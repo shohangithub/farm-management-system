@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Identity — Authentication & Authorization Layer
+    Reference: F360-AUTH-2026-001 — Enterprise Auth Architecture
+    ASP.NET Core Identity + JWT RS256 + OTP + Refresh Tokens
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Identity</RootNamespace>
+    <AssemblyName>Farm360.Identity</AssemblyName>
+    <Description>ASP.NET Core Identity, JWT RS256 token service, OTP service, refresh token rotation, tenant resolution</Description>
+  </PropertyGroup>
+
+  <ItemGroup Label="Identity + JWT — F360-AUTH-2026-001">
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" />
+  </ItemGroup>
+
+  <ItemGroup Label="Redis — OTP and Token Version Cache">
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+  </ItemGroup>
+
+  <ItemGroup Label="AWS KMS — JWT Key Signing (F360-AUTH-2026-001 §2.2)">
+    <PackageReference Include="AWSSDK.KeyManagementService" />
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" />
+  </ItemGroup>
+
+  <ItemGroup Label="Abstractions">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project References">
+    <ProjectReference Include="..\Farm360.Application\Farm360.Application.csproj" />
+    <ProjectReference Include="..\Farm360.Domain\Farm360.Domain.csproj" />
+    <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Infrastructure — Infrastructure Layer (External Concerns)
+    Reference: F360-CONST-2026-001 §11 (Logging), §12 (DB Standards)
+    Serilog, Hangfire, SignalR, Redis, AWS, HTTP clients, SMS, Email
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Infrastructure</RootNamespace>
+    <AssemblyName>Farm360.Infrastructure</AssemblyName>
+    <Description>Serilog, Hangfire, SignalR, Redis cache, AWS S3/SNS, external HTTP services, resilience policies</Description>
+    <!--
+      Infrastructure-specific CA suppressions:
+      CA1031: Cache methods catch Exception intentionally — cache failures MUST NOT crash the app (graceful degradation).
+      CA1308: ToLowerInvariant on cache keys is correct — Redis keys are case-sensitive, lowercase is the convention.
+      CA1305: Serilog sink methods do not accept IFormatProvider — Serilog manages its own locale-neutral formatting.
+    -->
+    <NoWarn>$(NoWarn);CA1031;CA1308;CA1305</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Label="Logging — Serilog (Constitution §11)">
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Serilog.Sinks.Seq" />
+    <PackageReference Include="Serilog.Enrichers.Environment" />
+    <PackageReference Include="Serilog.Enrichers.Thread" />
+    <PackageReference Include="Serilog.Enrichers.Process" />
+    <PackageReference Include="Serilog.Enrichers.Span" />
+    <PackageReference Include="Serilog.Expressions" />
+  </ItemGroup>
+
+  <ItemGroup Label="Background Jobs — Hangfire">
+    <PackageReference Include="Hangfire.Core" />
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.SqlServer" />
+  </ItemGroup>
+
+  <ItemGroup Label="Caching — Redis">
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+  </ItemGroup>
+
+  <ItemGroup Label="Resilience — Polly 8">
+    <PackageReference Include="Polly" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+  </ItemGroup>
+
+  <ItemGroup Label="AWS — S3 + SNS">
+    <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" />
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" />
+  </ItemGroup>
+
+  <ItemGroup Label="HTTP">
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup Label="Abstractions">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project References">
+    <ProjectReference Include="..\Farm360.Application\Farm360.Application.csproj" />
+    <ProjectReference Include="..\Farm360.Domain\Farm360.Domain.csproj" />
+    <ProjectReference Include="..\Farm360.Contracts\Farm360.Contracts.csproj" />
+    <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
+  </ItemGroup>
+</Project>

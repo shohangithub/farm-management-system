@@ -1,0 +1,59 @@
+<Project>
+  <!--
+    Directory.Build.props — Farm360 AI
+    Applies to ALL projects in the solution.
+    Reference: F360-CONST-2026-001 §3 (Coding Standards), §4 (Naming Standards)
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Code Quality — Constitution §3.1 -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Nullability — Constitution §3.2 -->
+    <Nullable>enable</Nullable>
+    <WarningLevel>9999</WarningLevel>
+
+    <!-- Assembly metadata -->
+    <Company>Farm360 AI</Company>
+    <Product>Farm360</Product>
+    <Copyright>Copyright © 2026 Farm360 AI Engineering Organization</Copyright>
+    <Authors>Farm360 Engineering</Authors>
+    <RepositoryUrl>https://github.com/farm360/farm360-ai</RepositoryUrl>
+    <PackageLicenseExpression>Proprietary</PackageLicenseExpression>
+
+    <!-- Reproducible builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Suppress CA rules that conflict with deliberate design patterns
+       CA1716: 'Shared'/'Error'/'Primitives' namespace — acceptable for domain-specific naming
+       CA1822: GuardClause instance methods — intentional for fluent Guard.Against.Null() API
+       CA1815: GuardClause readonly struct — equality not semantically meaningful for guard clauses
+       CA2225: Result<T> implicit operator — Result.Success<T>() factory is the alternate
+       CA1000: PaginatedResult<T>.Create static factory — established .NET pattern (like Task.FromResult)
+       CA1805: explicit default values — intentional for API clarity in DTOs
+       CA1062: Null validation — done via Guard pattern, not BCL null checks
+       CA1034: nested types in domain (IDomainEvent inside BaseEntity) — acceptable
+       CA2007: ConfigureAwait — not needed in ASP.NET Core (SynchronizationContext is null)
+  -->
+  <PropertyGroup>
+    <!-- CA1848: Use LoggerMessage delegates — micro-optimization hint; standard logger.Log* is correct.
+         Optimize incrementally on identified hot paths, not globally at scaffold time. -->
+    <NoWarn>$(NoWarn);CA1716;CA1822;CA1815;CA2225;CA1000;CA1805;CA1062;CA1034;CA2007;IDE0040;CA1032;CA1030;CA1819;CA1848</NoWarn>
+  </PropertyGroup>
+
+  <!-- Source Link for debugging -->
+  <ItemGroup Condition="'$(CI)' == 'true'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

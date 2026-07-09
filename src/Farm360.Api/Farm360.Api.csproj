@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    Farm360.Api — Entry Point (ASP.NET Core 10 Minimal APIs)
+    Reference: F360-CONST-2026-001 §6 (API Standards)
+    All requests enter here. Assembles and orchestrates all layers.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Api</RootNamespace>
+    <AssemblyName>Farm360.Api</AssemblyName>
+    <Description>ASP.NET Core Web API — Composition Root</Description>
+    <!--
+      API-specific suppressions:
+      CA1515: Program/Controllers don't strictly need to be internal, often needed by Integration Tests.
+      CA1305: Serilog sink configuration doesn't take IFormatProvider.
+      CA1031: Global Exception Middleware must catch Exception.
+      CA1873: Logger.IsEnabled is handled locally or suppressed for simplicity.
+      CA1812: TenantCacheEntry instantiated via reflection/JSON.
+    -->
+    <NoWarn>$(NoWarn);CA1515;CA1305;CA1031;CA1873;CA1812</NoWarn>
+    <UserSecretsId>farm360-api-dev</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup Label="OpenAPI — Scalar (replaces Swashbuckle in .NET 10)">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="Serilog for request logging">
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project References — Composition Root">
+    <ProjectReference Include="..\Farm360.Application\Farm360.Application.csproj" />
+    <ProjectReference Include="..\Farm360.Infrastructure\Farm360.Infrastructure.csproj" />
+    <ProjectReference Include="..\Farm360.Identity\Farm360.Identity.csproj" />
+    <ProjectReference Include="..\Farm360.Persistence\Farm360.Persistence.csproj" />
+    <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Domain — Domain Layer (DDD Core)
+    Reference: F360-CONST-2026-001 §2 (Architecture), Constitution §8 (CQRS + DDD)
+    Depends ONLY on Farm360.Shared.
+    NO infrastructure, NO EF Core, NO MediatR.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Domain</RootNamespace>
+    <AssemblyName>Farm360.Domain</AssemblyName>
+    <Description>Domain entities, value objects, domain events, aggregate roots, repository interfaces</Description>
+  </PropertyGroup>
+
+  <ItemGroup Label="Project References — Inward Dependency Rule">
+    <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
+  </ItemGroup>
+</Project>

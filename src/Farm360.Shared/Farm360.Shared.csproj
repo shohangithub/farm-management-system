@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Shared — Shared Kernel / Common Library
+    Reference: F360-CONST-2026-001 §2 (Architecture Principles)
+    NO dependencies on other Farm360 projects.
+    NO framework-specific packages (pure BCL only).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Shared</RootNamespace>
+    <AssemblyName>Farm360.Shared</AssemblyName>
+    <Description>Shared kernel: Result pattern, Guard clauses, primitives, constants, extensions</Description>
+  </PropertyGroup>
+
+  <!-- No NuGet references — Shared Kernel must remain a pure .NET library -->
+</Project>

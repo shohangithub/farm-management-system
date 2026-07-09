@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Application — Application Layer (CQRS Use Cases)
+    Reference: F360-CONST-2026-001 §8 (CQRS Standards)
+    Commands, Queries, Handlers, Behaviors, Application Interfaces.
+    MediatR pipeline is assembled here.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Application</RootNamespace>
+    <AssemblyName>Farm360.Application</AssemblyName>
+    <Description>CQRS commands/queries, MediatR pipeline behaviors, FluentValidation, AutoMapper, application interfaces</Description>
+  </PropertyGroup>
+
+  <ItemGroup Label="CQRS + Pipeline">
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation — Constitution §9">
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+  <ItemGroup Label="Object Mapping">
+    <PackageReference Include="AutoMapper" />
+  </ItemGroup>
+
+  <ItemGroup Label="Abstractions only — no concrete implementations">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project References — Inward Dependency Rule">
+    <ProjectReference Include="..\Farm360.Domain\Farm360.Domain.csproj" />
+    <ProjectReference Include="..\Farm360.Contracts\Farm360.Contracts.csproj" />
+    <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
+  </ItemGroup>
+</Project>

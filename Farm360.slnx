@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Farm360.Api/Farm360.Api.csproj" />
+    <Project Path="src/Farm360.Application/Farm360.Application.csproj" />
+    <Project Path="src/Farm360.Contracts/Farm360.Contracts.csproj" />
+    <Project Path="src/Farm360.Domain/Farm360.Domain.csproj" />
+    <Project Path="src/Farm360.Identity/Farm360.Identity.csproj" />
+    <Project Path="src/Farm360.Infrastructure/Farm360.Infrastructure.csproj" />
+    <Project Path="src/Farm360.Persistence/Farm360.Persistence.csproj" />
+    <Project Path="src/Farm360.Shared/Farm360.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Farm360.Api.FunctionalTests/Farm360.Api.FunctionalTests.csproj" />
+    <Project Path="tests/Farm360.Application.IntegrationTests/Farm360.Application.IntegrationTests.csproj" />
+    <Project Path="tests/Farm360.Application.UnitTests/Farm360.Application.UnitTests.csproj" />
+    <Project Path="tests/Farm360.Architecture.Tests/Farm360.Architecture.Tests.csproj" />
+    <Project Path="tests/Farm360.Domain.UnitTests/Farm360.Domain.UnitTests.csproj" />
+  </Folder>
+</Solution>

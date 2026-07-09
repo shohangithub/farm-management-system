@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Persistence — Data Access Layer (EF Core 10 + SQL Server 2022)
+    Reference: F360-CONST-2026-001 §12 (Database Standards), §13 (Migration Rules)
+    Multi-tenant: F360-MTA-2026-001 — Global Query Filters + Interceptors
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Persistence</RootNamespace>
+    <AssemblyName>Farm360.Persistence</AssemblyName>
+    <Description>EF Core 10 DbContext, SQL Server, migrations, repositories, audit + tenant interceptors</Description>
+  </PropertyGroup>
+
+  <ItemGroup Label="Entity Framework Core 10">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+  </ItemGroup>
+
+  <ItemGroup Label="Abstractions">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project References">
+    <ProjectReference Include="..\Farm360.Application\Farm360.Application.csproj" />
+    <ProjectReference Include="..\Farm360.Domain\Farm360.Domain.csproj" />
+    <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
+  </ItemGroup>
+</Project>

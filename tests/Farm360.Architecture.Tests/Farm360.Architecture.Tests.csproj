@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Architecture.Tests — Enforces Clean Architecture dependency rules.
+    Reference: F360-CONST-2026-001 §17 (Unit Testing Standards)
+    Run in CI on every PR: dotnet test tests/Farm360.Architecture.Tests
+    A failing test here = architecture violation = PR blocked.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Architecture.Tests</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Suppress CA rules for tests: CA1707 (underscores), CA1307 (StringComparison for NetArchTest), CA1823 (unused fields in tests) -->
+    <NoWarn>$(NoWarn);CA1707;CA1307;CA1823</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Label="Test Framework">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Label="Architecture Testing">
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+
+  <ItemGroup Label="MediatR + FluentValidation (for interface type references)">
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project References — Must include all tested assemblies">
+    <ProjectReference Include="..\..\src\Farm360.Shared\Farm360.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Farm360.Domain\Farm360.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Farm360.Application\Farm360.Application.csproj" />
+    <ProjectReference Include="..\..\src\Farm360.Persistence\Farm360.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Farm360.Identity\Farm360.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Farm360.Infrastructure\Farm360.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Farm360.Api\Farm360.Api.csproj" />
+  </ItemGroup>
+</Project>

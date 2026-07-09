@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Farm360.Contracts — Integration Contracts
+    Reference: F360-CONST-2026-001 §2 (Architecture)
+    Shared DTOs, integration events for cross-service/module communication.
+    Outbox pattern for reliable event delivery.
+  -->
+  <PropertyGroup>
+    <RootNamespace>Farm360.Contracts</RootNamespace>
+    <AssemblyName>Farm360.Contracts</AssemblyName>
+    <Description>Integration events, outbox messages, external contract DTOs</Description>
+  </PropertyGroup>
+
+  <ItemGroup Label="Project References">
+    <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
+    <ProjectReference Include="..\Farm360.Domain\Farm360.Domain.csproj" />
+  </ItemGroup>
+</Project>
