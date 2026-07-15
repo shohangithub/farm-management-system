@@ -74,7 +74,7 @@ public static class PermissionConstants
     }
 
     // ── Organizations & Branches ─────────────────────────────────────────────
-    public static class Organizations
+    public static class OrganizationModule
     {
         public const string View   = "organizations.view";
         public const string Create = "organizations.create";
@@ -143,10 +143,10 @@ public static class PermissionConstants
         (Roles.Edit,   "Roles", "Edit role permissions"),
         (Roles.Delete, "Roles", "Delete custom roles"),
 
-        (Organizations.View,   "Organizations", "View organizations and branches"),
-        (Organizations.Create, "Organizations", "Create organizations and branches"),
-        (Organizations.Edit,   "Organizations", "Edit organization details"),
-        (Organizations.Delete, "Organizations", "Delete organizations"),
+        (OrganizationModule.View,   "Organizations", "View organizations and branches"),
+        (OrganizationModule.Create, "Organizations", "Create organizations and branches"),
+        (OrganizationModule.Edit,   "Organizations", "Edit organization details"),
+        (OrganizationModule.Delete, "Organizations", "Delete organizations"),
 
         (Settings.View, "Settings", "View tenant settings"),
         (Settings.Edit, "Settings", "Edit tenant settings and branding"),

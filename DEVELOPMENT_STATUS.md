@@ -11,6 +11,7 @@
 | Module / Component | Domain | Persistence | CQRS Application | API Layer | Angular UI | Unit & Integration Tests | Status |
 |---|---|---|---|---|---|---|---|
 | **1. Identity & Multi-Tenant Core** | ✅ | ✅ | ✅ | ✅ | N/A | ✅ (37/37) | **COMPLETED** |
+| **1.5 Organization Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (1/1) | **COMPLETED** |
 | **2. Livestock Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (76/76) | **COMPLETED** |
 | **3. Health & Veterinary Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (6/6) | **COMPLETED** |
 | **4. Smart Feeding Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
@@ -28,6 +29,14 @@
 - **Authorization:** Declarative permission handler (`[RequirePermission]`), dynamic policy provider, dynamic tenant EF Core query filter.
 - **Seed Data:** 42 permissions across 5 system roles (`PlatformAdmin`, `TenantOwner`, `FarmManager`, `Veterinarian`, `Worker`, `Accountant`).
 - **Tests:** 37 passing tests across Tenant and Permission suites.
+
+### 1.5 Organization Management (Completed)
+- **Domain Layer:** Refactored `Organization` entity into its own bounded context (`Farm360.Domain.Organizations`). Added properties for business information, logo, contact, BIN, tax info, currency, timezone, language, address, and business type.
+- **Persistence Layer:** EF Core configuration with `RowVersion` concurrency token and unique constraint on TenantId/Name. EF Core Migration `AddOrganizationModule` applied.
+- **Application Layer:** CQRS setup with MediatR. `CreateOrganizationCommand`, `UpdateOrganizationCommand`, `DeactivateOrganizationCommand`, and Queries. Handled DTO mappings and validations using FluentValidation.
+- **API Layer:** REST API endpoints via `OrganizationEndpoints.cs` mapped to `/api/v1/organizations` with role-based access control.
+- **Angular UI:** Standalone components for listing and form creation/editing. Service layer for HTTP interactions. Styled with existing Tailwind CSS definitions.
+- **Tests:** Command handlers unit tested using Moq and xUnit.
 
 ### 2. Livestock Management Module (Completed)
 - **Domain Layer:** `Animal` Aggregate Root, `WeightRecord`, `BreedingRecord`, `AnimalPhoto` owned children; `AnimalTag` & `Weight` Value Objects; domain events & exceptions.

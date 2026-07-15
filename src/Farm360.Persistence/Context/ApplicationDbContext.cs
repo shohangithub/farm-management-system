@@ -4,6 +4,7 @@ using Farm360.Domain.Identity;
 using Farm360.Domain.Livestock;
 using Farm360.Domain.Health;
 using Farm360.Domain.Tenancy;
+using Farm360.Domain.Organizations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Linq.Expressions;

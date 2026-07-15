@@ -1,5 +1,6 @@
 using Farm360.Api.Endpoints.Health;
 using Farm360.Api.Endpoints.Livestock;
+using Farm360.Api.Endpoints.Organizations;
 using Farm360.Api.Middleware;
 using Farm360.Application.DependencyInjection;
 using Farm360.Identity.DependencyInjection;
@@ -181,6 +182,9 @@ try
 
     // ── Health module ───────────────────────────────────────────────────────
     app.MapHealthEndpoints();
+
+    // ── Organization module ─────────────────────────────────────────────────
+    app.MapOrganizationEndpoints();
 
     // app.MapGroup("/api/v1/feeding").MapFeedingEndpoints();
     // app.MapGroup("/api/v1/finance").MapFinanceEndpoints();
