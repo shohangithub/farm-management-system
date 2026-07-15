@@ -8,6 +8,8 @@
     <RootNamespace>Farm360.Identity</RootNamespace>
     <AssemblyName>Farm360.Identity</AssemblyName>
     <Description>ASP.NET Core Identity, JWT RS256 token service, OTP service, refresh token rotation, tenant resolution</Description>
+    <!-- CA1873: logger calls in auth services use evaluated string args that are already cheap variables -->
+    <NoWarn>$(NoWarn);CA1873</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Label="Identity + JWT — F360-AUTH-2026-001">

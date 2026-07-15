@@ -2,6 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Farm360.Application.UnitTests</RootNamespace>
     <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 

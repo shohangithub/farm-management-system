@@ -2,7 +2,9 @@ using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Interfaces.Repositories;
 using Farm360.Persistence.Context;
 using Farm360.Persistence.Interceptors;
+using Farm360.Persistence.Permissions;
 using Farm360.Persistence.Repositories;
+using Farm360.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,13 +34,18 @@ public static class PersistenceServiceExtensions
                 sqlOptions.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorNumbersToAdd: null);
             });
 
-            // Register the interceptor
             var interceptor = sp.GetRequiredService<AuditSaveChangesInterceptor>();
             options.AddInterceptors(interceptor);
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+        // ── Permission service (Redis-cached, DB-backed) ──────────────────────
+        services.AddScoped<IPermissionService, PermissionService>();
+
+        // ── Data Seeder (transient — runs once at startup) ────────────────────
+        services.AddTransient<DataSeeder>();
 
         return services;
     }

@@ -1,8 +1,10 @@
 using Farm360.Application.Common.Interfaces;
+using Farm360.Identity.Configuration;
 using Farm360.Identity.Context;
 using Farm360.Identity.Entities;
 using Farm360.Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,7 +16,7 @@ namespace Farm360.Identity.DependencyInjection;
 
 /// <summary>
 /// Identity layer DI registration.
-/// F360-AUTH-2026-001: ASP.NET Core Identity + JWT RS256 + OTP + Refresh tokens.
+/// F360-AUTH-2026-001: ASP.NET Core Identity + JWT HS256 + OTP + Refresh tokens + Permission-based AuthZ.
 /// </summary>
 public static class IdentityServiceExtensions
 {
@@ -22,6 +24,11 @@ public static class IdentityServiceExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // ── Jwt Configuration ─────────────────────────────────────────────────
+        services.Configure<JwtConfiguration>(configuration.GetSection(JwtConfiguration.SectionName));
+        var jwtConfig = configuration.GetSection(JwtConfiguration.SectionName).Get<JwtConfiguration>()
+            ?? throw new InvalidOperationException("Jwt configuration section is missing.");
+
         // ── Identity DbContext ────────────────────────────────────────────────
         services.AddDbContext<IdentityDbContext>(options =>
         {
@@ -50,7 +57,6 @@ public static class IdentityServiceExtensions
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.AllowedForNewUsers = true;
 
-            // Phone confirmed required (primary auth method)
             options.SignIn.RequireConfirmedPhoneNumber = false; // Enforced in auth flow, not here
         })
         .AddRoles<IdentityRole<Guid>>()
@@ -58,24 +64,18 @@ public static class IdentityServiceExtensions
         .AddDefaultTokenProviders();
 
         // ── JWT Authentication ────────────────────────────────────────────────
-        // F360-AUTH-2026-001 §2.2: RS256 — public key for validation, private in AWS KMS
-        var jwtSection = configuration.GetSection("Jwt");
-
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = jwtSection["Issuer"] ?? "https://auth.farm360.ai",
+                    ValidIssuer = jwtConfig.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtSection["Audience"] ?? "https://api.farm360.ai",
+                    ValidAudience = jwtConfig.Audience,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    // Public key loaded from JWKS endpoint (configured below)
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(
-                            jwtSection["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured."))),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Secret)),
                     ClockSkew = TimeSpan.FromSeconds(30), // F360-AUTH-2026-001 §16 R-12
                 };
 
@@ -86,7 +86,8 @@ public static class IdentityServiceExtensions
                     {
                         var accessToken = ctx.Request.Query["access_token"];
                         var path = ctx.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
                         {
                             ctx.Token = accessToken;
                         }
@@ -95,12 +96,18 @@ public static class IdentityServiceExtensions
                 };
             });
 
+        // ── Permission-based Authorization (handlers registered at API layer) ───
+        // Note: PermissionPolicyProvider + PermissionHandler live in Farm360.Api
+        // and are registered by ApiServiceExtensions to avoid circular references.
         services.AddAuthorization();
 
-        // ── Application Services ──────────────────────────────────────────────
+        // ── Application Service Implementations ───────────────────────────────
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITenantService, TenantService>();
         services.AddSingleton<IDateTimeService, DateTimeService>();
+        services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IOtpService, OtpService>();
 
         return services;
     }

@@ -3,6 +3,8 @@
     <RootNamespace>Farm360.Domain.UnitTests</RootNamespace>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Suppress test naming rules: underscores are the standard xUnit convention -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Label="Test Framework — versions from Directory.Packages.props">

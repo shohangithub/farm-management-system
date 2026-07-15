@@ -61,7 +61,6 @@ public interface IDateTimeService
 /// <summary>
 /// Abstraction for a database transaction.
 /// Constitution §2 (Architecture): Application layer MUST NOT reference EF Core.
-/// Concrete implementation lives in Farm360.Persistence using IDbContextTransaction.
 /// </summary>
 public interface ITransaction : IAsyncDisposable
 {
@@ -69,10 +68,7 @@ public interface ITransaction : IAsyncDisposable
     Task RollbackAsync(CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// Unit of Work abstraction for transaction management.
-/// Used by TransactionBehavior. Never call directly from handlers.
-/// </summary>
+/// <summary>Unit of Work abstraction for transaction management.</summary>
 public interface IUnitOfWork : IAsyncDisposable
 {
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
@@ -107,7 +103,7 @@ public interface IEmailService
 
 /// <summary>
 /// SMS service abstraction (primary communication channel — Bangladesh context).
-/// F360-AUTH-2026-001: OTP delivery via SMS. Constitution PRD: Phone is primary identity.
+/// F360-AUTH-2026-001: OTP delivery via SMS. Phone is primary identity.
 /// OTP values are NEVER logged (SensitiveDataAttribute).
 /// </summary>
 public interface ISmsService
@@ -116,10 +112,7 @@ public interface ISmsService
     Task SendOtpAsync(string phoneNumber, string otpCode, string purpose, CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// AWS S3 blob storage abstraction.
-/// Used for animal photos, reports, documents.
-/// </summary>
+/// <summary>AWS S3 blob storage abstraction.</summary>
 public interface IBlobStorageService
 {
     Task<string> UploadAsync(string containerName, string fileName, Stream content, string contentType, CancellationToken cancellationToken = default);
@@ -130,8 +123,7 @@ public interface IBlobStorageService
 
 /// <summary>
 /// Background job service abstraction (Hangfire backing implementation).
-/// Constitution §11 (Logging): Background jobs MUST call SetTenant() explicitly.
-/// F360-MTA-2026-001 Golden Rule §7: No implicit tenant context in background workers.
+/// Constitution §11: Background jobs MUST call SetTenant() explicitly.
 /// </summary>
 public interface IBackgroundJobService
 {
@@ -144,10 +136,153 @@ public interface IBackgroundJobService
 /// <summary>
 /// Real-time notification service (SignalR backing implementation).
 /// F360-MTA-2026-001: All SignalR groups are tenant-scoped.
-/// Group pattern: {tenantId}:{userId} or {tenantId}:all
 /// </summary>
 public interface INotificationService
 {
     Task SendToUserAsync(Guid tenantId, Guid userId, string eventType, object payload, CancellationToken cancellationToken = default);
     Task SendToTenantAsync(Guid tenantId, string eventType, object payload, CancellationToken cancellationToken = default);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// New interfaces added for Identity + Multi-Tenant Foundation
+// ══════════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Permission evaluation service.
+/// Checks whether a user has a specific permission within a tenant.
+/// Results cached in Redis (5 min TTL) for performance.
+/// F360-AUTH-2026-001 §7 (Permission-Based Authorization).
+/// Cache key: {tenantId}:permissions:{userId}
+/// </summary>
+public interface IPermissionService
+{
+    /// <summary>Returns true if the user has the specified permission in the given tenant.</summary>
+    Task<bool> HasPermissionAsync(Guid userId, Guid tenantId, string permissionCode, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns all permission codes for the user in the given tenant. Used for JWT generation.</summary>
+    Task<IReadOnlyList<string>> GetPermissionsAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>Invalidates the cached permissions for a user when their role changes.</summary>
+    Task InvalidatePermissionCacheAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// JWT token generation and validation service.
+/// F360-AUTH-2026-001 §3 (JWT Structure).
+/// Claims: sub, tenant_id, role, tv, tier, farms, sys, jti, iat, exp.
+/// </summary>
+public interface ITokenService
+{
+    /// <summary>Generates a short-lived access token (15 min) with all claims.</summary>
+    Task<TokenResult> GenerateAccessTokenAsync(
+        Guid userId,
+        Guid tenantId,
+        string role,
+        int tokenVersion,
+        IEnumerable<string> permissions,
+        IEnumerable<Guid>? farmIds = null,
+        bool isSystemUser = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Validates and extracts claims from a JWT. Returns null if invalid.</summary>
+    TokenClaimsResult? ValidateToken(string token);
+}
+
+/// <summary>Result of JWT token generation.</summary>
+public sealed record TokenResult(
+    string AccessToken,
+    DateTime ExpiresAt,
+    string TokenId);
+
+/// <summary>Validated JWT claims.</summary>
+public sealed record TokenClaimsResult(
+    Guid UserId,
+    Guid TenantId,
+    string Role,
+    int TokenVersion,
+    string TokenId,
+    DateTime ExpiresAt);
+
+/// <summary>
+/// OTP generation and verification service.
+/// Redis is the primary store (5 min TTL). DB stores audit record only.
+/// F360-AUTH-2026-001 §4 (OTP Authentication).
+/// OTP values are NEVER logged.
+/// </summary>
+public interface IOtpService
+{
+    /// <summary>Generates a 6-digit OTP, stores in Redis, sends via SMS.</summary>
+    Task<string> GenerateAndSendAsync(string phoneNumber, OtpPurpose purpose, CancellationToken cancellationToken = default);
+
+    /// <summary>Verifies OTP. Returns true on success, false on invalid/expired. Locks after 3 attempts.</summary>
+    Task<bool> VerifyAsync(string phoneNumber, string otpCode, OtpPurpose purpose, CancellationToken cancellationToken = default);
+
+    /// <summary>Checks whether a phone number is currently locked out due to too many OTP attempts.</summary>
+    Task<bool> IsLockedOutAsync(string phoneNumber, CancellationToken cancellationToken = default);
+}
+
+public enum OtpPurpose
+{
+    Registration = 0,
+    Login = 1,
+    PasswordReset = 2,
+    EmailVerification = 3,
+    TwoFactorAuth = 4
+}
+
+/// <summary>
+/// Refresh token (UserSession) management.
+/// F360-AUTH-2026-001 §5 (Session Management, Token Rotation).
+/// </summary>
+public interface IRefreshTokenService
+{
+    /// <summary>Creates a new session (refresh token) for the user. Returns the raw token.</summary>
+    Task<string> CreateSessionAsync(
+        Guid userId,
+        Guid tenantId,
+        string? deviceName,
+        string? deviceFingerprint,
+        string? ipHash,
+        string? userAgent,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Rotates: validates old token, creates new session, revokes old session.</summary>
+    Task<RefreshTokenResult> RotateAsync(string refreshToken, string? ipHash, CancellationToken cancellationToken = default);
+
+    /// <summary>Revokes a specific session (logout).</summary>
+    Task RevokeSessionAsync(string refreshToken, SessionRevokeReason reason, CancellationToken cancellationToken = default);
+
+    /// <summary>Revokes all active sessions for a user (e.g. password change, account compromise).</summary>
+    Task RevokeAllSessionsAsync(Guid userId, SessionRevokeReason reason, CancellationToken cancellationToken = default);
+}
+
+public sealed record RefreshTokenResult(
+    Guid UserId,
+    Guid TenantId,
+    string NewRefreshToken,
+    DateTime ExpiresAt);
+
+public enum SessionRevokeReason
+{
+    Logout = 0,
+    PasswordChange = 1,
+    AdminRevoke = 2,
+    Suspicious = 3
+}
+
+/// <summary>
+/// Business audit log writing service.
+/// Constitution §11: All entity changes produce an audit record.
+/// F360-MTA-2026-001: Audit logs are tenant-scoped and INSERT-only.
+/// </summary>
+public interface IAuditLogService
+{
+    Task LogAsync(
+        Guid tenantId,
+        string entityName,
+        Guid entityId,
+        string action,
+        string? oldValues,
+        string? newValues,
+        CancellationToken cancellationToken = default);
 }
