@@ -35,4 +35,5 @@
     <ProjectReference Include="..\Farm360.Domain\Farm360.Domain.csproj" />
     <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
   </ItemGroup>
+
 </Project>

@@ -1,0 +1,21 @@
+# Farm360 — Migrations folder .editorconfig
+# ─────────────────────────────────────────────────────────────────────────────
+# EF Core auto-generates migration files. These files are never hand-edited
+# and cannot be changed to satisfy analyser rules without breaking migrations.
+#
+# Suppressions here are SCOPED to this directory only — they do NOT affect
+# any other code in Farm360.Persistence or any other project.
+#
+# CA1707: Identifiers should not contain underscores
+#   → EF names migration classes like "Livestock_AddAnimalAggregate"
+#   → Cannot rename — EF migration history table stores this class name
+#
+# CA1861: Prefer 'static readonly' fields over constant array arguments
+#   → EF generates inline new[] { "col1", "col2" } in every CreateIndex call
+#   → Cannot refactor — EF regenerates the file on each migration add
+
+root = false
+
+[*.cs]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1861.severity = none

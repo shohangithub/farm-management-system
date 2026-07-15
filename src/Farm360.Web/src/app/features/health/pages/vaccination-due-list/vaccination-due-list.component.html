@@ -1,0 +1,60 @@
+<div class="page-container">
+  <div class="command-bar">
+    <div class="left-zone">
+      <button class="btn btn-primary">+ Record Vaccination</button>
+      <button class="btn btn-secondary">+ Create Protocol</button>
+    </div>
+    <div class="center-zone">
+      <!-- Filters -->
+    </div>
+    <div class="right-zone">
+      <button class="btn-ghost">Export ↓</button>
+    </div>
+  </div>
+
+  <div class="content-area">
+    <h1 class="page-title">Due Vaccinations</h1>
+    
+    <div *ngIf="loading" class="skeleton-table">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
+    </div>
+    
+    <div *ngIf="error" class="error-banner">
+      ⚠ {{ error }}
+    </div>
+
+    <div *ngIf="!loading && upcomingVaccinations.length === 0" class="empty-state">
+      <h3>All vaccinations are up to date!</h3>
+      <p>Great work keeping your herd healthy.</p>
+    </div>
+
+    <div class="table-container" *ngIf="!loading && upcomingVaccinations.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Vaccine</th>
+            <th>Animal ID</th>
+            <th>Batch No</th>
+            <th>Due Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ev of upcomingVaccinations" [ngClass]="getUrgencyClass(ev.scheduledDate)">
+            <td><strong>{{ ev.vaccineName }}</strong></td>
+            <td class="mono-text">{{ ev.animalId.substring(0, 8) }}...</td>
+            <td>{{ ev.batchNumber || '-' }}</td>
+            <td>{{ ev.scheduledDate | date:'mediumDate' }}</td>
+            <td>
+              <span class="status-badge status-{{ ev.status | lowercase }}">{{ ev.status }}</span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary" (click)="administer(ev.id)">Administer</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

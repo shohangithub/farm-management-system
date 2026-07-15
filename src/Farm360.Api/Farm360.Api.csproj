@@ -30,6 +30,18 @@
     <PackageReference Include="Serilog.AspNetCore" />
   </ItemGroup>
 
+  <ItemGroup Label="EF Core tooling (design-time only — not published)">
+    <!--
+      Required by: dotnet ef migrations add / dotnet ef database update
+      when Farm360.Api is the startup project.
+      PrivateAssets=all: excluded from published output and downstream packages.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <ItemGroup Label="Project References — Composition Root">
     <ProjectReference Include="..\Farm360.Application\Farm360.Application.csproj" />
     <ProjectReference Include="..\Farm360.Infrastructure\Farm360.Infrastructure.csproj" />

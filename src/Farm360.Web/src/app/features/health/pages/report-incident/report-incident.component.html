@@ -1,0 +1,81 @@
+<div class="page-container centered-form-layout">
+  <div class="content-area">
+    <div class="header-section">
+      <a routerLink="/health/vaccinations" class="back-link">← Back</a>
+      <h1 class="page-title">Report Disease Incident</h1>
+      <p class="subtext">Log a new disease outbreak or incident affecting multiple animals.</p>
+    </div>
+    
+    <div *ngIf="error" class="error-banner">
+      ⚠ {{ error }}
+    </div>
+
+    <form [formGroup]="incidentForm" (ngSubmit)="onSubmit()" class="data-form">
+      
+      <div class="form-section">
+        <h3>Incident Details</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="diseaseName">Disease / Condition *</label>
+            <input id="diseaseName" type="text" formControlName="diseaseName" placeholder="e.g., FMD Outbreak">
+            <div class="error-text" *ngIf="incidentForm.get('diseaseName')?.touched && incidentForm.get('diseaseName')?.errors?.['required']">
+              Disease name is required.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row 2-col">
+          <div class="form-group">
+            <label for="incidentDate">Incident Date *</label>
+            <input id="incidentDate" type="date" formControlName="incidentDate">
+          </div>
+          
+          <div class="form-group">
+            <label for="severity">Severity *</label>
+            <select id="severity" formControlName="severity">
+              <option value="Mild">Mild</option>
+              <option value="Moderate">Moderate</option>
+              <option value="Severe">Severe</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row 2-col">
+          <div class="form-group">
+            <label for="affectedAnimalCount">Affected Animal Count *</label>
+            <input id="affectedAnimalCount" type="number" formControlName="affectedAnimalCount" min="1">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Clinical Information</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="symptoms">Symptoms *</label>
+            <textarea id="symptoms" formControlName="symptoms" rows="3" placeholder="Describe symptoms observed"></textarea>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="notes">Action Taken / Notes</label>
+            <textarea id="notes" formControlName="notes" rows="3" placeholder="Initial response, isolation details, etc."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" routerLink="/health/vaccinations">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="incidentForm.invalid || isSubmitting">
+          <span *ngIf="isSubmitting">Reporting...</span>
+          <span *ngIf="!isSubmitting">Report Incident →</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

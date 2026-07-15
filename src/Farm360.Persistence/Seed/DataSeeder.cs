@@ -135,9 +135,11 @@ public sealed class DataSeeder(
         var vetPerms = new[]
         {
             PermissionConstants.Animals.View,
-            PermissionConstants.Health.View, PermissionConstants.Health.Create,
-            PermissionConstants.Health.Edit, PermissionConstants.Health.Delete,
-            PermissionConstants.Health.Prescribe,
+            PermissionConstants.HealthModule.View,
+            PermissionConstants.HealthModule.Create,
+            PermissionConstants.HealthModule.Edit,
+            PermissionConstants.HealthModule.Delete,
+            PermissionConstants.HealthModule.Prescribe,
             PermissionConstants.Feeding.View,
             PermissionConstants.Reports.View,
             PermissionConstants.Notifications.View,

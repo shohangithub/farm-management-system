@@ -1,3 +1,5 @@
+using Farm360.Api.Endpoints.Health;
+using Farm360.Api.Endpoints.Livestock;
 using Farm360.Api.Middleware;
 using Farm360.Application.DependencyInjection;
 using Farm360.Identity.DependencyInjection;
@@ -174,9 +176,12 @@ try
         Version = "1.0.0",
     })).AllowAnonymous().WithTags("Health");
 
-    // API endpoint groups registered here as modules are implemented:
-    // app.MapGroup("/api/v1/livestock").MapLivestockEndpoints();
-    // app.MapGroup("/api/v1/health").MapHealthEndpoints();
+    // ── Livestock module ────────────────────────────────────────────────────
+    app.MapGroup("/api/v1/livestock").MapLivestockEndpoints();
+
+    // ── Health module ───────────────────────────────────────────────────────
+    app.MapHealthEndpoints();
+
     // app.MapGroup("/api/v1/feeding").MapFeedingEndpoints();
     // app.MapGroup("/api/v1/finance").MapFinanceEndpoints();
     // app.MapGroup("/api/v1/inventory").MapInventoryEndpoints();

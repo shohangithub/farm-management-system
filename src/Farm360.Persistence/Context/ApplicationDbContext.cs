@@ -1,6 +1,8 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Common;
 using Farm360.Domain.Identity;
+using Farm360.Domain.Livestock;
+using Farm360.Domain.Health;
 using Farm360.Domain.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -62,8 +64,17 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<TenantUser> TenantUsers => Set<TenantUser>();
 
-    // ── Business module DbSets added here when modules are implemented ────────
-    // public DbSet<Animal> Animals => Set<Animal>();
+    // ── Livestock Module ───────────────────────────────────────────────────────
+    public DbSet<Animal> Animals => Set<Animal>();
+    public DbSet<WeightRecord> WeightRecords => Set<WeightRecord>();
+    public DbSet<BreedingRecord> BreedingRecords => Set<BreedingRecord>();
+    public DbSet<AnimalPhoto> AnimalPhotos => Set<AnimalPhoto>();
+
+    // ── Health & Veterinary Module ─────────────────────────────────────────────
+    public DbSet<VaccinationProtocol> VaccinationProtocols => Set<VaccinationProtocol>();
+    public DbSet<VaccinationEvent> VaccinationEvents => Set<VaccinationEvent>();
+    public DbSet<MedicalTreatment> MedicalTreatments => Set<MedicalTreatment>();
+    public DbSet<DiseaseIncident> DiseaseIncidents => Set<DiseaseIncident>();
 
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;

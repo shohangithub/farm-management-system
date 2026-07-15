@@ -19,7 +19,7 @@ public static class PermissionConstants
     }
 
     // ── Health / Veterinary ───────────────────────────────────────────────────
-    public static class Health
+    public static class HealthModule
     {
         public const string View   = "health.view";
         public const string Create = "health.create";
@@ -112,11 +112,11 @@ public static class PermissionConstants
         (Animals.Delete, "Animals", "Delete or archive animal records"),
         (Animals.Export, "Animals", "Export animal data to Excel/PDF"),
 
-        (Health.View,      "Health", "View health records and treatments"),
-        (Health.Create,    "Health", "Record new health events and treatments"),
-        (Health.Edit,      "Health", "Edit health records"),
-        (Health.Delete,    "Health", "Delete health records"),
-        (Health.Prescribe, "Health", "Issue prescriptions and medication orders"),
+        (HealthModule.View,      "Health", "View health records and treatments"),
+        (HealthModule.Create,    "Health", "Record new health events and treatments"),
+        (HealthModule.Edit,      "Health", "Edit health records"),
+        (HealthModule.Delete,    "Health", "Delete health records"),
+        (HealthModule.Prescribe, "Health", "Issue prescriptions and medication orders"),
 
         (Feeding.View,   "Feeding", "View feeding schedules and records"),
         (Feeding.Create, "Feeding", "Record feeding events"),

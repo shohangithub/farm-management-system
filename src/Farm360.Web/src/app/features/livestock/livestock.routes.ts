@@ -1,0 +1,22 @@
+import { Routes } from '@angular/router';
+
+export const livestockRoutes: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./pages/animal-list/animal-list.component').then(m => m.AnimalListComponent),
+    title: 'Livestock — Farm360',
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./pages/animal-register/animal-register.component').then(m => m.AnimalRegisterComponent),
+    title: 'Register Animal — Farm360',
+  },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./pages/animal-detail/animal-detail.component').then(m => m.AnimalDetailComponent),
+    title: 'Animal Detail — Farm360',
+  },
+];

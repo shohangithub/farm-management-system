@@ -1,9 +1,13 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Interfaces.Repositories;
+using Farm360.Domain.Livestock.Repositories;
 using Farm360.Persistence.Context;
 using Farm360.Persistence.Interceptors;
 using Farm360.Persistence.Permissions;
 using Farm360.Persistence.Repositories;
+using Farm360.Persistence.Repositories.Livestock;
+using Farm360.Persistence.Repositories.Health;
+using Farm360.Domain.Health.Interfaces.Repositories;
 using Farm360.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -43,6 +47,14 @@ public static class PersistenceServiceExtensions
 
         // ── Permission service (Redis-cached, DB-backed) ──────────────────────
         services.AddScoped<IPermissionService, PermissionService>();
+
+        // ── Livestock repositories ──────────────────────────────────────────────
+        services.AddScoped<IAnimalRepository, AnimalRepository>();
+
+        // ── Health repositories ─────────────────────────────────────────────────
+        services.AddScoped<IVaccinationRepository, VaccinationRepository>();
+        services.AddScoped<IMedicalTreatmentRepository, MedicalTreatmentRepository>();
+        services.AddScoped<IDiseaseIncidentRepository, DiseaseIncidentRepository>();
 
         // ── Data Seeder (transient — runs once at startup) ────────────────────
         services.AddTransient<DataSeeder>();
