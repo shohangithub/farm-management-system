@@ -76,6 +76,15 @@ public static class InfrastructureServiceExtensions
         // ── HTTP Client factory (for external services) ────────────────────
         services.AddHttpClient();
 
+        // ── Messaging services ────────────────────────────────────────────────
+        // DEV/STAGING: Log-only stubs — no real messages are sent.
+        // PRODUCTION:  Replace with real gateway implementations:
+        //   services.AddScoped<ISmsService, TwilioSmsService>();
+        //   services.AddScoped<IEmailService, SendGridEmailService>();
+        // References: docs/7_Farm360_Solution_Structure.md §Messaging
+        services.AddScoped<ISmsService, LoggingSmsService>();
+        services.AddScoped<IEmailService, LoggingEmailService>();
+
         return services;
     }
 }
