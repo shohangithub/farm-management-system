@@ -1,0 +1,54 @@
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden col-span-2">
+  <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+      <i class="fas fa-warehouse text-brand-600 dark:text-brand-400 mr-2"></i> Sheds Overview
+    </h3>
+    <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds']" class="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
+      Manage Sheds
+    </a>
+  </div>
+  
+  <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+      <div class="p-3 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg mr-4">
+        <i class="fas fa-layer-group text-xl"></i>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Sheds</p>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalSheds }}</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+      <div class="p-3 bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 rounded-lg mr-4">
+        <i class="fas fa-paw text-xl"></i>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Current Occupancy</p>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalOccupancy | number }}</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+      <div class="p-3 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rounded-lg mr-4">
+        <i class="fas fa-arrow-up text-xl"></i>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Capacity</p>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalCapacity ? (totalCapacity | number) : 'Unlimited' }}</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="px-5 pb-5 pt-2" *ngIf="totalCapacity > 0">
+    <div class="flex justify-between items-end mb-1">
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Branch Occupancy</span>
+      <span class="text-sm font-bold text-gray-900 dark:text-white">{{ Math.round((totalOccupancy / totalCapacity) * 100) }}%</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 overflow-hidden">
+      <div class="h-2 rounded-full transition-all duration-500" 
+           [ngClass]="{'bg-brand-600': ((totalOccupancy / totalCapacity) < 0.8), 'bg-yellow-500': ((totalOccupancy / totalCapacity) >= 0.8 && (totalOccupancy / totalCapacity) < 1), 'bg-red-500': ((totalOccupancy / totalCapacity) >= 1)}"
+           [style.width]="Math.min((totalOccupancy / totalCapacity) * 100, 100) + '%'"></div>
+    </div>
+  </div>
+</div>

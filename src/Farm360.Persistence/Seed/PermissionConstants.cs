@@ -91,6 +91,14 @@ public static class PermissionConstants
         public const string Delete = "farms.delete";
     }
 
+    public static class ShedModule
+    {
+        public const string View   = "sheds.view";
+        public const string Create = "sheds.create";
+        public const string Edit   = "sheds.edit";
+        public const string Delete = "sheds.delete";
+    }
+
     // ── Settings ─────────────────────────────────────────────────────────────
     public static class Settings
     {
@@ -161,6 +169,11 @@ public static class PermissionConstants
         (FarmModule.Create, "Farms", "Create new farms"),
         (FarmModule.Edit,   "Farms", "Edit farm details"),
         (FarmModule.Delete, "Farms", "Delete farms"),
+
+        (ShedModule.View,   "Sheds", "View sheds and housing units"),
+        (ShedModule.Create, "Sheds", "Create new sheds"),
+        (ShedModule.Edit,   "Sheds", "Edit shed details"),
+        (ShedModule.Delete, "Sheds", "Delete sheds"),
 
         (Settings.View, "Settings", "View tenant settings"),
         (Settings.Edit, "Settings", "Edit tenant settings and branding"),

@@ -1,0 +1,128 @@
+<div class="p-6 max-w-5xl mx-auto">
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+  </div>
+
+  <div *ngIf="!isLoading && shed">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div class="flex items-center gap-4">
+        <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId]" class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+              {{ shed.shedNumber }}
+            </span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(shed.status)">
+              {{ getStatusName(shed.status) }}
+            </span>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ shed.shedName }}</h1>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shed.id, 'edit']" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
+          <i class="fas fa-edit mr-2"></i> Edit
+        </a>
+        <button (click)="deleteShed()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+          <i class="fas fa-trash-alt mr-2"></i> Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Occupancy Dashboard / Capacity Indicator -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Occupancy Dashboard</h3>
+      
+      <div class="flex flex-col md:flex-row items-center gap-8">
+        <div class="relative w-32 h-32 flex-shrink-0">
+          <svg class="w-full h-full" viewBox="0 0 36 36">
+            <path class="text-gray-200 dark:text-gray-700"
+              stroke-width="3.8" stroke="currentColor" fill="none"
+              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="text-brand-600" [ngClass]="{'text-brand-600': (shed.capacity && (shed.currentOccupancy / shed.capacity) < 0.8), 'text-yellow-500': (shed.capacity && (shed.currentOccupancy / shed.capacity) >= 0.8 && (shed.currentOccupancy / shed.capacity) < 1), 'text-red-500': (shed.capacity && (shed.currentOccupancy / shed.capacity) >= 1)}"
+              stroke-width="3.8" stroke-dasharray="100, 100" [attr.stroke-dasharray]="(shed.capacity ? Math.min((shed.currentOccupancy / shed.capacity) * 100, 100) : 0) + ', 100'" stroke="currentColor" fill="none"
+              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-xl font-bold text-gray-900 dark:text-white">{{ shed.capacity ? Math.round((shed.currentOccupancy / shed.capacity) * 100) : 0 }}%</span>
+            <span class="text-xs text-gray-500">Full</span>
+          </div>
+        </div>
+        
+        <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Current Animals</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ shed.currentOccupancy | number }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Max Capacity</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ shed.capacity ? (shed.capacity | number) : 'Unlimited' }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Available Slots</p>
+            <p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{{ shed.capacity ? (shed.capacity - shed.currentOccupancy | number) : '∞' }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Animal Type</p>
+            <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ shed.animalType || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Infrastructure -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Infrastructure Details</h3>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Construction</h4>
+            <ul class="space-y-4">
+              <li class="flex items-start">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400">
+                  <i class="fas fa-layer-group"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Floor Type</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ shed.floorType || 'Not specified' }}</p>
+                </div>
+              </li>
+              <li class="flex items-start">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400">
+                  <i class="fas fa-home"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Roof Type</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ shed.roofType || 'Not specified' }}</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Systems</h4>
+            <ul class="space-y-4">
+              <li class="flex items-center">
+                <i class="fas" [ngClass]="shed.hasVentilation ? 'fa-check-circle text-green-500' : 'fa-times-circle text-gray-300 dark:text-gray-600'"></i>
+                <span class="ml-3 text-sm font-medium" [ngClass]="shed.hasVentilation ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 line-through'">Ventilation System</span>
+              </li>
+              <li class="flex items-center">
+                <i class="fas" [ngClass]="shed.hasWaterLine ? 'fa-check-circle text-green-500' : 'fa-times-circle text-gray-300 dark:text-gray-600'"></i>
+                <span class="ml-3 text-sm font-medium" [ngClass]="shed.hasWaterLine ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 line-through'">Water Line</span>
+              </li>
+              <li class="flex items-center">
+                <i class="fas" [ngClass]="shed.hasFeedLine ? 'fa-check-circle text-green-500' : 'fa-times-circle text-gray-300 dark:text-gray-600'"></i>
+                <span class="ml-3 text-sm font-medium" [ngClass]="shed.hasFeedLine ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 line-through'">Feed Line</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

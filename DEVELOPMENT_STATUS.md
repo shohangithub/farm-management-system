@@ -14,6 +14,7 @@
 | **1.5 Organization Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (1/1) | **COMPLETED** |
 | **1.6 Branch Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
 | **1.7 Farm Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
+| **1.8 Shed Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
 | **2. Livestock Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (76/76) | **COMPLETED** |
 | **3. Health & Veterinary Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (6/6) | **COMPLETED** |
 | **4. Smart Feeding Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
@@ -55,6 +56,14 @@
 - **API Layer:** REST API endpoints under `/api/v1/branches/{branchId}/farms` and `/api/v1/farms`. Protected via `farms.read`, `farms.write`, `farms.delete` permissions.
 - **Angular UI:** Developed standalone components for Farm List, Form, Detail, and Card. Added a high-level Farm Dashboard widget. Mapped nested routes under Branches.
 - **Tests:** Added unit tests for `CreateFarmCommandHandler` which pass successfully.
+
+### 1.8 Shed Management (Completed)
+- **Domain Layer:** Added `Shed` Aggregate Root into `Farm360.Domain.Farms` context. Features parameters for Capacity, Animal Type, Construction details (Floor, Roof), Systems (Ventilation, Water, Feed), and Occupancy.
+- **Persistence Layer:** Created `ShedConfiguration` with unique index (`TenantId + FarmId + ShedNumber`). Applied EF Core migration `AddShedManagementModule`.
+- **Application Layer:** Implemented `CreateShedCommand`, `UpdateShedCommand`, `DeleteShedCommand`, `GetShedsByFarmQuery`, `GetShedByIdQuery` using MediatR and FluentValidation.
+- **API Layer:** REST API endpoints mapped under `/api/v1/farms/{farmId}/sheds` and `/api/v1/sheds`. Added `sheds.read`, `sheds.write`, `sheds.delete` permissions.
+- **Angular UI:** Created standalone components for Shed List, Form, and Detail. Built a dynamic Occupancy Dashboard with dynamic SVG capacity indicators. Configured nested routing under Farms.
+- **Tests:** Added unit tests for `CreateShedCommandHandler`.
 
 ### 2. Livestock Management Module (Completed)
 - **Domain Layer:** `Animal` Aggregate Root, `WeightRecord`, `BreedingRecord`, `AnimalPhoto` owned children; `AnimalTag` & `Weight` Value Objects; domain events & exceptions.
