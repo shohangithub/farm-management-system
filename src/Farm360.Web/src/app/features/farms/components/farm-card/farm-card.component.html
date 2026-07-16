@@ -1,0 +1,59 @@
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow group">
+  <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-start bg-gray-50/50 dark:bg-gray-800/50">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
+          {{ farm.farmCode }}
+        </span>
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(farm.status)">
+          {{ getStatusName(farm.status) }}
+        </span>
+      </div>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+        <a [routerLink]="['/organizations/branches', branchId, 'farms', farm.id]">{{ farm.farmName }}</a>
+      </h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ getFarmTypeName(farm.type) }} Farm</p>
+    </div>
+    
+    <div class="dropdown">
+      <button class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <i class="fas fa-ellipsis-v fa-fw"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="p-5">
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Animals</p>
+        <p class="text-xl font-bold text-gray-900 dark:text-white">
+          {{ farm.currentAnimalCount | number }}
+        </p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Capacity</p>
+        <p class="text-xl font-bold text-gray-900 dark:text-white">
+          {{ farm.capacity ? (farm.capacity | number) : 'N/A' }}
+        </p>
+      </div>
+    </div>
+    
+    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+      <div class="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
+        <div class="bg-brand-600 h-1.5 rounded-full" [style.width]="(farm.capacity ? (farm.currentAnimalCount / farm.capacity) * 100 : 0) + '%'"></div>
+      </div>
+      <span class="text-xs font-medium text-gray-500 dark:text-gray-400 ml-3 whitespace-nowrap">
+        {{ farm.capacity ? ((farm.currentAnimalCount / farm.capacity) * 100 | number:'1.0-0') : 0 }}% Full
+      </span>
+    </div>
+  </div>
+  
+  <div class="px-5 py-3 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+    <a [routerLink]="['/organizations/branches', branchId, 'farms', farm.id]" class="flex-1 text-center py-2 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/40 rounded-lg transition-colors">
+      View Details
+    </a>
+    <a [routerLink]="['/organizations/branches', branchId, 'farms', farm.id, 'edit']" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors">
+      <i class="fas fa-edit"></i>
+    </a>
+  </div>
+</div>

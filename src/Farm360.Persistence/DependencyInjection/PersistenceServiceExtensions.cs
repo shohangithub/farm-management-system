@@ -10,6 +10,8 @@ using Farm360.Persistence.Repositories.Health;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using Farm360.Domain.Organizations.Repositories;
 using Farm360.Persistence.Repositories.Organizations;
+using Farm360.Domain.Farms.Repositories;
+using Farm360.Persistence.Repositories.Farms;
 using Farm360.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -58,8 +60,10 @@ public static class PersistenceServiceExtensions
         services.AddScoped<IMedicalTreatmentRepository, MedicalTreatmentRepository>();
         services.AddScoped<IDiseaseIncidentRepository, DiseaseIncidentRepository>();
 
-        // ── Organization repositories ───────────────────────────────────────────
+        // ── Farm repositories ───────────────────────────────────────────
+        services.AddScoped<IFarmRepository, FarmRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+        services.AddScoped<IBranchRepository, BranchRepository>();
 
         // ── Data Seeder (transient — runs once at startup) ────────────────────
         services.AddTransient<DataSeeder>();

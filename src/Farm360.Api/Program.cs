@@ -1,3 +1,4 @@
+using Farm360.Api.Endpoints.Farms;
 using Farm360.Api.Endpoints.Health;
 using Farm360.Api.Endpoints.Livestock;
 using Farm360.Api.Endpoints.Organizations;
@@ -185,6 +186,8 @@ try
 
     // ── Organization module ─────────────────────────────────────────────────
     app.MapOrganizationEndpoints();
+    app.MapBranchEndpoints();
+    app.MapFarmEndpoints();
 
     // app.MapGroup("/api/v1/feeding").MapFeedingEndpoints();
     // app.MapGroup("/api/v1/finance").MapFinanceEndpoints();

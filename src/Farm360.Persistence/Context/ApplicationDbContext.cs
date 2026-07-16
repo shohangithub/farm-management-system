@@ -5,6 +5,7 @@ using Farm360.Domain.Livestock;
 using Farm360.Domain.Health;
 using Farm360.Domain.Tenancy;
 using Farm360.Domain.Organizations;
+using Farm360.Domain.Farms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Linq.Expressions;
@@ -58,6 +59,9 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
+
+    // ── Farms Module ──────────────────────────────────────────────────────────
+    public DbSet<Farm> Farms => Set<Farm>();
 
     // ── Identity / Authorization DbSets ──────────────────────────────────────
     public DbSet<Permission> Permissions => Set<Permission>();

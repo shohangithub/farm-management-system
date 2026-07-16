@@ -1,0 +1,30 @@
+<div class="p-6 max-w-7xl mx-auto">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Farms</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">Manage farms and their operational data.</p>
+    </div>
+    <a [routerLink]="['/organizations/branches', branchId, 'farms', 'new']" class="btn-primary">
+      <i class="fas fa-plus mr-2"></i> Add Farm
+    </a>
+  </div>
+
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+  </div>
+
+  <div *ngIf="!isLoading && farms.length === 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-12 text-center">
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 mb-4">
+      <i class="fas fa-tractor text-2xl"></i>
+    </div>
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">No farms found</h3>
+    <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">You haven't added any farms to this branch yet. Create your first farm to start managing your agricultural operations.</p>
+    <a [routerLink]="['/organizations/branches', branchId, 'farms', 'new']" class="btn-primary inline-flex">
+      <i class="fas fa-plus mr-2"></i> Add Your First Farm
+    </a>
+  </div>
+
+  <div *ngIf="!isLoading && farms.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <app-farm-card *ngFor="let farm of farms" [farm]="farm" [branchId]="branchId"></app-farm-card>
+  </div>
+</div>

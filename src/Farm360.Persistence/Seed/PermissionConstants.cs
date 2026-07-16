@@ -82,6 +82,15 @@ public static class PermissionConstants
         public const string Delete = "organizations.delete";
     }
 
+    // ── Farms ────────────────────────────────────────────────────────────────
+    public static class FarmModule
+    {
+        public const string View   = "farms.view";
+        public const string Create = "farms.create";
+        public const string Edit   = "farms.edit";
+        public const string Delete = "farms.delete";
+    }
+
     // ── Settings ─────────────────────────────────────────────────────────────
     public static class Settings
     {
@@ -147,6 +156,11 @@ public static class PermissionConstants
         (OrganizationModule.Create, "Organizations", "Create organizations and branches"),
         (OrganizationModule.Edit,   "Organizations", "Edit organization details"),
         (OrganizationModule.Delete, "Organizations", "Delete organizations"),
+
+        (FarmModule.View,   "Farms", "View farms and locations"),
+        (FarmModule.Create, "Farms", "Create new farms"),
+        (FarmModule.Edit,   "Farms", "Edit farm details"),
+        (FarmModule.Delete, "Farms", "Delete farms"),
 
         (Settings.View, "Settings", "View tenant settings"),
         (Settings.Edit, "Settings", "Edit tenant settings and branding"),

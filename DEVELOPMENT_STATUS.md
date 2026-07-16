@@ -12,6 +12,8 @@
 |---|---|---|---|---|---|---|---|
 | **1. Identity & Multi-Tenant Core** | ✅ | ✅ | ✅ | ✅ | N/A | ✅ (37/37) | **COMPLETED** |
 | **1.5 Organization Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (1/1) | **COMPLETED** |
+| **1.6 Branch Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
+| **1.7 Farm Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
 | **2. Livestock Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (76/76) | **COMPLETED** |
 | **3. Health & Veterinary Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (6/6) | **COMPLETED** |
 | **4. Smart Feeding Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
@@ -37,6 +39,22 @@
 - **API Layer:** REST API endpoints via `OrganizationEndpoints.cs` mapped to `/api/v1/organizations` with role-based access control.
 - **Angular UI:** Standalone components for listing and form creation/editing. Service layer for HTTP interactions. Styled with existing Tailwind CSS definitions.
 - **Tests:** Command handlers unit tested using Moq and xUnit.
+
+### 1.6 Branch Management (Completed)
+- **Domain Layer:** Moved `Branch` into `Farm360.Domain.Organizations`. Added Branch Code, Contacts, Address, Coordinates, Business Hours, and Holiday Calendar properties.
+- **Persistence Layer:** `BranchConfiguration` updated. `BranchRepository` implemented. EF Core Migration `AddBranchManagementFeatures` applied.
+- **Application Layer:** `CreateBranchCommand`, `UpdateBranchCommand`, `DeleteBranchCommand`, `GetBranchesByOrganizationQuery`, `GetBranchByIdQuery` implemented and validated.
+- **API Layer:** REST API endpoints mapped under `/api/v1/organizations/{orgId}/branches` and `/api/v1/branches`.
+- **Angular UI:** Standalone components (List, Form, Details). Dashboard Widget created. Routing configured as children of organization routes.
+- **Tests:** `CreateBranchCommandHandler` unit tests added.
+
+### 1.7 Farm Management (Completed)
+- **Domain Layer:** Created new bounded context `Farm360.Domain.Farms`. Added `Farm` Aggregate Root with properties for Farm Code, Name, Type, Dimensions (Size, LandArea), Geographic Location (Lat/Long, GeoJSON Map Polygon), Capacity, Animal Count, Owner, Manager, Status, and Description.
+- **Persistence Layer:** Created `FarmConfiguration` and `FarmRepository`. Applied EF Core migration `AddFarmManagementModule`.
+- **Application Layer:** Implemented `CreateFarmCommand`, `UpdateFarmCommand`, `DeleteFarmCommand`, `GetFarmsByBranchQuery`, `GetFarmByIdQuery` using MediatR and FluentValidation.
+- **API Layer:** REST API endpoints under `/api/v1/branches/{branchId}/farms` and `/api/v1/farms`. Protected via `farms.read`, `farms.write`, `farms.delete` permissions.
+- **Angular UI:** Developed standalone components for Farm List, Form, Detail, and Card. Added a high-level Farm Dashboard widget. Mapped nested routes under Branches.
+- **Tests:** Added unit tests for `CreateFarmCommandHandler` which pass successfully.
 
 ### 2. Livestock Management Module (Completed)
 - **Domain Layer:** `Animal` Aggregate Root, `WeightRecord`, `BreedingRecord`, `AnimalPhoto` owned children; `AnimalTag` & `Weight` Value Objects; domain events & exceptions.

@@ -1,0 +1,92 @@
+<div class="page-header mb-6">
+  <div class="flex items-center">
+    <button [routerLink]="['/organizations', orgId(), 'branches']" class="mr-4 text-gray-400 hover:text-gray-500">
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Branch Details</h1>
+      <p class="text-sm text-gray-500">View detailed information about this branch.</p>
+    </div>
+  </div>
+  <div *ngIf="branch()">
+    <a [routerLink]="['/organizations', orgId(), 'branches', 'edit', branch()?.id]" class="btn btn-outline mr-2">Edit</a>
+  </div>
+</div>
+
+<div *ngIf="error()" class="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md mb-6">
+  {{ error() }}
+</div>
+
+<div *ngIf="isLoading()" class="flex justify-center py-12">
+  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+</div>
+
+<div *ngIf="!isLoading() && branch()" class="bg-white shadow overflow-hidden sm:rounded-lg">
+  <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+    <div>
+      <h3 class="text-lg leading-6 font-medium text-gray-900">
+        {{ branch()?.name }}
+        <span *ngIf="branch()?.isHeadOffice" class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Head Office</span>
+      </h3>
+      <p class="mt-1 max-w-2xl text-sm text-gray-500">
+        Code: {{ branch()?.branchCode }}
+      </p>
+    </div>
+    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+          [ngClass]="{
+            'bg-green-100 text-green-800': branch()?.status === 1,
+            'bg-gray-100 text-gray-800': branch()?.status === 2,
+            'bg-red-100 text-red-800': branch()?.status === 3
+          }">
+      {{ branch()?.status === 1 ? 'Active' : (branch()?.status === 2 ? 'Inactive' : 'Closed') }}
+    </span>
+  </div>
+  <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+    <dl class="sm:divide-y sm:divide-gray-200">
+      
+      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Contact Email</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.contactEmail }}</dd>
+      </div>
+
+      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Contact Phone</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.contactPhone || '-' }}</dd>
+      </div>
+
+      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Address</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+          {{ branch()?.address?.street }}<br *ngIf="branch()?.address?.street">
+          {{ branch()?.address?.city }}<ng-container *ngIf="branch()?.address?.city && branch()?.address?.state">, </ng-container>
+          {{ branch()?.address?.state }} {{ branch()?.address?.zipCode }}<br *ngIf="branch()?.address?.city || branch()?.address?.state || branch()?.address?.zipCode">
+          {{ branch()?.address?.country }}
+          <span *ngIf="!branch()?.address?.street && !branch()?.address?.city">-</span>
+        </dd>
+      </div>
+      
+      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">GPS Coordinates</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+          <span *ngIf="branch()?.latitude || branch()?.longitude">
+            {{ branch()?.latitude }}, {{ branch()?.longitude }}
+          </span>
+          <span *ngIf="!branch()?.latitude && !branch()?.longitude">-</span>
+        </dd>
+      </div>
+
+      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Working Hours</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.workingHours || '-' }}</dd>
+      </div>
+
+      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Holiday Calendar</dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.holidayCalendar || '-' }}</dd>
+      </div>
+      
+    </dl>
+  </div>
+</div>

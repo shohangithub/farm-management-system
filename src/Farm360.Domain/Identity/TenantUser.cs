@@ -1,5 +1,6 @@
 using Farm360.Domain.Common;
 using Farm360.Domain.Tenancy;
+using Farm360.Domain.Organizations;
 
 namespace Farm360.Domain.Identity;
 

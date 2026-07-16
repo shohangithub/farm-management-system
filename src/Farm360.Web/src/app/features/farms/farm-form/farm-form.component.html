@@ -1,0 +1,93 @@
+<div class="p-6 max-w-4xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditMode ? 'Edit Farm' : 'Register New Farm' }}</h1>
+    <p class="text-gray-500 dark:text-gray-400 mt-1">
+      {{ isEditMode ? 'Update farm operational details.' : 'Add a new farm location under this branch.' }}
+    </p>
+  </div>
+
+  <form [formGroup]="farmForm" (ngSubmit)="onSubmit()" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-6">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Farm Code *</label>
+        <input type="text" formControlName="farmCode" class="form-input" placeholder="e.g. F-101">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Farm Name *</label>
+        <input type="text" formControlName="farmName" class="form-input" placeholder="e.g. Sunny Dairy Farm">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Farm Type *</label>
+        <select formControlName="type" class="form-input">
+          <option [value]="1">Dairy</option>
+          <option [value]="2">Poultry</option>
+          <option [value]="3">Mixed</option>
+          <option [value]="4">Crop</option>
+          <option [value]="5">Aquaculture</option>
+        </select>
+      </div>
+      <div *ngIf="isEditMode">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+        <select formControlName="status" class="form-input">
+          <option [value]="1">Active</option>
+          <option [value]="2">Inactive</option>
+          <option [value]="3">Under Maintenance</option>
+          <option [value]="4">Closed</option>
+        </select>
+      </div>
+    </div>
+
+    <hr class="border-gray-200 dark:border-gray-700">
+
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Location & Size</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Farm Size (Acres)</label>
+        <input type="number" formControlName="farmSize" class="form-input">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Land Area</label>
+        <input type="number" formControlName="landArea" class="form-input">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label>
+        <input type="number" step="any" formControlName="latitude" class="form-input" placeholder="e.g. 23.8103">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label>
+        <input type="number" step="any" formControlName="longitude" class="form-input" placeholder="e.g. 90.4125">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Map Polygon (GeoJSON)</label>
+      <textarea formControlName="mapPolygon" rows="3" class="form-input" placeholder='{"type": "Polygon", "coordinates": [...]}'></textarea>
+    </div>
+
+    <hr class="border-gray-200 dark:border-gray-700">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Capacity & Details</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Capacity (Animals)</label>
+        <input type="number" formControlName="capacity" class="form-input">
+      </div>
+    </div>
+    
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+      <textarea formControlName="description" rows="3" class="form-input" placeholder="Farm details..."></textarea>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+      <a [routerLink]="['/organizations/branches', branchId, 'farms']" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
+        Cancel
+      </a>
+      <button type="submit" [disabled]="farmForm.invalid || isSaving" class="btn-primary">
+        <span *ngIf="isSaving"><i class="fas fa-spinner fa-spin mr-2"></i> Saving...</span>
+        <span *ngIf="!isSaving">{{ isEditMode ? 'Update Farm' : 'Create Farm' }}</span>
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,104 @@
+<div class="p-6 max-w-5xl mx-auto">
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+  </div>
+
+  <div *ngIf="!isLoading && farm">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div class="flex items-center gap-4">
+        <a [routerLink]="['/organizations/branches', branchId, 'farms']" class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
+              {{ farm.farmCode }}
+            </span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(farm.status)">
+              {{ getStatusName(farm.status) }}
+            </span>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ farm.farmName }}</h1>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <a [routerLink]="['/organizations/branches', branchId, 'farms', farm.id, 'edit']" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
+          <i class="fas fa-edit mr-2"></i> Edit Farm
+        </a>
+        <button (click)="deleteFarm()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+          <i class="fas fa-trash-alt mr-2"></i> Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Type</p>
+        <p class="text-lg font-bold text-gray-900 dark:text-white mt-1">{{ getFarmTypeName(farm.type) }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Animals</p>
+        <p class="text-lg font-bold text-gray-900 dark:text-white mt-1">{{ farm.currentAnimalCount | number }} / {{ farm.capacity || 'Unlimited' }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Size</p>
+        <p class="text-lg font-bold text-gray-900 dark:text-white mt-1">{{ farm.farmSize || 0 }} acres</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Land Area</p>
+        <p class="text-lg font-bold text-gray-900 dark:text-white mt-1">{{ farm.landArea || 0 }} sq m</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Details Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Farm Details</h3>
+          </div>
+          <div class="p-6">
+            <div class="prose dark:prose-invert max-w-none">
+              <p *ngIf="farm.description" class="whitespace-pre-line">{{ farm.description }}</p>
+              <p *ngIf="!farm.description" class="text-gray-500 italic">No description provided.</p>
+            </div>
+            
+            <div class="mt-6 grid grid-cols-2 gap-y-4 text-sm">
+              <div>
+                <span class="text-gray-500 block mb-1">Owner ID</span>
+                <span class="font-medium text-gray-900 dark:text-white">{{ farm.ownerId || 'Not Assigned' }}</span>
+              </div>
+              <div>
+                <span class="text-gray-500 block mb-1">Manager ID</span>
+                <span class="font-medium text-gray-900 dark:text-white">{{ farm.managerId || 'Not Assigned' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="space-y-6">
+        <!-- Map Card placeholder -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Location</h3>
+          </div>
+          <div class="p-0">
+            <div class="bg-gray-100 dark:bg-gray-900 h-48 w-full flex items-center justify-center">
+              <div class="text-center">
+                <i class="fas fa-map-marked-alt text-4xl text-gray-300 dark:text-gray-700 mb-2"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Map Integration Ready</p>
+                <p *ngIf="farm.latitude && farm.longitude" class="text-xs text-gray-400 mt-1">
+                  {{ farm.latitude }}, {{ farm.longitude }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
