@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { FarmService } from '../../services/farm.service';
-import { FarmList } from '../../models/farm.model';
-import { FarmCardComponent } from '../../components/farm-card/farm-card.component';
+import { FarmService } from '../services/farm.service';
+import { FarmList } from '../models/farm.model';
+import { FarmCardComponent } from '../components/farm-card/farm-card.component';
 
 @Component({
   selector: 'app-farm-list',

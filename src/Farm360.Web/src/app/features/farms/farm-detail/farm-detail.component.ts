@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { FarmService } from '../../services/farm.service';
-import { Farm } from '../../models/farm.model';
+import { FarmService } from '../services/farm.service';
+import { Farm } from '../models/farm.model';
 
 @Component({
   selector: 'app-farm-detail',

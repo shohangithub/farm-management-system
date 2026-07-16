@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { ShedService } from '../../services/shed.service';
-import { ShedList } from '../../models/shed.model';
+import { ShedService } from '../services/shed.service';
+import { ShedList } from '../models/shed.model';
 
 @Component({
   selector: 'app-shed-list',

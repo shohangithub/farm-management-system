@@ -1,16 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { Farm, FarmList, CreateFarmCommand, UpdateFarmCommand } from '../models/farm.model';
-
 @Injectable({
   providedIn: 'root'
 })
 export class FarmService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/v1/farms`;
-  private branchApiUrl = `${environment.apiUrl}/v1/branches`;
+  private apiUrl = '/api/v1/farms';
+  private branchApiUrl = '/api/v1/branches';
 
   getFarmsByBranch(branchId: string): Observable<FarmList[]> {
     return this.http.get<FarmList[]>(`${this.branchApiUrl}/${branchId}/farms`);

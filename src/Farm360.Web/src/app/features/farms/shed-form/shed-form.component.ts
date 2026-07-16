@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { ShedService } from '../../services/shed.service';
+import { ShedService } from '../services/shed.service';
 
 @Component({
   selector: 'app-shed-form',

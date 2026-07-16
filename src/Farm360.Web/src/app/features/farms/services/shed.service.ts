@@ -1,16 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { Shed, ShedList, CreateShedCommand, UpdateShedCommand } from '../models/shed.model';
-
 @Injectable({
   providedIn: 'root'
 })
 export class ShedService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/v1/sheds`;
-  private farmApiUrl = `${environment.apiUrl}/v1/farms`;
+  private apiUrl = '/api/v1/sheds';
+  private farmApiUrl = '/api/v1/farms';
 
   getShedsByFarm(farmId: string): Observable<ShedList[]> {
     return this.http.get<ShedList[]>(`${this.farmApiUrl}/${farmId}/sheds`);
