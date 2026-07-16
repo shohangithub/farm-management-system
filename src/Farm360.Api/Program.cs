@@ -189,6 +189,7 @@ try
     app.MapBranchEndpoints();
     app.MapFarmEndpoints();
     app.MapShedEndpoints();
+    app.MapPenEndpoints();
 
     // app.MapGroup("/api/v1/feeding").MapFeedingEndpoints();
     // app.MapGroup("/api/v1/finance").MapFinanceEndpoints();

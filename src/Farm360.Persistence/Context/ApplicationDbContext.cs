@@ -63,6 +63,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     // ── Farms Module ──────────────────────────────────────────────────────────
     public DbSet<Farm> Farms => Set<Farm>();
     public DbSet<Shed> Sheds => Set<Shed>();
+    public DbSet<Pen> Pens => Set<Pen>();
 
     // ── Identity / Authorization DbSets ──────────────────────────────────────
     public DbSet<Permission> Permissions => Set<Permission>();

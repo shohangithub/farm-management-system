@@ -17,5 +17,9 @@ export const ORGANIZATION_ROUTES: Routes = [
   { path: 'branches/:branchId/farms/:farmId/sheds', loadComponent: () => import('../farms/shed-list/shed-list.component').then(c => c.ShedListComponent) },
   { path: 'branches/:branchId/farms/:farmId/sheds/new', loadComponent: () => import('../farms/shed-form/shed-form.component').then(c => c.ShedFormComponent) },
   { path: 'branches/:branchId/farms/:farmId/sheds/:shedId/edit', loadComponent: () => import('../farms/shed-form/shed-form.component').then(c => c.ShedFormComponent) },
-  { path: 'branches/:branchId/farms/:farmId/sheds/:shedId', loadComponent: () => import('../farms/shed-detail/shed-detail.component').then(c => c.ShedDetailComponent) }
+  { path: 'branches/:branchId/farms/:farmId/sheds/:shedId', loadComponent: () => import('../farms/shed-detail/shed-detail.component').then(c => c.ShedDetailComponent) },
+  { path: 'branches/:branchId/farms/:farmId/sheds/:shedId/pens', loadComponent: () => import('../farms/pen-list/pen-list.component').then(c => c.PenListComponent) },
+  { path: 'branches/:branchId/farms/:farmId/sheds/:shedId/pens/new', loadComponent: () => import('../farms/pen-form/pen-form.component').then(c => c.PenFormComponent) },
+  { path: 'branches/:branchId/farms/:farmId/sheds/:shedId/pens/:penId/edit', loadComponent: () => import('../farms/pen-form/pen-form.component').then(c => c.PenFormComponent) },
+  { path: 'branches/:branchId/farms/:farmId/sheds/:shedId/pens/:penId', loadComponent: () => import('../farms/pen-detail/pen-detail.component').then(c => c.PenDetailComponent) }
 ];

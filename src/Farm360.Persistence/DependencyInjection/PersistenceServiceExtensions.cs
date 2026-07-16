@@ -63,6 +63,7 @@ public static class PersistenceServiceExtensions
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();
         services.AddScoped<IShedRepository, ShedRepository>();
+        services.AddScoped<IPenRepository, PenRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
 

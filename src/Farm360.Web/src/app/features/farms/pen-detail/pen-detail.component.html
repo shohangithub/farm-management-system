@@ -1,0 +1,110 @@
+<div class="p-6 max-w-5xl mx-auto">
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+  </div>
+
+  <div *ngIf="!isLoading && pen">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div class="flex items-center gap-4">
+        <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId]" class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+              {{ pen.penNumber }}
+            </span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(pen.status)">
+              {{ getStatusName(pen.status) }}
+            </span>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ pen.penName }}</h1>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId, 'pens', pen.id, 'edit']" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
+          <i class="fas fa-edit mr-2"></i> Edit
+        </a>
+        <button (click)="deletePen()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+          <i class="fas fa-trash-alt mr-2"></i> Delete
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Occupancy Status -->
+      <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6">Occupancy Status</h3>
+        
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <!-- SVG Arc Indicator -->
+          <div class="relative w-40 h-40 flex-shrink-0">
+            <svg class="w-full h-full" viewBox="0 0 36 36">
+              <path class="text-gray-100 dark:text-gray-700"
+                stroke-width="3" stroke="currentColor" fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="text-brand-600" [ngClass]="{'text-brand-600': ((pen.currentOccupancy / pen.capacity) < 0.8), 'text-yellow-500': ((pen.currentOccupancy / pen.capacity) >= 0.8 && (pen.currentOccupancy / pen.capacity) < 1), 'text-red-500': ((pen.currentOccupancy / pen.capacity) >= 1)}"
+                stroke-width="3" stroke-dasharray="100, 100" [attr.stroke-dasharray]="Math.min((pen.currentOccupancy / pen.capacity) * 100, 100) + ', 100'" stroke="currentColor" fill="none" stroke-linecap="round"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-3xl font-bold text-gray-900 dark:text-white">{{ Math.round((pen.currentOccupancy / pen.capacity) * 100) }}%</span>
+              <span class="text-xs font-medium text-gray-500 uppercase tracking-widest mt-1">Full</span>
+            </div>
+          </div>
+          
+          <div class="flex-1 grid grid-cols-2 gap-6 w-full">
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+              <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Current Animals</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ pen.currentOccupancy | number }}</p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+              <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Max Capacity</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ pen.capacity | number }}</p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800 col-span-2 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Available Slots</p>
+                <p class="text-2xl font-bold mt-1" [ngClass]="{'text-green-600': pen.capacity - pen.currentOccupancy > 0, 'text-red-500': pen.capacity - pen.currentOccupancy <= 0}">
+                  {{ pen.capacity - pen.currentOccupancy | number }}
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-full flex items-center justify-center" [ngClass]="{'bg-green-100 text-green-600': pen.capacity - pen.currentOccupancy > 0, 'bg-red-100 text-red-500': pen.capacity - pen.currentOccupancy <= 0}">
+                <i class="fas fa-check" *ngIf="pen.capacity - pen.currentOccupancy > 0"></i>
+                <i class="fas fa-times" *ngIf="pen.capacity - pen.currentOccupancy <= 0"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pen Information -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6">Pen Details</h3>
+        
+        <div class="space-y-6 flex-1">
+          <div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Animal Group</p>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 mr-3">
+                <i class="fas fa-tags"></i>
+              </div>
+              <p class="text-base font-semibold text-gray-900 dark:text-white">{{ pen.animalGroup || 'No group assigned' }}</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Notes</p>
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800 h-32 overflow-y-auto">
+              <p class="text-sm text-gray-700 dark:text-gray-300 italic" *ngIf="pen.notes">{{ pen.notes }}</p>
+              <p class="text-sm text-gray-400 italic" *ngIf="!pen.notes">No notes provided for this pen.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>

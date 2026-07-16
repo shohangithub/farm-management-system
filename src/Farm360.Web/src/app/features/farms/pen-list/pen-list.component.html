@@ -1,0 +1,79 @@
+<div class="mb-6">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900 dark:text-white">Pens</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage pens and sub-divisions within this shed.</p>
+    </div>
+    <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId, 'pens', 'new']" class="btn-primary">
+      <i class="fas fa-plus mr-2"></i> Add Pen
+    </a>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="flex justify-center items-center h-48">
+  <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600"></div>
+</div>
+
+<div *ngIf="!isLoading && pens.length === 0" class="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center">
+  <i class="fas fa-th-large text-4xl text-gray-400 dark:text-gray-600 mb-3"></i>
+  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">No pens found</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">You haven't added any pens to this shed yet.</p>
+  <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId, 'pens', 'new']" class="btn-primary inline-flex text-sm">
+    <i class="fas fa-plus mr-2"></i> Add Pen
+  </a>
+</div>
+
+<!-- Drag and Drop Ready Board -->
+<div *ngIf="!isLoading && pens.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" cdkDropListGroup>
+  <div *ngFor="let pen of pens" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow flex flex-col group">
+    
+    <!-- Header -->
+    <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-start bg-gray-50/50 dark:bg-gray-800/50">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+            {{ pen.penNumber }}
+          </span>
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(pen.status)">
+            {{ getStatusName(pen.status) }}
+          </span>
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+          <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId, 'pens', pen.id]">{{ pen.penName }}</a>
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"><i class="fas fa-tags mr-1"></i> {{ pen.animalGroup || 'No Group' }}</p>
+      </div>
+    </div>
+    
+    <!-- Drag & Drop Dropzone for Animals -->
+    <div class="p-4 flex-1 flex flex-col" cdkDropList [cdkDropListData]="pens" (cdkDropListDropped)="drop($event)">
+      <div class="flex-1 min-h-[4rem] border-2 border-dashed border-transparent hover:border-brand-300 dark:hover:border-brand-700 rounded-lg transition-colors flex items-center justify-center p-2 group-hover:bg-gray-50/50 dark:group-hover:bg-gray-800/50">
+        <div class="text-center w-full">
+          <div class="flex justify-between items-end mb-1">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Occupancy</span>
+            <span class="text-sm font-bold text-gray-900 dark:text-white">{{ pen.currentOccupancy | number }} <span class="text-xs font-normal text-gray-500">/ {{ pen.capacity | number }}</span></span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 overflow-hidden">
+            <div class="h-2 rounded-full transition-all duration-500" 
+                 [ngClass]="{'bg-brand-600': ((pen.currentOccupancy / pen.capacity) < 0.8), 'bg-yellow-500': ((pen.currentOccupancy / pen.capacity) >= 0.8 && (pen.currentOccupancy / pen.capacity) < 1), 'bg-red-500': ((pen.currentOccupancy / pen.capacity) >= 1)}"
+                 [style.width]="Math.min((pen.currentOccupancy / pen.capacity) * 100, 100) + '%'"></div>
+          </div>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <i class="fas fa-arrow-down mr-1"></i> Drop animals here
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer Actions -->
+    <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+      <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId, 'pens', pen.id]" class="flex-1 text-center py-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/40 rounded-lg transition-colors">
+        View
+      </a>
+      <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId, 'pens', pen.id, 'edit']" class="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors">
+        <i class="fas fa-edit"></i>
+      </a>
+    </div>
+
+  </div>
+</div>

@@ -99,6 +99,14 @@ public static class PermissionConstants
         public const string Delete = "sheds.delete";
     }
 
+    public static class PenModule
+    {
+        public const string View   = "pens.view";
+        public const string Create = "pens.create";
+        public const string Edit   = "pens.edit";
+        public const string Delete = "pens.delete";
+    }
+
     // ── Settings ─────────────────────────────────────────────────────────────
     public static class Settings
     {

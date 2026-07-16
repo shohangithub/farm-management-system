@@ -1,0 +1,56 @@
+<div class="p-6 max-w-3xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditMode ? 'Edit Pen' : 'Create New Pen' }}</h1>
+    <p class="text-gray-500 dark:text-gray-400 mt-1">
+      {{ isEditMode ? 'Update pen details.' : 'Add a new pen to the shed.' }}
+    </p>
+  </div>
+
+  <form [formGroup]="penForm" (ngSubmit)="onSubmit()" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-6">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pen Number *</label>
+        <input type="text" formControlName="penNumber" class="form-input" placeholder="e.g. P-01">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pen Name *</label>
+        <input type="text" formControlName="penName" class="form-input" placeholder="e.g. Nursery Pen A">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Capacity *</label>
+        <input type="number" formControlName="capacity" class="form-input" placeholder="Max animals in this pen">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Animal Group (Optional)</label>
+        <input type="text" formControlName="animalGroup" class="form-input" placeholder="e.g. Weaners, Sick Bay">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+      <textarea formControlName="notes" rows="3" class="form-input" placeholder="Any specific notes or maintenance remarks for this pen"></textarea>
+    </div>
+
+    <div *ngIf="isEditMode">
+      <hr class="border-gray-200 dark:border-gray-700 my-6">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+      <select formControlName="status" class="form-input w-full md:w-1/2">
+        <option [value]="1">Active</option>
+        <option [value]="2">Inactive</option>
+        <option [value]="3">Maintenance</option>
+      </select>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-6">
+      <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shedId]" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
+        Cancel
+      </a>
+      <button type="submit" [disabled]="penForm.invalid || isSaving" class="btn-primary">
+        <span *ngIf="isSaving"><i class="fas fa-spinner fa-spin mr-2"></i> Saving...</span>
+        <span *ngIf="!isSaving">{{ isEditMode ? 'Update Pen' : 'Create Pen' }}</span>
+      </button>
+    </div>
+  </form>
+</div>
