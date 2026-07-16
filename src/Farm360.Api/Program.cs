@@ -1,6 +1,7 @@
 using Farm360.Api.Endpoints.Farms;
 using Farm360.Api.Endpoints.Health;
 using Farm360.Api.Endpoints.Livestock;
+using Farm360.Api.Endpoints.MasterData;
 using Farm360.Api.Endpoints.Organizations;
 using Farm360.Api.Middleware;
 using Farm360.Application.DependencyInjection;
@@ -190,6 +191,8 @@ try
     app.MapFarmEndpoints();
     app.MapShedEndpoints();
     app.MapPenEndpoints();
+    app.MapMasterDataEndpoints();
+    app.MapLocationEndpoints();
 
     // app.MapGroup("/api/v1/feeding").MapFeedingEndpoints();
     // app.MapGroup("/api/v1/finance").MapFinanceEndpoints();

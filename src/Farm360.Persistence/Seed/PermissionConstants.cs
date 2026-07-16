@@ -107,6 +107,12 @@ public static class PermissionConstants
         public const string Delete = "pens.delete";
     }
 
+    public static class MasterDataModule
+    {
+        public const string View   = "masterdata.view";
+        public const string Manage = "masterdata.manage";
+    }
+
     // ── Settings ─────────────────────────────────────────────────────────────
     public static class Settings
     {

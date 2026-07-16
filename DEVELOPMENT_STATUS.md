@@ -11,6 +11,7 @@
 | Module / Component | Domain | Persistence | CQRS Application | API Layer | Angular UI | Unit & Integration Tests | Status |
 |---|---|---|---|---|---|---|---|
 | **1. Identity & Multi-Tenant Core** | ✅ | ✅ | ✅ | ✅ | N/A | ✅ (37/37) | **COMPLETED** |
+| **1.1 Master Data Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (0/0) | **COMPLETED** |
 | **1.5 Organization Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (1/1) | **COMPLETED** |
 | **1.6 Branch Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
 | **1.7 Farm Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
@@ -33,6 +34,13 @@
 - **Authorization:** Declarative permission handler (`[RequirePermission]`), dynamic policy provider, dynamic tenant EF Core query filter.
 - **Seed Data:** 42 permissions across 5 system roles (`PlatformAdmin`, `TenantOwner`, `FarmManager`, `Veterinarian`, `Worker`, `Accountant`).
 - **Tests:** 37 passing tests across Tenant and Permission suites.
+
+### 1.1 Master Data Module (Completed)
+- **Domain Layer:** Generic `MasterDataEntry` Aggregate Root with 14 Types (Breed, Animal Type, etc.) and Explicit Hierarchical Locations (Country -> Division -> District -> Upazila -> Union -> Village).
+- **Persistence Layer:** Configurations and Repositories (`MasterDataRepository`, `LocationRepository`). EF Migration `AddMasterDataModule`.
+- **Application Layer:** Reusable Generic CQRS Commands (Create/Update/Delete) and Queries.
+- **API Layer:** MasterData and Location REST endpoints.
+- **Angular UI:** `MasterDataService` and `LocationService` with `BehaviorSubject` caching. Standalone UI components `<app-master-data-dropdown>` and `<app-location-selector>`. Master Data Management Settings Page.
 
 ### 1.5 Organization Management (Completed)
 - **Domain Layer:** Refactored `Organization` entity into its own bounded context (`Farm360.Domain.Organizations`). Added properties for business information, logo, contact, BIN, tax info, currency, timezone, language, address, and business type.

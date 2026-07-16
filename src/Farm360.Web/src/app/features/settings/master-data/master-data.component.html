@@ -1,0 +1,134 @@
+<div class="h-full flex flex-col md:flex-row gap-6 p-6">
+  <!-- Sidebar -->
+  <div class="w-full md:w-64 flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+      <h2 class="font-semibold text-gray-900 dark:text-white">Master Data</h2>
+    </div>
+    <div class="p-2 h-[calc(100vh-16rem)] overflow-y-auto">
+      <ul class="space-y-1">
+        <li *ngFor="let type of types">
+          <button 
+            (click)="selectType(type.id)"
+            [class]="type.id === selectedType 
+              ? 'w-full text-left px-4 py-2 rounded-lg bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium'
+              : 'w-full text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+            {{ type.name }}
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    
+    <!-- Header -->
+    <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 z-10">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          {{ types[selectedType - 1]?.name }} Management
+        </h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Manage references and properties for {{ types[selectedType - 1]?.name | lowercase }}.
+        </p>
+      </div>
+      <button (click)="openCreateModal()" class="btn bg-green-600 hover:bg-green-700 text-white border-0 shadow-sm rounded-lg px-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Add New
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="flex-1 overflow-auto p-6 relative">
+      <div *ngIf="isLoading" class="absolute inset-0 bg-white/50 dark:bg-gray-800/50 flex items-center justify-center z-10">
+        <span class="loading loading-spinner loading-lg text-green-600"></span>
+      </div>
+
+      <table class="table w-full">
+        <thead>
+          <tr class="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <th>Code</th>
+            <th>Name</th>
+            <th>Order</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of entries" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-100 dark:border-gray-800">
+            <td class="font-mono text-sm text-gray-600 dark:text-gray-400">{{ entry.code }}</td>
+            <td class="font-medium text-gray-900 dark:text-white">{{ entry.name }}</td>
+            <td class="text-gray-500">{{ entry.displayOrder }}</td>
+            <td>
+              <span [class]="entry.isActive 
+                ? 'px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                : 'px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'">
+                {{ entry.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="text-right">
+              <button (click)="openEditModal(entry)" class="btn btn-ghost btn-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 mr-2">Edit</button>
+              <button (click)="deleteEntry(entry)" class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+            </td>
+          </tr>
+          <tr *ngIf="entries.length === 0 && !isLoading">
+            <td colspan="5" class="text-center py-12 text-gray-500 dark:text-gray-400">
+              No entries found. Click 'Add New' to create one.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<dialog class="modal modal-bottom sm:modal-middle" [class.modal-open]="isModalOpen">
+  <div class="modal-box bg-white dark:bg-gray-800 max-w-md">
+    <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">
+      {{ editingId ? 'Edit' : 'Create' }} Entry
+    </h3>
+    
+    <div class="space-y-4">
+      <div class="form-control">
+        <label class="label"><span class="label-text">Name</span></label>
+        <input type="text" [(ngModel)]="formData.name" class="input input-bordered w-full bg-gray-50 dark:bg-gray-900" placeholder="e.g. Holstein" />
+      </div>
+      
+      <div class="form-control" *ngIf="!editingId">
+        <label class="label"><span class="label-text">Code</span></label>
+        <input type="text" [(ngModel)]="formData.code" class="input input-bordered w-full bg-gray-50 dark:bg-gray-900 uppercase" placeholder="e.g. HOL" />
+      </div>
+
+      <div class="form-control">
+        <label class="label"><span class="label-text">Description</span></label>
+        <textarea [(ngModel)]="formData.description" class="textarea textarea-bordered w-full bg-gray-50 dark:bg-gray-900"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-control">
+          <label class="label"><span class="label-text">Display Order</span></label>
+          <input type="number" [(ngModel)]="formData.displayOrder" class="input input-bordered w-full bg-gray-50 dark:bg-gray-900" />
+        </div>
+        <div class="form-control" *ngIf="editingId">
+          <label class="label cursor-pointer justify-start gap-3 mt-8">
+            <input type="checkbox" [(ngModel)]="formData.isActive" class="toggle toggle-success" />
+            <span class="label-text">Active</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-action mt-6">
+      <button class="btn border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" (click)="closeModal()">Cancel</button>
+      <button class="btn bg-green-600 hover:bg-green-700 text-white border-0" (click)="saveEntry()" [disabled]="!formData.name || (!editingId && !formData.code)">
+        Save
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop" (click)="closeModal()">
+    <button>close</button>
+  </form>
+</dialog>

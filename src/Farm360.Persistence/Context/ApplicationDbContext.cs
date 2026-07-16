@@ -3,6 +3,8 @@ using Farm360.Domain.Common;
 using Farm360.Domain.Identity;
 using Farm360.Domain.Livestock;
 using Farm360.Domain.Health;
+using Farm360.Domain.MasterData;
+using Farm360.Domain.MasterData.Locations;
 using Farm360.Domain.Tenancy;
 using Farm360.Domain.Organizations;
 using Farm360.Domain.Farms;
@@ -64,6 +66,15 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<Farm> Farms => Set<Farm>();
     public DbSet<Shed> Sheds => Set<Shed>();
     public DbSet<Pen> Pens => Set<Pen>();
+
+    // ── Master Data Module ────────────────────────────────────────────────────
+    public DbSet<MasterDataEntry> MasterDataEntries => Set<MasterDataEntry>();
+    public DbSet<Country> Countries => Set<Country>();
+    public DbSet<Division> Divisions => Set<Division>();
+    public DbSet<District> Districts => Set<District>();
+    public DbSet<Upazila> Upazilas => Set<Upazila>();
+    public DbSet<Union> Unions => Set<Union>();
+    public DbSet<Village> Villages => Set<Village>();
 
     // ── Identity / Authorization DbSets ──────────────────────────────────────
     public DbSet<Permission> Permissions => Set<Permission>();

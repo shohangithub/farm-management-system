@@ -1,0 +1,17 @@
+<div class="form-control w-full">
+  <label class="label" *ngIf="label">
+    <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+      {{ label }} <span *ngIf="required" class="text-red-500">*</span>
+    </span>
+  </label>
+  <select 
+    class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500" 
+    [value]="value"
+    [disabled]="isDisabled || isLoading"
+    (change)="onSelectChange($event)">
+    <option value="" disabled selected>{{ isLoading ? 'Loading...' : placeholder }}</option>
+    <option *ngFor="let option of options" [value]="option.id">
+      {{ option.name }}
+    </option>
+  </select>
+</div>

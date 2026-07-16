@@ -6,8 +6,10 @@ using Farm360.Persistence.Interceptors;
 using Farm360.Persistence.Permissions;
 using Farm360.Persistence.Repositories;
 using Farm360.Persistence.Repositories.Livestock;
+using Farm360.Persistence.Repositories.MasterData;
 using Farm360.Persistence.Repositories.Health;
 using Farm360.Domain.Health.Interfaces.Repositories;
+using Farm360.Domain.MasterData.Repositories;
 using Farm360.Domain.Organizations.Repositories;
 using Farm360.Persistence.Repositories.Organizations;
 using Farm360.Domain.Farms.Repositories;
@@ -66,6 +68,10 @@ public static class PersistenceServiceExtensions
         services.AddScoped<IPenRepository, PenRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
+
+        // ── Master Data repositories ────────────────────────────────────
+        services.AddScoped<IMasterDataRepository, MasterDataRepository>();
+        services.AddScoped<ILocationRepository, LocationRepository>();
 
         // ── Data Seeder (transient — runs once at startup) ────────────────────
         services.AddTransient<DataSeeder>();
