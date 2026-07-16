@@ -7,142 +7,157 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AnimalService }          from '../../services/animal.service';
 import { AnimalSpecies, AnimalSex, AcquisitionType, TagType, SPECIES_LABELS } from '../../models/animal.models';
 
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+
 @Component({
   selector: 'app-animal-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [
+    CommonModule, RouterModule, ReactiveFormsModule,
+    PageHeaderComponent,
+    MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
+    MatDatepickerModule, MatNativeDateModule
+  ],
   template: `
-    <div style="max-width:720px">
-
-      <nav class="breadcrumb">
-        <a routerLink="/">Home</a>
-        <span class="separator">›</span>
-        <a routerLink="/livestock">Livestock</a>
-        <span class="separator">›</span>
-        <span>Register Animal</span>
-      </nav>
-
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Register Animal</h1>
-          <p class="page-subtitle">Add a new animal to your herd</p>
-        </div>
-      </div>
+    <div class="max-w-4xl mx-auto">
+      <app-page-header 
+        title="Register Animal" 
+        description="Add a new animal to your herd">
+      </app-page-header>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        
+        <!-- Identification -->
+        <mat-card class="mb-6 !bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+          <mat-card-header class="!pb-4 !pt-4 !border-b border-gray-100 dark:border-gray-800">
+            <mat-card-title class="!text-lg !font-bold">Identification</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="!p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <mat-form-field appearance="outline" class="w-full md:col-span-2">
+              <mat-label>Tag ID</mat-label>
+              <input matInput formControlName="tagId" placeholder="e.g. B-001 or 001234">
+              <mat-error *ngIf="f['tagId'].errors?.['required']">Tag ID is required</mat-error>
+            </mat-form-field>
 
-        <!-- ── Identification ───────────────────────────── -->
-        <div class="card card--elevated" style="margin-bottom:16px">
-          <div class="card-header"><h3 style="font-size:1rem">Identification</h3></div>
-          <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Tag Type</mat-label>
+              <mat-select formControlName="tagType">
+                <mat-option [value]="TagType.Manual">Manual Label</mat-option>
+                <mat-option [value]="TagType.EarTag">Ear Tag</mat-option>
+                <mat-option [value]="TagType.Rfid">RFID</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-            <div class="form-group" style="grid-column:1/-1">
-              <label class="form-label">Tag ID *</label>
-              <input class="form-control" formControlName="tagId" placeholder="e.g. B-001 or 001234" />
-              <span class="form-error" *ngIf="f['tagId'].touched && f['tagId'].errors?.['required']">Tag ID is required</span>
-            </div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Farm</mat-label>
+              <input matInput formControlName="farmId" placeholder="Farm ID (GUID)">
+              <mat-error *ngIf="f['farmId'].errors?.['required']">Farm is required</mat-error>
+            </mat-form-field>
 
-            <div class="form-group">
-              <label class="form-label">Tag Type *</label>
-              <select class="form-control" formControlName="tagType">
-                <option [value]="TagType.Manual">Manual Label</option>
-                <option [value]="TagType.EarTag">Ear Tag</option>
-                <option [value]="TagType.Rfid">RFID</option>
-              </select>
-            </div>
+          </mat-card-content>
+        </mat-card>
 
-            <div class="form-group">
-              <label class="form-label">Farm *</label>
-              <input class="form-control" formControlName="farmId" placeholder="Farm ID (GUID)" />
-              <span class="form-error" *ngIf="f['farmId'].touched && f['farmId'].errors?.['required']">Farm is required</span>
-            </div>
+        <!-- Classification -->
+        <mat-card class="mb-6 !bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+          <mat-card-header class="!pb-4 !pt-4 !border-b border-gray-100 dark:border-gray-800">
+            <mat-card-title class="!text-lg !font-bold">Classification</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="!p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          </div>
-        </div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Species</mat-label>
+              <mat-select formControlName="species">
+                <mat-option *ngFor="let s of speciesOptions" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-        <!-- ── Classification ──────────────────────────── -->
-        <div class="card card--elevated" style="margin-bottom:16px">
-          <div class="card-header"><h3 style="font-size:1rem">Classification</h3></div>
-          <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Breed</mat-label>
+              <input matInput formControlName="breedName" placeholder="e.g. Holstein-Friesian">
+              <mat-error *ngIf="f['breedName'].errors?.['required']">Breed name is required</mat-error>
+            </mat-form-field>
 
-            <div class="form-group">
-              <label class="form-label">Species *</label>
-              <select class="form-control" formControlName="species">
-                <option *ngFor="let s of speciesOptions" [value]="s.value">{{ s.label }}</option>
-              </select>
-            </div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Sex</mat-label>
+              <mat-select formControlName="sex">
+                <mat-option [value]="AnimalSex.Male">Male</mat-option>
+                <mat-option [value]="AnimalSex.Female">Female</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-            <div class="form-group">
-              <label class="form-label">Breed *</label>
-              <input class="form-control" formControlName="breedName" placeholder="e.g. Shahibal, Holstein-Friesian" />
-              <span class="form-error" *ngIf="f['breedName'].touched && f['breedName'].errors?.['required']">Breed name is required</span>
-            </div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Date of Birth</mat-label>
+              <input matInput type="date" formControlName="dateOfBirth" [max]="today">
+              <mat-error *ngIf="f['dateOfBirth'].errors?.['required']">Date of birth is required</mat-error>
+            </mat-form-field>
 
-            <div class="form-group">
-              <label class="form-label">Sex *</label>
-              <select class="form-control" formControlName="sex">
-                <option [value]="AnimalSex.Male">Male ♂</option>
-                <option [value]="AnimalSex.Female">Female ♀</option>
-              </select>
-            </div>
+          </mat-card-content>
+        </mat-card>
 
-            <div class="form-group">
-              <label class="form-label">Date of Birth *</label>
-              <input class="form-control" type="date" formControlName="dateOfBirth" [max]="today" />
-              <span class="form-error" *ngIf="f['dateOfBirth'].touched && f['dateOfBirth'].errors?.['required']">Date of birth is required</span>
-            </div>
+        <!-- Acquisition -->
+        <mat-card class="mb-6 !bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+          <mat-card-header class="!pb-4 !pt-4 !border-b border-gray-100 dark:border-gray-800">
+            <mat-card-title class="!text-lg !font-bold">Acquisition</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="!p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          </div>
-        </div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Acquisition Type</mat-label>
+              <mat-select formControlName="acquisitionType">
+                <mat-option [value]="AcquisitionType.Purchased">Purchased</mat-option>
+                <mat-option [value]="AcquisitionType.BornOnFarm">Born On Farm</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-        <!-- ── Acquisition ─────────────────────────────── -->
-        <div class="card card--elevated" style="margin-bottom:16px">
-          <div class="card-header"><h3 style="font-size:1rem">Acquisition</h3></div>
-          <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Acquisition Date</mat-label>
+              <input matInput type="date" formControlName="acquisitionDate" [max]="today">
+              <mat-error *ngIf="f['acquisitionDate'].errors?.['required']">Acquisition date is required</mat-error>
+            </mat-form-field>
 
-            <div class="form-group">
-              <label class="form-label">Acquisition Type *</label>
-              <select class="form-control" formControlName="acquisitionType">
-                <option [value]="AcquisitionType.Purchased">Purchased</option>
-                <option [value]="AcquisitionType.BornOnFarm">Born On Farm</option>
-              </select>
-            </div>
+            <mat-form-field appearance="outline" class="w-full" *ngIf="form.get('acquisitionType')?.value == AcquisitionType.Purchased">
+              <mat-label>Purchase Price (BDT)</mat-label>
+              <input matInput type="number" formControlName="acquisitionPriceBdt" placeholder="0.00" min="0">
+            </mat-form-field>
 
-            <div class="form-group">
-              <label class="form-label">Acquisition Date *</label>
-              <input class="form-control" type="date" formControlName="acquisitionDate" [max]="today" />
-            </div>
+          </mat-card-content>
+        </mat-card>
 
-            <div class="form-group" *ngIf="form.get('acquisitionType')?.value == AcquisitionType.Purchased">
-              <label class="form-label">Purchase Price (BDT)</label>
-              <input class="form-control" type="number" formControlName="acquisitionPriceBdt" placeholder="0.00" min="0" />
-            </div>
+        <!-- Notes -->
+        <mat-card class="mb-6 !bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+          <mat-card-header class="!pb-4 !pt-4 !border-b border-gray-100 dark:border-gray-800">
+            <mat-card-title class="!text-lg !font-bold">Additional Notes</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="!p-6">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Notes</mat-label>
+              <textarea matInput formControlName="notes" rows="3" placeholder="Any additional notes about this animal..."></textarea>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
 
-          </div>
-        </div>
-
-        <!-- ── Notes ──────────────────────────────────── -->
-        <div class="card card--elevated" style="margin-bottom:24px">
-          <div class="card-header"><h3 style="font-size:1rem">Additional Notes</h3></div>
-          <div class="card-body">
-            <textarea class="form-control" formControlName="notes"
-              placeholder="Any additional notes about this animal..." rows="3"></textarea>
-          </div>
-        </div>
-
-        <!-- ── Error ──────────────────────────────────── -->
-        <div *ngIf="submitError()" style="margin-bottom:16px;padding:12px 16px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:var(--color-danger);font-size:0.875rem">
+        <!-- Error -->
+        <div *ngIf="submitError()" class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-900/20 dark:text-red-400" role="alert">
           {{ submitError() }}
         </div>
 
-        <!-- ── Actions ────────────────────────────────── -->
-        <div class="d-flex gap-3 align-center">
-          <button type="submit" class="btn btn-primary" [disabled]="submitting() || form.invalid">
+        <!-- Actions -->
+        <div class="flex gap-4 items-center">
+          <button mat-flat-button color="primary" type="submit" [disabled]="submitting() || form.invalid" class="!px-6">
             <span *ngIf="submitting()">Registering…</span>
             <span *ngIf="!submitting()">Register Animal</span>
           </button>
-          <a routerLink="/livestock" class="btn btn-secondary">Cancel</a>
+          <button mat-button type="button" routerLink="/livestock">Cancel</button>
         </div>
 
       </form>

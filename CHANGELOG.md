@@ -4,6 +4,15 @@ All notable changes to the Farm360 AI project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Enterprise UI Shared Components (`PageHeaderComponent`, `DataTableComponent`, `ConfirmationDialogComponent`, `EmptyStateComponent`, `LoadingComponent`, `BreadcrumbComponent`).
+
+### Changed
+- Migrated Livestock module UI to use the new Enterprise UI Shared Components and Angular Material.
+- **Enterprise Application Shell** (Angular UI).
+  - Integrated Angular Material (`@angular/material` 22).
+  - Created `MainLayoutComponent` with responsive `mat-sidenav`.
+  - Created `HeaderComponent` with Context Switcher, Global Search, Notifications, and Profile menu.
+  - Implemented dynamic Dark/Light Mode toggling.
 - **Pen Management Module** (Domain, Persistence, Application CQRS, API Endpoints, Angular UI).
   - Drag-and-drop ready architecture for Pen Dashboard.
   - Animal assignment ready properties.

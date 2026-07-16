@@ -2,7 +2,7 @@ import {
   Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule }        from '@angular/common';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil }  from 'rxjs';
 import { AnimalService }       from '../../services/animal.service';
 import {
@@ -10,233 +10,174 @@ import {
   SPECIES_LABELS, STATUS_LABELS, STATUS_BADGE_CLASS, SEX_LABELS,
 } from '../../models/animal.models';
 
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
+import { DataTableComponent, TableColumn } from '../../../../shared/components/data-table/data-table.component';
+
 @Component({
   selector: 'app-animal-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, RouterModule, 
+    PageHeaderComponent, LoadingComponent, EmptyStateComponent, DataTableComponent,
+    MatCardModule, MatButtonModule, MatIconModule, MatDialogModule, MatDividerModule
+  ],
   template: `
-    <!-- ── Skeleton loading ───────────────────────────────── -->
-    <div *ngIf="loading()">
-      <div class="skeleton" style="height:32px;width:300px;margin-bottom:24px;"></div>
-      <div class="skeleton" style="height:200px;border-radius:12px;margin-bottom:16px;"></div>
-      <div class="skeleton" style="height:120px;border-radius:12px;"></div>
-    </div>
+    <app-loading *ngIf="loading()"></app-loading>
 
-    <!-- ── Error ──────────────────────────────────────────── -->
-    <div *ngIf="!loading() && error()" class="empty-state">
-      <div class="empty-icon">⚠️</div>
-      <h3>Animal not found</h3>
-      <p>{{ error() }}</p>
-      <a routerLink="/livestock" class="btn btn-primary btn-sm">Back to list</a>
-    </div>
+    <app-empty-state 
+      *ngIf="!loading() && error()" 
+      icon="error_outline" 
+      title="Animal not found" 
+      [description]="error() || 'The requested animal could not be loaded.'"
+      actionLabel="Back to List" 
+      (action)="goBack()">
+    </app-empty-state>
 
-    <!-- ── Content ────────────────────────────────────────── -->
     <ng-container *ngIf="!loading() && animal() as a">
+      <app-page-header 
+        [title]="a.tagId" 
+        [description]="speciesLabel(a.species) + ' · ' + a.breedName + ' · ' + sexLabel(a.sex)"
+        primaryActionLabel="Record Weight"
+        primaryActionIcon="add"
+        (primaryAction)="onRecordWeight(a)">
+      </app-page-header>
 
-      <!-- Breadcrumb + Header -->
-      <div class="page-header">
-        <div>
-          <nav class="breadcrumb">
-            <a routerLink="/">Home</a>
-            <span class="separator">›</span>
-            <a routerLink="/livestock">Livestock</a>
-            <span class="separator">›</span>
-            <span>{{ a.tagId }}</span>
-          </nav>
-          <h1 class="page-title" style="display:flex;align-items:center;gap:12px">
-            {{ a.tagId }}
-            <span class="badge" [ngClass]="statusBadge(a.status)">{{ statusLabel(a.status) }}</span>
-          </h1>
-          <p class="page-subtitle">{{ speciesLabel(a.species) }} · {{ a.breedName }} · {{ sexLabel(a.sex) }}</p>
-        </div>
-        <div class="d-flex gap-3 align-center">
-          <button class="btn btn-secondary" (click)="load()" title="Refresh">↻ Refresh</button>
-          <a [routerLink]="['/livestock', a.id, 'weights', 'new']" class="btn btn-primary">+ Record Weight</a>
-        </div>
-      </div>
-
-      <!-- ── Top section: photo + identity + quick stats ─── -->
-      <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;margin-bottom:20px;align-items:start">
-
-        <!-- Photo -->
-        <div class="card" style="width:200px;min-height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden">
-          <img *ngIf="a.primaryPhotoUrl"
-               [src]="a.primaryPhotoUrl"
-               style="width:100%;height:200px;object-fit:cover"
-               [alt]="a.tagId" />
-          <div *ngIf="!a.primaryPhotoUrl" style="font-size:4rem;opacity:0.3">
-            {{ speciesEmoji(a.species) }}
-          </div>
-        </div>
-
-        <!-- Identity card -->
-        <div class="card card--elevated">
-          <div class="card-header">
-            <h3 style="font-size:1rem">Animal Profile</h3>
-            <div class="d-flex gap-2">
-              <button *ngIf="a.status === AnimalStatus.Active"
-                class="btn btn-secondary btn-sm" (click)="onQuarantine(a)">⚠ Quarantine</button>
-              <button *ngIf="a.status === AnimalStatus.Quarantined"
-                class="btn btn-secondary btn-sm" (click)="onRelease(a)">✓ Release</button>
-              <button *ngIf="a.status === AnimalStatus.Active"
-                class="btn btn-primary btn-sm" (click)="onSell(a)">💰 Sell</button>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        
+        <!-- Identity Card -->
+        <mat-card class="col-span-1 md:col-span-2 !bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+          <mat-card-header class="!pb-4 !pt-4 !border-b border-gray-100 dark:border-gray-800">
+            <mat-card-title class="!text-lg !font-bold">Animal Profile</mat-card-title>
+            <div class="flex-1"></div>
+            <div class="flex gap-2">
+              <button mat-stroked-button color="warn" *ngIf="a.status === AnimalStatus.Active" (click)="onQuarantine(a)">Quarantine</button>
+              <button mat-flat-button color="primary" *ngIf="a.status === AnimalStatus.Quarantined" (click)="onRelease(a)">Release</button>
+              <button mat-flat-button color="accent" *ngIf="a.status === AnimalStatus.Active" (click)="onSell(a)">Sell</button>
             </div>
-          </div>
-          <div class="card-body">
-            <div class="detail-grid">
-              <div class="detail-row">
-                <span class="detail-label">Tag ID</span>
-                <span class="detail-value fw-600">{{ a.tagId }}</span>
+          </mat-card-header>
+          <mat-card-content class="!p-0">
+            <div class="flex flex-col sm:flex-row">
+              <div class="w-full sm:w-1/3 p-4 flex justify-center items-start border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+                <img *ngIf="a.primaryPhotoUrl" [src]="a.primaryPhotoUrl" class="w-full max-w-[200px] rounded-lg shadow-sm object-cover aspect-square" />
+                <div *ngIf="!a.primaryPhotoUrl" class="w-full max-w-[200px] aspect-square flex items-center justify-center text-6xl opacity-30 bg-gray-200 dark:bg-gray-800 rounded-lg">
+                  {{ speciesEmoji(a.species) }}
+                </div>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Tag Type</span>
-                <span class="detail-value">{{ tagTypeLabel(a.tagType) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Species</span>
-                <span class="detail-value">{{ speciesLabel(a.species) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Breed</span>
-                <span class="detail-value">{{ a.breedName }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Sex</span>
-                <span class="detail-value">{{ sexLabel(a.sex) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Date of Birth</span>
-                <span class="detail-value">{{ a.dateOfBirth | date:'dd MMM yyyy' }} · {{ ageLabel(a.dateOfBirth) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Farm</span>
-                <span class="detail-value text-muted">{{ a.farmId }}</span>
-              </div>
-              <div class="detail-row" *ngIf="a.acquisitionPriceBdt">
-                <span class="detail-label">Purchase Price</span>
-                <span class="detail-value">৳ {{ a.acquisitionPriceBdt | number }}</span>
-              </div>
-              <div class="detail-row" *ngIf="a.notes">
-                <span class="detail-label">Notes</span>
-                <span class="detail-value text-muted">{{ a.notes }}</span>
+              <div class="w-full sm:w-2/3 p-4">
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
+                  <div>
+                    <dt class="text-xs font-semibold text-gray-500 uppercase">Tag ID</dt>
+                    <dd class="mt-1 text-sm text-gray-900 dark:text-white font-medium">{{ a.tagId }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs font-semibold text-gray-500 uppercase">Status</dt>
+                    <dd class="mt-1 text-sm">
+                      <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{{ statusLabel(a.status) }}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs font-semibold text-gray-500 uppercase">Species & Breed</dt>
+                    <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ speciesLabel(a.species) }} / {{ a.breedName }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs font-semibold text-gray-500 uppercase">Date of Birth</dt>
+                    <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ a.dateOfBirth | date:'mediumDate' }} ({{ ageLabel(a.dateOfBirth) }})</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs font-semibold text-gray-500 uppercase">Tag Type</dt>
+                    <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ tagTypeLabel(a.tagType) }}</dd>
+                  </div>
+                  <div *ngIf="a.acquisitionPriceBdt">
+                    <dt class="text-xs font-semibold text-gray-500 uppercase">Purchase Price</dt>
+                    <dd class="mt-1 text-sm text-gray-900 dark:text-white">৳ {{ a.acquisitionPriceBdt | number }}</dd>
+                  </div>
+                </dl>
               </div>
             </div>
-          </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- KPI Column -->
+        <div class="col-span-1 flex flex-col gap-4">
+          <mat-card class="!bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+            <mat-card-content class="!p-4 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-500">Latest Weight</p>
+                <p class="text-2xl font-bold text-green-600">{{ a.latestWeightKg ? (a.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}</p>
+                <p class="text-xs text-gray-400 mt-1" *ngIf="a.latestWeightDate">as of {{ a.latestWeightDate | date:'mediumDate' }}</p>
+              </div>
+              <mat-icon class="text-4xl text-gray-200 dark:text-gray-700">scale</mat-icon>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="!bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+            <mat-card-content class="!p-4 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-500">Avg Daily Gain</p>
+                <p class="text-2xl font-bold" [class.text-green-600]="(a.adgKgPerDay ?? 0) > 0">{{ a.adgKgPerDay ? (a.adgKgPerDay | number:'1.3-3') + ' kg/d' : '—' }}</p>
+              </div>
+              <mat-icon class="text-4xl text-gray-200 dark:text-gray-700">trending_up</mat-icon>
+            </mat-card-content>
+          </mat-card>
         </div>
       </div>
 
-      <!-- ── KPI row ─────────────────────────────────────── -->
-      <div class="stat-grid" style="margin-bottom:20px">
-        <div class="stat-card">
-          <div class="stat-label">Latest Weight</div>
-          <div class="stat-value text-accent">
-            {{ a.latestWeightKg ? (a.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}
-          </div>
-          <div class="stat-delta" *ngIf="a.latestWeightDate">
-            as of {{ a.latestWeightDate | date:'dd MMM' }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg Daily Gain</div>
-          <div class="stat-value" [class.text-accent]="(a.adgKgPerDay ?? 0) > 0">
-            {{ a.adgKgPerDay ? (a.adgKgPerDay | number:'1.3-3') + ' kg/d' : '—' }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Weight Records</div>
-          <div class="stat-value">{{ a.weightRecords.length }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Breeding Records</div>
-          <div class="stat-value">{{ a.breedingRecords.length }}</div>
-        </div>
-      </div>
+      <!-- Weight History Table -->
+      <mat-card class="mb-6 !bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+        <mat-card-header class="!pb-4 !pt-4 !border-b border-gray-100 dark:border-gray-800">
+          <mat-card-title class="!text-lg !font-bold">Weight History</mat-card-title>
+        </mat-card-header>
+        
+        <app-empty-state 
+          *ngIf="a.weightRecords.length === 0" 
+          icon="scale" 
+          title="No weight records yet" 
+          description="Record the first weight measurement."
+          actionLabel="Record Weight" 
+          (action)="onRecordWeight(a)">
+        </app-empty-state>
 
-      <!-- ── Weight History Table ─────────────────────────── -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header">
-          <h3 style="font-size:1rem">Weight History</h3>
-          <a [routerLink]="['/livestock', a.id, 'weights', 'new']" class="btn btn-primary btn-sm">
-            + Record Weight
-          </a>
-        </div>
-        <div *ngIf="a.weightRecords.length === 0" class="empty-state" style="padding:40px">
-          <div class="empty-icon">⚖️</div>
-          <h3>No weight records yet</h3>
-          <p>Record the first weight measurement</p>
-        </div>
-        <div *ngIf="a.weightRecords.length > 0" style="overflow-x:auto">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Weight (kg)</th>
-                <th>Recorded At</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let w of sortedWeights(a)">
-                <td class="fw-500">{{ w.recordedDate | date:'dd MMM yyyy' }}</td>
-                <td class="fw-600 text-accent">{{ w.weightKg | number:'1.1-1' }} kg</td>
-                <td class="text-muted text-xs">{{ w.recordedAtUtc | date:'dd MMM yyyy, HH:mm' }}</td>
-                <td class="text-muted text-sm">{{ w.notes ?? '—' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <mat-card-content class="!p-4" *ngIf="a.weightRecords.length > 0">
+          <app-data-table 
+            [data]="sortedWeights(a)" 
+            [columns]="weightColumns" 
+            [displayedColumns]="['date', 'weight', 'recordedAt', 'notes']">
+          </app-data-table>
+        </mat-card-content>
+      </mat-card>
 
-      <!-- ── Photos ─────────────────────────────────────────── -->
-      <div class="card">
-        <div class="card-header">
-          <h3 style="font-size:1rem">Photos</h3>
-        </div>
-        <div *ngIf="a.photos.length === 0" class="empty-state" style="padding:40px">
-          <div class="empty-icon">📷</div>
-          <h3>No photos yet</h3>
-          <p>Add a photo to the animal profile</p>
-        </div>
-        <div *ngIf="a.photos.length > 0" class="card-body" style="display:flex;flex-wrap:wrap;gap:12px">
-          <div *ngFor="let p of a.photos"
-               style="position:relative;border-radius:8px;overflow:hidden;border:2px solid transparent"
-               [style.border-color]="p.isPrimary ? 'var(--color-primary)' : 'var(--border-subtle)'">
-            <img [src]="p.photoUrl" [alt]="p.caption ?? 'Photo'"
-                 style="width:120px;height:120px;object-fit:cover" />
-            <div *ngIf="p.isPrimary"
-                 style="position:absolute;bottom:4px;left:4px;font-size:0.65rem;background:var(--color-primary);color:#fff;padding:2px 6px;border-radius:4px">
-              Primary
-            </div>
+      <!-- Photos -->
+      <mat-card class="!bg-white dark:!bg-gray-800 !shadow-sm !rounded-xl border border-gray-200 dark:border-gray-700">
+        <mat-card-header class="!pb-4 !pt-4 !border-b border-gray-100 dark:border-gray-800">
+          <mat-card-title class="!text-lg !font-bold">Photos</mat-card-title>
+        </mat-card-header>
+        
+        <app-empty-state 
+          *ngIf="a.photos.length === 0" 
+          icon="add_a_photo" 
+          title="No photos yet" 
+          description="Add a photo to the animal profile.">
+        </app-empty-state>
+
+        <mat-card-content class="!p-4 flex flex-wrap gap-4" *ngIf="a.photos.length > 0">
+          <div *ngFor="let p of a.photos" class="relative rounded-lg overflow-hidden border-2" [class.border-green-500]="p.isPrimary" [class.border-transparent]="!p.isPrimary">
+            <img [src]="p.photoUrl" [alt]="p.caption ?? 'Photo'" class="w-32 h-32 object-cover" />
+            <div *ngIf="p.isPrimary" class="absolute bottom-1 left-1 text-[10px] font-bold bg-green-600 text-white px-1.5 py-0.5 rounded">Primary</div>
           </div>
-        </div>
-      </div>
+        </mat-card-content>
+      </mat-card>
 
     </ng-container>
-  `,
-  styles: [`
-    .detail-grid { display: flex; flex-direction: column; gap: 0; }
-    .detail-row {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border-subtle);
-      &:last-child { border-bottom: none; }
-    }
-    .detail-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      min-width: 140px;
-    }
-    .detail-value {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-  `],
+  `
 })
 export class AnimalDetailComponent implements OnInit, OnDestroy {
   private readonly svc     = inject(AnimalService);
@@ -248,6 +189,16 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   readonly animal  = signal<AnimalDto | null>(null);
 
   readonly AnimalStatus = AnimalStatus;
+
+  private dialog = inject(MatDialog);
+  private router = inject(Router);
+
+  weightColumns: TableColumn[] = [
+    { def: 'date', header: 'Date', cell: (e: any) => new Date(e.recordedDate).toLocaleDateString() },
+    { def: 'weight', header: 'Weight (kg)', cell: (e: any) => `<span class="font-bold text-green-600">${e.weightKg.toFixed(1)}</span>` },
+    { def: 'recordedAt', header: 'Recorded At', cell: (e: any) => new Date(e.recordedAtUtc).toLocaleString() },
+    { def: 'notes', header: 'Notes', cell: (e: any) => e.notes ?? '—' }
+  ];
 
   ngOnInit(): void { this.load(); }
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
@@ -287,8 +238,28 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   }
 
   onRelease(a: AnimalDto): void {
-    if (!confirm('Release from quarantine?')) return;
-    this.svc.releaseFromQuarantine(a.id).pipe(takeUntil(this.destroy$)).subscribe({ next: () => this.load() });
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        title: 'Release from Quarantine',
+        message: `Are you sure you want to release ${a.tagId} from quarantine?`,
+        confirmButtonText: 'Release',
+        isDestructive: false
+      }
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
+      if (result) {
+        this.svc.releaseFromQuarantine(a.id).pipe(takeUntil(this.destroy$)).subscribe({ next: () => this.load() });
+      }
+    });
+  }
+
+  onRecordWeight(a: AnimalDto): void {
+    this.router.navigate(['/livestock', a.id, 'weights', 'new']);
+  }
+
+  goBack(): void {
+    this.router.navigate(['/livestock']);
   }
 
   onSell(a: AnimalDto): void {

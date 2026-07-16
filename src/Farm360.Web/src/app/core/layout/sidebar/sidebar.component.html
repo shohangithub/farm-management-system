@@ -1,0 +1,61 @@
+<div class="flex flex-col h-full overflow-hidden">
+  
+  <!-- Logo Section -->
+  <div class="h-16 flex items-center shrink-0 border-b border-gray-200 dark:border-gray-800"
+       [class.justify-center]="isCollapsed" [class.px-4]="!isCollapsed">
+    <div class="flex items-center gap-3 text-green-600 dark:text-green-500">
+      <mat-icon class="text-2xl" [class.mr-0]="isCollapsed">agriculture</mat-icon>
+      <span *ngIf="!isCollapsed" class="text-xl font-bold tracking-tight text-gray-900 dark:text-white truncate">
+        Farm360 <span class="text-green-600">AI</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Navigation List -->
+  <mat-nav-list class="flex-1 overflow-y-auto px-2 py-4 custom-scrollbar">
+    <ng-container *ngFor="let item of menuItems">
+      <a mat-list-item
+         [routerLink]="item.disabled ? null : item.route"
+         routerLinkActive="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium"
+         [class.opacity-50]="item.disabled"
+         [class.cursor-not-allowed]="item.disabled"
+         [matTooltip]="isCollapsed ? item.label : ''"
+         matTooltipPosition="right"
+         class="rounded-lg mb-1 transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+        
+        <div class="flex items-center w-full h-full" [class.justify-center]="isCollapsed">
+          <mat-icon matListItemIcon [class.text-green-600]="!item.disabled" [class.mr-0]="isCollapsed">{{ item.icon }}</mat-icon>
+          
+          <div *ngIf="!isCollapsed" class="flex items-center justify-between flex-1 ml-4 truncate">
+            <span class="truncate">{{ item.label }}</span>
+            <span *ngIf="item.badge" class="ml-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-100 rounded-full dark:bg-green-900 dark:text-green-300">
+              {{ item.badge }}
+            </span>
+          </div>
+        </div>
+
+      </a>
+    </ng-container>
+  </mat-nav-list>
+
+  <!-- Bottom Settings/Org Nav -->
+  <div class="shrink-0 border-t border-gray-200 dark:border-gray-800 p-2">
+    <mat-nav-list class="pt-0">
+      <ng-container *ngFor="let item of bottomMenuItems">
+        <a mat-list-item
+           [routerLink]="item.route"
+           routerLinkActive="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium"
+           [matTooltip]="isCollapsed ? item.label : ''"
+           matTooltipPosition="right"
+           class="rounded-lg mb-1 transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+          
+          <div class="flex items-center w-full h-full" [class.justify-center]="isCollapsed">
+            <mat-icon matListItemIcon [class.mr-0]="isCollapsed" class="text-gray-500">{{ item.icon }}</mat-icon>
+            <span *ngIf="!isCollapsed" class="ml-4 truncate">{{ item.label }}</span>
+          </div>
+        </a>
+      </ng-container>
+    </mat-nav-list>
+  </div>
+
+</div>

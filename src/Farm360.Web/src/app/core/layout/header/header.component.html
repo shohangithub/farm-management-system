@@ -1,0 +1,92 @@
+<mat-toolbar class="h-16 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 shrink-0 transition-colors">
+  
+  <!-- Left Side: Menu Toggle & Breadcrumb -->
+  <div class="flex items-center gap-4">
+    <button mat-icon-button (click)="onToggleSidebar()" aria-label="Toggle sidebar" class="text-gray-600 dark:text-gray-300">
+      <mat-icon>menu</mat-icon>
+    </button>
+    
+    <!-- Breadcrumb (Placeholder) -->
+    <div class="hidden md:flex items-center text-sm font-medium text-gray-500 dark:text-gray-400">
+      <span>Home</span>
+      <mat-icon class="text-sm mx-1 h-5 w-5 leading-5 opacity-50">chevron_right</mat-icon>
+      <span class="text-gray-900 dark:text-gray-100">Dashboard</span>
+    </div>
+  </div>
+
+  <!-- Middle: Global Search (Placeholder) -->
+  <div class="hidden lg:flex flex-1 max-w-xl mx-8">
+    <div class="relative w-full">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <mat-icon class="text-gray-400 text-sm">search</mat-icon>
+      </div>
+      <input type="text" placeholder="Search across farms, animals, health records..." 
+             class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400 transition-colors">
+      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+        <span class="text-gray-400 text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5">Ctrl+K</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Actions & Profile -->
+  <div class="flex items-center gap-2">
+    
+    <!-- Theme Switcher -->
+    <button mat-icon-button (click)="toggleTheme()" [matTooltip]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" class="text-gray-600 dark:text-gray-300">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Context Switcher Menu -->
+    <button mat-button [matMenuTriggerFor]="contextMenu" class="hidden md:flex items-center text-left max-w-[200px]">
+      <div class="flex flex-col truncate ml-2">
+        <span class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold leading-tight">{{ currentOrg }}</span>
+        <span class="text-sm font-bold text-gray-900 dark:text-white truncate leading-tight">{{ currentBranch }}</span>
+      </div>
+      <mat-icon class="ml-1 text-gray-400">arrow_drop_down</mat-icon>
+    </button>
+    <mat-menu #contextMenu="matMenu" class="w-64 bg-white dark:bg-gray-800">
+      <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+        <p class="text-xs font-semibold text-gray-500 uppercase">Current Context</p>
+        <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ currentTenant }}</p>
+      </div>
+      <button mat-menu-item>
+        <mat-icon>business</mat-icon>
+        <span>Change Organization</span>
+      </button>
+      <button mat-menu-item>
+        <mat-icon>store</mat-icon>
+        <span>Change Branch</span>
+      </button>
+    </mat-menu>
+
+    <!-- Notifications -->
+    <button mat-icon-button matTooltip="Notifications" class="text-gray-600 dark:text-gray-300">
+      <mat-icon matBadge="3" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
+    </button>
+
+    <!-- User Profile Menu -->
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" class="ml-2 bg-green-100 dark:bg-green-900/50 rounded-full h-9 w-9 flex items-center justify-center border-2 border-transparent hover:border-green-500 transition-colors">
+      <span class="text-green-800 dark:text-green-400 font-bold text-sm">FA</span>
+    </button>
+    <mat-menu #userMenu="matMenu" xPosition="before" class="bg-white dark:bg-gray-800 min-w-[200px]">
+      <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+        <p class="text-sm font-medium text-gray-900 dark:text-white">Farm Admin</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">admin@farm360.ai</p>
+      </div>
+      <button mat-menu-item>
+        <mat-icon>person</mat-icon>
+        <span>My Profile</span>
+      </button>
+      <button mat-menu-item>
+        <mat-icon>settings</mat-icon>
+        <span>Account Settings</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()" class="text-red-600 dark:text-red-400">
+        <mat-icon class="text-red-600 dark:text-red-400">logout</mat-icon>
+        <span>Sign Out</span>
+      </button>
+    </mat-menu>
+    
+  </div>
+</mat-toolbar>

@@ -1,0 +1,18 @@
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  <div>
+    <app-breadcrumb></app-breadcrumb>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+      {{ title }}
+    </h1>
+    <p *ngIf="description" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+      {{ description }}
+    </p>
+  </div>
+  
+  <div *ngIf="primaryActionLabel" class="flex items-center gap-2">
+    <button mat-flat-button color="primary" (click)="onPrimaryAction()" class="!bg-green-600 !text-white hover:!bg-green-700 !rounded-lg">
+      <mat-icon *ngIf="primaryActionIcon" class="mr-2">{{ primaryActionIcon }}</mat-icon>
+      {{ primaryActionLabel }}
+    </button>
+  </div>
+</div>
