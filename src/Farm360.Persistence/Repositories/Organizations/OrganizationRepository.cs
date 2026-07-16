@@ -31,7 +31,7 @@ public class OrganizationRepository : IOrganizationRepository
     public async Task<bool> ExistsByNameAsync(Guid tenantId, string name, CancellationToken cancellationToken = default)
     {
         return await _context.Organizations
-            .AnyAsync(o => o.TenantId == tenantId && EF.Functions.Like(o.Name, name), cancellationToken);
+            .AnyAsync(o => o.TenantId == tenantId && o.Name == name, cancellationToken);
     }
 
     public void Add(Organization organization)

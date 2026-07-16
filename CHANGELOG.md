@@ -3,6 +3,17 @@
 All notable changes to the Farm360 AI project will be documented in this file.
 
 ## [Unreleased]
+
+### Fixed
+- **Organization Module CRUD HTTP 500 Errors** — Root cause: Command handlers (`CreateOrganizationCommand`, `UpdateOrganizationCommand`, `DeactivateOrganizationCommand`) were manually calling `BeginTransactionAsync`/`CommitTransactionAsync` inside the handler body while the `TransactionBehavior` MediatR pipeline was simultaneously managing a transaction, causing a double-nested transaction SQL Server exception. Fixed by:
+  - Removing manual `BeginTransactionAsync`/`CommitTransactionAsync` calls from all three handlers.
+  - Adding `ITransactionalCommand` marker interface to all three command records so `TransactionBehavior` correctly manages the transaction.
+  - Replacing the manual transaction calls with `await _unitOfWork.SaveChangesAsync()`.
+- **Organization Name Uniqueness Check** (`OrganizationRepository.ExistsByNameAsync`) — Replaced `EF.Functions.Like(o.Name, name)` with direct equality `o.Name == name`. The `Like` call without wildcards was semantically misleading and triggers CA analyzer errors.
+- **Angular Form `businessType` Integer Coercion** — Changed `<option [value]="n">` to `<option [ngValue]="n">` to ensure the value is sent as a number (not a string) to the backend. Also added `+formValue.businessType` cast in `onSubmit()`.
+- **Angular Error Handling** — Form components now extract `err.error.detail` / `err.error.title` from ProblemDetails responses for user-friendly error messages. Added success message display.
+
+
 ### Added
 - Enterprise UI Shared Components (`PageHeaderComponent`, `DataTableComponent`, `ConfirmationDialogComponent`, `EmptyStateComponent`, `LoadingComponent`, `BreadcrumbComponent`).
 

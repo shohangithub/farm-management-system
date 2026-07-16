@@ -1,19 +1,21 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BranchService } from '../services/branch.service';
 import { Branch } from '../models/branch.model';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-branch-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PageHeaderComponent],
   templateUrl: './branch-detail.html',
   styleUrls: ['./branch-detail.scss']
 })
 export class BranchDetailComponent implements OnInit {
   private readonly branchService = inject(BranchService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   orgId = signal<string>('');
   branch = signal<Branch | null>(null);
@@ -45,5 +47,11 @@ export class BranchDetailComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  onEdit(): void {
+    if (this.branch()) {
+      this.router.navigate(['/organizations', this.orgId(), 'branches', 'edit', this.branch()?.id]);
+    }
   }
 }

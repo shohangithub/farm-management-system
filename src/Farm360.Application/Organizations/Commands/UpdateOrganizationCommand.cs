@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Organizations;
@@ -26,7 +27,7 @@ public record UpdateOrganizationCommand(
     string? State,
     string? Country,
     string? ZipCode,
-    BusinessType BusinessType) : IRequest;
+    BusinessType BusinessType) : IRequest, ITransactionalCommand;
 
 public class UpdateOrganizationCommandValidator : AbstractValidator<UpdateOrganizationCommand>
 {
@@ -114,10 +115,10 @@ internal sealed class UpdateOrganizationCommandHandler : IRequestHandler<UpdateO
             address,
             request.BusinessType);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
         _repository.Update(organization);
 
-        await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
+        // SaveChangesAsync persists within the pipeline-managed transaction (TransactionBehavior).
+        // Do NOT call BeginTransactionAsync here — the MediatR TransactionBehavior already wraps this command.
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

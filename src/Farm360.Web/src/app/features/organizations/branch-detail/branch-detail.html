@@ -1,21 +1,12 @@
-<div class="page-header mb-6">
-  <div class="flex items-center">
-    <button [routerLink]="['/organizations', orgId(), 'branches']" class="mr-4 text-gray-400 hover:text-gray-500">
-      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-      </svg>
-    </button>
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Branch Details</h1>
-      <p class="text-sm text-gray-500">View detailed information about this branch.</p>
-    </div>
-  </div>
-  <div *ngIf="branch()">
-    <a [routerLink]="['/organizations', orgId(), 'branches', 'edit', branch()?.id]" class="btn btn-outline mr-2">Edit</a>
-  </div>
-</div>
+<app-page-header 
+  title="Branch Details" 
+  description="View detailed information about this branch."
+  primaryActionLabel="Edit Branch"
+  primaryActionIcon="edit"
+  (primaryAction)="onEdit()">
+</app-page-header>
 
-<div *ngIf="error()" class="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md mb-6">
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 shadow-sm">
   {{ error() }}
 </div>
 
@@ -23,68 +14,75 @@
   <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
 </div>
 
-<div *ngIf="!isLoading() && branch()" class="bg-white shadow overflow-hidden sm:rounded-lg">
-  <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+<div *ngIf="!isLoading() && branch()" class="bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800/50 rounded-xl overflow-hidden">
+  
+  <!-- Header Section -->
+  <div class="px-6 py-6 sm:px-8 flex justify-between items-start border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-800/20">
     <div>
-      <h3 class="text-lg leading-6 font-medium text-gray-900">
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center">
         {{ branch()?.name }}
-        <span *ngIf="branch()?.isHeadOffice" class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Head Office</span>
+        <span *ngIf="branch()?.isHeadOffice" class="ml-3 px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-sm bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Head Office</span>
       </h3>
-      <p class="mt-1 max-w-2xl text-sm text-gray-500">
-        Code: {{ branch()?.branchCode }}
+      <p class="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
+        Branch Code: <span class="font-mono text-gray-900 dark:text-gray-300 ml-1">{{ branch()?.branchCode }}</span>
       </p>
     </div>
-    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+    
+    <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-md"
           [ngClass]="{
-            'bg-green-100 text-green-800': branch()?.status === 1,
-            'bg-gray-100 text-gray-800': branch()?.status === 2,
-            'bg-red-100 text-red-800': branch()?.status === 3
+            'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400': branch()?.status === 1,
+            'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400': branch()?.status === 2,
+            'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400': branch()?.status === 3
           }">
       {{ branch()?.status === 1 ? 'Active' : (branch()?.status === 2 ? 'Inactive' : 'Closed') }}
     </span>
   </div>
-  <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
-    <dl class="sm:divide-y sm:divide-gray-200">
+  
+  <!-- Content Section -->
+  <div class="px-6 py-6 sm:p-8">
+    <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
       
-      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-        <dt class="text-sm font-medium text-gray-500">Contact Email</dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.contactEmail }}</dd>
+      <div>
+        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Email</dt>
+        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.contactEmail }}</dd>
       </div>
 
-      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-        <dt class="text-sm font-medium text-gray-500">Contact Phone</dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.contactPhone || '-' }}</dd>
+      <div>
+        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Phone</dt>
+        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.contactPhone || '-' }}</dd>
       </div>
 
-      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-        <dt class="text-sm font-medium text-gray-500">Address</dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-          {{ branch()?.address?.street }}<br *ngIf="branch()?.address?.street">
-          {{ branch()?.address?.city }}<ng-container *ngIf="branch()?.address?.city && branch()?.address?.state">, </ng-container>
-          {{ branch()?.address?.state }} {{ branch()?.address?.zipCode }}<br *ngIf="branch()?.address?.city || branch()?.address?.state || branch()?.address?.zipCode">
-          {{ branch()?.address?.country }}
-          <span *ngIf="!branch()?.address?.street && !branch()?.address?.city">-</span>
+      <div class="md:col-span-2 border-t border-gray-100 dark:border-gray-800/50 pt-6">
+        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Address</dt>
+        <dd class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200 leading-relaxed bg-gray-50 dark:bg-gray-800/20 p-4 rounded-lg border border-gray-100 dark:border-gray-800/50">
+          <div *ngIf="branch()?.address?.street || branch()?.address?.city">
+            {{ branch()?.address?.street }}<br *ngIf="branch()?.address?.street">
+            {{ branch()?.address?.city }}<ng-container *ngIf="branch()?.address?.city && branch()?.address?.state">, </ng-container>
+            {{ branch()?.address?.state }} {{ branch()?.address?.zipCode }}<br *ngIf="branch()?.address?.city || branch()?.address?.state || branch()?.address?.zipCode">
+            {{ branch()?.address?.country }}
+          </div>
+          <span *ngIf="!branch()?.address?.street && !branch()?.address?.city" class="text-gray-400 italic">No address provided.</span>
         </dd>
       </div>
       
-      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-        <dt class="text-sm font-medium text-gray-500">GPS Coordinates</dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+      <div class="border-t border-gray-100 dark:border-gray-800/50 pt-6">
+        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">GPS Coordinates</dt>
+        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200 font-mono">
           <span *ngIf="branch()?.latitude || branch()?.longitude">
             {{ branch()?.latitude }}, {{ branch()?.longitude }}
           </span>
-          <span *ngIf="!branch()?.latitude && !branch()?.longitude">-</span>
+          <span *ngIf="!branch()?.latitude && !branch()?.longitude" class="text-gray-400 font-sans italic">Not set</span>
         </dd>
       </div>
 
-      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-        <dt class="text-sm font-medium text-gray-500">Working Hours</dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.workingHours || '-' }}</dd>
+      <div class="border-t border-gray-100 dark:border-gray-800/50 pt-6">
+        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Working Hours</dt>
+        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.workingHours || '-' }}</dd>
       </div>
 
-      <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-        <dt class="text-sm font-medium text-gray-500">Holiday Calendar</dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ branch()?.holidayCalendar || '-' }}</dd>
+      <div class="border-t border-gray-100 dark:border-gray-800/50 pt-6">
+        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Holiday Calendar</dt>
+        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.holidayCalendar || '-' }}</dd>
       </div>
       
     </dl>

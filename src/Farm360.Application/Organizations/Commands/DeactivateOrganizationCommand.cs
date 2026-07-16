@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Organizations;
@@ -6,7 +7,7 @@ using MediatR;
 
 namespace Farm360.Application.Organizations.Commands;
 
-public record DeactivateOrganizationCommand(Guid Id) : IRequest;
+public record DeactivateOrganizationCommand(Guid Id) : IRequest, ITransactionalCommand;
 
 internal sealed class DeactivateOrganizationCommandHandler : IRequestHandler<DeactivateOrganizationCommand>
 {
@@ -28,10 +29,10 @@ internal sealed class DeactivateOrganizationCommandHandler : IRequestHandler<Dea
 
         organization.Deactivate();
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
         _repository.Update(organization);
 
-        await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
+        // SaveChangesAsync persists within the pipeline-managed transaction (TransactionBehavior).
+        // Do NOT call BeginTransactionAsync here — the MediatR TransactionBehavior already wraps this command.
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

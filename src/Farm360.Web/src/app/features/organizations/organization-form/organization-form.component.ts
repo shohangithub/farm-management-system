@@ -4,11 +4,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { OrganizationService } from '../services/organization.service';
 import { CreateOrganizationCommand, UpdateOrganizationCommand } from '../models/organization.model';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-organization-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent],
   templateUrl: './organization-form.html',
   styleUrls: ['./organization-form.scss']
 })
@@ -23,6 +24,7 @@ export class OrganizationFormComponent implements OnInit {
   orgId = signal<string | null>(null);
   isSubmitting = signal<boolean>(false);
   error = signal<string | null>(null);
+  successMessage = signal<string | null>(null);
 
   ngOnInit(): void {
     this.initForm();
@@ -40,9 +42,9 @@ export class OrganizationFormComponent implements OnInit {
       businessType: [1, Validators.required],
       contactEmail: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       contactPhone: ['', Validators.maxLength(30)],
-      currencyCode: ['USD', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
-      timeZoneId: ['UTC', Validators.required],
-      languageCode: ['en-US', Validators.required],
+      currencyCode: ['BDT', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
+      timeZoneId: ['Asia/Dhaka', Validators.required],
+      languageCode: ['en', Validators.required],
       businessRegistrationNumber: ['', Validators.maxLength(100)],
       tradeLicenseNumber: ['', Validators.maxLength(100)],
       taxIdentificationNumber: ['', Validators.maxLength(100)],
@@ -59,25 +61,26 @@ export class OrganizationFormComponent implements OnInit {
       next: (org) => {
         this.orgForm.patchValue({
           name: org.name,
-          businessType: org.businessType,
+          businessType: +org.businessType, // Ensure integer
           contactEmail: org.contactEmail,
-          contactPhone: org.contactPhone,
+          contactPhone: org.contactPhone || '',
           currencyCode: org.currencyCode,
           timeZoneId: org.timeZoneId,
           languageCode: org.languageCode,
-          businessRegistrationNumber: org.businessRegistrationNumber,
-          tradeLicenseNumber: org.tradeLicenseNumber,
-          taxIdentificationNumber: org.taxIdentificationNumber,
-          street: org.address?.street,
-          city: org.address?.city,
-          state: org.address?.state,
-          country: org.address?.country,
-          zipCode: org.address?.zipCode
+          businessRegistrationNumber: org.businessRegistrationNumber || '',
+          tradeLicenseNumber: org.tradeLicenseNumber || '',
+          taxIdentificationNumber: org.taxIdentificationNumber || '',
+          street: org.address?.street || '',
+          city: org.address?.city || '',
+          state: org.address?.state || '',
+          country: org.address?.country || '',
+          zipCode: org.address?.zipCode || ''
         });
       },
       error: (err) => {
-        this.error.set('Failed to load organization details.');
-        console.error(err);
+        const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to load organization details.';
+        this.error.set(message);
+        console.error('[OrganizationForm] loadOrganization error:', err);
       }
     });
   }
@@ -90,36 +93,47 @@ export class OrganizationFormComponent implements OnInit {
 
     this.isSubmitting.set(true);
     this.error.set(null);
+    this.successMessage.set(null);
 
-    const formValue = this.orgForm.value;
+    const formValue = this.orgForm.getRawValue();
+
+    // Ensure businessType is sent as a number, not a string
+    const sanitizedValues = {
+      ...formValue,
+      businessType: +formValue.businessType
+    };
 
     if (this.isEditMode() && this.orgId()) {
       const command: UpdateOrganizationCommand = {
         id: this.orgId()!,
-        ...formValue
+        ...sanitizedValues
       };
       this.organizationService.updateOrganization(this.orgId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.router.navigate(['/organizations']);
+          this.successMessage.set('Organization updated successfully.');
+          setTimeout(() => this.router.navigate(['/organizations']), 500);
         },
         error: (err) => {
-          this.error.set('Failed to update organization. Please check the inputs.');
+          const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to update organization. Please check the inputs.';
+          this.error.set(message);
           this.isSubmitting.set(false);
-          console.error(err);
+          console.error('[OrganizationForm] update error:', err);
         }
       });
     } else {
-      const command: CreateOrganizationCommand = { ...formValue };
+      const command: CreateOrganizationCommand = { ...sanitizedValues };
       this.organizationService.createOrganization(command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.router.navigate(['/organizations']);
+          this.successMessage.set('Organization created successfully.');
+          setTimeout(() => this.router.navigate(['/organizations']), 500);
         },
         error: (err) => {
-          this.error.set('Failed to create organization. Please check the inputs.');
+          const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to create organization. Please check the inputs.';
+          this.error.set(message);
           this.isSubmitting.set(false);
-          console.error(err);
+          console.error('[OrganizationForm] create error:', err);
         }
       });
     }

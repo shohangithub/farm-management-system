@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Organizations;
 using Farm360.Domain.Organizations.Enums;
@@ -24,7 +25,7 @@ public record CreateOrganizationCommand(
     string? State,
     string? Country,
     string? ZipCode,
-    BusinessType BusinessType) : IRequest<Guid>;
+    BusinessType BusinessType) : IRequest<Guid>, ITransactionalCommand;
 
 public class CreateOrganizationCommandValidator : AbstractValidator<CreateOrganizationCommand>
 {
@@ -114,11 +115,11 @@ internal sealed class CreateOrganizationCommandHandler : IRequestHandler<CreateO
             address,
             request.BusinessType);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
         _repository.Add(organization);
 
-        await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
+        // SaveChangesAsync persists within the pipeline-managed transaction (TransactionBehavior).
+        // Do NOT call BeginTransactionAsync here — the MediatR TransactionBehavior already wraps this command.
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return organization.Id;
     }

@@ -12,8 +12,8 @@
           [color]="data.isDestructive ? 'warn' : 'primary'" 
           (click)="onConfirm()"
           [class.!bg-red-600]="data.isDestructive"
-          [class.!bg-green-600]="!data.isDestructive"
-          class="!text-white ml-2">
+          [class.!bg-primary-600]="!data.isDestructive"
+          class="!text-white ml-2 shadow-sm !rounded-md">
     {{ data.confirmButtonText || 'Confirm' }}
   </button>
 </mat-dialog-actions>

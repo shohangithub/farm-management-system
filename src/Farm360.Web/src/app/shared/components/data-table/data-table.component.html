@@ -1,44 +1,43 @@
-<div class="mat-elevation-z1 !shadow-sm border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+<div class="border border-gray-100 dark:border-gray-800/50 rounded-lg overflow-hidden bg-white dark:bg-surface-dark shadow-sm">
   <div class="overflow-x-auto">
     <table mat-table [dataSource]="dataSource" matSort class="w-full bg-transparent">
 
       <!-- Dynamic Columns -->
       <ng-container *ngFor="let col of columns" [matColumnDef]="col.def">
         <ng-container *ngIf="!col.isAction">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="!text-gray-500 dark:!text-gray-400 !font-semibold !bg-gray-50 dark:!bg-gray-800/50"> 
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="!text-gray-500 dark:!text-gray-400 !font-bold !bg-gray-50/50 dark:!bg-gray-800/20 !text-[11px] !tracking-wider !uppercase !px-4 !py-3"> 
             {{ col.header }} 
           </th>
-          <td mat-cell *matCellDef="let element" class="!text-gray-700 dark:!text-gray-300"> 
-            <!-- We will use innerHTML in case we want to return badges -->
+          <td mat-cell *matCellDef="let element" class="!text-gray-700 dark:!text-gray-300 !px-4 !py-3 !text-[13px]"> 
             <div [innerHTML]="col.cell(element)"></div>
           </td>
         </ng-container>
         
         <!-- Actions Column -->
         <ng-container *ngIf="col.isAction">
-          <th mat-header-cell *matHeaderCellDef class="!text-right !text-gray-500 dark:!text-gray-400 !font-semibold !bg-gray-50 dark:!bg-gray-800/50"> 
+          <th mat-header-cell *matHeaderCellDef class="!text-right !text-gray-500 dark:!text-gray-400 !font-bold !bg-gray-50/50 dark:!bg-gray-800/20 !text-[11px] !tracking-wider !uppercase !px-4 !py-3"> 
             {{ col.header }} 
           </th>
-          <td mat-cell *matCellDef="let element" class="!text-right">
+          <td mat-cell *matCellDef="let element" class="!text-right !px-4 !py-2">
             <div class="flex justify-end gap-1">
-              <button *ngIf="view.observed" mat-icon-button color="primary" matTooltip="View Details" (click)="onView(element)">
-                <mat-icon>visibility</mat-icon>
+              <button *ngIf="view.observed" mat-icon-button class="!text-gray-400 hover:!text-primary-600 dark:hover:!text-primary-400 !transition-colors !w-8 !h-8" matTooltip="View Details" (click)="onView(element)">
+                <mat-icon class="!text-[18px] !w-[18px] !h-[18px] flex items-center justify-center">visibility</mat-icon>
               </button>
-              <button *ngIf="edit.observed" mat-icon-button color="accent" matTooltip="Edit" (click)="onEdit(element)">
-                <mat-icon>edit</mat-icon>
+              <button *ngIf="edit.observed" mat-icon-button class="!text-gray-400 hover:!text-accent-600 dark:hover:!text-accent-400 !transition-colors !w-8 !h-8" matTooltip="Edit" (click)="onEdit(element)">
+                <mat-icon class="!text-[18px] !w-[18px] !h-[18px] flex items-center justify-center">edit</mat-icon>
               </button>
-              <button *ngIf="delete.observed" mat-icon-button color="warn" matTooltip="Delete" (click)="onDelete(element)">
-                <mat-icon>delete</mat-icon>
+              <button *ngIf="delete.observed" mat-icon-button class="!text-gray-400 hover:!text-red-600 dark:hover:!text-red-400 !transition-colors !w-8 !h-8" matTooltip="Delete" (click)="onDelete(element)">
+                <mat-icon class="!text-[18px] !w-[18px] !h-[18px] flex items-center justify-center">delete</mat-icon>
               </button>
             </div>
           </td>
         </ng-container>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns" class="!border-b !border-gray-200 dark:!border-gray-800"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="!border-b !border-gray-100 dark:!border-gray-800 hover:!bg-gray-50 dark:hover:!bg-gray-800/30 transition-colors"></tr>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns" class="!border-b !border-gray-100 dark:!border-gray-800/50"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="!border-b !border-gray-50 dark:!border-gray-800/30 hover:!bg-primary-50/30 dark:hover:!bg-primary-900/10 transition-colors"></tr>
     </table>
   </div>
   
-  <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page" class="!bg-white dark:!bg-gray-900 border-t border-gray-100 dark:border-gray-800"></mat-paginator>
+  <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page" class="!bg-white dark:!bg-surface-dark border-t border-gray-100 dark:border-gray-800/50"></mat-paginator>
 </div>

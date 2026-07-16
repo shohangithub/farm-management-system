@@ -1,162 +1,117 @@
-<div class="page-header mb-6">
-  <div class="flex items-center">
-    <button [routerLink]="['/organizations', orgId(), 'branches']" class="mr-4 text-gray-400 hover:text-gray-500">
-      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-      </svg>
-    </button>
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">{{ isEditMode() ? 'Edit Branch' : 'Add Branch' }}</h1>
-      <p class="text-sm text-gray-500">{{ isEditMode() ? 'Update location details.' : 'Create a new branch or unit.' }}</p>
-    </div>
-  </div>
-</div>
+<app-page-header 
+  [title]="isEditMode() ? 'Edit Branch' : 'Add Branch'" 
+  [description]="isEditMode() ? 'Update location and contact details.' : 'Create a new branch or unit.'">
+</app-page-header>
 
-<div *ngIf="error()" class="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md mb-6">
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 shadow-sm">
   {{ error() }}
 </div>
 
-<form [formGroup]="branchForm" (ngSubmit)="onSubmit()" class="space-y-8 divide-y divide-gray-200 bg-white p-6 rounded-lg shadow">
+<form [formGroup]="branchForm" (ngSubmit)="onSubmit()" class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800/50 divide-y divide-gray-100 dark:divide-gray-800/50">
   
-  <div class="space-y-6 sm:space-y-5">
+  <div class="p-6 sm:p-8 space-y-6">
     <div>
-      <h3 class="text-lg leading-6 font-medium text-gray-900">Branch Details</h3>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Basic Information</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Core details for this branch.</p>
     </div>
     
-    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-      <div class="sm:col-span-2">
-        <label for="branchCode" class="block text-sm font-medium text-gray-700">Branch Code *</label>
-        <div class="mt-1">
-          <input type="text" formControlName="branchCode" id="branchCode" class="input uppercase">
-        </div>
+    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+      <div class="sm:col-span-2 form-group">
+        <label for="branchCode" class="form-label">Branch Code *</label>
+        <input type="text" formControlName="branchCode" id="branchCode" class="form-control uppercase" placeholder="BR-001">
       </div>
 
-      <div class="sm:col-span-4">
-        <label for="name" class="block text-sm font-medium text-gray-700">Branch Name *</label>
-        <div class="mt-1">
-          <input type="text" formControlName="name" id="name" class="input">
-        </div>
+      <div class="sm:col-span-4 form-group">
+        <label for="name" class="form-label">Branch Name *</label>
+        <input type="text" formControlName="name" id="name" class="form-control" placeholder="Main Farm">
       </div>
-      
+
       <div class="sm:col-span-6 flex items-center">
-        <input id="isHeadOffice" formControlName="isHeadOffice" type="checkbox" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-        <label for="isHeadOffice" class="ml-2 block text-sm text-gray-900">
-          Mark as Head Office
+        <input type="checkbox" formControlName="isHeadOffice" id="isHeadOffice" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded">
+        <label for="isHeadOffice" class="ml-2 block text-sm text-gray-700 dark:text-gray-300 font-medium">
+          This is the Head Office
         </label>
       </div>
-
-      <div *ngIf="isEditMode()" class="sm:col-span-2">
-        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-        <div class="mt-1">
-          <select id="status" formControlName="status" class="input">
-            <option [value]="1">Active</option>
-            <option [value]="2">Inactive</option>
-            <option [value]="3">Closed</option>
-          </select>
-        </div>
-      </div>
     </div>
   </div>
 
-  <div class="pt-8 space-y-6 sm:space-y-5">
+  <div class="p-6 sm:p-8 space-y-6">
     <div>
-      <h3 class="text-lg leading-6 font-medium text-gray-900">Contact & Address</h3>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Contact & Address</h3>
     </div>
     
-    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-      <div class="sm:col-span-3">
-        <label for="contactEmail" class="block text-sm font-medium text-gray-700">Contact Email *</label>
-        <div class="mt-1">
-          <input type="email" formControlName="contactEmail" id="contactEmail" class="input">
-        </div>
+    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+      <div class="sm:col-span-3 form-group">
+        <label for="contactEmail" class="form-label">Contact Email *</label>
+        <input type="email" formControlName="contactEmail" id="contactEmail" class="form-control" placeholder="branch@example.com">
       </div>
 
-      <div class="sm:col-span-3">
-        <label for="contactPhone" class="block text-sm font-medium text-gray-700">Contact Phone</label>
-        <div class="mt-1">
-          <input type="text" formControlName="contactPhone" id="contactPhone" class="input">
-        </div>
+      <div class="sm:col-span-3 form-group">
+        <label for="contactPhone" class="form-label">Contact Phone</label>
+        <input type="text" formControlName="contactPhone" id="contactPhone" class="form-control" placeholder="+1 (555) 000-0000">
       </div>
 
-      <div class="sm:col-span-6">
-        <label for="street" class="block text-sm font-medium text-gray-700">Street Address</label>
-        <div class="mt-1">
-          <input type="text" formControlName="street" id="street" class="input">
-        </div>
+      <div class="sm:col-span-6 form-group">
+        <label for="street" class="form-label">Street Address</label>
+        <input type="text" formControlName="street" id="street" class="form-control">
+      </div>
+      
+      <div class="sm:col-span-2 form-group">
+        <label for="city" class="form-label">City</label>
+        <input type="text" formControlName="city" id="city" class="form-control">
+      </div>
+      
+      <div class="sm:col-span-2 form-group">
+        <label for="state" class="form-label">State / Province</label>
+        <input type="text" formControlName="state" id="state" class="form-control">
+      </div>
+      
+      <div class="sm:col-span-2 form-group">
+        <label for="zipCode" class="form-label">ZIP / Postal Code</label>
+        <input type="text" formControlName="zipCode" id="zipCode" class="form-control">
       </div>
 
-      <div class="sm:col-span-2">
-        <label for="city" class="block text-sm font-medium text-gray-700">City</label>
-        <div class="mt-1">
-          <input type="text" formControlName="city" id="city" class="input">
-        </div>
-      </div>
-      
-      <div class="sm:col-span-2">
-        <label for="state" class="block text-sm font-medium text-gray-700">State / Province</label>
-        <div class="mt-1">
-          <input type="text" formControlName="state" id="state" class="input">
-        </div>
-      </div>
-      
-      <div class="sm:col-span-2">
-        <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
-        <div class="mt-1">
-          <input type="text" formControlName="country" id="country" class="input">
-        </div>
-      </div>
-      
-      <div class="sm:col-span-2">
-        <label for="zipCode" class="block text-sm font-medium text-gray-700">ZIP / Postal Code</label>
-        <div class="mt-1">
-          <input type="text" formControlName="zipCode" id="zipCode" class="input">
-        </div>
+      <div class="sm:col-span-3 form-group">
+        <label for="country" class="form-label">Country</label>
+        <input type="text" formControlName="country" id="country" class="form-control">
       </div>
     </div>
   </div>
 
-  <div class="pt-8 space-y-6 sm:space-y-5">
+  <div class="p-6 sm:p-8 space-y-6">
     <div>
-      <h3 class="text-lg leading-6 font-medium text-gray-900">Operations & Geo</h3>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Additional Details</h3>
     </div>
     
-    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-      <div class="sm:col-span-3">
-        <label for="latitude" class="block text-sm font-medium text-gray-700">Latitude</label>
-        <div class="mt-1">
-          <input type="number" step="0.00000001" formControlName="latitude" id="latitude" class="input">
-        </div>
+    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+      <div class="sm:col-span-3 form-group">
+        <label for="workingHours" class="form-label">Working Hours</label>
+        <input type="text" formControlName="workingHours" id="workingHours" class="form-control" placeholder="e.g. Mon-Fri, 9AM-5PM">
       </div>
 
-      <div class="sm:col-span-3">
-        <label for="longitude" class="block text-sm font-medium text-gray-700">Longitude</label>
-        <div class="mt-1">
-          <input type="number" step="0.00000001" formControlName="longitude" id="longitude" class="input">
-        </div>
+      <div class="sm:col-span-3 form-group">
+        <label for="holidayCalendar" class="form-label">Holiday Calendar ID</label>
+        <input type="text" formControlName="holidayCalendar" id="holidayCalendar" class="form-control">
       </div>
 
-      <div class="sm:col-span-3">
-        <label for="workingHours" class="block text-sm font-medium text-gray-700">Working Hours (JSON/String)</label>
-        <div class="mt-1">
-          <input type="text" formControlName="workingHours" id="workingHours" class="input" placeholder='e.g., {"Mon-Fri": "09:00-17:00"}'>
-        </div>
+      <div class="sm:col-span-3 form-group">
+        <label for="latitude" class="form-label">Latitude</label>
+        <input type="number" formControlName="latitude" id="latitude" class="form-control" placeholder="e.g. 40.7128">
       </div>
 
-      <div class="sm:col-span-3">
-        <label for="holidayCalendar" class="block text-sm font-medium text-gray-700">Holiday Calendar (JSON/String)</label>
-        <div class="mt-1">
-          <input type="text" formControlName="holidayCalendar" id="holidayCalendar" class="input">
-        </div>
+      <div class="sm:col-span-3 form-group">
+        <label for="longitude" class="form-label">Longitude</label>
+        <input type="number" formControlName="longitude" id="longitude" class="form-control" placeholder="e.g. -74.0060">
       </div>
     </div>
   </div>
 
-  <div class="pt-5">
-    <div class="flex justify-end">
-      <button type="button" [routerLink]="['/organizations', orgId(), 'branches']" class="btn btn-outline mr-3">Cancel</button>
-      <button type="submit" [disabled]="branchForm.invalid || isSubmitting()" class="btn btn-primary disabled:opacity-50">
-        {{ isSubmitting() ? 'Saving...' : 'Save' }}
-      </button>
-    </div>
+  <div class="p-6 sm:p-8 bg-gray-50 dark:bg-gray-800/20 rounded-b-xl flex items-center justify-end gap-3">
+    <button type="button" [routerLink]="['/organizations', orgId(), 'branches']" class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+      Cancel
+    </button>
+    <button type="submit" [disabled]="branchForm.invalid || isSubmitting()" class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+      {{ isSubmitting() ? 'Saving...' : 'Save Branch' }}
+    </button>
   </div>
 </form>

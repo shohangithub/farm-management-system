@@ -1,17 +1,17 @@
-<mat-sidenav-container class="h-screen w-full bg-gray-50 dark:bg-gray-900" autosize>
+<mat-sidenav-container class="h-screen w-full bg-elevated-light dark:bg-elevated-dark" autosize>
   
   <!-- Sidebar -->
-  <mat-sidenav #sidenav mode="side" opened class="border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900" [class.w-16]="isSidebarCollapsed" [class.w-64]="!isSidebarCollapsed" style="transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);">
+  <mat-sidenav #sidenav mode="side" opened class="border-r border-gray-100 dark:border-gray-800/50 bg-white dark:bg-surface-dark shadow-sm" [class.w-16]="isSidebarCollapsed" [class.w-64]="!isSidebarCollapsed" style="transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);">
     <app-sidebar [isCollapsed]="isSidebarCollapsed"></app-sidebar>
   </mat-sidenav>
 
   <!-- Main Content -->
-  <mat-sidenav-content class="flex flex-col h-full overflow-hidden">
+  <mat-sidenav-content class="flex flex-col h-full overflow-hidden bg-elevated-light dark:bg-elevated-dark">
     <!-- Top Header -->
     <app-header (toggleSidebar)="toggleSidebar()"></app-header>
     
     <!-- Page Content -->
-    <main class="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900">
+    <main class="flex-1 overflow-auto p-4 md:p-8">
       <router-outlet></router-outlet>
     </main>
   </mat-sidenav-content>
