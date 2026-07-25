@@ -271,7 +271,7 @@ public enum SessionRevokeReason
 }
 
 /// <summary>
-/// Business audit log writing service.
+/// Audit log writing service for business operations.
 /// Constitution §11: All entity changes produce an audit record.
 /// F360-MTA-2026-001: Audit logs are tenant-scoped and INSERT-only.
 /// </summary>
@@ -286,3 +286,37 @@ public interface IAuditLogService
         string? newValues,
         CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Result of resolving a user's active tenant membership.
+/// Used by AuthService during login and token refresh to embed the correct
+/// tenant ID and role into the JWT without a Persistence → Identity dependency.
+/// </summary>
+public sealed record TenantMembership(
+    Guid TenantId,
+    string RoleName);
+
+/// <summary>
+/// Cross-cutting service: resolves a user's active tenant memberships from the
+/// Application database (TenantUser table).
+///
+/// Lives in Application.Common.Interfaces so it can be called from Farm360.Identity
+/// (which references Farm360.Application) without creating a circular dependency.
+/// Implemented in Farm360.Persistence, registered via DI.
+///
+/// F360-MTA-2026-001 §3: Users may belong to multiple tenants.
+/// </summary>
+public interface ITenantMembershipService
+{
+    /// <summary>
+    /// Returns the user's primary active tenant membership.
+    /// If preferredTenantId is provided and the user has an active membership in that tenant,
+    /// that membership is returned; otherwise the earliest active membership is returned.
+    /// Returns null if the user has no active memberships.
+    /// </summary>
+    Task<TenantMembership?> GetActiveMembershipAsync(
+        Guid userId,
+        Guid? preferredTenantId = null,
+        CancellationToken cancellationToken = default);
+}
+

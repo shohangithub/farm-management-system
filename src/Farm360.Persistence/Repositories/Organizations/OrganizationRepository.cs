@@ -34,6 +34,13 @@ public class OrganizationRepository : IOrganizationRepository
             .AnyAsync(o => o.TenantId == tenantId && o.Name == name, cancellationToken);
     }
 
+    public async Task<Organization?> GetByNameAsync(Guid tenantId, string name, CancellationToken cancellationToken = default)
+    {
+        // EF global query filters (tenant + soft-delete) are active; the TenantId check is explicit for clarity
+        return await _context.Organizations
+            .FirstOrDefaultAsync(o => o.TenantId == tenantId && o.Name == name, cancellationToken);
+    }
+
     public void Add(Organization organization)
     {
         _context.Organizations.Add(organization);

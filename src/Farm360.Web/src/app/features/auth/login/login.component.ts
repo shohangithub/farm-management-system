@@ -17,6 +17,8 @@ export class LoginComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  readonly currentYear = new Date().getFullYear();
+
   loginForm = this.fb.nonNullable.group({
     phone: ['', [Validators.required]],
     password: ['', [Validators.required]]
@@ -39,13 +41,13 @@ export class LoginComponent {
         const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
         this.router.navigateByUrl(returnUrl).then(navigated => {
           if (!navigated) {
-             this.isLoading = false;
+            this.isLoading = false;
           }
         });
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.error?.detail || 'Invalid login credentials.';
+        this.errorMessage = err.error?.detail || err.error?.title || 'Invalid credentials. Please try again.';
       }
     });
   }

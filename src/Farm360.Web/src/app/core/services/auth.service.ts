@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, firstValueFrom, of, tap, catchError, map } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, firstValueFrom, map, of, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
@@ -24,15 +24,19 @@ export interface UserProfile {
   permissions?: string[];
 }
 
+// ── Token storage keys ────────────────────────────────────────────────────────
+// Access token: sessionStorage (cleared on tab/browser close, not readable cross-tab)
+// Refresh token: localStorage  (persists for silent re-authentication across sessions)
+// Note: httpOnly cookies would be ideal but require backend cookie support (Phase 2).
+const ACCESS_TOKEN_KEY = 'farm360_access_token';
+const REFRESH_TOKEN_KEY = 'farm360_refresh_token';
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-
-  private accessTokenKey = 'farm360_access_token';
-  private refreshTokenKey = 'farm360_refresh_token';
 
   public isInitialized = signal<boolean>(false);
   private isInitializedSubject = new BehaviorSubject<boolean>(false);
@@ -42,17 +46,21 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
   public currentUserSignal = signal<UserProfile | null>(null);
 
+  // ── Token accessors ───────────────────────────────────────────────────────
+
   public get accessToken(): string | null {
-    return localStorage.getItem(this.accessTokenKey);
+    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
   }
 
   public get refreshToken(): string | null {
-    return localStorage.getItem(this.refreshTokenKey);
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
   }
 
   public get isAuthenticated(): boolean {
     return !!this.accessToken;
   }
+
+  // ── Session initialization (called at app startup) ────────────────────────
 
   public initializeSession(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
@@ -64,7 +72,7 @@ export class AuthService {
             resolve(true);
           },
           error: () => {
-            // Access token failed/expired; try silent refresh if refresh token present
+            // Access token expired or invalid; attempt silent refresh
             if (this.refreshToken) {
               this.refreshSessionAndLoadProfile(resolve);
             } else {
@@ -108,6 +116,8 @@ export class AuthService {
     });
   }
 
+  // ── Authentication actions ────────────────────────────────────────────────
+
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>('/api/v1/auth/login', request).pipe(
       tap(response => this.setSession(response)),
@@ -129,14 +139,31 @@ export class AuthService {
     );
   }
 
+  /**
+   * H2 Fix: Logout properly awaits the server-side session revocation before clearing local state.
+   * If the API call fails (network error, etc.), we still clear the local session — the server-side
+   * session will eventually expire naturally, but the user is immediately logged out locally.
+   */
   logout(): void {
     const token = this.refreshToken;
-    if (token) {
-      this.http.post('/api/v1/auth/logout', { refreshToken: token }).subscribe();
-    }
+
+    // Clear local state immediately to prevent further API calls with this token
     this.clearSession();
+
+    // Attempt server-side revocation — fire-and-observe (don't block navigation)
+    if (token) {
+      this.http.post('/api/v1/auth/logout', { refreshToken: token }).subscribe({
+        error: (err) => {
+          // Log but don't re-throw — local session is already cleared
+          console.warn('[AuthService] Server-side session revocation failed (session will expire naturally):', err?.status);
+        }
+      });
+    }
+
     this.router.navigate(['/login']);
   }
+
+  // ── Authorization ─────────────────────────────────────────────────────────
 
   hasPermission(permissionCode: string): boolean {
     const user = this.currentUserSubject.value;
@@ -144,14 +171,18 @@ export class AuthService {
     return user.permissions.includes(permissionCode);
   }
 
+  // ── Session management ────────────────────────────────────────────────────
+
   public setSession(response: LoginResponse): void {
-    localStorage.setItem(this.accessTokenKey, response.accessToken);
-    localStorage.setItem(this.refreshTokenKey, response.refreshToken);
+    // Access token: sessionStorage (shorter lifetime, tab-scoped)
+    sessionStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
+    // Refresh token: localStorage (persists for silent re-auth)
+    localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
   }
 
   public clearSession(): void {
-    localStorage.removeItem(this.accessTokenKey);
-    localStorage.removeItem(this.refreshTokenKey);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     this.currentUserSubject.next(null);
     this.currentUserSignal.set(null);
   }

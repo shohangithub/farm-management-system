@@ -54,7 +54,7 @@ public class CreateOrganizationCommandHandlerTests
             null,
             null,
             null,
-            BusinessType.LLC);
+            BusinessType.Buyer);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

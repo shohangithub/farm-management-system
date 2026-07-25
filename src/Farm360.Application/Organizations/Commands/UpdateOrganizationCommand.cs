@@ -43,21 +43,39 @@ public class UpdateOrganizationCommandValidator : AbstractValidator<UpdateOrgani
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Organization name is required.")
-            .MaximumLength(200).WithMessage("Organization name must not exceed 200 characters.");
-            
-        // Complex unique check omitted from simple validator for brevity (can be done in handler or custom validator rule checking ID)
+            .MaximumLength(200).WithMessage("Organization name must not exceed 200 characters.")
+            .MustAsync(BeUniqueNameForUpdate).WithMessage("An organization with this name already exists for the current tenant.");
 
         RuleFor(x => x.ContactEmail)
             .NotEmpty().WithMessage("Contact email is required.")
             .EmailAddress().WithMessage("Contact email must be a valid email address.")
             .MaximumLength(150);
 
+        RuleFor(x => x.ContactPhone)
+            .MaximumLength(30);
+
         RuleFor(x => x.CurrencyCode)
             .NotEmpty()
             .Length(3);
 
+        RuleFor(x => x.TimeZoneId)
+            .NotEmpty().WithMessage("Time zone is required.");
+
+        RuleFor(x => x.LanguageCode)
+            .NotEmpty().WithMessage("Language code is required.");
+
         RuleFor(x => x.BusinessType)
             .IsInEnum();
+    }
+
+    /// <summary>
+    /// Checks uniqueness of the organization name within the tenant, excluding the current entity being updated.
+    /// </summary>
+    private async Task<bool> BeUniqueNameForUpdate(UpdateOrganizationCommand command, string name, CancellationToken cancellationToken)
+    {
+        var existing = await _organizationRepository.GetByNameAsync(_tenantService.TenantId, name, cancellationToken);
+        // Unique if no org found, or the found org IS the one being updated
+        return existing == null || existing.Id == command.Id;
     }
 }
 

@@ -25,6 +25,15 @@ export class OrganizationListComponent implements OnInit {
 
   displayedColumns = ['name', 'contact', 'type', 'status', 'actions'];
 
+  // BusinessType enum label map — must match Farm360.Domain.Organizations.Enums.BusinessType
+  private readonly businessTypeLabels: Record<number, string> = {
+    1: 'Farm',
+    2: 'Supplier',
+    3: 'Buyer',
+    4: 'Veterinary Clinic',
+    5: 'Cooperative'
+  };
+
   columns: TableColumn[] = [
     {
       def: 'name',
@@ -41,7 +50,7 @@ export class OrganizationListComponent implements OnInit {
     {
       def: 'type',
       header: 'Type',
-      cell: (row: Organization) => row.businessType === 1 ? 'Farm' : (row.businessType === 2 ? 'Supplier' : 'Other'),
+      cell: (row: Organization) => this.businessTypeLabels[row.businessType] ?? 'Unknown',
       isAction: false
     },
     {

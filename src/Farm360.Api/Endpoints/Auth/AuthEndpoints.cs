@@ -62,29 +62,10 @@ public static class AuthEndpoints
         .WithTags("Auth")
         .Produces<UserProfileDto>();
 
-        group.MapPost("/forgot-password", async ([FromBody] ForgotPasswordRequest request) =>
-        {
-            // Placeholder for email/OTP logic
-            await Task.Delay(100);
-            return Results.Ok(new { message = "If the email is registered, a reset link has been sent." });
-        })
-        .AllowAnonymous()
-        .WithTags("Auth")
-        .Produces(StatusCodes.Status200OK);
-
-        group.MapPost("/reset-password", async ([FromBody] ResetPasswordRequest request) =>
-        {
-            // Placeholder for password reset logic
-            await Task.Delay(100);
-            return Results.Ok(new { message = "Password reset successfully." });
-        })
-        .AllowAnonymous()
-        .WithTags("Auth")
-        .Produces(StatusCodes.Status200OK);
+        // Phase 2: Password Reset via OTP (F360-AUTH-2026-001 §4 — not implemented yet)
+        // POST /forgot-password → generate OTP, send via SMS
+        // POST /reset-password  → verify OTP, set new password
 
         return group;
     }
 }
-
-public record ForgotPasswordRequest(string Email);
-public record ResetPasswordRequest(string Email, string Token, string NewPassword);

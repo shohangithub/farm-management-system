@@ -13,6 +13,7 @@
 
 <form [formGroup]="orgForm" (ngSubmit)="onSubmit()" class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800/50 divide-y divide-gray-100 dark:divide-gray-800/50">
   
+  <!-- ── Basic Information ───────────────────────────────────── -->
   <div class="p-6 sm:p-8 space-y-6">
     <div>
       <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Basic Information</h3>
@@ -23,11 +24,15 @@
       <div class="sm:col-span-4 form-group">
         <label for="name" class="form-label">Organization Name *</label>
         <input type="text" formControlName="name" id="name" class="form-control" placeholder="Enter organization name">
+        <span *ngIf="orgForm.get('name')?.touched && orgForm.get('name')?.invalid" class="text-xs text-red-500 mt-1">
+          Organization name is required (max 200 characters).
+        </span>
       </div>
 
       <div class="sm:col-span-2 form-group">
         <label for="businessType" class="form-label">Business Type *</label>
         <select id="businessType" formControlName="businessType" class="form-control">
+          <!-- Values align with Farm360.Domain.Organizations.Enums.BusinessType -->
           <option [ngValue]="1">Farm</option>
           <option [ngValue]="2">Supplier</option>
           <option [ngValue]="3">Buyer</option>
@@ -38,6 +43,7 @@
     </div>
   </div>
 
+  <!-- ── Contact & Regional ──────────────────────────────────── -->
   <div class="p-6 sm:p-8 space-y-6">
     <div>
       <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Contact & Regional</h3>
@@ -48,34 +54,54 @@
       <div class="sm:col-span-3 form-group">
         <label for="contactEmail" class="form-label">Contact Email *</label>
         <input type="email" formControlName="contactEmail" id="contactEmail" class="form-control" placeholder="admin@example.com">
+        <span *ngIf="orgForm.get('contactEmail')?.touched && orgForm.get('contactEmail')?.invalid" class="text-xs text-red-500 mt-1">
+          A valid contact email is required.
+        </span>
       </div>
 
       <div class="sm:col-span-3 form-group">
         <label for="contactPhone" class="form-label">Contact Phone</label>
-        <input type="text" formControlName="contactPhone" id="contactPhone" class="form-control" placeholder="+1 (555) 000-0000">
+        <input type="text" formControlName="contactPhone" id="contactPhone" class="form-control" placeholder="+880XXXXXXXXXX">
       </div>
 
       <div class="sm:col-span-2 form-group">
         <label for="currencyCode" class="form-label">Currency *</label>
         <select id="currencyCode" formControlName="currencyCode" class="form-control">
-          <option value="USD">USD ($)</option>
-          <option value="EUR">EUR (€)</option>
-          <option value="GBP">GBP (£)</option>
+          <!-- BDT first — this is the primary market (Bangladesh). Default in domain entity. -->
+          <option value="BDT">BDT (৳) — Bangladeshi Taka</option>
+          <option value="USD">USD ($) — US Dollar</option>
+          <option value="EUR">EUR (€) — Euro</option>
+          <option value="GBP">GBP (£) — British Pound</option>
+          <option value="INR">INR (₹) — Indian Rupee</option>
+          <option value="AED">AED (د.إ) — UAE Dirham</option>
         </select>
       </div>
 
       <div class="sm:col-span-2 form-group">
         <label for="timeZoneId" class="form-label">Time Zone *</label>
-        <input type="text" formControlName="timeZoneId" id="timeZoneId" class="form-control" placeholder="e.g. UTC, America/New_York">
+        <select id="timeZoneId" formControlName="timeZoneId" class="form-control">
+          <option value="Asia/Dhaka">Asia/Dhaka (GMT+6)</option>
+          <option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</option>
+          <option value="Asia/Dubai">Asia/Dubai (GMT+4)</option>
+          <option value="UTC">UTC (GMT+0)</option>
+          <option value="America/New_York">America/New_York (EST)</option>
+          <option value="Europe/London">Europe/London (GMT)</option>
+        </select>
       </div>
       
       <div class="sm:col-span-2 form-group">
         <label for="languageCode" class="form-label">Language *</label>
-        <input type="text" formControlName="languageCode" id="languageCode" class="form-control" placeholder="en-US">
+        <select id="languageCode" formControlName="languageCode" class="form-control">
+          <option value="en">English</option>
+          <option value="bn">Bengali (বাংলা)</option>
+          <option value="hi">Hindi (हिंदी)</option>
+          <option value="ar">Arabic (العربية)</option>
+        </select>
       </div>
     </div>
   </div>
 
+  <!-- ── Legal Details ───────────────────────────────────────── -->
   <div class="p-6 sm:p-8 space-y-6">
     <div>
       <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Legal Details</h3>
@@ -94,18 +120,55 @@
       </div>
 
       <div class="sm:col-span-2 form-group">
-        <label for="taxIdentificationNumber" class="form-label">Tax ID (BIN/TIN)</label>
+        <label for="taxIdentificationNumber" class="form-label">Tax ID (BIN / TIN)</label>
         <input type="text" formControlName="taxIdentificationNumber" id="taxIdentificationNumber" class="form-control">
       </div>
     </div>
   </div>
 
+  <!-- ── Address ────────────────────────────────────────────── -->
+  <div class="p-6 sm:p-8 space-y-6">
+    <div>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Address</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Physical location of this organization (optional).</p>
+    </div>
+    
+    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+      <div class="sm:col-span-6 form-group">
+        <label for="street" class="form-label">Street Address</label>
+        <input type="text" formControlName="street" id="street" class="form-control" placeholder="123 Main Road, Block A">
+      </div>
+
+      <div class="sm:col-span-2 form-group">
+        <label for="city" class="form-label">City / Upazila</label>
+        <input type="text" formControlName="city" id="city" class="form-control" placeholder="Dhaka">
+      </div>
+
+      <div class="sm:col-span-2 form-group">
+        <label for="state" class="form-label">State / Division</label>
+        <input type="text" formControlName="state" id="state" class="form-control" placeholder="Dhaka Division">
+      </div>
+
+      <div class="sm:col-span-1 form-group">
+        <label for="country" class="form-label">Country</label>
+        <input type="text" formControlName="country" id="country" class="form-control" placeholder="Bangladesh">
+      </div>
+
+      <div class="sm:col-span-1 form-group">
+        <label for="zipCode" class="form-label">ZIP / Postal Code</label>
+        <input type="text" formControlName="zipCode" id="zipCode" class="form-control" placeholder="1212">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Action Buttons ─────────────────────────────────────── -->
   <div class="p-6 sm:p-8 bg-gray-50 dark:bg-gray-800/20 rounded-b-xl flex items-center justify-end gap-3">
     <button type="button" routerLink="/organizations" class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
       Cancel
     </button>
     <button type="submit" [disabled]="orgForm.invalid || isSubmitting()" class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-      {{ isSubmitting() ? 'Saving...' : 'Save Organization' }}
+      {{ isSubmitting() ? 'Saving…' : 'Save Organization' }}
     </button>
   </div>
+
 </form>

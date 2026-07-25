@@ -15,6 +15,7 @@ using Farm360.Persistence.Repositories.Organizations;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Persistence.Repositories.Farms;
 using Farm360.Persistence.Seed;
+using Farm360.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -72,6 +73,9 @@ public static class PersistenceServiceExtensions
         // ── Master Data repositories ────────────────────────────────────
         services.AddScoped<IMasterDataRepository, MasterDataRepository>();
         services.AddScoped<ILocationRepository, LocationRepository>();
+
+        // ── Cross-cutting services ────────────────────────────────────────────
+        services.AddScoped<ITenantMembershipService, TenantMembershipService>();
 
         // ── Data Seeder (transient — runs once at startup) ────────────────────
         services.AddTransient<DataSeeder>();
