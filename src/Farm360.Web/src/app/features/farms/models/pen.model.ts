@@ -8,6 +8,10 @@ export interface Pen {
   animalGroup?: string;
   notes?: string;
   status: number; // enum PenStatus
+  createdAtUtc?: string;
+  createdBy?: string;
+  modifiedAtUtc?: string;
+  modifiedBy?: string;
 }
 
 export interface PenList {

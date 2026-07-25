@@ -1,72 +1,108 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute } from '@angular/router';
-import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { PenService } from '../services/pen.service';
 import { PenList } from '../models/pen.model';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-pen-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, DragDropModule],
+  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent],
   templateUrl: './pen-list.component.html'
 })
 export class PenListComponent implements OnInit {
-  private penService = inject(PenService);
-  private route = inject(ActivatedRoute);
+  private readonly penService = inject(PenService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  pens: PenList[] = [];
-  isLoading = true;
-  shedId: string = '';
-  farmId: string = '';
-  branchId: string = '';
+  pens = signal<PenList[]>([]);
+  isLoading = signal<boolean>(true);
+  branchId = signal<string>('');
+  farmId = signal<string>('');
+  shedId = signal<string>('');
   Math = Math;
 
+  searchTerm = signal<string>('');
+  statusFilter = signal<number | null>(null);
+
+  filteredPens = computed(() => {
+    let result = this.pens();
+    
+    const search = this.searchTerm().toLowerCase();
+    if (search) {
+      result = result.filter(p => 
+        p.penName.toLowerCase().includes(search) || 
+        p.penNumber.toLowerCase().includes(search)
+      );
+    }
+    
+    const status = this.statusFilter();
+    if (status) {
+      result = result.filter(p => p.status === status);
+    }
+    
+    return result;
+  });
+
   ngOnInit(): void {
-    const getParams = () => ({
-      branchId: this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId') || '',
-      farmId: this.route.snapshot.paramMap.get('farmId') || this.route.parent?.snapshot.paramMap.get('farmId') || '',
-      shedId: this.route.snapshot.paramMap.get('shedId') || this.route.parent?.snapshot.paramMap.get('shedId') || ''
-    });
+    const getParams = () => {
+      let currentRoute: ActivatedRoute | null = this.route;
+      let branchId = '';
+      let farmId = '';
+      let shedId = this.route.snapshot.paramMap.get('shedId') || this.route.parent?.snapshot.paramMap.get('shedId') || '';
+      
+      while (currentRoute) {
+        if (!branchId) branchId = currentRoute.snapshot.paramMap.get('branchId') || '';
+        if (!farmId) farmId = currentRoute.snapshot.paramMap.get('farmId') || '';
+        if (!shedId) shedId = currentRoute.snapshot.paramMap.get('shedId') || '';
+        currentRoute = currentRoute.parent;
+      }
+      return { branchId, farmId, shedId };
+    };
+    
     const p = getParams();
-    this.branchId = p.branchId;
-    this.farmId = p.farmId;
-    this.shedId = p.shedId;
-    if (this.shedId) {
+    if (p.branchId && p.farmId && p.shedId) {
+      this.branchId.set(p.branchId);
+      this.farmId.set(p.farmId);
+      this.shedId.set(p.shedId);
       this.loadPens();
     }
+    
     this.route.paramMap.subscribe(() => {
       const updated = getParams();
-      if (updated.shedId && updated.shedId !== this.shedId) {
-        this.branchId = updated.branchId;
-        this.farmId = updated.farmId;
-        this.shedId = updated.shedId;
+      if (updated.shedId && updated.shedId !== this.shedId()) {
+        this.branchId.set(updated.branchId);
+        this.farmId.set(updated.farmId);
+        this.shedId.set(updated.shedId);
         this.loadPens();
       }
     });
   }
 
   loadPens(): void {
-    this.isLoading = true;
-    this.penService.getPensByShed(this.shedId).subscribe({
+    this.isLoading.set(true);
+    this.penService.getPensByShed(this.shedId()).subscribe({
       next: (data) => {
-        this.pens = data;
-        this.isLoading = false;
+        this.pens.set(data);
+        this.isLoading.set(false);
       },
       error: (err) => {
         console.error('Failed to load pens', err);
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     });
   }
 
-  // Future integration for Animal assignment via D&D
-  drop(event: CdkDragDrop<PenList[]>) {
-    if (event.previousContainer === event.container) {
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      // Logic for handling animal drops into a pen will go here
-    }
+  onFilterStatus(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value;
+    this.statusFilter.set(val ? parseInt(val, 10) : null);
+  }
+
+  onAddPen(): void {
+    this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens', 'new']);
   }
 
   getStatusName(status: number): string {
@@ -80,10 +116,10 @@ export class PenListComponent implements OnInit {
 
   getStatusClass(status: number): string {
     switch (status) {
-      case 1: return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 2: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-      case 3: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      default: return 'bg-gray-100 text-gray-800';
+      case 1: return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
+      case 2: return 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700';
+      case 3: return 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
+      default: return 'bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400 border border-gray-200 dark:border-gray-800';
     }
   }
 }

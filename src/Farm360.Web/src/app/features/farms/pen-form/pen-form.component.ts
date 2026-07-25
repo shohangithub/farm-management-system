@@ -1,91 +1,179 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subject, takeUntil } from 'rxjs';
 import { PenService } from '../services/pen.service';
+import { CreatePenCommand, UpdatePenCommand } from '../models/pen.model';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-pen-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './pen-form.component.html'
 })
-export class PenFormComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private penService = inject(PenService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+export class PenFormComponent implements OnInit, OnDestroy {
+  private readonly fb = inject(FormBuilder);
+  private readonly penService = inject(PenService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly destroy$ = new Subject<void>();
 
   penForm!: FormGroup;
-  isEditMode = false;
-  penId: string = '';
-  shedId: string = '';
-  farmId: string = '';
-  branchId: string = '';
-  isSaving = false;
-  errorMessage = '';
+  isEditMode = signal<boolean>(false);
+  branchId = signal<string>('');
+  farmId = signal<string>('');
+  shedId = signal<string>('');
+  penId = signal<string | null>(null);
+  isSubmitting = signal<boolean>(false);
+  error = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.branchId = this.route.snapshot.paramMap.get('branchId') || '';
-    this.farmId = this.route.snapshot.paramMap.get('farmId') || '';
-    this.shedId = this.route.snapshot.paramMap.get('shedId') || '';
-    this.penId = this.route.snapshot.paramMap.get('penId') || '';
-    
-    this.isEditMode = !!this.penId;
-
     this.initForm();
 
-    if (this.isEditMode) {
-      this.loadPen();
+    let currentRoute: ActivatedRoute | null = this.route;
+    let branchId = '';
+    let farmId = '';
+    let shedId = '';
+    
+    while (currentRoute) {
+      if (!branchId) branchId = currentRoute.snapshot.paramMap.get('branchId') || '';
+      if (!farmId) farmId = currentRoute.snapshot.paramMap.get('farmId') || '';
+      if (!shedId) shedId = currentRoute.snapshot.paramMap.get('shedId') || '';
+      currentRoute = currentRoute.parent;
     }
+
+    const penId = this.route.snapshot.paramMap.get('penId');
+
+    if (branchId) this.branchId.set(branchId);
+    if (farmId) this.farmId.set(farmId);
+    if (shedId) this.shedId.set(shedId);
+
+    if (penId) {
+      this.isEditMode.set(true);
+      this.penId.set(penId);
+      this.loadPen(penId);
+    }
+
+    // Auto-uppercase pen number as the user types
+    this.penForm.get('penNumber')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (value && value !== value.toUpperCase()) {
+          this.penForm.get('penNumber')?.setValue(value.toUpperCase(), { emitEvent: false });
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   initForm(): void {
     this.penForm = this.fb.group({
       penNumber: ['', [Validators.required, Validators.maxLength(50)]],
       penName: ['', [Validators.required, Validators.maxLength(200)]],
-      capacity: [10, [Validators.required, Validators.min(0)]],
+      capacity: [null, [Validators.required, Validators.min(1)]],
       animalGroup: ['', Validators.maxLength(100)],
-      notes: ['', Validators.maxLength(500)],
+      notes: ['', Validators.maxLength(1000)],
       status: [1]
     });
   }
 
-  loadPen(): void {
-    this.penService.getPenById(this.penId).subscribe(pen => {
-      this.penForm.patchValue(pen);
-      this.penForm.get('penNumber')?.disable();
+  loadPen(id: string): void {
+    this.penService.getPenById(id).subscribe({
+      next: (pen) => {
+        this.penForm.patchValue({
+          penNumber: pen.penNumber,
+          penName: pen.penName,
+          capacity: pen.capacity,
+          animalGroup: pen.animalGroup,
+          notes: pen.notes,
+          status: pen.status
+        });
+        // Pen number shouldn't change after creation
+        this.penForm.get('penNumber')?.disable();
+      },
+      error: (err) => {
+        this.error.set('Failed to load pen details.');
+        console.error(err);
+      }
     });
   }
 
+  getError(field: string): string {
+    const control = this.penForm.get(field);
+    if (!control || !control.touched || control.valid) return '';
+    if (control.hasError('required')) return 'This field is required.';
+    if (control.hasError('maxlength')) {
+      const max = control.getError('maxlength').requiredLength;
+      return `Maximum ${max} characters allowed.`;
+    }
+    if (control.hasError('min')) {
+      return 'Value must be greater than zero.';
+    }
+    return 'Invalid value.';
+  }
+
   onSubmit(): void {
-    if (this.penForm.invalid) return;
+    if (this.penForm.invalid) {
+      this.penForm.markAllAsTouched();
+      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
+        duration: 4000,
+        panelClass: ['snack-error']
+      });
+      return;
+    }
 
-    this.isSaving = true;
-    this.errorMessage = '';
-    const formData = this.penForm.getRawValue();
+    this.isSubmitting.set(true);
+    this.error.set(null);
 
-    if (this.isEditMode) {
-      this.penService.updatePen(this.penId, formData).subscribe({
+    const formValue = this.penForm.getRawValue();
+
+    if (this.isEditMode() && this.penId()) {
+      const command: UpdatePenCommand = {
+        id: this.penId()!,
+        ...formValue
+      };
+      this.penService.updatePen(this.penId()!, command).subscribe({
         next: () => {
-          this.router.navigate(['/organizations/branches', this.branchId, 'farms', this.farmId, 'sheds', this.shedId]);
+          this.isSubmitting.set(false);
+          this.snackBar.open('Pen updated successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success']
+          });
+          this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
         },
         error: (err) => {
+          const message = err?.error?.detail || err?.error?.title || 'Failed to update pen. Please check the inputs.';
+          this.error.set(message);
+          this.isSubmitting.set(false);
           console.error(err);
-          this.errorMessage = err.error?.detail || err.error?.title || 'An unexpected error occurred.';
-          this.isSaving = false;
         }
       });
     } else {
-      formData.shedId = this.shedId;
-      this.penService.createPen(this.shedId, formData).subscribe({
+      const command: CreatePenCommand = {
+        shedId: this.shedId(),
+        ...formValue
+      };
+      this.penService.createPen(this.shedId(), command).subscribe({
         next: () => {
-          this.router.navigate(['/organizations/branches', this.branchId, 'farms', this.farmId, 'sheds', this.shedId]);
+          this.isSubmitting.set(false);
+          this.snackBar.open('Pen created successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success']
+          });
+          this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
         },
         error: (err) => {
+          const message = err?.error?.detail || err?.error?.title || 'Failed to create pen. Please check the inputs.';
+          this.error.set(message);
+          this.isSubmitting.set(false);
           console.error(err);
-          this.errorMessage = err.error?.detail || err.error?.title || 'An unexpected error occurred.';
-          this.isSaving = false;
         }
       });
     }

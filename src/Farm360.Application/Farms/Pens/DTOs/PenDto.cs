@@ -11,7 +11,11 @@ public record PenDto(
     int CurrentOccupancy,
     string? AnimalGroup,
     string? Notes,
-    int Status);
+    int Status,
+    DateTime CreatedAtUtc,
+    Guid CreatedBy,
+    DateTime? ModifiedAtUtc,
+    Guid? ModifiedBy);
 
 public record PenListDto(
     Guid Id,
@@ -35,7 +39,11 @@ public static class PenMappingExtensions
             pen.CurrentOccupancy,
             pen.AnimalGroup,
             pen.Notes,
-            (int)pen.Status);
+            (int)pen.Status,
+            pen.CreatedAtUtc,
+            pen.CreatedBy,
+            pen.ModifiedAtUtc,
+            pen.ModifiedBy);
     }
 
     public static PenListDto ToListDto(this Pen pen)
