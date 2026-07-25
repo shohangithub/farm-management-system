@@ -35,19 +35,32 @@ export class BranchListComponent implements OnInit {
   searchTerm = signal<string>('');
   statusFilter = signal<number | null>(null);
 
-  displayedColumns = ['branch', 'contact', 'status', 'actions'];
+  displayedColumns = ['branch', 'contact', 'location', 'status', 'actions'];
 
   columns: TableColumn[] = [
     {
       def: 'branch',
       header: 'Branch',
-      cell: (row: BranchList) => `<div><div class="font-semibold text-gray-900 dark:text-white">${row.name}</div><div class="text-[11px] text-gray-500">Code: ${row.branchCode} ${row.isHeadOffice ? '<span class="ml-1 px-1.5 py-0.5 inline-flex text-[9px] leading-4 font-bold rounded-sm bg-blue-100 text-blue-800 uppercase">HQ</span>' : ''}</div></div>`,
+      cell: (row: BranchList) => `<div><div class="font-semibold text-gray-900 dark:text-white">${row.name}</div><div class="text-[11px] text-gray-500 font-mono mt-0.5">Code: ${row.branchCode} ${row.isHeadOffice ? '<span class="ml-1 px-1.5 py-0.5 inline-flex text-[9px] leading-4 font-bold rounded-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 uppercase">HQ</span>' : ''}</div></div>`,
       isAction: false
     },
     {
       def: 'contact',
       header: 'Contact',
-      cell: (row: BranchList) => `<div>${row.contactEmail}</div><div class="text-[11px] text-gray-500">${row.contactPhone || '-'}</div>`,
+      cell: (row: BranchList) => `<div class="text-sm text-gray-700 dark:text-gray-300">${row.contactEmail}</div><div class="text-[11px] text-gray-500 mt-0.5">${row.contactPhone || '—'}</div>`,
+      isAction: false
+    },
+    {
+      def: 'location',
+      header: 'Location',
+      cell: (row: BranchList) => {
+        const city = (row as any).city;
+        const country = (row as any).country;
+        if (city || country) {
+          return `<div class="text-sm text-gray-600 dark:text-gray-400">${[city, country].filter(Boolean).join(', ')}</div>`;
+        }
+        return `<span class="text-[11px] text-gray-400 italic">Not specified</span>`;
+      },
       isAction: false
     },
     {

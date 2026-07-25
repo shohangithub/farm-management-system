@@ -17,7 +17,11 @@ public sealed record BranchDto(
     BranchStatus Status,
     string? WorkingHours,
     string? HolidayCalendar,
-    bool IsHeadOffice);
+    bool IsHeadOffice,
+    DateTime CreatedAtUtc,
+    Guid CreatedBy,
+    DateTime? ModifiedAtUtc,
+    Guid? ModifiedBy);
 
 public sealed record BranchListDto(
     Guid Id,

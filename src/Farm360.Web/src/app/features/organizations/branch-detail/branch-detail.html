@@ -1,90 +1,258 @@
 <app-page-header 
-  title="Branch Details" 
-  description="View detailed information about this branch."
+  [title]="branch() ? branch()!.name : 'Branch Details'"
+  [description]="branch() ? 'Branch Code: ' + branch()!.branchCode : ''"
   primaryActionLabel="Edit Branch"
   primaryActionIcon="edit"
-  (primaryAction)="onEdit()">
+  secondaryActionLabel="Back"
+  secondaryActionIcon="arrow_back"
+  (primaryAction)="onEdit()"
+  (secondaryAction)="onBack()">
 </app-page-header>
 
-<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 shadow-sm">
-  {{ error() }}
-</div>
-
-<div *ngIf="isLoading()" class="flex justify-center py-12">
-  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-</div>
-
-<div *ngIf="!isLoading() && branch()" class="bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800/50 rounded-xl overflow-hidden">
-  
-  <!-- Header Section -->
-  <div class="px-6 py-6 sm:px-8 flex justify-between items-start border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-800/20">
-    <div>
-      <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center">
-        {{ branch()?.name }}
-        <span *ngIf="branch()?.isHeadOffice" class="ml-3 px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-sm bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Head Office</span>
-      </h3>
-      <p class="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
-        Branch Code: <span class="font-mono text-gray-900 dark:text-gray-300 ml-1">{{ branch()?.branchCode }}</span>
-      </p>
-    </div>
-    
-    <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-md"
-          [ngClass]="{
-            'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400': branch()?.status === 1,
-            'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400': branch()?.status === 2,
-            'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400': branch()?.status === 3
-          }">
-      {{ branch()?.status === 1 ? 'Active' : (branch()?.status === 2 ? 'Inactive' : 'Closed') }}
-    </span>
+<!-- Error State -->
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3">
+  <mat-icon class="!text-red-500 mt-0.5 flex-shrink-0">error_outline</mat-icon>
+  <div>
+    <h3 class="text-sm font-semibold">Error</h3>
+    <p class="text-xs mt-1">{{ error() }}</p>
   </div>
-  
-  <!-- Content Section -->
-  <div class="px-6 py-6 sm:p-8">
-    <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-      
-      <div>
-        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Email</dt>
-        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.contactEmail }}</dd>
-      </div>
+</div>
 
-      <div>
-        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Phone</dt>
-        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.contactPhone || '-' }}</dd>
-      </div>
+<!-- Loading State -->
+<div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-24 space-y-4">
+  <div class="relative w-12 h-12">
+    <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
+    <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
+  </div>
+  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Branch...</p>
+</div>
 
-      <div class="md:col-span-2 border-t border-gray-100 dark:border-gray-800/50 pt-6">
-        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Address</dt>
-        <dd class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200 leading-relaxed bg-gray-50 dark:bg-gray-800/20 p-4 rounded-lg border border-gray-100 dark:border-gray-800/50">
-          <div *ngIf="branch()?.address?.street || branch()?.address?.city">
-            {{ branch()?.address?.street }}<br *ngIf="branch()?.address?.street">
-            {{ branch()?.address?.city }}<ng-container *ngIf="branch()?.address?.city && branch()?.address?.state">, </ng-container>
-            {{ branch()?.address?.state }} {{ branch()?.address?.zipCode }}<br *ngIf="branch()?.address?.city || branch()?.address?.state || branch()?.address?.zipCode">
-            {{ branch()?.address?.country }}
+<div *ngIf="!isLoading() && branch()" class="space-y-6">
+
+  <!-- Hero Card -->
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <div class="px-6 py-5 sm:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 dark:border-gray-800/50 bg-gradient-to-r from-gray-50/50 to-white dark:from-gray-900/20 dark:to-surface-dark">
+      <div class="flex items-center gap-4">
+        <!-- Branch Icon -->
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+             [ngClass]="branch()?.isHeadOffice ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-primary-500 to-primary-700'">
+          <mat-icon class="!text-white !text-[28px] !w-[28px] !h-[28px]">
+            {{ branch()?.isHeadOffice ? 'corporate_fare' : 'location_city' }}
+          </mat-icon>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{{ branch()?.name }}</h2>
+            <span *ngIf="branch()?.isHeadOffice"
+                  class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+              Head Office
+            </span>
           </div>
-          <span *ngIf="!branch()?.address?.street && !branch()?.address?.city" class="text-gray-400 italic">No address provided.</span>
-        </dd>
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 font-mono">{{ branch()?.branchCode }}</p>
+        </div>
       </div>
-      
-      <div class="border-t border-gray-100 dark:border-gray-800/50 pt-6">
-        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">GPS Coordinates</dt>
-        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200 font-mono">
-          <span *ngIf="branch()?.latitude || branch()?.longitude">
-            {{ branch()?.latitude }}, {{ branch()?.longitude }}
-          </span>
-          <span *ngIf="!branch()?.latitude && !branch()?.longitude" class="text-gray-400 font-sans italic">Not set</span>
-        </dd>
-      </div>
+      <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider"
+            [ngClass]="statusClass()">
+        <span class="w-2 h-2 rounded-full mr-2"
+              [ngClass]="branch()?.status === 1 ? 'bg-emerald-500' : branch()?.status === 2 ? 'bg-amber-500' : 'bg-gray-400'"></span>
+        {{ statusLabel() }}
+      </span>
+    </div>
 
-      <div class="border-t border-gray-100 dark:border-gray-800/50 pt-6">
-        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Working Hours</dt>
-        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.workingHours || '-' }}</dd>
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y sm:divide-y-0 divide-gray-100 dark:divide-gray-800/50">
+      <div class="px-6 py-4 flex items-center gap-3">
+        <div class="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+          <mat-icon class="!text-primary-600 dark:!text-primary-400 !text-[20px] !w-[20px] !h-[20px]">email</mat-icon>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Email</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[180px]">{{ branch()?.contactEmail }}</div>
+        </div>
       </div>
-
-      <div class="border-t border-gray-100 dark:border-gray-800/50 pt-6">
-        <dt class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Holiday Calendar</dt>
-        <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-200">{{ branch()?.holidayCalendar || '-' }}</dd>
+      <div class="px-6 py-4 flex items-center gap-3">
+        <div class="p-2 bg-violet-50 dark:bg-violet-900/20 rounded-lg">
+          <mat-icon class="!text-violet-600 dark:!text-violet-400 !text-[20px] !w-[20px] !h-[20px]">phone</mat-icon>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Contact Phone</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ branch()?.contactPhone || '—' }}</div>
+        </div>
       </div>
-      
-    </dl>
+      <div class="px-6 py-4 col-span-2 sm:col-span-1 flex items-center gap-3">
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+          <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[20px] !w-[20px] !h-[20px]">location_on</mat-icon>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Location</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            {{ branch()?.address?.city || '—' }}
+            <span *ngIf="branch()?.address?.country" class="text-gray-500 dark:text-gray-400">, {{ branch()?.address?.country }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Tabbed Details -->
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <mat-tab-group animationDuration="200ms" class="branch-tab-group">
+
+      <!-- ─── Overview Tab ─────────────────────────────────────────── -->
+      <mat-tab label="Overview">
+        <div class="p-6 sm:p-8">
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- Working Hours -->
+            <div>
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">schedule</mat-icon>
+                Working Hours
+              </dt>
+              <dd class="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                {{ branch()?.workingHours || '—' }}
+              </dd>
+            </div>
+
+            <!-- Holiday Calendar -->
+            <div>
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">event</mat-icon>
+                Holiday Calendar
+              </dt>
+              <dd class="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                {{ branch()?.holidayCalendar || '—' }}
+              </dd>
+            </div>
+
+            <!-- GPS Coordinates -->
+            <div>
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">gps_fixed</mat-icon>
+                GPS Coordinates
+              </dt>
+              <dd class="text-sm font-mono text-gray-800 dark:text-gray-200">
+                <ng-container *ngIf="branch()?.latitude || branch()?.longitude">
+                  {{ branch()?.latitude | number:'1.4-6' }}, {{ branch()?.longitude | number:'1.4-6' }}
+                </ng-container>
+                <span *ngIf="!branch()?.latitude && !branch()?.longitude" class="font-sans text-gray-400 italic">Not set</span>
+              </dd>
+            </div>
+
+            <!-- Head Office Status -->
+            <div>
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">corporate_fare</mat-icon>
+                Head Office
+              </dt>
+              <dd class="text-sm font-medium">
+                <span *ngIf="branch()?.isHeadOffice" class="inline-flex items-center gap-1.5 text-blue-700 dark:text-blue-400">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon> Yes — This is the Head Office
+                </span>
+                <span *ngIf="!branch()?.isHeadOffice" class="text-gray-500 dark:text-gray-400">No</span>
+              </dd>
+            </div>
+
+            <!-- Full Address -->
+            <div class="md:col-span-2 pt-4 border-t border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">home_pin</mat-icon>
+                Address
+              </dt>
+              <dd>
+                <div *ngIf="hasAddress(branch())"
+                     class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4">
+                  <address class="not-italic text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+                    <span *ngIf="branch()?.address?.street" class="block">{{ branch()?.address?.street }}</span>
+                    <span class="block">
+                      {{ branch()?.address?.city }}<ng-container *ngIf="branch()?.address?.city && branch()?.address?.state">, </ng-container>
+                      {{ branch()?.address?.state }}
+                      <ng-container *ngIf="branch()?.address?.zipCode"> {{ branch()?.address?.zipCode }}</ng-container>
+                    </span>
+                    <span *ngIf="branch()?.address?.country" class="block font-semibold">{{ branch()?.address?.country }}</span>
+                  </address>
+                </div>
+                <span *ngIf="!hasAddress(branch())" class="text-sm text-gray-400 italic">No address provided.</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </mat-tab>
+
+      <!-- ─── Farms Tab ─────────────────────────────────────────────── -->
+      <mat-tab label="Farms">
+        <div class="p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">Farms in this Branch</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">All farm locations operating under this branch.</p>
+            </div>
+            <button mat-flat-button (click)="onManageFarms()"
+                    class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-xl !text-sm !font-semibold shadow-sm">
+              <mat-icon class="!mr-1 !text-[18px] !w-[18px] !h-[18px]">agriculture</mat-icon>
+              Manage Farms
+            </button>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">agriculture</mat-icon>
+            </div>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Navigate to Farms</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">Click "Manage Farms" to view and manage all farms under this branch.</p>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
+      <mat-tab label="Audit Info">
+        <div class="p-6 sm:p-8">
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_circle_outline</mat-icon>
+                Created At
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                {{ (branch()?.createdAtUtc | date:'MMM d, y, h:mm a') || '—' }}
+              </dd>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon>
+                Created By
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
+                {{ branch()?.createdBy || '—' }}
+              </dd>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_calendar</mat-icon>
+                Last Modified
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                {{ (branch()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || 'Never modified' }}
+              </dd>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">manage_accounts</mat-icon>
+                Last Modified By
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
+                {{ branch()?.modifiedBy || '—' }}
+              </dd>
+            </div>
+
+          </dl>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+
 </div>

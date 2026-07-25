@@ -21,7 +21,11 @@ public static class BranchMappingExtensions
             branch.Status,
             branch.WorkingHours,
             branch.HolidayCalendar,
-            branch.IsHeadOffice);
+            branch.IsHeadOffice,
+            branch.CreatedAtUtc,
+            branch.CreatedBy,
+            branch.ModifiedAtUtc,
+            branch.ModifiedBy);
     }
 
     public static BranchListDto ToListDto(this Branch branch)

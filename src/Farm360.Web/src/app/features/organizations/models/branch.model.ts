@@ -11,10 +11,14 @@ export interface Branch {
   address?: Address;
   latitude?: number;
   longitude?: number;
-  status: number; // enum
+  status: number; // enum: 1=Active, 2=Inactive, 3=Closed
   workingHours?: string;
   holidayCalendar?: string;
   isHeadOffice: boolean;
+  createdAtUtc?: string;
+  createdBy?: string;
+  modifiedAtUtc?: string;
+  modifiedBy?: string;
 }
 
 export interface BranchList {

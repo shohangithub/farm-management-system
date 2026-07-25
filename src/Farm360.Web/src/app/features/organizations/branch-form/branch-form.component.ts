@@ -1,7 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subject, takeUntil } from 'rxjs';
 import { BranchService } from '../services/branch.service';
 import { CreateBranchCommand, UpdateBranchCommand } from '../models/branch.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -9,15 +11,17 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 @Component({
   selector: 'app-branch-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './branch-form.html',
   styleUrls: ['./branch-form.scss']
 })
-export class BranchFormComponent implements OnInit {
+export class BranchFormComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly branchService = inject(BranchService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly destroy$ = new Subject<void>();
 
   branchForm!: FormGroup;
   isEditMode = signal<boolean>(false);
@@ -28,6 +32,7 @@ export class BranchFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+
     const orgId = this.route.snapshot.paramMap.get('orgId');
     const branchId = this.route.snapshot.paramMap.get('branchId');
 
@@ -40,6 +45,20 @@ export class BranchFormComponent implements OnInit {
       this.branchId.set(branchId);
       this.loadBranch(branchId);
     }
+
+    // Auto-uppercase branch code as the user types
+    this.branchForm.get('branchCode')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (value && value !== value.toUpperCase()) {
+          this.branchForm.get('branchCode')?.setValue(value.toUpperCase(), { emitEvent: false });
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   initForm(): void {
@@ -49,7 +68,7 @@ export class BranchFormComponent implements OnInit {
       contactEmail: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       contactPhone: ['', Validators.maxLength(30)],
       isHeadOffice: [false],
-      status: [1], // Only for edit mode usually, but added here
+      status: [1],
       street: [''],
       city: [''],
       state: [''],
@@ -82,7 +101,8 @@ export class BranchFormComponent implements OnInit {
           workingHours: branch.workingHours,
           holidayCalendar: branch.holidayCalendar
         });
-        this.branchForm.get('branchCode')?.disable(); // Usually code shouldn't change
+        // Branch code shouldn't change after creation
+        this.branchForm.get('branchCode')?.disable();
       },
       error: (err) => {
         this.error.set('Failed to load branch details.');
@@ -91,9 +111,25 @@ export class BranchFormComponent implements OnInit {
     });
   }
 
+  getError(field: string): string {
+    const control = this.branchForm.get(field);
+    if (!control || !control.touched || control.valid) return '';
+    if (control.hasError('required')) return 'This field is required.';
+    if (control.hasError('email')) return 'Please enter a valid email address.';
+    if (control.hasError('maxlength')) {
+      const max = control.getError('maxlength').requiredLength;
+      return `Maximum ${max} characters allowed.`;
+    }
+    return 'Invalid value.';
+  }
+
   onSubmit(): void {
     if (this.branchForm.invalid) {
       this.branchForm.markAllAsTouched();
+      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
+        duration: 4000,
+        panelClass: ['snack-error']
+      });
       return;
     }
 
@@ -111,26 +147,36 @@ export class BranchFormComponent implements OnInit {
       this.branchService.updateBranch(this.branchId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
+          this.snackBar.open('Branch updated successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success']
+          });
           this.router.navigate(['/organizations', this.orgId(), 'branches']);
         },
         error: (err) => {
-          this.error.set('Failed to update branch. Please check the inputs.');
+          const message = err?.error?.detail || err?.error?.title || 'Failed to update branch. Please check the inputs.';
+          this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);
         }
       });
     } else {
-      const command: CreateBranchCommand = { 
+      const command: CreateBranchCommand = {
         organizationId: this.orgId(),
-        ...formValue 
+        ...formValue
       };
       this.branchService.createBranch(this.orgId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
+          this.snackBar.open('Branch created successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success']
+          });
           this.router.navigate(['/organizations', this.orgId(), 'branches']);
         },
         error: (err) => {
-          this.error.set('Failed to create branch. Please check the inputs.');
+          const message = err?.error?.detail || err?.error?.title || 'Failed to create branch. Please check the inputs.';
+          this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);
         }
