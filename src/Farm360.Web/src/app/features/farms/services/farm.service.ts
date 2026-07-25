@@ -14,6 +14,10 @@ export class FarmService {
     return this.http.get<FarmList[]>(`${this.branchApiUrl}/${branchId}/farms`);
   }
 
+  getAllFarms(): Observable<FarmList[]> {
+    return this.http.get<FarmList[]>(this.apiUrl);
+  }
+
   getFarmById(id: string): Observable<Farm> {
     return this.http.get<Farm>(`${this.apiUrl}/${id}`);
   }
