@@ -5,6 +5,7 @@ using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Organizations.Repositories;
 using FluentValidation;
 using MediatR;
+using Farm360.Application.Common.Behaviors;
 
 namespace Farm360.Application.Farms.Commands;
 
@@ -21,7 +22,7 @@ public sealed record CreateFarmCommand(
     int? Capacity,
     string? OwnerId,
     string? ManagerId,
-    string? Description) : IRequest<Guid>;
+    string? Description) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class CreateFarmCommandValidator : AbstractValidator<CreateFarmCommand>
 {
@@ -86,18 +87,8 @@ public sealed class CreateFarmCommandHandler : IRequestHandler<CreateFarmCommand
             request.ManagerId,
             request.Description);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            _repository.Add(farm);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-            return farm.Id;
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-            throw;
-        }
+        _repository.Add(farm);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        return farm.Id;
     }
 }

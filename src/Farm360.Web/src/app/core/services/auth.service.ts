@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, firstValueFrom, map, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, firstValueFrom, map, of, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
@@ -136,6 +136,13 @@ export class AuthService {
     }
     return this.http.post<LoginResponse>('/api/v1/auth/refresh', { refreshToken: token }).pipe(
       tap(response => this.setSession(response))
+    );
+  }
+
+  refreshSession(): Observable<UserProfile> {
+    return this.refresh().pipe(
+      switchMap(() => this.fetchProfile()),
+      tap(user => this.setUserData(user))
     );
   }
 

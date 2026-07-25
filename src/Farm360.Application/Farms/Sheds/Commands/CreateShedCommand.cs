@@ -3,6 +3,7 @@ using Farm360.Domain.Farms;
 using Farm360.Domain.Farms.Repositories;
 using FluentValidation;
 using MediatR;
+using Farm360.Application.Common.Behaviors;
 
 namespace Farm360.Application.Farms.Sheds.Commands;
 
@@ -16,7 +17,7 @@ public sealed record CreateShedCommand(
     string? RoofType,
     bool HasVentilation,
     bool HasWaterLine,
-    bool HasFeedLine) : IRequest<Guid>;
+    bool HasFeedLine) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class CreateShedCommandValidator : AbstractValidator<CreateShedCommand>
 {
@@ -77,18 +78,8 @@ public sealed class CreateShedCommandHandler : IRequestHandler<CreateShedCommand
             request.HasWaterLine,
             request.HasFeedLine);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            _repository.Add(shed);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-            return shed.Id;
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-            throw;
-        }
+        _repository.Add(shed);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        return shed.Id;
     }
 }

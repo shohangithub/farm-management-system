@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../../core/services/auth.service';
 
 import { Organization, CreateOrganizationCommand, UpdateOrganizationCommand } from '../models/organization.model';
 import { Observable } from 'rxjs';
@@ -9,6 +10,7 @@ import { Observable } from 'rxjs';
 })
 export class OrganizationService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly baseUrl = '/api/v1/organizations';
 
   getOrganizations(): Observable<Organization[]> {
@@ -20,6 +22,13 @@ export class OrganizationService {
   }
 
   createOrganization(command: CreateOrganizationCommand): Observable<{ id: string }> {
+    const user = this.authService.currentUserSignal();
+    const isNewTenant = user?.tenantId === '00000000-0000-0000-0000-000000000000';
+    
+    if (isNewTenant) {
+      return this.http.post<{ id: string }>('/api/v1/tenants/onboard', command);
+    }
+    
     return this.http.post<{ id: string }>(this.baseUrl, command);
   }
 

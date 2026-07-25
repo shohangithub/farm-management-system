@@ -45,29 +45,32 @@ public sealed class TransactionBehavior<TRequest, TResponse>(
             logger.LogDebug("Farm360 Transaction: Begin for {RequestName}", requestName);
         }
 
-        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
-
-        try
+        return await unitOfWork.ExecuteStrategyAsync(async () =>
         {
-            // MediatR 12: delegate takes no CancellationToken
-            var response = await next();
+            await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-            await unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-
-            if (logger.IsEnabled(LogLevel.Debug))
+            try
             {
-                logger.LogDebug("Farm360 Transaction: Committed for {RequestName}", requestName);
+                // MediatR 12: delegate takes no CancellationToken
+                var response = await next();
+
+                await unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
+
+                if (logger.IsEnabled(LogLevel.Debug))
+                {
+                    logger.LogDebug("Farm360 Transaction: Committed for {RequestName}", requestName);
+                }
+
+                return response;
             }
+            catch (Exception ex)
+            {
+                await unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
 
-            return response;
-        }
-        catch (Exception ex)
-        {
-            await unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
+                logger.LogError(ex, "Farm360 Transaction: Rolled back for {RequestName}", requestName);
 
-            logger.LogError(ex, "Farm360 Transaction: Rolled back for {RequestName}", requestName);
-
-            throw;
-        }
+                throw;
+            }
+        });
     }
 }

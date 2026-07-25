@@ -152,6 +152,12 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     }
 
     // ── IUnitOfWork implementation ────────────────────────────────────────────
+    public async Task<T> ExecuteStrategyAsync<T>(Func<Task<T>> operation)
+    {
+        var strategy = Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(operation);
+    }
+
     public async Task<ITransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
         var inner = await Database.BeginTransactionAsync(cancellationToken);

@@ -4,6 +4,7 @@ using Farm360.Domain.Organizations.Repositories;
 using Farm360.Domain.Organizations.ValueObjects;
 using FluentValidation;
 using MediatR;
+using Farm360.Application.Common.Behaviors;
 
 namespace Farm360.Application.Organizations.Branches.Commands;
 
@@ -22,7 +23,7 @@ public sealed record CreateBranchCommand(
     double? Longitude,
     string? WorkingHours,
     string? HolidayCalendar,
-    bool IsHeadOffice) : IRequest<Guid>;
+    bool IsHeadOffice) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class CreateBranchCommandValidator : AbstractValidator<CreateBranchCommand>
 {
@@ -97,18 +98,8 @@ public sealed class CreateBranchCommandHandler : IRequestHandler<CreateBranchCom
             request.WorkingHours,
             request.HolidayCalendar);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            _repository.Add(branch);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-            return branch.Id;
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-            throw;
-        }
+        _repository.Add(branch);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        return branch.Id;
     }
 }

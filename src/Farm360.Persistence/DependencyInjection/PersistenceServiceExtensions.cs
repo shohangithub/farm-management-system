@@ -1,6 +1,8 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Interfaces.Repositories;
 using Farm360.Domain.Livestock.Repositories;
+using Farm360.Domain.Tenancy.Repositories;
+using Farm360.Domain.Identity.Repositories;
 using Farm360.Persistence.Context;
 using Farm360.Persistence.Interceptors;
 using Farm360.Persistence.Permissions;
@@ -14,6 +16,8 @@ using Farm360.Domain.Organizations.Repositories;
 using Farm360.Persistence.Repositories.Organizations;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Persistence.Repositories.Farms;
+using Farm360.Persistence.Repositories.Tenancy;
+using Farm360.Persistence.Repositories.Identity;
 using Farm360.Persistence.Seed;
 using Farm360.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +77,10 @@ public static class PersistenceServiceExtensions
         // ── Master Data repositories ────────────────────────────────────
         services.AddScoped<IMasterDataRepository, MasterDataRepository>();
         services.AddScoped<ILocationRepository, LocationRepository>();
+
+        // ── Tenancy & Identity repositories ──────────────────────────────
+        services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<ITenantUserRepository, TenantUserRepository>();
 
         // ── Cross-cutting services ────────────────────────────────────────────
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();

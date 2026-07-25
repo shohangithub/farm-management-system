@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { OrganizationService } from '../services/organization.service';
 import { CreateOrganizationCommand, UpdateOrganizationCommand } from '../models/organization.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-organization-form',
@@ -18,6 +19,7 @@ export class OrganizationFormComponent implements OnInit {
   private readonly organizationService = inject(OrganizationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   orgForm!: FormGroup;
   isEditMode = signal<boolean>(false);
@@ -127,7 +129,16 @@ export class OrganizationFormComponent implements OnInit {
         next: () => {
           this.isSubmitting.set(false);
           this.successMessage.set('Organization created successfully.');
-          setTimeout(() => this.router.navigate(['/organizations']), 500);
+          
+          const isNewTenant = this.authService.currentUserSignal()?.tenantId === '00000000-0000-0000-0000-000000000000';
+          if (isNewTenant) {
+            // Force a token refresh to acquire the new TenantId and Owner role in the JWT
+            this.authService.refreshSession().subscribe(() => {
+              setTimeout(() => this.router.navigate(['/organizations']), 500);
+            });
+          } else {
+            setTimeout(() => this.router.navigate(['/organizations']), 500);
+          }
         },
         error: (err) => {
           const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to create organization. Please check the inputs.';

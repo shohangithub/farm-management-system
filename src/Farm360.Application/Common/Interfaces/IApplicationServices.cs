@@ -72,6 +72,7 @@ public interface ITransaction : IAsyncDisposable
 public interface IUnitOfWork : IAsyncDisposable
 {
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<T> ExecuteStrategyAsync<T>(Func<Task<T>> operation);
     Task<ITransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(ITransaction transaction, CancellationToken cancellationToken = default);
     Task RollbackTransactionAsync(ITransaction transaction, CancellationToken cancellationToken = default);
