@@ -3,171 +3,245 @@
   [description]="isEditMode() ? 'Update business details.' : 'Create a new business entity.'">
 </app-page-header>
 
-<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 shadow-sm">
-  {{ error() }}
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3 animate-fade-in-up">
+  <mat-icon class="!text-red-500 mt-0.5">error_outline</mat-icon>
+  <div>
+    <h3 class="text-sm font-semibold">Error</h3>
+    <p class="text-xs mt-1">{{ error() }}</p>
+  </div>
 </div>
 
-<div *ngIf="successMessage()" class="bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800 text-accent-700 dark:text-accent-400 p-4 rounded-md mb-6 shadow-sm">
-  {{ successMessage() }}
+<div *ngIf="successMessage()" class="bg-accent-50 dark:bg-accent-900/20 border-l-4 border-accent-500 text-accent-700 dark:text-accent-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3 animate-fade-in-up">
+  <mat-icon class="!text-accent-500 mt-0.5">check_circle_outline</mat-icon>
+  <div>
+    <h3 class="text-sm font-semibold">Success</h3>
+    <p class="text-xs mt-1">{{ successMessage() }}</p>
+  </div>
 </div>
 
-<form [formGroup]="orgForm" (ngSubmit)="onSubmit()" class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800/50 divide-y divide-gray-100 dark:divide-gray-800/50">
+<form [formGroup]="orgForm" (ngSubmit)="onSubmit()" class="space-y-8 animate-fade-in">
   
   <!-- ── Basic Information ───────────────────────────────────── -->
-  <div class="p-6 sm:p-8 space-y-6">
-    <div>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Basic Information</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Provide the fundamental details about this business entity.</p>
-    </div>
-    
-    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
-      <div class="sm:col-span-4 form-group">
-        <label for="name" class="form-label">Organization Name *</label>
-        <input type="text" formControlName="name" id="name" class="form-control" placeholder="Enter organization name">
-        <span *ngIf="orgForm.get('name')?.touched && orgForm.get('name')?.invalid" class="text-xs text-red-500 mt-1">
-          Organization name is required (max 200 characters).
-        </span>
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800/50">
+      
+      <div class="p-8 md:col-span-1 bg-gray-50/50 dark:bg-gray-900/20">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">domain</mat-icon>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Basic Info</h3>
+        </div>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">Provide the fundamental details about this business entity. This name will appear on all official documents.</p>
       </div>
+      
+      <div class="p-8 md:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          
+          <!-- Logo Upload -->
+          <div class="sm:col-span-2 form-group relative">
+            <label class="form-label font-medium mb-1.5 block">Organization Logo</label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl hover:border-primary-500 dark:hover:border-primary-500 transition-colors bg-white/50 dark:bg-gray-800/30">
+              <div class="space-y-1 text-center flex flex-col items-center">
+                <div *ngIf="logoPreviewUrl()" class="mb-4 relative group">
+                  <img [src]="logoPreviewUrl()" alt="Logo Preview" class="h-24 w-24 object-cover rounded-xl shadow-sm ring-1 ring-black/5" />
+                  <button type="button" (click)="onRemoveLogo()" class="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200 shadow-sm">
+                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">close</mat-icon>
+                  </button>
+                </div>
+                <mat-icon *ngIf="!logoPreviewUrl()" class="mx-auto !h-12 !w-12 !text-[48px] text-gray-400">image</mat-icon>
+                <div class="flex text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  <label for="file-upload" class="relative cursor-pointer bg-transparent rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                    <span>Upload a file</span>
+                    <input id="file-upload" name="file-upload" type="file" accept="image/*" class="sr-only" (change)="onLogoSelected($event)">
+                  </label>
+                  <p class="pl-1">or drag and drop</p>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-500">
+                  PNG, JPG, GIF up to 2MB
+                </p>
+              </div>
+            </div>
+          </div>
 
-      <div class="sm:col-span-2 form-group">
-        <label for="businessType" class="form-label">Business Type *</label>
-        <select id="businessType" formControlName="businessType" class="form-control">
-          <!-- Values align with Farm360.Domain.Organizations.Enums.BusinessType -->
-          <option [ngValue]="1">Farm</option>
-          <option [ngValue]="2">Supplier</option>
-          <option [ngValue]="3">Buyer</option>
-          <option [ngValue]="4">Veterinary Clinic</option>
-          <option [ngValue]="5">Cooperative</option>
-        </select>
+          <div class="sm:col-span-2 form-group relative">
+            <label for="name" class="form-label font-medium mb-1.5 block">Organization Name <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="name" id="name" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="e.g. Acme Corporation">
+            <span *ngIf="orgForm.get('name')?.touched && orgForm.get('name')?.invalid" class="text-[11px] text-red-500 mt-1.5 flex items-center gap-1">
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">info</mat-icon> Organization name is required (max 200 chars).
+            </span>
+          </div>
+
+          <div class="sm:col-span-2 form-group relative">
+            <label for="businessType" class="form-label font-medium mb-1.5 block">Business Type <span class="text-red-500">*</span></label>
+            <select id="businessType" formControlName="businessType" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
+              <option [ngValue]="1">Farm / Producer</option>
+              <option [ngValue]="2">Supplier / Vendor</option>
+              <option [ngValue]="3">Buyer / Distributor</option>
+              <option [ngValue]="4">Veterinary Clinic</option>
+              <option [ngValue]="5">Cooperative</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ── Contact & Regional ──────────────────────────────────── -->
-  <div class="p-6 sm:p-8 space-y-6">
-    <div>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Contact & Regional</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">How can we reach this organization and where are they based?</p>
-    </div>
-    
-    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
-      <div class="sm:col-span-3 form-group">
-        <label for="contactEmail" class="form-label">Contact Email *</label>
-        <input type="email" formControlName="contactEmail" id="contactEmail" class="form-control" placeholder="admin@example.com">
-        <span *ngIf="orgForm.get('contactEmail')?.touched && orgForm.get('contactEmail')?.invalid" class="text-xs text-red-500 mt-1">
-          A valid contact email is required.
-        </span>
-      </div>
-
-      <div class="sm:col-span-3 form-group">
-        <label for="contactPhone" class="form-label">Contact Phone</label>
-        <input type="text" formControlName="contactPhone" id="contactPhone" class="form-control" placeholder="+880XXXXXXXXXX">
-      </div>
-
-      <div class="sm:col-span-2 form-group">
-        <label for="currencyCode" class="form-label">Currency *</label>
-        <select id="currencyCode" formControlName="currencyCode" class="form-control">
-          <!-- BDT first — this is the primary market (Bangladesh). Default in domain entity. -->
-          <option value="BDT">BDT (৳) — Bangladeshi Taka</option>
-          <option value="USD">USD ($) — US Dollar</option>
-          <option value="EUR">EUR (€) — Euro</option>
-          <option value="GBP">GBP (£) — British Pound</option>
-          <option value="INR">INR (₹) — Indian Rupee</option>
-          <option value="AED">AED (د.إ) — UAE Dirham</option>
-        </select>
-      </div>
-
-      <div class="sm:col-span-2 form-group">
-        <label for="timeZoneId" class="form-label">Time Zone *</label>
-        <select id="timeZoneId" formControlName="timeZoneId" class="form-control">
-          <option value="Asia/Dhaka">Asia/Dhaka (GMT+6)</option>
-          <option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</option>
-          <option value="Asia/Dubai">Asia/Dubai (GMT+4)</option>
-          <option value="UTC">UTC (GMT+0)</option>
-          <option value="America/New_York">America/New_York (EST)</option>
-          <option value="Europe/London">Europe/London (GMT)</option>
-        </select>
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800/50">
+      
+      <div class="p-8 md:col-span-1 bg-gray-50/50 dark:bg-gray-900/20">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-8 h-8 rounded-lg bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 flex items-center justify-center">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">public</mat-icon>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Regional Settings</h3>
+        </div>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">Set the primary communication channels and localization settings for the organization.</p>
       </div>
       
-      <div class="sm:col-span-2 form-group">
-        <label for="languageCode" class="form-label">Language *</label>
-        <select id="languageCode" formControlName="languageCode" class="form-control">
-          <option value="en">English</option>
-          <option value="bn">Bengali (বাংলা)</option>
-          <option value="hi">Hindi (हिंदी)</option>
-          <option value="ar">Arabic (العربية)</option>
-        </select>
+      <div class="p-8 md:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="form-group relative">
+            <label for="contactEmail" class="form-label font-medium mb-1.5 block">Contact Email <span class="text-red-500">*</span></label>
+            <input type="email" formControlName="contactEmail" id="contactEmail" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="admin@example.com">
+            <span *ngIf="orgForm.get('contactEmail')?.touched && orgForm.get('contactEmail')?.invalid" class="text-[11px] text-red-500 mt-1.5 flex items-center gap-1">
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">info</mat-icon> Valid email is required.
+            </span>
+          </div>
+
+          <div class="form-group relative">
+            <label for="contactPhone" class="form-label font-medium mb-1.5 block">Contact Phone</label>
+            <input type="text" formControlName="contactPhone" id="contactPhone" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="+880XXXXXXXXXX">
+          </div>
+
+          <div class="form-group relative">
+            <label for="currencyCode" class="form-label font-medium mb-1.5 block">Currency <span class="text-red-500">*</span></label>
+            <select id="currencyCode" formControlName="currencyCode" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
+              <option value="BDT">BDT (৳) — Bangladeshi Taka</option>
+              <option value="USD">USD ($) — US Dollar</option>
+              <option value="EUR">EUR (€) — Euro</option>
+              <option value="GBP">GBP (£) — British Pound</option>
+              <option value="INR">INR (₹) — Indian Rupee</option>
+              <option value="AED">AED (د.إ) — UAE Dirham</option>
+            </select>
+          </div>
+
+          <div class="form-group relative">
+            <label for="timeZoneId" class="form-label font-medium mb-1.5 block">Time Zone <span class="text-red-500">*</span></label>
+            <select id="timeZoneId" formControlName="timeZoneId" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
+              <option value="Asia/Dhaka">Asia/Dhaka (GMT+6)</option>
+              <option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</option>
+              <option value="Asia/Dubai">Asia/Dubai (GMT+4)</option>
+              <option value="UTC">UTC (GMT+0)</option>
+              <option value="America/New_York">America/New_York (EST)</option>
+              <option value="Europe/London">Europe/London (GMT)</option>
+            </select>
+          </div>
+          
+          <div class="sm:col-span-2 form-group relative">
+            <label for="languageCode" class="form-label font-medium mb-1.5 block">Language <span class="text-red-500">*</span></label>
+            <select id="languageCode" formControlName="languageCode" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
+              <option value="en">English</option>
+              <option value="bn">Bengali (বাংলা)</option>
+              <option value="hi">Hindi (हिंदी)</option>
+              <option value="ar">Arabic (العربية)</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ── Legal Details ───────────────────────────────────────── -->
-  <div class="p-6 sm:p-8 space-y-6">
-    <div>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Legal Details</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Official registration details for compliance and billing.</p>
-    </div>
-    
-    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
-      <div class="sm:col-span-2 form-group">
-        <label for="businessRegistrationNumber" class="form-label">Business Reg Number</label>
-        <input type="text" formControlName="businessRegistrationNumber" id="businessRegistrationNumber" class="form-control">
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800/50">
+      
+      <div class="p-8 md:col-span-1 bg-gray-50/50 dark:bg-gray-900/20">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">gavel</mat-icon>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Legal & Compliance</h3>
+        </div>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">Official registration and tax identification details required for billing.</p>
       </div>
+      
+      <div class="p-8 md:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="sm:col-span-2 form-group relative">
+            <label for="businessRegistrationNumber" class="form-label font-medium mb-1.5 block">Business Reg Number</label>
+            <input type="text" formControlName="businessRegistrationNumber" id="businessRegistrationNumber" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
+          </div>
 
-      <div class="sm:col-span-2 form-group">
-        <label for="tradeLicenseNumber" class="form-label">Trade License Number</label>
-        <input type="text" formControlName="tradeLicenseNumber" id="tradeLicenseNumber" class="form-control">
-      </div>
+          <div class="form-group relative">
+            <label for="tradeLicenseNumber" class="form-label font-medium mb-1.5 block">Trade License Number</label>
+            <input type="text" formControlName="tradeLicenseNumber" id="tradeLicenseNumber" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
+          </div>
 
-      <div class="sm:col-span-2 form-group">
-        <label for="taxIdentificationNumber" class="form-label">Tax ID (BIN / TIN)</label>
-        <input type="text" formControlName="taxIdentificationNumber" id="taxIdentificationNumber" class="form-control">
+          <div class="form-group relative">
+            <label for="taxIdentificationNumber" class="form-label font-medium mb-1.5 block">Tax ID (BIN / TIN)</label>
+            <input type="text" formControlName="taxIdentificationNumber" id="taxIdentificationNumber" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ── Address ────────────────────────────────────────────── -->
-  <div class="p-6 sm:p-8 space-y-6">
-    <div>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Address</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Physical location of this organization (optional).</p>
-    </div>
-    
-    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
-      <div class="sm:col-span-6 form-group">
-        <label for="street" class="form-label">Street Address</label>
-        <input type="text" formControlName="street" id="street" class="form-control" placeholder="123 Main Road, Block A">
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800/50">
+      
+      <div class="p-8 md:col-span-1 bg-gray-50/50 dark:bg-gray-900/20">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">location_on</mat-icon>
+          </div>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Location Address</h3>
+        </div>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">The physical or headquarters address of the organization.</p>
       </div>
+      
+      <div class="p-8 md:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="sm:col-span-2 form-group relative">
+            <label for="street" class="form-label font-medium mb-1.5 block">Street Address</label>
+            <input type="text" formControlName="street" id="street" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="123 Main Road, Block A">
+          </div>
 
-      <div class="sm:col-span-2 form-group">
-        <label for="city" class="form-label">City / Upazila</label>
-        <input type="text" formControlName="city" id="city" class="form-control" placeholder="Dhaka">
-      </div>
+          <div class="form-group relative">
+            <label for="city" class="form-label font-medium mb-1.5 block">City / Upazila</label>
+            <input type="text" formControlName="city" id="city" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="Dhaka">
+          </div>
 
-      <div class="sm:col-span-2 form-group">
-        <label for="state" class="form-label">State / Division</label>
-        <input type="text" formControlName="state" id="state" class="form-control" placeholder="Dhaka Division">
-      </div>
+          <div class="form-group relative">
+            <label for="state" class="form-label font-medium mb-1.5 block">State / Division</label>
+            <input type="text" formControlName="state" id="state" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="Dhaka Division">
+          </div>
 
-      <div class="sm:col-span-1 form-group">
-        <label for="country" class="form-label">Country</label>
-        <input type="text" formControlName="country" id="country" class="form-control" placeholder="Bangladesh">
-      </div>
+          <div class="form-group relative">
+            <label for="country" class="form-label font-medium mb-1.5 block">Country</label>
+            <input type="text" formControlName="country" id="country" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="Bangladesh">
+          </div>
 
-      <div class="sm:col-span-1 form-group">
-        <label for="zipCode" class="form-label">ZIP / Postal Code</label>
-        <input type="text" formControlName="zipCode" id="zipCode" class="form-control" placeholder="1212">
+          <div class="form-group relative">
+            <label for="zipCode" class="form-label font-medium mb-1.5 block">ZIP / Postal Code</label>
+            <input type="text" formControlName="zipCode" id="zipCode" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="1212">
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ── Action Buttons ─────────────────────────────────────── -->
-  <div class="p-6 sm:p-8 bg-gray-50 dark:bg-gray-800/20 rounded-b-xl flex items-center justify-end gap-3">
-    <button type="button" routerLink="/organizations" class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+  <div class="sticky bottom-6 z-10 flex items-center justify-end gap-3 p-4 bg-white/70 dark:bg-surface-dark/70 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-lg ring-1 ring-black/5">
+    <button type="button" routerLink="/organizations" class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
       Cancel
     </button>
-    <button type="submit" [disabled]="orgForm.invalid || isSubmitting()" class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-      {{ isSubmitting() ? 'Saving…' : 'Save Organization' }}
+    <button type="submit" [disabled]="orgForm.invalid || isSubmitting()" class="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-[0_4px_14px_0_rgba(99,102,241,0.39)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.23)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none">
+      <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-5 !h-5 !text-[20px]">autorenew</mat-icon>
+      {{ isSubmitting() ? 'Saving...' : 'Save Organization' }}
     </button>
   </div>
 

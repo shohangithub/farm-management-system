@@ -6,6 +6,7 @@ export const ORGANIZATION_ROUTES: Routes = [
   { path: '', component: OrganizationListComponent },
   { path: 'new', component: OrganizationFormComponent },
   { path: 'edit/:id', component: OrganizationFormComponent },
+  { path: 'detail/:id', loadComponent: () => import('./organization-detail/organization-detail.component').then(c => c.OrganizationDetailComponent) },
   { path: ':orgId/branches', loadComponent: () => import('./branch-list/branch-list.component').then(c => c.BranchListComponent) },
   { path: ':orgId/branches/new', loadComponent: () => import('./branch-form/branch-form.component').then(c => c.BranchFormComponent) },
   { path: ':orgId/branches/edit/:branchId', loadComponent: () => import('./branch-form/branch-form.component').then(c => c.BranchFormComponent) },

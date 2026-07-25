@@ -85,6 +85,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ISmsService, LoggingSmsService>();
         services.AddScoped<IEmailService, LoggingEmailService>();
 
+        // ── Storage Services ──────────────────────────────────────────────────
+        services.AddScoped<IFileStorageService, Farm360.Infrastructure.Storage.LocalFileStorageService>();
+
         return services;
     }
 }

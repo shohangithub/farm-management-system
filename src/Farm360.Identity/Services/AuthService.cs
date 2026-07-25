@@ -154,8 +154,8 @@ public sealed class AuthService(
         Guid? preferredTenantId,
         CancellationToken cancellationToken)
     {
-        if (user.IsSystemUser)
-            return (Guid.Empty, "PlatformAdmin");
+        //if (user.IsSystemUser)
+        //    return (Guid.Empty, "PlatformAdmin");
 
         var membership = await tenantMembershipService.GetActiveMembershipAsync(
             user.Id, preferredTenantId, cancellationToken);

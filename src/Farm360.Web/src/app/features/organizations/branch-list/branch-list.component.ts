@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { BranchService } from '../services/branch.service';
 import { BranchList } from '../models/branch.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -11,7 +13,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 @Component({
   selector: 'app-branch-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeaderComponent, DataTableComponent],
+  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent],
   templateUrl: './branch-list.html',
   styleUrls: ['./branch-list.scss']
 })
@@ -25,6 +27,13 @@ export class BranchListComponent implements OnInit {
   branches = signal<BranchList[]>([]);
   isLoading = signal<boolean>(false);
   error = signal<string | null>(null);
+
+  // Pagination & Search State
+  totalCount = signal<number>(0);
+  pageSize = signal<number>(10);
+  pageIndex = signal<number>(0);
+  searchTerm = signal<string>('');
+  statusFilter = signal<number | null>(null);
 
   displayedColumns = ['branch', 'contact', 'status', 'actions'];
 
@@ -73,9 +82,11 @@ export class BranchListComponent implements OnInit {
 
   loadBranches(): void {
     this.isLoading.set(true);
-    this.branchService.getBranchesByOrganization(this.orgId()).subscribe({
+    const status = this.statusFilter();
+    this.branchService.getBranchesByOrganization(this.orgId(), this.searchTerm(), status !== null ? status : undefined, this.pageIndex() + 1, this.pageSize()).subscribe({
       next: (data) => {
-        this.branches.set(data);
+        this.branches.set(data.items);
+        this.totalCount.set(data.totalCount);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -84,6 +95,30 @@ export class BranchListComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  onSearch(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
+    this.pageIndex.set(0);
+    this.loadBranches();
+  }
+
+  onFilterStatus(event: any): void {
+    const val = event.target.value;
+    if (val === '') {
+      this.statusFilter.set(null);
+    } else {
+      this.statusFilter.set(Number(val));
+    }
+    this.pageIndex.set(0);
+    this.loadBranches();
+  }
+
+  onPageChange(event: any): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    this.loadBranches();
   }
 
   delete(id: string): void {
@@ -122,5 +157,27 @@ export class BranchListComponent implements OnInit {
 
   onDelete(branch: BranchList): void {
     this.delete(branch.id);
+  }
+
+  onRestore(branch: BranchList): void {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Restore Branch',
+        message: 'Are you sure you want to restore this branch? It will become active again.',
+        confirmButtonText: 'Restore',
+        cancelButtonText: 'Cancel',
+        isDestructive: false
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.branchService.activateBranch(branch.id).subscribe({
+          next: () => this.loadBranches(),
+          error: (err) => console.error(err)
+        });
+      }
+    });
   }
 }

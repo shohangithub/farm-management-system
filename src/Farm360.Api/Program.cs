@@ -139,6 +139,9 @@ try
     // [4] Security headers
     app.UseHsts();
     app.UseHttpsRedirection();
+    
+    // Allow serving static files (e.g. uploads from wwwroot)
+    app.UseStaticFiles();
 
     app.Use(async (context, next) =>
     {

@@ -17,6 +17,10 @@ public record OrganizationDto(
     AddressDto? Address,
     BusinessType BusinessType,
     OrganizationStatus Status,
+    DateTime CreatedAt,
+    string? CreatedBy,
+    DateTime? LastModifiedAt,
+    string? LastModifiedBy,
     byte[] RowVersion);
 
 public record AddressDto(

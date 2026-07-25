@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -45,7 +46,9 @@ export class HeaderComponent {
     }
   }
 
+  private authService = inject(AuthService);
+
   logout(): void {
-    console.log('Logout clicked');
+    this.authService.logout();
   }
 }

@@ -26,6 +26,10 @@ public static class MappingExtensions
                 entity.Address.ZipCode) : null,
             entity.BusinessType,
             entity.Status,
+            entity.CreatedAtUtc,
+            entity.CreatedBy.ToString(),
+            entity.ModifiedAtUtc,
+            entity.ModifiedBy?.ToString(),
             entity.RowVersion);
     }
 }

@@ -18,9 +18,9 @@ public static class BranchEndpoints
             .WithTags("Branches")
             .RequireAuthorization();
 
-        group.MapGet("/", async ([FromRoute] Guid orgId, ISender sender) =>
+        group.MapGet("/", async ([FromRoute] Guid orgId, ISender sender, string? search, int? status, int page = 1, int size = 10) =>
         {
-            var result = await sender.Send(new GetBranchesByOrganizationQuery(orgId));
+            var result = await sender.Send(new GetBranchesByOrganizationQuery(orgId, search, status, page, size));
             return Results.Ok(result);
         })
         .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
@@ -62,6 +62,13 @@ public static class BranchEndpoints
             return Results.NoContent();
         })
         .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Delete}");
+
+        rootGroup.MapPost("/{id:guid}/activate", async (Guid id, ISender sender) =>
+        {
+            await sender.Send(new ActivateBranchCommand(id));
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Edit}");
 
         return app;
     }

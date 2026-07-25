@@ -6,20 +6,68 @@
   (primaryAction)="onAdd()">
 </app-page-header>
 
-<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 shadow-sm">
-  {{ error() }}
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3 animate-fade-in-up">
+  <mat-icon class="!text-red-500 mt-0.5">error_outline</mat-icon>
+  <div>
+    <h3 class="text-sm font-semibold">Error</h3>
+    <p class="text-xs mt-1">{{ error() }}</p>
+  </div>
 </div>
 
-<div *ngIf="isLoading()" class="flex justify-center py-12">
-  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+<div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-24 space-y-4 animate-pulse">
+  <div class="relative w-12 h-12">
+    <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
+    <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
+  </div>
+  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Branches...</p>
 </div>
 
-<app-data-table
-  *ngIf="!isLoading()"
-  [data]="branches()"
-  [columns]="columns"
-  [displayedColumns]="displayedColumns"
-  (view)="onView($event)"
-  (edit)="onEdit($event)"
-  (delete)="onDelete($event)">
-</app-data-table>
+<div *ngIf="!isLoading() && branches().length === 0 && !error()" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border border-dashed border-gray-300 dark:border-gray-700 rounded-2xl flex flex-col items-center justify-center py-24 px-6 text-center animate-fade-in">
+  <div class="w-16 h-16 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
+    <mat-icon class="!text-[32px] !w-[32px] !h-[32px] !text-gray-400">location_city</mat-icon>
+  </div>
+  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Branches Found</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">Create your first branch to start tracking operations in this location.</p>
+  <button mat-flat-button color="primary" (click)="onAdd()" class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-lg shadow-[0_4px_14px_0_rgba(99,102,241,0.39)] hover:-translate-y-0.5 transition-all !font-semibold">
+    <mat-icon class="mr-2">add</mat-icon> Add Branch
+  </button>
+</div>
+
+<div *ngIf="!isLoading() && branches().length > 0" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden animate-fade-in-up">
+  <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/30 dark:bg-gray-900/10 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="relative w-72">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <mat-icon class="!text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
+        </div>
+        <input type="text" (keyup.enter)="onSearch($event)" (blur)="onSearch($event)" placeholder="Search branches..." class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg leading-5 bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all shadow-sm">
+      </div>
+      
+      <div class="relative">
+        <select (change)="onFilterStatus($event)" class="block w-40 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
+          <option value="">All Statuses</option>
+          <option value="1">Active</option>
+          <option value="2">Inactive</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    [data]="branches()"
+    [columns]="columns"
+    [displayedColumns]="displayedColumns"
+    [isServerSide]="true"
+    [totalLength]="totalCount()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageIndex()"
+    (page)="onPageChange($event)"
+    (view)="onView($event)"
+    (edit)="onEdit($event)"
+    (delete)="onDelete($event)"
+    (restore)="onRestore($event)">
+  </app-data-table>
+</div>

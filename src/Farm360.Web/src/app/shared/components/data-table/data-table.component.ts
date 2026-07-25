@@ -33,9 +33,17 @@ export class DataTableComponent implements AfterViewInit, OnChanges {
   @Input() columns: TableColumn[] = [];
   @Input() displayedColumns: string[] = [];
   
+  // Server-side pagination inputs
+  @Input() isServerSide: boolean = false;
+  @Input() totalLength: number = 0;
+  @Input() pageSize: number = 10;
+  @Input() pageIndex: number = 0;
+  
   @Output() edit = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
   @Output() view = new EventEmitter<any>();
+  @Output() restore = new EventEmitter<any>();
+  @Output() page = new EventEmitter<any>();
 
   dataSource = new MatTableDataSource<any>([]);
 
@@ -49,8 +57,16 @@ export class DataTableComponent implements AfterViewInit, OnChanges {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    if (!this.isServerSide) {
+      this.dataSource.paginator = this.paginator;
+      this.dataSource.sort = this.sort;
+    }
+  }
+
+  onPage(event: any): void {
+    if (this.isServerSide) {
+      this.page.emit(event);
+    }
   }
 
   onEdit(element: any): void {
@@ -59,6 +75,10 @@ export class DataTableComponent implements AfterViewInit, OnChanges {
 
   onDelete(element: any): void {
     this.delete.emit(element);
+  }
+
+  onRestore(element: any): void {
+    this.restore.emit(element);
   }
 
   onView(element: any): void {

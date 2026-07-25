@@ -6,6 +6,13 @@ public interface IOrganizationRepository
 {
     Task<Organization?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Organization>> GetAllByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<Organization> Items, int TotalCount)> GetPagedByTenantAsync(
+        Guid tenantId, 
+        string? searchTerm, 
+        int? status, 
+        int pageNumber, 
+        int pageSize, 
+        CancellationToken cancellationToken = default);
     Task<bool> ExistsByNameAsync(Guid tenantId, string name, CancellationToken cancellationToken = default);
 
     /// <summary>

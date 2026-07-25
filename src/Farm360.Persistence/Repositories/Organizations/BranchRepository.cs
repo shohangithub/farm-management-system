@@ -34,6 +34,38 @@ public sealed class BranchRepository : IBranchRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<(IReadOnlyList<Branch> Items, int TotalCount)> GetPagedByOrganizationAsync(
+        Guid tenantId, 
+        Guid organizationId, 
+        string? searchTerm, 
+        int? status, 
+        int pageNumber, 
+        int pageSize, 
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Set<Branch>().Where(b => b.TenantId == tenantId && b.OrganizationId == organizationId);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(b => b.Name.Contains(searchTerm) || b.BranchCode.Contains(searchTerm));
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(b => (int)b.Status == status.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderBy(b => b.Name)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
+
     public async Task<bool> ExistsByCodeAsync(Guid tenantId, string branchCode, CancellationToken cancellationToken = default)
     {
         return await _context.Set<Branch>()

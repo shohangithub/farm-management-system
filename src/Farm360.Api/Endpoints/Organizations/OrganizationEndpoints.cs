@@ -13,9 +13,9 @@ public static class OrganizationEndpoints
             .WithTags("Organizations")
             .RequireAuthorization();
 
-        group.MapGet("/", async (ISender sender) =>
+        group.MapGet("/", async (ISender sender, string? search, int? status, int page = 1, int size = 10) =>
         {
-            var result = await sender.Send(new GetOrganizationsQuery());
+            var result = await sender.Send(new GetOrganizationsQuery(search, status, page, size));
             return Results.Ok(result);
         })
         .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
@@ -50,5 +50,27 @@ public static class OrganizationEndpoints
             return Results.NoContent();
         })
         .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Delete}");
+
+        group.MapPost("/{id:guid}/activate", async (Guid id, ISender sender) =>
+        {
+            await sender.Send(new ActivateOrganizationCommand(id));
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Edit}");
+
+        group.MapPost("/{id:guid}/logo", async (Guid id, Microsoft.AspNetCore.Http.IFormFile file, Farm360.Application.Common.Interfaces.IFileStorageService storageService, ISender sender) =>
+        {
+            if (file == null || file.Length == 0)
+                return Results.BadRequest("No file uploaded.");
+
+            using var stream = file.OpenReadStream();
+            var logoUrl = await storageService.UploadFileAsync(stream, file.FileName, "organizations");
+
+            await sender.Send(new UpdateOrganizationLogoCommand(id, logoUrl));
+            
+            return Results.Ok(new { LogoUrl = logoUrl });
+        })
+        .DisableAntiforgery()
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Edit}");
     }
 }

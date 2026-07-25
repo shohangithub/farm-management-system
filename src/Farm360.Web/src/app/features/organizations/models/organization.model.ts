@@ -21,6 +21,10 @@ export interface Organization {
   address?: Address;
   businessType: number; // enum BusinessType
   status: number; // enum OrganizationStatus
+  createdAt: string;
+  createdBy?: string;
+  lastModifiedAt?: string;
+  lastModifiedBy?: string;
   rowVersion: string; // byte[] represented as base64 or string
 }
 

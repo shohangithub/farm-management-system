@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { OrganizationService } from '../services/organization.service';
 import { Organization } from '../models/organization.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -11,7 +13,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 @Component({
   selector: 'app-organization-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeaderComponent, DataTableComponent],
+  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent],
   templateUrl: './organization-list.html',
   styleUrls: ['./organization-list.scss']
 })
@@ -22,6 +24,13 @@ export class OrganizationListComponent implements OnInit {
   organizations = signal<Organization[]>([]);
   isLoading = signal<boolean>(false);
   error = signal<string | null>(null);
+
+  // Pagination & Search State
+  totalCount = signal<number>(0);
+  pageSize = signal<number>(10);
+  pageIndex = signal<number>(0);
+  searchTerm = signal<string>('');
+  statusFilter = signal<number | null>(null);
 
   displayedColumns = ['name', 'contact', 'type', 'status', 'actions'];
 
@@ -76,9 +85,11 @@ export class OrganizationListComponent implements OnInit {
 
   loadOrganizations(): void {
     this.isLoading.set(true);
-    this.organizationService.getOrganizations().subscribe({
+    const status = this.statusFilter();
+    this.organizationService.getOrganizations(this.searchTerm(), status !== null ? status : undefined, this.pageIndex() + 1, this.pageSize()).subscribe({
       next: (data) => {
-        this.organizations.set(data);
+        this.organizations.set(data.items);
+        this.totalCount.set(data.totalCount);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -87,6 +98,30 @@ export class OrganizationListComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  onSearch(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
+    this.pageIndex.set(0); // Reset to first page
+    this.loadOrganizations();
+  }
+
+  onFilterStatus(event: any): void {
+    const val = event.target.value;
+    if (val === '') {
+      this.statusFilter.set(null);
+    } else {
+      this.statusFilter.set(Number(val));
+    }
+    this.pageIndex.set(0);
+    this.loadOrganizations();
+  }
+
+  onPageChange(event: any): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    this.loadOrganizations();
   }
 
   deactivate(id: string): void {
@@ -115,11 +150,37 @@ export class OrganizationListComponent implements OnInit {
     this.router.navigate(['/organizations/new']);
   }
 
+  onView(org: Organization): void {
+    this.router.navigate(['/organizations/detail', org.id]);
+  }
+
   onEdit(org: Organization): void {
     this.router.navigate(['/organizations/edit', org.id]);
   }
 
   onDelete(org: Organization): void {
     this.deactivate(org.id);
+  }
+
+  onRestore(org: Organization): void {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Restore Organization',
+        message: 'Are you sure you want to restore this organization? It will become active again.',
+        confirmButtonText: 'Restore',
+        cancelButtonText: 'Cancel',
+        isDestructive: false
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.organizationService.activateOrganization(org.id).subscribe({
+          next: () => this.loadOrganizations(),
+          error: (err) => console.error(err)
+        });
+      }
+    });
   }
 }

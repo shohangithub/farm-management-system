@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { OrganizationService } from '../services/organization.service';
 import { CreateOrganizationCommand, UpdateOrganizationCommand } from '../models/organization.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -10,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-organization-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, PageHeaderComponent],
   templateUrl: './organization-form.html',
   styleUrls: ['./organization-form.scss']
 })
@@ -27,6 +28,10 @@ export class OrganizationFormComponent implements OnInit {
   isSubmitting = signal<boolean>(false);
   error = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+
+  // Logo upload state
+  selectedLogoFile = signal<File | null>(null);
+  logoPreviewUrl = signal<string | null>(null);
 
   ngOnInit(): void {
     this.initForm();
@@ -78,6 +83,12 @@ export class OrganizationFormComponent implements OnInit {
           country: org.address?.country || '',
           zipCode: org.address?.zipCode || ''
         });
+
+        if (org.logoUrl) {
+          // If LogoUrl is relative, it will map to backend via proxy or absolute path.
+          // Assuming it's already a usable URL in the context of the frontend.
+          this.logoPreviewUrl.set(org.logoUrl);
+        }
       },
       error: (err) => {
         const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to load organization details.';
@@ -105,6 +116,22 @@ export class OrganizationFormComponent implements OnInit {
       businessType: +formValue.businessType
     };
 
+    const handleLogoUpload = (id: string, callback: () => void) => {
+      const file = this.selectedLogoFile();
+      if (file) {
+        this.organizationService.uploadLogo(id, file).subscribe({
+          next: () => callback(),
+          error: (err) => {
+            console.error('[OrganizationForm] logo upload error:', err);
+            // Even if logo upload fails, the org was created/updated.
+            callback();
+          }
+        });
+      } else {
+        callback();
+      }
+    };
+
     if (this.isEditMode() && this.orgId()) {
       const command: UpdateOrganizationCommand = {
         id: this.orgId()!,
@@ -112,9 +139,11 @@ export class OrganizationFormComponent implements OnInit {
       };
       this.organizationService.updateOrganization(this.orgId()!, command).subscribe({
         next: () => {
-          this.isSubmitting.set(false);
-          this.successMessage.set('Organization updated successfully.');
-          setTimeout(() => this.router.navigate(['/organizations']), 500);
+          handleLogoUpload(this.orgId()!, () => {
+            this.isSubmitting.set(false);
+            this.successMessage.set('Organization updated successfully.');
+            setTimeout(() => this.router.navigate(['/organizations']), 500);
+          });
         },
         error: (err) => {
           const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to update organization. Please check the inputs.';
@@ -126,19 +155,20 @@ export class OrganizationFormComponent implements OnInit {
     } else {
       const command: CreateOrganizationCommand = { ...sanitizedValues };
       this.organizationService.createOrganization(command).subscribe({
-        next: () => {
-          this.isSubmitting.set(false);
-          this.successMessage.set('Organization created successfully.');
-          
-          const isNewTenant = this.authService.currentUserSignal()?.tenantId === '00000000-0000-0000-0000-000000000000';
-          if (isNewTenant) {
-            // Force a token refresh to acquire the new TenantId and Owner role in the JWT
-            this.authService.refreshSession().subscribe(() => {
+        next: (response) => {
+          handleLogoUpload(response.id, () => {
+            this.isSubmitting.set(false);
+            this.successMessage.set('Organization created successfully.');
+            
+            const isNewTenant = this.authService.currentUserSignal()?.tenantId === '00000000-0000-0000-0000-000000000000';
+            if (isNewTenant) {
+              this.authService.refreshSession().subscribe(() => {
+                setTimeout(() => this.router.navigate(['/organizations']), 500);
+              });
+            } else {
               setTimeout(() => this.router.navigate(['/organizations']), 500);
-            });
-          } else {
-            setTimeout(() => this.router.navigate(['/organizations']), 500);
-          }
+            }
+          });
         },
         error: (err) => {
           const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to create organization. Please check the inputs.';
@@ -148,5 +178,27 @@ export class OrganizationFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  onLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      this.selectedLogoFile.set(file);
+
+      // Create a local preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.logoPreviewUrl.set(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onRemoveLogo(): void {
+    this.selectedLogoFile.set(null);
+    this.logoPreviewUrl.set(null);
+    // Note: To completely clear it from the backend on edit, we would need 
+    // a separate delete API, but for now we just clear the preview.
   }
 }
