@@ -12,6 +12,10 @@ export interface Shed {
   hasWaterLine: boolean;
   hasFeedLine: boolean;
   status: number; // enum ShedStatus
+  createdAtUtc?: string;
+  createdBy?: string;
+  modifiedAtUtc?: string;
+  modifiedBy?: string;
 }
 
 export interface ShedList {

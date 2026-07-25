@@ -1,94 +1,184 @@
-<div class="p-6 max-w-3xl mx-auto">
-  <div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditMode ? 'Edit Shed' : 'Register New Shed' }}</h1>
-    <p class="text-gray-500 dark:text-gray-400 mt-1">
-      {{ isEditMode ? 'Update housing unit details.' : 'Add a new housing unit to the farm.' }}
-    </p>
+<app-page-header 
+  [title]="isEditMode() ? 'Edit Shed' : 'Register New Shed'" 
+  [description]="isEditMode() ? 'Update shed operational details.' : 'Add a new physical structure under this farm.'">
+</app-page-header>
+
+<!-- Server Error Alert -->
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3 animate-fade-in">
+  <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+  </svg>
+  <div>
+    <h3 class="text-sm font-semibold">Submission Failed</h3>
+    <p class="text-xs mt-0.5">{{ error() }}</p>
+  </div>
+</div>
+
+<form [formGroup]="shedForm" (ngSubmit)="onSubmit()" novalidate class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 divide-y divide-gray-100 dark:divide-gray-800/50">
+  
+  <!-- ── Section 1: Basic Information ──────────────────────────── -->
+  <div class="p-6 sm:p-8 space-y-6">
+    <div>
+      <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Basic Information</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Core identification details for this shed.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+      <!-- Shed Number -->
+      <div class="sm:col-span-2 space-y-1.5">
+        <label for="shedNumber" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Shed Number <span class="text-red-500">*</span>
+        </label>
+        <input type="text" formControlName="shedNumber" id="shedNumber" 
+               placeholder="e.g. S-01"
+               class="block w-full px-3 py-2.5 border rounded-lg text-sm font-mono uppercase shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                      border-gray-300 dark:border-gray-600 placeholder-gray-400
+                      disabled:bg-gray-50 dark:disabled:bg-gray-800/50 disabled:text-gray-500 disabled:cursor-not-allowed
+                      [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
+        <p *ngIf="getError('shedNumber')" class="text-xs text-red-500 mt-1 flex items-center gap-1">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          {{ getError('shedNumber') }}
+        </p>
+        <p *ngIf="isEditMode() && !getError('shedNumber')" class="text-[11px] text-gray-400 mt-1 italic">Shed number cannot be changed after creation.</p>
+      </div>
+
+      <!-- Shed Name -->
+      <div class="sm:col-span-4 space-y-1.5">
+        <label for="shedName" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Shed Name <span class="text-red-500">*</span>
+        </label>
+        <input type="text" formControlName="shedName" id="shedName" 
+               placeholder="e.g. Primary Breeding Shed"
+               class="block w-full px-3 py-2.5 border rounded-lg text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                      border-gray-300 dark:border-gray-600 placeholder-gray-400
+                      [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
+        <p *ngIf="getError('shedName')" class="text-xs text-red-500 mt-1 flex items-center gap-1">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          {{ getError('shedName') }}
+        </p>
+      </div>
+
+      <!-- Animal Type -->
+      <div class="sm:col-span-3 space-y-1.5">
+        <label for="animalType" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Animal Type
+        </label>
+        <input type="text" formControlName="animalType" id="animalType" 
+               placeholder="e.g. Cattle, Poultry"
+               class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        <p *ngIf="getError('animalType')" class="text-xs text-red-500 mt-1">{{ getError('animalType') }}</p>
+      </div>
+
+      <!-- Status (Edit Mode Only) -->
+      <div *ngIf="isEditMode()" class="sm:col-span-3 space-y-1.5">
+        <label for="status" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Status</label>
+        <select formControlName="status" id="status"
+                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
+          <option [ngValue]="1">Active</option>
+          <option [ngValue]="2">Inactive</option>
+          <option [ngValue]="3">Maintenance</option>
+        </select>
+      </div>
+    </div>
   </div>
 
-  <form [formGroup]="shedForm" (ngSubmit)="onSubmit()" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-6">
+  <!-- ── Section 2: Construction & Capacity ──────────────────────────── -->
+  <div class="p-6 sm:p-8 space-y-6">
+    <div>
+      <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Construction & Capacity</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Physical structure details and animal limits.</p>
+    </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Shed Number *</label>
-        <input type="text" formControlName="shedNumber" class="form-input" placeholder="e.g. S-01">
+    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+      
+      <!-- Capacity -->
+      <div class="sm:col-span-2 space-y-1.5">
+        <label for="capacity" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Capacity (Headcount)</label>
+        <input type="number" formControlName="capacity" id="capacity" 
+               placeholder="e.g. 100"
+               class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        <p *ngIf="getError('capacity')" class="text-xs text-red-500 mt-1">{{ getError('capacity') }}</p>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Shed Name *</label>
-        <input type="text" formControlName="shedName" class="form-input" placeholder="e.g. North Broiler House">
+
+      <!-- Floor Type -->
+      <div class="sm:col-span-2 space-y-1.5">
+        <label for="floorType" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Floor Type</label>
+        <input type="text" formControlName="floorType" id="floorType" 
+               placeholder="e.g. Concrete, Slatted"
+               class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
       </div>
       
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Animal Type</label>
-        <input type="text" formControlName="animalType" class="form-input" placeholder="e.g. Broiler, Dairy Cattle">
+      <!-- Roof Type -->
+      <div class="sm:col-span-2 space-y-1.5">
+        <label for="roofType" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Roof Type</label>
+        <input type="text" formControlName="roofType" id="roofType"
+               placeholder="e.g. Tin, Asbestos"
+               class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Capacity</label>
-        <input type="number" formControlName="capacity" class="form-input" placeholder="Max animals">
-      </div>
+      
     </div>
+  </div>
 
-    <hr class="border-gray-200 dark:border-gray-700">
-
-    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Infrastructure Details</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Floor Type</label>
-        <input type="text" formControlName="floorType" class="form-input" placeholder="e.g. Concrete, Slatted">
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Roof Type</label>
-        <input type="text" formControlName="roofType" class="form-input" placeholder="e.g. Tin, Insulated">
-      </div>
+  <!-- ── Section 3: Facilities ─────────────────────────── -->
+  <div class="p-6 sm:p-8 space-y-6">
+    <div>
+      <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Facilities</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Available utilities inside the shed.</p>
     </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg">
-      <label class="flex items-center space-x-3 cursor-pointer">
-        <input type="checkbox" formControlName="hasVentilation" class="form-checkbox h-5 w-5 text-brand-600 rounded border-gray-300 focus:ring-brand-500">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ventilation System</span>
-      </label>
-      <label class="flex items-center space-x-3 cursor-pointer">
-        <input type="checkbox" formControlName="hasWaterLine" class="form-checkbox h-5 w-5 text-brand-600 rounded border-gray-300 focus:ring-brand-500">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Water Line</span>
-      </label>
-      <label class="flex items-center space-x-3 cursor-pointer">
-        <input type="checkbox" formControlName="hasFeedLine" class="form-checkbox h-5 w-5 text-brand-600 rounded border-gray-300 focus:ring-brand-500">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Feed Line</span>
-      </label>
-    </div>
-
-    <div *ngIf="isEditMode">
-      <hr class="border-gray-200 dark:border-gray-700 my-6">
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-      <select formControlName="status" class="form-input w-full md:w-1/2">
-        <option [ngValue]="1">Active</option>
-        <option [ngValue]="2">Inactive</option>
-        <option [ngValue]="3">Maintenance</option>
-      </select>
-    </div>
-
-    <!-- Error Message -->
-    <div *ngIf="errorMessage" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-md">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <i class="fas fa-exclamation-circle text-red-500"></i>
+    
+    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-3">
+      
+      <!-- Ventilation -->
+      <label class="relative flex items-start p-4 cursor-pointer rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+        <div class="flex items-center h-5">
+          <input type="checkbox" formControlName="hasVentilation" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
         </div>
-        <div class="ml-3">
-          <p class="text-sm text-red-700 dark:text-red-400">
-            {{ errorMessage }}
-          </p>
+        <div class="ml-3 text-sm">
+          <span class="font-medium text-gray-900 dark:text-white">Ventilation System</span>
+          <p class="text-gray-500 dark:text-gray-400 mt-0.5 text-xs">Fans, extractors, or climate control</p>
         </div>
-      </div>
-    </div>
+      </label>
 
-    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-6">
-      <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId]" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
-        Cancel
-      </a>
-      <button type="submit" [disabled]="shedForm.invalid || isSaving" class="btn-primary">
-        <span *ngIf="isSaving"><i class="fas fa-spinner fa-spin mr-2"></i> Saving...</span>
-        <span *ngIf="!isSaving">{{ isEditMode ? 'Update Shed' : 'Create Shed' }}</span>
-      </button>
+      <!-- Water Line -->
+      <label class="relative flex items-start p-4 cursor-pointer rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+        <div class="flex items-center h-5">
+          <input type="checkbox" formControlName="hasWaterLine" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+        </div>
+        <div class="ml-3 text-sm">
+          <span class="font-medium text-gray-900 dark:text-white">Water Line</span>
+          <p class="text-gray-500 dark:text-gray-400 mt-0.5 text-xs">Automated drinking systems</p>
+        </div>
+      </label>
+
+      <!-- Feed Line -->
+      <label class="relative flex items-start p-4 cursor-pointer rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+        <div class="flex items-center h-5">
+          <input type="checkbox" formControlName="hasFeedLine" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+        </div>
+        <div class="ml-3 text-sm">
+          <span class="font-medium text-gray-900 dark:text-white">Feed Line</span>
+          <p class="text-gray-500 dark:text-gray-400 mt-0.5 text-xs">Automated feeding systems</p>
+        </div>
+      </label>
+
     </div>
-  </form>
-</div>
+  </div>
+
+  <!-- ── Form Footer ─────────────────────────────────────────────── -->
+  <div class="p-6 sm:p-8 bg-gray-50/50 dark:bg-gray-800/10 rounded-b-2xl flex items-center justify-between gap-3">
+    <button type="button" [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds']"
+            class="px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+      Cancel
+    </button>
+    <button type="submit" [disabled]="shedForm.invalid || isSubmitting()"
+            class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+      <svg *ngIf="isSubmitting()" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      {{ isSubmitting() ? 'Saving...' : (isEditMode() ? 'Update Shed' : 'Create Shed') }}
+    </button>
+  </div>
+</form>

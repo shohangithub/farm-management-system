@@ -15,7 +15,11 @@ public sealed record ShedDto(
     bool HasVentilation,
     bool HasWaterLine,
     bool HasFeedLine,
-    ShedStatus Status);
+    ShedStatus Status,
+    DateTime CreatedAtUtc,
+    Guid CreatedBy,
+    DateTime? ModifiedAtUtc,
+    Guid? ModifiedBy);
 
 public sealed record ShedListDto(
     Guid Id,

@@ -1,47 +1,71 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subject, takeUntil } from 'rxjs';
 import { ShedService } from '../services/shed.service';
+import { CreateShedCommand, UpdateShedCommand } from '../models/shed.model';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-shed-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './shed-form.component.html'
 })
-export class ShedFormComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private shedService = inject(ShedService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+export class ShedFormComponent implements OnInit, OnDestroy {
+  private readonly fb = inject(FormBuilder);
+  private readonly shedService = inject(ShedService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly destroy$ = new Subject<void>();
 
   shedForm!: FormGroup;
-  isEditMode = false;
-  shedId: string = '';
-  farmId: string = '';
-  branchId: string = '';
-  isSaving = false;
-  errorMessage = '';
+  isEditMode = signal<boolean>(false);
+  branchId = signal<string>('');
+  farmId = signal<string>('');
+  shedId = signal<string | null>(null);
+  isSubmitting = signal<boolean>(false);
+  error = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.branchId = this.route.snapshot.paramMap.get('branchId') || '';
-    this.farmId = this.route.snapshot.paramMap.get('farmId') || '';
-    this.shedId = this.route.snapshot.paramMap.get('shedId') || '';
-    this.isEditMode = !!this.shedId;
-
     this.initForm();
 
-    if (this.isEditMode) {
-      this.loadShed();
+    const branchId = this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId');
+    const farmId = this.route.snapshot.paramMap.get('farmId') || this.route.parent?.snapshot.paramMap.get('farmId');
+    const shedId = this.route.snapshot.paramMap.get('shedId');
+
+    if (branchId) this.branchId.set(branchId);
+    if (farmId) this.farmId.set(farmId);
+
+    if (shedId) {
+      this.isEditMode.set(true);
+      this.shedId.set(shedId);
+      this.loadShed(shedId);
     }
+
+    // Auto-uppercase shed number as the user types
+    this.shedForm.get('shedNumber')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (value && value !== value.toUpperCase()) {
+          this.shedForm.get('shedNumber')?.setValue(value.toUpperCase(), { emitEvent: false });
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   initForm(): void {
     this.shedForm = this.fb.group({
       shedNumber: ['', [Validators.required, Validators.maxLength(50)]],
       shedName: ['', [Validators.required, Validators.maxLength(200)]],
-      capacity: [null, Validators.min(0)],
+      capacity: [null, [Validators.min(1)]],
       animalType: ['', Validators.maxLength(100)],
       floorType: ['', Validators.maxLength(100)],
       roofType: ['', Validators.maxLength(100)],
@@ -52,41 +76,101 @@ export class ShedFormComponent implements OnInit {
     });
   }
 
-  loadShed(): void {
-    this.shedService.getShedById(this.shedId).subscribe(shed => {
-      this.shedForm.patchValue(shed);
-      this.shedForm.get('shedNumber')?.disable();
+  loadShed(id: string): void {
+    this.shedService.getShedById(id).subscribe({
+      next: (shed) => {
+        this.shedForm.patchValue({
+          shedNumber: shed.shedNumber,
+          shedName: shed.shedName,
+          capacity: shed.capacity,
+          animalType: shed.animalType,
+          floorType: shed.floorType,
+          roofType: shed.roofType,
+          hasVentilation: shed.hasVentilation,
+          hasWaterLine: shed.hasWaterLine,
+          hasFeedLine: shed.hasFeedLine,
+          status: shed.status
+        });
+        // Shed number shouldn't change after creation
+        this.shedForm.get('shedNumber')?.disable();
+      },
+      error: (err) => {
+        this.error.set('Failed to load shed details.');
+        console.error(err);
+      }
     });
   }
 
+  getError(field: string): string {
+    const control = this.shedForm.get(field);
+    if (!control || !control.touched || control.valid) return '';
+    if (control.hasError('required')) return 'This field is required.';
+    if (control.hasError('maxlength')) {
+      const max = control.getError('maxlength').requiredLength;
+      return `Maximum ${max} characters allowed.`;
+    }
+    if (control.hasError('min')) {
+      return 'Value must be greater than zero.';
+    }
+    return 'Invalid value.';
+  }
+
   onSubmit(): void {
-    if (this.shedForm.invalid) return;
+    if (this.shedForm.invalid) {
+      this.shedForm.markAllAsTouched();
+      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
+        duration: 4000,
+        panelClass: ['snack-error']
+      });
+      return;
+    }
 
-    this.isSaving = true;
-    this.errorMessage = '';
-    const formData = this.shedForm.getRawValue();
+    this.isSubmitting.set(true);
+    this.error.set(null);
 
-    if (this.isEditMode) {
-      this.shedService.updateShed(this.shedId, formData).subscribe({
+    const formValue = this.shedForm.getRawValue();
+
+    if (this.isEditMode() && this.shedId()) {
+      const command: UpdateShedCommand = {
+        id: this.shedId()!,
+        farmId: this.farmId(),
+        ...formValue
+      };
+      this.shedService.updateShed(this.shedId()!, command).subscribe({
         next: () => {
-          this.router.navigate(['/organizations/branches', this.branchId, 'farms', this.farmId]);
+          this.isSubmitting.set(false);
+          this.snackBar.open('Shed updated successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success']
+          });
+          this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
         },
         error: (err) => {
+          const message = err?.error?.detail || err?.error?.title || 'Failed to update shed. Please check the inputs.';
+          this.error.set(message);
+          this.isSubmitting.set(false);
           console.error(err);
-          this.errorMessage = err.error?.detail || err.error?.title || 'An unexpected error occurred.';
-          this.isSaving = false;
         }
       });
     } else {
-      formData.farmId = this.farmId;
-      this.shedService.createShed(this.farmId, formData).subscribe({
+      const command: CreateShedCommand = {
+        farmId: this.farmId(),
+        ...formValue
+      };
+      this.shedService.createShed(this.farmId(), command).subscribe({
         next: () => {
-          this.router.navigate(['/organizations/branches', this.branchId, 'farms', this.farmId]);
+          this.isSubmitting.set(false);
+          this.snackBar.open('Shed created successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success']
+          });
+          this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
         },
         error: (err) => {
+          const message = err?.error?.detail || err?.error?.title || 'Failed to create shed. Please check the inputs.';
+          this.error.set(message);
+          this.isSubmitting.set(false);
           console.error(err);
-          this.errorMessage = err.error?.detail || err.error?.title || 'An unexpected error occurred.';
-          this.isSaving = false;
         }
       });
     }

@@ -19,7 +19,11 @@ public static class ShedMappingExtensions
             shed.HasVentilation,
             shed.HasWaterLine,
             shed.HasFeedLine,
-            shed.Status);
+            shed.Status,
+            shed.CreatedAtUtc,
+            shed.CreatedBy,
+            shed.ModifiedAtUtc,
+            shed.ModifiedBy);
     }
 
     public static ShedListDto ToListDto(this Shed shed)

@@ -1,131 +1,243 @@
-<div class="p-6 max-w-5xl mx-auto">
-  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
-    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
-  </div>
+<app-page-header 
+  [title]="shed() ? shed()!.shedName : 'Shed Details'"
+  [description]="shed() ? 'Shed Number: ' + shed()!.shedNumber : ''"
+  primaryActionLabel="Edit Shed"
+  primaryActionIcon="edit"
+  secondaryActionLabel="Back"
+  secondaryActionIcon="arrow_back"
+  (primaryAction)="onEdit()"
+  (secondaryAction)="onBack()">
+</app-page-header>
 
-  <div *ngIf="!isLoading && shed">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<!-- Error State -->
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3">
+  <mat-icon class="!text-red-500 mt-0.5 flex-shrink-0">error_outline</mat-icon>
+  <div>
+    <h3 class="text-sm font-semibold">Error</h3>
+    <p class="text-xs mt-1">{{ error() }}</p>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-24 space-y-4">
+  <div class="relative w-12 h-12">
+    <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
+    <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
+  </div>
+  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Shed...</p>
+</div>
+
+<div *ngIf="!isLoading() && shed()" class="space-y-6">
+
+  <!-- Hero Card -->
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <div class="px-6 py-5 sm:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 dark:border-gray-800/50 bg-gradient-to-r from-gray-50/50 to-white dark:from-gray-900/20 dark:to-surface-dark">
       <div class="flex items-center gap-4">
-        <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId]" class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
-          <i class="fas fa-arrow-left"></i>
-        </a>
+        <!-- Shed Icon -->
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br from-primary-500 to-primary-700">
+          <mat-icon class="!text-white !text-[28px] !w-[28px] !h-[28px]">house_siding</mat-icon>
+        </div>
         <div>
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-              {{ shed.shedNumber }}
-            </span>
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full" [ngClass]="getStatusClass(shed.status)">
-              {{ getStatusName(shed.status) }}
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{{ shed()?.shedName }}</h2>
+            <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
+              {{ shed()?.animalType || 'Mixed' }}
             </span>
           </div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ shed.shedName }}</h1>
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 font-mono">{{ shed()?.shedNumber }}</p>
         </div>
       </div>
-      <div class="flex gap-3">
-        <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shed.id, 'pens']" class="px-4 py-2 text-sm font-medium text-brand-600 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 dark:bg-brand-900/20 dark:text-brand-400 dark:border-brand-800 dark:hover:bg-brand-900/40 transition-colors">
-          <i class="fas fa-th-large mr-2"></i> Manage Pens
-        </a>
-        <a [routerLink]="['/organizations/branches', branchId, 'farms', farmId, 'sheds', shed.id, 'edit']" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
-          <i class="fas fa-edit mr-2"></i> Edit
-        </a>
-        <button (click)="deleteShed()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-          <i class="fas fa-trash-alt mr-2"></i> Delete
-        </button>
-      </div>
+      <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider"
+            [ngClass]="statusClass()">
+        <span class="w-2 h-2 rounded-full mr-2"
+              [ngClass]="{'bg-emerald-500': shed()?.status === 1, 'bg-gray-400': shed()?.status === 2, 'bg-amber-500': shed()?.status === 3}"></span>
+        {{ statusLabel() }}
+      </span>
     </div>
 
-    <!-- Occupancy Dashboard / Capacity Indicator -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Occupancy Dashboard</h3>
-      
-      <div class="flex flex-col md:flex-row items-center gap-8">
-        <div class="relative w-32 h-32 flex-shrink-0">
-          <svg class="w-full h-full" viewBox="0 0 36 36">
-            <path class="text-gray-200 dark:text-gray-700"
-              stroke-width="3.8" stroke="currentColor" fill="none"
-              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="text-brand-600" [ngClass]="{'text-brand-600': (shed.capacity && (shed.currentOccupancy / shed.capacity) < 0.8), 'text-yellow-500': (shed.capacity && (shed.currentOccupancy / shed.capacity) >= 0.8 && (shed.currentOccupancy / shed.capacity) < 1), 'text-red-500': (shed.capacity && (shed.currentOccupancy / shed.capacity) >= 1)}"
-              stroke-width="3.8" stroke-dasharray="100, 100" [attr.stroke-dasharray]="(shed.capacity ? Math.min((shed.currentOccupancy / shed.capacity) * 100, 100) : 0) + ', 100'" stroke="currentColor" fill="none"
-              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-xl font-bold text-gray-900 dark:text-white">{{ shed.capacity ? Math.round((shed.currentOccupancy / shed.capacity) * 100) : 0 }}%</span>
-            <span class="text-xs text-gray-500">Full</span>
-          </div>
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-gray-100 dark:divide-gray-800/50">
+      <div class="px-6 py-4 flex items-center gap-3">
+        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <mat-icon class="!text-blue-600 dark:!text-blue-400 !text-[20px] !w-[20px] !h-[20px]">pets</mat-icon>
         </div>
-        
-        <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
-          <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Current Animals</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ shed.currentOccupancy | number }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Max Capacity</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ shed.capacity ? (shed.capacity | number) : 'Unlimited' }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Available Slots</p>
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{{ shed.capacity ? (shed.capacity - shed.currentOccupancy | number) : '∞' }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Animal Type</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ shed.animalType || 'N/A' }}</p>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Current Animals</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ shed()?.currentOccupancy | number }}</div>
+        </div>
+      </div>
+      <div class="px-6 py-4 flex items-center gap-3">
+        <div class="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+          <mat-icon class="!text-indigo-600 dark:!text-indigo-400 !text-[20px] !w-[20px] !h-[20px]">warehouse</mat-icon>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Capacity</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ shed()?.capacity ? (shed()?.capacity | number) : 'Unlimited' }}</div>
+        </div>
+      </div>
+      <div class="px-6 py-4 flex items-center gap-3">
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+          <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[20px] !w-[20px] !h-[20px]">pie_chart</mat-icon>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Utilization</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            {{ shed()?.capacity ? ((shed()!.currentOccupancy / shed()!.capacity!) * 100 | number:'1.0-0') + '%' : 'N/A' }}
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Infrastructure -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Infrastructure Details</h3>
-      </div>
-      <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Construction</h4>
-            <ul class="space-y-4">
-              <li class="flex items-start">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400">
-                  <i class="fas fa-layer-group"></i>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">Floor Type</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ shed.floorType || 'Not specified' }}</p>
-                </div>
-              </li>
-              <li class="flex items-start">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400">
-                  <i class="fas fa-home"></i>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">Roof Type</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ shed.roofType || 'Not specified' }}</p>
-                </div>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Systems</h4>
-            <ul class="space-y-4">
-              <li class="flex items-center">
-                <i class="fas" [ngClass]="shed.hasVentilation ? 'fa-check-circle text-green-500' : 'fa-times-circle text-gray-300 dark:text-gray-600'"></i>
-                <span class="ml-3 text-sm font-medium" [ngClass]="shed.hasVentilation ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 line-through'">Ventilation System</span>
-              </li>
-              <li class="flex items-center">
-                <i class="fas" [ngClass]="shed.hasWaterLine ? 'fa-check-circle text-green-500' : 'fa-times-circle text-gray-300 dark:text-gray-600'"></i>
-                <span class="ml-3 text-sm font-medium" [ngClass]="shed.hasWaterLine ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 line-through'">Water Line</span>
-              </li>
-              <li class="flex items-center">
-                <i class="fas" [ngClass]="shed.hasFeedLine ? 'fa-check-circle text-green-500' : 'fa-times-circle text-gray-300 dark:text-gray-600'"></i>
-                <span class="ml-3 text-sm font-medium" [ngClass]="shed.hasFeedLine ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 line-through'">Feed Line</span>
-              </li>
-            </ul>
+      <div class="px-6 py-4 flex items-center gap-3">
+        <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+          <mat-icon class="!text-amber-600 dark:!text-amber-400 !text-[20px] !w-[20px] !h-[20px]">roofing</mat-icon>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Floor Type</div>
+          <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            {{ shed()?.floorType || 'Standard' }}
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Tabbed Details -->
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+    <mat-tab-group animationDuration="200ms" class="farm-tab-group">
+
+      <!-- ─── Overview Tab ─────────────────────────────────────────── -->
+      <mat-tab label="Overview">
+        <div class="p-6 sm:p-8">
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- Utilities and Features -->
+            <div class="md:col-span-2">
+               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">plumbing</mat-icon>
+                Facilities & Utilities
+              </dt>
+              <dd class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                 <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ventilation</span>
+                    <mat-icon [ngClass]="shed()?.hasVentilation ? '!text-green-500' : '!text-gray-400'">
+                      {{ shed()?.hasVentilation ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                 </div>
+                 <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Water Line</span>
+                    <mat-icon [ngClass]="shed()?.hasWaterLine ? '!text-green-500' : '!text-gray-400'">
+                      {{ shed()?.hasWaterLine ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                 </div>
+                 <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Feed Line</span>
+                    <mat-icon [ngClass]="shed()?.hasFeedLine ? '!text-green-500' : '!text-gray-400'">
+                      {{ shed()?.hasFeedLine ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                 </div>
+              </dd>
+            </div>
+
+            <!-- Roof Type -->
+            <div>
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">roofing</mat-icon>
+                Roof Type
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                {{ shed()?.roofType || 'Not specified' }}
+              </dd>
+            </div>
+            
+             <!-- Danger Zone -->
+            <div class="md:col-span-2 pt-4 mt-4 border-t border-red-100 dark:border-red-900/30">
+               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-red-500 mb-3">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">warning</mat-icon>
+                Danger Zone
+              </dt>
+              <dd>
+                 <button mat-flat-button color="warn" (click)="deleteShed()" class="!rounded-lg shadow-sm">
+                   Delete Shed
+                 </button>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </mat-tab>
+
+      <!-- ─── Pens Tab ─────────────────────────────────────────────── -->
+      <mat-tab label="Pens">
+        <div class="p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">Pens in this Shed</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Enclosures for housing individual or grouped animals.</p>
+            </div>
+            <button mat-flat-button (click)="onManagePens()"
+                    class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-xl !text-sm !font-semibold shadow-sm">
+              <mat-icon class="!mr-1 !text-[18px] !w-[18px] !h-[18px]">fence</mat-icon>
+              Manage Pens
+            </button>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">fence</mat-icon>
+            </div>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Navigate to Pens</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">Click "Manage Pens" to view and manage all animal enclosures under this shed.</p>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
+      <mat-tab label="Audit Info">
+        <div class="p-6 sm:p-8">
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_circle_outline</mat-icon>
+                Created At
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                {{ (shed()?.createdAtUtc | date:'MMM d, y, h:mm a') || '—' }}
+              </dd>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon>
+                Created By
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
+                {{ shed()?.createdBy || '—' }}
+              </dd>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_calendar</mat-icon>
+                Last Modified
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                {{ (shed()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || 'Never modified' }}
+              </dd>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">manage_accounts</mat-icon>
+                Last Modified By
+              </dt>
+              <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
+                {{ shed()?.modifiedBy || '—' }}
+              </dd>
+            </div>
+
+          </dl>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+
 </div>
