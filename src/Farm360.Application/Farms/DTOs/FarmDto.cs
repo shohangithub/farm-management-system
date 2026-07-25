@@ -18,7 +18,11 @@ public sealed record FarmDto(
     string? OwnerId,
     string? ManagerId,
     FarmStatus Status,
-    string? Description);
+    string? Description,
+    DateTime CreatedAtUtc,
+    Guid CreatedBy,
+    DateTime? ModifiedAtUtc,
+    Guid? ModifiedBy);
 
 public sealed record FarmListDto(
     Guid Id,

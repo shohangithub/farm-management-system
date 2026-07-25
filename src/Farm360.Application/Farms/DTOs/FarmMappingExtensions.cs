@@ -22,7 +22,11 @@ public static class FarmMappingExtensions
             farm.OwnerId,
             farm.ManagerId,
             farm.Status,
-            farm.Description);
+            farm.Description,
+            farm.CreatedAtUtc,
+            farm.CreatedBy,
+            farm.ModifiedAtUtc,
+            farm.ModifiedBy);
     }
 
     public static FarmListDto ToListDto(this Farm farm)

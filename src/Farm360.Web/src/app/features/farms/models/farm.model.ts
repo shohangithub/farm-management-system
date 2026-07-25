@@ -15,6 +15,10 @@ export interface Farm {
   managerId?: string;
   status: number; // enum FarmStatus
   description?: string;
+  createdAtUtc?: string;
+  createdBy?: string;
+  modifiedAtUtc?: string;
+  modifiedBy?: string;
 }
 
 export interface FarmList {

@@ -1,62 +1,59 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatDividerModule } from '@angular/material/divider';
 import { FarmService } from '../services/farm.service';
 import { Farm } from '../models/farm.model';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-farm-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTabsModule,
+    MatDividerModule,
+    PageHeaderComponent,
+    DatePipe,
+    DecimalPipe
+  ],
   templateUrl: './farm-detail.component.html'
 })
 export class FarmDetailComponent implements OnInit {
-  private farmService = inject(FarmService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private readonly farmService = inject(FarmService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  farm: Farm | null = null;
-  isLoading = true;
-  farmId: string = '';
-  branchId: string = '';
+  branchId = signal<string>('');
+  farmId = signal<string>('');
+  farm = signal<Farm | null>(null);
+  isLoading = signal<boolean>(false);
+  error = signal<string | null>(null);
 
-  ngOnInit(): void {
-    this.branchId = this.route.snapshot.paramMap.get('branchId') || '';
-    this.farmId = this.route.snapshot.paramMap.get('farmId') || '';
-    
-    if (this.farmId) {
-      this.loadFarm();
-    }
-  }
+  statusLabel = computed(() => {
+    const s = this.farm()?.status;
+    if (s === 1) return 'Active';
+    if (s === 2) return 'Inactive';
+    if (s === 3) return 'Under Maintenance';
+    return 'Closed';
+  });
 
-  loadFarm(): void {
-    this.isLoading = true;
-    this.farmService.getFarmById(this.farmId).subscribe({
-      next: (data) => {
-        this.farm = data;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error(err);
-        this.isLoading = false;
-      }
-    });
-  }
+  statusClass = computed(() => {
+    const s = this.farm()?.status;
+    if (s === 1) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
+    if (s === 2) return 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700';
+    if (s === 3) return 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
+    return 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800';
+  });
 
-  deleteFarm(): void {
-    if (confirm('Are you sure you want to delete this farm? This action cannot be undone.')) {
-      this.farmService.deleteFarm(this.farmId).subscribe({
-        next: () => {
-          this.router.navigate(['/organizations/branches', this.branchId, 'farms']);
-        },
-        error: (err) => {
-          console.error('Failed to delete farm', err);
-        }
-      });
-    }
-  }
-
-  getFarmTypeName(type: number): string {
+  farmTypeLabel = computed(() => {
+    const t = this.farm()?.type;
     const types: Record<number, string> = {
       1: 'Dairy',
       2: 'Poultry',
@@ -64,26 +61,64 @@ export class FarmDetailComponent implements OnInit {
       4: 'Crop',
       5: 'Aquaculture'
     };
-    return types[type] || 'Unknown';
+    return t ? (types[t] || 'Unknown') : 'Unknown';
+  });
+
+  ngOnInit(): void {
+    const branchId = this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId');
+    const farmId = this.route.snapshot.paramMap.get('farmId');
+
+    if (branchId && farmId) {
+      this.branchId.set(branchId);
+      this.farmId.set(farmId);
+      this.loadFarm(farmId);
+    } else {
+      this.error.set('Branch ID or Farm ID not found in route.');
+    }
   }
 
-  getStatusName(status: number): string {
-    const statuses: Record<number, string> = {
-      1: 'Active',
-      2: 'Inactive',
-      3: 'Under Maintenance',
-      4: 'Closed'
-    };
-    return statuses[status] || 'Unknown';
+  loadFarm(id: string): void {
+    this.isLoading.set(true);
+    this.farmService.getFarmById(id).subscribe({
+      next: (data) => {
+        this.farm.set(data);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        this.error.set('Failed to load farm details.');
+        this.isLoading.set(false);
+        console.error(err);
+      }
+    });
   }
 
-  getStatusClass(status: number): string {
-    switch (status) {
-      case 1: return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 2: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-      case 3: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 4: return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default: return 'bg-gray-100 text-gray-800';
+  onEdit(): void {
+    if (this.farm()) {
+      this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'edit']);
+    }
+  }
+
+  onBack(): void {
+    this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
+  }
+
+  onManageSheds(): void {
+    if (this.farm()) {
+      this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
+    }
+  }
+
+  deleteFarm(): void {
+    if (confirm('Are you sure you want to delete this farm? This action cannot be undone.')) {
+      this.farmService.deleteFarm(this.farmId()).subscribe({
+        next: () => {
+          this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
+        },
+        error: (err) => {
+          this.error.set(err?.error?.detail || 'Failed to delete farm.');
+          console.error('Failed to delete farm', err);
+        }
+      });
     }
   }
 }
