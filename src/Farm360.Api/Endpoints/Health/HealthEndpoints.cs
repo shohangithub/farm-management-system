@@ -27,7 +27,7 @@ public static class HealthEndpoints
             var eventId = await sender.Send(command, ct);
             return Results.Ok(new { Id = eventId });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.HealthModule.Create))
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
         .WithSummary("Schedule a vaccination for an animal");
 
         group.MapPut("/vaccinations/{id:guid}/administer", async (
@@ -40,7 +40,7 @@ public static class HealthEndpoints
             await sender.Send(command, ct);
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.HealthModule.Edit))
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
         .WithSummary("Record administration of a scheduled vaccination");
 
         group.MapGet("/vaccinations/upcoming", async (
@@ -52,7 +52,7 @@ public static class HealthEndpoints
             var result = await sender.Send(new GetUpcomingVaccinationsQuery(farmId, beforeDate), ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.HealthModule.View))
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
         .WithSummary("Get upcoming scheduled vaccinations");
 
         // ── Medical Treatments ───────────────────────────────────────────────────
@@ -65,7 +65,7 @@ public static class HealthEndpoints
             var treatmentId = await sender.Send(command, ct);
             return Results.Ok(new { Id = treatmentId });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.HealthModule.Create))
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
         .WithSummary("Log a new medical treatment");
 
         // ── Disease Incidents ────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ public static class HealthEndpoints
             var incidentId = await sender.Send(command, ct);
             return Results.Ok(new { Id = incidentId });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.HealthModule.Create))
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
         .WithSummary("Report a new disease incident or outbreak");
 
         // ── Animal Health History ────────────────────────────────────────────────
@@ -91,7 +91,7 @@ public static class HealthEndpoints
             var result = await sender.Send(new GetAnimalHealthHistoryQuery(animalId), ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.HealthModule.View))
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
         .WithSummary("Get complete health history (vaccinations and treatments) for an animal");
 
         return app;

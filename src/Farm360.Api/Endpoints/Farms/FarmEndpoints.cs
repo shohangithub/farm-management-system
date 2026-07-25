@@ -23,14 +23,14 @@ public static class FarmEndpoints
             var result = await sender.Send(new GetFarmsByBranchQuery(branchId));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.FarmModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.View}");
 
         rootGroup.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
         {
             var result = await sender.Send(new GetFarmByIdQuery(id));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.FarmModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.View}");
 
         branchGroup.MapPost("/", async ([FromRoute] Guid branchId, [FromBody] CreateFarmCommand command, ISender sender) =>
         {
@@ -42,7 +42,7 @@ public static class FarmEndpoints
             var id = await sender.Send(command);
             return Results.Created($"/api/v1/farms/{id}", new { Id = id });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.FarmModule.Create));
+        .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.Create}");
 
         rootGroup.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateFarmCommand command, ISender sender) =>
         {
@@ -54,14 +54,14 @@ public static class FarmEndpoints
             await sender.Send(command);
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.FarmModule.Edit));
+        .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.Edit}");
 
         rootGroup.MapDelete("/{id:guid}", async (Guid id, ISender sender) =>
         {
             await sender.Send(new DeleteFarmCommand(id));
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.FarmModule.Delete));
+        .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.Delete}");
 
         return app;
     }

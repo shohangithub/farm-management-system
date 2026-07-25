@@ -74,7 +74,7 @@ public class LogMedicalTreatmentCommandTests
         // Assert
         Assert.NotEqual(Guid.Empty, result);
         _medicalTreatmentRepositoryMock.Verify(r => r.Add(It.Is<Domain.Health.MedicalTreatment>(t => t.MedicationName == "Oxy")), Times.Once);
-        _unitOfWorkMock.Verify(u => u.CommitTransactionAsync(_transactionMock.Object, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

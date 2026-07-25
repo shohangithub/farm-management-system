@@ -58,7 +58,7 @@ export class ReportIncidentComponent {
       },
       error: (err) => {
         console.error(err);
-        this.error = 'Failed to report incident. Please try again.';
+        this.error = err.error?.detail || err.error?.title || 'Failed to report incident. Please try again.';
         this.isSubmitting = false;
       }
     });

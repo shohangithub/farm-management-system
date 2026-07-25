@@ -132,6 +132,18 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     },
                 }),
 
+            // Authentication failure → 401
+            AuthenticationException authEx => (
+                HttpStatusCode.Unauthorized,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/unauthorized",
+                    Title = "Unauthorized",
+                    Status = (int)HttpStatusCode.Unauthorized,
+                    Detail = authEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
             // Unauthorized cross-tenant access → 404 (Security: do not reveal resource existence)
             UnauthorizedAccessException => (
                 HttpStatusCode.NotFound,

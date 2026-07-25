@@ -40,6 +40,18 @@ public abstract class AuditableEntity : BaseEntity, ITenantEntity, ISoftDeletabl
     public byte[] RowVersion { get; private set; } = [];
 
     /// <summary>
+    /// Called by AuditSaveChangesInterceptor on entity creation when TenantId is unassigned.
+    /// Never call manually from application code.
+    /// </summary>
+    protected internal void SetTenantId(Guid tenantId)
+    {
+        if (TenantId == Guid.Empty && tenantId != Guid.Empty)
+        {
+            TenantId = tenantId;
+        }
+    }
+
+    /// <summary>
     /// Called by AuditSaveChangesInterceptor on entity creation.
     /// Never call manually from application code.
     /// </summary>

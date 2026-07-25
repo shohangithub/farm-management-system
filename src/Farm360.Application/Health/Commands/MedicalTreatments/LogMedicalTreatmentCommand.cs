@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Health;
 using Farm360.Domain.Health.Exceptions;
@@ -22,7 +23,7 @@ public sealed record LogMedicalTreatmentCommand(
     decimal CostBdt,
     string? VeterinarianName,
     string? Notes
-) : IRequest<Guid>;
+) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class LogMedicalTreatmentCommandValidator : AbstractValidator<LogMedicalTreatmentCommand>
 {
@@ -79,10 +80,7 @@ internal sealed class LogMedicalTreatmentCommandHandler(
             request.Notes);
 
         medicalTreatmentRepository.Add(treatment);
-        
-        await using var tx = await unitOfWork.BeginTransactionAsync(cancellationToken);
-        await unitOfWork.CommitTransactionAsync(tx, cancellationToken);
-
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return treatment.Id;
     }
 }

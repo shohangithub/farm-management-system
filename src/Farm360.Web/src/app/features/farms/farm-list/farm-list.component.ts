@@ -20,10 +20,15 @@ export class FarmListComponent implements OnInit {
   branchId: string = '';
 
   ngOnInit(): void {
-    // Expecting to be a child route of branch, so parent params have branchId
-    this.route.parent?.paramMap.subscribe(params => {
-      this.branchId = params.get('branchId') || '';
-      if (this.branchId) {
+    const getBranchId = () => this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId') || '';
+    this.branchId = getBranchId();
+    if (this.branchId) {
+      this.loadFarms();
+    }
+    this.route.paramMap.subscribe(() => {
+      const id = getBranchId();
+      if (id && id !== this.branchId) {
+        this.branchId = id;
         this.loadFarms();
       }
     });

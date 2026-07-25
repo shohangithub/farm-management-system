@@ -21,11 +21,21 @@ export class ShedListComponent implements OnInit {
   Math = Math;
 
   ngOnInit(): void {
-    // Expected to be a child route of farm
-    this.route.parent?.paramMap.subscribe(params => {
-      this.farmId = params.get('farmId') || '';
-      this.branchId = params.get('branchId') || '';
-      if (this.farmId) {
+    const getParams = () => ({
+      farmId: this.route.snapshot.paramMap.get('farmId') || this.route.parent?.snapshot.paramMap.get('farmId') || '',
+      branchId: this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId') || ''
+    });
+    const p = getParams();
+    this.farmId = p.farmId;
+    this.branchId = p.branchId;
+    if (this.farmId) {
+      this.loadSheds();
+    }
+    this.route.paramMap.subscribe(() => {
+      const updated = getParams();
+      if (updated.farmId && updated.farmId !== this.farmId) {
+        this.farmId = updated.farmId;
+        this.branchId = updated.branchId;
         this.loadSheds();
       }
     });

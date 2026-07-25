@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Farms.Enums;
@@ -13,7 +14,7 @@ public record UpdatePenCommand(
     int Capacity,
     string? AnimalGroup,
     string? Notes,
-    int Status) : IRequest;
+    int Status) : IRequest, ITransactionalCommand;
 
 public class UpdatePenCommandValidator : AbstractValidator<UpdatePenCommand>
 {

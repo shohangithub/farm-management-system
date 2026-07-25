@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Farms.Enums;
 using Farm360.Domain.Farms.Repositories;
@@ -16,7 +17,7 @@ public sealed record UpdateShedCommand(
     bool HasVentilation,
     bool HasWaterLine,
     bool HasFeedLine,
-    ShedStatus Status) : IRequest;
+    ShedStatus Status) : IRequest, ITransactionalCommand;
 
 public sealed class UpdateShedCommandValidator : AbstractValidator<UpdateShedCommand>
 {
@@ -67,17 +68,7 @@ public sealed class UpdateShedCommandHandler : IRequestHandler<UpdateShedCommand
 
         shed.ChangeStatus(request.Status);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            _repository.Update(shed);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-            throw;
-        }
+        _repository.Update(shed);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

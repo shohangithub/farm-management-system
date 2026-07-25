@@ -1,10 +1,11 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Farms.Repositories;
 using MediatR;
 
 namespace Farm360.Application.Farms.Sheds.Commands;
 
-public sealed record DeleteShedCommand(Guid Id) : IRequest;
+public sealed record DeleteShedCommand(Guid Id) : IRequest, ITransactionalCommand;
 
 public sealed class DeleteShedCommandHandler : IRequestHandler<DeleteShedCommand>
 {
@@ -29,17 +30,7 @@ public sealed class DeleteShedCommandHandler : IRequestHandler<DeleteShedCommand
         var shed = await _repository.GetByIdAsync(tenantId, request.Id, cancellationToken)
             ?? throw new Farm360.Application.Common.Exceptions.NotFoundException(nameof(Domain.Farms.Shed), request.Id);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            _repository.Delete(shed);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-            throw;
-        }
+        _repository.Delete(shed);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

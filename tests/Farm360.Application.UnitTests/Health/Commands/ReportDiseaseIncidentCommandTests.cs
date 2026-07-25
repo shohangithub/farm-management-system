@@ -53,6 +53,6 @@ public class ReportDiseaseIncidentCommandTests
         // Assert
         Assert.NotEqual(Guid.Empty, result);
         _incidentRepositoryMock.Verify(r => r.Add(It.Is<Domain.Health.DiseaseIncident>(i => i.DiseaseName == "FMD Outbreak" && i.AffectedAnimalCount == 12)), Times.Once);
-        _unitOfWorkMock.Verify(u => u.CommitTransactionAsync(_transactionMock.Object, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

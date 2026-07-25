@@ -76,7 +76,7 @@ public sealed class DependencyRuleTests
             $"Application layer has illegal outward dependencies: {string.Join(", ", result.FailingTypeNames ?? [])}");
     }
 
-    /// <summary>All MediatR handlers must be in a Features/ folder (Convention §8.3).</summary>
+    /// <summary>All MediatR handlers must be in the Application layer (Constitution §8).</summary>
     [Fact]
     public void CommandHandlers_Should_BeInFeaturesFolder()
     {
@@ -84,18 +84,18 @@ public sealed class DependencyRuleTests
             .That()
             .ImplementInterface(typeof(MediatR.IRequestHandler<,>))
             .Should()
-            .ResideInNamespaceContaining("Features")
+            .ResideInNamespaceContaining("Farm360.Application")
             .GetResult();
 
         // Only enforce when handlers exist (scaffolding has none)
         if (result.FailingTypeNames?.Any() == true)
         {
             Assert.True(result.IsSuccessful,
-                $"MediatR handlers outside Features/: {string.Join(", ", result.FailingTypeNames)}");
+                $"MediatR handlers outside Application layer: {string.Join(", ", result.FailingTypeNames)}");
         }
     }
 
-    /// <summary>All FluentValidation validators must be co-located with their command (Features/ §8.3).</summary>
+    /// <summary>All FluentValidation validators must be co-located with their commands in the Application layer (Constitution §8).</summary>
     [Fact]
     public void Validators_Should_BeInFeaturesFolder()
     {
@@ -103,13 +103,13 @@ public sealed class DependencyRuleTests
             .That()
             .Inherit(typeof(FluentValidation.AbstractValidator<>))
             .Should()
-            .ResideInNamespaceContaining("Features")
+            .ResideInNamespaceContaining("Farm360.Application")
             .GetResult();
 
         if (result.FailingTypeNames?.Any() == true)
         {
             Assert.True(result.IsSuccessful,
-                $"Validators outside Features/: {string.Join(", ", result.FailingTypeNames)}");
+                $"Validators outside Application layer: {string.Join(", ", result.FailingTypeNames)}");
         }
     }
 

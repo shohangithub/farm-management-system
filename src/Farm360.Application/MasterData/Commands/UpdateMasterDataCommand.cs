@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.MasterData.Repositories;
@@ -11,7 +12,7 @@ public record UpdateMasterDataCommand(
     string Name,
     string? Description,
     int DisplayOrder,
-    bool IsActive) : IRequest;
+    bool IsActive) : IRequest, ITransactionalCommand;
 
 public class UpdateMasterDataCommandValidator : AbstractValidator<UpdateMasterDataCommand>
 {

@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Farms.Repositories;
@@ -5,7 +6,7 @@ using MediatR;
 
 namespace Farm360.Application.Farms.Pens.Commands;
 
-public record DeletePenCommand(Guid Id) : IRequest;
+public record DeletePenCommand(Guid Id) : IRequest, ITransactionalCommand;
 
 public class DeletePenCommandHandler : IRequestHandler<DeletePenCommand>
 {

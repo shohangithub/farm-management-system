@@ -62,6 +62,6 @@ public class CreateOrganizationCommandHandlerTests
         // Assert
         result.Should().NotBeEmpty();
         _repositoryMock.Verify(x => x.Add(It.Is<Organization>(o => o.Name == "Test Org")), Times.Once);
-        _unitOfWorkMock.Verify(x => x.CommitTransactionAsync(It.IsAny<ITransaction>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -23,14 +23,14 @@ public static class BranchEndpoints
             var result = await sender.Send(new GetBranchesByOrganizationQuery(orgId));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
 
         rootGroup.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
         {
             var result = await sender.Send(new GetBranchByIdQuery(id));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
 
         group.MapPost("/", async ([FromRoute] Guid orgId, [FromBody] CreateBranchCommand command, ISender sender) =>
         {
@@ -42,7 +42,7 @@ public static class BranchEndpoints
             var id = await sender.Send(command);
             return Results.Created($"/api/v1/branches/{id}", new { Id = id });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.Create));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Create}");
 
         rootGroup.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateBranchCommand command, ISender sender) =>
         {
@@ -54,14 +54,14 @@ public static class BranchEndpoints
             await sender.Send(command);
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.Edit));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Edit}");
 
         rootGroup.MapDelete("/{id:guid}", async (Guid id, ISender sender) =>
         {
             await sender.Send(new DeleteBranchCommand(id));
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.Delete));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Delete}");
 
         return app;
     }

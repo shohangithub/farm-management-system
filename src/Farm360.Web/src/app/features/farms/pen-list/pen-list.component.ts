@@ -23,12 +23,24 @@ export class PenListComponent implements OnInit {
   Math = Math;
 
   ngOnInit(): void {
-    // Expected to be a child route of shed
-    this.route.parent?.paramMap.subscribe(params => {
-      this.branchId = params.get('branchId') || '';
-      this.farmId = params.get('farmId') || '';
-      this.shedId = params.get('shedId') || '';
-      if (this.shedId) {
+    const getParams = () => ({
+      branchId: this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId') || '',
+      farmId: this.route.snapshot.paramMap.get('farmId') || this.route.parent?.snapshot.paramMap.get('farmId') || '',
+      shedId: this.route.snapshot.paramMap.get('shedId') || this.route.parent?.snapshot.paramMap.get('shedId') || ''
+    });
+    const p = getParams();
+    this.branchId = p.branchId;
+    this.farmId = p.farmId;
+    this.shedId = p.shedId;
+    if (this.shedId) {
+      this.loadPens();
+    }
+    this.route.paramMap.subscribe(() => {
+      const updated = getParams();
+      if (updated.shedId && updated.shedId !== this.shedId) {
+        this.branchId = updated.branchId;
+        this.farmId = updated.farmId;
+        this.shedId = updated.shedId;
         this.loadPens();
       }
     });

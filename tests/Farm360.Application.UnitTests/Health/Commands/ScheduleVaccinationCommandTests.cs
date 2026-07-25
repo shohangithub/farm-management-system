@@ -65,7 +65,7 @@ public class ScheduleVaccinationCommandTests
         // Assert
         Assert.NotEqual(Guid.Empty, result);
         _vaccinationRepositoryMock.Verify(r => r.AddEvent(It.Is<Domain.Health.VaccinationEvent>(e => e.VaccineName == "FMD")), Times.Once);
-        _unitOfWorkMock.Verify(u => u.CommitTransactionAsync(_transactionMock.Object, It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

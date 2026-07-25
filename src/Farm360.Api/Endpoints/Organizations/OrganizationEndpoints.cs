@@ -18,21 +18,21 @@ public static class OrganizationEndpoints
             var result = await sender.Send(new GetOrganizationsQuery());
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
 
         group.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
         {
             var result = await sender.Send(new GetOrganizationByIdQuery(id));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
 
         group.MapPost("/", async (CreateOrganizationCommand command, ISender sender) =>
         {
             var id = await sender.Send(command);
             return Results.Created($"/api/v1/organizations/{id}", new { Id = id });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.Create));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Create}");
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateOrganizationCommand command, ISender sender) =>
         {
@@ -42,13 +42,13 @@ public static class OrganizationEndpoints
             await sender.Send(command);
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.Edit));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Edit}");
 
         group.MapDelete("/{id:guid}", async (Guid id, ISender sender) =>
         {
             await sender.Send(new DeactivateOrganizationCommand(id));
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.OrganizationModule.Delete));
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.Delete}");
     }
 }

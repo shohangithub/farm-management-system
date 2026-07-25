@@ -102,30 +102,48 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
         // Auto-discover all IEntityTypeConfiguration<T> in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
-        // ── Global Query Filter 1: Tenant Isolation (per-entity, query-time) ─
-        // F360-MTA-2026-001 Layer 1: Uses CurrentTenantId property — evaluated at EACH query.
+        // ── Combined Global Query Filters: Tenant Isolation & Soft Delete ────────
+        // F360-MTA-2026-001 Layer 1: Combines TenantId == CurrentTenantId AND IsDeleted == false
+        // into a SINGLE HasQueryFilter call per entity type to prevent filter overwriting.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (typeof(ITenantEntity).IsAssignableFrom(entityType.ClrType))
+            var isTenantEntity = typeof(ITenantEntity).IsAssignableFrom(entityType.ClrType);
+            var isSoftDeletable = typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType);
+
+            if (!isTenantEntity && !isSoftDeletable)
             {
-                // Capture 'this' context reference — EF evaluates CurrentTenantId at query time
-                var contextRef = Expression.Constant(this);
-                var currentTenantIdProp = Expression.Property(contextRef, nameof(CurrentTenantId));
-
-                var param = Expression.Parameter(entityType.ClrType, "e");
-                var tenantIdProp = Expression.Property(param, nameof(ITenantEntity.TenantId));
-                var filter = Expression.Lambda(Expression.Equal(tenantIdProp, currentTenantIdProp), param);
-
-                modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+                continue;
             }
 
-            // ── Global Query Filter 2: Soft Delete ───────────────────────────
-            if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
-            {
-                var param = Expression.Parameter(entityType.ClrType, "e");
-                var isDeletedProp = Expression.Property(param, nameof(ISoftDeletable.IsDeleted));
-                var filter = Expression.Lambda(Expression.Equal(isDeletedProp, Expression.Constant(false)), param);
+            var param = Expression.Parameter(entityType.ClrType, "e");
+            Expression? combinedExpression = null;
 
+            if (isTenantEntity)
+            {
+                var contextRef = Expression.Constant(this);
+                var currentTenantIdProp = Expression.Property(contextRef, nameof(CurrentTenantId));
+                var tenantIdProp = Expression.Property(param, nameof(ITenantEntity.TenantId));
+                var tenantFilterExpr = Expression.OrElse(
+                    Expression.Equal(tenantIdProp, currentTenantIdProp),
+                    Expression.Equal(tenantIdProp, Expression.Constant(Guid.Empty))
+                );
+
+                combinedExpression = tenantFilterExpr;
+            }
+
+            if (isSoftDeletable)
+            {
+                var isDeletedProp = Expression.Property(param, nameof(ISoftDeletable.IsDeleted));
+                var softDeleteFilterExpr = Expression.Equal(isDeletedProp, Expression.Constant(false));
+
+                combinedExpression = combinedExpression is null
+                    ? softDeleteFilterExpr
+                    : Expression.AndAlso(combinedExpression, softDeleteFilterExpr);
+            }
+
+            if (combinedExpression is not null)
+            {
+                var filter = Expression.Lambda(combinedExpression, param);
                 modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
             }
         }

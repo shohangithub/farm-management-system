@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Organizations.Enums;
 using Farm360.Domain.Organizations.Repositories;
@@ -23,7 +24,7 @@ public sealed record UpdateBranchCommand(
     string? WorkingHours,
     string? HolidayCalendar,
     bool IsHeadOffice,
-    string? ManagerUserId) : IRequest;
+    string? ManagerUserId) : IRequest, ITransactionalCommand;
 
 public sealed class UpdateBranchCommandValidator : AbstractValidator<UpdateBranchCommand>
 {
@@ -92,17 +93,7 @@ public sealed class UpdateBranchCommandHandler : IRequestHandler<UpdateBranchCom
         else if (Guid.TryParse(request.ManagerUserId, out var managerId))
             branch.AssignManager(managerId);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            _repository.Update(branch);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-            throw;
-        }
+        _repository.Update(branch);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

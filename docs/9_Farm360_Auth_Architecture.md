@@ -535,7 +535,54 @@ POST /api/v1/auth/logout/all
 
 ---
 
-## 5. Session Management
+## 5. Session Management & Auto-Login Lifecycle
+
+### 5.1 Frontend Session Persistence & Initialization (`provideAppInitializer`)
+
+Farm360 AI enforces a zero-flash, production-grade session restoration lifecycle during Angular application bootstrap (F5 / Ctrl+R page refresh).
+
+```
+BROWSER REFRESH (F5 / Ctrl+R)
+       │
+       ▼
+Angular Application Bootstrap
+       │
+       ▼
+provideAppInitializer ──► AuthService.initializeSession()
+                                │
+          ┌─────────────────────┴─────────────────────┐
+          ▼                                           ▼
+Access Token Exists?                      No Access Token, Refresh Exists?
+          │                                           │
+          ▼                                           ▼
+GET /api/v1/auth/me                      POST /api/v1/auth/refresh
+          │                                           │
+ ┌────────┴────────┐                         ┌────────┴────────┐
+ ▼                 ▼                         ▼                 ▼
+200 OK          401 Error                  200 OK           401 Error
+ │                 │                         │                 │
+ ▼                 ▼                         ▼                 ▼
+Set User       POST /api/v1/auth/refresh   Set Tokens &      Clear Session
+ & Perms            │                       Fetch Profile     Redirect /login
+ Signal        ┌────┴────┐                   │
+               ▼         ▼                   ▼
+            200 OK    401 Fail           Set Initialized = true
+               │         │                   │
+               ▼         ▼                   ▼
+           Set Tokens Clear Session     AuthGuard Unblocks Router
+           Set User   Redirect /login
+```
+
+### 5.2 Silent Refresh & Interceptor Request Queuing
+
+When an active session's short-lived JWT access token expires during background or foreground API operations:
+1. `authInterceptor` catches the `HTTP 401 Unauthorized` response on a protected endpoint.
+2. If token refresh is not already in progress, `isRefreshing` lock is engaged and `authService.refresh()` is invoked.
+3. Concurrent API requests emitted while refresh is in flight are queued via `BehaviorSubject<string | null>`.
+4. Upon successful response from `/api/v1/auth/refresh`, new access and refresh tokens are persisted in `localStorage`, the new access token is emitted to all queued requests, and original requests are retried automatically.
+5. If the refresh token is expired or revoked, `authService.logout()` clears local storage and safely redirects the user to `/login`.
+
+---
 
 ### 5.1 Session Object
 

@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using FluentValidation;
@@ -9,7 +10,7 @@ public sealed record RecordVaccinationAdministrationCommand(
     Guid VaccinationEventId,
     DateOnly AdministeredDate,
     string? Notes
-) : IRequest;
+) : IRequest, ITransactionalCommand;
 
 public sealed class RecordVaccinationAdministrationCommandValidator : AbstractValidator<RecordVaccinationAdministrationCommand>
 {
@@ -38,8 +39,6 @@ internal sealed class RecordVaccinationAdministrationCommandHandler(
         @event.RecordAdministration(request.AdministeredDate, userId, request.Notes);
 
         vaccinationRepository.UpdateEvent(@event);
-        
-        await using var tx = await unitOfWork.BeginTransactionAsync(cancellationToken);
-        await unitOfWork.CommitTransactionAsync(tx, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

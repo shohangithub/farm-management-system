@@ -29,21 +29,21 @@ public static class LivestockEndpoints
             .WithSummary("Get paginated list of animals")
             .WithDescription("Supports filtering by farm, shed, species, sex, status, and free-text search. Sorted and paginated.")
             .Produces<PagedAnimalListDto>()
-            .RequireAuthorization("Permission:animals.read");
+            .RequireAuthorization("Permission:animals.view");
 
         group.MapGet("/animals/{id:guid}", GetAnimalById)
             .WithName("GetAnimalById")
             .WithSummary("Get full animal detail including weight records, breeding records, and photos")
             .Produces<AnimalDto>()
             .Produces(404)
-            .RequireAuthorization("Permission:animals.read");
+            .RequireAuthorization("Permission:animals.view");
 
         group.MapPost("/animals", RegisterAnimal)
             .WithName("RegisterAnimal")
             .WithSummary("Register a new animal")
             .Produces<AnimalDto>(201)
             .Produces(422)
-            .RequireAuthorization("Permission:animals.write");
+            .RequireAuthorization("Permission:animals.create");
 
         group.MapDelete("/animals/{id:guid}", DeleteAnimal)
             .WithName("DeleteAnimal")
@@ -58,14 +58,14 @@ public static class LivestockEndpoints
             .WithSummary("Get chronological weight history for an animal")
             .Produces<IReadOnlyList<WeightRecordDto>>()
             .Produces(404)
-            .RequireAuthorization("Permission:animals.read");
+            .RequireAuthorization("Permission:animals.view");
 
         group.MapPost("/animals/{id:guid}/weights", RecordWeight)
             .WithName("RecordAnimalWeight")
             .WithSummary("Record a new weight measurement")
             .Produces<WeightRecordDto>(201)
             .Produces(422)
-            .RequireAuthorization("Permission:animals.write");
+            .RequireAuthorization("Permission:animals.create");
 
         // ── Status Transitions ─────────────────────────────────────────────────
         group.MapPost("/animals/{id:guid}/sell", SellAnimal)
@@ -98,7 +98,7 @@ public static class LivestockEndpoints
             .Produces(204)
             .Produces(404)
             .Produces(422)
-            .RequireAuthorization("Permission:animals.write");
+            .RequireAuthorization("Permission:animals.edit");
 
         group.MapPost("/animals/{id:guid}/transfer", TransferAnimal)
             .WithName("TransferAnimalToShed")
@@ -106,7 +106,7 @@ public static class LivestockEndpoints
             .Produces(204)
             .Produces(404)
             .Produces(422)
-            .RequireAuthorization("Permission:animals.write");
+            .RequireAuthorization("Permission:animals.edit");
 
         // ── Photos ─────────────────────────────────────────────────────────────
         group.MapPost("/animals/{id:guid}/photos", AddPhoto)
@@ -114,7 +114,7 @@ public static class LivestockEndpoints
             .WithSummary("Register an S3 photo URL on the animal after client upload")
             .Produces<AnimalPhotoDto>(201)
             .Produces(422)
-            .RequireAuthorization("Permission:animals.write");
+            .RequireAuthorization("Permission:animals.create");
 
         return group;
     }

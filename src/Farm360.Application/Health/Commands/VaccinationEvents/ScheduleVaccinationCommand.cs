@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Health;
 using Farm360.Domain.Health.Interfaces.Repositories;
@@ -14,7 +15,7 @@ public sealed record ScheduleVaccinationCommand(
     string BatchNumber,
     DateOnly ScheduledDate,
     string? Notes
-) : IRequest<Guid>;
+) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class ScheduleVaccinationCommandValidator : AbstractValidator<ScheduleVaccinationCommand>
 {
@@ -55,10 +56,7 @@ internal sealed class ScheduleVaccinationCommandHandler(
             request.Notes);
 
         vaccinationRepository.AddEvent(@event);
-        
-        await using var tx = await unitOfWork.BeginTransactionAsync(cancellationToken);
-        await unitOfWork.CommitTransactionAsync(tx, cancellationToken);
-
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return @event.Id;
     }
 }

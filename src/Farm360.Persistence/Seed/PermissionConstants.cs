@@ -16,6 +16,8 @@ public static class PermissionConstants
         public const string Edit   = "animals.edit";
         public const string Delete = "animals.delete";
         public const string Export = "animals.export";
+        public const string Sell   = "animals.sell";
+        public const string Quarantine = "animals.quarantine";
     }
 
     // ── Health / Veterinary ───────────────────────────────────────────────────
@@ -142,6 +144,8 @@ public static class PermissionConstants
         (Animals.Edit,   "Animals", "Edit existing animal records"),
         (Animals.Delete, "Animals", "Delete or archive animal records"),
         (Animals.Export, "Animals", "Export animal data to Excel/PDF"),
+        (Animals.Sell,       "Animals", "Record animal sales"),
+        (Animals.Quarantine, "Animals", "Place animals under quarantine or release them"),
 
         (HealthModule.View,      "Health", "View health records and treatments"),
         (HealthModule.Create,    "Health", "Record new health events and treatments"),
@@ -188,6 +192,14 @@ public static class PermissionConstants
         (ShedModule.Create, "Sheds", "Create new sheds"),
         (ShedModule.Edit,   "Sheds", "Edit shed details"),
         (ShedModule.Delete, "Sheds", "Delete sheds"),
+
+        (PenModule.View,   "Pens", "View pens within sheds"),
+        (PenModule.Create, "Pens", "Create new pens"),
+        (PenModule.Edit,   "Pens", "Edit pen details"),
+        (PenModule.Delete, "Pens", "Delete pens"),
+
+        (MasterDataModule.View,   "MasterData", "View master data and reference lists"),
+        (MasterDataModule.Manage, "MasterData", "Create and edit master data entries"),
 
         (Settings.View, "Settings", "View tenant settings"),
         (Settings.Edit, "Settings", "Edit tenant settings and branding"),

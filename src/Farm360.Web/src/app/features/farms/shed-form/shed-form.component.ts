@@ -22,6 +22,7 @@ export class ShedFormComponent implements OnInit {
   farmId: string = '';
   branchId: string = '';
   isSaving = false;
+  errorMessage = '';
 
   ngOnInit(): void {
     this.branchId = this.route.snapshot.paramMap.get('branchId') || '';
@@ -62,6 +63,7 @@ export class ShedFormComponent implements OnInit {
     if (this.shedForm.invalid) return;
 
     this.isSaving = true;
+    this.errorMessage = '';
     const formData = this.shedForm.getRawValue();
 
     if (this.isEditMode) {
@@ -71,6 +73,7 @@ export class ShedFormComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
+          this.errorMessage = err.error?.detail || err.error?.title || 'An unexpected error occurred.';
           this.isSaving = false;
         }
       });
@@ -82,6 +85,7 @@ export class ShedFormComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
+          this.errorMessage = err.error?.detail || err.error?.title || 'An unexpected error occurred.';
           this.isSaving = false;
         }
       });

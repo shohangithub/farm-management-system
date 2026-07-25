@@ -1,10 +1,11 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Organizations.Repositories;
 using MediatR;
 
 namespace Farm360.Application.Organizations.Branches.Commands;
 
-public sealed record DeleteBranchCommand(Guid Id) : IRequest;
+public sealed record DeleteBranchCommand(Guid Id) : IRequest, ITransactionalCommand;
 
 public sealed class DeleteBranchCommandHandler : IRequestHandler<DeleteBranchCommand>
 {
@@ -29,17 +30,7 @@ public sealed class DeleteBranchCommandHandler : IRequestHandler<DeleteBranchCom
         var branch = await _repository.GetByIdAsync(tenantId, request.Id, cancellationToken)
             ?? throw new Farm360.Application.Common.Exceptions.NotFoundException(nameof(Domain.Organizations.Branch), request.Id);
 
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            _repository.Delete(branch);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-            throw;
-        }
+        _repository.Delete(branch);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

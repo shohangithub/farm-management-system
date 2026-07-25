@@ -3,7 +3,9 @@ using Farm360.Api.Endpoints.Health;
 using Farm360.Api.Endpoints.Livestock;
 using Farm360.Api.Endpoints.MasterData;
 using Farm360.Api.Endpoints.Organizations;
+using Farm360.Api.Endpoints.Auth;
 using Farm360.Api.Middleware;
+using Farm360.Api.Authorization;
 using Farm360.Application.DependencyInjection;
 using Farm360.Identity.DependencyInjection;
 using Farm360.Infrastructure.DependencyInjection;
@@ -72,6 +74,10 @@ try
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddEndpointsApiExplorer();
 
+    // ── Permission-based Authorization ────────────────────────────────────
+    builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+    builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionHandler>();
+
     // OpenAPI (replaces Swashbuckle in .NET 10 — using Scalar UI)
     builder.Services.AddOpenApi(options =>
     {
@@ -132,6 +138,15 @@ try
     // [4] Security headers
     app.UseHsts();
     app.UseHttpsRedirection();
+
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+        context.Response.Headers.TryAdd("X-XSS-Protection", "1; mode=block");
+        context.Response.Headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
+        await next();
+    });
 
     // [5] CORS
     app.UseCors("AngularClient");
@@ -197,9 +212,20 @@ try
     // app.MapGroup("/api/v1/feeding").MapFeedingEndpoints();
     // app.MapGroup("/api/v1/finance").MapFinanceEndpoints();
     // app.MapGroup("/api/v1/inventory").MapInventoryEndpoints();
-    // app.MapGroup("/api/v1/auth").MapAuthEndpoints().AllowAnonymous();
+    app.MapGroup("/api/v1/auth").MapAuthEndpoints();
+    app.MapGroup("/api/v1/users").MapUsersEndpoints();
 
     Log.Information("Farm360 API started. Environment: {Environment}", app.Environment.EnvironmentName);
+
+    // ── Run Data Seeders ──────────────────────────────────────────────────────
+    using (var scope = app.Services.CreateScope())
+    {
+        var dataSeeder = scope.ServiceProvider.GetRequiredService<Farm360.Persistence.Seed.DataSeeder>();
+        await dataSeeder.SeedAsync();
+
+        var identitySeeder = scope.ServiceProvider.GetRequiredService<Farm360.Identity.Seed.IdentitySeeder>();
+        await identitySeeder.SeedAsync();
+    }
 
     await app.RunAsync();
 }

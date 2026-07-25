@@ -23,14 +23,14 @@ public static class ShedEndpoints
             var result = await sender.Send(new GetShedsByFarmQuery(farmId));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.ShedModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.ShedModule.View}");
 
         rootGroup.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
         {
             var result = await sender.Send(new GetShedByIdQuery(id));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.ShedModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.ShedModule.View}");
 
         farmGroup.MapPost("/", async ([FromRoute] Guid farmId, [FromBody] CreateShedCommand command, ISender sender) =>
         {
@@ -42,7 +42,7 @@ public static class ShedEndpoints
             var id = await sender.Send(command);
             return Results.Created($"/api/v1/sheds/{id}", new { Id = id });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.ShedModule.Create));
+        .RequireAuthorization($"Permission:{PermissionConstants.ShedModule.Create}");
 
         rootGroup.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateShedCommand command, ISender sender) =>
         {
@@ -54,14 +54,14 @@ public static class ShedEndpoints
             await sender.Send(command);
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.ShedModule.Edit));
+        .RequireAuthorization($"Permission:{PermissionConstants.ShedModule.Edit}");
 
         rootGroup.MapDelete("/{id:guid}", async (Guid id, ISender sender) =>
         {
             await sender.Send(new DeleteShedCommand(id));
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.ShedModule.Delete));
+        .RequireAuthorization($"Permission:{PermissionConstants.ShedModule.Delete}");
 
         return app;
     }

@@ -27,7 +27,7 @@ public static class PenEndpoints
             var result = await sender.Send(new GetPensByShedQuery(shedId));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.PenModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.PenModule.View}");
 
         // GET: /api/v1/pens/{id}
         penGroup.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
@@ -35,7 +35,7 @@ public static class PenEndpoints
             var result = await sender.Send(new GetPenByIdQuery(id));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.PenModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.PenModule.View}");
 
         // POST: /api/v1/sheds/{shedId}/pens
         shedGroup.MapPost("/", async (Guid shedId, CreatePenRequest request, ISender sender) =>
@@ -51,7 +51,7 @@ public static class PenEndpoints
             var id = await sender.Send(command);
             return Results.Created($"/api/v1/pens/{id}", new { Id = id });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.PenModule.Create));
+        .RequireAuthorization($"Permission:{PermissionConstants.PenModule.Create}");
 
         // PUT: /api/v1/pens/{id}
         penGroup.MapPut("/{id:guid}", async (Guid id, UpdatePenRequest request, ISender sender) =>
@@ -67,7 +67,7 @@ public static class PenEndpoints
             await sender.Send(command);
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.PenModule.Edit));
+        .RequireAuthorization($"Permission:{PermissionConstants.PenModule.Edit}");
 
         // DELETE: /api/v1/pens/{id}
         penGroup.MapDelete("/{id:guid}", async (Guid id, ISender sender) =>
@@ -75,7 +75,7 @@ public static class PenEndpoints
             await sender.Send(new DeletePenCommand(id));
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.PenModule.Delete));
+        .RequireAuthorization($"Permission:{PermissionConstants.PenModule.Delete}");
     }
 }
 

@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.MasterData.Repositories;
@@ -5,7 +6,7 @@ using MediatR;
 
 namespace Farm360.Application.MasterData.Commands;
 
-public record DeleteMasterDataCommand(Guid Id) : IRequest;
+public record DeleteMasterDataCommand(Guid Id) : IRequest, ITransactionalCommand;
 
 public class DeleteMasterDataCommandHandler : IRequestHandler<DeleteMasterDataCommand>
 {

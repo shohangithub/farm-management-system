@@ -34,10 +34,10 @@
           <div class="form-group">
             <label for="severity">Severity *</label>
             <select id="severity" formControlName="severity">
-              <option value="Mild">Mild</option>
-              <option value="Moderate">Moderate</option>
-              <option value="Severe">Severe</option>
-              <option value="Critical">Critical</option>
+              <option [ngValue]="1">Mild</option>
+              <option [ngValue]="2">Moderate</option>
+              <option [ngValue]="3">Severe</option>
+              <option [ngValue]="4">Critical</option>
             </select>
           </div>
         </div>

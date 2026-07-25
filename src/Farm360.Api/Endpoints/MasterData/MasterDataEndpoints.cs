@@ -24,7 +24,7 @@ public static class MasterDataEndpoints
             var result = await sender.Send(new GetMasterDataByTypeQuery(type));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.MasterDataModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.MasterDataModule.View}");
 
         // GET: /api/v1/master-data/entry/{id}
         group.MapGet("/entry/{id:guid}", async (Guid id, ISender sender) =>
@@ -32,7 +32,7 @@ public static class MasterDataEndpoints
             var result = await sender.Send(new GetMasterDataByIdQuery(id));
             return Results.Ok(result);
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.MasterDataModule.View));
+        .RequireAuthorization($"Permission:{PermissionConstants.MasterDataModule.View}");
 
         // POST: /api/v1/master-data
         group.MapPost("/", async ([FromBody] CreateMasterDataCommand command, ISender sender) =>
@@ -40,7 +40,7 @@ public static class MasterDataEndpoints
             var id = await sender.Send(command);
             return Results.Created($"/api/v1/master-data/entry/{id}", new { Id = id });
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.MasterDataModule.Manage));
+        .RequireAuthorization($"Permission:{PermissionConstants.MasterDataModule.Manage}");
 
         // PUT: /api/v1/master-data/{id}
         group.MapPut("/{id:guid}", async (Guid id, [FromBody] UpdateMasterDataCommand command, ISender sender) =>
@@ -49,7 +49,7 @@ public static class MasterDataEndpoints
             await sender.Send(command);
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.MasterDataModule.Manage));
+        .RequireAuthorization($"Permission:{PermissionConstants.MasterDataModule.Manage}");
 
         // DELETE: /api/v1/master-data/{id}
         group.MapDelete("/{id:guid}", async (Guid id, ISender sender) =>
@@ -57,6 +57,6 @@ public static class MasterDataEndpoints
             await sender.Send(new DeleteMasterDataCommand(id));
             return Results.NoContent();
         })
-        .RequireAuthorization(policy => policy.RequireClaim("Permission", PermissionConstants.MasterDataModule.Manage));
+        .RequireAuthorization($"Permission:{PermissionConstants.MasterDataModule.Manage}");
     }
 }

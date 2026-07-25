@@ -52,6 +52,12 @@ public sealed class AuditSaveChangesInterceptor(
             switch (entry.State)
             {
                 case EntityState.Added:
+                    // ── Auto-assign TenantId if not explicitly set ─────────
+                    if (entry.Entity.TenantId == Guid.Empty && tenantId.HasValue && tenantId.Value != Guid.Empty)
+                    {
+                        entry.Entity.SetTenantId(tenantId.Value);
+                    }
+
                     // ── Layer 2: Cross-tenant write guard ──────────────────
                     if (tenantId.HasValue && entry.Entity.TenantId != Guid.Empty
                         && entry.Entity.TenantId != tenantId.Value

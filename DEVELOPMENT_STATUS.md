@@ -1,6 +1,6 @@
 # Farm360 AI — Development Status & Task Roadmap
 
-**Last Updated:** July 16, 2026  
+**Last Updated:** July 22, 2026  
 **Governing Documents:** `/docs/*` (Single Source of Truth)  
 **Architecture:** Clean Architecture · DDD · CQRS · MediatR · Angular 22  
 
@@ -10,7 +10,7 @@
 
 | Module / Component | Domain | Persistence | CQRS Application | API Layer | Angular UI | Unit & Integration Tests | Status |
 |---|---|---|---|---|---|---|---|
-| **1. Identity & Multi-Tenant Core** | ✅ | ✅ | ✅ | ✅ | N/A | ✅ (37/37) | **COMPLETED** |
+| **1. Identity & Multi-Tenant Core** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (79/79) | **COMPLETED** ✅ Multi-Tenant Refactored & Hardened |
 | **1.1 Master Data Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (0/0) | **COMPLETED** |
 | **1.5 Organization Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (1/1) | **COMPLETED** ✅ CRUD Fixed |
 | **1.6 Branch Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
@@ -19,21 +19,24 @@
 | **1.9 Pen Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
 | **2. Livestock Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (76/76) | **COMPLETED** |
 | **3. Health & Veterinary Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (6/6) | **COMPLETED** |
-| **4. Smart Feeding Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
-| **5. Inventory Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
-| **6. Finance Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
-| **7. Executive Dashboard** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
+| **4. Enterprise Architecture & Security** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (150/150) | **COMPLETED** ✅ Enterprise Architecture Hardened |
+| **5. Smart Feeding Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
+| **6. Inventory Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
+| **7. Finance Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
+| **8. Executive Dashboard** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
 
 ---
 
 ## 🔍 Detailed Completed Feature Log
 
-### 1. Identity & Multi-Tenant Foundation (Completed)
+### 1. Identity & Multi-Tenant Foundation (Completed & Hardened)
 - **Entities:** Tenant, Organization, Branch, TenantUser, Role, Permission, RolePermission, RefreshToken, AuditLog, Notification.
-- **Services:** `JwtTokenService`, `RefreshTokenService`, `OtpService`, `PermissionService`, `CurrentUserService`, `CurrentTenantService`.
+- **Services:** `JwtTokenService`, `RefreshTokenService`, `OtpService`, `PermissionService`, `CurrentUserService`, `CurrentTenantService`, `AuthService`.
+- **Multi-Tenant Architecture:** Combined EF Core `TenantId` & `IsDeleted` query filters into unified expressions in `ApplicationDbContext`; `AuditSaveChangesInterceptor` automatic `TenantId` & audit column population; multi-channel tenant resolution (JWT claim, `X-Tenant-Id` header, subdomain) in `TenantResolutionMiddleware`.
+- **Session Persistence & Auto-Login:** `provideAppInitializer` executing `AuthService.initializeSession()` on bootstrap; silent refresh with request queuing in `authInterceptor`; permissions array exposed in `UserProfileDto`; reactive `authGuard` initialization lock; zero-flash splash UI in `AppComponent`.
 - **Authorization:** Declarative permission handler (`[RequirePermission]`), dynamic policy provider, dynamic tenant EF Core query filter.
-- **Seed Data:** 42 permissions across 5 system roles (`PlatformAdmin`, `TenantOwner`, `FarmManager`, `Veterinarian`, `Worker`, `Accountant`).
-- **Tests:** 37 passing tests across Tenant and Permission suites.
+- **Seed Data:** 42 permissions across system roles (`PlatformAdmin`, `TenantOwner`, `FarmManager`, `Veterinarian`, `Worker`, `Accountant`).
+- **Tests:** 150 passing tests across solution test suites (79 Domain + 62 Application + 7 Architecture + 1 Integration + 1 Functional).
 
 ### 1.1 Master Data Module (Completed)
 - **Domain Layer:** Generic `MasterDataEntry` Aggregate Root with 14 Types (Breed, Animal Type, etc.) and Explicit Hierarchical Locations (Country -> Division -> District -> Upazila -> Union -> Village).

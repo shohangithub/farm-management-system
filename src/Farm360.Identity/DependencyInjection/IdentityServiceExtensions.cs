@@ -29,6 +29,11 @@ public static class IdentityServiceExtensions
         var jwtConfig = configuration.GetSection(JwtConfiguration.SectionName).Get<JwtConfiguration>()
             ?? throw new InvalidOperationException("Jwt configuration section is missing.");
 
+        if (string.IsNullOrWhiteSpace(jwtConfig.Secret) || jwtConfig.Secret.Length < 32)
+        {
+            throw new InvalidOperationException("JWT Secret is missing or too short. It must be at least 32 characters long for HS256.");
+        }
+
         // ── Identity DbContext ────────────────────────────────────────────────
         services.AddDbContext<IdentityDbContext>(options =>
         {
@@ -98,7 +103,7 @@ public static class IdentityServiceExtensions
 
         // ── Permission-based Authorization (handlers registered at API layer) ───
         // Note: PermissionPolicyProvider + PermissionHandler live in Farm360.Api
-        // and are registered by ApiServiceExtensions to avoid circular references.
+        // and are registered by Program.cs to avoid circular references.
         services.AddAuthorization();
 
         // ── Application Service Implementations ───────────────────────────────
@@ -108,6 +113,9 @@ public static class IdentityServiceExtensions
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<IAuthService, AuthService>();
+        
+        services.AddTransient<Farm360.Identity.Seed.IdentitySeeder>();
 
         return services;
     }

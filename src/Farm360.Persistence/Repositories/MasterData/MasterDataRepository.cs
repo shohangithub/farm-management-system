@@ -18,19 +18,19 @@ public class MasterDataRepository : IMasterDataRepository
     public async Task<MasterDataEntry?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.MasterDataEntries
-            .FirstOrDefaultAsync(m => m.Id == id && m.TenantId == tenantId, cancellationToken);
+            .FirstOrDefaultAsync(m => m.Id == id && (m.TenantId == tenantId || m.TenantId == Guid.Empty), cancellationToken);
     }
 
     public async Task<MasterDataEntry?> GetByCodeAsync(Guid tenantId, MasterDataType type, string code, CancellationToken cancellationToken = default)
     {
         return await _context.MasterDataEntries
-            .FirstOrDefaultAsync(m => m.TenantId == tenantId && m.Type == type && m.Code == code, cancellationToken);
+            .FirstOrDefaultAsync(m => (m.TenantId == tenantId || m.TenantId == Guid.Empty) && m.Type == type && m.Code == code, cancellationToken);
     }
 
     public async Task<IReadOnlyList<MasterDataEntry>> GetAllByTypeAsync(Guid tenantId, MasterDataType type, CancellationToken cancellationToken = default)
     {
         return await _context.MasterDataEntries
-            .Where(m => m.TenantId == tenantId && m.Type == type)
+            .Where(m => (m.TenantId == tenantId || m.TenantId == Guid.Empty) && m.Type == type)
             .OrderBy(m => m.DisplayOrder)
             .ThenBy(m => m.Name)
             .ToListAsync(cancellationToken);
@@ -39,7 +39,7 @@ public class MasterDataRepository : IMasterDataRepository
     public async Task<bool> ExistsByCodeAsync(Guid tenantId, MasterDataType type, string code, CancellationToken cancellationToken = default)
     {
         return await _context.MasterDataEntries
-            .AnyAsync(m => m.TenantId == tenantId && m.Type == type && m.Code == code, cancellationToken);
+            .AnyAsync(m => (m.TenantId == tenantId || m.TenantId == Guid.Empty) && m.Type == type && m.Code == code, cancellationToken);
     }
 
     public void Add(MasterDataEntry entry)

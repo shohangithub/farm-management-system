@@ -20,6 +20,12 @@ public sealed class JwtConfiguration
     /// <summary>Access token lifetime in minutes. Default: 15.</summary>
     public int AccessTokenExpiryMinutes { get; init; } = 15;
 
+    /// <summary>Refresh token lifetime in days. Default: 30.</summary>
+    public int RefreshTokenExpiryDays { get; init; } = 30;
+
+    /// <summary>Device token lifetime in days. Default: 90.</summary>
+    public int DeviceTokenExpiryDays { get; init; } = 90;
+
     /// <summary>Default subscription tier to embed in JWT when not overridden.</summary>
     public string DefaultTier { get; init; } = "Starter";
 }

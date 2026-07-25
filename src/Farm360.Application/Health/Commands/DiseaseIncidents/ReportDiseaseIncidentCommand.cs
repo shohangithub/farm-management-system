@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Health;
 using Farm360.Domain.Health.Enums;
@@ -16,7 +17,7 @@ public sealed record ReportDiseaseIncidentCommand(
     string Symptoms,
     int AffectedAnimalCount,
     string? Notes
-) : IRequest<Guid>;
+) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class ReportDiseaseIncidentCommandValidator : AbstractValidator<ReportDiseaseIncidentCommand>
 {
@@ -51,10 +52,7 @@ internal sealed class ReportDiseaseIncidentCommandHandler(
             request.Notes);
 
         diseaseIncidentRepository.Add(incident);
-        
-        await using var tx = await unitOfWork.BeginTransactionAsync(cancellationToken);
-        await unitOfWork.CommitTransactionAsync(tx, cancellationToken);
-
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return incident.Id;
     }
 }
