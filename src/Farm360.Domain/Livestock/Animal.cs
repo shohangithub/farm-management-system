@@ -28,6 +28,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     private readonly List<BreedingRecord> _breedingRecords = [];
     private readonly List<AnimalPhoto> _photos = [];
     private readonly List<AnimalMovement> _movements = [];
+    private readonly List<BodyConditionScore> _bcsRecords = [];
 
     // ── EF Core constructor (required by the ORM) ─────────────────────────────
     private Animal() { }
@@ -74,6 +75,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     public string BreedName { get; private set; } = string.Empty;
 
     public AnimalSex Sex { get; private set; }
+    
+    public Guid? BatchId { get; private set; }
 
     // ── Dates ─────────────────────────────────────────────────────────────────
     public DateOnly DateOfBirth { get; private set; }
@@ -104,11 +107,14 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// <summary>Average Daily Gain in kg/day. Recomputed when a weight is recorded.</summary>
     public decimal? AdgKgPerDay { get; private set; }
 
+    public decimal? LatestBcs { get; private set; }
+
     // ── Child Collections (IReadOnlyCollection — Constitution §3.1) ──────────
     public IReadOnlyCollection<WeightRecord> WeightRecords => _weightRecords.AsReadOnly();
     public IReadOnlyCollection<BreedingRecord> BreedingRecords => _breedingRecords.AsReadOnly();
     public IReadOnlyCollection<AnimalPhoto> Photos => _photos.AsReadOnly();
     public IReadOnlyCollection<AnimalMovement> Movements => _movements.AsReadOnly();
+    public IReadOnlyCollection<BodyConditionScore> BcsRecords => _bcsRecords.AsReadOnly();
     
     public AnimalMovement? CurrentMovement => _movements.FirstOrDefault(m => m.RemovedAtUtc == null);
 
@@ -355,6 +361,47 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// Updates the free-text notes on the animal profile.
     /// </summary>
     public void UpdateNotes(string? notes) => Notes = notes;
+
+    public void AssignToBatch(Guid? batchId)
+    {
+        BatchId = batchId;
+        RaiseDomainEvent(new AnimalAssignedToBatchEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            Id,
+            TenantId,
+            batchId));
+    }
+
+    public BodyConditionScore RecordBodyConditionScore(decimal score, DateOnly recordedDate, Guid evaluatorId, string? notes)
+    {
+        if (score < 1.0m || score > 5.0m)
+            throw new ArgumentException("BCS score must be between 1.0 and 5.0.", nameof(score));
+
+        var record = new BodyConditionScore(
+            Guid.NewGuid(),
+            Id,
+            score,
+            recordedDate,
+            evaluatorId,
+            notes);
+
+        _bcsRecords.Add(record);
+
+        // Update latest BCS
+        var latest = _bcsRecords.OrderByDescending(b => b.RecordedDate).First();
+        LatestBcs = latest.Score;
+
+        RaiseDomainEvent(new BcsRecordedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            Id,
+            TenantId,
+            score,
+            recordedDate));
+
+        return record;
+    }
 
     /// <summary>
     /// Adds a photo. If no primary photo exists, the first one becomes primary automatically.

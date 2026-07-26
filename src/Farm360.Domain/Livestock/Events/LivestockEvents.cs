@@ -117,3 +117,18 @@ public sealed record CalvingRecordedEvent(
     DateOnly CalvingDate,
     string Outcome,
     int CalvesCount) : IDomainEvent;
+
+public sealed record BcsRecordedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid AnimalId,
+    Guid TenantId,
+    decimal Score,
+    DateOnly RecordedDate) : IDomainEvent;
+
+public sealed record AnimalAssignedToBatchEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid AnimalId,
+    Guid TenantId,
+    Guid? BatchId) : IDomainEvent;

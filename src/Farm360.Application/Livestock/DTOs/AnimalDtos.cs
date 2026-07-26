@@ -10,6 +10,7 @@ public sealed record AnimalDto(
     Guid Id,
     Guid TenantId,
     Guid FarmId,
+    Guid? BatchId,
     Guid? ShedId,
     Guid? PenId,
     string TagId,
@@ -30,11 +31,13 @@ public sealed record AnimalDto(
     decimal? LatestWeightKg,
     DateOnly? LatestWeightDate,
     decimal? AdgKgPerDay,
+    decimal? LatestBcs,
     string? PrimaryPhotoUrl,
     IReadOnlyList<WeightRecordDto> WeightRecords,
     IReadOnlyList<BreedingRecordDto> BreedingRecords,
     IReadOnlyList<AnimalPhotoDto> Photos,
     IReadOnlyList<AnimalMovementDto> Movements,
+    IReadOnlyList<BcsRecordDto> BcsRecords,
     DateTime CreatedAtUtc,
     Guid CreatedBy,
     DateTime? ModifiedAtUtc);
@@ -53,11 +56,13 @@ public sealed record AnimalListItemDto(
     DateOnly DateOfBirth,
     AnimalStatus Status,
     Guid FarmId,
+    Guid? BatchId,
     Guid? ShedId,
     Guid? PenId,
     decimal? LatestWeightKg,
     DateOnly? LatestWeightDate,
     decimal? AdgKgPerDay,
+    decimal? LatestBcs,
     string? PrimaryPhotoUrl,
     DateTime CreatedAtUtc);
 
@@ -71,6 +76,17 @@ public sealed record WeightRecordDto(
     DateOnly RecordedDate,
     string? Notes,
     DateTime RecordedAtUtc);
+
+/// <summary>
+/// Body condition score DTO.
+/// </summary>
+public sealed record BcsRecordDto(
+    Guid Id,
+    Guid AnimalId,
+    decimal Score,
+    DateOnly RecordedDate,
+    Guid EvaluatorId,
+    string? Notes);
 
 /// <summary>
 /// Breeding record DTO.

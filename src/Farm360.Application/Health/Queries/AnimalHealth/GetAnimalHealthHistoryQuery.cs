@@ -27,13 +27,8 @@ internal sealed class GetAnimalHealthHistoryQueryHandler(
 {
     public async Task<AnimalHealthHistoryDto> Handle(GetAnimalHealthHistoryQuery request, CancellationToken cancellationToken)
     {
-        var vaccinationsTask = vaccinationRepository.GetEventsByAnimalIdAsync(request.AnimalId, cancellationToken);
-        var treatmentsTask = medicalTreatmentRepository.GetByAnimalIdAsync(request.AnimalId, cancellationToken);
-
-        await Task.WhenAll(vaccinationsTask, treatmentsTask);
-
-        var vaccinations = await vaccinationsTask;
-        var treatments = await treatmentsTask;
+        var vaccinations = await vaccinationRepository.GetEventsByAnimalIdAsync(request.AnimalId, cancellationToken);
+        var treatments = await medicalTreatmentRepository.GetByAnimalIdAsync(request.AnimalId, cancellationToken);
 
         return new AnimalHealthHistoryDto(
             vaccinations.Select(v => v.ToDto()).ToList(),

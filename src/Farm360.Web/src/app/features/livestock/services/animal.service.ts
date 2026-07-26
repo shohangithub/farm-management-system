@@ -16,6 +16,7 @@ import {
   WeightRecordDto,
   ConfirmPregnancyRequest,
   RecordCalvingRequest,
+  BcsRecordDto
 } from '../models/animal.models';
 
 /**
@@ -102,6 +103,10 @@ export class AnimalService {
 
   recordCalving(id: string, recordId: string, request: RecordCalvingRequest): Observable<void> {
     return this.http.put(`${this.base}/${id}/breeding/${recordId}/calving`, request).pipe(map(() => undefined));
+  }
+
+  recordBcs(id: string, score: number, recordedDate: string, notes?: string): Observable<BcsRecordDto> {
+    return this.http.post<BcsRecordDto>(`${this.base}/${id}/bcs`, { score, recordedDate, notes });
   }
 
   delete(id: string): Observable<void> {

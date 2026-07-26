@@ -16,6 +16,7 @@ public static class AnimalMappings
             Id: animal.Id,
             TenantId: animal.TenantId,
             FarmId: animal.FarmId,
+            BatchId: animal.BatchId,
             ShedId: animal.CurrentMovement?.ShedId,
             PenId: animal.CurrentMovement?.PenId,
             TagId: animal.Tag.TagId,
@@ -36,11 +37,13 @@ public static class AnimalMappings
             LatestWeightKg: animal.LatestWeightKg,
             LatestWeightDate: animal.LatestWeightDate,
             AdgKgPerDay: animal.AdgKgPerDay,
+            LatestBcs: animal.LatestBcs,
             PrimaryPhotoUrl: animal.Photos.FirstOrDefault(p => p.IsPrimary)?.PhotoUrl,
             WeightRecords: animal.WeightRecords.Select(w => w.ToDto()).ToList().AsReadOnly(),
             BreedingRecords: animal.BreedingRecords.Select(b => b.ToDto()).ToList().AsReadOnly(),
             Photos: animal.Photos.Select(p => p.ToDto()).ToList().AsReadOnly(),
             Movements: animal.Movements.OrderByDescending(m => m.PlacedAtUtc).Select(m => m.ToDto()).ToList().AsReadOnly(),
+            BcsRecords: animal.BcsRecords.OrderByDescending(b => b.RecordedDate).Select(b => b.ToDto()).ToList().AsReadOnly(),
             CreatedAtUtc: animal.CreatedAtUtc,
             CreatedBy: animal.CreatedBy,
             ModifiedAtUtc: animal.ModifiedAtUtc);
@@ -56,11 +59,13 @@ public static class AnimalMappings
             DateOfBirth: animal.DateOfBirth,
             Status: animal.Status,
             FarmId: animal.FarmId,
+            BatchId: animal.BatchId,
             ShedId: animal.CurrentMovement?.ShedId,
             PenId: animal.CurrentMovement?.PenId,
             LatestWeightKg: animal.LatestWeightKg,
             LatestWeightDate: animal.LatestWeightDate,
             AdgKgPerDay: animal.AdgKgPerDay,
+            LatestBcs: animal.LatestBcs,
             PrimaryPhotoUrl: animal.Photos.FirstOrDefault(p => p.IsPrimary)?.PhotoUrl,
             CreatedAtUtc: animal.CreatedAtUtc);
 
@@ -72,6 +77,15 @@ public static class AnimalMappings
             RecordedDate: record.RecordedDate,
             Notes: record.Notes,
             RecordedAtUtc: record.RecordedAtUtc);
+
+    public static BcsRecordDto ToDto(this BodyConditionScore record) =>
+        new(
+            Id: record.Id,
+            AnimalId: record.AnimalId,
+            Score: record.Score,
+            RecordedDate: record.RecordedDate,
+            EvaluatorId: record.EvaluatorId,
+            Notes: record.Notes);
 
     public static BreedingRecordDto ToDto(this BreedingRecord record) =>
         new(

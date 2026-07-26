@@ -61,6 +61,7 @@ public static class PersistenceServiceExtensions
 
         // ── Livestock repositories ──────────────────────────────────────────────
         services.AddScoped<IAnimalRepository, AnimalRepository>();
+        services.AddScoped<IAnimalBatchRepository, AnimalBatchRepository>();
 
         // ── Health repositories ─────────────────────────────────────────────────
         services.AddScoped<IVaccinationRepository, VaccinationRepository>();

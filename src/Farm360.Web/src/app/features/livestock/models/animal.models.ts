@@ -89,10 +89,20 @@ export interface AnimalMovementDto {
   transferReason?: string;
 }
 
+export interface BcsRecordDto {
+  id: string;
+  animalId: string;
+  score: number;
+  recordedDate: string;
+  evaluatorId: string;
+  notes?: string;
+}
+
 export interface AnimalDto {
   id: string;
   tenantId: string;
   farmId: string;
+  batchId?: string;
   shedId?: string;
   penId?: string;
   tagId: string;
@@ -113,11 +123,13 @@ export interface AnimalDto {
   latestWeightKg?: number;
   latestWeightDate?: string;
   adgKgPerDay?: number;
+  latestBcs?: number;
   primaryPhotoUrl?: string;
   weightRecords: WeightRecordDto[];
   breedingRecords: BreedingRecordDto[];
   photos: AnimalPhotoDto[];
   movements: AnimalMovementDto[];
+  bcsRecords: BcsRecordDto[];
   createdAtUtc: string;
   createdBy: string;
   modifiedAtUtc?: string;
@@ -133,11 +145,13 @@ export interface AnimalListItemDto {
   dateOfBirth: string;
   status: AnimalStatus;
   farmId: string;
+  batchId?: string;
   shedId?: string;
   penId?: string;
   latestWeightKg?: number;
   latestWeightDate?: string;
   adgKgPerDay?: number;
+  latestBcs?: number;
   primaryPhotoUrl?: string;
   createdAtUtc: string;
 }

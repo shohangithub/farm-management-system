@@ -25,6 +25,7 @@ export class SidebarComponent {
   menuItems: MenuItem[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard', disabled: true, badge: 'soon' },
     { icon: 'pets', label: 'Livestock', route: '/livestock' },
+    { icon: 'group_work', label: 'Batches', route: '/livestock/batches' },
     { icon: 'healing', label: 'Health', route: '/health' },
     { icon: 'agriculture', label: 'Feeding', disabled: true, badge: 'soon' },
     { icon: 'inventory', label: 'Inventory', disabled: true, badge: 'soon' },

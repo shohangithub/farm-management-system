@@ -39,6 +39,10 @@
       class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
       Assign Location
     </button>
+    <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onAssignBatch()"
+      class="px-4 py-2 text-sm font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-colors shadow-sm">
+      Assign to Batch
+    </button>
     <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()"
       class="px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors shadow-sm">
       Record Sale
@@ -207,6 +211,51 @@
         </div>
       </mat-tab>
 
+      <!-- ─── Body Condition Score (BCS) ─────────────────────────────── -->
+      <mat-tab label="Body Condition Score">
+        <div class="p-0">
+          <div *ngIf="animal()!.bcsRecords.length === 0" class="py-16 text-center">
+            <div
+              class="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
+              <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">fitness_center</mat-icon>
+            </div>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No BCS records</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first Body Condition Score
+              measurement for this animal.</p>
+            <button (click)="onRecordBcs()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all shadow-sm">
+              Record BCS
+            </button>
+          </div>
+
+          <div *ngIf="animal()!.bcsRecords.length > 0" class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Date</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Score</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Notes</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                <tr *ngFor="let b of animal()!.bcsRecords"
+                  class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ b.recordedDate | date:'mediumDate' }}
+                  </td>
+                  <td class="px-6 py-4 text-sm font-bold" [ngClass]="{'text-amber-600': b.score < 2.5 || b.score > 4.0, 'text-emerald-600': b.score >= 2.5 && b.score <= 4.0}">
+                    {{ b.score | number:'1.1-1' }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">{{ b.notes || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
       <!-- ─── Photos ─────────────────────────────────────────────── -->
       <mat-tab label="Photos Gallery">
         <div class="p-6 sm:p-8">
@@ -259,6 +308,15 @@
                       <ng-template #noLocation><span class="text-gray-400 italic">No Shed/Pen
                           Assigned</span></ng-template>
                     </div>
+                  </dd>
+                </div>
+                <div *ngIf="animal()!.batchId">
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Batch Assignment</dt>
+                  <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50">
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">group_work</mat-icon>
+                      Assigned to Batch
+                    </span>
                   </dd>
                 </div>
                 <div>
@@ -970,6 +1028,93 @@
       <button (click)="submitRecordCalving()" [disabled]="!recordCalvingForm.calvingDate"
         class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
         Record Calving
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Record BCS Dialog Template ─────────────────────────────── -->
+<ng-template #recordBcsDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-emerald-500">fitness_center</mat-icon>
+          Record BCS
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Record body condition score</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Score (1.0 to 5.0) <span class="text-red-500">*</span></label>
+        <input type="number" [(ngModel)]="recordBcsForm.score" step="0.25" min="1.0" max="5.0" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
+      </div>
+      
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Recording Date <span class="text-red-500">*</span></label>
+        <input type="date" [(ngModel)]="recordBcsForm.recordedDate" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes (Optional)</label>
+        <textarea [(ngModel)]="recordBcsForm.notes" rows="2"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow"></textarea>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="submitRecordBcs()" [disabled]="!recordBcsForm.recordedDate || !recordBcsForm.score"
+        class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        Save Score
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Assign Batch Dialog Template ─────────────────────────────── -->
+<ng-template #assignBatchDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-purple-500">group_work</mat-icon>
+          Assign to Batch
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Assign this animal to a management batch</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Batch <span class="text-red-500">*</span></label>
+        <select [(ngModel)]="assignBatchForm.batchId" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          <option value="" disabled selected>-- Select a Batch --</option>
+          <option *ngFor="let b of availableBatches()" [value]="b.id">{{ b.name }} ({{ b.status }})</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="submitAssignBatch()" [disabled]="!assignBatchForm.batchId"
+        class="px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-xl hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        Assign Batch
       </button>
     </div>
   </div>

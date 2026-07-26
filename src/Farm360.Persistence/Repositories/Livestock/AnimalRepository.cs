@@ -28,6 +28,7 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
             .Include(a => a.BreedingRecords)
             .Include(a => a.Photos)
             .Include(a => a.Movements)
+            .Include(a => a.BcsRecords)
             .FirstOrDefaultAsync(a => a.Id == animalId, cancellationToken);
 
     /// <inheritdoc/>

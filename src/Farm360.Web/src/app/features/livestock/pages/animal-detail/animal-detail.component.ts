@@ -26,6 +26,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FarmService } from '../../../farms/services/farm.service';
+import { BatchService } from '../../services/batch.service';
+import { BatchDto } from '../../models/batch.models';
 
 @Component({
   selector: 'app-animal-detail',
@@ -45,6 +47,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   private readonly penSvc  = inject(PenService);
   private readonly farmSvc = inject(FarmService);
   private readonly healthSvc = inject(HealthService);
+  private readonly batchSvc = inject(BatchService);
   private readonly dialog  = inject(MatDialog);
   private readonly router  = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -58,6 +61,8 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   readonly farmName = signal<string | null>(null);
   readonly shedName = signal<string | null>(null);
   readonly penName = signal<string | null>(null);
+
+  readonly availableBatches = signal<BatchDto[]>([]);
 
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex = AnimalSex;
@@ -111,6 +116,18 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     calvesCount: 1
   };
 
+  @ViewChild('assignBatchDialogTemplate') assignBatchDialogTemplate!: TemplateRef<any>;
+  assignBatchForm = {
+    batchId: ''
+  };
+
+  @ViewChild('recordBcsDialogTemplate') recordBcsDialogTemplate!: TemplateRef<any>;
+  recordBcsForm = {
+    score: null as number | null,
+    recordedDate: new Date().toISOString().split('T')[0],
+    notes: ''
+  };
+
   readonly sheds = signal<ShedList[]>([]);
   readonly pens = signal<PenList[]>([]);
   readonly loadingSheds = signal(false);
@@ -162,9 +179,14 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
 
         this.loading.set(false); 
         
-        // Load Location Names
+        // Load Location Names and Batches
         if (a.farmId) {
           this.farmSvc.getFarmById(a.farmId).subscribe(f => this.farmName.set(f.farmName));
+          
+          this.batchSvc.getBatches(a.farmId).subscribe(b => {
+             this.availableBatches.set(b.items);
+          });
+          
           // Preload Sheds and Pens for the farm to resolve movement history names
           this.shedSvc.getShedsByFarm(a.farmId).subscribe(sheds => {
             this.sheds.set(sheds);
@@ -485,6 +507,64 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       next: () => {
         this.dialog.closeAll();
         this.snackBar.open('Calving recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.load();
+      }
+    });
+  }
+
+  onRecordBcs(): void {
+    const a = this.animal();
+    if (!a) return;
+
+    this.recordBcsForm = {
+      score: null,
+      recordedDate: new Date().toISOString().split('T')[0],
+      notes: ''
+    };
+
+    this.dialog.open(this.recordBcsDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  submitRecordBcs(): void {
+    const a = this.animal();
+    if (!a || !this.recordBcsForm.score || !this.recordBcsForm.recordedDate) return;
+
+    this.svc.recordBcs(a.id, this.recordBcsForm.score, this.recordBcsForm.recordedDate, this.recordBcsForm.notes).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.snackBar.open('BCS recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.load();
+      }
+    });
+  }
+
+  onAssignBatch(): void {
+    const a = this.animal();
+    if (!a) return;
+
+    this.assignBatchForm = {
+      batchId: a.batchId ?? ''
+    };
+
+    this.dialog.open(this.assignBatchDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  submitAssignBatch(): void {
+    const a = this.animal();
+    if (!a || !this.assignBatchForm.batchId) return;
+
+    this.batchSvc.assignAnimalsToBatch(this.assignBatchForm.batchId, [a.id]).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.snackBar.open('Animal assigned to batch successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
       }
     });

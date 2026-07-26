@@ -23,6 +23,33 @@ public static class LivestockEndpoints
         group.WithTags("Livestock");
         group.RequireAuthorization();
 
+        // ── Batch Management ───────────────────────────────────────────────────
+        group.MapPost("/batches", CreateBatch)
+            .WithName("CreateBatch")
+            .WithSummary("Create a new animal batch/group")
+            .Produces<Guid>(201)
+            .Produces(422)
+            .RequireAuthorization("Permission:animals.create");
+
+        group.MapGet("/batches", GetBatches)
+            .WithName("GetBatches")
+            .WithSummary("Get list of batches")
+            .Produces<PagedBatchListDto>()
+            .RequireAuthorization("Permission:animals.view");
+
+        group.MapGet("/batches/{id:guid}", GetBatchDetails)
+            .WithName("GetBatchDetails")
+            .Produces<BatchDto>()
+            .Produces(404)
+            .RequireAuthorization("Permission:animals.view");
+
+        group.MapPost("/batches/{id:guid}/assign", AssignAnimalsToBatch)
+            .WithName("AssignAnimalsToBatch")
+            .WithSummary("Bulk assign animals to a batch")
+            .Produces(204)
+            .Produces(404)
+            .RequireAuthorization("Permission:animals.update");
+
         // ── Animal CRUD ────────────────────────────────────────────────────────
         group.MapGet("/animals", GetAnimalList)
             .WithName("GetAnimalList")
@@ -62,10 +89,20 @@ public static class LivestockEndpoints
 
         group.MapPost("/animals/{id:guid}/weights", RecordWeight)
             .WithName("RecordAnimalWeight")
-            .WithSummary("Record a new weight measurement")
+            .WithSummary("Record a new weight for an animal")
             .Produces<WeightRecordDto>(201)
-            .Produces(422)
-            .RequireAuthorization("Permission:animals.create");
+            .Produces(400) // Domain validation error
+            .Produces(404)
+            .RequireAuthorization("Permission:animals.update");
+
+        // ── Body Condition Score ───────────────────────────────────────────────
+        group.MapPost("/animals/{id:guid}/bcs", RecordBcs)
+            .WithName("RecordBodyConditionScore")
+            .WithSummary("Record a BCS for an animal")
+            .Produces<BcsRecordDto>(201)
+            .Produces(400)
+            .Produces(404)
+            .RequireAuthorization("Permission:animals.update");
 
         // ── Status Transitions ─────────────────────────────────────────────────
         group.MapPost("/animals/{id:guid}/sell", SellAnimal)
@@ -300,6 +337,39 @@ public static class LivestockEndpoints
         await sender.Send(new RecordCalvingCommand(id, recordId, request.CalvingDate, request.Outcome, request.CalvesCount), cancellationToken);
         return Results.NoContent();
     }
+
+    // ── Handlers: Batches & BCS ──────────────────────────────────────────
+
+    private static async Task<IResult> CreateBatch([FromBody] CreateBatchCommand command, IMediator mediator)
+    {
+        var resultId = await mediator.Send(command);
+        return Results.Created($"/api/v1/livestock/batches/{resultId}", resultId);
+    }
+
+    private static async Task<IResult> GetBatches([AsParameters] GetBatchesQuery query, IMediator mediator)
+    {
+        var result = await mediator.Send(query);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetBatchDetails([FromRoute] Guid id, IMediator mediator)
+    {
+        var result = await mediator.Send(new GetBatchDetailsQuery(id));
+        return result is not null ? Results.Ok(result) : Results.NotFound();
+    }
+
+    private static async Task<IResult> AssignAnimalsToBatch([FromRoute] Guid id, [FromBody] List<Guid> animalIds, IMediator mediator)
+    {
+        await mediator.Send(new AssignAnimalsToBatchCommand(id, animalIds));
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> RecordBcs([FromRoute] Guid id, [FromBody] RecordBcsRequest request, IMediator mediator)
+    {
+        var command = new RecordBcsCommand(id, request.Score, request.RecordedDate, request.Notes);
+        var result = await mediator.Send(command);
+        return Results.Created($"/api/v1/livestock/animals/{id}/bcs", result);
+    }
 }
 
 // ── Request bodies (simple records — not commands, to decouple route param binding) ──
@@ -325,3 +395,4 @@ public sealed record AddPhotoRequest(string PhotoUrl, string? Caption);
 public sealed record RecordMatingRequest(DateOnly MatingDate, Guid? SireAnimalId, string? SireExternalId, bool IsArtificialInsemination);
 public sealed record ConfirmPregnancyRequest(DateOnly ConfirmDate, DateOnly ExpectedCalvingDate);
 public sealed record RecordCalvingRequest(DateOnly CalvingDate, string Outcome, int CalvesCount);
+public sealed record RecordBcsRequest(decimal Score, DateOnly RecordedDate, string? Notes);

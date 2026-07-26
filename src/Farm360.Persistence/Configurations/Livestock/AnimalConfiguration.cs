@@ -130,6 +130,10 @@ public sealed class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .HasPrecision(8, 3)
             .IsRequired(false);
 
+        builder.Property(a => a.LatestBcs)
+            .HasPrecision(3, 2)
+            .IsRequired(false);
+
         // ── Soft delete columns (AuditableEntity) ─────────────────────────────
         builder.Property(a => a.IsDeleted)
             .IsRequired()
@@ -164,6 +168,11 @@ public sealed class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .WithOne()
             .HasForeignKey(x => x.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<AnimalBatch>()
+            .WithMany(b => b.Animals)
+            .HasForeignKey(a => a.BatchId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // ── Indexes for common query patterns ──────────────────────────────────
         builder.HasIndex(a => new { a.TenantId, a.Status })

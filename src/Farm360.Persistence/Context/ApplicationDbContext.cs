@@ -108,6 +108,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 
     // ── Livestock Module ───────────────────────────────────────────────────────
     public DbSet<Animal> Animals => Set<Animal>();
+    public DbSet<AnimalBatch> AnimalBatches => Set<AnimalBatch>();
+    public DbSet<BodyConditionScore> BodyConditionScores => Set<BodyConditionScore>();
     public DbSet<WeightRecord> WeightRecords => Set<WeightRecord>();
     public DbSet<BreedingRecord> BreedingRecords => Set<BreedingRecord>();
     public DbSet<AnimalPhoto> AnimalPhotos => Set<AnimalPhoto>();
