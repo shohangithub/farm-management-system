@@ -120,3 +120,4 @@ __MACOSX/
 
 # Hangfire Dashboard (not for prod)
 hangfire.*.db
+src/Farm360.Api/wwwroot/uploads

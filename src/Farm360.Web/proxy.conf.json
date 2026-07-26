@@ -11,5 +11,11 @@
     "changeOrigin": true,
     "ws": true,
     "logLevel": "info"
+  },
+  "/uploads": {
+    "target": "https://localhost:7272",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
   }
 }

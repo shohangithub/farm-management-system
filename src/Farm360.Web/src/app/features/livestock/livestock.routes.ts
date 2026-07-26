@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 export const livestockRoutes: Routes = [
   {
     path: '',
+    pathMatch: 'full',
     loadComponent: () =>
       import('./pages/animal-list/animal-list.component').then(m => m.AnimalListComponent),
     title: 'Livestock — Farm360',

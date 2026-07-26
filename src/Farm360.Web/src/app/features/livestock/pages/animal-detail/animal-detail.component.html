@@ -56,8 +56,10 @@
     <!-- Photo Area -->
     <div
       class="w-full md:w-1/3 bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800/50 h-64 md:h-auto">
-      <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" class="w-full h-full object-cover" />
-      <div *ngIf="!animal()!.primaryPhotoUrl" class="text-7xl opacity-20">{{ speciesEmoji(animal()!.species) }}</div>
+      <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl"
+        class="absolute inset-0 w-full h-full object-cover" />
+      <div *ngIf="!animal()!.primaryPhotoUrl" class="text-7xl opacity-20 relative z-10">{{
+        speciesEmoji(animal()!.species) }}</div>
 
       <!-- Status Badge Overlay -->
       <div
@@ -96,6 +98,23 @@
               {{ animal()!.sex === AnimalSex.Male ? 'male' : 'female' }}
             </mat-icon>
             {{ sexLabel(animal()!.sex) }}
+          </dd>
+        </div>
+        <div *ngIf="animal()!.latestWeightKg">
+          <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Latest Weight</dt>
+          <dd class="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            {{ animal()!.latestWeightKg | number:'1.1-2' }} <span class="text-xs font-normal">kg</span>
+            <span class="text-xs text-gray-400 font-normal ml-1">({{ animal()!.latestWeightDate | date:'shortDate'
+              }})</span>
+          </dd>
+        </div>
+        <div *ngIf="animal()!.adgKgPerDay !== null && animal()!.adgKgPerDay !== undefined">
+          <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">ADG (Avg Daily Gain)</dt>
+          <dd class="text-sm font-bold flex items-center gap-1"
+            [ngClass]="animal()!.adgKgPerDay! > 0 ? 'text-emerald-600' : (animal()!.adgKgPerDay! < 0 ? 'text-red-500' : 'text-gray-500')">
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">{{ animal()!.adgKgPerDay! > 0 ? 'trending_up' :
+              (animal()!.adgKgPerDay! < 0 ? 'trending_down' : 'trending_flat' ) }}</mat-icon>
+                {{ animal()!.adgKgPerDay | number:'1.2-2' }} <span class="text-xs font-normal">kg/day</span>
           </dd>
         </div>
         <div>
@@ -220,7 +239,8 @@
               <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">fitness_center</mat-icon>
             </div>
             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No BCS records</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first Body Condition Score
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first Body Condition
+              Score
               measurement for this animal.</p>
             <button (click)="onRecordBcs()"
               class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all shadow-sm">
@@ -245,7 +265,8 @@
                   class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                   <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ b.recordedDate | date:'mediumDate' }}
                   </td>
-                  <td class="px-6 py-4 text-sm font-bold" [ngClass]="{'text-amber-600': b.score < 2.5 || b.score > 4.0, 'text-emerald-600': b.score >= 2.5 && b.score <= 4.0}">
+                  <td class="px-6 py-4 text-sm font-bold"
+                    [ngClass]="{'text-amber-600': b.score < 2.5 || b.score > 4.0, 'text-emerald-600': b.score >= 2.5 && b.score <= 4.0}">
                     {{ b.score | number:'1.1-1' }}
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">{{ b.notes || '—' }}</td>
@@ -256,33 +277,6 @@
         </div>
       </mat-tab>
 
-      <!-- ─── Photos ─────────────────────────────────────────────── -->
-      <mat-tab label="Photos Gallery">
-        <div class="p-6 sm:p-8">
-          <div *ngIf="animal()!.photos.length === 0" class="py-12 text-center">
-            <div
-              class="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
-              <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">add_a_photo</mat-icon>
-            </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No photos yet</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Upload photos to keep a visual record.
-            </p>
-          </div>
-
-          <div *ngIf="animal()!.photos.length > 0"
-            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <div *ngFor="let p of animal()!.photos"
-              class="relative rounded-xl overflow-hidden aspect-square border-2 shadow-sm"
-              [ngClass]="p.isPrimary ? 'border-primary-500' : 'border-gray-200 dark:border-gray-700'">
-              <img [src]="p.photoUrl" [alt]="p.caption || 'Photo'" class="w-full h-full object-cover" />
-              <div *ngIf="p.isPrimary"
-                class="absolute bottom-2 left-2 text-[10px] font-bold tracking-wider uppercase bg-primary-600 text-white px-2 py-0.5 rounded shadow-sm">
-                Primary
-              </div>
-            </div>
-          </div>
-        </div>
-      </mat-tab>
 
       <!-- ─── Location & Status Tab ────────────────────────────────────── -->
       <mat-tab label="Location & Status">
@@ -311,9 +305,11 @@
                   </dd>
                 </div>
                 <div *ngIf="animal()!.batchId">
-                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Batch Assignment</dt>
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Batch Assignment
+                  </dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50">
+                    <span
+                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50">
                       <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">group_work</mat-icon>
                       Assigned to Batch
                     </span>
@@ -434,41 +430,149 @@
         </div>
       </mat-tab>
 
+      <!-- ─── Weight History Tab ────────────────────── -->
+      <mat-tab label="Weight Tracking">
+        <div class="p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">Weight Progression</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of animal weights.</p>
+            </div>
+            <button (click)="onRecordWeight()"
+              class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all shadow-sm">
+              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Add Weight
+            </button>
+          </div>
+
+          <div *ngIf="animal()!.weightRecords.length === 0"
+            class="py-12 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+            <div
+              class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
+              <mat-icon class="!text-gray-400">scale</mat-icon>
+            </div>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No weight records</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Start tracking weight to automatically
+              calculate Average Daily Gain (ADG).</p>
+          </div>
+
+          <div *ngIf="animal()!.weightRecords.length > 0"
+            class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-800/50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Date</th>
+                  <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Weight (kg)</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Notes</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-800">
+                <tr *ngFor="let w of animal()!.weightRecords"
+                  class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{
+                    w.recordedDate | date:'mediumDate' }}</td>
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ w.weightKg | number:'1.1-2' }} kg</td>
+                  <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ w.notes || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ─── Photo Gallery Tab ────────────────────── -->
+      <mat-tab label="Photo Gallery">
+        <div class="p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">Animal Photos</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Visual record and identification.</p>
+            </div>
+            <button (click)="onUploadPhoto()"
+              class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm">
+              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add_a_photo</mat-icon> Add Photo
+            </button>
+          </div>
+
+          <div *ngIf="animal()!.photos.length === 0"
+            class="py-12 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+            <div
+              class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
+              <mat-icon class="!text-gray-400">photo_library</mat-icon>
+            </div>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No photos</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Upload photos to visually track growth
+              or for identification.</p>
+          </div>
+
+          <div *ngIf="animal()!.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div *ngFor="let p of animal()!.photos"
+              class="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 aspect-square">
+              <img [src]="p.photoUrl" [alt]="p.caption || 'Animal photo'"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                <p class="text-white text-xs font-medium">{{ p.caption || 'No caption' }}</p>
+                <p class="text-gray-300 text-[10px] mt-0.5">{{ p.uploadedAtUtc | date:'shortDate' }}</p>
+              </div>
+              <div *ngIf="p.isPrimary"
+                class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
+                Primary
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
       <!-- ─── Breeding History Tab (Females Only) ────────────────────── -->
       <mat-tab label="Breeding History" *ngIf="animal()?.sex === AnimalSex.Female">
         <div class="p-6 sm:p-8">
           <div *ngIf="animal()!.breedingRecords.length === 0" class="py-16 text-center">
-            <div class="w-14 h-14 bg-pink-50 dark:bg-pink-900/20 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
+            <div
+              class="w-14 h-14 bg-pink-50 dark:bg-pink-900/20 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
               <mat-icon class="!text-pink-400 !text-[28px] !w-[28px] !h-[28px]">favorite_border</mat-icon>
             </div>
             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No breeding records</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first mating or breeding event for this animal.</p>
-            <button (click)="onRecordMating()" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-all shadow-sm">
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first mating or
+              breeding event for this animal.</p>
+            <button (click)="onRecordMating()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-all shadow-sm">
               Record Mating
             </button>
           </div>
 
           <div *ngIf="animal()!.breedingRecords.length > 0" class="overflow-x-auto">
             <div class="flex justify-end mb-4">
-              <button (click)="onRecordMating()" class="px-3 py-1.5 text-xs font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg transition-colors shadow-sm">
+              <button (click)="onRecordMating()"
+                class="px-3 py-1.5 text-xs font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg transition-colors shadow-sm">
                 Record New Mating
               </button>
             </div>
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Mating Date</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Method</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Sire Details</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Pregnancy Status</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Mating Date</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Method</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Sire Details</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Pregnancy Status</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <tr *ngFor="let br of animal()!.breedingRecords" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                  <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{{ br.matingDate | date:'mediumDate' }}</td>
+                <tr *ngFor="let br of animal()!.breedingRecords"
+                  class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{{ br.matingDate |
+                    date:'mediumDate' }}</td>
                   <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" 
-                          [ngClass]="br.isArtificialInsemination ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                      [ngClass]="br.isArtificialInsemination ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'">
                       {{ br.isArtificialInsemination ? 'AI' : 'Natural' }}
                     </span>
                   </td>
@@ -476,7 +580,8 @@
                     <ng-container *ngIf="br.sireAnimalId || br.sireExternalId; else noSire">
                       <div class="flex flex-col">
                         <span *ngIf="br.sireAnimalId" class="font-medium">Internal: {{ br.sireAnimalId }}</span>
-                        <span *ngIf="br.sireExternalId" class="text-xs text-gray-500">Ext: {{ br.sireExternalId }}</span>
+                        <span *ngIf="br.sireExternalId" class="text-xs text-gray-500">Ext: {{ br.sireExternalId
+                          }}</span>
                       </div>
                     </ng-container>
                     <ng-template #noSire><span class="text-gray-400 italic">Unknown Sire</span></ng-template>
@@ -488,11 +593,15 @@
                           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon>
                           Confirmed
                         </span>
-                        <div class="text-xs text-gray-500" *ngIf="br.expectedCalvingDate">Expected: {{ br.expectedCalvingDate | date:'shortDate' }}</div>
-                        <div *ngIf="br.actualCalvingDate" class="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
-                          Calved: {{ br.actualCalvingDate | date:'mediumDate' }} ({{ br.calvingOutcome || 'Live Birth' }})
+                        <div class="text-xs text-gray-500" *ngIf="br.expectedCalvingDate">Expected: {{
+                          br.expectedCalvingDate | date:'shortDate' }}</div>
+                        <div *ngIf="br.actualCalvingDate"
+                          class="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                          Calved: {{ br.actualCalvingDate | date:'mediumDate' }} ({{ br.calvingOutcome || 'Live Birth'
+                          }})
                         </div>
-                        <button *ngIf="!br.actualCalvingDate" (click)="onRecordCalving(br.id)" class="mt-1 inline-flex items-center gap-1 w-max px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors">
+                        <button *ngIf="!br.actualCalvingDate" (click)="onRecordCalving(br.id)"
+                          class="mt-1 inline-flex items-center gap-1 w-max px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors">
                           <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">child_care</mat-icon>
                           Record Calving
                         </button>
@@ -501,7 +610,8 @@
                     <ng-template #notConfirmed>
                       <div class="flex flex-col gap-1">
                         <span class="text-amber-600 dark:text-amber-400 font-medium">Pending Check</span>
-                        <button (click)="onConfirmPregnancy(br.id)" class="inline-flex items-center gap-1 w-max px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors">
+                        <button (click)="onConfirmPregnancy(br.id)"
+                          class="inline-flex items-center gap-1 w-max px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors">
                           <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">done</mat-icon>
                           Confirm
                         </button>
@@ -518,7 +628,7 @@
       <!-- ─── Medical & Health Tab ───────────────────────────────────── -->
       <mat-tab label="Medical & Health">
         <div class="p-6 sm:p-8 space-y-8">
-          
+
           <div *ngIf="!healthHistory()" class="flex justify-center py-8">
             <div class="animate-pulse flex gap-2 items-center text-gray-500">
               <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
@@ -537,11 +647,13 @@
                 </h3>
               </div>
 
-              <div *ngIf="healthHistory()!.vaccinations.length === 0" class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
+              <div *ngIf="healthHistory()!.vaccinations.length === 0"
+                class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">No vaccination records found.</p>
               </div>
 
-              <div *ngIf="healthHistory()!.vaccinations.length > 0" class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+              <div *ngIf="healthHistory()!.vaccinations.length > 0"
+                class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
                 <table class="w-full text-left border-collapse">
                   <thead>
                     <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
@@ -552,16 +664,18 @@
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <tr *ngFor="let v of healthHistory()!.vaccinations" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                    <tr *ngFor="let v of healthHistory()!.vaccinations"
+                      class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                       <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ v.vaccineName }}</td>
                       <td class="px-4 py-3 text-sm text-gray-500">{{ v.batchNumber }}</td>
                       <td class="px-4 py-3 text-sm text-gray-500">{{ v.scheduledDate | date:'mediumDate' }}</td>
                       <td class="px-4 py-3 text-sm">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                              [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-emerald-100 text-emerald-800' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800')">
+                          [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-emerald-100 text-emerald-800' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800')">
                           {{ v.status }}
                         </span>
-                        <div class="text-[10px] text-gray-400 mt-0.5" *ngIf="v.administeredDate">On {{ v.administeredDate | date:'shortDate' }}</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5" *ngIf="v.administeredDate">On {{
+                          v.administeredDate | date:'shortDate' }}</div>
                       </td>
                     </tr>
                   </tbody>
@@ -578,11 +692,13 @@
                 </h3>
               </div>
 
-              <div *ngIf="healthHistory()!.treatments.length === 0" class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
+              <div *ngIf="healthHistory()!.treatments.length === 0"
+                class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">No medical treatments found.</p>
               </div>
 
-              <div *ngIf="healthHistory()!.treatments.length > 0" class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+              <div *ngIf="healthHistory()!.treatments.length > 0"
+                class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
                 <table class="w-full text-left border-collapse">
                   <thead>
                     <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
@@ -594,20 +710,22 @@
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <tr *ngFor="let t of healthHistory()!.treatments" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                    <tr *ngFor="let t of healthHistory()!.treatments"
+                      class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                       <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ t.diagnosis }}</td>
                       <td class="px-4 py-3 text-sm text-gray-500">
-                        {{ t.medicationName }}<br/>
+                        {{ t.medicationName }}<br />
                         <span class="text-[10px] text-gray-400">{{ t.dosageAmount }} {{ t.dosageUnit }}</span>
                       </td>
                       <td class="px-4 py-3 text-sm text-gray-500">
                         {{ t.startDate | date:'shortDate' }}
                         <span *ngIf="t.endDate"> - {{ t.endDate | date:'shortDate' }}</span>
                       </td>
-                      <td class="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">৳{{ t.costBdt | number }}</td>
+                      <td class="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">৳{{ t.costBdt | number
+                        }}</td>
                       <td class="px-4 py-3 text-sm">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                              [ngClass]="t.status === TreatmentStatus.Ongoing ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'">
+                          [ngClass]="t.status === TreatmentStatus.Ongoing ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'">
                           {{ t.status }}
                         </span>
                       </td>
@@ -875,7 +993,8 @@
 <!-- ── Mating Dialog Template ──────────────────────────────────────── -->
 <ng-template #matingDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-pink-500">favorite</mat-icon>
@@ -883,14 +1002,16 @@
         </h2>
         <p class="text-xs text-gray-500 mt-0.5">Enter breeding details for {{ animal()?.tagId }}</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <div class="p-6 space-y-4 overflow-y-auto">
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Mating Date <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Mating Date <span
+            class="text-red-500">*</span></label>
         <input type="date" [(ngModel)]="matingForm.date" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-shadow">
       </div>
@@ -899,11 +1020,13 @@
         <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Breeding Method</label>
         <div class="flex items-center gap-4">
           <label class="inline-flex items-center gap-2 cursor-pointer">
-            <input type="radio" [value]="false" [(ngModel)]="matingForm.isAI" name="matingMethod" class="text-pink-600 focus:ring-pink-500 h-4 w-4">
+            <input type="radio" [value]="false" [(ngModel)]="matingForm.isAI" name="matingMethod"
+              class="text-pink-600 focus:ring-pink-500 h-4 w-4">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Natural</span>
           </label>
           <label class="inline-flex items-center gap-2 cursor-pointer">
-            <input type="radio" [value]="true" [(ngModel)]="matingForm.isAI" name="matingMethod" class="text-pink-600 focus:ring-pink-500 h-4 w-4">
+            <input type="radio" [value]="true" [(ngModel)]="matingForm.isAI" name="matingMethod"
+              class="text-pink-600 focus:ring-pink-500 h-4 w-4">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Artificial Insemination (AI)</span>
           </label>
         </div>
@@ -923,8 +1046,10 @@
       </div>
     </div>
 
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
-      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
       <button (click)="confirmMating()" [disabled]="!matingForm.date"
@@ -938,7 +1063,8 @@
 <!-- ── Confirm Pregnancy Dialog Template ──────────────────────────── -->
 <ng-template #confirmPregnancyDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-emerald-500">check_circle</mat-icon>
@@ -946,34 +1072,41 @@
         </h2>
         <p class="text-xs text-gray-500 mt-0.5">Confirm pregnancy for this breeding record</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <div class="p-6 space-y-4 overflow-y-auto">
-      <div *ngIf="confirmPregnancyForm.error" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-3 rounded-r-md shadow-sm flex items-start gap-2">
+      <div *ngIf="confirmPregnancyForm.error"
+        class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-3 rounded-r-md shadow-sm flex items-start gap-2">
         <mat-icon class="!text-red-500 !text-[18px] !w-[18px] !h-[18px] mt-0.5 flex-shrink-0">error_outline</mat-icon>
         <p class="text-xs">{{ confirmPregnancyForm.error }}</p>
       </div>
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Confirmation Date <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Confirmation Date <span
+            class="text-red-500">*</span></label>
         <input type="date" [(ngModel)]="confirmPregnancyForm.confirmDate" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
       </div>
-      
+
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Expected Calving Date <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Expected Calving Date <span
+            class="text-red-500">*</span></label>
         <input type="date" [(ngModel)]="confirmPregnancyForm.expectedCalvingDate" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
       </div>
     </div>
 
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
-      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
-      <button (click)="submitConfirmPregnancy()" [disabled]="!confirmPregnancyForm.confirmDate || !confirmPregnancyForm.expectedCalvingDate"
+      <button (click)="submitConfirmPregnancy()"
+        [disabled]="!confirmPregnancyForm.confirmDate || !confirmPregnancyForm.expectedCalvingDate"
         class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
         Confirm Pregnancy
       </button>
@@ -984,7 +1117,8 @@
 <!-- ── Record Calving Dialog Template ─────────────────────────────── -->
 <ng-template #recordCalvingDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-blue-500">child_care</mat-icon>
@@ -992,20 +1126,23 @@
         </h2>
         <p class="text-xs text-gray-500 mt-0.5">Record calving details for this pregnancy</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <div class="p-6 space-y-4 overflow-y-auto">
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Calving Date <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Calving Date <span
+            class="text-red-500">*</span></label>
         <input type="date" [(ngModel)]="recordCalvingForm.calvingDate" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow">
       </div>
-      
+
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Outcome <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Outcome <span
+            class="text-red-500">*</span></label>
         <select [(ngModel)]="recordCalvingForm.outcome" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
           <option value="Live Birth">Live Birth</option>
@@ -1015,14 +1152,17 @@
       </div>
 
       <div class="space-y-1.5" *ngIf="recordCalvingForm.outcome === 'Live Birth'">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Number of Calves <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Number of Calves <span
+            class="text-red-500">*</span></label>
         <input type="number" [(ngModel)]="recordCalvingForm.calvesCount" min="1" max="10" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow">
       </div>
     </div>
 
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
-      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
       <button (click)="submitRecordCalving()" [disabled]="!recordCalvingForm.calvingDate"
@@ -1036,7 +1176,8 @@
 <!-- ── Record BCS Dialog Template ─────────────────────────────── -->
 <ng-template #recordBcsDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-emerald-500">fitness_center</mat-icon>
@@ -1044,20 +1185,23 @@
         </h2>
         <p class="text-xs text-gray-500 mt-0.5">Record body condition score</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <div class="p-6 space-y-4 overflow-y-auto">
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Score (1.0 to 5.0) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Score (1.0 to 5.0) <span
+            class="text-red-500">*</span></label>
         <input type="number" [(ngModel)]="recordBcsForm.score" step="0.25" min="1.0" max="5.0" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
       </div>
-      
+
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Recording Date <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Recording Date <span
+            class="text-red-500">*</span></label>
         <input type="date" [(ngModel)]="recordBcsForm.recordedDate" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
       </div>
@@ -1069,8 +1213,10 @@
       </div>
     </div>
 
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
-      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
       <button (click)="submitRecordBcs()" [disabled]="!recordBcsForm.recordedDate || !recordBcsForm.score"
@@ -1084,7 +1230,8 @@
 <!-- ── Assign Batch Dialog Template ─────────────────────────────── -->
 <ng-template #assignBatchDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-purple-500">group_work</mat-icon>
@@ -1092,14 +1239,16 @@
         </h2>
         <p class="text-xs text-gray-500 mt-0.5">Assign this animal to a management batch</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <div class="p-6 space-y-4 overflow-y-auto">
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Batch <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Batch <span
+            class="text-red-500">*</span></label>
         <select [(ngModel)]="assignBatchForm.batchId" required
           class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
           <option value="" disabled selected>-- Select a Batch --</option>
@@ -1108,13 +1257,115 @@
       </div>
     </div>
 
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
-      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
       <button (click)="submitAssignBatch()" [disabled]="!assignBatchForm.batchId"
         class="px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-xl hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
         Assign Batch
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Record Weight Dialog Template ─────────────────────────────── -->
+<ng-template #recordWeightDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-emerald-500">scale</mat-icon>
+          Record Weight
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Track growth and calculate ADG</p>
+      </div>
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Weight (kg) <span
+              class="text-red-500">*</span></label>
+          <input type="number" [(ngModel)]="recordWeightForm.weightKg" step="0.1" required
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Date <span
+              class="text-red-500">*</span></label>
+          <input type="date" [(ngModel)]="recordWeightForm.recordedDate" required
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+      </div>
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes (Optional)</label>
+        <textarea [(ngModel)]="recordWeightForm.notes" rows="2"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+      </div>
+    </div>
+
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="submitRecordWeight()" [disabled]="!recordWeightForm.recordedDate || !recordWeightForm.weightKg"
+        class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        Save Weight
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Upload Photo Dialog Template ─────────────────────────────── -->
+<ng-template #uploadPhotoDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-blue-500">add_a_photo</mat-icon>
+          Add Photo
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Upload a new photo for this animal</p>
+      </div>
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Photo File <span
+            class="text-red-500">*</span></label>
+        <input type="file" (change)="onFileSelected($event)" accept="image/jpeg,image/png,image/webp" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+      </div>
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Caption (Optional)</label>
+        <input type="text" [(ngModel)]="uploadPhotoForm.caption" placeholder="E.g., Side profile at 6 months"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+      </div>
+    </div>
+
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="submitUploadPhoto()" [disabled]="!uploadPhotoForm.file"
+        class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        Upload Photo
       </button>
     </div>
   </div>

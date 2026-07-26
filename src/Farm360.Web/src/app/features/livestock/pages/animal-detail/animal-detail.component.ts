@@ -128,6 +128,19 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     notes: ''
   };
 
+  @ViewChild('recordWeightDialogTemplate') recordWeightDialogTemplate!: TemplateRef<any>;
+  recordWeightForm = {
+    weightKg: null as number | null,
+    recordedDate: new Date().toISOString().split('T')[0],
+    notes: ''
+  };
+
+  @ViewChild('uploadPhotoDialogTemplate') uploadPhotoDialogTemplate!: TemplateRef<any>;
+  uploadPhotoForm = {
+    file: null as File | null,
+    caption: ''
+  };
+
   readonly sheds = signal<ShedList[]>([]);
   readonly pens = signal<PenList[]>([]);
   readonly loadingSheds = signal(false);
@@ -277,11 +290,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  onRecordWeight(): void {
-    const a = this.animal();
-    if (!a) return;
-    this.router.navigate(['/livestock', a.id, 'weights', 'new']);
-  }
+
 
   goBack(): void {
     this.router.navigate(['/livestock']);
@@ -538,7 +547,8 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
         this.dialog.closeAll();
         this.snackBar.open('BCS recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
-      }
+      },
+      error: (e) => this.handleError(e)
     });
   }
 
@@ -566,7 +576,97 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
         this.dialog.closeAll();
         this.snackBar.open('Animal assigned to batch successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
-      }
+      },
+      error: (e) => this.handleError(e)
     });
+  }
+
+  onRecordWeight(): void {
+    const a = this.animal();
+    if (!a) return;
+
+    this.recordWeightForm = {
+      weightKg: null,
+      recordedDate: new Date().toISOString().split('T')[0],
+      notes: ''
+    };
+
+    this.dialog.open(this.recordWeightDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  submitRecordWeight(): void {
+    const a = this.animal();
+    if (!a || !this.recordWeightForm.weightKg || !this.recordWeightForm.recordedDate) return;
+
+    this.svc.recordWeight(a.id, {
+      weightKg: this.recordWeightForm.weightKg,
+      recordedDate: this.recordWeightForm.recordedDate,
+      notes: this.recordWeightForm.notes
+    }).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.snackBar.open('Weight recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.load();
+      },
+      error: (e) => this.handleError(e)
+    });
+  }
+
+  onUploadPhoto(): void {
+    const a = this.animal();
+    if (!a) return;
+
+    this.uploadPhotoForm = {
+      file: null,
+      caption: ''
+    };
+
+    this.dialog.open(this.uploadPhotoDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        this.snackBar.open('File size must be less than 5MB', 'Close', { duration: 3000, panelClass: ['snack-error'] });
+        event.target.value = '';
+        return;
+      }
+      this.uploadPhotoForm.file = file;
+    }
+  }
+
+  submitUploadPhoto(): void {
+    const a = this.animal();
+    if (!a || !this.uploadPhotoForm.file) return;
+
+    this.svc.uploadPhotoFile(a.id, this.uploadPhotoForm.file, this.uploadPhotoForm.caption).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.snackBar.open('Photo uploaded successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
+        this.load();
+      },
+      error: (e) => this.handleError(e)
+    });
+  }
+
+  private handleError(err: any): void {
+    let msg = 'An unexpected error occurred.';
+    if (err?.error?.errors) {
+      msg = Object.values(err.error.errors).flat().join('\n');
+    } else if (err?.error?.detail) {
+      msg = err.error.detail;
+    } else if (err?.error?.title) {
+      msg = err.error.title;
+    }
+    this.snackBar.open(msg, 'Close', { duration: 5000, panelClass: ['snack-error'] });
   }
 }

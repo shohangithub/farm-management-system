@@ -153,6 +153,15 @@ public static class LivestockEndpoints
             .Produces(422)
             .RequireAuthorization("Permission:animals.create");
 
+        group.MapPost("/animals/{id:guid}/photos/upload", UploadPhoto)
+            .WithName("UploadAnimalPhoto")
+            .WithSummary("Directly upload a photo file via multipart/form-data")
+            .DisableAntiforgery()
+            .Produces<AnimalPhotoDto>(201)
+            .Produces(400)
+            .Produces(422)
+            .RequireAuthorization("Permission:animals.create");
+
         // ── Breeding ───────────────────────────────────────────────────────────
         group.MapPost("/animals/{id:guid}/breeding", RecordMating)
             .WithName("RecordMating")
@@ -302,6 +311,20 @@ public static class LivestockEndpoints
     {
         var result = await sender.Send(
             new AddAnimalPhotoCommand(id, request.PhotoUrl, request.Caption),
+            cancellationToken);
+        return Results.Created($"/api/v1/livestock/animals/{id}/photos/{result.Id}", result);
+    }
+
+    private static async Task<IResult> UploadPhoto(
+        Guid id,
+        [FromForm] IFormFile file,
+        [FromForm] string? caption,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        using var stream = file.OpenReadStream();
+        var result = await sender.Send(
+            new UploadAnimalPhotoCommand(id, stream, file.FileName, file.ContentType, caption),
             cancellationToken);
         return Results.Created($"/api/v1/livestock/animals/{id}/photos/{result.Id}", result);
     }

@@ -93,6 +93,15 @@ export class AnimalService {
     return this.http.post<AnimalPhotoDto>(`${this.base}/${id}/photos`, request);
   }
 
+  uploadPhotoFile(id: string, file: File, caption?: string): Observable<AnimalPhotoDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (caption) {
+      formData.append('caption', caption);
+    }
+    return this.http.post<AnimalPhotoDto>(`${this.base}/${id}/photos/upload`, formData);
+  }
+
   recordMating(id: string, request: any): Observable<void> {
     return this.http.post(`${this.base}/${id}/breeding`, request).pipe(map(() => undefined));
   }
