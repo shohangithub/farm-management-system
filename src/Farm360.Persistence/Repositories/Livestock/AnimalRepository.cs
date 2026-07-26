@@ -147,10 +147,6 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         _animals.Add(animal);
 
     /// <inheritdoc/>
-    public void Update(Animal animal) =>
-        _animals.Update(animal);
-
-    /// <inheritdoc/>
     /// <remarks>
     /// Sets IsDeleted = true via domain method. The AuditSaveChangesInterceptor
     /// will intercept any EntityState.Deleted and convert to soft-delete automatically,

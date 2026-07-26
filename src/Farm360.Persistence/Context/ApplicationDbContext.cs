@@ -49,12 +49,34 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 {
     private readonly ITenantService _tenantService;
 
+    /// <summary>
+    /// Tracks entities that were materialized from database queries.
+    /// Used by <see cref="FixupNewChildEntityStates"/> to distinguish
+    /// query-loaded entities from in-memory-created entities that EF Core
+    /// mistakenly tracked as Unchanged (due to non-sentinel GUID keys).
+    /// </summary>
+    private readonly HashSet<object> _queryLoadedEntities = new(ReferenceEqualityComparer.Instance);
+
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options,
         ITenantService tenantService)
         : base(options)
     {
         _tenantService = tenantService;
+
+        // Subscribe to the Tracked event — fires whenever an entity enters the change tracker.
+        // EntityTrackedEventArgs.FromQuery is true ONLY when the entity was materialized
+        // from a database query (SELECT). It is false for entities discovered through
+        // DetectChanges, Add(), Attach(), or navigation fixup.
+        ChangeTracker.Tracked += OnEntityTracked;
+    }
+
+    private void OnEntityTracked(object? sender, Microsoft.EntityFrameworkCore.ChangeTracking.EntityTrackedEventArgs e)
+    {
+        if (e.FromQuery)
+        {
+            _queryLoadedEntities.Add(e.Entry.Entity);
+        }
     }
 
     // ── Tenancy DbSets ────────────────────────────────────────────────────────
@@ -151,6 +173,61 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
         }
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // AGGREGATE-AWARE SAVE: Fix child entity states before persistence
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Overrides SaveChangesAsync to fix a fundamental EF Core / DDD mismatch:
+    ///
+    /// Root Cause: All domain entities are created with Guid.NewGuid() (DDD best practice),
+    /// but EF Core uses Guid.Empty as the "sentinel" to detect new entities.
+    /// Since BaseEntity rejects Guid.Empty, EF Core can never see the sentinel,
+    /// and mistakenly tracks new child entities as Unchanged instead of Added.
+    ///
+    /// Fix: Before saving, walk all Unchanged entries. If an entry was NOT loaded
+    /// from a database query (tracked via ChangeTracker.Tracked event), it must
+    /// have been created in-memory and added to an aggregate's collection.
+    /// Set its state to Added so EF generates an INSERT.
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        FixupNewChildEntityStates();
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override int SaveChanges()
+    {
+        FixupNewChildEntityStates();
+        return base.SaveChanges();
+    }
+
+    /// <summary>
+    /// Walks all Unchanged entries in the change tracker.
+    /// Any entity that was NOT loaded from a database query is a new in-memory entity
+    /// that EF Core failed to detect as Added (due to non-sentinel GUID key).
+    /// Corrects its state to Added.
+    /// </summary>
+    private void FixupNewChildEntityStates()
+    {
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            // We only care about entities that EF thinks already exist in the DB
+            if (entry.State is not (EntityState.Unchanged or EntityState.Modified))
+                continue;
+
+            // If the entity was loaded from a query, it genuinely exists in the DB.
+            // Leave it as-is (Unchanged or Modified) — no fix needed.
+            if (_queryLoadedEntities.Contains(entry.Entity))
+                continue;
+
+            // Entity is Unchanged or Modified but was NOT from a query.
+            // It was created in-memory and discovered by DetectChanges
+            // in a tracked aggregate's collection → should be Added.
+            entry.State = EntityState.Added;
+        }
     }
 
     // ── IUnitOfWork implementation ────────────────────────────────────────────

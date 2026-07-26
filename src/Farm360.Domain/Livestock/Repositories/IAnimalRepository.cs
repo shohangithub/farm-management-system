@@ -61,7 +61,6 @@ public interface IAnimalRepository
     // ── Commands ──────────────────────────────────────────────────────────────
 
     void Add(Animal animal);
-    void Update(Animal animal);
 
     /// <summary>
     /// Soft-deletes the animal (sets IsDeleted = true).
