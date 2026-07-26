@@ -195,13 +195,42 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         FixupNewChildEntityStates();
-        return await base.SaveChangesAsync(cancellationToken);
+
+        var newlyAddedEntities = ChangeTracker.Entries()
+            .Where(e => e.State == EntityState.Added)
+            .Select(e => e.Entity)
+            .ToList();
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        // After successful save, these entities now genuinely exist in the DB.
+        // Add them to the tracked set so subsequent SaveChanges calls in the same
+        // transaction/context don't mistakenly mark them as Added again.
+        foreach (var entity in newlyAddedEntities)
+        {
+            _queryLoadedEntities.Add(entity);
+        }
+
+        return result;
     }
 
     public override int SaveChanges()
     {
         FixupNewChildEntityStates();
-        return base.SaveChanges();
+
+        var newlyAddedEntities = ChangeTracker.Entries()
+            .Where(e => e.State == EntityState.Added)
+            .Select(e => e.Entity)
+            .ToList();
+
+        var result = base.SaveChanges();
+
+        foreach (var entity in newlyAddedEntities)
+        {
+            _queryLoadedEntities.Add(entity);
+        }
+
+        return result;
     }
 
     /// <summary>
