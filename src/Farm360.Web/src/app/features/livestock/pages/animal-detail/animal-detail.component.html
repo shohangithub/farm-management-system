@@ -1,16 +1,12 @@
-<app-page-header 
-  [title]="animal() ? animal()!.tagId : 'Animal Details'"
+<app-page-header [title]="animal() ? animal()!.tagId : 'Animal Details'"
   [description]="animal() ? speciesLabel(animal()!.species) + ' · ' + animal()!.breedName + ' · ' + sexLabel(animal()!.sex) : ''"
-  primaryActionLabel="Record Weight"
-  primaryActionIcon="add"
-  secondaryActionLabel="Back"
-  secondaryActionIcon="arrow_back"
-  (primaryAction)="onRecordWeight()"
-  (secondaryAction)="goBack()">
+  primaryActionLabel="Record Weight" primaryActionIcon="add" secondaryActionLabel="Back"
+  secondaryActionIcon="arrow_back" (primaryAction)="onRecordWeight()" (secondaryAction)="goBack()">
 </app-page-header>
 
 <!-- Error State -->
-<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3">
+<div *ngIf="error()"
+  class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3">
   <mat-icon class="!text-red-500 mt-0.5 flex-shrink-0">error_outline</mat-icon>
   <div>
     <h3 class="text-sm font-semibold">Error</h3>
@@ -32,43 +28,48 @@
   <!-- Action Bar -->
   <div class="flex justify-end gap-3 mb-2">
     <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()"
-            class="px-4 py-2 text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors shadow-sm">
+      class="px-4 py-2 text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors shadow-sm">
       Quarantine
     </button>
     <button *ngIf="animal()!.status === AnimalStatus.Quarantined" (click)="onRelease()"
-            class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-sm">
+      class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-sm">
       Release from Quarantine
     </button>
     <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onTransfer()"
-            class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+      class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
       Assign Location
     </button>
     <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()"
-            class="px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors shadow-sm">
+      class="px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors shadow-sm">
       Record Sale
     </button>
   </div>
 
   <!-- Hero Card -->
-  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden flex flex-col md:flex-row">
-    
+  <div
+    class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden flex flex-col md:flex-row">
+
     <!-- Photo Area -->
-    <div class="w-full md:w-1/3 bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800/50 h-64 md:h-auto">
+    <div
+      class="w-full md:w-1/3 bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800/50 h-64 md:h-auto">
       <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" class="w-full h-full object-cover" />
       <div *ngIf="!animal()!.primaryPhotoUrl" class="text-7xl opacity-20">{{ speciesEmoji(animal()!.species) }}</div>
-      
+
       <!-- Status Badge Overlay -->
-      <div class="absolute top-4 left-4 shadow-sm px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md border backdrop-blur-md"
-           [ngClass]="statusClass()">
+      <div
+        class="absolute top-4 left-4 shadow-sm px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md border backdrop-blur-md"
+        [ngClass]="statusClass()">
         {{ statusLabel() }}
       </div>
     </div>
 
     <!-- Details Area -->
-    <div class="w-full md:w-2/3 p-6 sm:p-8 bg-gradient-to-br from-white to-gray-50/50 dark:from-surface-dark dark:to-gray-900/20">
+    <div
+      class="w-full md:w-2/3 p-6 sm:p-8 bg-gradient-to-br from-white to-gray-50/50 dark:from-surface-dark dark:to-gray-900/20">
       <div class="flex items-center gap-2 flex-wrap mb-4">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{{ animal()!.tagId }}</h2>
-        <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
+        <span
+          class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
           {{ speciesLabel(animal()!.species) }} / {{ animal()!.breedName }}
         </span>
       </div>
@@ -76,7 +77,8 @@
       <dl class="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
         <div>
           <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Date of Birth</dt>
-          <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ animal()!.dateOfBirth | date:'mediumDate' }}</dd>
+          <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ animal()!.dateOfBirth | date:'mediumDate'
+            }}</dd>
         </div>
         <div>
           <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Age</dt>
@@ -85,7 +87,8 @@
         <div>
           <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Sex</dt>
           <dd class="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1">
-             <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" [class.text-blue-500]="animal()!.sex === AnimalSex.Male" [class.text-pink-500]="animal()!.sex === AnimalSex.Female">
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" [class.text-blue-500]="animal()!.sex === AnimalSex.Male"
+              [class.text-pink-500]="animal()!.sex === AnimalSex.Female">
               {{ animal()!.sex === AnimalSex.Male ? 'male' : 'female' }}
             </mat-icon>
             {{ sexLabel(animal()!.sex) }}
@@ -99,7 +102,7 @@
           <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Location</dt>
           <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
             <ng-container *ngIf="animal()!.shedId || animal()!.penId; else noLocation">
-              <span *ngIf="animal()!.shedId" class="text-primary-600 font-semibold">Shed Assigned</span>
+              <span *ngIf="animal()!.shedId" class="text-primary-600 font-semibold">Shed</span>
               <span *ngIf="animal()!.penId" class="text-primary-600 font-semibold"> / Pen Assigned</span>
             </ng-container>
             <ng-template #noLocation><span class="text-gray-400 italic">Not Assigned</span></ng-template>
@@ -107,7 +110,8 @@
         </div>
         <div *ngIf="animal()!.acquisitionPriceBdt">
           <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Purchase Price</dt>
-          <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">৳ {{ animal()!.acquisitionPriceBdt | number }}</dd>
+          <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">৳ {{ animal()!.acquisitionPriceBdt | number
+            }}</dd>
         </div>
       </dl>
     </div>
@@ -115,13 +119,16 @@
 
   <!-- KPI Cards -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    
+
     <!-- Latest Weight -->
-    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
+    <div
+      class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
       <div>
         <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Latest Weight</p>
-        <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ animal()!.latestWeightKg ? (animal()!.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}</p>
-        <p class="text-xs text-gray-400 mt-1" *ngIf="animal()!.latestWeightDate">Recorded {{ animal()!.latestWeightDate | date:'mediumDate' }}</p>
+        <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ animal()!.latestWeightKg ?
+          (animal()!.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}</p>
+        <p class="text-xs text-gray-400 mt-1" *ngIf="animal()!.latestWeightDate">Recorded {{ animal()!.latestWeightDate
+          | date:'mediumDate' }}</p>
       </div>
       <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl">
         <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[32px] !w-[32px] !h-[32px]">scale</mat-icon>
@@ -129,10 +136,13 @@
     </div>
 
     <!-- ADG -->
-    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
+    <div
+      class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Avg Daily Gain (ADG)</p>
-        <p class="text-3xl font-bold mt-1" [class.text-emerald-600]="(animal()!.adgKgPerDay ?? 0) > 0" [class.text-gray-900]="!(animal()!.adgKgPerDay ?? 0)" [class.dark:text-white]="!(animal()!.adgKgPerDay ?? 0)">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Avg Daily Gain (ADG)
+        </p>
+        <p class="text-3xl font-bold mt-1" [class.text-emerald-600]="(animal()!.adgKgPerDay ?? 0) > 0"
+          [class.text-gray-900]="!(animal()!.adgKgPerDay ?? 0)" [class.dark:text-white]="!(animal()!.adgKgPerDay ?? 0)">
           {{ animal()!.adgKgPerDay ? (animal()!.adgKgPerDay | number:'1.3-3') + ' kg/d' : '—' }}
         </p>
         <p class="text-xs text-gray-400 mt-1">Growth rate based on history</p>
@@ -145,20 +155,23 @@
   </div>
 
   <!-- Tabbed Details -->
-  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+  <div
+    class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
     <mat-tab-group animationDuration="200ms" class="farm-tab-group">
 
       <!-- ─── Weight History ─────────────────────────────────────────── -->
       <mat-tab label="Weight History">
         <div class="p-0">
           <div *ngIf="animal()!.weightRecords.length === 0" class="py-16 text-center">
-            <div class="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
+            <div
+              class="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
               <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">scale</mat-icon>
             </div>
             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No weight records</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first weight measurement for this animal.</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first weight
+              measurement for this animal.</p>
             <button (click)="onRecordWeight()"
-               class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all shadow-sm">
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all shadow-sm">
               Record Weight
             </button>
           </div>
@@ -168,16 +181,23 @@
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Date</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Weight</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Recorded At</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Notes</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Date</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Weight</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Recorded At</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Notes</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <tr *ngFor="let w of sortedWeights()" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                  <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ w.recordedDate | date:'mediumDate' }}</td>
-                  <td class="px-6 py-4 text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ w.weightKg | number:'1.1-1' }} kg</td>
+                <tr *ngFor="let w of sortedWeights()"
+                  class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ w.recordedDate | date:'mediumDate' }}
+                  </td>
+                  <td class="px-6 py-4 text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ w.weightKg |
+                    number:'1.1-1' }} kg</td>
                   <td class="px-6 py-4 text-sm text-gray-500">{{ w.recordedAtUtc | date:'short' }}</td>
                   <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">{{ w.notes || '—' }}</td>
                 </tr>
@@ -191,21 +211,167 @@
       <mat-tab label="Photos Gallery">
         <div class="p-6 sm:p-8">
           <div *ngIf="animal()!.photos.length === 0" class="py-12 text-center">
-            <div class="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
+            <div
+              class="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
               <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">add_a_photo</mat-icon>
             </div>
             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No photos yet</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Upload photos to keep a visual record.</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Upload photos to keep a visual record.
+            </p>
           </div>
-          
-          <div *ngIf="animal()!.photos.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-             <div *ngFor="let p of animal()!.photos" class="relative rounded-xl overflow-hidden aspect-square border-2 shadow-sm"
-                  [ngClass]="p.isPrimary ? 'border-primary-500' : 'border-gray-200 dark:border-gray-700'">
-                <img [src]="p.photoUrl" [alt]="p.caption || 'Photo'" class="w-full h-full object-cover" />
-                <div *ngIf="p.isPrimary" class="absolute bottom-2 left-2 text-[10px] font-bold tracking-wider uppercase bg-primary-600 text-white px-2 py-0.5 rounded shadow-sm">
-                  Primary
+
+          <div *ngIf="animal()!.photos.length > 0"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div *ngFor="let p of animal()!.photos"
+              class="relative rounded-xl overflow-hidden aspect-square border-2 shadow-sm"
+              [ngClass]="p.isPrimary ? 'border-primary-500' : 'border-gray-200 dark:border-gray-700'">
+              <img [src]="p.photoUrl" [alt]="p.caption || 'Photo'" class="w-full h-full object-cover" />
+              <div *ngIf="p.isPrimary"
+                class="absolute bottom-2 left-2 text-[10px] font-bold tracking-wider uppercase bg-primary-600 text-white px-2 py-0.5 rounded shadow-sm">
+                Primary
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ─── Location & Status Tab ────────────────────────────────────── -->
+      <mat-tab label="Location & Status">
+        <div class="p-6 sm:p-8 space-y-8">
+
+          <!-- Current Details Section -->
+          <div>
+            <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Current Status</h3>
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-700 p-6">
+              <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-6">
+                <div>
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Current Location
+                  </dt>
+                  <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    <div class="flex flex-col gap-0.5">
+                      <span class="text-xs text-gray-500">{{ farmName() || 'Loading Farm...' }}</span>
+                      <ng-container *ngIf="animal()!.shedId || animal()!.penId; else noLocation">
+                        <span *ngIf="animal()!.shedId" class="text-primary-600 font-semibold">{{ shedName() || 'Loading
+                          Shed...' }}</span>
+                        <span *ngIf="animal()!.penId" class="text-primary-600 font-semibold">Pen: {{ penName() || '...'
+                          }}</span>
+                      </ng-container>
+                      <ng-template #noLocation><span class="text-gray-400 italic">No Shed/Pen
+                          Assigned</span></ng-template>
+                    </div>
+                  </dd>
                 </div>
-             </div>
+                <div>
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Acquisition</dt>
+                  <dd class="text-sm font-medium text-gray-800 dark:text-gray-200 flex flex-col gap-0.5">
+                    <span>{{ animal()!.acquisitionType === 1 ? 'Purchased' : 'Born on Farm' }}</span>
+                    <span class="text-xs text-gray-500">{{ animal()!.acquisitionDate | date:'mediumDate' }}</span>
+                  </dd>
+                </div>
+                <div *ngIf="animal()!.acquisitionPriceBdt">
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Purchase Price</dt>
+                  <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">৳ {{ animal()!.acquisitionPriceBdt |
+                    number }}</dd>
+                </div>
+                <div *ngIf="animal()!.status === AnimalStatus.Quarantined && animal()!.quarantineReason">
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-amber-500 mb-1">Quarantine Reason
+                  </dt>
+                  <dd class="text-sm font-medium text-amber-700 dark:text-amber-400">{{ animal()!.quarantineReason }}
+                  </dd>
+                </div>
+                <div *ngIf="animal()!.disposalReason">
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-red-500 mb-1">Disposal Reason</dt>
+                  <dd class="text-sm font-medium text-red-700 dark:text-red-400">{{ animal()!.disposalReason === 1 ?
+                    'Sale' : animal()!.disposalReason === 2 ? 'Slaughter' : animal()!.disposalReason === 3 ? 'Natural
+                    Death' : animal()!.disposalReason === 4 ? 'Disease' : animal()!.disposalReason === 5 ? 'Accident' :
+                    'Unknown' }}</dd>
+                </div>
+                <div *ngIf="animal()!.notes" class="col-span-1 sm:col-span-2 md:col-span-3">
+                  <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Notes</dt>
+                  <dd class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ animal()!.notes }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <!-- Transfer History Section -->
+          <div class="border-t border-gray-100 dark:border-gray-800/50 pt-8">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Transfer History</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of all physical location
+                  changes.</p>
+              </div>
+            </div>
+
+            <div *ngIf="!resolvedMovements().length"
+              class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-12 px-6 text-center">
+              <div
+                class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 shadow-sm">
+                <mat-icon class="!text-gray-400">route</mat-icon>
+              </div>
+              <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No Transfer History</h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">This animal has not been transferred yet.</p>
+            </div>
+
+            <div *ngIf="resolvedMovements().length" class="relative">
+              <!-- Vertical Timeline Line -->
+              <div class="absolute left-4 sm:left-6 top-4 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+
+              <div class="space-y-6 relative">
+                <div *ngFor="let m of resolvedMovements(); let isFirst = first" class="relative pl-12 sm:pl-16">
+                  <!-- Timeline Node -->
+                  <div
+                    class="absolute left-2.5 sm:left-4 top-1 w-3.5 h-3.5 rounded-full border-2 bg-white dark:bg-gray-900 z-10"
+                    [ngClass]="isFirst && !m.removedAtUtc ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/30' : 'border-gray-300 dark:border-gray-600'">
+                  </div>
+
+                  <div
+                    class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 sm:p-5 transition-all hover:shadow-md hover:border-primary-100 dark:hover:border-primary-900/30">
+                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div>
+                        <div class="flex items-center gap-2 mb-1.5">
+                          <span
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 text-xs font-semibold">
+                            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">warehouse</mat-icon>
+                            {{ m.shedName }}
+                          </span>
+                          <span class="text-gray-400 dark:text-gray-500">→</span>
+                          <span
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 text-xs font-semibold">
+                            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">fence</mat-icon>
+                            Pen {{ m.penName }}
+                          </span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white mt-2">
+                          <span class="text-gray-500 dark:text-gray-400 font-normal">Reason: </span>
+                          {{ m.transferReason || 'Initial Assignment' }}
+                        </p>
+                      </div>
+
+                      <div class="text-left sm:text-right flex flex-col gap-1">
+                        <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">login</mat-icon>
+                          <span>Placed: <strong class="text-gray-700 dark:text-gray-300">{{ m.placedAtUtc |
+                              date:'mediumDate' }}</strong></span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs"
+                          [ngClass]="m.removedAtUtc ? 'text-gray-500 dark:text-gray-400' : 'text-emerald-600 dark:text-emerald-400'">
+                          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">{{ m.removedAtUtc ? 'logout' : 'done'
+                            }}</mat-icon>
+                          <span>
+                            {{ m.removedAtUtc ? 'Removed: ' : 'Current Status: ' }}
+                            <strong [ngClass]="m.removedAtUtc ? 'text-gray-700 dark:text-gray-300' : 'font-bold'">
+                              {{ m.removedAtUtc ? (m.removedAtUtc | date:'mediumDate') : 'Active Here' }}
+                            </strong>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </mat-tab>
@@ -215,7 +381,8 @@
         <div class="p-6 sm:p-8">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
-              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              <dt
+                class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_circle_outline</mat-icon> Created At
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -223,7 +390,8 @@
               </dd>
             </div>
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
-              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              <dt
+                class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon> Created By
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
@@ -231,7 +399,8 @@
               </dd>
             </div>
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
-              <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              <dt
+                class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_calendar</mat-icon> Last Modified
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -251,34 +420,39 @@
 <ng-template #saleDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
     <!-- Header -->
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white">Record Sale</h2>
         <p class="text-xs text-gray-500 mt-0.5">Enter transaction details for {{ animal()?.tagId }}</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <!-- Body -->
     <div class="p-6 space-y-4 overflow-y-auto">
-      
+
       <!-- Price & Date Row -->
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Sale Price (BDT) <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Sale Price (BDT) <span
+              class="text-red-500">*</span></label>
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 font-semibold">৳</span>
+            <span
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 font-semibold">৳</span>
             <input type="number" [(ngModel)]="saleForm.price" placeholder="0.00" min="1" step="0.01" required
-                   class="block w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              class="block w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           </div>
         </div>
 
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Sale Date <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Sale Date <span
+              class="text-red-500">*</span></label>
           <input type="date" [(ngModel)]="saleForm.date" required
-                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
         </div>
       </div>
 
@@ -290,7 +464,7 @@
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">person_outline</mat-icon>
           </span>
           <input type="text" [(ngModel)]="saleForm.buyer" placeholder="Optional"
-                 class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
         </div>
       </div>
 
@@ -301,8 +475,9 @@
           <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">scale</mat-icon>
           </span>
-          <input type="number" [(ngModel)]="saleForm.weight" placeholder="Optional (Defaults to latest)" min="1" step="0.1"
-                 class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+          <input type="number" [(ngModel)]="saleForm.weight" placeholder="Optional (Defaults to latest)" min="1"
+            step="0.1"
+            class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
         </div>
         <p class="text-[11px] text-gray-400 mt-1" *ngIf="animal()?.latestWeightKg">
           Current recorded weight: {{ animal()?.latestWeightKg }} kg
@@ -312,13 +487,14 @@
     </div>
 
     <!-- Footer -->
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
       <button mat-dialog-close
-              class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
       <button (click)="confirmSale()" [disabled]="!saleForm.price || !saleForm.date"
-              class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+        class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
         Confirm Sale
       </button>
     </div>
@@ -329,25 +505,27 @@
 <ng-template #transferDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
     <!-- Header -->
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white">Assign Location</h2>
         <p class="text-xs text-gray-500 mt-0.5">Move {{ animal()?.tagId }} to a different shed or pen</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <!-- Body -->
     <div class="p-6 space-y-4 overflow-y-auto">
-      
+
       <!-- Shed -->
       <div class="space-y-1.5 relative">
         <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Target Shed</label>
         <select [ngModel]="transferForm.shedId" (ngModelChange)="onTransferShedChange($event)"
-                [disabled]="loadingSheds()"
-                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          [disabled]="loadingSheds()"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           <option value="">-- No Shed / Clear Location --</option>
           <option *ngFor="let s of sheds()" [value]="s.id">{{ s.shedName }} (Cap: {{ s.capacity ?? '∞' }})</option>
         </select>
@@ -356,9 +534,8 @@
       <!-- Pen -->
       <div class="space-y-1.5 relative">
         <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Target Pen</label>
-        <select [(ngModel)]="transferForm.penId"
-                [disabled]="!transferForm.shedId || loadingPens()"
-                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        <select [(ngModel)]="transferForm.penId" [disabled]="!transferForm.shedId || loadingPens()"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           <option value="">-- Optional --</option>
           <option *ngFor="let p of pens()" [value]="p.id">{{ p.penNumber }}</option>
         </select>
@@ -367,9 +544,10 @@
       <!-- Date Row -->
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Transfer Date <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Transfer Date <span
+              class="text-red-500">*</span></label>
           <input type="date" [(ngModel)]="transferForm.date" required
-                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
         </div>
       </div>
 
@@ -381,20 +559,21 @@
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">notes</mat-icon>
           </span>
           <input type="text" [(ngModel)]="transferForm.reason" placeholder="Optional"
-                 class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
         </div>
       </div>
 
     </div>
 
     <!-- Footer -->
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
       <button mat-dialog-close
-              class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
       <button (click)="confirmTransfer()" [disabled]="!transferForm.date"
-              class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+        class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
         Confirm Transfer
       </button>
     </div>
@@ -405,7 +584,8 @@
 <ng-template #quarantineDialogTemplate>
   <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
     <!-- Header -->
-    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-amber-50/50 dark:bg-amber-900/20 flex items-center justify-between">
+    <div
+      class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-amber-50/50 dark:bg-amber-900/20 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-amber-900 dark:text-amber-400 flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">warning</mat-icon>
@@ -413,7 +593,8 @@
         </h2>
         <p class="text-xs text-amber-700/70 dark:text-amber-400/70 mt-0.5">Move {{ animal()?.tagId }} to quarantine</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close
+        class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
@@ -422,22 +603,25 @@
     <div class="p-6 space-y-4 overflow-y-auto">
       <!-- Reason -->
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Reason for Quarantine <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Reason for Quarantine <span
+            class="text-red-500">*</span></label>
         <div class="relative">
-          <textarea [(ngModel)]="quarantineForm.reason" rows="3" required placeholder="Describe symptoms or reason for quarantine..."
-                 class="block w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-shadow resize-none"></textarea>
+          <textarea [(ngModel)]="quarantineForm.reason" rows="3" required
+            placeholder="Describe symptoms or reason for quarantine..."
+            class="block w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-shadow resize-none"></textarea>
         </div>
       </div>
     </div>
 
     <!-- Footer -->
-    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+    <div
+      class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
       <button mat-dialog-close
-              class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
       <button (click)="confirmQuarantine()" [disabled]="!quarantineForm.reason"
-              class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors shadow-sm shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+        class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors shadow-sm shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
         Quarantine
       </button>
     </div>

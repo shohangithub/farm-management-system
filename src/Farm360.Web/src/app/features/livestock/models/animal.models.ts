@@ -77,6 +77,18 @@ export interface AnimalPhotoDto {
   uploadedAtUtc: string;
 }
 
+export interface AnimalMovementDto {
+  id: string;
+  animalId: string;
+  shedId?: string;
+  penId?: string;
+  placedAtUtc: string;
+  placedBy: string;
+  removedAtUtc?: string;
+  removedBy?: string;
+  transferReason?: string;
+}
+
 export interface AnimalDto {
   id: string;
   tenantId: string;
@@ -105,6 +117,7 @@ export interface AnimalDto {
   weightRecords: WeightRecordDto[];
   breedingRecords: BreedingRecordDto[];
   photos: AnimalPhotoDto[];
+  movements: AnimalMovementDto[];
   createdAtUtc: string;
   createdBy: string;
   modifiedAtUtc?: string;
@@ -196,6 +209,8 @@ export interface AnimalListParams {
   pageNumber?: number;
   pageSize?: number;
   farmId?: string;
+  shedId?: string;
+  penId?: string;
   species?: AnimalSpecies;
   sex?: AnimalSex;
   status?: AnimalStatus;

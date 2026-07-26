@@ -34,6 +34,7 @@ public sealed record AnimalDto(
     IReadOnlyList<WeightRecordDto> WeightRecords,
     IReadOnlyList<BreedingRecordDto> BreedingRecords,
     IReadOnlyList<AnimalPhotoDto> Photos,
+    IReadOnlyList<AnimalMovementDto> Movements,
     DateTime CreatedAtUtc,
     Guid CreatedBy,
     DateTime? ModifiedAtUtc);
@@ -99,6 +100,20 @@ public sealed record AnimalPhotoDto(
     string? Caption,
     bool IsPrimary,
     DateTime UploadedAtUtc);
+
+/// <summary>
+/// Animal movement history DTO.
+/// </summary>
+public sealed record AnimalMovementDto(
+    Guid Id,
+    Guid AnimalId,
+    Guid? ShedId,
+    Guid? PenId,
+    DateTime PlacedAtUtc,
+    Guid PlacedBy,
+    DateTime? RemovedAtUtc,
+    Guid? RemovedBy,
+    string? TransferReason);
 
 /// <summary>
 /// Paginated list result wrapper used by GetAnimalListQuery.

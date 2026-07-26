@@ -43,6 +43,7 @@ public interface IAnimalRepository
         int pageSize,
         Guid? farmId = null,
         Guid? shedId = null,
+        Guid? penId = null,
         AnimalSpecies? species = null,
         AnimalSex? sex = null,
         AnimalStatus? status = null,

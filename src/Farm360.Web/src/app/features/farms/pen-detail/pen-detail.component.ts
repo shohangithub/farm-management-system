@@ -7,6 +7,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDividerModule } from '@angular/material/divider';
 import { PenService } from '../services/pen.service';
 import { Pen } from '../models/pen.model';
+import { AnimalService } from '../../livestock/services/animal.service';
+import { AnimalListItemDto } from '../../livestock/models/animal.models';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
@@ -27,6 +29,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 })
 export class PenDetailComponent implements OnInit {
   private readonly penService = inject(PenService);
+  private readonly animalService = inject(AnimalService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -35,7 +38,9 @@ export class PenDetailComponent implements OnInit {
   shedId = signal<string>('');
   penId = signal<string>('');
   pen = signal<Pen | null>(null);
+  animals = signal<AnimalListItemDto[]>([]);
   isLoading = signal<boolean>(false);
+  isLoadingAnimals = signal<boolean>(false);
   error = signal<string | null>(null);
 
   statusLabel = computed(() => {
@@ -86,11 +91,25 @@ export class PenDetailComponent implements OnInit {
       next: (data) => {
         this.pen.set(data);
         this.isLoading.set(false);
+        this.loadAnimals(id);
       },
       error: (err) => {
         this.error.set('Failed to load pen details.');
         this.isLoading.set(false);
         console.error(err);
+      }
+    });
+  }
+
+  loadAnimals(penId: string): void {
+    this.isLoadingAnimals.set(true);
+    this.animalService.getList({ penId, pageSize: 50 }).subscribe({
+      next: (data) => {
+        this.animals.set(data.items);
+        this.isLoadingAnimals.set(false);
+      },
+      error: () => {
+        this.isLoadingAnimals.set(false);
       }
     });
   }

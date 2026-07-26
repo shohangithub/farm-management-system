@@ -12,7 +12,7 @@ import { PenService }        from '../../../farms/services/pen.service';
 import { ShedList }          from '../../../farms/models/shed.model';
 import { PenList }           from '../../../farms/models/pen.model';
 import {
-  AnimalDto, AnimalStatus, AnimalSex,
+  AnimalDto, AnimalStatus, AnimalSex, AnimalMovementDto,
   SPECIES_LABELS, STATUS_LABELS, SEX_LABELS,
 } from '../../models/animal.models';
 
@@ -22,6 +22,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FarmService } from '../../../farms/services/farm.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -30,7 +32,7 @@ import { MatTabsModule } from '@angular/material/tabs';
   imports: [
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, DatePipe, DecimalPipe,
-    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule
+    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule
   ],
   templateUrl: './animal-detail.component.html'
 })
@@ -39,13 +41,19 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   private readonly route   = inject(ActivatedRoute);
   private readonly shedSvc = inject(ShedService);
   private readonly penSvc  = inject(PenService);
+  private readonly farmSvc = inject(FarmService);
   private readonly dialog  = inject(MatDialog);
   private readonly router  = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
 
   readonly loading = signal(true);
   readonly error   = signal<string | null>(null);
   readonly animal  = signal<AnimalDto | null>(null);
+
+  readonly farmName = signal<string | null>(null);
+  readonly shedName = signal<string | null>(null);
+  readonly penName = signal<string | null>(null);
 
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex = AnimalSex;
@@ -77,6 +85,16 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   readonly loadingSheds = signal(false);
   readonly loadingPens = signal(false);
 
+  readonly resolvedMovements = computed(() => {
+    const a = this.animal();
+    if (!a || !a.movements) return [];
+    return a.movements.map(m => ({
+      ...m,
+      shedName: m.shedId ? this.sheds().find(s => s.id === m.shedId)?.shedName ?? 'Unknown Shed' : '—',
+      penName: m.penId ? this.pens().find(p => p.id === m.penId)?.penNumber ?? 'Unknown Pen' : '—'
+    }));
+  });
+
   statusLabel = computed(() => {
     const s = this.animal()?.status;
     return s !== undefined ? (STATUS_LABELS as any)[s] || '—' : '—';
@@ -102,7 +120,38 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     this.svc.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
-      next:  a  => { this.animal.set(a); this.loading.set(false); },
+      next:  a  => { 
+        this.animal.set(a); 
+        this.loading.set(false); 
+        
+        // Load Location Names
+        if (a.farmId) {
+          this.farmSvc.getFarmById(a.farmId).subscribe(f => this.farmName.set(f.farmName));
+          // Preload Sheds and Pens for the farm to resolve movement history names
+          this.shedSvc.getShedsByFarm(a.farmId).subscribe(sheds => {
+            this.sheds.set(sheds);
+            sheds.forEach(s => {
+              this.penSvc.getPensByShed(s.id).subscribe(pens => {
+                this.pens.update(existing => {
+                  // Only add pens that aren't already in the list
+                  const newPens = pens.filter(p => !existing.some(ep => ep.id === p.id));
+                  return [...existing, ...newPens];
+                });
+              });
+            });
+          });
+        }
+        if (a.shedId) {
+          this.shedSvc.getShedById(a.shedId).subscribe(s => this.shedName.set(s.shedName));
+        } else {
+          this.shedName.set(null);
+        }
+        if (a.penId) {
+          this.penSvc.getPenById(a.penId).subscribe(p => this.penName.set(p.penNumber));
+        } else {
+          this.penName.set(null);
+        }
+      },
       error: e  => { this.error.set(e?.error?.detail ?? 'Not found'); this.loading.set(false); }
     });
   }
@@ -280,6 +329,10 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.dialog.closeAll();
+        this.snackBar.open('Location assigned successfully!', 'Close', { 
+          duration: 3000,
+          panelClass: ['success-snackbar']
+        });
         this.load();
       }
     });

@@ -35,6 +35,8 @@ export class AnimalService {
     if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
     if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
     if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.shedId)     httpParams = httpParams.set('shedId', params.shedId);
+    if (params.penId)      httpParams = httpParams.set('penId', params.penId);
     if (params.species != null) httpParams = httpParams.set('species', params.species);
     if (params.sex != null)     httpParams = httpParams.set('sex', params.sex);
     if (params.status != null)  httpParams = httpParams.set('status', params.status);

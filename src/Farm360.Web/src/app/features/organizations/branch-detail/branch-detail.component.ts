@@ -7,6 +7,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDividerModule } from '@angular/material/divider';
 import { BranchService } from '../services/branch.service';
 import { Branch } from '../models/branch.model';
+import { FarmService } from '../../farms/services/farm.service';
+import { FarmList } from '../../farms/models/farm.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
@@ -27,12 +29,15 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 })
 export class BranchDetailComponent implements OnInit {
   private readonly branchService = inject(BranchService);
+  private readonly farmService = inject(FarmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   orgId = signal<string>('');
   branch = signal<Branch | null>(null);
+  farms = signal<FarmList[]>([]);
   isLoading = signal<boolean>(false);
+  isLoadingFarms = signal<boolean>(false);
   error = signal<string | null>(null);
 
   statusLabel = computed(() => {
@@ -67,11 +72,25 @@ export class BranchDetailComponent implements OnInit {
       next: (data) => {
         this.branch.set(data);
         this.isLoading.set(false);
+        this.loadFarms(id);
       },
       error: (err) => {
         this.error.set('Failed to load branch details.');
         this.isLoading.set(false);
         console.error(err);
+      }
+    });
+  }
+
+  loadFarms(branchId: string): void {
+    this.isLoadingFarms.set(true);
+    this.farmService.getFarmsByBranch(branchId).subscribe({
+      next: (data) => {
+        this.farms.set(data);
+        this.isLoadingFarms.set(false);
+      },
+      error: () => {
+        this.isLoadingFarms.set(false);
       }
     });
   }

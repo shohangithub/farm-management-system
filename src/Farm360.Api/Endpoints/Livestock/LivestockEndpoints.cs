@@ -129,6 +129,7 @@ public static class LivestockEndpoints
         [FromQuery] int pageSize = 20,
         [FromQuery] Guid? farmId = null,
         [FromQuery] Guid? shedId = null,
+        [FromQuery] Guid? penId = null,
         [FromQuery] AnimalSpecies? species = null,
         [FromQuery] AnimalSex? sex = null,
         [FromQuery] AnimalStatus? status = null,
@@ -138,7 +139,7 @@ public static class LivestockEndpoints
         CancellationToken cancellationToken = default)
     {
         var result = await sender.Send(
-            new GetAnimalListQuery(pageNumber, pageSize, farmId, shedId, species, sex, status, search, sortBy, sortDesc),
+            new GetAnimalListQuery(pageNumber, pageSize, farmId, shedId, penId, species, sex, status, search, sortBy, sortDesc),
             cancellationToken);
         return Results.Ok(result);
     }

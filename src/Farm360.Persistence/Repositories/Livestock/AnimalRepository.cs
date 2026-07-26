@@ -60,6 +60,7 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         int pageSize,
         Guid? farmId = null,
         Guid? shedId = null,
+        Guid? penId = null,
         AnimalSpecies? species = null,
         AnimalSex? sex = null,
         AnimalStatus? status = null,
@@ -80,6 +81,9 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
 
         if (shedId.HasValue)
             query = query.Where(a => a.Movements.Any(m => m.RemovedAtUtc == null && m.ShedId == shedId.Value));
+
+        if (penId.HasValue)
+            query = query.Where(a => a.Movements.Any(m => m.RemovedAtUtc == null && m.PenId == penId.Value));
 
         if (species.HasValue)
             query = query.Where(a => a.Species == species.Value);

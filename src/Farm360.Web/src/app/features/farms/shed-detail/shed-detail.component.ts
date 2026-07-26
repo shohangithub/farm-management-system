@@ -7,6 +7,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDividerModule } from '@angular/material/divider';
 import { ShedService } from '../services/shed.service';
 import { Shed } from '../models/shed.model';
+import { PenService } from '../services/pen.service';
+import { PenList } from '../models/pen.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
@@ -27,6 +29,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 })
 export class ShedDetailComponent implements OnInit {
   private readonly shedService = inject(ShedService);
+  private readonly penService = inject(PenService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -34,7 +37,9 @@ export class ShedDetailComponent implements OnInit {
   farmId = signal<string>('');
   shedId = signal<string>('');
   shed = signal<Shed | null>(null);
+  pens = signal<PenList[]>([]);
   isLoading = signal<boolean>(false);
+  isLoadingPens = signal<boolean>(false);
   error = signal<string | null>(null);
 
   statusLabel = computed(() => {
@@ -74,11 +79,25 @@ export class ShedDetailComponent implements OnInit {
       next: (data) => {
         this.shed.set(data);
         this.isLoading.set(false);
+        this.loadPens(id);
       },
       error: (err) => {
         this.error.set('Failed to load shed details.');
         this.isLoading.set(false);
         console.error(err);
+      }
+    });
+  }
+
+  loadPens(shedId: string): void {
+    this.isLoadingPens.set(true);
+    this.penService.getPensByShed(shedId).subscribe({
+      next: (data) => {
+        this.pens.set(data);
+        this.isLoadingPens.set(false);
+      },
+      error: () => {
+        this.isLoadingPens.set(false);
       }
     });
   }

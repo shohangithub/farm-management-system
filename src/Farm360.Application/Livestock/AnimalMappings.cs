@@ -40,6 +40,7 @@ public static class AnimalMappings
             WeightRecords: animal.WeightRecords.Select(w => w.ToDto()).ToList().AsReadOnly(),
             BreedingRecords: animal.BreedingRecords.Select(b => b.ToDto()).ToList().AsReadOnly(),
             Photos: animal.Photos.Select(p => p.ToDto()).ToList().AsReadOnly(),
+            Movements: animal.Movements.OrderByDescending(m => m.PlacedAtUtc).Select(m => m.ToDto()).ToList().AsReadOnly(),
             CreatedAtUtc: animal.CreatedAtUtc,
             CreatedBy: animal.CreatedBy,
             ModifiedAtUtc: animal.ModifiedAtUtc);
@@ -96,4 +97,16 @@ public static class AnimalMappings
             Caption: photo.Caption,
             IsPrimary: photo.IsPrimary,
             UploadedAtUtc: photo.UploadedAtUtc);
+
+    public static AnimalMovementDto ToDto(this AnimalMovement movement) =>
+        new(
+            Id: movement.Id,
+            AnimalId: movement.AnimalId,
+            ShedId: movement.ShedId,
+            PenId: movement.PenId,
+            PlacedAtUtc: movement.PlacedAtUtc,
+            PlacedBy: movement.PlacedBy,
+            RemovedAtUtc: movement.RemovedAtUtc,
+            RemovedBy: movement.RemovedBy,
+            TransferReason: movement.TransferReason);
 }

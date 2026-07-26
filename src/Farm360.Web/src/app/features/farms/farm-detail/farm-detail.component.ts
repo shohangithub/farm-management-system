@@ -7,6 +7,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDividerModule } from '@angular/material/divider';
 import { FarmService } from '../services/farm.service';
 import { Farm } from '../models/farm.model';
+import { ShedService } from '../services/shed.service';
+import { ShedList } from '../models/shed.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
@@ -27,13 +29,16 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 })
 export class FarmDetailComponent implements OnInit {
   private readonly farmService = inject(FarmService);
+  private readonly shedService = inject(ShedService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   branchId = signal<string>('');
   farmId = signal<string>('');
   farm = signal<Farm | null>(null);
+  sheds = signal<ShedList[]>([]);
   isLoading = signal<boolean>(false);
+  isLoadingSheds = signal<boolean>(false);
   error = signal<string | null>(null);
 
   statusLabel = computed(() => {
@@ -83,11 +88,25 @@ export class FarmDetailComponent implements OnInit {
       next: (data) => {
         this.farm.set(data);
         this.isLoading.set(false);
+        this.loadSheds(id);
       },
       error: (err) => {
         this.error.set('Failed to load farm details.');
         this.isLoading.set(false);
         console.error(err);
+      }
+    });
+  }
+
+  loadSheds(farmId: string): void {
+    this.isLoadingSheds.set(true);
+    this.shedService.getShedsByFarm(farmId).subscribe({
+      next: (data) => {
+        this.sheds.set(data);
+        this.isLoadingSheds.set(false);
+      },
+      error: () => {
+        this.isLoadingSheds.set(false);
       }
     });
   }
