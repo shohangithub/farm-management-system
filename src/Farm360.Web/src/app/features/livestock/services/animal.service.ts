@@ -90,6 +90,18 @@ export class AnimalService {
     return this.http.post<AnimalPhotoDto>(`${this.base}/${id}/photos`, request);
   }
 
+  recordMating(id: string, request: any): Observable<void> {
+    return this.http.post(`${this.base}/${id}/breeding`, request).pipe(map(() => undefined));
+  }
+
+  confirmPregnancy(id: string, recordId: string, request: any): Observable<void> {
+    return this.http.put(`${this.base}/${id}/breeding/${recordId}/pregnancy`, request).pipe(map(() => undefined));
+  }
+
+  recordCalving(id: string, recordId: string, request: any): Observable<void> {
+    return this.http.put(`${this.base}/${id}/breeding/${recordId}/calving`, request).pipe(map(() => undefined));
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete(`${this.base}/${id}`).pipe(map(() => undefined));
   }

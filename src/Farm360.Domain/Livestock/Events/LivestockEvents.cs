@@ -80,3 +80,40 @@ public sealed record WeightRecordedEvent(
     Guid TenantId,
     decimal WeightKg,
     DateOnly RecordedDate) : IDomainEvent;
+
+/// <summary>
+/// Raised when a mating event is recorded.
+/// </summary>
+public sealed record MatingRecordedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid AnimalId,
+    Guid TenantId,
+    Guid BreedingRecordId,
+    DateOnly MatingDate,
+    bool IsArtificialInsemination) : IDomainEvent;
+
+/// <summary>
+/// Raised when pregnancy is confirmed.
+/// </summary>
+public sealed record PregnancyConfirmedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid AnimalId,
+    Guid TenantId,
+    Guid BreedingRecordId,
+    DateOnly ConfirmDate,
+    DateOnly ExpectedCalvingDate) : IDomainEvent;
+
+/// <summary>
+/// Raised when calving (birth) is recorded.
+/// </summary>
+public sealed record CalvingRecordedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid AnimalId,
+    Guid TenantId,
+    Guid BreedingRecordId,
+    DateOnly CalvingDate,
+    string Outcome,
+    int CalvesCount) : IDomainEvent;

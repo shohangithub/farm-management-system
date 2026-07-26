@@ -376,6 +376,72 @@
         </div>
       </mat-tab>
 
+      <!-- ─── Breeding History Tab (Females Only) ────────────────────── -->
+      <mat-tab label="Breeding History" *ngIf="animal()?.sex === AnimalSex.Female">
+        <div class="p-6 sm:p-8">
+          <div *ngIf="animal()!.breedingRecords.length === 0" class="py-16 text-center">
+            <div class="w-14 h-14 bg-pink-50 dark:bg-pink-900/20 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
+              <mat-icon class="!text-pink-400 !text-[28px] !w-[28px] !h-[28px]">favorite_border</mat-icon>
+            </div>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No breeding records</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first mating or breeding event for this animal.</p>
+            <button (click)="onRecordMating()" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-all shadow-sm">
+              Record Mating
+            </button>
+          </div>
+
+          <div *ngIf="animal()!.breedingRecords.length > 0" class="overflow-x-auto">
+            <div class="flex justify-end mb-4">
+              <button (click)="onRecordMating()" class="px-3 py-1.5 text-xs font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg transition-colors shadow-sm">
+                Record New Mating
+              </button>
+            </div>
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Mating Date</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Method</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Sire Details</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Pregnancy Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                <tr *ngFor="let br of animal()!.breedingRecords" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{{ br.matingDate | date:'mediumDate' }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" 
+                          [ngClass]="br.isArtificialInsemination ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'">
+                      {{ br.isArtificialInsemination ? 'AI' : 'Natural' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                    <ng-container *ngIf="br.sireAnimalId || br.sireExternalId; else noSire">
+                      <div class="flex flex-col">
+                        <span *ngIf="br.sireAnimalId" class="font-medium">Internal: {{ br.sireAnimalId }}</span>
+                        <span *ngIf="br.sireExternalId" class="text-xs text-gray-500">Ext: {{ br.sireExternalId }}</span>
+                      </div>
+                    </ng-container>
+                    <ng-template #noSire><span class="text-gray-400 italic">Unknown Sire</span></ng-template>
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <ng-container *ngIf="br.isPregnancyConfirmed; else notConfirmed">
+                      <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon>
+                        Confirmed
+                      </span>
+                      <div class="text-xs text-gray-500 mt-0.5" *ngIf="br.expectedCalvingDate">Expected: {{ br.expectedCalvingDate | date:'shortDate' }}</div>
+                    </ng-container>
+                    <ng-template #notConfirmed>
+                      <span class="text-amber-600 dark:text-amber-400 font-medium">Pending Check</span>
+                    </ng-template>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
       <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
       <mat-tab label="Audit Info">
         <div class="p-6 sm:p-8">
@@ -623,6 +689,69 @@
       <button (click)="confirmQuarantine()" [disabled]="!quarantineForm.reason"
         class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors shadow-sm shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
         Quarantine
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Mating Dialog Template ──────────────────────────────────────── -->
+<ng-template #matingDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-pink-500">favorite</mat-icon>
+          Record Mating
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Enter breeding details for {{ animal()?.tagId }}</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Mating Date <span class="text-red-500">*</span></label>
+        <input type="date" [(ngModel)]="matingForm.date" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-shadow">
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Breeding Method</label>
+        <div class="flex items-center gap-4">
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="radio" [value]="false" [(ngModel)]="matingForm.isAI" name="matingMethod" class="text-pink-600 focus:ring-pink-500 h-4 w-4">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Natural</span>
+          </label>
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="radio" [value]="true" [(ngModel)]="matingForm.isAI" name="matingMethod" class="text-pink-600 focus:ring-pink-500 h-4 w-4">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Artificial Insemination (AI)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Internal Sire ID</label>
+          <input type="text" [(ngModel)]="matingForm.sireAnimalId" placeholder="e.g. UUID (Optional)"
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-shadow">
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">External Sire ID</label>
+          <input type="text" [(ngModel)]="matingForm.sireExternalId" placeholder="External Bull Tag (Optional)"
+            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-shadow">
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="confirmMating()" [disabled]="!matingForm.date"
+        class="px-4 py-2 text-sm font-semibold text-white bg-pink-600 rounded-xl hover:bg-pink-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        Save Record
       </button>
     </div>
   </div>

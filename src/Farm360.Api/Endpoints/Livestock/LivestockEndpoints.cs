@@ -116,6 +116,28 @@ public static class LivestockEndpoints
             .Produces(422)
             .RequireAuthorization("Permission:animals.create");
 
+        // ── Breeding ───────────────────────────────────────────────────────────
+        group.MapPost("/animals/{id:guid}/breeding", RecordMating)
+            .WithName("RecordMating")
+            .WithSummary("Record a mating event")
+            .Produces(204)
+            .Produces(422)
+            .RequireAuthorization("Permission:animals.edit");
+
+        group.MapPut("/animals/{id:guid}/breeding/{recordId:guid}/pregnancy", ConfirmPregnancy)
+            .WithName("ConfirmPregnancy")
+            .WithSummary("Confirm pregnancy for a breeding record")
+            .Produces(204)
+            .Produces(422)
+            .RequireAuthorization("Permission:animals.edit");
+
+        group.MapPut("/animals/{id:guid}/breeding/{recordId:guid}/calving", RecordCalving)
+            .WithName("RecordCalving")
+            .WithSummary("Record calving outcome")
+            .Produces(204)
+            .Produces(422)
+            .RequireAuthorization("Permission:animals.edit");
+
         return group;
     }
 
@@ -246,6 +268,38 @@ public static class LivestockEndpoints
             cancellationToken);
         return Results.Created($"/api/v1/livestock/animals/{id}/photos/{result.Id}", result);
     }
+
+    private static async Task<IResult> RecordMating(
+        Guid id,
+        [FromBody] RecordMatingRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(new RecordMatingCommand(id, request.MatingDate, request.SireAnimalId, request.SireExternalId, request.IsArtificialInsemination), cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ConfirmPregnancy(
+        Guid id,
+        Guid recordId,
+        [FromBody] ConfirmPregnancyRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(new ConfirmPregnancyCommand(id, recordId, request.ConfirmDate, request.ExpectedCalvingDate), cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> RecordCalving(
+        Guid id,
+        Guid recordId,
+        [FromBody] RecordCalvingRequest request,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(new RecordCalvingCommand(id, recordId, request.CalvingDate, request.Outcome, request.CalvesCount), cancellationToken);
+        return Results.NoContent();
+    }
 }
 
 // ── Request bodies (simple records — not commands, to decouple route param binding) ──
@@ -267,3 +321,7 @@ public sealed record TransferAnimalRequest(Guid? ToShedId, Guid? ToPenId, DateOn
 
 /// <summary>Photo registration request body (URL from S3 upload).</summary>
 public sealed record AddPhotoRequest(string PhotoUrl, string? Caption);
+
+public sealed record RecordMatingRequest(DateOnly MatingDate, Guid? SireAnimalId, string? SireExternalId, bool IsArtificialInsemination);
+public sealed record ConfirmPregnancyRequest(DateOnly ConfirmDate, DateOnly ExpectedCalvingDate);
+public sealed record RecordCalvingRequest(DateOnly CalvingDate, string Outcome, int CalvesCount);

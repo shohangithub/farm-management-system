@@ -406,7 +406,58 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             recordedBy);
 
         _breedingRecords.Add(record);
+
+        RaiseDomainEvent(new MatingRecordedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            Id,
+            TenantId,
+            record.Id,
+            matingDate,
+            isArtificialInsemination));
+
         return record;
+    }
+
+    /// <summary>
+    /// Confirms pregnancy for a breeding record.
+    /// </summary>
+    public void ConfirmPregnancy(Guid breedingRecordId, DateOnly confirmDate, DateOnly expectedCalvingDate)
+    {
+        var record = _breedingRecords.FirstOrDefault(r => r.Id == breedingRecordId)
+            ?? throw new ArgumentException($"Breeding record '{breedingRecordId}' not found.");
+
+        record.ConfirmPregnancy(confirmDate, expectedCalvingDate);
+
+        RaiseDomainEvent(new PregnancyConfirmedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            Id,
+            TenantId,
+            breedingRecordId,
+            confirmDate,
+            expectedCalvingDate));
+    }
+
+    /// <summary>
+    /// Records calving outcome for a breeding record.
+    /// </summary>
+    public void RecordCalving(Guid breedingRecordId, DateOnly calvingDate, string outcome, int calvesCount)
+    {
+        var record = _breedingRecords.FirstOrDefault(r => r.Id == breedingRecordId)
+            ?? throw new ArgumentException($"Breeding record '{breedingRecordId}' not found.");
+
+        record.RecordCalving(calvingDate, outcome, calvesCount);
+
+        RaiseDomainEvent(new CalvingRecordedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            Id,
+            TenantId,
+            breedingRecordId,
+            calvingDate,
+            outcome,
+            calvesCount));
     }
 
     /// <summary>

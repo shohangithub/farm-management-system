@@ -80,6 +80,15 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     date: new Date().toISOString().split('T')[0],
     reason: ''
   };
+
+  @ViewChild('matingDialogTemplate') matingDialogTemplate!: TemplateRef<any>;
+  matingForm = {
+    date: new Date().toISOString().split('T')[0],
+    isAI: false,
+    sireAnimalId: '',
+    sireExternalId: ''
+  };
+
   readonly sheds = signal<ShedList[]>([]);
   readonly pens = signal<PenList[]>([]);
   readonly loadingSheds = signal(false);
@@ -333,6 +342,42 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
           duration: 3000,
           panelClass: ['success-snackbar']
         });
+        this.load();
+      }
+    });
+  }
+
+  onRecordMating(): void {
+    const a = this.animal();
+    if (!a) return;
+    
+    this.matingForm = {
+      date: new Date().toISOString().split('T')[0],
+      isAI: false,
+      sireAnimalId: '',
+      sireExternalId: ''
+    };
+
+    this.dialog.open(this.matingDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  confirmMating(): void {
+    const a = this.animal();
+    if (!a || !this.matingForm.date) return;
+    
+    this.svc.recordMating(a.id, {
+      matingDate: this.matingForm.date,
+      isArtificialInsemination: this.matingForm.isAI,
+      sireAnimalId: this.matingForm.sireAnimalId || undefined,
+      sireExternalId: this.matingForm.sireExternalId || undefined
+    }).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.snackBar.open('Mating recorded successfully!', 'Close', { duration: 3000 });
         this.load();
       }
     });
