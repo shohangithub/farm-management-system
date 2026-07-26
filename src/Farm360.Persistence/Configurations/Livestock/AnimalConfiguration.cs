@@ -39,9 +39,6 @@ public sealed class AnimalConfiguration : IEntityTypeConfiguration<Animal>
         builder.Property(a => a.FarmId)
             .IsRequired();
 
-        builder.Property(a => a.ShedId)
-            .IsRequired(false);
-
         // ── Owned Value Object: AnimalTag ─────────────────────────────────────
         // EF Core Owned Entity maps TagId and TagType as columns on this table.
         builder.OwnsOne(a => a.Tag, tagBuilder =>
@@ -99,6 +96,14 @@ public sealed class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .HasPrecision(14, 2)
             .IsRequired(false);
 
+        builder.Property(a => a.SaleWeightKg)
+            .HasPrecision(8, 2)
+            .IsRequired(false);
+
+        builder.Property(a => a.BuyerName)
+            .HasMaxLength(200)
+            .IsRequired(false);
+
         // ── Status ─────────────────────────────────────────────────────────────
         builder.Property(a => a.Status)
             .HasConversion<int>()
@@ -139,22 +144,25 @@ public sealed class AnimalConfiguration : IEntityTypeConfiguration<Animal>
         builder.Property(a => a.ModifiedAtUtc).IsRequired(false);
         builder.Property(a => a.ModifiedBy).IsRequired(false);  // Guid? — nullable
 
-        // ── Children: WeightRecords ────────────────────────────────────────────
-        builder.HasMany(a => a.WeightRecords)
+        // Navigation properties
+        builder.HasMany(x => x.WeightRecords)
             .WithOne()
-            .HasForeignKey(w => w.AnimalId)
+            .HasForeignKey(x => x.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // ── Children: BreedingRecords ──────────────────────────────────────────
-        builder.HasMany(a => a.BreedingRecords)
+        builder.HasMany(x => x.BreedingRecords)
             .WithOne()
-            .HasForeignKey(b => b.AnimalId)
+            .HasForeignKey(x => x.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // ── Children: Photos ───────────────────────────────────────────────────
-        builder.HasMany(a => a.Photos)
+        builder.HasMany(x => x.Photos)
             .WithOne()
-            .HasForeignKey(p => p.AnimalId)
+            .HasForeignKey(x => x.AnimalId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Movements)
+            .WithOne()
+            .HasForeignKey(x => x.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // ── Indexes for common query patterns ──────────────────────────────────

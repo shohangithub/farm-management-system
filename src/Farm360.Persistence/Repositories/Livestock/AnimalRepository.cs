@@ -27,12 +27,14 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
             .Include(a => a.WeightRecords)
             .Include(a => a.BreedingRecords)
             .Include(a => a.Photos)
+            .Include(a => a.Movements)
             .FirstOrDefaultAsync(a => a.Id == animalId, cancellationToken);
 
     /// <inheritdoc/>
     public async Task<Animal?> GetByIdWithWeightsAsync(Guid animalId, CancellationToken cancellationToken = default) =>
         await _animals
             .Include(a => a.WeightRecords)
+            .Include(a => a.Movements)
             .FirstOrDefaultAsync(a => a.Id == animalId, cancellationToken);
 
     /// <inheritdoc/>
@@ -68,6 +70,7 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
     {
         var query = _animals
             .Include(a => a.Photos.Where(p => p.IsPrimary))
+            .Include(a => a.Movements.Where(m => m.RemovedAtUtc == null))
             .AsNoTracking()
             .AsQueryable();
 
@@ -76,7 +79,7 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
             query = query.Where(a => a.FarmId == farmId.Value);
 
         if (shedId.HasValue)
-            query = query.Where(a => a.ShedId == shedId.Value);
+            query = query.Where(a => a.Movements.Any(m => m.RemovedAtUtc == null && m.ShedId == shedId.Value));
 
         if (species.HasValue)
             query = query.Where(a => a.Species == species.Value);

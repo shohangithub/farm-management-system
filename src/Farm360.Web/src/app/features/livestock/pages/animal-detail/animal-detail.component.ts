@@ -1,10 +1,16 @@
 import {
-  Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy, computed
+  Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy, computed,
+  TemplateRef, ViewChild
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil }  from 'rxjs';
 import { AnimalService }       from '../../services/animal.service';
+import { ShedService }       from '../../../farms/services/shed.service';
+import { PenService }        from '../../../farms/services/pen.service';
+import { ShedList }          from '../../../farms/models/shed.model';
+import { PenList }           from '../../../farms/models/pen.model';
 import {
   AnimalDto, AnimalStatus, AnimalSex,
   SPECIES_LABELS, STATUS_LABELS, SEX_LABELS,
@@ -22,7 +28,7 @@ import { MatTabsModule } from '@angular/material/tabs';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, RouterModule, 
+    CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, DatePipe, DecimalPipe,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule
   ],
@@ -31,6 +37,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 export class AnimalDetailComponent implements OnInit, OnDestroy {
   private readonly svc     = inject(AnimalService);
   private readonly route   = inject(ActivatedRoute);
+  private readonly shedSvc = inject(ShedService);
+  private readonly penSvc  = inject(PenService);
   private readonly dialog  = inject(MatDialog);
   private readonly router  = inject(Router);
   private readonly destroy$ = new Subject<void>();
@@ -43,6 +51,31 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   readonly AnimalSex = AnimalSex;
 
   readonly Math = Math;
+
+  @ViewChild('saleDialogTemplate') saleDialogTemplate!: TemplateRef<any>;
+  saleForm = {
+    price: null as number | null,
+    date: new Date().toISOString().split('T')[0],
+    buyer: '',
+    weight: null as number | null
+  };
+
+  @ViewChild('quarantineDialogTemplate') quarantineDialogTemplate!: TemplateRef<any>;
+  quarantineForm = {
+    reason: ''
+  };
+
+  @ViewChild('transferDialogTemplate') transferDialogTemplate!: TemplateRef<any>;
+  transferForm = {
+    shedId: '',
+    penId: '',
+    date: new Date().toISOString().split('T')[0],
+    reason: ''
+  };
+  readonly sheds = signal<ShedList[]>([]);
+  readonly pens = signal<PenList[]>([]);
+  readonly loadingSheds = signal(false);
+  readonly loadingPens = signal(false);
 
   statusLabel = computed(() => {
     const s = this.animal()?.status;
@@ -94,9 +127,26 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onQuarantine(): void {
     const a = this.animal();
     if (!a) return;
-    const reason = prompt('Quarantine reason:');
-    if (!reason) return;
-    this.svc.quarantine(a.id, { reason }).pipe(takeUntil(this.destroy$)).subscribe({ next: () => this.load() });
+    
+    this.quarantineForm = { reason: '' };
+
+    this.dialog.open(this.quarantineDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  confirmQuarantine(): void {
+    const a = this.animal();
+    if (!a || !this.quarantineForm.reason) return;
+
+    this.svc.quarantine(a.id, { reason: this.quarantineForm.reason }).pipe(takeUntil(this.destroy$)).subscribe({ 
+      next: () => {
+        this.dialog.closeAll();
+        this.load();
+      }
+    });
   }
 
   onRelease(): void {
@@ -131,10 +181,107 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onSell(): void {
     const a = this.animal();
     if (!a) return;
-    const price = prompt('Sale price (BDT):');
-    if (!price || isNaN(+price)) return;
-    const today = new Date().toISOString().split('T')[0];
-    this.svc.sell(a.id, { salePriceBdt: +price, saleDate: today })
-      .pipe(takeUntil(this.destroy$)).subscribe({ next: () => this.load() });
+    
+    // Reset form
+    this.saleForm = {
+      price: null,
+      date: new Date().toISOString().split('T')[0],
+      buyer: '',
+      weight: a.latestWeightKg ?? null
+    };
+
+    this.dialog.open(this.saleDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent' // if relying entirely on internal tailwind
+    });
+  }
+
+  confirmSale(): void {
+    const a = this.animal();
+    if (!a || !this.saleForm.price) return;
+    
+    this.svc.sell(a.id, { 
+      salePriceBdt: this.saleForm.price, 
+      saleDate: this.saleForm.date,
+      buyerName: this.saleForm.buyer || undefined,
+      saleWeightKg: this.saleForm.weight || undefined
+    }).pipe(takeUntil(this.destroy$)).subscribe({ 
+      next: () => {
+        this.dialog.closeAll();
+        this.load();
+      }
+    });
+  }
+
+  onTransfer(): void {
+    const a = this.animal();
+    if (!a) return;
+    
+    this.transferForm = {
+      shedId: a.shedId || '',
+      penId: a.penId || '',
+      date: new Date().toISOString().split('T')[0],
+      reason: ''
+    };
+    
+    this.sheds.set([]);
+    this.pens.set([]);
+    
+    this.loadingSheds.set(true);
+    this.shedSvc.getShedsByFarm(a.farmId).subscribe({
+      next: (data) => {
+        this.sheds.set(data);
+        this.loadingSheds.set(false);
+        if (this.transferForm.shedId) {
+          this.loadPensForTransfer(this.transferForm.shedId);
+        }
+      },
+      error: () => this.loadingSheds.set(false)
+    });
+
+    this.dialog.open(this.transferDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  onTransferShedChange(shedId: string): void {
+    this.transferForm.shedId = shedId;
+    this.transferForm.penId = '';
+    if (shedId) {
+      this.loadPensForTransfer(shedId);
+    } else {
+      this.pens.set([]);
+    }
+  }
+
+  private loadPensForTransfer(shedId: string): void {
+    this.loadingPens.set(true);
+    this.penSvc.getPensByShed(shedId).subscribe({
+      next: (data) => {
+        this.pens.set(data);
+        this.loadingPens.set(false);
+      },
+      error: () => this.loadingPens.set(false)
+    });
+  }
+
+  confirmTransfer(): void {
+    const a = this.animal();
+    if (!a || !this.transferForm.date) return;
+    
+    this.svc.transfer(a.id, {
+      toShedId: this.transferForm.shedId || undefined,
+      toPenId: this.transferForm.penId || undefined,
+      transferDate: this.transferForm.date,
+      reason: this.transferForm.reason || undefined
+    }).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.load();
+      }
+    });
   }
 }

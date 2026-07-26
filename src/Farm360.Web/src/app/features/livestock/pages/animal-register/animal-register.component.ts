@@ -32,7 +32,7 @@ export class AnimalRegisterComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   readonly farms       = signal<FarmList[]>([]);
-
+  
   readonly submitting  = signal(false);
   readonly error       = signal<string | null>(null);
   readonly today       = new Date().toISOString().split('T')[0];

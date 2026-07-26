@@ -4,6 +4,7 @@ using Farm360.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Farm360.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260725203054_AddLivestockPenAndSaleFields")]
+    partial class AddLivestockPenAndSaleFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -803,6 +806,9 @@ namespace Farm360.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<Guid?>("PenId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("QuarantineReason")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -826,6 +832,9 @@ namespace Farm360.Persistence.Migrations
 
                     b.Property<int>("Sex")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("ShedId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Species")
                         .HasColumnType("int");
@@ -854,78 +863,6 @@ namespace Farm360.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Animals_Sex", "[Sex] IN (1, 2)");
                         });
-                });
-
-            modelBuilder.Entity("Farm360.Domain.Livestock.AnimalMovement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AnimalId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DeletedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("ModifiedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("PenId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("PlacedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("PlacedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("RemovedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("RemovedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<Guid?>("ShedId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("TransferReason")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AnimalId");
-
-                    b.HasIndex("AnimalId", "RemovedAtUtc");
-
-                    b.ToTable("AnimalMovements", (string)null);
                 });
 
             modelBuilder.Entity("Farm360.Domain.Livestock.AnimalPhoto", b =>
@@ -2021,15 +1958,6 @@ namespace Farm360.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Farm360.Domain.Livestock.AnimalMovement", b =>
-                {
-                    b.HasOne("Farm360.Domain.Livestock.Animal", null)
-                        .WithMany("Movements")
-                        .HasForeignKey("AnimalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Farm360.Domain.Livestock.AnimalPhoto", b =>
                 {
                     b.HasOne("Farm360.Domain.Livestock.Animal", null)
@@ -2246,8 +2174,6 @@ namespace Farm360.Persistence.Migrations
             modelBuilder.Entity("Farm360.Domain.Livestock.Animal", b =>
                 {
                     b.Navigation("BreedingRecords");
-
-                    b.Navigation("Movements");
 
                     b.Navigation("Photos");
 

@@ -30,7 +30,6 @@ public sealed class AnimalTests
         Animal.Create(
             tenantId:           TenantId,
             farmId:             FarmId,
-            shedId:             null,
             tag:                tag ?? DefaultTag,
             species:            species,
             breedName:          "Shahiwal",
@@ -74,7 +73,6 @@ public sealed class AnimalTests
         var act = () => Animal.Create(
             tenantId:        Guid.Empty,
             farmId:          FarmId,
-            shedId:          null,
             tag:             DefaultTag,
             species:         AnimalSpecies.CattleBeef,
             breedName:       "Test",
@@ -96,7 +94,6 @@ public sealed class AnimalTests
         var act = () => Animal.Create(
             tenantId:        TenantId,
             farmId:          Guid.Empty,
-            shedId:          null,
             tag:             DefaultTag,
             species:         AnimalSpecies.CattleBeef,
             breedName:       "Test",
@@ -149,7 +146,7 @@ public sealed class AnimalTests
     public void RecordWeight_OnSoldAnimal_ThrowsInvalidOperationException()
     {
         var animal = CreateActiveAnimal();
-        animal.Sell(80_000m, new DateOnly(2025, 3, 1), Guid.NewGuid());
+        animal.Sell(80_000m, new DateOnly(2025, 3, 1), Guid.NewGuid(), null, null);
 
         var act = () => animal.RecordWeight(Weight.Create(300m), new DateOnly(2025, 3, 2), Guid.NewGuid(), null);
 
@@ -167,7 +164,7 @@ public sealed class AnimalTests
         var saleDate  = new DateOnly(2025, 5, 1);
         var salePrice = 75_000m;
 
-        animal.Sell(salePrice, saleDate, Guid.NewGuid());
+        animal.Sell(salePrice, saleDate, Guid.NewGuid(), null, null);
 
         animal.Status.Should().Be(AnimalStatus.Sold);
         animal.SalePriceBdt.Should().Be(salePrice);
@@ -178,7 +175,7 @@ public sealed class AnimalTests
     public void Sell_ActiveAnimal_RaisesAnimalSoldEvent()
     {
         var animal = CreateActiveAnimal();
-        animal.Sell(75_000m, new DateOnly(2025, 5, 1), Guid.NewGuid());
+        animal.Sell(75_000m, new DateOnly(2025, 5, 1), Guid.NewGuid(), null, null);
 
         animal.DomainEvents.Should().Contain(e => e.GetType().Name == "AnimalSoldEvent");
     }
@@ -189,7 +186,7 @@ public sealed class AnimalTests
         var animal = CreateActiveAnimal();
         animal.Quarantine("Foot and mouth");
 
-        var act = () => animal.Sell(75_000m, new DateOnly(2025, 5, 1), Guid.NewGuid());
+        var act = () => animal.Sell(75_000m, new DateOnly(2025, 5, 1), Guid.NewGuid(), null, null);
 
         act.Should().Throw<AnimalQuarantinedException>();
     }
@@ -198,9 +195,9 @@ public sealed class AnimalTests
     public void Sell_AlreadySoldAnimal_ThrowsInvalidStateException()
     {
         var animal = CreateActiveAnimal();
-        animal.Sell(75_000m, new DateOnly(2025, 5, 1), Guid.NewGuid());
+        animal.Sell(75_000m, new DateOnly(2025, 5, 1), Guid.NewGuid(), null, null);
 
-        var act = () => animal.Sell(80_000m, new DateOnly(2025, 5, 2), Guid.NewGuid());
+        var act = () => animal.Sell(80_000m, new DateOnly(2025, 5, 2), Guid.NewGuid(), null, null);
 
         act.Should().Throw<InvalidAnimalStateTransitionException>();
     }
@@ -272,7 +269,7 @@ public sealed class AnimalTests
     public void RecordDeath_SoldAnimal_ThrowsInvalidStateException()
     {
         var animal = CreateActiveAnimal();
-        animal.Sell(50_000m, new DateOnly(2025, 5, 1), Guid.NewGuid());
+        animal.Sell(50_000m, new DateOnly(2025, 5, 1), Guid.NewGuid(), null, null);
 
         var act = () => animal.RecordDeath(DisposalReason.Disease, new DateOnly(2025, 5, 2), null);
 
@@ -289,20 +286,20 @@ public sealed class AnimalTests
         var animal  = CreateActiveAnimal();
         var newShed = Guid.NewGuid();
 
-        animal.TransferToShed(newShed, new DateOnly(2025, 4, 1));
+        animal.TransferToShed(newShed, null, new DateOnly(2025, 4, 1), Guid.NewGuid());
 
-        animal.ShedId.Should().Be(newShed);
+        animal.CurrentMovement?.ShedId.Should().Be(newShed);
     }
 
     [Fact]
     public void TransferToShed_NullShed_ClearsShed()
     {
         var animal = CreateActiveAnimal();
-        animal.TransferToShed(Guid.NewGuid(), new DateOnly(2025, 4, 1));
+        animal.TransferToShed(Guid.NewGuid(), null, new DateOnly(2025, 4, 1), Guid.NewGuid());
 
-        animal.TransferToShed(null, new DateOnly(2025, 4, 2));
+        animal.TransferToShed(null, null, new DateOnly(2025, 4, 2), Guid.NewGuid());
 
-        animal.ShedId.Should().BeNull();
+        animal.CurrentMovement?.ShedId.Should().BeNull();
     }
 
     // ══════════════════════════════════════════════════════════════════════════

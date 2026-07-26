@@ -20,7 +20,6 @@ namespace Farm360.Application.Livestock.Commands;
 /// </summary>
 public sealed record RegisterAnimalCommand(
     Guid FarmId,
-    Guid? ShedId,
     string TagId,
     TagType TagType,
     AnimalSpecies Species,
@@ -84,7 +83,6 @@ public sealed class RegisterAnimalCommandHandler(
         var animal = Animal.Create(
             tenantId: tenantService.TenantId,
             farmId: request.FarmId,
-            shedId: request.ShedId,
             tag: tag,
             species: request.Species,
             breedName: request.BreedName,
@@ -149,7 +147,6 @@ public sealed class RecordWeightCommandHandler(
         var weight = Weight.Create(request.WeightKg);
         var record = animal.RecordWeight(weight, request.RecordedDate, currentUser.UserId ?? Guid.Empty, request.Notes);
 
-        repository.Update(animal);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return record.ToDto();
@@ -167,7 +164,9 @@ public sealed class RecordWeightCommandHandler(
 public sealed record SellAnimalCommand(
     Guid AnimalId,
     decimal SalePriceBdt,
-    DateOnly SaleDate) : IRequest;
+    DateOnly SaleDate,
+    string? BuyerName,
+    decimal? SaleWeightKg) : IRequest;
 
 public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCommand>
 {
@@ -181,6 +180,14 @@ public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCom
         RuleFor(x => x.SaleDate)
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
             .WithMessage("Sale date cannot be in the future.");
+
+        RuleFor(x => x.SaleWeightKg)
+            .GreaterThan(0).WithMessage("Sale weight must be greater than zero.")
+            .When(x => x.SaleWeightKg.HasValue);
+
+        RuleFor(x => x.BuyerName)
+            .MaximumLength(200).WithMessage("Buyer name cannot exceed 200 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.BuyerName));
     }
 }
 
@@ -194,9 +201,7 @@ public sealed class SellAnimalCommandHandler(
         var animal = await repository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
-        animal.Sell(request.SalePriceBdt, request.SaleDate, currentUser.UserId ?? Guid.Empty);
-
-        repository.Update(animal);
+        animal.Sell(request.SalePriceBdt, request.SaleDate, currentUser.UserId ?? Guid.Empty, request.BuyerName, request.SaleWeightKg);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
@@ -233,7 +238,6 @@ public sealed class QuarantineAnimalCommandHandler(
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
         animal.Quarantine(request.Reason);
-        repository.Update(animal);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
@@ -254,7 +258,6 @@ public sealed class ReleaseFromQuarantineCommandHandler(
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
         animal.ReleaseFromQuarantine();
-        repository.Update(animal);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
@@ -290,31 +293,32 @@ public sealed class RecordAnimalDeathCommandHandler(
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
         animal.RecordDeath(request.Cause, request.DeathDate, request.Notes);
-        repository.Update(animal);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TRANSFER ANIMAL TO SHED
+// TRANSFER ANIMAL
 // ══════════════════════════════════════════════════════════════════════════════
 
-public sealed record TransferAnimalToShedCommand(
+public sealed record TransferAnimalCommand(
     Guid AnimalId,
     Guid? ToShedId,
-    DateOnly TransferDate) : IRequest;
+    Guid? ToPenId,
+    DateOnly TransferDate,
+    string? Reason) : IRequest;
 
-public sealed class TransferAnimalToShedCommandHandler(
+public sealed class TransferAnimalCommandHandler(
     IAnimalRepository repository,
-    IUnitOfWork unitOfWork) : IRequestHandler<TransferAnimalToShedCommand>
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser) : IRequestHandler<TransferAnimalCommand>
 {
-    public async Task Handle(TransferAnimalToShedCommand request, CancellationToken cancellationToken)
+    public async Task Handle(TransferAnimalCommand request, CancellationToken cancellationToken)
     {
         var animal = await repository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
-        animal.TransferToShed(request.ToShedId, request.TransferDate);
-        repository.Update(animal);
+        animal.TransferToShed(request.ToShedId, request.ToPenId, request.TransferDate, currentUser.UserId ?? Guid.Empty, request.Reason);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
@@ -383,7 +387,6 @@ public sealed class AddAnimalPhotoCommandHandler(
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
         var photo = animal.AddPhoto(request.PhotoUrl, request.Caption, currentUser.UserId ?? Guid.Empty);
-        repository.Update(animal);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return photo.ToDto();

@@ -101,8 +101,8 @@ public static class LivestockEndpoints
             .RequireAuthorization("Permission:animals.edit");
 
         group.MapPost("/animals/{id:guid}/transfer", TransferAnimal)
-            .WithName("TransferAnimalToShed")
-            .WithSummary("Transfer animal to a different shed")
+            .WithName("TransferAnimal")
+            .WithSummary("Transfer animal to a different location (Shed/Pen)")
             .Produces(204)
             .Produces(404)
             .Produces(422)
@@ -189,7 +189,7 @@ public static class LivestockEndpoints
         ISender sender,
         CancellationToken cancellationToken)
     {
-        await sender.Send(new SellAnimalCommand(id, request.SalePriceBdt, request.SaleDate), cancellationToken);
+        await sender.Send(new SellAnimalCommand(id, request.SalePriceBdt, request.SaleDate, request.BuyerName, request.SaleWeightKg), cancellationToken);
         return Results.NoContent();
     }
 
@@ -229,7 +229,7 @@ public static class LivestockEndpoints
         CancellationToken cancellationToken)
     {
         await sender.Send(
-            new TransferAnimalToShedCommand(id, request.ToShedId, request.TransferDate),
+            new TransferAnimalCommand(id, request.ToShedId, request.ToPenId, request.TransferDate, request.Reason),
             cancellationToken);
         return Results.NoContent();
     }
@@ -253,7 +253,7 @@ public static class LivestockEndpoints
 public sealed record RecordWeightRequest(decimal WeightKg, DateOnly RecordedDate, string? Notes);
 
 /// <summary>Sale request body.</summary>
-public sealed record SellAnimalRequest(decimal SalePriceBdt, DateOnly SaleDate);
+public sealed record SellAnimalRequest(decimal SalePriceBdt, DateOnly SaleDate, string? BuyerName, decimal? SaleWeightKg);
 
 /// <summary>Quarantine request body.</summary>
 public sealed record QuarantineAnimalRequest(string Reason);
@@ -261,8 +261,8 @@ public sealed record QuarantineAnimalRequest(string Reason);
 /// <summary>Death recording request body.</summary>
 public sealed record RecordDeathRequest(DisposalReason Cause, DateOnly DeathDate, string? Notes);
 
-/// <summary>Shed transfer request body.</summary>
-public sealed record TransferAnimalRequest(Guid? ToShedId, DateOnly TransferDate);
+/// <summary>Location transfer request body.</summary>
+public sealed record TransferAnimalRequest(Guid? ToShedId, Guid? ToPenId, DateOnly TransferDate, string? Reason);
 
 /// <summary>Photo registration request body (URL from S3 upload).</summary>
 public sealed record AddPhotoRequest(string PhotoUrl, string? Caption);

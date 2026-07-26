@@ -22,7 +22,6 @@ public sealed class AnimalQueryHandlerTests
     private static Animal CreateAnimal(string tagId = "B-001") => Animal.Create(
         tenantId:        Guid.NewGuid(),
         farmId:          Guid.NewGuid(),
-        shedId:          null,
         tag:             AnimalTag.Create(tagId, TagType.EarTag),
         species:         AnimalSpecies.CattleBeef,
         breedName:       "Shahiwal",

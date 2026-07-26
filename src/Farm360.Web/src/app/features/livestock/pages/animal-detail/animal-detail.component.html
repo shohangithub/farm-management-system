@@ -39,6 +39,10 @@
             class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-sm">
       Release from Quarantine
     </button>
+    <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onTransfer()"
+            class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+      Assign Location
+    </button>
     <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()"
             class="px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors shadow-sm">
       Record Sale
@@ -90,6 +94,16 @@
         <div>
           <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Tag Type</dt>
           <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ tagTypeLabel(animal()!.tagType) }}</dd>
+        </div>
+        <div>
+          <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Location</dt>
+          <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
+            <ng-container *ngIf="animal()!.shedId || animal()!.penId; else noLocation">
+              <span *ngIf="animal()!.shedId" class="text-primary-600 font-semibold">Shed Assigned</span>
+              <span *ngIf="animal()!.penId" class="text-primary-600 font-semibold"> / Pen Assigned</span>
+            </ng-container>
+            <ng-template #noLocation><span class="text-gray-400 italic">Not Assigned</span></ng-template>
+          </dd>
         </div>
         <div *ngIf="animal()!.acquisitionPriceBdt">
           <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Purchase Price</dt>
@@ -232,3 +246,200 @@
   </div>
 
 </div>
+
+<!-- ── Sale Dialog Template ──────────────────────────────────────── -->
+<ng-template #saleDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white">Record Sale</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Enter transaction details for {{ animal()?.tagId }}</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-4 overflow-y-auto">
+      
+      <!-- Price & Date Row -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Sale Price (BDT) <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 font-semibold">৳</span>
+            <input type="number" [(ngModel)]="saleForm.price" placeholder="0.00" min="1" step="0.01" required
+                   class="block w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Sale Date <span class="text-red-500">*</span></label>
+          <input type="date" [(ngModel)]="saleForm.date" required
+                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+        </div>
+      </div>
+
+      <!-- Buyer Name -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Buyer Name</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">person_outline</mat-icon>
+          </span>
+          <input type="text" [(ngModel)]="saleForm.buyer" placeholder="Optional"
+                 class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+        </div>
+      </div>
+
+      <!-- Sale Weight -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Sale Weight (kg)</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">scale</mat-icon>
+          </span>
+          <input type="number" [(ngModel)]="saleForm.weight" placeholder="Optional (Defaults to latest)" min="1" step="0.1"
+                 class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+        </div>
+        <p class="text-[11px] text-gray-400 mt-1" *ngIf="animal()?.latestWeightKg">
+          Current recorded weight: {{ animal()?.latestWeightKg }} kg
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+              class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="confirmSale()" [disabled]="!saleForm.price || !saleForm.date"
+              class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+        Confirm Sale
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Transfer Location Dialog Template ──────────────────────────── -->
+<ng-template #transferDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white">Assign Location</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Move {{ animal()?.tagId }} to a different shed or pen</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-4 overflow-y-auto">
+      
+      <!-- Shed -->
+      <div class="space-y-1.5 relative">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Target Shed</label>
+        <select [ngModel]="transferForm.shedId" (ngModelChange)="onTransferShedChange($event)"
+                [disabled]="loadingSheds()"
+                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          <option value="">-- No Shed / Clear Location --</option>
+          <option *ngFor="let s of sheds()" [value]="s.id">{{ s.shedName }} (Cap: {{ s.capacity ?? '∞' }})</option>
+        </select>
+      </div>
+
+      <!-- Pen -->
+      <div class="space-y-1.5 relative">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Target Pen</label>
+        <select [(ngModel)]="transferForm.penId"
+                [disabled]="!transferForm.shedId || loadingPens()"
+                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          <option value="">-- Optional --</option>
+          <option *ngFor="let p of pens()" [value]="p.id">{{ p.penNumber }}</option>
+        </select>
+      </div>
+
+      <!-- Date Row -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Transfer Date <span class="text-red-500">*</span></label>
+          <input type="date" [(ngModel)]="transferForm.date" required
+                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+        </div>
+      </div>
+
+      <!-- Reason -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Reason</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">notes</mat-icon>
+          </span>
+          <input type="text" [(ngModel)]="transferForm.reason" placeholder="Optional"
+                 class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+              class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="confirmTransfer()" [disabled]="!transferForm.date"
+              class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+        Confirm Transfer
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Quarantine Dialog Template ────────────────────────────────────── -->
+<ng-template #quarantineDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-amber-50/50 dark:bg-amber-900/20 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-amber-900 dark:text-amber-400 flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">warning</mat-icon>
+          Quarantine Animal
+        </h2>
+        <p class="text-xs text-amber-700/70 dark:text-amber-400/70 mt-0.5">Move {{ animal()?.tagId }} to quarantine</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <!-- Reason -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Reason for Quarantine <span class="text-red-500">*</span></label>
+        <div class="relative">
+          <textarea [(ngModel)]="quarantineForm.reason" rows="3" required placeholder="Describe symptoms or reason for quarantine..."
+                 class="block w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-shadow resize-none"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close
+              class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="confirmQuarantine()" [disabled]="!quarantineForm.reason"
+              class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors shadow-sm shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+        Quarantine
+      </button>
+    </div>
+  </div>
+</ng-template>

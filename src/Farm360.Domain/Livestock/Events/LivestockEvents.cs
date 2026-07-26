@@ -29,7 +29,9 @@ public sealed record AnimalSoldEvent(
     Guid TenantId,
     Guid SoldBy,
     decimal SalePriceBdt,
-    DateOnly SaleDate) : IDomainEvent;
+    DateOnly SaleDate,
+    string? BuyerName,
+    decimal? SaleWeightKg) : IDomainEvent;
 
 /// <summary>
 /// Raised when an animal is recorded as dead.

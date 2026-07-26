@@ -49,6 +49,16 @@ public sealed class AuditSaveChangesInterceptor(
 
         foreach (var entry in context.ChangeTracker.Entries<AuditableEntity>())
         {
+            // ── Fix EF Core Graph Traversal for pre-generated Guids ──────────
+            // If an entity is added via a navigation property and its Id (Guid) is already set,
+            // EF Core might incorrectly assume it's an existing entity and mark it as Modified.
+            // A brand new entity will always have an empty RowVersion array.
+            if ((entry.State == EntityState.Modified || entry.State == EntityState.Unchanged) 
+                && entry.Entity.RowVersion.Length == 0)
+            {
+                entry.State = EntityState.Added;
+            }
+
             switch (entry.State)
             {
                 case EntityState.Added:

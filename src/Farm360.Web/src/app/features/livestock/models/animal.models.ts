@@ -82,6 +82,7 @@ export interface AnimalDto {
   tenantId: string;
   farmId: string;
   shedId?: string;
+  penId?: string;
   tagId: string;
   tagType: TagType;
   species: AnimalSpecies;
@@ -120,6 +121,7 @@ export interface AnimalListItemDto {
   status: AnimalStatus;
   farmId: string;
   shedId?: string;
+  penId?: string;
   latestWeightKg?: number;
   latestWeightDate?: string;
   adgKgPerDay?: number;
@@ -141,7 +143,6 @@ export interface PagedAnimalListDto {
 
 export interface RegisterAnimalRequest {
   farmId: string;
-  shedId?: string;
   tagId: string;
   tagType: TagType;
   species: AnimalSpecies;
@@ -163,6 +164,8 @@ export interface RecordWeightRequest {
 export interface SellAnimalRequest {
   salePriceBdt: number;
   saleDate: string;
+  buyerName?: string;
+  saleWeightKg?: number;
 }
 
 export interface QuarantineAnimalRequest {
@@ -177,7 +180,9 @@ export interface RecordDeathRequest {
 
 export interface TransferAnimalRequest {
   toShedId?: string;
+  toPenId?: string;
   transferDate: string;
+  reason?: string;
 }
 
 export interface AddPhotoRequest {
@@ -191,7 +196,6 @@ export interface AnimalListParams {
   pageNumber?: number;
   pageSize?: number;
   farmId?: string;
-  shedId?: string;
   species?: AnimalSpecies;
   sex?: AnimalSex;
   status?: AnimalStatus;

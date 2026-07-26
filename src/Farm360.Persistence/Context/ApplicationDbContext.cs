@@ -158,6 +158,28 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
         return await strategy.ExecuteAsync(operation);
     }
 
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        // Force EF Core to discover all navigation property changes first
+        ChangeTracker.DetectChanges();
+
+        // ── Fix EF Core Graph Traversal for pre-generated Guids ──────────
+        // This is a double-safety net (alongside the interceptor). If an entity is added 
+        // via a navigation property and its Id (Guid) is already set, EF Core might 
+        // incorrectly assume it's an existing entity and mark it as Modified or Unchanged.
+        // A brand new entity will always have an empty RowVersion array.
+        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+        {
+            if ((entry.State == EntityState.Modified || entry.State == EntityState.Unchanged) 
+                && entry.Entity.RowVersion.Length == 0)
+            {
+                entry.State = EntityState.Added;
+            }
+        }
+
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<ITransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
         var inner = await Database.BeginTransactionAsync(cancellationToken);

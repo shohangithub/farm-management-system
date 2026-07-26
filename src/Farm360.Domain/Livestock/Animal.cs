@@ -27,6 +27,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     private readonly List<WeightRecord> _weightRecords = [];
     private readonly List<BreedingRecord> _breedingRecords = [];
     private readonly List<AnimalPhoto> _photos = [];
+    private readonly List<AnimalMovement> _movements = [];
 
     // ── EF Core constructor (required by the ORM) ─────────────────────────────
     private Animal() { }
@@ -35,7 +36,6 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         Guid id,
         Guid tenantId,
         Guid farmId,
-        Guid? shedId,
         AnimalTag tag,
         AnimalSpecies species,
         string breedName,
@@ -48,7 +48,6 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         : base(id, tenantId)
     {
         FarmId = farmId;
-        ShedId = shedId;
         Tag = tag;
         Species = species;
         BreedName = breedName;
@@ -64,9 +63,6 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     // ── Identity ──────────────────────────────────────────────────────────────
     /// <summary>Farm this animal belongs to. FK to Farms table.</summary>
     public Guid FarmId { get; private set; }
-
-    /// <summary>Current shed assignment. Null = not assigned to a shed.</summary>
-    public Guid? ShedId { get; private set; }
 
     /// <summary>Owned Value Object — composite tag identifier (TagId + TagType).</summary>
     public AnimalTag Tag { get; private set; } = null!;
@@ -91,6 +87,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// <summary>Sale price in BDT. Set when animal is disposed.</summary>
     public decimal? SalePriceBdt { get; private set; }
     public DateOnly? SaleDate { get; private set; }
+    public string? BuyerName { get; private set; }
+    public decimal? SaleWeightKg { get; private set; }
 
     // ── Status ────────────────────────────────────────────────────────────────
     public AnimalStatus Status { get; private set; }
@@ -110,6 +108,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     public IReadOnlyCollection<WeightRecord> WeightRecords => _weightRecords.AsReadOnly();
     public IReadOnlyCollection<BreedingRecord> BreedingRecords => _breedingRecords.AsReadOnly();
     public IReadOnlyCollection<AnimalPhoto> Photos => _photos.AsReadOnly();
+    public IReadOnlyCollection<AnimalMovement> Movements => _movements.AsReadOnly();
+    
+    public AnimalMovement? CurrentMovement => _movements.FirstOrDefault(m => m.RemovedAtUtc == null);
 
     // ══════════════════════════════════════════════════════════════════════════
     // FACTORY METHOD — the only valid construction path
@@ -123,7 +124,6 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     public static Animal Create(
         Guid tenantId,
         Guid farmId,
-        Guid? shedId,
         AnimalTag tag,
         AnimalSpecies species,
         string breedName,
@@ -138,7 +138,6 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             Guid.NewGuid(),
             tenantId,
             farmId,
-            shedId,
             tag,
             species,
             breedName,
@@ -223,7 +222,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     ///   - SalePrice > 0.
     /// Raises <see cref="AnimalSoldEvent"/>.
     /// </summary>
-    public void Sell(decimal salePriceBdt, DateOnly saleDate, Guid soldBy)
+    public void Sell(decimal salePriceBdt, DateOnly saleDate, Guid soldBy, string? buyerName, decimal? saleWeightKg)
     {
         if (Status == AnimalStatus.Quarantined)
             throw new AnimalQuarantinedException(Tag.TagId);
@@ -240,6 +239,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         Status = AnimalStatus.Sold;
         SalePriceBdt = salePriceBdt;
         SaleDate = saleDate;
+        BuyerName = buyerName;
+        SaleWeightKg = saleWeightKg;
         DisposalReason = Enums.DisposalReason.Sale;
 
         RaiseDomainEvent(new AnimalSoldEvent(
@@ -249,7 +250,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             TenantId,
             soldBy,
             salePriceBdt,
-            saleDate));
+            saleDate,
+            buyerName,
+            saleWeightKg));
     }
 
     /// <summary>
@@ -313,16 +316,30 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     }
 
     /// <summary>
-    /// Transfers the animal to a different shed (or removes shed assignment).
+    /// Transfers the animal to a different shed and pen (or removes assignment).
     /// Raises <see cref="AnimalTransferredEvent"/>.
     /// </summary>
-    public void TransferToShed(Guid? toShedId, DateOnly transferDate)
+    public void TransferToShed(Guid? toShedId, Guid? toPenId, DateOnly transferDate, Guid transferredBy, string? reason = null)
     {
         if (Status is not (AnimalStatus.Active or AnimalStatus.Quarantined))
             throw new InvalidAnimalStateTransitionException(Status.ToString(), "Transfer");
 
-        var fromShedId = ShedId;
-        ShedId = toShedId;
+        var current = CurrentMovement;
+        var fromShedId = current?.ShedId;
+        
+        current?.MarkAsRemoved(transferDate.ToDateTime(TimeOnly.MinValue), transferredBy);
+
+        var movement = new AnimalMovement(
+            Guid.NewGuid(),
+            TenantId,
+            Id,
+            toShedId,
+            toPenId,
+            transferDate.ToDateTime(TimeOnly.MinValue),
+            transferredBy,
+            reason);
+
+        _movements.Add(movement);
 
         RaiseDomainEvent(new AnimalTransferredEvent(
             Guid.NewGuid(),

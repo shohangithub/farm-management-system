@@ -32,7 +32,6 @@ public sealed class AnimalCommandHandlerTests
     private Animal CreateAnimal() => Animal.Create(
         tenantId:        TenantId,
         farmId:          Guid.NewGuid(),
-        shedId:          null,
         tag:             AnimalTag.Create("B-001", TagType.EarTag),
         species:         AnimalSpecies.CattleBeef,
         breedName:       "Shahiwal",
@@ -59,7 +58,6 @@ public sealed class AnimalCommandHandlerTests
         var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
-            ShedId:              null,
             TagId:               "B-001",
             TagType:             TagType.EarTag,
             Species:             AnimalSpecies.CattleBeef,
@@ -85,7 +83,6 @@ public sealed class AnimalCommandHandlerTests
         var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
-            ShedId:              null,
             TagId:               "B-999",
             TagType:             TagType.Manual,
             Species:             AnimalSpecies.Goat,
@@ -149,7 +146,7 @@ public sealed class AnimalCommandHandlerTests
         _repo.GetByIdAsync(animal.Id, Arg.Any<CancellationToken>()).Returns(animal);
 
         var handler = new SellAnimalCommandHandler(_repo, _uow, _currentUser);
-        var command = new SellAnimalCommand(animal.Id, 80_000m, new DateOnly(2025, 7, 1));
+        var command = new SellAnimalCommand(animal.Id, 80_000m, new DateOnly(2025, 7, 1), null, null);
 
         await handler.Handle(command, CancellationToken.None);
 
@@ -166,7 +163,7 @@ public sealed class AnimalCommandHandlerTests
 
         var handler = new SellAnimalCommandHandler(_repo, _uow, _currentUser);
         var act = async () => await handler.Handle(
-            new SellAnimalCommand(Guid.NewGuid(), 80_000m, new DateOnly(2025, 7, 1)),
+            new SellAnimalCommand(Guid.NewGuid(), 80_000m, new DateOnly(2025, 7, 1), null, null),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NotFoundException>();

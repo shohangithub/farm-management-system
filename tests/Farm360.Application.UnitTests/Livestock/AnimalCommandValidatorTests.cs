@@ -30,7 +30,6 @@ public sealed class AnimalCommandValidatorTests
 
     private static RegisterAnimalCommand ValidRegisterCommand() => new(
         FarmId:              Guid.NewGuid(),
-        ShedId:              null,
         TagId:               "B-001",
         TagType:             TagType.EarTag,
         Species:             AnimalSpecies.CattleBeef,
@@ -210,7 +209,9 @@ public sealed class AnimalCommandValidatorTests
     private static SellAnimalCommand ValidSellCommand() => new(
         AnimalId:    Guid.NewGuid(),
         SalePriceBdt: 75_000m,
-        SaleDate:    DateOnly.FromDateTime(DateTime.UtcNow));
+        SaleDate:    DateOnly.FromDateTime(DateTime.UtcNow),
+        BuyerName:   null,
+        SaleWeightKg: null);
 
     [Fact]
     public void SellAnimal_ValidCommand_PassesValidation()
@@ -269,5 +270,14 @@ public sealed class AnimalCommandValidatorTests
         var result = QuarantineValidator.TestValidate(cmd);
 
         result.ShouldHaveValidationErrorFor(x => x.Reason);
+    }
+
+    [Fact]
+    public void Validator_WhenSalePriceIsZero_ShouldHaveError()
+    {
+        var command = new SellAnimalCommand(Guid.NewGuid(), 0m, new DateOnly(2025, 7, 1), null, null);
+        var result = SellValidator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.SalePriceBdt);
     }
 }
