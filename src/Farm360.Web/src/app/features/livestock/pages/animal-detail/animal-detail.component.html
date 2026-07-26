@@ -425,20 +425,140 @@
                   </td>
                   <td class="px-6 py-4 text-sm">
                     <ng-container *ngIf="br.isPregnancyConfirmed; else notConfirmed">
-                      <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon>
-                        Confirmed
-                      </span>
-                      <div class="text-xs text-gray-500 mt-0.5" *ngIf="br.expectedCalvingDate">Expected: {{ br.expectedCalvingDate | date:'shortDate' }}</div>
+                      <div class="flex flex-col gap-1">
+                        <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon>
+                          Confirmed
+                        </span>
+                        <div class="text-xs text-gray-500" *ngIf="br.expectedCalvingDate">Expected: {{ br.expectedCalvingDate | date:'shortDate' }}</div>
+                        <div *ngIf="br.actualCalvingDate" class="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                          Calved: {{ br.actualCalvingDate | date:'mediumDate' }} ({{ br.calvingOutcome || 'Live Birth' }})
+                        </div>
+                        <button *ngIf="!br.actualCalvingDate" (click)="onRecordCalving(br.id)" class="mt-1 inline-flex items-center gap-1 w-max px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors">
+                          <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">child_care</mat-icon>
+                          Record Calving
+                        </button>
+                      </div>
                     </ng-container>
                     <ng-template #notConfirmed>
-                      <span class="text-amber-600 dark:text-amber-400 font-medium">Pending Check</span>
+                      <div class="flex flex-col gap-1">
+                        <span class="text-amber-600 dark:text-amber-400 font-medium">Pending Check</span>
+                        <button (click)="onConfirmPregnancy(br.id)" class="inline-flex items-center gap-1 w-max px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors">
+                          <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">done</mat-icon>
+                          Confirm
+                        </button>
+                      </div>
                     </ng-template>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+        </div>
+      </mat-tab>
+
+      <!-- ─── Medical & Health Tab ───────────────────────────────────── -->
+      <mat-tab label="Medical & Health">
+        <div class="p-6 sm:p-8 space-y-8">
+          
+          <div *ngIf="!healthHistory()" class="flex justify-center py-8">
+            <div class="animate-pulse flex gap-2 items-center text-gray-500">
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+              <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
+          </div>
+
+          <ng-container *ngIf="healthHistory()">
+            <!-- Vaccinations -->
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-blue-500">vaccines</mat-icon>
+                  Vaccinations
+                </h3>
+              </div>
+
+              <div *ngIf="healthHistory()!.vaccinations.length === 0" class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">No vaccination records found.</p>
+              </div>
+
+              <div *ngIf="healthHistory()!.vaccinations.length > 0" class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Vaccine</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Batch</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Scheduled</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <tr *ngFor="let v of healthHistory()!.vaccinations" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                      <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ v.vaccineName }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500">{{ v.batchNumber }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500">{{ v.scheduledDate | date:'mediumDate' }}</td>
+                      <td class="px-4 py-3 text-sm">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                              [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-emerald-100 text-emerald-800' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800')">
+                          {{ v.status }}
+                        </span>
+                        <div class="text-[10px] text-gray-400 mt-0.5" *ngIf="v.administeredDate">On {{ v.administeredDate | date:'shortDate' }}</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Treatments -->
+            <div>
+              <div class="flex items-center justify-between mb-4 mt-8">
+                <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-amber-500">medical_services</mat-icon>
+                  Medical Treatments
+                </h3>
+              </div>
+
+              <div *ngIf="healthHistory()!.treatments.length === 0" class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">No medical treatments found.</p>
+              </div>
+
+              <div *ngIf="healthHistory()!.treatments.length > 0" class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Diagnosis</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Medication</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Dates</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Cost</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <tr *ngFor="let t of healthHistory()!.treatments" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                      <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ t.diagnosis }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500">
+                        {{ t.medicationName }}<br/>
+                        <span class="text-[10px] text-gray-400">{{ t.dosageAmount }} {{ t.dosageUnit }}</span>
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-500">
+                        {{ t.startDate | date:'shortDate' }}
+                        <span *ngIf="t.endDate"> - {{ t.endDate | date:'shortDate' }}</span>
+                      </td>
+                      <td class="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">৳{{ t.costBdt | number }}</td>
+                      <td class="px-4 py-3 text-sm">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                              [ngClass]="t.status === TreatmentStatus.Ongoing ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'">
+                          {{ t.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </ng-container>
         </div>
       </mat-tab>
 
@@ -752,6 +872,104 @@
       <button (click)="confirmMating()" [disabled]="!matingForm.date"
         class="px-4 py-2 text-sm font-semibold text-white bg-pink-600 rounded-xl hover:bg-pink-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
         Save Record
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Confirm Pregnancy Dialog Template ──────────────────────────── -->
+<ng-template #confirmPregnancyDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-emerald-500">check_circle</mat-icon>
+          Confirm Pregnancy
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Confirm pregnancy for this breeding record</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div *ngIf="confirmPregnancyForm.error" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-3 rounded-r-md shadow-sm flex items-start gap-2">
+        <mat-icon class="!text-red-500 !text-[18px] !w-[18px] !h-[18px] mt-0.5 flex-shrink-0">error_outline</mat-icon>
+        <p class="text-xs">{{ confirmPregnancyForm.error }}</p>
+      </div>
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Confirmation Date <span class="text-red-500">*</span></label>
+        <input type="date" [(ngModel)]="confirmPregnancyForm.confirmDate" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
+      </div>
+      
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Expected Calving Date <span class="text-red-500">*</span></label>
+        <input type="date" [(ngModel)]="confirmPregnancyForm.expectedCalvingDate" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="submitConfirmPregnancy()" [disabled]="!confirmPregnancyForm.confirmDate || !confirmPregnancyForm.expectedCalvingDate"
+        class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        Confirm Pregnancy
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Record Calving Dialog Template ─────────────────────────────── -->
+<ng-template #recordCalvingDialogTemplate>
+  <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-blue-500">child_care</mat-icon>
+          Record Calving
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Record calving details for this pregnancy</p>
+      </div>
+      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto">
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Calving Date <span class="text-red-500">*</span></label>
+        <input type="date" [(ngModel)]="recordCalvingForm.calvingDate" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+      </div>
+      
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Outcome <span class="text-red-500">*</span></label>
+        <select [(ngModel)]="recordCalvingForm.outcome" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="Live Birth">Live Birth</option>
+          <option value="Stillborn">Stillborn</option>
+          <option value="Abortion">Abortion</option>
+        </select>
+      </div>
+
+      <div class="space-y-1.5" *ngIf="recordCalvingForm.outcome === 'Live Birth'">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Number of Calves <span class="text-red-500">*</span></label>
+        <input type="number" [(ngModel)]="recordCalvingForm.calvesCount" min="1" max="10" required
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+      </div>
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+      <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button (click)="submitRecordCalving()" [disabled]="!recordCalvingForm.calvingDate"
+        class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        Record Calving
       </button>
     </div>
   </div>

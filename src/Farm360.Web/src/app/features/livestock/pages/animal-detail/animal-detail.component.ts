@@ -9,8 +9,10 @@ import { Subject, takeUntil }  from 'rxjs';
 import { AnimalService }       from '../../services/animal.service';
 import { ShedService }       from '../../../farms/services/shed.service';
 import { PenService }        from '../../../farms/services/pen.service';
+import { HealthService }     from '../../../health/services/health.service';
 import { ShedList }          from '../../../farms/models/shed.model';
 import { PenList }           from '../../../farms/models/pen.model';
+import { AnimalHealthHistoryDto, VaccinationStatus, TreatmentStatus } from '../../../health/models/health.models';
 import {
   AnimalDto, AnimalStatus, AnimalSex, AnimalMovementDto,
   SPECIES_LABELS, STATUS_LABELS, SEX_LABELS,
@@ -42,6 +44,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   private readonly shedSvc = inject(ShedService);
   private readonly penSvc  = inject(PenService);
   private readonly farmSvc = inject(FarmService);
+  private readonly healthSvc = inject(HealthService);
   private readonly dialog  = inject(MatDialog);
   private readonly router  = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -50,6 +53,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly error   = signal<string | null>(null);
   readonly animal  = signal<AnimalDto | null>(null);
+  readonly healthHistory = signal<AnimalHealthHistoryDto | null>(null);
 
   readonly farmName = signal<string | null>(null);
   readonly shedName = signal<string | null>(null);
@@ -57,6 +61,8 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
 
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex = AnimalSex;
+  readonly VaccinationStatus = VaccinationStatus;
+  readonly TreatmentStatus = TreatmentStatus;
 
   readonly Math = Math;
 
@@ -87,6 +93,22 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     isAI: false,
     sireAnimalId: '',
     sireExternalId: ''
+  };
+
+  @ViewChild('confirmPregnancyDialogTemplate') confirmPregnancyDialogTemplate!: TemplateRef<any>;
+  confirmPregnancyForm = {
+    recordId: '',
+    confirmDate: new Date().toISOString().split('T')[0],
+    expectedCalvingDate: '',
+    error: null as string | null
+  };
+
+  @ViewChild('recordCalvingDialogTemplate') recordCalvingDialogTemplate!: TemplateRef<any>;
+  recordCalvingForm = {
+    recordId: '',
+    calvingDate: new Date().toISOString().split('T')[0],
+    outcome: 'Live Birth',
+    calvesCount: 1
   };
 
   readonly sheds = signal<ShedList[]>([]);
@@ -131,6 +153,13 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     this.svc.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
       next:  a  => { 
         this.animal.set(a); 
+        
+        // Fetch Health History in parallel
+        this.healthSvc.getAnimalHealthHistory(id).subscribe({
+          next: h => this.healthHistory.set(h),
+          error: () => this.healthHistory.set(null)
+        });
+
         this.loading.set(false); 
         
         // Load Location Names
@@ -378,6 +407,84 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       next: () => {
         this.dialog.closeAll();
         this.snackBar.open('Mating recorded successfully!', 'Close', { duration: 3000 });
+        this.load();
+      }
+    });
+  }
+
+  onConfirmPregnancy(recordId: string): void {
+    const a = this.animal();
+    if (!a) return;
+    
+    // Estimate expected calving date: roughly 283 days for cows, adjusting based on species can be done if needed.
+    const expected = new Date();
+    expected.setDate(expected.getDate() + 283);
+
+    this.confirmPregnancyForm = {
+      recordId: recordId,
+      confirmDate: new Date().toISOString().split('T')[0],
+      expectedCalvingDate: expected.toISOString().split('T')[0],
+      error: null
+    };
+
+    this.dialog.open(this.confirmPregnancyDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  submitConfirmPregnancy(): void {
+    const a = this.animal();
+    if (!a || !this.confirmPregnancyForm.confirmDate || !this.confirmPregnancyForm.expectedCalvingDate) return;
+
+    this.confirmPregnancyForm.error = null;
+
+    this.svc.confirmPregnancy(a.id, this.confirmPregnancyForm.recordId, {
+      confirmDate: this.confirmPregnancyForm.confirmDate,
+      expectedCalvingDate: this.confirmPregnancyForm.expectedCalvingDate
+    }).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.snackBar.open('Pregnancy confirmed successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.load();
+      },
+      error: err => {
+        this.confirmPregnancyForm.error = err.error?.detail || err.error?.title || 'An error occurred while confirming pregnancy.';
+      }
+    });
+  }
+
+  onRecordCalving(recordId: string): void {
+    const a = this.animal();
+    if (!a) return;
+    
+    this.recordCalvingForm = {
+      recordId: recordId,
+      calvingDate: new Date().toISOString().split('T')[0],
+      outcome: 'Live Birth',
+      calvesCount: 1
+    };
+
+    this.dialog.open(this.recordCalvingDialogTemplate, {
+      width: '450px',
+      autoFocus: false,
+      panelClass: 'bg-transparent'
+    });
+  }
+
+  submitRecordCalving(): void {
+    const a = this.animal();
+    if (!a || !this.recordCalvingForm.calvingDate) return;
+
+    this.svc.recordCalving(a.id, this.recordCalvingForm.recordId, {
+      calvingDate: this.recordCalvingForm.calvingDate,
+      outcome: this.recordCalvingForm.outcome,
+      calvesCount: this.recordCalvingForm.calvesCount
+    }).subscribe({
+      next: () => {
+        this.dialog.closeAll();
+        this.snackBar.open('Calving recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
       }
     });

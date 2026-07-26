@@ -203,6 +203,17 @@ export interface AddPhotoRequest {
   caption?: string;
 }
 
+export interface ConfirmPregnancyRequest {
+  confirmDate: string;
+  expectedCalvingDate: string;
+}
+
+export interface RecordCalvingRequest {
+  calvingDate: string;
+  outcome: string;
+  calvesCount: number;
+}
+
 // ── Filter params ─────────────────────────────────────────────────────────────
 
 export interface AnimalListParams {

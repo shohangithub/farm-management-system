@@ -14,6 +14,8 @@ import {
   TransferAnimalRequest,
   AddPhotoRequest,
   WeightRecordDto,
+  ConfirmPregnancyRequest,
+  RecordCalvingRequest,
 } from '../models/animal.models';
 
 /**
@@ -94,11 +96,11 @@ export class AnimalService {
     return this.http.post(`${this.base}/${id}/breeding`, request).pipe(map(() => undefined));
   }
 
-  confirmPregnancy(id: string, recordId: string, request: any): Observable<void> {
+  confirmPregnancy(id: string, recordId: string, request: ConfirmPregnancyRequest): Observable<void> {
     return this.http.put(`${this.base}/${id}/breeding/${recordId}/pregnancy`, request).pipe(map(() => undefined));
   }
 
-  recordCalving(id: string, recordId: string, request: any): Observable<void> {
+  recordCalving(id: string, recordId: string, request: RecordCalvingRequest): Observable<void> {
     return this.http.put(`${this.base}/${id}/breeding/${recordId}/calving`, request).pipe(map(() => undefined));
   }
 

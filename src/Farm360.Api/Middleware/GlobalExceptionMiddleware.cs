@@ -156,6 +156,30 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
+            // Argument exception (often thrown by domain guards) → 400
+            ArgumentException argEx => (
+                HttpStatusCode.BadRequest,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/bad-request",
+                    Title = "Bad Request",
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Detail = argEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
+            // Invalid operation (often thrown by domain rules) → 400
+            InvalidOperationException invEx => (
+                HttpStatusCode.BadRequest,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/bad-request",
+                    Title = "Bad Request",
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Detail = invEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
             // All other exceptions → 500 (no detail in production)
             _ => (
                 HttpStatusCode.InternalServerError,
