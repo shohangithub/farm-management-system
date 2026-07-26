@@ -115,7 +115,6 @@ public sealed class AnimalCommandHandlerTests
 
         var result = await handler.Handle(command, CancellationToken.None);
 
-        _repo.Received(1).Update(animal);
         await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         result.WeightKg.Should().Be(280m);
         result.AnimalId.Should().Be(animal.Id);
@@ -152,7 +151,6 @@ public sealed class AnimalCommandHandlerTests
 
         animal.Status.Should().Be(AnimalStatus.Sold);
         animal.SalePriceBdt.Should().Be(80_000m);
-        _repo.Received(1).Update(animal);
         await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

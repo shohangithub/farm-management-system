@@ -88,7 +88,7 @@ public sealed class AnimalQueryHandlerTests
         var animals = new List<Animal> { CreateAnimal("B-001"), CreateAnimal("B-002") };
         _repo.GetPagedAsync(
             Arg.Any<int>(), Arg.Any<int>(),
-            Arg.Any<Guid?>(), Arg.Any<Guid?>(),
+            Arg.Any<Guid?>(), Arg.Any<Guid?>(), Arg.Any<Guid?>(),
             Arg.Any<AnimalSpecies?>(), Arg.Any<AnimalSex?>(),
             Arg.Any<AnimalStatus?>(), Arg.Any<string?>(),
             Arg.Any<string?>(), Arg.Any<bool>(),
@@ -111,7 +111,7 @@ public sealed class AnimalQueryHandlerTests
     {
         _repo.GetPagedAsync(
             Arg.Any<int>(), Arg.Is<int>(ps => ps == 100), // clamped
-            Arg.Any<Guid?>(), Arg.Any<Guid?>(),
+            Arg.Any<Guid?>(), Arg.Any<Guid?>(), Arg.Any<Guid?>(),
             Arg.Any<AnimalSpecies?>(), Arg.Any<AnimalSex?>(),
             Arg.Any<AnimalStatus?>(), Arg.Any<string?>(),
             Arg.Any<string?>(), Arg.Any<bool>(),
@@ -123,7 +123,7 @@ public sealed class AnimalQueryHandlerTests
 
         await _repo.Received(1).GetPagedAsync(
             Arg.Any<int>(), 100,
-            Arg.Any<Guid?>(), Arg.Any<Guid?>(),
+            Arg.Any<Guid?>(), Arg.Any<Guid?>(), Arg.Any<Guid?>(),
             Arg.Any<AnimalSpecies?>(), Arg.Any<AnimalSex?>(),
             Arg.Any<AnimalStatus?>(), Arg.Any<string?>(),
             Arg.Any<string?>(), Arg.Any<bool>(),
@@ -135,7 +135,7 @@ public sealed class AnimalQueryHandlerTests
     {
         _repo.GetPagedAsync(
             Arg.Is<int>(pn => pn == 1), Arg.Any<int>(),
-            Arg.Any<Guid?>(), Arg.Any<Guid?>(),
+            Arg.Any<Guid?>(), Arg.Any<Guid?>(), Arg.Any<Guid?>(),
             Arg.Any<AnimalSpecies?>(), Arg.Any<AnimalSex?>(),
             Arg.Any<AnimalStatus?>(), Arg.Any<string?>(),
             Arg.Any<string?>(), Arg.Any<bool>(),
