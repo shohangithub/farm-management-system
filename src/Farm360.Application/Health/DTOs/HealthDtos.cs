@@ -61,3 +61,37 @@ public sealed record DiseaseIncidentDto(
     IncidentStatus Status,
     string? Notes
 );
+
+public sealed record MortalityRecordDto(
+    Guid Id,
+    Guid AnimalId,
+    DateOnly DeathDate,
+    CauseOfDeath CauseOfDeath,
+    string? DiseaseName,
+    string? PostMortemNotes,
+    decimal? EstimatedEconomicLossBdt,
+    Guid? DiseaseIncidentId,
+    Guid RecordedByUserId
+);
+
+public sealed record VetVisitDto(
+    Guid Id,
+    Guid FarmId,
+    string VetName,
+    DateOnly VisitDate,
+    VetVisitType VisitType,
+    string? Purpose,
+    string? Findings,
+    string? Recommendations,
+    decimal? CostBdt,
+    DateOnly? NextVisitDate
+);
+
+public sealed record HealthDashboardDto(
+    int VaccinationsDueThisWeek,
+    int VaccinationsOverdue,
+    int ActiveTreatments,
+    int ActiveDiseaseIncidents,
+    int RecentMortalityCount,
+    decimal MonthlyHealthCostBdt
+);

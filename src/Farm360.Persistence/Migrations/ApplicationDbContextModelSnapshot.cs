@@ -438,6 +438,81 @@ namespace Farm360.Persistence.Migrations
                     b.ToTable("MedicalTreatments", "app");
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Health.MortalityRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AnimalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CauseOfDeath")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("DeathDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("DiseaseIncidentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DiseaseName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal?>("EstimatedEconomicLossBdt")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PostMortemNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("RecordedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimalId")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Mortality_AnimalId");
+
+                    b.HasIndex("DiseaseIncidentId");
+
+                    b.HasIndex("TenantId", "DeathDate")
+                        .HasDatabaseName("IX_Mortality_TenantId_Date");
+
+                    b.ToTable("MortalityRecords", "app");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Health.VaccinationEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -567,6 +642,62 @@ namespace Farm360.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("VaccinationProtocols", "app");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Health.VetVisit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("CostBdt")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Findings")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateOnly?>("NextVisitDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Purpose")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Recommendations")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("VetName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateOnly>("VisitDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("VisitType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FarmId")
+                        .HasDatabaseName("IX_VetVisits_FarmId");
+
+                    b.HasIndex("TenantId", "VisitDate")
+                        .HasDatabaseName("IX_VetVisits_TenantId_Date");
+
+                    b.ToTable("VetVisits", "app");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Identity.Permission", b =>
@@ -1998,6 +2129,20 @@ namespace Farm360.Persistence.Migrations
 
                     b.Navigation("WithdrawalPeriod")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Health.MortalityRecord", b =>
+                {
+                    b.HasOne("Farm360.Domain.Livestock.Animal", null)
+                        .WithMany()
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Farm360.Domain.Health.DiseaseIncident", null)
+                        .WithMany()
+                        .HasForeignKey("DiseaseIncidentId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Farm360.Domain.Health.VaccinationEvent", b =>

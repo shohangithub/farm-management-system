@@ -54,3 +54,27 @@ public enum VetVisitType
     VaccinationDrive = 3,
     Surgery          = 4,
 }
+
+/// <summary>
+/// Cause of death for a mortality record.
+/// </summary>
+public enum CauseOfDeath
+{
+    Disease       = 1,
+    Accident      = 2,
+    NaturalCauses = 3,
+    Unknown       = 4,
+    Slaughter     = 5,
+}
+
+/// <summary>
+/// Frequency for deworming calendar schedules.
+/// </summary>
+public enum DewormingFrequency
+{
+    Monthly    = 1,
+    Quarterly  = 2,
+    BiAnnual   = 3,
+    Annual     = 4,
+    Custom     = 5,
+}

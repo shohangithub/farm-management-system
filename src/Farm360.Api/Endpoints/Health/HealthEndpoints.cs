@@ -1,8 +1,17 @@
 using Farm360.Application.Health.Commands.DiseaseIncidents;
 using Farm360.Application.Health.Commands.MedicalTreatments;
+using Farm360.Application.Health.Commands.MortalityRecords;
 using Farm360.Application.Health.Commands.VaccinationEvents;
+using Farm360.Application.Health.Commands.VaccinationProtocols;
+using Farm360.Application.Health.Commands.VetVisits;
 using Farm360.Application.Health.Queries.AnimalHealth;
+using Farm360.Application.Health.Queries.Dashboard;
+using Farm360.Application.Health.Queries.MedicalTreatments;
+using Farm360.Application.Health.Queries.MortalityRecords;
 using Farm360.Application.Health.Queries.VaccinationEvents;
+using Farm360.Application.Health.Queries.VaccinationProtocols;
+using Farm360.Application.Health.Queries.VetVisits;
+using Farm360.Domain.Health.Enums;
 using Farm360.Persistence.Seed;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +26,66 @@ public static class HealthEndpoints
             .WithTags("Health & Veterinary")
             .RequireAuthorization();
 
+        // ── Dashboard ────────────────────────────────────────────────────────────
+
+        group.MapGet("/dashboard", async (
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetHealthDashboardQuery(), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get health dashboard summary stats");
+
+        // ── Vaccination Protocols ────────────────────────────────────────────────
+
+        group.MapPost("/protocols", async (
+            [FromBody] CreateVaccinationProtocolCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Ok(new { Id = id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
+        .WithSummary("Create a new vaccination protocol");
+
+        group.MapGet("/protocols", async (
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? searchTerm = null,
+            [FromServices] ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetVaccinationProtocolsQuery(pageNumber, pageSize, searchTerm), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get paginated list of vaccination protocols");
+
+        group.MapGet("/protocols/{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetVaccinationProtocolDetailQuery(id), ct);
+            return result is not null ? Results.Ok(result) : Results.NotFound();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get details of a vaccination protocol");
+
+        group.MapPost("/protocols/assign", async (
+            [FromBody] AssignProtocolToAnimalsCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(command, ct);
+            return Results.Ok();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
+        .WithSummary("Assign a vaccination protocol to a list of animals");
+
         // ── Vaccinations ─────────────────────────────────────────────────────────
 
         group.MapPost("/vaccinations/schedule", async (
@@ -28,7 +97,7 @@ public static class HealthEndpoints
             return Results.Ok(new { Id = eventId });
         })
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
-        .WithSummary("Schedule a vaccination for an animal");
+        .WithSummary("Schedule a single vaccination for an animal");
 
         group.MapPut("/vaccinations/{id:guid}/administer", async (
             [FromRoute] Guid id,
@@ -68,6 +137,31 @@ public static class HealthEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
         .WithSummary("Log a new medical treatment");
 
+        group.MapGet("/treatments", async (
+            [FromQuery] Guid? animalId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromServices] ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetTreatmentListQuery(animalId, pageNumber, pageSize), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get paginated list of medical treatments");
+
+        group.MapPut("/treatments/{id:guid}/status", async (
+            [FromRoute] Guid id,
+            [FromBody] UpdateTreatmentStatusRequest request,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new UpdateTreatmentStatusCommand(id, request.Status, request.Notes), ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Update status of a medical treatment");
+
         // ── Disease Incidents ────────────────────────────────────────────────────
 
         group.MapPost("/incidents", async (
@@ -81,6 +175,69 @@ public static class HealthEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
         .WithSummary("Report a new disease incident or outbreak");
 
+        group.MapPut("/incidents/{id:guid}/status", async (
+            [FromRoute] Guid id,
+            [FromBody] UpdateIncidentStatusRequest request,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new UpdateDiseaseIncidentCommand(id, request.Status, request.AffectedAnimalCount, request.Notes), ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Update status and affected count of an incident");
+
+        // ── Mortality Records ────────────────────────────────────────────────────
+
+        group.MapPost("/mortality", async (
+            [FromBody] RecordMortalityCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Ok(new { Id = id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
+        .WithSummary("Record an animal death");
+
+        group.MapGet("/mortality", async (
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromServices] ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetMortalityRecordsQuery(pageNumber, pageSize), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get paginated list of mortality records");
+
+        // ── Vet Visits ───────────────────────────────────────────────────────────
+
+        group.MapPost("/vet-visits", async (
+            [FromBody] CreateVetVisitCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Ok(new { Id = id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
+        .WithSummary("Log a vet visit");
+
+        group.MapGet("/vet-visits", async (
+            [FromQuery] Guid? farmId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromServices] ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetVetVisitListQuery(farmId, pageNumber, pageSize), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get paginated list of vet visits");
+
         // ── Animal Health History ────────────────────────────────────────────────
 
         group.MapGet("/animals/{animalId:guid}/history", async (
@@ -92,10 +249,12 @@ public static class HealthEndpoints
             return Results.Ok(result);
         })
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
-        .WithSummary("Get complete health history (vaccinations and treatments) for an animal");
+        .WithSummary("Get complete health history for an animal");
 
         return app;
     }
 }
 
 public sealed record AdministerVaccinationRequest(DateOnly AdministeredDate, string? Notes);
+public sealed record UpdateTreatmentStatusRequest(TreatmentStatus Status, string? Notes);
+public sealed record UpdateIncidentStatusRequest(IncidentStatus Status, int AffectedAnimalCount, string? Notes);

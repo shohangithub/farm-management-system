@@ -119,6 +119,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<VaccinationEvent> VaccinationEvents => Set<VaccinationEvent>();
     public DbSet<MedicalTreatment> MedicalTreatments => Set<MedicalTreatment>();
     public DbSet<DiseaseIncident> DiseaseIncidents => Set<DiseaseIncident>();
+    public DbSet<MortalityRecord> MortalityRecords => Set<MortalityRecord>();
+    public DbSet<VetVisit> VetVisits => Set<VetVisit>();
 
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;

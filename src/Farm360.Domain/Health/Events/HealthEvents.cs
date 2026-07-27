@@ -46,3 +46,24 @@ public sealed record DiseaseIncidentReportedEvent(
     IncidentSeverity Severity,
     DateOnly IncidentDate
 ) : IDomainEvent;
+
+public sealed record MortalityRecordedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid MortalityRecordId,
+    Guid TenantId,
+    Guid AnimalId,
+    CauseOfDeath Cause,
+    DateOnly DeathDate
+) : IDomainEvent;
+
+public sealed record VetVisitCreatedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid VetVisitId,
+    Guid TenantId,
+    Guid FarmId,
+    string VetName,
+    VetVisitType VisitType,
+    DateOnly VisitDate
+) : IDomainEvent;

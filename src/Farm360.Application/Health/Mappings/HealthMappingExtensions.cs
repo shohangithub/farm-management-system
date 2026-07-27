@@ -73,4 +73,34 @@ public static class HealthMappingExtensions
             incident.Notes
         );
     }
+    public static MortalityRecordDto ToDto(this MortalityRecord record)
+    {
+        return new MortalityRecordDto(
+            record.Id,
+            record.AnimalId,
+            record.DeathDate,
+            record.CauseOfDeath,
+            record.DiseaseName,
+            record.PostMortemNotes,
+            record.EstimatedEconomicLossBdt,
+            record.DiseaseIncidentId,
+            record.RecordedByUserId
+        );
+    }
+
+    public static VetVisitDto ToDto(this VetVisit visit)
+    {
+        return new VetVisitDto(
+            visit.Id,
+            visit.FarmId,
+            visit.VetName,
+            visit.VisitDate,
+            visit.VisitType,
+            visit.Purpose,
+            visit.Findings,
+            visit.Recommendations,
+            visit.CostBdt,
+            visit.NextVisitDate
+        );
+    }
 }

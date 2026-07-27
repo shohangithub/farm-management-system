@@ -67,6 +67,9 @@ public static class PersistenceServiceExtensions
         services.AddScoped<IVaccinationRepository, VaccinationRepository>();
         services.AddScoped<IMedicalTreatmentRepository, MedicalTreatmentRepository>();
         services.AddScoped<IDiseaseIncidentRepository, DiseaseIncidentRepository>();
+        services.AddScoped<IMortalityRecordRepository, MortalityRecordRepository>();
+        services.AddScoped<IVetVisitRepository, VetVisitRepository>();
+        services.AddScoped<IHealthDashboardRepository, HealthDashboardRepository>();
 
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();

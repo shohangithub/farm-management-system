@@ -1,0 +1,192 @@
+<div class="px-6 py-8 mx-auto max-w-7xl animate-fade-in">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="mr-3 text-green-600 scale-150 transform">health_and_safety</mat-icon>
+        Health Dashboard
+      </h1>
+      <p class="mt-2 text-sm text-gray-500 font-medium">Monitor farm health, treatments, and vaccination schedules.</p>
+    </div>
+    
+    <div class="flex gap-3">
+      <button mat-flat-button color="primary" class="!rounded-full !px-6 !py-1 shadow-md hover:shadow-lg transition-shadow" (click)="openScheduleVaccinationDialog()">
+        <mat-icon>vaccines</mat-icon>
+        Schedule Vaccine
+      </button>
+      <button mat-stroked-button class="!rounded-full !px-6 !py-1 !border-green-600 !text-green-700 bg-green-50 hover:bg-green-100" (click)="openLogTreatmentDialog()">
+        <mat-icon>medical_services</mat-icon>
+        Log Treatment
+      </button>
+      <button mat-stroked-button color="warn" class="!rounded-full !px-6 !py-1 bg-red-50 hover:bg-red-100" (click)="openRecordMortalityDialog()">
+        <mat-icon>warning</mat-icon>
+        Record Mortality
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <mat-icon class="text-red-500">error</mat-icon>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+        <button mat-button color="warn" (click)="loadDashboard()" class="mt-2">Try Again</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && !error && dashboardData" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Vaccinations Due -->
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100 cursor-pointer" routerLink="../vaccinations">
+      <div class="h-2 bg-blue-500 w-full"></div>
+      <mat-card-content class="!p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-xl bg-blue-50 text-blue-600 mr-4">
+            <mat-icon class="transform scale-125">event_available</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Vaccines Due</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ dashboardData.vaccinationsDueThisWeek }}</h3>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+          <span class="text-gray-600">Scheduled for this week</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Vaccinations Overdue -->
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100 cursor-pointer" routerLink="../vaccinations">
+      <div class="h-2 bg-red-500 w-full"></div>
+      <mat-card-content class="!p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-xl bg-red-50 text-red-600 mr-4">
+            <mat-icon class="transform scale-125">event_busy</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Overdue Vaccines</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ dashboardData.vaccinationsOverdue }}</h3>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+          <mat-icon class="text-red-500 scale-75 mr-1">warning</mat-icon>
+          <span class="text-red-600 font-medium">Requires immediate action</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Active Treatments -->
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100 cursor-pointer" routerLink="../treatments">
+      <div class="h-2 bg-purple-500 w-full"></div>
+      <mat-card-content class="!p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-xl bg-purple-50 text-purple-600 mr-4">
+            <mat-icon class="transform scale-125">healing</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Active Treatments</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ dashboardData.activeTreatments }}</h3>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+          <span class="text-gray-600">Ongoing medical treatments</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Active Incidents -->
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100 cursor-pointer" routerLink="../incidents">
+      <div class="h-2 bg-orange-500 w-full"></div>
+      <mat-card-content class="!p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-xl bg-orange-50 text-orange-600 mr-4">
+            <mat-icon class="transform scale-125">coronavirus</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Active Incidents</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ dashboardData.activeIncidents }}</h3>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+          <span class="text-gray-600">Unresolved disease incidents</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Mortalities -->
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100 cursor-pointer" routerLink="../mortality-records">
+      <div class="h-2 bg-gray-800 w-full"></div>
+      <mat-card-content class="!p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-xl bg-gray-100 text-gray-700 mr-4">
+            <mat-icon class="transform scale-125">sentiment_very_dissatisfied</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Mortalities (30d)</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ dashboardData.recentMortalityCount }}</h3>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+          <span class="text-gray-600">Animals lost in last 30 days</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Monthly Health Cost -->
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100">
+      <div class="h-2 bg-green-500 w-full"></div>
+      <mat-card-content class="!p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-xl bg-green-50 text-green-600 mr-4">
+            <mat-icon class="transform scale-125">payments</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Health Costs (30d)</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">৳ {{ dashboardData.monthlyHealthCost | number:'1.0-0' }}</h3>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+          <span class="text-gray-600">Treatments and Vet visits</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  
+  <!-- Quick Navigation / Secondary Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6" *ngIf="!isLoading && !error">
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 cursor-pointer bg-gradient-to-r from-blue-50 to-indigo-50" routerLink="../vaccination-protocols">
+      <mat-card-content class="!p-6 flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-white shadow-sm text-blue-600 mr-4">
+            <mat-icon>library_books</mat-icon>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">Vaccination Protocols</h3>
+            <p class="text-sm text-gray-600">Manage standard vaccination schedules for species</p>
+          </div>
+        </div>
+        <mat-icon class="text-gray-400">chevron_right</mat-icon>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="!rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 cursor-pointer bg-gradient-to-r from-teal-50 to-emerald-50" routerLink="../vet-visits">
+      <mat-card-content class="!p-6 flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-white shadow-sm text-teal-600 mr-4">
+            <mat-icon>local_hospital</mat-icon>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">Veterinary Visits</h3>
+            <p class="text-sm text-gray-600">Track professional vet visits and recommendations</p>
+          </div>
+        </div>
+        <mat-icon class="text-gray-400">chevron_right</mat-icon>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

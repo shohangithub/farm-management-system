@@ -57,6 +57,29 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
             .ToListAsync(ct);
     }
 
+    public async Task<(IReadOnlyList<VaccinationProtocol> Items, int TotalCount)> GetPagedProtocolsAsync(int pageNumber, int pageSize, string? searchTerm, CancellationToken ct = default)
+    {
+        var query = context.VaccinationProtocols
+            .Include(p => p.Steps)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(p => p.Title.Contains(searchTerm));
+        }
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderBy(p => p.Title)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return (items, totalCount);
+    }
+
     public void AddEvent(VaccinationEvent @event) => context.VaccinationEvents.Add(@event);
+    public void AddEvents(IEnumerable<VaccinationEvent> events) => context.VaccinationEvents.AddRange(events);
     public void UpdateEvent(VaccinationEvent @event) => context.VaccinationEvents.Update(@event);
 }

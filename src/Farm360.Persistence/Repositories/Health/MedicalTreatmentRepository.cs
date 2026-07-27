@@ -31,6 +31,26 @@ internal sealed class MedicalTreatmentRepository(ApplicationDbContext context) :
                             mt.Status == TreatmentStatus.Ongoing, ct);
     }
 
+    public async Task<(IReadOnlyList<MedicalTreatment> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, Guid? animalId, CancellationToken ct = default)
+    {
+        var query = context.MedicalTreatments.AsQueryable();
+
+        if (animalId.HasValue)
+        {
+            query = query.Where(mt => mt.AnimalId == animalId.Value);
+        }
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderByDescending(mt => mt.StartDate)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return (items, totalCount);
+    }
+
     public void Add(MedicalTreatment treatment) => context.MedicalTreatments.Add(treatment);
     public void Update(MedicalTreatment treatment) => context.MedicalTreatments.Update(treatment);
 }

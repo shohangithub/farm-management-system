@@ -1,0 +1,114 @@
+<div class="px-6 py-8 mx-auto max-w-7xl animate-fade-in">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center">
+        <mat-icon class="mr-3 text-purple-600 scale-150 transform">healing</mat-icon>
+        Medical Treatments
+      </h1>
+      <p class="mt-2 text-sm text-gray-500 font-medium">Log and track medication, dosages, and withdrawal periods.</p>
+    </div>
+    
+    <div>
+      <button mat-flat-button color="primary" class="!rounded-full !px-6 !py-1 shadow-md hover:shadow-lg transition-shadow" (click)="openLogTreatmentDialog()">
+        <mat-icon>add</mat-icon>
+        Log Treatment
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="!rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="relative min-h-[300px]">
+      <div *ngIf="isLoading" class="absolute inset-0 z-10 flex justify-center items-center bg-white/70 backdrop-blur-sm">
+        <mat-spinner diameter="48"></mat-spinner>
+      </div>
+
+      <table mat-table [dataSource]="dataSource" class="w-full">
+        
+        <ng-container matColumnDef="animalId">
+          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Animal ID</th>
+          <td mat-cell *matCellDef="let element" class="font-medium text-gray-900"> {{element.animalId | slice:0:8}}... </td>
+        </ng-container>
+
+        <ng-container matColumnDef="diagnosis">
+          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Diagnosis</th>
+          <td mat-cell *matCellDef="let element" class="text-gray-700"> {{element.diagnosis}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="medicationName">
+          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Medication</th>
+          <td mat-cell *matCellDef="let element">
+            <div>
+              <span class="text-gray-900 font-medium">{{element.medicationName}}</span>
+              <div class="text-xs text-gray-500">{{element.dosageAmount}} {{element.dosageUnit}}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="startDate">
+          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Date</th>
+          <td mat-cell *matCellDef="let element" class="text-gray-600"> {{element.startDate | date:'mediumDate'}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Status</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-chip-set>
+              <mat-chip [class.bg-blue-100]="element.status === treatmentStatus.Ongoing" [class.text-blue-800]="element.status === treatmentStatus.Ongoing"
+                        [class.bg-green-100]="element.status === treatmentStatus.Completed" [class.text-green-800]="element.status === treatmentStatus.Completed"
+                        [class.bg-red-100]="element.status === treatmentStatus.Failed" [class.text-red-800]="element.status === treatmentStatus.Failed"
+                        [class.bg-gray-100]="element.status === treatmentStatus.Discontinued" [class.text-gray-800]="element.status === treatmentStatus.Discontinued"
+                        class="!text-xs !min-h-0 !py-1">
+                {{ element.status }}
+              </mat-chip>
+            </mat-chip-set>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="cost">
+          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Cost</th>
+          <td mat-cell *matCellDef="let element" class="text-gray-900 font-medium">
+            ৳ {{element.costBdt | number:'1.2-2'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="text-right font-bold text-gray-700 uppercase text-xs tracking-wider">Actions</th>
+          <td mat-cell *matCellDef="let element" class="text-right space-x-2">
+            <button mat-icon-button [matMenuTriggerFor]="menu" *ngIf="element.status === treatmentStatus.Ongoing">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="updateStatus(element, treatmentStatus.Completed)">
+                <mat-icon class="text-green-600">check_circle</mat-icon>
+                <span>Mark Completed</span>
+              </button>
+              <button mat-menu-item (click)="updateStatus(element, treatmentStatus.Failed)">
+                <mat-icon class="text-red-600">cancel</mat-icon>
+                <span>Mark Failed</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50 border-b border-gray-100"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors border-b border-gray-50"></tr>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && dataSource.length === 0" class="py-16 flex flex-col items-center justify-center text-gray-500">
+        <mat-icon class="text-6xl mb-4 text-gray-300 scale-[2]">medical_services</mat-icon>
+        <p class="text-lg font-medium text-gray-600">No treatments found</p>
+        <p class="text-sm">Log a new treatment to start tracking animal health.</p>
+        <button mat-flat-button color="primary" class="mt-4 !rounded-full" (click)="openLogTreatmentDialog()">Log Treatment</button>
+      </div>
+    </div>
+
+    <mat-paginator [length]="totalItems"
+                   [pageSize]="pageSize"
+                   [pageSizeOptions]="[5, 10, 25, 100]"
+                   [pageIndex]="pageIndex"
+                   (page)="onPageChange($event)"
+                   aria-label="Select page">
+    </mat-paginator>
+  </mat-card>
+</div>

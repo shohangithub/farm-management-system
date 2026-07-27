@@ -1,0 +1,89 @@
+<div class="px-6 py-8 mx-auto max-w-4xl animate-fade-in">
+  <!-- Header -->
+  <div class="mb-6 flex items-center text-gray-500">
+    <a routerLink=".." class="hover:text-blue-600 transition-colors flex items-center">
+      <mat-icon class="mr-1 scale-75">arrow_back</mat-icon>
+      Back to Protocols
+    </a>
+  </div>
+
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+    <p class="text-sm text-red-700 flex items-center">
+      <mat-icon class="mr-2">error</mat-icon>
+      {{ error }}
+    </p>
+  </div>
+
+  <ng-container *ngIf="!isLoading && protocol">
+    <div class="flex items-start justify-between mb-8">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ protocol.title }}</h1>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="protocol.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+            {{ protocol.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="text-gray-600 flex items-center">
+          <mat-icon class="mr-1 scale-75">pets</mat-icon>
+          Target Species: <strong class="ml-1 text-gray-900">{{ protocol.targetSpecies }}</strong>
+        </p>
+      </div>
+      
+      <button mat-flat-button color="primary" class="!rounded-full shadow-md">
+        <mat-icon>edit</mat-icon>
+        Edit Protocol
+      </button>
+    </div>
+
+    <mat-card class="!rounded-2xl shadow-sm border border-gray-100 mb-8">
+      <mat-card-header class="!pb-0 !pt-6 !px-6">
+        <mat-icon mat-card-avatar class="text-blue-600 transform scale-125">info</mat-icon>
+        <mat-card-title class="!text-lg font-bold">Description</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="!p-6">
+        <p class="text-gray-700 leading-relaxed">{{ protocol.description || 'No description provided for this protocol.' }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+      <mat-icon class="mr-2 text-indigo-600">format_list_numbered</mat-icon>
+      Vaccination Schedule
+    </h2>
+
+    <mat-card class="!rounded-2xl shadow-sm border border-gray-100">
+      <mat-list>
+        <ng-container *ngFor="let step of protocol.steps; let last = last">
+          <mat-list-item class="!h-auto !py-4">
+            <mat-icon matListItemIcon class="text-blue-500 bg-blue-50 rounded-full !p-2 !w-10 !h-10">vaccines</mat-icon>
+            <div matListItemTitle class="font-bold text-gray-900 !mb-1 text-lg">{{ step.stepName }}</div>
+            <div matListItemLine class="text-gray-600 space-y-1">
+              <div class="flex items-center">
+                <mat-icon class="scale-[0.6] -ml-1 text-gray-400">calendar_today</mat-icon>
+                <span>Target Age: <strong>{{ step.targetAgeDays }} days</strong></span>
+              </div>
+              <div class="flex items-center">
+                <mat-icon class="scale-[0.6] -ml-1 text-gray-400">medication</mat-icon>
+                <span>Vaccine: <strong>{{ step.vaccineName }}</strong></span>
+              </div>
+              <div class="flex items-center" *ngIf="step.dosageInstruction">
+                <mat-icon class="scale-[0.6] -ml-1 text-gray-400">info</mat-icon>
+                <span>Dosage: {{ step.dosageInstruction }}</span>
+              </div>
+            </div>
+          </mat-list-item>
+          <mat-divider *ngIf="!last" class="!mx-4"></mat-divider>
+        </ng-container>
+
+        <div *ngIf="!protocol.steps.length" class="p-8 text-center text-gray-500">
+          <mat-icon class="text-4xl text-gray-300 mb-2">list_alt</mat-icon>
+          <p>No steps defined for this protocol.</p>
+        </div>
+      </mat-list>
+    </mat-card>
+  </ng-container>
+</div>

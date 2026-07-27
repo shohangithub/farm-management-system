@@ -8,6 +8,7 @@ export enum VaccinationStatus {
 export enum TreatmentStatus {
   Ongoing = 'Ongoing',
   Completed = 'Completed',
+  Failed = 'Failed',
   Discontinued = 'Discontinued'
 }
 
@@ -22,6 +23,44 @@ export enum IncidentStatus {
   Reported = 'Reported',
   UnderTreatment = 'UnderTreatment',
   Resolved = 'Resolved'
+}
+
+export enum CauseOfDeath {
+  Disease = 'Disease',
+  Injury = 'Injury',
+  Natural = 'Natural',
+  Predator = 'Predator',
+  Unknown = 'Unknown'
+}
+
+export enum VetVisitType {
+  Routine = 'Routine',
+  Emergency = 'Emergency',
+  FollowUp = 'FollowUp'
+}
+
+export enum AnimalSpecies {
+  Cattle = 'Cattle',
+  Sheep = 'Sheep',
+  Goat = 'Goat',
+  Poultry = 'Poultry'
+}
+
+export interface VaccinationProtocolStepDto {
+  id: string;
+  stepName: string;
+  targetAgeDays: number;
+  vaccineName: string;
+  dosageInstruction: string;
+}
+
+export interface VaccinationProtocolDto {
+  id: string;
+  title: string;
+  targetSpecies: string;
+  description?: string;
+  isActive: boolean;
+  steps: VaccinationProtocolStepDto[];
 }
 
 export interface VaccinationEventDto {
@@ -63,6 +102,40 @@ export interface DiseaseIncidentDto {
   affectedAnimalCount: number;
   status: IncidentStatus;
   notes?: string;
+}
+
+export interface MortalityRecordDto {
+  id: string;
+  animalId: string;
+  deathDate: string;
+  causeOfDeath: string;
+  diseaseName?: string;
+  postMortemNotes?: string;
+  estimatedEconomicLossBdt?: number;
+  diseaseIncidentId?: string;
+  recordedByUserId: string;
+}
+
+export interface VetVisitDto {
+  id: string;
+  farmId: string;
+  vetName: string;
+  visitDate: string;
+  visitType: string;
+  purpose?: string;
+  findings?: string;
+  recommendations?: string;
+  costBdt?: number;
+  nextVisitDate?: string;
+}
+
+export interface HealthDashboardDto {
+  vaccinationsDueThisWeek: number;
+  vaccinationsOverdue: number;
+  activeTreatments: number;
+  activeIncidents: number;
+  recentMortalityCount: number;
+  monthlyHealthCost: number;
 }
 
 export interface AnimalHealthHistoryDto {
