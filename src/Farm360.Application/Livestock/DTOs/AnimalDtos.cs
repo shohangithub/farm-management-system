@@ -24,6 +24,8 @@ public sealed record AnimalDto(
     decimal? AcquisitionPriceBdt,
     decimal? SalePriceBdt,
     DateOnly? SaleDate,
+    string? BuyerName,
+    decimal? SaleWeightKg,
     AnimalStatus Status,
     string? QuarantineReason,
     DisposalReason? DisposalReason,

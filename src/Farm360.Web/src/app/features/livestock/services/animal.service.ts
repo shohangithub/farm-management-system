@@ -16,7 +16,8 @@ import {
   WeightRecordDto,
   ConfirmPregnancyRequest,
   RecordCalvingRequest,
-  BcsRecordDto
+  BcsRecordDto,
+  RecordMatingRequest
 } from '../models/animal.models';
 
 /**
@@ -38,6 +39,7 @@ export class AnimalService {
     if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
     if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
     if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.batchId)    httpParams = httpParams.set('batchId', params.batchId);
     if (params.shedId)     httpParams = httpParams.set('shedId', params.shedId);
     if (params.penId)      httpParams = httpParams.set('penId', params.penId);
     if (params.species != null) httpParams = httpParams.set('species', params.species);
@@ -102,7 +104,7 @@ export class AnimalService {
     return this.http.post<AnimalPhotoDto>(`${this.base}/${id}/photos/upload`, formData);
   }
 
-  recordMating(id: string, request: any): Observable<void> {
+  recordMating(id: string, request: RecordMatingRequest): Observable<void> {
     return this.http.post(`${this.base}/${id}/breeding`, request).pipe(map(() => undefined));
   }
 

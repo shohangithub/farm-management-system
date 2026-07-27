@@ -5,6 +5,15 @@ All notable changes to the Farm360 AI project will be documented in this file.
 ## [Unreleased]
 
 ### Refactored & Hardened (Enterprise Architecture Sprint)
+- **Livestock Module Production-Readiness Fixes**:
+  - Implemented missing FluentValidation validators for all Livestock commands (`RecordBcsCommand`, `RecordMatingCommand`, `ConfirmPregnancyCommand`, `RecordCalvingCommand`, `CreateBatchCommand`, `UploadAnimalPhotoCommand`, `TransferAnimalCommand`).
+  - Enforced a maximum of 5 photos per animal in the domain layer.
+  - Added batch filtering to the `GetAnimalList` API and repository.
+  - Added strict parameter typing for `AnimalService.recordMating()` in the frontend.
+  - Surfaced `BuyerName` and `SaleWeightKg` to the `AnimalDto`.
+  - Fixed pregnancy confirmation date validation rules.
+  - Removed redundant manual tenant checks and aligned with EF Core Global Query Filter.
+  - Standardized error handling to use `NotFoundException` instead of `ArgumentException`.
 - **EF Core Global Query Filter Combination** — Fixed EF Core filter overwriting issue by combining `TenantId == CurrentTenantId` and `IsDeleted == false` into a single combined Lambda Expression per entity type in `ApplicationDbContext.OnModelCreating`.
 - **AuditSaveChangesInterceptor** — Hardened interceptor to automatically populate `TenantId` on `EntityState.Added` if `TenantId == Guid.Empty` using domain `SetTenantId()` helper, preventing unassigned tenant IDs and enforcing cross-tenant write boundaries.
 - **Multi-Channel Tenant Resolution** — Refactored `TenantResolutionMiddleware` to support hierarchical resolution strategies: (1) JWT claim `tenant_id`, (2) `X-Tenant-Id` HTTP Header, (3) Host Subdomain (`{slug}.farm360.ai`). Validates active tenant state against `Tenant` aggregate root and Redis cache.

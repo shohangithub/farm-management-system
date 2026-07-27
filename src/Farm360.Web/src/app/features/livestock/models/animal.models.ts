@@ -212,6 +212,13 @@ export interface TransferAnimalRequest {
   reason?: string;
 }
 
+export interface RecordMatingRequest {
+  matingDate: string;
+  sireAnimalId?: string;
+  sireExternalId?: string;
+  isArtificialInsemination: boolean;
+}
+
 export interface AddPhotoRequest {
   photoUrl: string;
   caption?: string;
@@ -234,6 +241,7 @@ export interface AnimalListParams {
   pageNumber?: number;
   pageSize?: number;
   farmId?: string;
+  batchId?: string;
   shedId?: string;
   penId?: string;
   species?: AnimalSpecies;

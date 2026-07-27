@@ -80,9 +80,9 @@
 ### 2. Livestock Management Module (Completed)
 - **Domain Layer:** `Animal` Aggregate Root, `WeightRecord`, `BreedingRecord`, `AnimalPhoto` owned children; `AnimalTag` & `Weight` Value Objects; domain events & exceptions.
 - **Persistence Layer:** EF Core Fluent API configurations (`app.Animals`, `app.WeightRecords`, etc.), `AnimalRepository`, EF Core Migration with raw SQL filter patch for owned types unique index.
-- **Application Layer:** 9 CQRS Commands, 3 Queries, FluentValidation validators, explicit mapping extensions.
-- **API Layer:** 12 Minimal API endpoints (`/api/v1/livestock/...`) with `RequireAuthorization` permission policies (`animals.read`, `animals.write`, `animals.sell`, `animals.quarantine`, `animals.delete`).
-- **Angular UI:** Standalone Angular 22 components (`AnimalListComponent`, `AnimalDetailComponent`, `AnimalRegisterComponent`), dark enterprise design system (`styles.scss`), `AnimalService` API client, lazy-loaded routing.
+- **Application Layer:** 9 CQRS Commands, 3 Queries, FluentValidation validators for all commands (e.g., `RecordBcsCommandValidator`, `CreateBatchCommandValidator`), explicit mapping extensions.
+- **API Layer:** 12 Minimal API endpoints (`/api/v1/livestock/...`) with `RequireAuthorization` permission policies (`animals.read`, `animals.write`, `animals.sell`, `animals.quarantine`, `animals.delete`) and batch filtering support.
+- **Angular UI:** Standalone Angular 22 components (`AnimalListComponent`, `AnimalDetailComponent`, `AnimalRegisterComponent`), dark enterprise design system (`styles.scss`), `AnimalService` API client (with strict typing for `recordMating`), lazy-loaded routing.
 - **Tests:** 76 passing unit tests (38 Domain unit tests + 38 Application command/query/validator unit tests).
 
 ### Enterprise Application Shell

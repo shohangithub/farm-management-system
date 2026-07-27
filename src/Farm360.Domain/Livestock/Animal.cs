@@ -408,6 +408,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// </summary>
     public AnimalPhoto AddPhoto(string photoUrl, string? caption, Guid uploadedBy)
     {
+        if (_photos.Count >= 5)
+            throw new InvalidOperationException("Maximum 5 photos allowed per animal.");
+
         if (string.IsNullOrWhiteSpace(photoUrl))
             throw new ArgumentException("Photo URL cannot be empty.", nameof(photoUrl));
 

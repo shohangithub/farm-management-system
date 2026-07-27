@@ -308,6 +308,22 @@ public sealed record TransferAnimalCommand(
     DateOnly TransferDate,
     string? Reason) : IRequest;
 
+public sealed class TransferAnimalCommandValidator : AbstractValidator<TransferAnimalCommand>
+{
+    public TransferAnimalCommandValidator()
+    {
+        RuleFor(x => x.AnimalId).NotEmpty();
+        
+        RuleFor(x => x.TransferDate)
+            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Transfer date cannot be in the future.");
+            
+        RuleFor(x => x.Reason)
+            .MaximumLength(500).WithMessage("Reason cannot exceed 500 characters.")
+            .When(x => x.Reason is not null);
+    }
+}
+
 public sealed class TransferAnimalCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,

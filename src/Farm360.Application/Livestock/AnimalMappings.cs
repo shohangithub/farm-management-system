@@ -30,6 +30,8 @@ public static class AnimalMappings
             AcquisitionPriceBdt: animal.AcquisitionPriceBdt,
             SalePriceBdt: animal.SalePriceBdt,
             SaleDate: animal.SaleDate,
+            BuyerName: animal.BuyerName,
+            SaleWeightKg: animal.SaleWeightKg,
             Status: animal.Status,
             QuarantineReason: animal.QuarantineReason,
             DisposalReason: animal.DisposalReason,

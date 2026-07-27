@@ -1,6 +1,9 @@
+using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Livestock.DTOs;
+using Farm360.Domain.Livestock;
 using Farm360.Domain.Livestock.Repositories;
+using FluentValidation;
 using MediatR;
 using System.Text.Json.Serialization;
 
@@ -17,6 +20,24 @@ public sealed record UploadAnimalPhotoCommand(
     string ContentType,
     string? Caption, 
     bool IsPrimary = false) : IRequest<AnimalPhotoDto>;
+
+public sealed class UploadAnimalPhotoCommandValidator : AbstractValidator<UploadAnimalPhotoCommand>
+{
+    public UploadAnimalPhotoCommandValidator()
+    {
+        RuleFor(x => x.AnimalId).NotEmpty();
+        
+        RuleFor(x => x.FileName)
+            .NotEmpty().WithMessage("File name is required.");
+            
+        RuleFor(x => x.ContentType)
+            .NotEmpty().WithMessage("Content type is required.");
+            
+        RuleFor(x => x.Caption)
+            .MaximumLength(200).WithMessage("Caption cannot exceed 200 characters.")
+            .When(x => x.Caption is not null);
+    }
+}
 
 public sealed class UploadAnimalPhotoCommandHandler : IRequestHandler<UploadAnimalPhotoCommand, AnimalPhotoDto>
 {
@@ -37,7 +58,7 @@ public sealed class UploadAnimalPhotoCommandHandler : IRequestHandler<UploadAnim
     public async Task<AnimalPhotoDto> Handle(UploadAnimalPhotoCommand request, CancellationToken cancellationToken)
     {
         var animal = await _animalRepository.GetByIdAsync(request.AnimalId, cancellationToken)
-            ?? throw new KeyNotFoundException($"Animal {request.AnimalId} not found.");
+            ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
         if (request.FileStream == null || request.FileStream.Length == 0)
         {

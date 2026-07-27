@@ -60,6 +60,7 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         int pageNumber,
         int pageSize,
         Guid? farmId = null,
+        Guid? batchId = null,
         Guid? shedId = null,
         Guid? penId = null,
         AnimalSpecies? species = null,
@@ -79,6 +80,9 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         // ── Filters ───────────────────────────────────────────────────────────
         if (farmId.HasValue)
             query = query.Where(a => a.FarmId == farmId.Value);
+
+        if (batchId.HasValue)
+            query = query.Where(a => a.BatchId == batchId.Value);
 
         if (shedId.HasValue)
             query = query.Where(a => a.Movements.Any(m => m.RemovedAtUtc == null && m.ShedId == shedId.Value));

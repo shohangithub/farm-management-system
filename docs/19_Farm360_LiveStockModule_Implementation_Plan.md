@@ -28,6 +28,7 @@ Based on the audit comparing the current codebase to the `PRODUCT_REQUIREMENTS.m
 - [x] **Animal Batch & Group Management**: Domain, CQRS, and Frontend implemented for grouping animals.
 - [x] **Body Condition Score (BCS)**: Implemented in domain, CQRS, and Frontend for tracking animal health.
 - [x] **Photo Management**: Integrated file uploads directly to backend local storage, with UI photo galleries and primary photo selection.
+- [x] **Production-Readiness Security & Integrity Fixes**: Implemented missing validation (FluentValidation), enforced limits (e.g., 5 photos max per animal), mapped missing properties (`BuyerName`, `SaleWeightKg`), strictly typed API clients, aligned batch filtering across layers, and enforced pregnancy date business rules.
 - [x] **Weight History & ADG**: Weight history table and automatic ADG calculation and display.
 
 ---
