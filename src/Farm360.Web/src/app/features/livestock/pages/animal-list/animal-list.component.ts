@@ -6,6 +6,7 @@ import { RouterModule, Router }      from '@angular/router';
 import { FormsModule }       from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { AnimalService }     from '../../services/animal.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import {
   AnimalListItemDto, AnimalListParams, AnimalSpecies, AnimalStatus, AnimalSex,
   SPECIES_LABELS, STATUS_LABELS, SEX_LABELS, PagedAnimalListDto, STATUS_BADGE_CLASS
@@ -32,6 +33,7 @@ export class AnimalListComponent implements OnInit, OnDestroy {
   private readonly svc      = inject(AnimalService);
   private readonly router   = inject(Router);
   private readonly dialog   = inject(MatDialog);
+  private readonly contextService = inject(WorkingContextService);
   private readonly destroy$ = new Subject<void>();
   private readonly search$  = new Subject<string>();
 
@@ -57,6 +59,14 @@ export class AnimalListComponent implements OnInit, OnDestroy {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
+    // Listen to farm context changes
+    this.contextService.currentFarm$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(farm => {
+      this.params.update(p => ({ ...p, farmId: farm?.id || undefined, pageNumber: 1 }));
+      this.load();
+    });
+
     // Debounce search input
     this.search$.pipe(
       debounceTime(350),
@@ -66,8 +76,6 @@ export class AnimalListComponent implements OnInit, OnDestroy {
       this.params.update(p => ({ ...p, search: term || undefined, pageNumber: 1 }));
       this.load();
     });
-
-    this.load();
   }
 
   ngOnDestroy(): void {

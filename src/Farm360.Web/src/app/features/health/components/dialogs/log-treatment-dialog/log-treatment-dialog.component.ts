@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { HealthService } from '../../../services/health.service';
+import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
+import { WorkingContextService } from '../../../../../core/services/working-context.service';
 
 @Component({
   selector: 'app-log-treatment-dialog',
@@ -20,17 +22,18 @@ import { HealthService } from '../../../services/health.service';
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    AnimalPickerComponent
   ],
   template: `
     <h2 mat-dialog-title>Log Medical Treatment</h2>
     <mat-dialog-content class="!pt-4">
       <form [formGroup]="form" class="flex flex-col gap-4">
         
-        <mat-form-field appearance="outline">
-          <mat-label>Animal ID</mat-label>
-          <input matInput formControlName="animalId" placeholder="e.g. GUID">
-        </mat-form-field>
+        <div class="mb-2">
+          <mat-label class="text-sm font-medium text-gray-700">Select Animal</mat-label>
+          <app-animal-picker formControlName="animalId"></app-animal-picker>
+        </div>
 
         <mat-form-field appearance="outline">
           <mat-label>Diagnosis</mat-label>
@@ -100,13 +103,12 @@ import { HealthService } from '../../../services/health.service';
 export class LogTreatmentDialog {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<LogTreatmentDialog>);
 
   form: FormGroup;
   isSubmitting = false;
   error = '';
-  // Hardcoded MVP farm ID
-  private farmId = '11111111-1111-1111-1111-111111111111';
 
   constructor() {
     this.form = this.fb.group({
@@ -131,8 +133,16 @@ export class LogTreatmentDialog {
     this.error = '';
 
     const val = this.form.value;
+    const farmId = this.contextService.currentFarmValue?.id || '';
+    
+    if (!farmId) {
+      this.error = 'No farm context available.';
+      this.isSubmitting = false;
+      return;
+    }
+
     const request = {
-      farmId: this.farmId,
+      farmId: farmId,
       animalId: val.animalId,
       diagnosis: val.diagnosis,
       medicationName: val.medicationName,

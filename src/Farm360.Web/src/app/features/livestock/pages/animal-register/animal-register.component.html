@@ -25,24 +25,6 @@
     
     <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
       
-      <!-- ── Location Assignment ── -->
-      <!-- Farm ID -->
-      <div class="sm:col-span-2 space-y-1.5">
-        <label for="farmId" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Target Farm <span class="text-red-500">*</span>
-        </label>
-        <select formControlName="farmId" id="farmId"
-                class="block w-full px-3 py-2.5 border rounded-lg text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600
-                       [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300 cursor-pointer">
-          <option value="" disabled selected>Select a target farm</option>
-          <option *ngFor="let f of farms()" [value]="f.id">{{ f.farmName }}</option>
-        </select>
-        <p *ngIf="getError('farmId')" class="text-xs text-red-500 mt-1">{{ getError('farmId') }}</p>
-      </div>
-
-      <!-- ────────────────────────── -->
-
       <!-- Tag ID -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="tagId" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">

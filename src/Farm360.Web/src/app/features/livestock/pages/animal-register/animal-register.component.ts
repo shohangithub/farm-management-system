@@ -6,9 +6,8 @@ import { RouterModule, Router }   from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService }          from '../../services/animal.service';
-import { FarmService }            from '../../../farms/services/farm.service';
+import { WorkingContextService }  from '../../../../core/services/working-context.service';
 import { AnimalSpecies, AnimalSex, AcquisitionType, TagType, SPECIES_LABELS } from '../../models/animal.models';
-import { FarmList }               from '../../../farms/models/farm.model';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -25,13 +24,11 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 })
 export class AnimalRegisterComponent implements OnInit, OnDestroy {
   private readonly svc      = inject(AnimalService);
-  private readonly farmSvc  = inject(FarmService);
+  private readonly contextSvc = inject(WorkingContextService);
   private readonly router   = inject(Router);
   private readonly fb       = inject(FormBuilder);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
-
-  readonly farms       = signal<FarmList[]>([]);
   
   readonly submitting  = signal(false);
   readonly error       = signal<string | null>(null);
@@ -47,13 +44,7 @@ export class AnimalRegisterComponent implements OnInit, OnDestroy {
   readonly speciesOptions = Object.entries(SPECIES_LABELS).map(([v, l]) => ({ value: +v, label: l }));
 
   ngOnInit(): void {
-    this.farmSvc.getAllFarms().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (farms) => this.farms.set(farms),
-      error: () => this.snackBar.open('Failed to load farms', 'OK', { duration: 3000 })
-    });
-
     this.form = this.fb.group({
-      farmId:             ['', Validators.required],
       tagId:              ['', [Validators.required, Validators.maxLength(50)]],
       tagType:            [TagType.Manual, Validators.required],
       species:            [AnimalSpecies.CattleBeef, Validators.required],
@@ -109,9 +100,18 @@ export class AnimalRegisterComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const v = this.form.getRawValue();
+    const farmId = this.contextSvc.currentFarmValue?.id;
+    
+    if (!farmId) {
+      this.snackBar.open('Please select a farm context from the top navigation before registering an animal.', 'OK', {
+        duration: 4000,
+        panelClass: ['snack-error']
+      });
+      return;
+    }
 
     this.svc.register({
-      farmId:              v.farmId!,
+      farmId:              farmId,
       tagId:               v.tagId!,
       tagType:             +v.tagType!,
       species:             +v.species!,

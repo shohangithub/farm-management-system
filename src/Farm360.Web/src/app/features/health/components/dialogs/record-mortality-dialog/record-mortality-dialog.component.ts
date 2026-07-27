@@ -10,6 +10,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { HealthService } from '../../../services/health.service';
 import { CauseOfDeath } from '../../../models/health.models';
+import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
+import { WorkingContextService } from '../../../../../core/services/working-context.service';
 
 @Component({
   selector: 'app-record-mortality-dialog',
@@ -23,17 +25,18 @@ import { CauseOfDeath } from '../../../models/health.models';
     MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatSelectModule
+    MatSelectModule,
+    AnimalPickerComponent
   ],
   template: `
     <h2 mat-dialog-title>Record Mortality</h2>
     <mat-dialog-content class="!pt-4">
       <form [formGroup]="form" class="flex flex-col gap-4">
         
-        <mat-form-field appearance="outline">
-          <mat-label>Animal ID</mat-label>
-          <input matInput formControlName="animalId" placeholder="e.g. GUID">
-        </mat-form-field>
+        <div class="mb-2">
+          <mat-label class="text-sm font-medium text-gray-700">Select Animal</mat-label>
+          <app-animal-picker formControlName="animalId"></app-animal-picker>
+        </div>
 
         <div class="grid grid-cols-2 gap-4">
           <mat-form-field appearance="outline">
@@ -80,13 +83,13 @@ import { CauseOfDeath } from '../../../models/health.models';
 export class RecordMortalityDialog {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<RecordMortalityDialog>);
 
   form: FormGroup;
   isSubmitting = false;
   error = '';
   causes = Object.values(CauseOfDeath);
-  private farmId = '11111111-1111-1111-1111-111111111111';
 
   constructor() {
     this.form = this.fb.group({
@@ -106,8 +109,16 @@ export class RecordMortalityDialog {
     this.error = '';
 
     const val = this.form.value;
+    const farmId = this.contextService.currentFarmValue?.id || '';
+
+    if (!farmId) {
+      this.error = 'No farm context available.';
+      this.isSubmitting = false;
+      return;
+    }
+
     const request = {
-      farmId: this.farmId,
+      farmId: farmId,
       animalId: val.animalId,
       deathDate: new Date(val.deathDate).toISOString().split('T')[0],
       causeOfDeath: val.causeOfDeath,

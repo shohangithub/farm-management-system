@@ -1,6 +1,6 @@
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
   <div>
-    <app-breadcrumb></app-breadcrumb>
+    <app-breadcrumb [customLastNode]="breadcrumbActiveNode"></app-breadcrumb>
     <h1 class="text-[22px] font-bold text-gray-900 dark:text-white mt-1 tracking-tight leading-tight">
       {{ title }}
     </h1>
@@ -9,8 +9,9 @@
     </p>
   </div>
   
-  <div *ngIf="primaryActionLabel" class="flex items-center gap-2">
-    <button mat-flat-button color="primary" (click)="onPrimaryAction()" class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-md shadow-sm !font-semibold">
+  <div class="flex items-center gap-2">
+    <ng-content select="[actions]"></ng-content>
+    <button *ngIf="primaryActionLabel" mat-flat-button color="primary" (click)="onPrimaryAction()" class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-md shadow-sm !font-semibold">
       <mat-icon *ngIf="primaryActionIcon" class="mr-2">{{ primaryActionIcon }}</mat-icon>
       {{ primaryActionLabel }}
     </button>

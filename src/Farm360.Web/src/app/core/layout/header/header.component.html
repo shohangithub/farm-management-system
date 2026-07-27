@@ -31,28 +31,8 @@
       <mat-icon class="!w-5 !h-5 !text-[20px]">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
     </button>
 
-    <!-- Context Switcher Menu -->
-    <button mat-button [matMenuTriggerFor]="contextMenu" class="hidden md:flex items-center text-left max-w-[180px] px-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ml-1">
-      <div class="flex flex-col truncate">
-        <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold leading-tight">{{ currentOrg }}</span>
-        <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight">{{ currentBranch }}</span>
-      </div>
-      <mat-icon class="ml-1 text-gray-400 !w-5 !h-5 flex items-center justify-center">expand_more</mat-icon>
-    </button>
-    <mat-menu #contextMenu="matMenu" class="w-64 bg-white dark:bg-surface-dark rounded-lg shadow-lg border border-gray-100 dark:border-gray-800">
-      <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800/50">
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Current Context</p>
-        <p class="text-sm font-semibold text-gray-900 dark:text-white mt-0.5">{{ currentTenant }}</p>
-      </div>
-      <button mat-menu-item class="text-sm text-gray-700 dark:text-gray-300">
-        <mat-icon class="text-gray-400">business</mat-icon>
-        <span>Change Organization</span>
-      </button>
-      <button mat-menu-item class="text-sm text-gray-700 dark:text-gray-300">
-        <mat-icon class="text-gray-400">store</mat-icon>
-        <span>Change Branch</span>
-      </button>
-    </mat-menu>
+    <!-- Context Selector Component -->
+    <app-context-selector></app-context-selector>
 
     <!-- Notifications -->
     <button mat-icon-button matTooltip="Notifications" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors relative">

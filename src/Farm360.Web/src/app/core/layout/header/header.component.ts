@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ContextSelectorComponent } from '../context-selector/context-selector.component';
 import { AuthService } from '../../services/auth.service';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,17 +21,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatMenuModule,
     MatDividerModule,
     MatBadgeModule,
-    MatTooltipModule
+    MatTooltipModule,
+    ContextSelectorComponent
   ],
   templateUrl: './header.component.html'
 })
 export class HeaderComponent {
   @Output() toggleSidebar = new EventEmitter<void>();
-
-  // Placeholder state for context switcher
-  currentTenant = 'Default Tenant';
-  currentOrg = 'Farm360 Organization';
-  currentBranch = 'Main Branch';
   isDarkMode = false;
 
   onToggleSidebar(): void {

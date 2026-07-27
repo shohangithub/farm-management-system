@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { RouterModule } from '@angular/router';
   templateUrl: './breadcrumb.component.html'
 })
 export class BreadcrumbComponent {
+  @Input() customLastNode?: string;
   breadcrumbs: Array<{ label: string, url: string }> = [];
 
   constructor(private router: Router, private activatedRoute: ActivatedRoute) {
@@ -47,6 +48,12 @@ export class BreadcrumbComponent {
     if (route.firstChild) {
       return this.buildBreadcrumb(route.firstChild, nextUrl, breadcrumbs);
     }
+    
+    // Override the very last node if customLastNode is provided
+    if (this.customLastNode && breadcrumbs.length > 0) {
+      breadcrumbs[breadcrumbs.length - 1].label = this.customLastNode;
+    }
+    
     return breadcrumbs;
   }
 }

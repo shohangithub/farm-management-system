@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { HealthService } from '../../../services/health.service';
+import { AnimalMultiPickerComponent } from '../../../../../shared/components/animal-multi-picker/animal-multi-picker.component';
+import { WorkingContextService } from '../../../../../core/services/working-context.service';
 
 @Component({
   selector: 'app-assign-protocol-dialog',
@@ -20,7 +22,8 @@ import { HealthService } from '../../../services/health.service';
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    AnimalMultiPickerComponent
   ],
   template: `
     <h2 mat-dialog-title>Assign Protocol</h2>
@@ -32,11 +35,10 @@ import { HealthService } from '../../../services/health.service';
       
       <form [formGroup]="form" class="flex flex-col gap-4">
         
-        <mat-form-field appearance="outline">
-          <mat-label>Animal IDs (comma separated)</mat-label>
-          <textarea matInput formControlName="animalIds" placeholder="e.g. GUID1, GUID2" rows="3"></textarea>
-          <mat-hint>Enter one or more Animal IDs to assign this protocol to.</mat-hint>
-        </mat-form-field>
+        <div class="mb-2">
+          <mat-label class="text-sm font-medium text-gray-700">Select Animals</mat-label>
+          <app-animal-multi-picker formControlName="animalIds"></app-animal-multi-picker>
+        </div>
 
         <mat-form-field appearance="outline">
           <mat-label>Start Date</mat-label>
@@ -60,18 +62,17 @@ import { HealthService } from '../../../services/health.service';
 export class AssignProtocolDialog {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<AssignProtocolDialog>);
   data = inject(MAT_DIALOG_DATA);
 
   form: FormGroup;
   isSubmitting = false;
   error = '';
-  // Hardcoded MVP farm ID
-  private farmId = '11111111-1111-1111-1111-111111111111';
 
   constructor() {
     this.form = this.fb.group({
-      animalIds: ['', Validators.required],
+      animalIds: [[], [Validators.required, Validators.minLength(1)]],
       startDate: [new Date(), Validators.required]
     });
   }
@@ -83,21 +84,24 @@ export class AssignProtocolDialog {
     this.error = '';
 
     const val = this.form.value;
+    const farmId = this.contextService.currentFarmValue?.id || '';
+
+    if (!farmId) {
+      this.error = 'No farm context available.';
+      this.isSubmitting = false;
+      return;
+    }
     
-    // Parse animal IDs (comma separated, handle whitespace)
-    const animalIdArray = val.animalIds
-      .split(',')
-      .map((id: string) => id.trim())
-      .filter((id: string) => id.length > 0);
+    const animalIdArray = val.animalIds;
       
-    if (animalIdArray.length === 0) {
-      this.error = 'Please enter at least one valid Animal ID.';
+    if (!animalIdArray || animalIdArray.length === 0) {
+      this.error = 'Please select at least one animal.';
       this.isSubmitting = false;
       return;
     }
 
     const request = {
-      farmId: this.farmId,
+      farmId: farmId,
       protocolId: this.data.protocol.id,
       animalIds: animalIdArray,
       startDate: new Date(val.startDate).toISOString().split('T')[0]

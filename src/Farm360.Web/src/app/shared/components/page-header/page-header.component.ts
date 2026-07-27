@@ -13,6 +13,7 @@ import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 export class PageHeaderComponent {
   @Input() title: string = '';
   @Input() description: string = '';
+  @Input() breadcrumbActiveNode?: string;
   @Input() primaryActionLabel?: string;
   @Input() primaryActionIcon?: string;
   

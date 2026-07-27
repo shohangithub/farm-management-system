@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -11,6 +11,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ScheduleVaccinationDialog } from '../../components/dialogs/schedule-vaccination-dialog/schedule-vaccination-dialog.component';
 import { LogTreatmentDialog } from '../../components/dialogs/log-treatment-dialog/log-treatment-dialog.component';
 import { RecordMortalityDialog } from '../../components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-health-dashboard',
@@ -19,17 +21,29 @@ import { RecordMortalityDialog } from '../../components/dialogs/record-mortality
   templateUrl: './health-dashboard.html',
   styleUrls: ['./health-dashboard.scss']
 })
-export class HealthDashboardComponent implements OnInit {
+export class HealthDashboardComponent implements OnInit, OnDestroy {
   private healthService = inject(HealthService);
   private dialog = inject(MatDialog);
   private cdr = inject(ChangeDetectorRef);
+  private contextService = inject(WorkingContextService);
 
   dashboardData: HealthDashboardDto | null = null;
   isLoading = true;
   error = '';
+  private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
-    this.loadDashboard();
+    // Reload dashboard whenever farm context changes
+    this.contextService.currentFarm$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadDashboard();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadDashboard(): void {
