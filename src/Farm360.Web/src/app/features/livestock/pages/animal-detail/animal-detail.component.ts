@@ -28,6 +28,16 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FarmService } from '../../../farms/services/farm.service';
 import { BatchService } from '../../services/batch.service';
 import { BatchDto } from '../../models/batch.models';
+import { TransferAnimalDialogComponent } from '../../dialogs/transfer-animal-dialog/transfer-animal-dialog.component';
+import { QuarantineDialogComponent } from '../../dialogs/quarantine-dialog/quarantine-dialog.component';
+import { MatingDialogComponent } from '../../dialogs/mating-dialog/mating-dialog.component';
+import { ConfirmPregnancyDialogComponent } from '../../dialogs/confirm-pregnancy-dialog/confirm-pregnancy-dialog.component';
+import { RecordCalvingDialogComponent } from '../../dialogs/record-calving-dialog/record-calving-dialog.component';
+import { AssignBatchDialogComponent } from '../../dialogs/assign-batch-dialog/assign-batch-dialog.component';
+import { RecordBcsDialogComponent } from '../../dialogs/record-bcs-dialog/record-bcs-dialog.component';
+import { RecordWeightDialogComponent } from '../../dialogs/record-weight-dialog/record-weight-dialog.component';
+import { UploadPhotoDialogComponent } from '../../dialogs/upload-photo-dialog/upload-photo-dialog.component';
+import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/record-sale-dialog.component';
 
 @Component({
   selector: 'app-animal-detail',
@@ -70,76 +80,6 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   readonly TreatmentStatus = TreatmentStatus;
 
   readonly Math = Math;
-
-  @ViewChild('saleDialogTemplate') saleDialogTemplate!: TemplateRef<any>;
-  saleForm = {
-    price: null as number | null,
-    date: new Date().toISOString().split('T')[0],
-    buyer: '',
-    weight: null as number | null
-  };
-
-  @ViewChild('quarantineDialogTemplate') quarantineDialogTemplate!: TemplateRef<any>;
-  quarantineForm = {
-    reason: ''
-  };
-
-  @ViewChild('transferDialogTemplate') transferDialogTemplate!: TemplateRef<any>;
-  transferForm = {
-    shedId: '',
-    penId: '',
-    date: new Date().toISOString().split('T')[0],
-    reason: ''
-  };
-
-  @ViewChild('matingDialogTemplate') matingDialogTemplate!: TemplateRef<any>;
-  matingForm = {
-    date: new Date().toISOString().split('T')[0],
-    isAI: false,
-    sireAnimalId: '',
-    sireExternalId: ''
-  };
-
-  @ViewChild('confirmPregnancyDialogTemplate') confirmPregnancyDialogTemplate!: TemplateRef<any>;
-  confirmPregnancyForm = {
-    recordId: '',
-    confirmDate: new Date().toISOString().split('T')[0],
-    expectedCalvingDate: '',
-    error: null as string | null
-  };
-
-  @ViewChild('recordCalvingDialogTemplate') recordCalvingDialogTemplate!: TemplateRef<any>;
-  recordCalvingForm = {
-    recordId: '',
-    calvingDate: new Date().toISOString().split('T')[0],
-    outcome: 'Live Birth',
-    calvesCount: 1
-  };
-
-  @ViewChild('assignBatchDialogTemplate') assignBatchDialogTemplate!: TemplateRef<any>;
-  assignBatchForm = {
-    batchId: ''
-  };
-
-  @ViewChild('recordBcsDialogTemplate') recordBcsDialogTemplate!: TemplateRef<any>;
-  recordBcsForm = {
-    score: null as number | null,
-    recordedDate: new Date().toISOString().split('T')[0],
-    notes: ''
-  };
-
-  @ViewChild('recordWeightDialogTemplate') recordWeightDialogTemplate!: TemplateRef<any>;
-  recordWeightForm = {
-    weightKg: null as number | null,
-    recordedDate: new Date().toISOString().split('T')[0],
-    notes: ''
-  };
-
-  @ViewChild('uploadPhotoDialogTemplate') uploadPhotoDialogTemplate!: TemplateRef<any>;
-  uploadPhotoForm = {
-    file: null as File | null,
-    caption: ''
-  };
 
   readonly sheds = signal<ShedList[]>([]);
   readonly pens = signal<PenList[]>([]);
@@ -249,26 +189,13 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onQuarantine(): void {
     const a = this.animal();
     if (!a) return;
-    
-    this.quarantineForm = { reason: '' };
-
-    this.dialog.open(this.quarantineDialogTemplate, {
+    const dialogRef = this.dialog.open(QuarantineDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId }
     });
-  }
-
-  confirmQuarantine(): void {
-    const a = this.animal();
-    if (!a || !this.quarantineForm.reason) return;
-
-    this.svc.quarantine(a.id, { reason: this.quarantineForm.reason }).pipe(takeUntil(this.destroy$)).subscribe({ 
-      next: () => {
-        this.dialog.closeAll();
-        this.load();
-      }
-    });
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => { if (res) this.load(); });
   }
 
   onRelease(): void {
@@ -290,8 +217,6 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-
-
   goBack(): void {
     this.router.navigate(['/livestock']);
   }
@@ -299,109 +224,33 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onSell(): void {
     const a = this.animal();
     if (!a) return;
-    
-    // Reset form
-    this.saleForm = {
-      price: null,
-      date: new Date().toISOString().split('T')[0],
-      buyer: '',
-      weight: a.latestWeightKg ?? null
-    };
-
-    this.dialog.open(this.saleDialogTemplate, {
+    const dialogRef = this.dialog.open(RecordSaleDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent' // if relying entirely on internal tailwind
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId, latestWeightKg: a.latestWeightKg }
     });
-  }
-
-  confirmSale(): void {
-    const a = this.animal();
-    if (!a || !this.saleForm.price) return;
-    
-    this.svc.sell(a.id, { 
-      salePriceBdt: this.saleForm.price, 
-      saleDate: this.saleForm.date,
-      buyerName: this.saleForm.buyer || undefined,
-      saleWeightKg: this.saleForm.weight || undefined
-    }).pipe(takeUntil(this.destroy$)).subscribe({ 
-      next: () => {
-        this.dialog.closeAll();
-        this.load();
-      }
-    });
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => { if (res) this.load(); });
   }
 
   onTransfer(): void {
     const a = this.animal();
     if (!a) return;
-    
-    this.transferForm = {
-      shedId: a.shedId || '',
-      penId: a.penId || '',
-      date: new Date().toISOString().split('T')[0],
-      reason: ''
-    };
-    
-    this.sheds.set([]);
-    this.pens.set([]);
-    
-    this.loadingSheds.set(true);
-    this.shedSvc.getShedsByFarm(a.farmId).subscribe({
-      next: (data) => {
-        this.sheds.set(data);
-        this.loadingSheds.set(false);
-        if (this.transferForm.shedId) {
-          this.loadPensForTransfer(this.transferForm.shedId);
-        }
-      },
-      error: () => this.loadingSheds.set(false)
-    });
-
-    this.dialog.open(this.transferDialogTemplate, {
+    const dialogRef = this.dialog.open(TransferAnimalDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: {
+        animalId: a.id,
+        farmId: a.farmId,
+        animalTag: a.tagId,
+        currentShedId: a.shedId,
+        currentPenId: a.penId
+      }
     });
-  }
-
-  onTransferShedChange(shedId: string): void {
-    this.transferForm.shedId = shedId;
-    this.transferForm.penId = '';
-    if (shedId) {
-      this.loadPensForTransfer(shedId);
-    } else {
-      this.pens.set([]);
-    }
-  }
-
-  private loadPensForTransfer(shedId: string): void {
-    this.loadingPens.set(true);
-    this.penSvc.getPensByShed(shedId).subscribe({
-      next: (data) => {
-        this.pens.set(data);
-        this.loadingPens.set(false);
-      },
-      error: () => this.loadingPens.set(false)
-    });
-  }
-
-  confirmTransfer(): void {
-    const a = this.animal();
-    if (!a || !this.transferForm.date) return;
-    
-    this.svc.transfer(a.id, {
-      toShedId: this.transferForm.shedId || undefined,
-      toPenId: this.transferForm.penId || undefined,
-      transferDate: this.transferForm.date,
-      reason: this.transferForm.reason || undefined
-    }).subscribe({
-      next: () => {
-        this.dialog.closeAll();
-        this.snackBar.open('Location assigned successfully!', 'Close', { 
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => { 
+      if (res) {
+        this.snackBar.open('Location assigned successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
       }
     });
@@ -410,33 +259,14 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onRecordMating(): void {
     const a = this.animal();
     if (!a) return;
-    
-    this.matingForm = {
-      date: new Date().toISOString().split('T')[0],
-      isAI: false,
-      sireAnimalId: '',
-      sireExternalId: ''
-    };
-
-    this.dialog.open(this.matingDialogTemplate, {
+    const dialogRef = this.dialog.open(MatingDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId }
     });
-  }
-
-  confirmMating(): void {
-    const a = this.animal();
-    if (!a || !this.matingForm.date) return;
-    
-    this.svc.recordMating(a.id, {
-      matingDate: this.matingForm.date,
-      isArtificialInsemination: this.matingForm.isAI,
-      sireAnimalId: this.matingForm.sireAnimalId || undefined,
-      sireExternalId: this.matingForm.sireExternalId || undefined
-    }).subscribe({
-      next: () => {
-        this.dialog.closeAll();
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+      if (res) {
         this.snackBar.open('Mating recorded successfully!', 'Close', { duration: 3000 });
         this.load();
       }
@@ -446,42 +276,16 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onConfirmPregnancy(recordId: string): void {
     const a = this.animal();
     if (!a) return;
-    
-    // Estimate expected calving date: roughly 283 days for cows, adjusting based on species can be done if needed.
-    const expected = new Date();
-    expected.setDate(expected.getDate() + 283);
-
-    this.confirmPregnancyForm = {
-      recordId: recordId,
-      confirmDate: new Date().toISOString().split('T')[0],
-      expectedCalvingDate: expected.toISOString().split('T')[0],
-      error: null
-    };
-
-    this.dialog.open(this.confirmPregnancyDialogTemplate, {
+    const dialogRef = this.dialog.open(ConfirmPregnancyDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId, recordId }
     });
-  }
-
-  submitConfirmPregnancy(): void {
-    const a = this.animal();
-    if (!a || !this.confirmPregnancyForm.confirmDate || !this.confirmPregnancyForm.expectedCalvingDate) return;
-
-    this.confirmPregnancyForm.error = null;
-
-    this.svc.confirmPregnancy(a.id, this.confirmPregnancyForm.recordId, {
-      confirmDate: this.confirmPregnancyForm.confirmDate,
-      expectedCalvingDate: this.confirmPregnancyForm.expectedCalvingDate
-    }).subscribe({
-      next: () => {
-        this.dialog.closeAll();
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+      if (res) {
         this.snackBar.open('Pregnancy confirmed successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
-      },
-      error: err => {
-        this.confirmPregnancyForm.error = err.error?.detail || err.error?.title || 'An error occurred while confirming pregnancy.';
       }
     });
   }
@@ -489,32 +293,14 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onRecordCalving(recordId: string): void {
     const a = this.animal();
     if (!a) return;
-    
-    this.recordCalvingForm = {
-      recordId: recordId,
-      calvingDate: new Date().toISOString().split('T')[0],
-      outcome: 'Live Birth',
-      calvesCount: 1
-    };
-
-    this.dialog.open(this.recordCalvingDialogTemplate, {
+    const dialogRef = this.dialog.open(RecordCalvingDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId, recordId }
     });
-  }
-
-  submitRecordCalving(): void {
-    const a = this.animal();
-    if (!a || !this.recordCalvingForm.calvingDate) return;
-
-    this.svc.recordCalving(a.id, this.recordCalvingForm.recordId, {
-      calvingDate: this.recordCalvingForm.calvingDate,
-      outcome: this.recordCalvingForm.outcome,
-      calvesCount: this.recordCalvingForm.calvesCount
-    }).subscribe({
-      next: () => {
-        this.dialog.closeAll();
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+      if (res) {
         this.snackBar.open('Calving recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
       }
@@ -524,137 +310,73 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   onRecordBcs(): void {
     const a = this.animal();
     if (!a) return;
-
-    this.recordBcsForm = {
-      score: null,
-      recordedDate: new Date().toISOString().split('T')[0],
-      notes: ''
-    };
-
-    this.dialog.open(this.recordBcsDialogTemplate, {
+    const dialogRef = this.dialog.open(RecordBcsDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId }
     });
-  }
-
-  submitRecordBcs(): void {
-    const a = this.animal();
-    if (!a || !this.recordBcsForm.score || !this.recordBcsForm.recordedDate) return;
-
-    this.svc.recordBcs(a.id, this.recordBcsForm.score, this.recordBcsForm.recordedDate, this.recordBcsForm.notes).subscribe({
-      next: () => {
-        this.dialog.closeAll();
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+      if (res) {
         this.snackBar.open('BCS recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
-      },
-      error: (e) => this.handleError(e)
+      }
     });
   }
 
   onAssignBatch(): void {
     const a = this.animal();
     if (!a) return;
-
-    this.assignBatchForm = {
-      batchId: a.batchId ?? ''
-    };
-
-    this.dialog.open(this.assignBatchDialogTemplate, {
+    const dialogRef = this.dialog.open(AssignBatchDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { 
+        animalId: a.id, 
+        animalTag: a.tagId,
+        currentBatchId: a.batchId,
+        availableBatches: this.availableBatches()
+      }
     });
-  }
-
-  submitAssignBatch(): void {
-    const a = this.animal();
-    if (!a || !this.assignBatchForm.batchId) return;
-
-    this.batchSvc.assignAnimalsToBatch(this.assignBatchForm.batchId, [a.id]).subscribe({
-      next: () => {
-        this.dialog.closeAll();
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+      if (res) {
         this.snackBar.open('Animal assigned to batch successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
-      },
-      error: (e) => this.handleError(e)
+      }
     });
   }
 
   onRecordWeight(): void {
     const a = this.animal();
     if (!a) return;
-
-    this.recordWeightForm = {
-      weightKg: null,
-      recordedDate: new Date().toISOString().split('T')[0],
-      notes: ''
-    };
-
-    this.dialog.open(this.recordWeightDialogTemplate, {
+    const dialogRef = this.dialog.open(RecordWeightDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId }
     });
-  }
-
-  submitRecordWeight(): void {
-    const a = this.animal();
-    if (!a || !this.recordWeightForm.weightKg || !this.recordWeightForm.recordedDate) return;
-
-    this.svc.recordWeight(a.id, {
-      weightKg: this.recordWeightForm.weightKg,
-      recordedDate: this.recordWeightForm.recordedDate,
-      notes: this.recordWeightForm.notes
-    }).subscribe({
-      next: () => {
-        this.dialog.closeAll();
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+      if (res) {
         this.snackBar.open('Weight recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
-      },
-      error: (e) => this.handleError(e)
+      }
     });
   }
 
   onUploadPhoto(): void {
     const a = this.animal();
     if (!a) return;
-
-    this.uploadPhotoForm = {
-      file: null,
-      caption: ''
-    };
-
-    this.dialog.open(this.uploadPhotoDialogTemplate, {
+    const dialogRef = this.dialog.open(UploadPhotoDialogComponent, {
       width: '450px',
       autoFocus: false,
-      panelClass: 'bg-transparent'
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, animalTag: a.tagId }
     });
-  }
-
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        this.snackBar.open('File size must be less than 5MB', 'Close', { duration: 3000, panelClass: ['snack-error'] });
-        event.target.value = '';
-        return;
-      }
-      this.uploadPhotoForm.file = file;
-    }
-  }
-
-  submitUploadPhoto(): void {
-    const a = this.animal();
-    if (!a || !this.uploadPhotoForm.file) return;
-
-    this.svc.uploadPhotoFile(a.id, this.uploadPhotoForm.file, this.uploadPhotoForm.caption).subscribe({
-      next: () => {
-        this.dialog.closeAll();
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+      if (res) {
         this.snackBar.open('Photo uploaded successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
         this.load();
-      },
-      error: (e) => this.handleError(e)
+      }
     });
   }
 
