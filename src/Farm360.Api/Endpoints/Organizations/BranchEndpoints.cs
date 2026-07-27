@@ -25,6 +25,13 @@ public static class BranchEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
 
+        group.MapGet("/lookups", async ([FromRoute] Guid orgId, ISender sender) =>
+        {
+            var result = await sender.Send(new GetBranchLookupQuery(orgId));
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
+
         rootGroup.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
         {
             var result = await sender.Send(new GetBranchByIdQuery(id));

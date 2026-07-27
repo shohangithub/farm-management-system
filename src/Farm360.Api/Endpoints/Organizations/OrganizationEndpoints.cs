@@ -20,6 +20,13 @@ public static class OrganizationEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
 
+        group.MapGet("/lookups", async (ISender sender) =>
+        {
+            var result = await sender.Send(new GetOrganizationLookupQuery());
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.OrganizationModule.View}");
+
         group.MapGet("/{id:guid}", async (Guid id, ISender sender) =>
         {
             var result = await sender.Send(new GetOrganizationByIdQuery(id));

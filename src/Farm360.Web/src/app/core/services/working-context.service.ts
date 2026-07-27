@@ -2,12 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { BehaviorSubject, Observable, of, combineLatest, filter } from 'rxjs';
 import { catchError, map, switchMap, tap, distinctUntilChanged } from 'rxjs/operators';
 import { AuthService, UserProfile } from './auth.service';
-import { OrganizationService } from '../../features/organizations/services/organization.service';
-import { BranchService } from '../../features/organizations/services/branch.service';
-import { FarmService } from '../../features/farms/services/farm.service';
-import { Organization } from '../../features/organizations/models/organization.model';
-import { BranchList } from '../../features/organizations/models/branch.model';
-import { FarmList } from '../../features/farms/models/farm.model';
+import { LookupService } from './lookup.service';
+import { LookupDto } from '../../shared/models/lookup.model';
 
 const STORAGE_ORG_KEY = 'farm360_active_org';
 const STORAGE_BRANCH_KEY = 'farm360_active_branch';
@@ -18,33 +14,31 @@ const STORAGE_FARM_KEY = 'farm360_active_farm';
 })
 export class WorkingContextService {
   private authService = inject(AuthService);
-  private orgService = inject(OrganizationService);
-  private branchService = inject(BranchService);
-  private farmService = inject(FarmService);
+  private lookupService = inject(LookupService);
 
   // Available lists
-  private organizationsSubject = new BehaviorSubject<Organization[]>([]);
+  private organizationsSubject = new BehaviorSubject<LookupDto[]>([]);
   public organizations$ = this.organizationsSubject.asObservable();
 
-  private branchesSubject = new BehaviorSubject<BranchList[]>([]);
+  private branchesSubject = new BehaviorSubject<LookupDto[]>([]);
   public branches$ = this.branchesSubject.asObservable();
 
-  private farmsSubject = new BehaviorSubject<FarmList[]>([]);
+  private farmsSubject = new BehaviorSubject<LookupDto[]>([]);
   public farms$ = this.farmsSubject.asObservable();
 
   // Active selections
-  private currentOrgSubject = new BehaviorSubject<Organization | null>(null);
+  private currentOrgSubject = new BehaviorSubject<LookupDto | null>(null);
   public currentOrg$ = this.currentOrgSubject.asObservable().pipe(distinctUntilChanged((a, b) => a?.id === b?.id));
 
-  private currentBranchSubject = new BehaviorSubject<BranchList | null>(null);
+  private currentBranchSubject = new BehaviorSubject<LookupDto | null>(null);
   public currentBranch$ = this.currentBranchSubject.asObservable().pipe(distinctUntilChanged((a, b) => a?.id === b?.id));
 
-  private currentFarmSubject = new BehaviorSubject<FarmList | null>(null);
+  private currentFarmSubject = new BehaviorSubject<LookupDto | null>(null);
   public currentFarm$ = this.currentFarmSubject.asObservable().pipe(distinctUntilChanged((a, b) => a?.id === b?.id));
 
-  public get currentOrgValue(): Organization | null { return this.currentOrgSubject.value; }
-  public get currentBranchValue(): BranchList | null { return this.currentBranchSubject.value; }
-  public get currentFarmValue(): FarmList | null { return this.currentFarmSubject.value; }
+  public get currentOrgValue(): LookupDto | null { return this.currentOrgSubject.value; }
+  public get currentBranchValue(): LookupDto | null { return this.currentBranchSubject.value; }
+  public get currentFarmValue(): LookupDto | null { return this.currentFarmSubject.value; }
 
   constructor() {
     // Listen to user login/logout to initialize/clear context
@@ -59,9 +53,9 @@ export class WorkingContextService {
 
   private initializeContext(user: UserProfile) {
     // Fetch available organizations
-    this.orgService.getOrganizations().subscribe({
+    this.lookupService.getOrganizations().subscribe({
       next: (res) => {
-        const orgs = res.items || [];
+        const orgs = res || [];
         this.organizationsSubject.next(orgs);
         
         let targetOrgId = localStorage.getItem(STORAGE_ORG_KEY);
@@ -87,7 +81,7 @@ export class WorkingContextService {
     });
   }
 
-  public setOrganization(org: Organization | null) {
+  public setOrganization(org: LookupDto | null) {
     this.currentOrgSubject.next(org);
     if (org) {
       localStorage.setItem(STORAGE_ORG_KEY, org.id);
@@ -100,9 +94,9 @@ export class WorkingContextService {
   }
 
   private loadBranches(orgId: string) {
-    this.branchService.getBranchesByOrganization(orgId).subscribe({
+    this.lookupService.getBranches(orgId).subscribe({
       next: (res) => {
-        const branches = res.items || [];
+        const branches = res || [];
         this.branchesSubject.next(branches);
 
         let targetBranchId = localStorage.getItem(STORAGE_BRANCH_KEY);
@@ -125,7 +119,7 @@ export class WorkingContextService {
     });
   }
 
-  public setBranch(branch: BranchList | null) {
+  public setBranch(branch: LookupDto | null) {
     this.currentBranchSubject.next(branch);
     if (branch) {
       localStorage.setItem(STORAGE_BRANCH_KEY, branch.id);
@@ -138,7 +132,7 @@ export class WorkingContextService {
   }
 
   private loadFarms(branchId: string) {
-    this.farmService.getFarmsByBranch(branchId).subscribe({
+    this.lookupService.getFarms(branchId).subscribe({
       next: (farms) => {
         this.farmsSubject.next(farms || []);
 
@@ -162,7 +156,7 @@ export class WorkingContextService {
     });
   }
 
-  public setFarm(farm: FarmList | null) {
+  public setFarm(farm: LookupDto | null) {
     this.currentFarmSubject.next(farm);
     if (farm) {
       localStorage.setItem(STORAGE_FARM_KEY, farm.id);

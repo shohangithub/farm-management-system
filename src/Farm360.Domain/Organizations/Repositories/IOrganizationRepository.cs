@@ -13,6 +13,9 @@ public interface IOrganizationRepository
         int pageNumber, 
         int pageSize, 
         CancellationToken cancellationToken = default);
+        
+    Task<IReadOnlyList<LookupItem>> GetLookupsAsync(Guid tenantId, CancellationToken cancellationToken = default);
+    
     Task<bool> ExistsByNameAsync(Guid tenantId, string name, CancellationToken cancellationToken = default);
 
     /// <summary>

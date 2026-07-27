@@ -66,6 +66,21 @@ public sealed class BranchRepository : IBranchRepository
         return (items, totalCount);
     }
 
+    public async Task<IReadOnlyList<Farm360.Domain.Common.LookupItem>> GetLookupsAsync(Guid tenantId, Guid? organizationId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Set<Branch>().AsNoTracking().Where(b => b.TenantId == tenantId && (int)b.Status == 1); // 1 = Active
+        
+        if (organizationId.HasValue)
+        {
+            query = query.Where(b => b.OrganizationId == organizationId.Value);
+        }
+
+        return await query
+            .OrderBy(b => b.Name)
+            .Select(b => new Farm360.Domain.Common.LookupItem(b.Id, b.Name, b.OrganizationId))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> ExistsByCodeAsync(Guid tenantId, string branchCode, CancellationToken cancellationToken = default)
     {
         return await _context.Set<Branch>()

@@ -41,6 +41,21 @@ public sealed class FarmRepository : IFarmRepository
             .OrderBy(b => b.FarmName)
             .ToListAsync(cancellationToken);
     }
+    
+    public async Task<IReadOnlyList<Farm360.Domain.Common.LookupItem>> GetLookupsAsync(Guid tenantId, Guid? branchId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Set<Farm>().AsNoTracking().Where(f => f.TenantId == tenantId && (int)f.Status == 1); // 1 = Active
+        
+        if (branchId.HasValue)
+        {
+            query = query.Where(f => f.BranchId == branchId.Value);
+        }
+
+        return await query
+            .OrderBy(f => f.FarmName)
+            .Select(f => new Farm360.Domain.Common.LookupItem(f.Id, f.FarmName, f.BranchId))
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<bool> ExistsByCodeAsync(Guid tenantId, string farmCode, CancellationToken cancellationToken = default)
     {

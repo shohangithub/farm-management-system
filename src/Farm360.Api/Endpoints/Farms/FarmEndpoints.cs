@@ -25,6 +25,13 @@ public static class FarmEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.View}");
 
+        branchGroup.MapGet("/lookups", async ([FromRoute] Guid branchId, ISender sender) =>
+        {
+            var result = await sender.Send(new GetFarmLookupQuery(branchId));
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.View}");
+
         rootGroup.MapGet("/", async (ISender sender) =>
         {
             var result = await sender.Send(new GetAllFarmsQuery());

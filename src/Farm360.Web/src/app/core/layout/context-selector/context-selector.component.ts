@@ -50,7 +50,7 @@ import { Subject, takeUntil, combineLatest } from 'rxjs';
           <!-- Optional All Farms -->
           <mat-option [value]="null">All Farms</mat-option>
           <mat-option *ngFor="let farm of farms$ | async" [value]="farm.id">
-            {{ farm.farmName }}
+            {{ farm.name }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -58,7 +58,7 @@ import { Subject, takeUntil, combineLatest } from 'rxjs';
       <div *ngIf="(farms$ | async)?.length === 1" class="hidden lg:flex flex-col">
         <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold leading-tight">Farm</span>
         <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight max-w-[120px]">
-          {{ (currentFarm$ | async)?.farmName }}
+          {{ (currentFarm$ | async)?.name }}
         </span>
       </div>
     </div>

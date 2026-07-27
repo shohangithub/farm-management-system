@@ -1,3 +1,4 @@
+using Farm360.Domain.Common;
 using Farm360.Domain.Organizations;
 using Farm360.Domain.Organizations.Repositories;
 using Farm360.Persistence.Context;
@@ -57,6 +58,16 @@ public class OrganizationRepository : IOrganizationRepository
             .ToListAsync(cancellationToken);
 
         return (items, totalCount);
+    }
+
+    public async Task<IReadOnlyList<LookupItem>> GetLookupsAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Organizations
+            .AsNoTracking()
+            .Where(o => o.TenantId == tenantId && (int)o.Status == 1) // 1 = Active
+            .OrderBy(o => o.Name)
+            .Select(o => new LookupItem(o.Id, o.Name, null))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsByNameAsync(Guid tenantId, string name, CancellationToken cancellationToken = default)

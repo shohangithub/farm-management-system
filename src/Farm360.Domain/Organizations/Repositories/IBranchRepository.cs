@@ -13,6 +13,9 @@ public interface IBranchRepository
         int pageNumber, 
         int pageSize, 
         CancellationToken cancellationToken = default);
+        
+    Task<IReadOnlyList<Farm360.Domain.Common.LookupItem>> GetLookupsAsync(Guid tenantId, Guid? organizationId, CancellationToken cancellationToken = default);
+    
     Task<bool> ExistsByCodeAsync(Guid tenantId, string branchCode, CancellationToken cancellationToken = default);
     
     void Add(Branch branch);
