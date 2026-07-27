@@ -26,7 +26,7 @@
 <div *ngIf="!loading() && animal()" class="space-y-6">
 
   <!-- Action Bar -->
-  <div class="flex justify-end gap-3 mb-2">
+  <div class="flex flex-wrap justify-end gap-3 mb-2">
     <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()"
       class="px-4 py-2 text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors shadow-sm">
       Quarantine
@@ -55,10 +55,10 @@
 
     <!-- Photo Area -->
     <div
-      class="w-full md:w-1/3 bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800/50 h-64 md:h-auto">
+      class="w-full md:w-1/3 md:min-w-[320px] flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800/50">
       <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl"
-        class="absolute inset-0 w-full h-full object-cover" />
-      <div *ngIf="!animal()!.primaryPhotoUrl" class="text-7xl opacity-20 relative z-10">{{
+        class="w-full h-64 md:h-full object-cover" />
+      <div *ngIf="!animal()!.primaryPhotoUrl" class="text-7xl opacity-20 relative z-10 py-16 md:py-0">{{
         speciesEmoji(animal()!.species) }}</div>
 
       <!-- Status Badge Overlay -->

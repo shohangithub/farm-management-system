@@ -77,6 +77,18 @@
         <mat-icon class="text-gray-400">settings_applications</mat-icon>
         <span>Settings</span>
       </button>
+
+      <!-- Mobile Only Context Options -->
+      <mat-divider class="dark:border-gray-800/50 md:hidden"></mat-divider>
+      <button mat-menu-item class="text-sm text-gray-700 dark:text-gray-300 md:hidden">
+        <mat-icon class="text-gray-400">business</mat-icon>
+        <span>Change Organization</span>
+      </button>
+      <button mat-menu-item class="text-sm text-gray-700 dark:text-gray-300 md:hidden">
+        <mat-icon class="text-gray-400">store</mat-icon>
+        <span>Change Branch</span>
+      </button>
+
       <mat-divider class="dark:border-gray-800/50"></mat-divider>
       <button mat-menu-item (click)="logout()" class="text-sm text-red-600 dark:text-red-400">
         <mat-icon class="text-red-500 dark:text-red-400">logout</mat-icon>
