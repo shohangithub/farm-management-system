@@ -58,11 +58,11 @@ internal sealed class HealthDashboardRepository(ApplicationDbContext context) : 
 
         var treatmentCost = await context.MedicalTreatments
             .Where(t => t.TenantId == tenantId && t.StartDate >= thirtyDaysAgo)
-            .SumAsync(t => t.CostBdt, ct);
+            .SumAsync(t => (decimal?)t.CostBdt, ct) ?? 0;
             
         var vetCost = await context.VetVisits
             .Where(v => v.TenantId == tenantId && v.VisitDate >= thirtyDaysAgo)
-            .SumAsync(v => v.CostBdt ?? 0, ct);
+            .SumAsync(v => (decimal?)v.CostBdt, ct) ?? 0;
 
         return treatmentCost + vetCost;
     }

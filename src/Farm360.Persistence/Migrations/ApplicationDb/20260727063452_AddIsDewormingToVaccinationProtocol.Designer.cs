@@ -4,16 +4,19 @@ using Farm360.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Farm360.Persistence.Migrations
+namespace Farm360.Persistence.Migrations.ApplicationDb
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727063452_AddIsDewormingToVaccinationProtocol")]
+    partial class AddIsDewormingToVaccinationProtocol
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -294,11 +297,6 @@ namespace Farm360.Persistence.Migrations
 
                     b.Property<int>("AffectedAnimalCount")
                         .HasColumnType("int");
-
-                    b.PrimitiveCollection<string>("AffectedAnimalIds")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("AffectedAnimalIds");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");

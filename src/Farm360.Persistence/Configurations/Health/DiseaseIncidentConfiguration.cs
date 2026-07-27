@@ -35,5 +35,8 @@ public sealed class DiseaseIncidentConfiguration : IEntityTypeConfiguration<Dise
 
         // FarmId and ShedId are just Guid references; no navigation properties in this module per Clean Architecture
         // Assuming Farm and Shed might be in different bounded contexts or just stored as plain IDs
+
+        builder.PrimitiveCollection(di => di.AffectedAnimalIds)
+            .HasColumnName("AffectedAnimalIds");
     }
 }

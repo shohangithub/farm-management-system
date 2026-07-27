@@ -5,12 +5,15 @@ using Farm360.Application.Health.Commands.VaccinationEvents;
 using Farm360.Application.Health.Commands.VaccinationProtocols;
 using Farm360.Application.Health.Commands.VetVisits;
 using Farm360.Application.Health.Queries.AnimalHealth;
-using Farm360.Application.Health.Queries.Dashboard;
+using Farm360.Application.Health.Queries.Deworming;
+using Farm360.Application.Health.Queries.DiseaseIncidents;
 using Farm360.Application.Health.Queries.MedicalTreatments;
 using Farm360.Application.Health.Queries.MortalityRecords;
+using Farm360.Application.Health.Queries.SpecializedReports;
 using Farm360.Application.Health.Queries.VaccinationEvents;
 using Farm360.Application.Health.Queries.VaccinationProtocols;
 using Farm360.Application.Health.Queries.VetVisits;
+using Farm360.Application.Health.Queries.Dashboard;
 using Farm360.Domain.Health.Enums;
 using Farm360.Persistence.Seed;
 using MediatR;
@@ -187,6 +190,29 @@ public static class HealthEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
         .WithSummary("Update status and affected count of an incident");
 
+        group.MapGet("/incidents", async (
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromServices] ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetDiseaseIncidentListQuery(pageNumber, pageSize), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get paginated list of disease incidents");
+
+        group.MapGet("/incidents/{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetDiseaseIncidentDetailQuery(id), ct);
+            return result is not null ? Results.Ok(result) : Results.NotFound();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get details of a disease incident");
+
         // ── Mortality Records ────────────────────────────────────────────────────
 
         group.MapPost("/mortality", async (
@@ -250,6 +276,43 @@ public static class HealthEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
         .WithSummary("Get complete health history for an animal");
+
+        // ── Reports & Specialized Queries ────────────────────────────────────────
+
+        group.MapGet("/reports/animals/{animalId:guid}", async (
+            [FromRoute] Guid animalId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetAnimalHealthReportQuery(animalId), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get animal health report including incidents");
+
+        group.MapGet("/deworming/calendar", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromServices] ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var result = await sender.Send(new GetDewormingCalendarQuery(farmId, pageNumber, pageSize), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get deworming calendar events");
+
+        group.MapGet("/reports/withdrawals", async (
+            [FromQuery] Guid farmId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetMilkWithdrawalAnimalsQuery(farmId), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get animals currently under milk/meat withdrawal periods");
 
         return app;
     }

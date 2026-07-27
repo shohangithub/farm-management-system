@@ -57,6 +57,33 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
             .ToListAsync(ct);
     }
 
+    public async Task<(IReadOnlyList<VaccinationEvent> Items, int TotalCount)> GetDewormingEventsAsync(Guid farmId, int pageNumber, int pageSize, CancellationToken ct = default)
+    {
+        var dewormingStepIds = context.VaccinationProtocols
+            .Where(p => p.IsDeworming)
+            .SelectMany(p => p.Steps)
+            .Select(s => s.Id);
+
+        var animalIdsInFarm = context.Animals
+            .Where(a => a.FarmId == farmId)
+            .Select(a => a.Id);
+
+        var query = context.VaccinationEvents
+            .Where(ve => animalIdsInFarm.Contains(ve.AnimalId) && 
+                         ve.ProtocolStepId != null && 
+                         dewormingStepIds.Contains(ve.ProtocolStepId.Value));
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderBy(e => e.ScheduledDate)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return (items, totalCount);
+    }
+
     public async Task<(IReadOnlyList<VaccinationProtocol> Items, int TotalCount)> GetPagedProtocolsAsync(int pageNumber, int pageSize, string? searchTerm, CancellationToken ct = default)
     {
         var query = context.VaccinationProtocols

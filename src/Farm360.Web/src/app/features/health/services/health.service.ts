@@ -94,7 +94,17 @@ export class HealthService {
     return this.http.put<void>(`${this.apiUrl}/treatments/${id}/status`, { status, notes });
   }
 
-  // --- Disease Incidents ---
+  getIncidents(pageNumber = 1, pageSize = 10): Observable<PagedResult<DiseaseIncidentDto>> {
+    const params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+    return this.http.get<PagedResult<DiseaseIncidentDto>>(`${this.apiUrl}/incidents`, { params });
+  }
+
+  getIncidentDetails(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/incidents/${id}`);
+  }
+
   reportIncident(data: any): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(`${this.apiUrl}/incidents`, data);
   }
@@ -133,5 +143,22 @@ export class HealthService {
   // --- Miscellaneous ---
   getAnimalHealthHistory(animalId: string): Observable<AnimalHealthHistoryDto> {
     return this.http.get<AnimalHealthHistoryDto>(`${this.apiUrl}/animals/${animalId}/history`);
+  }
+
+  getAnimalHealthReport(animalId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reports/animals/${animalId}`);
+  }
+
+  getDewormingCalendar(farmId: string, pageNumber = 1, pageSize = 10): Observable<any> {
+    const params = new HttpParams()
+      .set('farmId', farmId)
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+    return this.http.get<any>(`${this.apiUrl}/deworming/calendar`, { params });
+  }
+
+  getMilkWithdrawals(farmId: string): Observable<any[]> {
+    const params = new HttpParams().set('farmId', farmId);
+    return this.http.get<any[]>(`${this.apiUrl}/reports/withdrawals`, { params });
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, firstValueFrom, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, firstValueFrom, map, of, switchMap, tap, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
@@ -132,7 +132,7 @@ export class AuthService {
   refresh(): Observable<LoginResponse> {
     const token = this.refreshToken;
     if (!token) {
-      throw new Error('No refresh token available');
+      return throwError(() => new Error('No refresh token available'));
     }
     return this.http.post<LoginResponse>('/api/v1/auth/refresh', { refreshToken: token }).pipe(
       tap(response => this.setSession(response))

@@ -63,6 +63,7 @@ public sealed class VaccinationProtocol : AuditableEntity, IAggregateRoot
     public AnimalSpecies TargetSpecies { get; private set; }
     public string? Description { get; private set; }
     public bool IsActive { get; private set; }
+    public bool IsDeworming { get; private set; }
 
     public IReadOnlyCollection<VaccinationProtocolStep> Steps => _steps.AsReadOnly();
 
@@ -70,12 +71,15 @@ public sealed class VaccinationProtocol : AuditableEntity, IAggregateRoot
         Guid tenantId,
         string title,
         AnimalSpecies targetSpecies,
-        string? description)
+        string? description,
+        bool isDeworming = false)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Protocol title is required.", nameof(title));
 
-        return new VaccinationProtocol(Guid.NewGuid(), tenantId, title.Trim(), targetSpecies, description?.Trim());
+        var protocol = new VaccinationProtocol(Guid.NewGuid(), tenantId, title.Trim(), targetSpecies, description?.Trim());
+        protocol.IsDeworming = isDeworming;
+        return protocol;
     }
 
     public VaccinationProtocolStep AddStep(

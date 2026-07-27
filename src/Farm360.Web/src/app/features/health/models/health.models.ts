@@ -22,7 +22,8 @@ export enum IncidentSeverity {
 export enum IncidentStatus {
   Reported = 'Reported',
   UnderTreatment = 'UnderTreatment',
-  Resolved = 'Resolved'
+  Resolved = 'Resolved',
+  Fatal = 'Fatal'
 }
 
 export enum CauseOfDeath {
@@ -142,3 +143,33 @@ export interface AnimalHealthHistoryDto {
   vaccinations: VaccinationEventDto[];
   treatments: MedicalTreatmentDto[];
 }
+
+export interface DiseaseIncidentDetail extends DiseaseIncidentDto {
+  affectedAnimals: {
+    animalId: string;
+    tagNumber: string;
+    species: string;
+    breedName: string;
+  }[];
+}
+
+export interface DewormingCalendarDto {
+  eventId: string;
+  animalId: string;
+  animalTag: string;
+  vaccineName: string;
+  scheduledDate: string;
+  status: string;
+}
+
+export interface MilkWithdrawalDto {
+  animalId: string;
+  animalTag: string;
+  treatmentId: string;
+  medicationName: string;
+  treatmentStartDate: string;
+  milkWithdrawalDays: number;
+  safeToMilkDate: string;
+}
+
+export type DiseaseIncident = DiseaseIncidentDto;

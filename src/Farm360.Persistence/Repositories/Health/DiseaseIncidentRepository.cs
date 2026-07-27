@@ -24,6 +24,14 @@ internal sealed class DiseaseIncidentRepository(ApplicationDbContext context) : 
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<DiseaseIncident>> GetIncidentsByAnimalIdAsync(Guid animalId, CancellationToken ct = default)
+    {
+        return await context.DiseaseIncidents
+            .Where(di => di.AffectedAnimalIds.Contains(animalId))
+            .OrderByDescending(di => di.IncidentDate)
+            .ToListAsync(ct);
+    }
+
     public async Task<(IReadOnlyList<DiseaseIncident> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
     {
         var query = context.DiseaseIncidents.AsQueryable();

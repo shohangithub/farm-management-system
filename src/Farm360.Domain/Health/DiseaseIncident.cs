@@ -9,6 +9,8 @@ namespace Farm360.Domain.Health;
 /// </summary>
 public sealed class DiseaseIncident : AuditableEntity, IAggregateRoot
 {
+    private readonly List<Guid> _affectedAnimalIds = [];
+
     private DiseaseIncident() { } // EF Core
 
     private DiseaseIncident(
@@ -44,6 +46,8 @@ public sealed class DiseaseIncident : AuditableEntity, IAggregateRoot
     public int AffectedAnimalCount { get; private set; }
     public IncidentStatus Status { get; private set; }
     public string? Notes { get; private set; }
+
+    public IReadOnlyCollection<Guid> AffectedAnimalIds => _affectedAnimalIds.AsReadOnly();
 
     public static DiseaseIncident Report(
         Guid tenantId,
@@ -100,5 +104,17 @@ public sealed class DiseaseIncident : AuditableEntity, IAggregateRoot
     {
         if (count < 0) throw new ArgumentException("Count cannot be negative.", nameof(count));
         AffectedAnimalCount = count;
+    }
+
+    public void AddAffectedAnimals(IEnumerable<Guid> animalIds)
+    {
+        foreach (var id in animalIds)
+        {
+            if (!_affectedAnimalIds.Contains(id))
+            {
+                _affectedAnimalIds.Add(id);
+            }
+        }
+        AffectedAnimalCount = _affectedAnimalIds.Count;
     }
 }

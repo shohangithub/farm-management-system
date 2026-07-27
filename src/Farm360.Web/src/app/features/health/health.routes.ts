@@ -33,8 +33,28 @@ export const HEALTH_ROUTES: Routes = [
   },
   {
     path: 'incidents',
-    loadComponent: () => import('./pages/report-incident/report-incident.component').then(c => c.ReportIncidentComponent),
+    loadComponent: () => import('./pages/incident-list/incident-list.component').then(c => c.IncidentListComponent),
     title: 'Disease Incidents - Farm360'
+  },
+  {
+    path: 'incidents/report',
+    loadComponent: () => import('./pages/report-incident/report-incident.component').then(c => c.ReportIncidentComponent),
+    title: 'Report Incident - Farm360'
+  },
+  {
+    path: 'incidents/:id',
+    loadComponent: () => import('./pages/incident-detail/incident-detail.component').then(c => c.IncidentDetailComponent),
+    title: 'Incident Details - Farm360'
+  },
+  {
+    path: 'deworming-calendar',
+    loadComponent: () => import('./pages/deworming-calendar/deworming-calendar.component').then(c => c.DewormingCalendarComponent),
+    title: 'Deworming Calendar - Farm360'
+  },
+  {
+    path: 'milk-withdrawal',
+    loadComponent: () => import('./pages/milk-withdrawal/milk-withdrawal.component').then(c => c.MilkWithdrawalComponent),
+    title: 'Milk Withdrawal - Farm360'
   },
   {
     path: 'mortality-records',

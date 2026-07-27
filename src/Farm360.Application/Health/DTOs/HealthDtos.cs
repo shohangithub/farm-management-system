@@ -62,6 +62,20 @@ public sealed record DiseaseIncidentDto(
     string? Notes
 );
 
+public sealed record DiseaseIncidentDetailDto(
+    Guid Id,
+    Guid FarmId,
+    Guid? ShedId,
+    string DiseaseName,
+    IncidentSeverity Severity,
+    DateOnly IncidentDate,
+    string Symptoms,
+    int AffectedAnimalCount,
+    IncidentStatus Status,
+    string? Notes,
+    IReadOnlyList<Guid> AffectedAnimalIds
+);
+
 public sealed record MortalityRecordDto(
     Guid Id,
     Guid AnimalId,
@@ -85,6 +99,16 @@ public sealed record VetVisitDto(
     string? Recommendations,
     decimal? CostBdt,
     DateOnly? NextVisitDate
+);
+
+public sealed record MilkWithdrawalDto(
+    Guid AnimalId,
+    string AnimalTag,
+    Guid TreatmentId,
+    string MedicationName,
+    DateOnly TreatmentStartDate,
+    int WithdrawalDays,
+    DateOnly SafeToMilkDate
 );
 
 public sealed record HealthDashboardDto(
