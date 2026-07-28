@@ -286,6 +286,368 @@ namespace Farm360.Persistence.Migrations
                     b.ToTable("Sheds", "app");
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Feeding.ConsumptionDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("CostBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("IngredientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("LogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("NetConsumedKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OfferedKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("RefusalKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LogId");
+
+                    b.ToTable("ConsumptionDetails", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedConsumptionLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormulaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("HeadCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateOnly>("LogDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("LoggedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("NetConsumptionKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid?>("PenId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid?>("ShedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TotalCostBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalFeedOfferedKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalRefusalKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "FarmId", "LogDate");
+
+                    b.ToTable("FeedConsumptionLogs", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedFormula", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetSpecies")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetStage")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("TotalCostPerKgBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Title");
+
+                    b.ToTable("FeedFormulas", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedIngredient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPreloaded")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("kg");
+
+                    b.Property<decimal>("UnitCostBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Name");
+
+                    b.ToTable("FeedIngredients", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormulaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid?>("PenId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid?>("ShedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("TargetQuantityKgPerHead")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "FarmId", "IsActive");
+
+                    b.ToTable("FeedingSchedules", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FormulaIngredient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormulaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("IngredientCostPerKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("IngredientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Percentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormulaId");
+
+                    b.ToTable("FormulaIngredients", "feeding");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Health.DiseaseIncident", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2079,6 +2441,168 @@ namespace Farm360.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Feeding.ConsumptionDetail", b =>
+                {
+                    b.HasOne("Farm360.Domain.Feeding.FeedConsumptionLog", null)
+                        .WithMany("Details")
+                        .HasForeignKey("LogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedFormula", b =>
+                {
+                    b.OwnsOne("Farm360.Domain.Feeding.ValueObjects.NutritionalProfile", "NutritionalProfile", b1 =>
+                        {
+                            b1.Property<Guid>("FeedFormulaId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("CalciumPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CalciumPct");
+
+                            b1.Property<decimal>("CrudeFiberPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CrudeFiberPct");
+
+                            b1.Property<decimal>("CrudeProteinPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CrudeProteinPct");
+
+                            b1.Property<decimal>("DryMatterPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("DryMatterPct");
+
+                            b1.Property<decimal>("MetabolizableEnergyMjPerKg")
+                                .HasPrecision(8, 4)
+                                .HasColumnType("decimal(8,4)")
+                                .HasColumnName("MetabolizableEnergyMjPerKg");
+
+                            b1.Property<decimal>("PhosphorusPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("PhosphorusPct");
+
+                            b1.HasKey("FeedFormulaId");
+
+                            b1.ToTable("FeedFormulas", "feeding");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FeedFormulaId");
+                        });
+
+                    b.Navigation("NutritionalProfile")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedIngredient", b =>
+                {
+                    b.OwnsOne("Farm360.Domain.Feeding.ValueObjects.NutritionalProfile", "NutritionalProfile", b1 =>
+                        {
+                            b1.Property<Guid>("FeedIngredientId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("CalciumPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CalciumPct");
+
+                            b1.Property<decimal>("CrudeFiberPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CrudeFiberPct");
+
+                            b1.Property<decimal>("CrudeProteinPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CrudeProteinPct");
+
+                            b1.Property<decimal>("DryMatterPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("DryMatterPct");
+
+                            b1.Property<decimal>("MetabolizableEnergyMjPerKg")
+                                .HasPrecision(8, 4)
+                                .HasColumnType("decimal(8,4)")
+                                .HasColumnName("MetabolizableEnergyMjPerKg");
+
+                            b1.Property<decimal>("PhosphorusPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("PhosphorusPct");
+
+                            b1.HasKey("FeedIngredientId");
+
+                            b1.ToTable("FeedIngredients", "feeding");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FeedIngredientId");
+                        });
+
+                    b.Navigation("NutritionalProfile")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FormulaIngredient", b =>
+                {
+                    b.HasOne("Farm360.Domain.Feeding.FeedFormula", null)
+                        .WithMany("Ingredients")
+                        .HasForeignKey("FormulaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Farm360.Domain.Feeding.ValueObjects.NutritionalProfile", "IngredientNutritionalProfile", b1 =>
+                        {
+                            b1.Property<Guid>("FormulaIngredientId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("CalciumPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CalciumPct");
+
+                            b1.Property<decimal>("CrudeFiberPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CrudeFiberPct");
+
+                            b1.Property<decimal>("CrudeProteinPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("CrudeProteinPct");
+
+                            b1.Property<decimal>("DryMatterPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("DryMatterPct");
+
+                            b1.Property<decimal>("MetabolizableEnergyMjPerKg")
+                                .HasPrecision(8, 4)
+                                .HasColumnType("decimal(8,4)")
+                                .HasColumnName("MetabolizableEnergyMjPerKg");
+
+                            b1.Property<decimal>("PhosphorusPercentage")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("PhosphorusPct");
+
+                            b1.HasKey("FormulaIngredientId");
+
+                            b1.ToTable("FormulaIngredients", "feeding");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FormulaIngredientId");
+                        });
+
+                    b.Navigation("IngredientNutritionalProfile")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Farm360.Domain.Health.MedicalTreatment", b =>
                 {
                     b.HasOne("Farm360.Domain.Livestock.Animal", null)
@@ -2497,6 +3021,16 @@ namespace Farm360.Persistence.Migrations
                         });
 
                     b.Navigation("Address");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedConsumptionLog", b =>
+                {
+                    b.Navigation("Details");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedFormula", b =>
+                {
+                    b.Navigation("Ingredients");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Identity.Permission", b =>

@@ -31,7 +31,7 @@ public static class PermissionConstants
     }
 
     // ── Feeding ───────────────────────────────────────────────────────────────
-    public static class Feeding
+    public static class FeedingModule
     {
         public const string View   = "feeding.view";
         public const string Create = "feeding.create";
@@ -153,10 +153,10 @@ public static class PermissionConstants
         (HealthModule.Delete,    "Health", "Delete health records"),
         (HealthModule.Prescribe, "Health", "Issue prescriptions and medication orders"),
 
-        (Feeding.View,   "Feeding", "View feeding schedules and records"),
-        (Feeding.Create, "Feeding", "Record feeding events"),
-        (Feeding.Edit,   "Feeding", "Edit feeding records"),
-        (Feeding.Delete, "Feeding", "Delete feeding records"),
+        (FeedingModule.View,   "Feeding", "View feeding schedules and records"),
+        (FeedingModule.Create, "Feeding", "Record feeding events"),
+        (FeedingModule.Edit,   "Feeding", "Edit feeding records"),
+        (FeedingModule.Delete, "Feeding", "Delete feeding records"),
 
         (Inventory.View,   "Inventory", "View inventory and stock levels"),
         (Inventory.Create, "Inventory", "Add inventory items and stock"),

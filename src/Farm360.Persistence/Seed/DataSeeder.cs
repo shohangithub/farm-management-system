@@ -140,7 +140,7 @@ public sealed class DataSeeder(
             PermissionConstants.HealthModule.Edit,
             PermissionConstants.HealthModule.Delete,
             PermissionConstants.HealthModule.Prescribe,
-            PermissionConstants.Feeding.View,
+            PermissionConstants.FeedingModule.View,
             PermissionConstants.Reports.View,
             PermissionConstants.Notifications.View,
         };
@@ -152,7 +152,7 @@ public sealed class DataSeeder(
         var workerPerms = new[]
         {
             PermissionConstants.Animals.View, PermissionConstants.Animals.Create,
-            PermissionConstants.Feeding.View, PermissionConstants.Feeding.Create, PermissionConstants.Feeding.Edit,
+            PermissionConstants.FeedingModule.View, PermissionConstants.FeedingModule.Create, PermissionConstants.FeedingModule.Edit,
             PermissionConstants.Inventory.View,
             PermissionConstants.Notifications.View,
         };

@@ -1,4 +1,6 @@
+using Farm360.Api.Converters;
 using Farm360.Api.Endpoints.Farms;
+using Farm360.Api.Endpoints.Feeding;
 using Farm360.Api.Endpoints.Health;
 using Farm360.Api.Endpoints.Livestock;
 using Farm360.Api.Endpoints.MasterData;
@@ -77,6 +79,8 @@ try
     builder.Services.ConfigureHttpJsonOptions(options =>
     {
         options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.SerializerOptions.Converters.Add(new NullableDateOnlyJsonConverter());
+        options.SerializerOptions.Converters.Add(new NullableGuidJsonConverter());
     });
 
     // ── Permission-based Authorization ────────────────────────────────────
@@ -207,6 +211,9 @@ try
 
     // ── Health module ───────────────────────────────────────────────────────
     app.MapHealthEndpoints();
+
+    // ── Smart Feeding module ────────────────────────────────────────────────
+    app.MapFeedingEndpoints();
 
     // ── Organization module ─────────────────────────────────────────────────
     app.MapOrganizationEndpoints();

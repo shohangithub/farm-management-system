@@ -24,6 +24,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using Farm360.Domain.Feeding.Interfaces.Repositories;
+using Farm360.Persistence.Repositories.Feeding;
+
 namespace Farm360.Persistence.DependencyInjection;
 
 /// <summary>
@@ -70,6 +73,12 @@ public static class PersistenceServiceExtensions
         services.AddScoped<IMortalityRecordRepository, MortalityRecordRepository>();
         services.AddScoped<IVetVisitRepository, VetVisitRepository>();
         services.AddScoped<IHealthDashboardRepository, HealthDashboardRepository>();
+
+        // ── Feeding repositories ────────────────────────────────────────────────
+        services.AddScoped<IFeedIngredientRepository, FeedIngredientRepository>();
+        services.AddScoped<IFeedFormulaRepository, FeedFormulaRepository>();
+        services.AddScoped<IFeedingScheduleRepository, FeedingScheduleRepository>();
+        services.AddScoped<IFeedConsumptionLogRepository, FeedConsumptionLogRepository>();
 
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();

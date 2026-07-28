@@ -8,6 +8,7 @@ using Farm360.Domain.MasterData.Locations;
 using Farm360.Domain.Tenancy;
 using Farm360.Domain.Organizations;
 using Farm360.Domain.Farms;
+using Farm360.Domain.Feeding;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -121,6 +122,12 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<DiseaseIncident> DiseaseIncidents => Set<DiseaseIncident>();
     public DbSet<MortalityRecord> MortalityRecords => Set<MortalityRecord>();
     public DbSet<VetVisit> VetVisits => Set<VetVisit>();
+
+    // ── Smart Feeding Module ──────────────────────────────────────────────────
+    public DbSet<FeedIngredient> FeedIngredients => Set<FeedIngredient>();
+    public DbSet<FeedFormula> FeedFormulas => Set<FeedFormula>();
+    public DbSet<FeedingSchedule> FeedingSchedules => Set<FeedingSchedule>();
+    public DbSet<FeedConsumptionLog> FeedConsumptionLogs => Set<FeedConsumptionLog>();
 
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;

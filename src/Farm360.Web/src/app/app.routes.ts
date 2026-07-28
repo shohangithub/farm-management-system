@@ -24,6 +24,11 @@ export const routes: Routes = [
           import('./features/health/health.routes').then(m => m.HEALTH_ROUTES),
       },
       {
+        path: 'feeding',
+        loadChildren: () =>
+          import('./features/feeding/feeding.routes').then(m => m.FEEDING_ROUTES),
+      },
+      {
         path: 'organizations',
         loadChildren: () =>
           import('./features/organizations/organizations.routes').then(m => m.ORGANIZATION_ROUTES),
