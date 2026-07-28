@@ -24,8 +24,10 @@ export class HealthService {
   private apiUrl = '/api/v1/health';
 
   // --- Dashboard ---
-  getHealthDashboard(): Observable<HealthDashboardDto> {
-    return this.http.get<HealthDashboardDto>(`${this.apiUrl}/dashboard`);
+  getHealthDashboard(farmId?: string): Observable<HealthDashboardDto> {
+    let params = new HttpParams();
+    if (farmId) params = params.set('farmId', farmId);
+    return this.http.get<HealthDashboardDto>(`${this.apiUrl}/dashboard`, { params });
   }
 
   // --- Vaccination Protocols ---

@@ -32,10 +32,11 @@ public static class HealthEndpoints
         // ── Dashboard ────────────────────────────────────────────────────────────
 
         group.MapGet("/dashboard", async (
+            [FromQuery] Guid? farmId,
             [FromServices] ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new GetHealthDashboardQuery(), ct);
+            var result = await sender.Send(new GetHealthDashboardQuery(farmId), ct);
             return Results.Ok(result);
         })
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")

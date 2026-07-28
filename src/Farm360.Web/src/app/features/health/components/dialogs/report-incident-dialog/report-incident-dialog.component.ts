@@ -1,20 +1,24 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { IncidentSeverity } from '../../../models/health.models';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
+import { parseApiError } from '../../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-report-incident-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -36,8 +40,9 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col overflow-hidden">
         
         <!-- Error State -->
-        <div *ngIf="error" class="mx-6 mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm whitespace-pre-wrap">
-          {{ error }}
+        <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-sm whitespace-pre-wrap flex items-start gap-2">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-red-500 mt-0.5 shrink-0">error</mat-icon>
+          <span>{{ error() }}</span>
         </div>
 
         <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
@@ -72,27 +77,27 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Symptoms <span class="text-red-500">*</span></label>
-            <textarea formControlName="symptoms" rows="3" placeholder="Describe the symptoms observed..."
+            <textarea formControlName="symptoms" rows="3" placeholder="Describe symptoms..."
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
           
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes (Optional)</label>
-            <textarea formControlName="notes" rows="2" placeholder="Any additional information..."
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes / Action Plan</label>
+            <textarea formControlName="notes" rows="2" placeholder="Quarantine details, notes..."
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
         </div>
 
         <!-- Footer Actions -->
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
-          <button type="button" mat-dialog-close [disabled]="isSubmitting"
+          <button type="button" mat-dialog-close [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
             Cancel
           </button>
-          <button type="submit" [disabled]="form.invalid || isSubmitting"
-                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-            <span *ngIf="!isSubmitting">Report Incident</span>
-            <span *ngIf="isSubmitting">Reporting...</span>
+          <button type="submit" [disabled]="form.invalid || isSubmitting()"
+                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
+            <span>{{ isSubmitting() ? 'Submitting...' : 'Report Incident' }}</span>
           </button>
         </div>
       </form>
@@ -119,10 +124,11 @@ export class ReportIncidentDialog {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<ReportIncidentDialog>);
+  private snackBar = inject(MatSnackBar);
 
   form: FormGroup;
-  isSubmitting = false;
-  error = '';
+  isSubmitting = signal(false);
+  error = signal('');
   severities = [
     { value: IncidentSeverity.Mild, label: 'Mild' },
     { value: IncidentSeverity.Moderate, label: 'Moderate' },
@@ -142,17 +148,26 @@ export class ReportIncidentDialog {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.snackBar.open('Please fill in all required fields correctly.', 'Close', {
+        duration: 4000,
+        panelClass: ['snack-error']
+      });
+      return;
+    }
 
-    this.isSubmitting = true;
-    this.error = '';
+    this.isSubmitting.set(true);
+    this.error.set('');
     
     const formValue = this.form.value;
     const farmId = this.contextService.currentFarmValue?.id || '';
 
     if (!farmId) {
-      this.error = 'No farm context available.';
-      this.isSubmitting = false;
+      const msg = 'No farm context available.';
+      this.error.set(msg);
+      this.snackBar.open(msg, 'Close', { duration: 4000, panelClass: ['snack-error'] });
+      this.isSubmitting.set(false);
       return;
     }
 
@@ -164,13 +179,22 @@ export class ReportIncidentDialog {
 
     this.healthService.reportIncident(request).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
+        this.snackBar.open('Incident reported successfully!', 'Close', {
+          duration: 3000,
+          panelClass: ['snack-success']
+        });
         this.dialogRef.close(true);
       },
       error: (err) => {
         console.error(err);
-        this.error = err.error?.detail || err.error?.title || 'Failed to report incident. Please try again.';
-        this.isSubmitting = false;
+        const parsedMsg = parseApiError(err, 'Failed to report incident. Please try again.');
+        this.error.set(parsedMsg);
+        this.snackBar.open(parsedMsg, 'Close', {
+          duration: 5000,
+          panelClass: ['snack-error']
+        });
+        this.isSubmitting.set(false);
       }
     });
   }

@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Farm360.Application.Health.Queries.Dashboard;
 
-public sealed record GetHealthDashboardQuery() : IRequest<HealthDashboardDto>;
+public sealed record GetHealthDashboardQuery(Guid? FarmId = null) : IRequest<HealthDashboardDto>;
 
 internal sealed class GetHealthDashboardQueryHandler : IRequestHandler<GetHealthDashboardQuery, HealthDashboardDto>
 {
@@ -24,12 +24,12 @@ internal sealed class GetHealthDashboardQueryHandler : IRequestHandler<GetHealth
     {
         var tenantId = _tenantService.TenantId;
 
-        var vaccinationsDueThisWeek = await _repository.GetVaccinationsDueThisWeekAsync(tenantId, cancellationToken);
-        var vaccinationsOverdue = await _repository.GetVaccinationsOverdueAsync(tenantId, cancellationToken);
-        var activeTreatments = await _repository.GetActiveTreatmentsAsync(tenantId, cancellationToken);
-        var activeIncidents = await _repository.GetActiveIncidentsAsync(tenantId, cancellationToken);
-        var recentMortalityCount = await _repository.GetRecentMortalityCountAsync(tenantId, cancellationToken);
-        var monthlyHealthCost = await _repository.GetMonthlyHealthCostAsync(tenantId, cancellationToken);
+        var vaccinationsDueThisWeek = await _repository.GetVaccinationsDueThisWeekAsync(tenantId, request.FarmId, cancellationToken);
+        var vaccinationsOverdue = await _repository.GetVaccinationsOverdueAsync(tenantId, request.FarmId, cancellationToken);
+        var activeTreatments = await _repository.GetActiveTreatmentsAsync(tenantId, request.FarmId, cancellationToken);
+        var activeIncidents = await _repository.GetActiveIncidentsAsync(tenantId, request.FarmId, cancellationToken);
+        var recentMortalityCount = await _repository.GetRecentMortalityCountAsync(tenantId, request.FarmId, cancellationToken);
+        var monthlyHealthCost = await _repository.GetMonthlyHealthCostAsync(tenantId, request.FarmId, cancellationToken);
 
         return new HealthDashboardDto(
             vaccinationsDueThisWeek,

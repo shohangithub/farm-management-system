@@ -4,9 +4,11 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { AnimalMultiPickerComponent } from '../../../../../shared/components/animal-multi-picker/animal-multi-picker.component';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
+import { parseApiError } from '../../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-assign-protocol-dialog',
@@ -16,8 +18,9 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
     CommonModule, 
     ReactiveFormsModule, 
     MatDialogModule, 
-    MatButtonModule,
+    MatButtonModule, 
     MatIconModule,
+    MatSnackBarModule,
     AnimalMultiPickerComponent
   ],
   template: `
@@ -111,6 +114,7 @@ export class AssignProtocolDialog {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<AssignProtocolDialog>);
+  private snackBar = inject(MatSnackBar);
   data = inject(MAT_DIALOG_DATA);
 
   form: FormGroup;
@@ -125,7 +129,14 @@ export class AssignProtocolDialog {
   }
 
   onSubmit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.snackBar.open('Please select at least one animal and start date.', 'Close', {
+        duration: 4000,
+        panelClass: ['snack-error']
+      });
+      return;
+    }
 
     this.isSubmitting.set(true);
     this.error.set('');
@@ -134,7 +145,9 @@ export class AssignProtocolDialog {
     const farmId = this.contextService.currentFarmValue?.id || '';
 
     if (!farmId) {
-      this.error.set('No farm context available.');
+      const msg = 'No farm context available.';
+      this.error.set(msg);
+      this.snackBar.open(msg, 'Close', { duration: 4000, panelClass: ['snack-error'] });
       this.isSubmitting.set(false);
       return;
     }
@@ -142,7 +155,9 @@ export class AssignProtocolDialog {
     const animalIdArray = val.animalIds;
       
     if (!animalIdArray || animalIdArray.length === 0) {
-      this.error.set('Please select at least one animal.');
+      const msg = 'Please select at least one animal.';
+      this.error.set(msg);
+      this.snackBar.open(msg, 'Close', { duration: 4000, panelClass: ['snack-error'] });
       this.isSubmitting.set(false);
       return;
     }
@@ -157,10 +172,19 @@ export class AssignProtocolDialog {
     this.healthService.assignProtocolToAnimals(request).subscribe({
       next: () => {
         this.isSubmitting.set(false);
+        this.snackBar.open('Protocol assigned successfully!', 'Close', {
+          duration: 3000,
+          panelClass: ['snack-success']
+        });
         this.dialogRef.close(true);
       },
       error: (err) => {
-        this.error.set(err.error?.detail || 'Failed to assign protocol.');
+        const parsedMsg = parseApiError(err, 'Failed to assign protocol.');
+        this.error.set(parsedMsg);
+        this.snackBar.open(parsedMsg, 'Close', {
+          duration: 5000,
+          panelClass: ['snack-error']
+        });
         this.isSubmitting.set(false);
       }
     });

@@ -58,7 +58,7 @@ export class HealthDashboardComponent {
           this.isLoading.set(false);
           return of(null);
         }
-        return this.healthService.getHealthDashboard().pipe(
+        return this.healthService.getHealthDashboard(farm?.id).pipe(
           catchError((err) => {
             console.error('Error loading health dashboard', err);
             this.error.set('Failed to load dashboard data. Please try again.');

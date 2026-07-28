@@ -22,8 +22,8 @@ export enum IncidentSeverity {
 export enum IncidentStatus {
   Reported = 1,
   UnderTreatment = 2,
-  Resolved = 3,
-  Fatal = 4
+  Contained = 3,
+  Resolved = 4
 }
 
 export enum CauseOfDeath {

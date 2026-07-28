@@ -8,7 +8,7 @@ namespace Farm360.Persistence.Repositories.Health;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by DI")]
 internal sealed class HealthDashboardRepository(ApplicationDbContext context) : IHealthDashboardRepository
 {
-    public async Task<int> GetVaccinationsDueThisWeekAsync(Guid tenantId, CancellationToken ct = default)
+    public async Task<int> GetVaccinationsDueThisWeekAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var endOfWeek = today.AddDays(7);
@@ -19,7 +19,7 @@ internal sealed class HealthDashboardRepository(ApplicationDbContext context) : 
                              v.ScheduledDate >= today && v.ScheduledDate <= endOfWeek, ct);
     }
 
-    public async Task<int> GetVaccinationsOverdueAsync(Guid tenantId, CancellationToken ct = default)
+    public async Task<int> GetVaccinationsOverdueAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -29,21 +29,22 @@ internal sealed class HealthDashboardRepository(ApplicationDbContext context) : 
                              v.ScheduledDate < today, ct);
     }
 
-    public async Task<int> GetActiveTreatmentsAsync(Guid tenantId, CancellationToken ct = default)
+    public async Task<int> GetActiveTreatmentsAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default)
     {
         return await context.MedicalTreatments
             .CountAsync(t => t.TenantId == tenantId && 
                              t.Status == TreatmentStatus.Ongoing, ct);
     }
 
-    public async Task<int> GetActiveIncidentsAsync(Guid tenantId, CancellationToken ct = default)
+    public async Task<int> GetActiveIncidentsAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default)
     {
         return await context.DiseaseIncidents
             .CountAsync(i => i.TenantId == tenantId && 
+                             (farmId == null || i.FarmId == farmId) &&
                              i.Status != IncidentStatus.Resolved, ct);
     }
 
-    public async Task<int> GetRecentMortalityCountAsync(Guid tenantId, CancellationToken ct = default)
+    public async Task<int> GetRecentMortalityCountAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default)
     {
         var thirtyDaysAgo = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-30));
 
@@ -52,7 +53,7 @@ internal sealed class HealthDashboardRepository(ApplicationDbContext context) : 
                              m.DeathDate >= thirtyDaysAgo, ct);
     }
 
-    public async Task<decimal> GetMonthlyHealthCostAsync(Guid tenantId, CancellationToken ct = default)
+    public async Task<decimal> GetMonthlyHealthCostAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default)
     {
         var thirtyDaysAgo = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-30));
 
@@ -61,7 +62,7 @@ internal sealed class HealthDashboardRepository(ApplicationDbContext context) : 
             .SumAsync(t => (decimal?)t.CostBdt, ct) ?? 0;
             
         var vetCost = await context.VetVisits
-            .Where(v => v.TenantId == tenantId && v.VisitDate >= thirtyDaysAgo)
+            .Where(v => v.TenantId == tenantId && (farmId == null || v.FarmId == farmId) && v.VisitDate >= thirtyDaysAgo)
             .SumAsync(v => (decimal?)v.CostBdt, ct) ?? 0;
 
         return treatmentCost + vetCost;

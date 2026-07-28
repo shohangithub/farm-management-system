@@ -1,23 +1,27 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { CauseOfDeath } from '../../../models/health.models';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
+import { parseApiError } from '../../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-record-mortality-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
-    MatDialogModule, 
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
     MatButtonModule,
     MatIconModule,
+    MatSnackBarModule,
     AnimalPickerComponent
   ],
   template: `
@@ -40,8 +44,9 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col overflow-hidden">
         
         <!-- Error State -->
-        <div *ngIf="error" class="mx-6 mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm whitespace-pre-wrap">
-          {{ error }}
+        <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-sm whitespace-pre-wrap flex items-start gap-2">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-red-500 mt-0.5 shrink-0">error</mat-icon>
+          <span>{{ error() }}</span>
         </div>
 
         <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
@@ -88,14 +93,14 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
 
         <!-- Footer Actions -->
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
-          <button type="button" mat-dialog-close [disabled]="isSubmitting"
+          <button type="button" mat-dialog-close [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
             Cancel
           </button>
-          <button type="submit" [disabled]="form.invalid || isSubmitting"
-                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-            <span *ngIf="!isSubmitting">Record Death</span>
-            <span *ngIf="isSubmitting">Recording...</span>
+          <button type="submit" [disabled]="form.invalid || isSubmitting()"
+                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
+            <span>{{ isSubmitting() ? 'Recording...' : 'Record Death' }}</span>
           </button>
         </div>
       </form>
@@ -124,8 +129,8 @@ export class RecordMortalityDialog {
   private dialogRef = inject(MatDialogRef<RecordMortalityDialog>);
 
   form: FormGroup;
-  isSubmitting = false;
-  error = '';
+  isSubmitting = signal(false);
+  error = signal('');
   causes = [
     { value: CauseOfDeath.Disease, label: 'Disease' },
     { value: CauseOfDeath.Accident, label: 'Accident' },
@@ -146,17 +151,21 @@ export class RecordMortalityDialog {
   }
 
   onSubmit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
-    this.isSubmitting = true;
-    this.error = '';
+    this.isSubmitting.set(true);
+    this.error.set('');
 
     const val = this.form.value;
     const farmId = this.contextService.currentFarmValue?.id || '';
 
     if (!farmId) {
-      this.error = 'No farm context available.';
-      this.isSubmitting = false;
+      const msg = 'No farm context available.';
+      this.error.set(msg);
+      this.isSubmitting.set(false);
       return;
     }
 
@@ -168,17 +177,18 @@ export class RecordMortalityDialog {
       diseaseName: val.causeOfDeath === CauseOfDeath.Disease ? val.diseaseName : null,
       postMortemNotes: val.postMortemNotes,
       estimatedEconomicLossBdt: val.estimatedEconomicLossBdt,
-      recordedByUserId: '00000000-0000-0000-0000-000000000000' // Mock user ID for MVP
+      recordedByUserId: '00000000-0000-0000-0000-000000000000'
     };
 
     this.healthService.recordMortality(request).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.dialogRef.close(true);
       },
       error: (err) => {
-        this.error = err.error?.detail || 'Failed to record mortality.';
-        this.isSubmitting = false;
+        const parsedMsg = parseApiError(err, 'Failed to record mortality.');
+        this.error.set(parsedMsg);
+        this.isSubmitting.set(false);
       }
     });
   }

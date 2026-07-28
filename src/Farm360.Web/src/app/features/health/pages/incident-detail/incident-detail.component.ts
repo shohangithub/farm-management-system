@@ -190,8 +190,8 @@ export class IncidentDetailComponent {
     switch (status) {
       case IncidentStatus.Reported: return 'Reported';
       case IncidentStatus.UnderTreatment: return 'Under Treatment';
+      case IncidentStatus.Contained: return 'Contained';
       case IncidentStatus.Resolved: return 'Resolved';
-      case IncidentStatus.Fatal: return 'Fatal';
       default: return 'Unknown';
     }
   }
@@ -200,8 +200,8 @@ export class IncidentDetailComponent {
     switch (status) {
       case IncidentStatus.Reported: return 'bg-amber-100 dark:bg-amber-400/30 text-amber-600 dark:text-amber-400';
       case IncidentStatus.UnderTreatment: return 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-400';
+      case IncidentStatus.Contained: return 'bg-blue-100 dark:bg-blue-500/30 text-blue-600 dark:text-blue-400';
       case IncidentStatus.Resolved: return 'bg-emerald-100 dark:bg-emerald-400/30 text-emerald-600 dark:text-emerald-400';
-      case IncidentStatus.Fatal: return 'bg-rose-100 dark:bg-rose-500/30 text-rose-500 dark:text-rose-400';
       default: return 'bg-slate-100 text-slate-500';
     }
   }

@@ -12,6 +12,7 @@
 - [x] **Security Headers** — Integrated production HTTP security response headers in `Program.cs`.
 - [x] **Regression & Architecture Testing** — Verified 150 tests across solution test projects (79 Domain + 62 Application + 7 Architecture + 1 Integration + 1 Functional).
 - [x] **Livestock Module Production-Readiness Fixes** — Completed missing FluentValidation, pregnancy validation, batch filtering, strict types, mapped missing fields, and unified exception handling.
+- [x] **Health & Veterinary Module Production-Readiness Fixes** — Connected mortality records to Livestock animal status (`AnimalStatus.Dead`), enabled `JsonStringEnumConverter` in Minimal API JSON options, aligned Angular `IncidentStatus` enum with C# domain, and enabled `farmId` scoping on dashboard statistics.
 
 ---
 

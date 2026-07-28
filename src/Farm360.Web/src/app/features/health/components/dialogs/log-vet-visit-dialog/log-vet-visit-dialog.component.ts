@@ -5,6 +5,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../../services/health.service';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
+import { parseApiError } from '../../../../../core/utils/error-parser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
@@ -23,6 +24,7 @@ export class LogVetVisitDialog {
   private destroyRef = inject(DestroyRef);
 
   isSubmitting = signal(false);
+  error = signal('');
 
   farms$ = this.contextService.farms$;
 
@@ -60,7 +62,10 @@ export class LogVetVisitDialog {
       finalize(() => this.isSubmitting.set(false))
     ).subscribe({
       next: () => this.dialogRef.close(true),
-      error: (err) => console.error('Failed to log vet visit', err)
+      error: (err) => {
+        console.error('Failed to log vet visit', err);
+        this.error.set(parseApiError(err, 'Failed to log vet visit. Please try again.'));
+      }
     });
   }
 

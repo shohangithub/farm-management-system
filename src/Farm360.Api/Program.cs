@@ -74,6 +74,10 @@ try
     // ── API layer services ───────────────────────────────────────────────────
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddEndpointsApiExplorer();
+    builder.Services.ConfigureHttpJsonOptions(options =>
+    {
+        options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
     // ── Permission-based Authorization ────────────────────────────────────
     builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, PermissionPolicyProvider>();

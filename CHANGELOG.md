@@ -5,6 +5,14 @@ All notable changes to the Farm360 AI project will be documented in this file.
 ## [Unreleased]
 
 ### Refactored & Hardened (Enterprise Architecture Sprint)
+- **Health & Veterinary Module Production-Readiness & Integration Fixes**:
+  - Added duplicate mortality record & deceased animal validation to `RecordMortalityCommandHandler` to prevent database unique constraint violations (`UQ_Mortality_AnimalId`).
+  - Connected `RecordMortalityCommand` to `IAnimalRepository` so recording animal mortality automatically transitions the animal's status in the Livestock module to `AnimalStatus.Dead`.
+  - Registered `JsonStringEnumConverter` in Minimal API `ConfigureHttpJsonOptions` inside `Program.cs` to ensure enums serialize to strings consistently across all HTTP REST endpoints.
+  - Aligned `IncidentStatus` enum in Angular `health.models.ts` (`Reported = 1, UnderTreatment = 2, Contained = 3, Resolved = 4`) with the C# Domain model.
+  - Scoped `GetHealthDashboardQuery` and `IHealthDashboardRepository` statistics by active `farmId` context.
+  - Resolved `VetVisitDetailDialogComponent` design and enum formatting bugs.
+  - Added click handler to "Record Vaccination" button on `VaccinationDueListComponent` to trigger `ScheduleVaccinationDialog`.
 - **Livestock Module Production-Readiness Fixes**:
   - Implemented missing FluentValidation validators for all Livestock commands (`RecordBcsCommand`, `RecordMatingCommand`, `ConfirmPregnancyCommand`, `RecordCalvingCommand`, `CreateBatchCommand`, `UploadAnimalPhotoCommand`, `TransferAnimalCommand`).
   - Enforced a maximum of 5 photos per animal in the domain layer.

@@ -45,6 +45,7 @@ public interface IDiseaseIncidentRepository
 
 public interface IMortalityRecordRepository
 {
+    Task<bool> ExistsByAnimalIdAsync(Guid animalId, CancellationToken ct = default);
     Task<(IReadOnlyList<MortalityRecord> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default);
     void Add(MortalityRecord record);
 }
@@ -59,10 +60,10 @@ public interface IVetVisitRepository
 
 public interface IHealthDashboardRepository
 {
-    Task<int> GetVaccinationsDueThisWeekAsync(Guid tenantId, CancellationToken ct = default);
-    Task<int> GetVaccinationsOverdueAsync(Guid tenantId, CancellationToken ct = default);
-    Task<int> GetActiveTreatmentsAsync(Guid tenantId, CancellationToken ct = default);
-    Task<int> GetActiveIncidentsAsync(Guid tenantId, CancellationToken ct = default);
-    Task<int> GetRecentMortalityCountAsync(Guid tenantId, CancellationToken ct = default);
-    Task<decimal> GetMonthlyHealthCostAsync(Guid tenantId, CancellationToken ct = default);
+    Task<int> GetVaccinationsDueThisWeekAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default);
+    Task<int> GetVaccinationsOverdueAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default);
+    Task<int> GetActiveTreatmentsAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default);
+    Task<int> GetActiveIncidentsAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default);
+    Task<int> GetRecentMortalityCountAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default);
+    Task<decimal> GetMonthlyHealthCostAsync(Guid tenantId, Guid? farmId = null, CancellationToken ct = default);
 }

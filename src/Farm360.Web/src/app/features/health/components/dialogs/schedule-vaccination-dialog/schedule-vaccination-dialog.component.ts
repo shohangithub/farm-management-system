@@ -1,21 +1,25 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
+import { parseApiError } from '../../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-schedule-vaccination-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, 
     ReactiveFormsModule, 
     MatDialogModule, 
     MatButtonModule,
     MatIconModule,
+    MatSnackBarModule,
     AnimalPickerComponent
   ],
   template: `
@@ -38,8 +42,9 @@ import { AnimalPickerComponent } from '../../../../../shared/components/animal-p
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col overflow-hidden">
         
         <!-- Error State -->
-        <div *ngIf="error" class="mx-6 mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm whitespace-pre-wrap">
-          {{ error }}
+        <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-sm whitespace-pre-wrap flex items-start gap-2">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-red-500 mt-0.5 shrink-0">error</mat-icon>
+          <span>{{ error() }}</span>
         </div>
 
         <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
@@ -57,8 +62,8 @@ import { AnimalPickerComponent } from '../../../../../shared/components/animal-p
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Batch Number <span class="text-red-500">*</span></label>
-              <input type="text" formControlName="batchNumber" placeholder="e.g. BATCH-001"
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Batch Number</label>
+              <input type="text" formControlName="batchNumber" placeholder="Optional batch #"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             </div>
 
@@ -70,22 +75,22 @@ import { AnimalPickerComponent } from '../../../../../shared/components/animal-p
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes (Optional)</label>
-            <textarea formControlName="notes" rows="3" placeholder="Any additional information..."
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes</label>
+            <textarea formControlName="notes" rows="3" placeholder="Booster details or special instructions..."
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
         </div>
 
         <!-- Footer Actions -->
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
-          <button type="button" mat-dialog-close [disabled]="isSubmitting"
+          <button type="button" mat-dialog-close [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
             Cancel
           </button>
-          <button type="submit" [disabled]="form.invalid || isSubmitting"
-                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-            <span *ngIf="!isSubmitting">Schedule Vaccine</span>
-            <span *ngIf="isSubmitting">Scheduling...</span>
+          <button type="submit" [disabled]="form.invalid || isSubmitting()"
+                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
+            <span>{{ isSubmitting() ? 'Scheduling...' : 'Schedule' }}</span>
           </button>
         </div>
       </form>
@@ -111,26 +116,34 @@ export class ScheduleVaccinationDialog {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
   private dialogRef = inject(MatDialogRef<ScheduleVaccinationDialog>);
+  private snackBar = inject(MatSnackBar);
 
   form: FormGroup;
-  isSubmitting = false;
-  error = '';
+  isSubmitting = signal(false);
+  error = signal('');
 
   constructor() {
     this.form = this.fb.group({
       animalId: ['', Validators.required],
       vaccineName: ['', Validators.required],
-      batchNumber: ['', Validators.required],
+      batchNumber: [''],
       scheduledDate: [new Date(), Validators.required],
       notes: ['']
     });
   }
 
   onSubmit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.snackBar.open('Please select an animal and enter the vaccine name.', 'Close', {
+        duration: 4000,
+        panelClass: ['snack-error']
+      });
+      return;
+    }
 
-    this.isSubmitting = true;
-    this.error = '';
+    this.isSubmitting.set(true);
+    this.error.set('');
 
     const val = this.form.value;
     const formattedDate = new Date(val.scheduledDate).toISOString().split('T')[0];
@@ -143,12 +156,21 @@ export class ScheduleVaccinationDialog {
       val.notes
     ).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
+        this.snackBar.open('Vaccination scheduled successfully!', 'Close', {
+          duration: 3000,
+          panelClass: ['snack-success']
+        });
         this.dialogRef.close(true);
       },
       error: (err) => {
-        this.error = err.error?.detail || 'Failed to schedule vaccination.';
-        this.isSubmitting = false;
+        const parsedMsg = parseApiError(err, 'Failed to schedule vaccination.');
+        this.error.set(parsedMsg);
+        this.snackBar.open(parsedMsg, 'Close', {
+          duration: 5000,
+          panelClass: ['snack-error']
+        });
+        this.isSubmitting.set(false);
       }
     });
   }

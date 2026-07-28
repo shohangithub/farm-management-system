@@ -8,6 +8,10 @@ namespace Farm360.Persistence.Repositories.Health;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by DI")]
 internal sealed class MortalityRecordRepository(ApplicationDbContext context) : IMortalityRecordRepository
 {
+    public async Task<bool> ExistsByAnimalIdAsync(Guid animalId, CancellationToken ct = default)
+    {
+        return await context.MortalityRecords.AnyAsync(m => m.AnimalId == animalId, ct);
+    }
     public async Task<(IReadOnlyList<MortalityRecord> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
     {
         var query = context.MortalityRecords.AsQueryable();

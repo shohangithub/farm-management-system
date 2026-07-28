@@ -180,6 +180,34 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
+            // Database constraint violation / unique key conflict → 409 Conflict
+            Microsoft.EntityFrameworkCore.DbUpdateException dbUpdateEx when dbUpdateEx.InnerException != null &&
+                (dbUpdateEx.InnerException.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ||
+                 dbUpdateEx.InnerException.Message.Contains("unique index", StringComparison.OrdinalIgnoreCase) ||
+                 dbUpdateEx.InnerException.Message.Contains("UNIQUE constraint", StringComparison.OrdinalIgnoreCase) ||
+                 dbUpdateEx.InnerException.Message.Contains("FOREIGN KEY constraint", StringComparison.OrdinalIgnoreCase)) => (
+                HttpStatusCode.Conflict,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/database-conflict",
+                    Title = "Database Conflict Error",
+                    Status = (int)HttpStatusCode.Conflict,
+                    Detail = "A record with the same unique identifier, tag, or key already exists in the system.",
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
+            // General Database update error → 409 Conflict
+            Microsoft.EntityFrameworkCore.DbUpdateException dbEx => (
+                HttpStatusCode.Conflict,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/database-conflict",
+                    Title = "Database Conflict Error",
+                    Status = (int)HttpStatusCode.Conflict,
+                    Detail = "A database constraint conflict occurred while saving changes.",
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
             // All other exceptions → 500 (no detail in production)
             _ => (
                 HttpStatusCode.InternalServerError,
