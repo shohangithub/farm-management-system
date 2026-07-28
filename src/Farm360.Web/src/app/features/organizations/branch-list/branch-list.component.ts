@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,31 +9,66 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-branch-list',
   standalone: true,
   imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent],
   templateUrl: './branch-list.html',
-  styleUrls: ['./branch-list.scss']
+  styleUrls: ['./branch-list.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BranchListComponent implements OnInit {
+export class BranchListComponent {
   private readonly branchService = inject(BranchService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
 
-  orgId = signal<string>('');
-  branches = signal<BranchList[]>([]);
-  isLoading = signal<boolean>(false);
-  error = signal<string | null>(null);
+  readonly orgId = toSignal(
+    this.route.paramMap.pipe(map(params => params.get('orgId') || '')),
+    { initialValue: '' }
+  );
+
+  readonly isLoading = signal<boolean>(false);
+  readonly error = signal<string | null>(null);
 
   // Pagination & Search State
-  totalCount = signal<number>(0);
-  pageSize = signal<number>(10);
-  pageIndex = signal<number>(0);
-  searchTerm = signal<string>('');
-  statusFilter = signal<number | null>(null);
+  readonly pageIndex = signal<number>(0);
+  readonly pageSize = signal<number>(10);
+  readonly searchTerm = signal<string>('');
+  readonly statusFilter = signal<number | null>(null);
+
+  private refreshTrigger = signal(0);
+  private fetchParams = computed(() => ({
+    orgId: this.orgId(),
+    search: this.searchTerm(),
+    status: this.statusFilter(),
+    pageNumber: this.pageIndex() + 1,
+    pageSize: this.pageSize(),
+    refresh: this.refreshTrigger()
+  }));
+
+  readonly branchesResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(params => !!params.orgId),
+      tap(() => { this.isLoading.set(true); this.error.set(null); }),
+      switchMap(params => this.branchService.getBranchesByOrganization(params.orgId, params.search, params.status !== null ? params.status : undefined, params.pageNumber, params.pageSize).pipe(
+        catchError(err => {
+          this.error.set('Failed to load branches.');
+          console.error(err);
+          return of({ items: [] as BranchList[], totalCount: 0 });
+        })
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { items: [] as BranchList[], totalCount: 0 } }
+  );
+
+  readonly branches = computed(() => this.branchesResult().items);
+  readonly totalCount = computed(() => this.branchesResult().totalCount);
 
   displayedColumns = ['branch', 'contact', 'location', 'status', 'actions'];
 
@@ -83,38 +118,14 @@ export class BranchListComponent implements OnInit {
     }
   ];
 
-  ngOnInit(): void {
-    const orgId = this.route.snapshot.paramMap.get('orgId');
-    if (orgId) {
-      this.orgId.set(orgId);
-      this.loadBranches();
-    } else {
-      this.error.set('Organization ID not found in route.');
-    }
-  }
-
   loadBranches(): void {
-    this.isLoading.set(true);
-    const status = this.statusFilter();
-    this.branchService.getBranchesByOrganization(this.orgId(), this.searchTerm(), status !== null ? status : undefined, this.pageIndex() + 1, this.pageSize()).subscribe({
-      next: (data) => {
-        this.branches.set(data.items);
-        this.totalCount.set(data.totalCount);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set('Failed to load branches.');
-        this.isLoading.set(false);
-        console.error(err);
-      }
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
     this.pageIndex.set(0);
-    this.loadBranches();
   }
 
   onFilterStatus(event: any): void {
@@ -125,13 +136,11 @@ export class BranchListComponent implements OnInit {
       this.statusFilter.set(Number(val));
     }
     this.pageIndex.set(0);
-    this.loadBranches();
   }
 
   onPageChange(event: any): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
-    this.loadBranches();
   }
 
   delete(id: string): void {

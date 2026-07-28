@@ -14,17 +14,17 @@
 </app-page-header>
 
 <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-  <app-loading *ngIf="loading" [overlay]="true"></app-loading>
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 m-6 rounded-md shadow-sm">
+  <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 m-6 rounded-md shadow-sm">
     <div class="flex">
       <mat-icon class="text-red-500 mr-2">error</mat-icon>
-      <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+      <p class="text-sm text-red-700 font-medium">{{ error() }}</p>
     </div>
   </div>
 
-  <div class="relative overflow-x-auto" *ngIf="!error">
-    <table class="w-full text-sm text-left" *ngIf="upcomingVaccinations.length > 0">
+  <div class="relative overflow-x-auto" *ngIf="!error()">
+    <table class="w-full text-sm text-left" *ngIf="upcomingVaccinations().length > 0">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
         <tr>
           <th scope="col" class="px-6 py-4">Vaccine</th>
@@ -36,7 +36,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let ev of upcomingVaccinations" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" [ngClass]="getUrgencyClass(ev.scheduledDate)">
+        <tr *ngFor="let ev of upcomingVaccinations()" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" [ngClass]="getUrgencyClass(ev.scheduledDate)">
           <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
             {{ ev.vaccineName }}
           </td>
@@ -70,12 +70,12 @@
     </table>
     
     <app-empty-state 
-      *ngIf="!loading && upcomingVaccinations.length === 0"
+      *ngIf="!isLoading() && upcomingVaccinations().length === 0"
       icon="health_and_safety"
       title="All vaccinations are up to date!"
       description="Great work keeping your herd healthy. There are no upcoming vaccinations scheduled."
       actionLabel="Create Protocol"
-      (action)="undefined"> <!-- Action handled via a function instead if needed -->
+      (action)="undefined">
     </app-empty-state>
   </div>
 </div>

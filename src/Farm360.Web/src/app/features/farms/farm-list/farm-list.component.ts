@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,27 +7,56 @@ import { FarmService } from '../services/farm.service';
 import { FarmList } from '../models/farm.model';
 import { FarmCardComponent } from '../components/farm-card/farm-card.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-farm-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, MatIconModule, FarmCardComponent, PageHeaderComponent],
-  templateUrl: './farm-list.component.html'
+  templateUrl: './farm-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FarmListComponent implements OnInit {
+export class FarmListComponent {
   private readonly farmService = inject(FarmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  farms = signal<FarmList[]>([]);
   isLoading = signal<boolean>(true);
-  branchId = signal<string>('');
+
+  // Using a custom observable chain to pick up changes from the route automatically
+  readonly branchId = toSignal(
+    this.route.paramMap.pipe(map(params => params.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId') || '')),
+    { initialValue: '' }
+  );
 
   searchTerm = signal<string>('');
   statusFilter = signal<number | null>(null);
 
+  private refreshTrigger = signal(0);
+  private fetchParams = computed(() => ({
+    branchId: this.branchId(),
+    refresh: this.refreshTrigger()
+  }));
+
+  readonly farmsResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(params => !!params.branchId),
+      tap(() => this.isLoading.set(true)),
+      switchMap(({ branchId }) => this.farmService.getFarmsByBranch(branchId).pipe(
+        catchError(err => {
+          console.error('Failed to load farms', err);
+          return of([] as FarmList[]);
+        })
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: [] as FarmList[] }
+  );
+
   filteredFarms = computed(() => {
-    let result = this.farms();
+    let result = this.farmsResult();
     
     const search = this.searchTerm().toLowerCase();
     if (search) {
@@ -45,36 +74,8 @@ export class FarmListComponent implements OnInit {
     return result;
   });
 
-  ngOnInit(): void {
-    const getBranchId = () => this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId') || '';
-    
-    const id = getBranchId();
-    if (id) {
-      this.branchId.set(id);
-      this.loadFarms();
-    }
-    
-    this.route.paramMap.subscribe(() => {
-      const newId = getBranchId();
-      if (newId && newId !== this.branchId()) {
-        this.branchId.set(newId);
-        this.loadFarms();
-      }
-    });
-  }
-
   loadFarms(): void {
-    this.isLoading.set(true);
-    this.farmService.getFarmsByBranch(this.branchId()).subscribe({
-      next: (data) => {
-        this.farms.set(data);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load farms', err);
-        this.isLoading.set(false);
-      }
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 
   onFilterStatus(event: Event): void {
@@ -83,6 +84,9 @@ export class FarmListComponent implements OnInit {
   }
 
   onAddFarm(): void {
-    this.router.navigate(['/organizations/branches', this.branchId(), 'farms', 'new']);
+    const branchId = this.branchId();
+    if (branchId) {
+      this.router.navigate(['/organizations/branches', branchId, 'farms', 'new']);
+    }
   }
 }

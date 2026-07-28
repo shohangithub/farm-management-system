@@ -6,11 +6,11 @@
   </label>
   <select 
     class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500" 
-    [value]="value"
-    [disabled]="isDisabled || isLoading"
+    [value]="value()"
+    [disabled]="isDisabled() || isLoading()"
     (change)="onSelectChange($event)">
-    <option value="" disabled selected>{{ isLoading ? 'Loading...' : placeholder }}</option>
-    <option *ngFor="let option of options" [value]="option.id">
+    <option value="" disabled selected>{{ isLoading() ? 'Loading...' : placeholder }}</option>
+    <option *ngFor="let option of options()" [value]="option.id">
       {{ option.name }}
     </option>
   </select>

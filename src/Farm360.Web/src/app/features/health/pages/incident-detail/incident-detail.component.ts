@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,9 @@ import { HealthService } from '../../services/health.service';
 import { DiseaseIncidentDetail, IncidentSeverity, IncidentStatus } from '../../models/health.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, tap, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-incident-detail',
@@ -27,16 +30,16 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 </app-page-header>
 
 <div class="animate-fade-in relative">
-  <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+  <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
     <div class="flex">
       <mat-icon class="text-red-500 mr-2">error</mat-icon>
-      <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+      <p class="text-sm text-red-700 font-medium">{{ error() }}</p>
     </div>
   </div>
 
-  <div *ngIf="incident && !isLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div *ngIf="incident() && !isLoading()" class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Left column -->
     <div class="md:col-span-2 space-y-6">
       <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6">
@@ -47,22 +50,22 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
             <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Disease Name</div>
-            <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident.diseaseName }}</div>
+            <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident()?.diseaseName }}</div>
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
             <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Date Reported</div>
-            <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident.incidentDate | date:'longDate' }}</div>
+            <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident()?.incidentDate | date:'longDate' }}</div>
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
             <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Severity</div>
-            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" [ngClass]="getSeverityClass(incident.severity)">
-              {{ getSeverityName(incident.severity) }}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" *ngIf="incident()?.severity !== undefined" [ngClass]="getSeverityClass(incident()!.severity)">
+              {{ getSeverityName(incident()!.severity) }}
             </span>
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
             <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Status</div>
-            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" [ngClass]="getStatusClass(incident.status)">
-              {{ getStatusName(incident.status) }}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" *ngIf="incident()?.status !== undefined" [ngClass]="getStatusClass(incident()!.status)">
+              {{ getStatusName(incident()!.status) }}
             </span>
           </div>
         </div>
@@ -70,14 +73,14 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         <div class="mt-6">
           <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Symptoms</h3>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 text-gray-700 dark:text-gray-300">
-            {{ incident.symptoms }}
+            {{ incident()?.symptoms }}
           </div>
         </div>
         
-        <div class="mt-6" *ngIf="incident.notes">
+        <div class="mt-6" *ngIf="incident()?.notes">
           <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes</h3>
           <div class="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-xl border border-yellow-100 dark:border-yellow-700/30 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-            {{ incident.notes }}
+            {{ incident()?.notes }}
           </div>
         </div>
       </div>
@@ -90,11 +93,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
             <mat-icon class="mr-2 text-gray-400">pets</mat-icon> Affected Animals
           </h2>
-          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">{{ incident.affectedAnimals.length }}</span>
+          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">{{ incident()?.affectedAnimals?.length || 0 }}</span>
         </div>
         
-        <ul class="space-y-3" *ngIf="incident.affectedAnimals.length > 0">
-          <li *ngFor="let animal of incident.affectedAnimals" class="flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 transition-colors">
+        <ul class="space-y-3" *ngIf="incident()?.affectedAnimals?.length">
+          <li *ngFor="let animal of incident()?.affectedAnimals" class="flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 transition-colors">
             <div class="flex items-center">
               <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mr-3 border border-indigo-200 dark:border-indigo-800">
                 <mat-icon class="text-indigo-600 dark:text-indigo-400">pets</mat-icon>
@@ -110,7 +113,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           </li>
         </ul>
         
-        <div *ngIf="incident.affectedAnimals.length === 0" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+        <div *ngIf="!incident()?.affectedAnimals?.length" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
           <mat-icon class="text-gray-400 mb-2">info_outline</mat-icon>
           <p class="text-sm text-gray-500">No individual animals explicitly tracked for this incident.</p>
         </div>
@@ -118,35 +121,49 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     </div>
   </div>
 </div>
-  `
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class IncidentDetailComponent implements OnInit {
+export class IncidentDetailComponent {
   private route = inject(ActivatedRoute);
   private healthService = inject(HealthService);
 
-  incident: DiseaseIncidentDetail | null = null;
-  isLoading = false;
-  error = '';
+  isLoading = signal(true);
+  error = signal('');
+  private refreshTrigger = signal(0);
 
-  ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.loadIncident(id);
-    }
-  }
+  private routeId = toSignal(
+    this.route.paramMap.pipe(map(params => params.get('id'))),
+    { initialValue: null }
+  );
 
-  loadIncident(id: string) {
-    this.isLoading = true;
-    this.healthService.getIncidentDetails(id).subscribe({
-      next: (data) => {
-        this.incident = data;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        this.error = 'Failed to load incident details.';
-        this.isLoading = false;
-      }
-    });
+  private fetchParams = computed(() => ({
+    id: this.routeId(),
+    refresh: this.refreshTrigger()
+  }));
+
+  incident = toSignal(
+    toObservable(this.fetchParams).pipe(
+      tap(() => { this.isLoading.set(true); this.error.set(''); }),
+      switchMap(({ id }) => {
+        if (!id) {
+          this.isLoading.set(false);
+          return of(null);
+        }
+        return this.healthService.getIncidentDetails(id).pipe(
+          catchError(() => {
+            this.error.set('Failed to load incident details.');
+            return of(null);
+          }),
+          tap(() => this.isLoading.set(false))
+        );
+      })
+    ),
+    { initialValue: null }
+  );
+
+  loadIncident() {
+    this.refreshTrigger.update(v => v + 1);
   }
 
   getSeverityName(severity: IncidentSeverity): string {

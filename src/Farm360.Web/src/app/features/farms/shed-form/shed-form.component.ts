@@ -1,12 +1,12 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Subject, takeUntil } from 'rxjs';
 import { ShedService } from '../services/shed.service';
 import { CreateShedCommand, UpdateShedCommand } from '../models/shed.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-shed-form',
@@ -14,13 +14,13 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
   imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './shed-form.component.html'
 })
-export class ShedFormComponent implements OnInit, OnDestroy {
+export class ShedFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly shedService = inject(ShedService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   shedForm!: FormGroup;
   isEditMode = signal<boolean>(false);
@@ -48,17 +48,12 @@ export class ShedFormComponent implements OnInit, OnDestroy {
 
     // Auto-uppercase shed number as the user types
     this.shedForm.get('shedNumber')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => {
         if (value && value !== value.toUpperCase()) {
           this.shedForm.get('shedNumber')?.setValue(value.toUpperCase(), { emitEvent: false });
         }
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   initForm(): void {

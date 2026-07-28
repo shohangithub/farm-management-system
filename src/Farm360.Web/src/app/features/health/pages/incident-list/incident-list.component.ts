@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,9 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { HealthService } from '../../services/health.service';
 import { DiseaseIncident, IncidentSeverity, IncidentStatus } from '../../models/health.models';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-incident-list',
@@ -26,10 +29,10 @@ import { DiseaseIncident, IncidentSeverity, IncidentStatus } from '../../models/
 </app-page-header>
 
 <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-  <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <div class="relative overflow-x-auto">
-    <table class="w-full text-sm text-left" *ngIf="incidents.length > 0">
+    <table class="w-full text-sm text-left" *ngIf="incidents().length > 0">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
         <tr>
           <th scope="col" class="px-6 py-4">Date</th>
@@ -41,7 +44,7 @@ import { DiseaseIncident, IncidentSeverity, IncidentStatus } from '../../models/
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let incident of incidents" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+        <tr *ngFor="let incident of incidents()" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
           <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
             {{ incident.incidentDate | date:'mediumDate' }}
           </td>
@@ -71,7 +74,7 @@ import { DiseaseIncident, IncidentSeverity, IncidentStatus } from '../../models/
     </table>
     
     <app-empty-state 
-      *ngIf="!isLoading && incidents.length === 0"
+      *ngIf="!isLoading() && incidents().length === 0"
       icon="health_and_safety"
       title="No Incidents"
       description="No disease incidents have been reported."
@@ -80,36 +83,40 @@ import { DiseaseIncident, IncidentSeverity, IncidentStatus } from '../../models/
     </app-empty-state>
   </div>
 </div>
-  `
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class IncidentListComponent implements OnInit {
+export class IncidentListComponent {
   private healthService = inject(HealthService);
   private router = inject(Router);
 
-  incidents: DiseaseIncident[] = [];
-  totalCount = 0;
-  isLoading = false;
+  isLoading = signal(true);
+  private refreshTrigger = signal(0);
+  
+  private fetchParams = computed(() => ({
+    refresh: this.refreshTrigger()
+  }));
 
-  ngOnInit() {
-    this.loadIncidents();
-  }
+  private incidentsResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      tap(() => this.isLoading.set(true)),
+      switchMap(() => this.healthService.getIncidents(1, 50).pipe(
+        catchError(() => of({ items: [], totalCount: 0 }))
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { items: [], totalCount: 0 } }
+  );
+
+  incidents = computed(() => this.incidentsResult().items);
+  totalCount = computed(() => this.incidentsResult().totalCount);
 
   reportIncident() {
     this.router.navigate(['/health/incidents/report']);
   }
 
   loadIncidents() {
-    this.isLoading = true;
-    this.healthService.getIncidents(1, 50).subscribe({
-      next: (res) => {
-        this.incidents = res.items;
-        this.totalCount = res.totalCount;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 
   getSeverityName(severity: IncidentSeverity): string {

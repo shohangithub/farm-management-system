@@ -140,11 +140,11 @@
             </a>
           </div>
 
-          <div *ngIf="isLoadingAnimals()" class="py-12 flex justify-center">
+          <div *ngIf="isLoading()" class="py-12 flex justify-center">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
           </div>
 
-          <div *ngIf="!isLoadingAnimals() && animals().length === 0" class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div *ngIf="!isLoading() && animals().length === 0" class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-16 px-6 text-center">
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
               <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">pets</mat-icon>
             </div>
@@ -152,7 +152,7 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">Register new animals to assign them to this pen.</p>
           </div>
 
-          <div *ngIf="!isLoadingAnimals() && animals().length > 0" class="overflow-x-auto">
+          <div *ngIf="!isLoading() && animals().length > 0" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-800/50 border-y border-gray-100 dark:border-gray-800">

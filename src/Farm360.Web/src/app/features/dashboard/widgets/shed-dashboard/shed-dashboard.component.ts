@@ -1,46 +1,54 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { ShedService } from '../../services/shed.service';
-import { ShedList } from '../../models/shed.model';
+import { ShedService } from '../../../farms/services/shed.service';
+import { ShedList } from '../../../farms/models/shed.model';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, filter } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-shed-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './shed-dashboard.component.html'
+  templateUrl: './shed-dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ShedDashboardComponent implements OnInit {
+export class ShedDashboardComponent {
   private shedService = inject(ShedService);
   private route = inject(ActivatedRoute);
 
-  sheds: ShedList[] = [];
-  farmId: string = '';
-  branchId: string = '';
-  
-  totalSheds = 0;
-  totalOccupancy = 0;
-  totalCapacity = 0;
   Math = Math;
 
-  ngOnInit(): void {
-    this.route.parent?.paramMap.subscribe(params => {
-      this.branchId = params.get('branchId') || '';
-      this.farmId = params.get('farmId') || '';
-      if (this.farmId) {
-        this.loadStats();
-      }
-    });
-  }
+  private routeParams = toSignal(
+    this.route.parent?.paramMap.pipe(
+      map(params => ({
+        branchId: params.get('branchId') || '',
+        farmId: params.get('farmId') || ''
+      }))
+    ) || of({ branchId: '', farmId: '' }),
+    { initialValue: { branchId: '', farmId: '' } }
+  );
 
-  loadStats(): void {
-    this.shedService.getShedsByFarm(this.farmId).subscribe({
-      next: (data) => {
-        this.sheds = data;
-        this.totalSheds = data.length;
-        this.totalOccupancy = data.reduce((acc, s) => acc + (s.currentOccupancy || 0), 0);
-        this.totalCapacity = data.reduce((acc, s) => acc + (s.capacity || 0), 0);
-      }
-    });
-  }
+  readonly branchId = computed(() => this.routeParams().branchId);
+  readonly farmId = computed(() => this.routeParams().farmId);
+
+  readonly shedsResult = toSignal(
+    toObservable(this.farmId).pipe(
+      filter(id => !!id),
+      switchMap(id => this.shedService.getShedsByFarm(id).pipe(
+        catchError(err => {
+          console.error(err);
+          return of([] as ShedList[]);
+        })
+      ))
+    ),
+    { initialValue: [] as ShedList[] }
+  );
+
+  readonly sheds = computed(() => this.shedsResult());
+  
+  readonly totalSheds = computed(() => this.sheds().length);
+  readonly totalOccupancy = computed(() => this.sheds().reduce((acc, s) => acc + (s.currentOccupancy || 0), 0));
+  readonly totalCapacity = computed(() => this.sheds().reduce((acc, s) => acc + (s.capacity || 0), 0));
 }

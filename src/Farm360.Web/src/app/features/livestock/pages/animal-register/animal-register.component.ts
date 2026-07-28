@@ -1,16 +1,17 @@
 import {
-  Component, inject, signal, ChangeDetectionStrategy, OnDestroy, OnInit
+  Component, inject, signal, ChangeDetectionStrategy, OnInit
 } from '@angular/core';
 import { CommonModule }           from '@angular/common';
 import { RouterModule, Router }   from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
 import { AnimalService }          from '../../services/animal.service';
 import { WorkingContextService }  from '../../../../core/services/working-context.service';
 import { AnimalSpecies, AnimalSex, AcquisitionType, TagType, SPECIES_LABELS } from '../../models/animal.models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
 
 @Component({
   selector: 'app-animal-register',
@@ -22,13 +23,13 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
   ],
   templateUrl: './animal-register.component.html'
 })
-export class AnimalRegisterComponent implements OnInit, OnDestroy {
+export class AnimalRegisterComponent implements OnInit {
   private readonly svc      = inject(AnimalService);
   private readonly contextSvc = inject(WorkingContextService);
   private readonly router   = inject(Router);
   private readonly fb       = inject(FormBuilder);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
   
   readonly submitting  = signal(false);
   readonly error       = signal<string | null>(null);
@@ -42,6 +43,8 @@ export class AnimalRegisterComponent implements OnInit, OnDestroy {
   readonly AcquisitionType = AcquisitionType;
 
   readonly speciesOptions = Object.entries(SPECIES_LABELS).map(([v, l]) => ({ value: +v, label: l }));
+
+  constructor() {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -59,17 +62,12 @@ export class AnimalRegisterComponent implements OnInit, OnDestroy {
 
     // Auto-uppercase tagId
     this.form.get('tagId')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => {
         if (value && value !== value.toUpperCase()) {
           this.form.get('tagId')?.setValue(value.toUpperCase(), { emitEvent: false });
         }
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   getError(field: string): string {

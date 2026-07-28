@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,6 +10,9 @@ import { Farm } from '../models/farm.model';
 import { ShedService } from '../services/shed.service';
 import { ShedList } from '../models/shed.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-farm-detail',
@@ -25,21 +28,50 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
     DatePipe,
     DecimalPipe
   ],
-  templateUrl: './farm-detail.component.html'
+  templateUrl: './farm-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FarmDetailComponent implements OnInit {
+export class FarmDetailComponent {
   private readonly farmService = inject(FarmService);
   private readonly shedService = inject(ShedService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  branchId = signal<string>('');
-  farmId = signal<string>('');
-  farm = signal<Farm | null>(null);
-  sheds = signal<ShedList[]>([]);
-  isLoading = signal<boolean>(false);
-  isLoadingSheds = signal<boolean>(false);
-  error = signal<string | null>(null);
+  readonly branchId = toSignal(this.route.paramMap.pipe(map(params => params.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId'))), { initialValue: null });
+  readonly farmId = toSignal(this.route.paramMap.pipe(map(params => params.get('farmId'))), { initialValue: null });
+
+  readonly isLoading = signal<boolean>(true);
+  readonly error = signal<string | null>(null);
+  private refreshTrigger = signal(0);
+
+  private fetchParams = computed(() => ({
+    farmId: this.farmId(),
+    refresh: this.refreshTrigger()
+  }));
+
+  private dataResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(params => !!params.farmId),
+      tap(() => { this.isLoading.set(true); this.error.set(null); }),
+      switchMap(({ farmId }) => forkJoin({
+        farm: this.farmService.getFarmById(farmId!).pipe(catchError(() => of(null))),
+        sheds: this.shedService.getShedsByFarm(farmId!).pipe(catchError(() => of([])))
+      }).pipe(
+        tap(res => {
+          if (!res.farm) this.error.set('Failed to load farm details.');
+        }),
+        catchError(err => {
+          this.error.set('Failed to load farm details.');
+          return of({ farm: null, sheds: [] });
+        })
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { farm: null, sheds: [] } }
+  );
+
+  readonly farm = computed(() => this.dataResult().farm);
+  readonly sheds = computed(() => this.dataResult().sheds);
 
   statusLabel = computed(() => {
     const s = this.farm()?.status;
@@ -69,46 +101,8 @@ export class FarmDetailComponent implements OnInit {
     return t ? (types[t] || 'Unknown') : 'Unknown';
   });
 
-  ngOnInit(): void {
-    const branchId = this.route.snapshot.paramMap.get('branchId') || this.route.parent?.snapshot.paramMap.get('branchId');
-    const farmId = this.route.snapshot.paramMap.get('farmId');
-
-    if (branchId && farmId) {
-      this.branchId.set(branchId);
-      this.farmId.set(farmId);
-      this.loadFarm(farmId);
-    } else {
-      this.error.set('Branch ID or Farm ID not found in route.');
-    }
-  }
-
-  loadFarm(id: string): void {
-    this.isLoading.set(true);
-    this.farmService.getFarmById(id).subscribe({
-      next: (data) => {
-        this.farm.set(data);
-        this.isLoading.set(false);
-        this.loadSheds(id);
-      },
-      error: (err) => {
-        this.error.set('Failed to load farm details.');
-        this.isLoading.set(false);
-        console.error(err);
-      }
-    });
-  }
-
-  loadSheds(farmId: string): void {
-    this.isLoadingSheds.set(true);
-    this.shedService.getShedsByFarm(farmId).subscribe({
-      next: (data) => {
-        this.sheds.set(data);
-        this.isLoadingSheds.set(false);
-      },
-      error: () => {
-        this.isLoadingSheds.set(false);
-      }
-    });
+  loadFarm(id?: string): void {
+    this.refreshTrigger.update(v => v + 1);
   }
 
   onEdit(): void {
@@ -128,8 +122,11 @@ export class FarmDetailComponent implements OnInit {
   }
 
   deleteFarm(): void {
+    const fId = this.farmId();
+    if (!fId) return;
+    
     if (confirm('Are you sure you want to delete this farm? This action cannot be undone.')) {
-      this.farmService.deleteFarm(this.farmId()).subscribe({
+      this.farmService.deleteFarm(fId).subscribe({
         next: () => {
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
         },

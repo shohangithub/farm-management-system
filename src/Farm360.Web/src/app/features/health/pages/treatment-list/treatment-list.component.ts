@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -16,6 +16,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-treatment-list',
@@ -37,46 +40,56 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     LoadingComponent
   ],
   templateUrl: './treatment-list.html',
-  styleUrls: ['./treatment-list.scss']
+  styleUrls: ['./treatment-list.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TreatmentListComponent implements OnInit {
+export class TreatmentListComponent {
   private healthService = inject(HealthService);
   private dialog = inject(MatDialog);
 
   displayedColumns: string[] = ['animalId', 'diagnosis', 'medicationName', 'startDate', 'status', 'cost', 'actions'];
-  dataSource: MedicalTreatmentDto[] = [];
-  totalItems = 0;
-  pageSize = 10;
-  pageIndex = 0;
-  isLoading = true;
   treatmentStatus = TreatmentStatus;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  ngOnInit(): void {
-    this.loadTreatments();
+  // State
+  pageIndex = signal(0);
+  pageSize = signal(10);
+  refreshTrigger = signal(0);
+  isLoading = signal(true);
+
+  private paginationParams = computed(() => ({
+    pageIndex: this.pageIndex(),
+    pageSize: this.pageSize(),
+    refresh: this.refreshTrigger()
+  }));
+
+  private treatmentsResult = toSignal(
+    toObservable(this.paginationParams).pipe(
+      tap(() => this.isLoading.set(true)),
+      switchMap(({ pageIndex, pageSize }) => 
+        this.healthService.getTreatments(pageIndex + 1, pageSize).pipe(
+          catchError((err) => {
+            console.error('Error loading treatments', err);
+            return of({ items: [], totalCount: 0 });
+          })
+        )
+      ),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { items: [], totalCount: 0 } }
+  );
+
+  dataSource = computed(() => this.treatmentsResult().items);
+  totalItems = computed(() => this.treatmentsResult().totalCount);
+
+  onPageChange(event: any): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   loadTreatments(): void {
-    this.isLoading = true;
-    const pageNumber = this.pageIndex + 1;
-    this.healthService.getTreatments(pageNumber, this.pageSize).subscribe({
-      next: (response) => {
-        this.dataSource = response.items;
-        this.totalItems = response.totalCount;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading treatments', err);
-        this.isLoading = false;
-      }
-    });
-  }
-
-  onPageChange(event: any): void {
-    this.pageIndex = event.pageIndex;
-    this.pageSize = event.pageSize;
-    this.loadTreatments();
+    this.refreshTrigger.update(v => v + 1);
   }
 
   openLogTreatmentDialog(): void {

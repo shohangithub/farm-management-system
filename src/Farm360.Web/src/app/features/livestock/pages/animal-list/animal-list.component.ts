@@ -1,15 +1,14 @@
 import {
-  Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy
+  Component, inject, signal, computed, ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule }      from '@angular/common';
 import { RouterModule, Router }      from '@angular/router';
 import { FormsModule }       from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { AnimalService }     from '../../services/animal.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import {
   AnimalListItemDto, AnimalListParams, AnimalSpecies, AnimalStatus, AnimalSex,
-  SPECIES_LABELS, STATUS_LABELS, SEX_LABELS, PagedAnimalListDto, STATUS_BADGE_CLASS
+  SPECIES_LABELS, STATUS_LABELS, SEX_LABELS, PagedAnimalListDto
 } from '../../models/animal.models';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -18,6 +17,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
+import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, debounceTime, distinctUntilChanged, tap, filter } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-animal-list',
@@ -29,18 +31,15 @@ import { MatButtonModule } from '@angular/material/button';
   ],
   templateUrl: './animal-list.component.html'
 })
-export class AnimalListComponent implements OnInit, OnDestroy {
+export class AnimalListComponent {
   private readonly svc      = inject(AnimalService);
   private readonly router   = inject(Router);
   private readonly dialog   = inject(MatDialog);
   private readonly contextService = inject(WorkingContextService);
-  private readonly destroy$ = new Subject<void>();
-  private readonly search$  = new Subject<string>();
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly loading    = signal(true);
   readonly error      = signal<string | null>(null);
-  readonly result     = signal<PagedAnimalListDto | null>(null);
   readonly searchTerm = signal('');
   readonly params     = signal<AnimalListParams>({ pageNumber: 1, pageSize: 20 });
 
@@ -57,67 +56,76 @@ export class AnimalListComponent implements OnInit, OnDestroy {
     return !!(p.species != null || p.status != null || p.sex != null || p.search);
   });
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
-  ngOnInit(): void {
+  constructor() {
     // Listen to farm context changes
     this.contextService.currentFarm$.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(farm => {
       this.params.update(p => ({ ...p, farmId: farm?.id || undefined, pageNumber: 1 }));
-      this.load();
     });
 
     // Debounce search input
-    this.search$.pipe(
+    toObservable(this.searchTerm).pipe(
       debounceTime(350),
       distinctUntilChanged(),
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(term => {
+      // Only update if it actually changes the search term in params to avoid infinite loops
+      // Wait, toObservable(this.searchTerm) is triggered when this.searchTerm.set() is called
       this.params.update(p => ({ ...p, search: term || undefined, pageNumber: 1 }));
-      this.load();
     });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   // ── Data ──────────────────────────────────────────────────────────────────
-  load(): void {
-    this.loading.set(true);
-    this.error.set(null);
+  private fetchParams = computed(() => this.params());
+  private refreshTrigger = signal(0);
 
-    this.svc.getList(this.params()).pipe(takeUntil(this.destroy$)).subscribe({
-      next:  r => { this.result.set(r); this.loading.set(false); },
-      error: e => { this.error.set(e?.error?.detail ?? 'An error occurred'); this.loading.set(false); }
-    });
-  }
+  private combinedParams = computed(() => ({
+    params: this.fetchParams(),
+    refresh: this.refreshTrigger()
+  }));
 
-  refresh(): void { this.load(); }
+  readonly result = toSignal(
+    toObservable(this.combinedParams).pipe(
+      // Ensure farmId is present before fetching, unless your API allows farm-less fetches
+      filter(({ params }) => !!params.farmId), 
+      tap(() => { this.loading.set(true); this.error.set(null); }),
+      switchMap(({ params }) => this.svc.getList(params).pipe(
+        catchError(e => {
+          this.error.set(e?.error?.detail ?? 'An error occurred');
+          return of(null);
+        })
+      )),
+      tap(() => this.loading.set(false))
+    ),
+    { initialValue: null }
+  );
+
+  refresh(): void { this.refreshTrigger.update(v => v + 1); }
 
   // ── Filters ───────────────────────────────────────────────────────────────
   onSearchChange(term: string): void {
     this.searchTerm.set(term);
-    this.search$.next(term);
   }
 
   setFilter(key: keyof AnimalListParams, event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
     const numVal = val ? parseInt(val, 10) : null;
     this.params.update(p => ({ ...p, [key]: numVal ?? undefined, pageNumber: 1 }));
-    this.load();
   }
 
   clearFilters(): void {
     this.searchTerm.set('');
-    this.params.set({ pageNumber: 1, pageSize: 20 });
-    this.load();
+    // Notice how changing searchTerm will also update params due to the observable subscription.
+    // However, we want to clear everything else as well.
+    // So we manually set params, taking care to preserve the farmId
+    const currentFarmId = this.params().farmId;
+    this.params.set({ pageNumber: 1, pageSize: 20, farmId: currentFarmId });
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
-  prevPage(): void { this.params.update(p => ({ ...p, pageNumber: (p.pageNumber ?? 1) - 1 })); this.load(); }
-  nextPage(): void { this.params.update(p => ({ ...p, pageNumber: (p.pageNumber ?? 1) + 1 })); this.load(); }
+  prevPage(): void { this.params.update(p => ({ ...p, pageNumber: (p.pageNumber ?? 1) - 1 })); }
+  nextPage(): void { this.params.update(p => ({ ...p, pageNumber: (p.pageNumber ?? 1) + 1 })); }
 
   pageStart = computed(() => {
     const p = this.params();
@@ -172,10 +180,10 @@ export class AnimalListComponent implements OnInit, OnDestroy {
       }
     });
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.svc.delete(animal.id).pipe(takeUntil(this.destroy$)).subscribe({
-          next: () => this.load(),
+        this.svc.delete(animal.id).subscribe({
+          next: () => this.refresh(),
           error: e => alert(e?.error?.detail ?? 'Delete failed'),
         });
       }

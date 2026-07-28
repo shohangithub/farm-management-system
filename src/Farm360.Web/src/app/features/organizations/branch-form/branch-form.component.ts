@@ -1,12 +1,12 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Subject, takeUntil } from 'rxjs';
 import { BranchService } from '../services/branch.service';
 import { CreateBranchCommand, UpdateBranchCommand } from '../models/branch.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-branch-form',
@@ -15,13 +15,13 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
   templateUrl: './branch-form.html',
   styleUrls: ['./branch-form.scss']
 })
-export class BranchFormComponent implements OnInit, OnDestroy {
+export class BranchFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly branchService = inject(BranchService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   branchForm!: FormGroup;
   isEditMode = signal<boolean>(false);
@@ -48,17 +48,12 @@ export class BranchFormComponent implements OnInit, OnDestroy {
 
     // Auto-uppercase branch code as the user types
     this.branchForm.get('branchCode')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => {
         if (value && value !== value.toUpperCase()) {
           this.branchForm.get('branchCode')?.setValue(value.toUpperCase(), { emitEvent: false });
         }
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   initForm(): void {

@@ -9,7 +9,7 @@
         <li *ngFor="let type of types">
           <button 
             (click)="selectType(type.id)"
-            [class]="type.id === selectedType 
+            [class]="type.id === selectedType() 
               ? 'w-full text-left px-4 py-2 rounded-lg bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium'
               : 'w-full text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
             {{ type.name }}
@@ -26,10 +26,10 @@
     <div class="p-6 border-b border-gray-100 dark:border-gray-800/50 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-surface-dark z-10 gap-4">
       <div>
         <h1 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-          {{ types[selectedType - 1]?.name }} Management
+          {{ types[selectedType() - 1]?.name }} Management
         </h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Manage references and properties for {{ types[selectedType - 1]?.name | lowercase }}.
+          Manage references and properties for {{ types[selectedType() - 1]?.name | lowercase }}.
         </p>
       </div>
       <button (click)="openCreateModal()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white transition-colors bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-900 shadow-sm">
@@ -42,13 +42,13 @@
 
     <!-- Table -->
     <div class="flex-1 overflow-auto p-0 relative">
-      <div *ngIf="isLoading" class="absolute inset-0 bg-white/50 dark:bg-gray-800/50 flex items-center justify-center z-10">
+      <div *ngIf="isLoading()" class="absolute inset-0 bg-white/50 dark:bg-gray-800/50 flex items-center justify-center z-10">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       </div>
 
       <app-data-table
-        *ngIf="!isLoading"
-        [data]="entries"
+        *ngIf="!isLoading()"
+        [data]="entries()"
         [columns]="columns"
         [displayedColumns]="displayedColumns"
         (edit)="openEditModal($event)"
@@ -59,11 +59,11 @@
 </div>
 
 <!-- Modal (Custom styled tailwind overlay to avoid daisyUI conflicts) -->
-<div *ngIf="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 dark:bg-gray-900/80 backdrop-blur-sm" (click)="closeModal()">
+<div *ngIf="isModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 dark:bg-gray-900/80 backdrop-blur-sm" (click)="closeModal()">
   <div class="bg-white dark:bg-surface-dark w-full max-w-md rounded-xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800/50" (click)="$event.stopPropagation()">
     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800/50 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20">
       <h3 class="font-bold text-lg text-gray-900 dark:text-white tracking-tight">
-        {{ editingId ? 'Edit' : 'Create' }} Entry
+        {{ editingId() ? 'Edit' : 'Create' }} Entry
       </h3>
       <button (click)="closeModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -73,31 +73,31 @@
     <div class="p-6 space-y-5">
       <div class="form-group">
         <label class="form-label">Name</label>
-        <input type="text" [(ngModel)]="formData.name" class="form-control" placeholder="e.g. Holstein" />
+        <input type="text" [ngModel]="formData().name" (ngModelChange)="updateFormField('name', $event)" class="form-control" placeholder="e.g. Holstein" />
       </div>
       
-      <div class="form-group" *ngIf="!editingId">
+      <div class="form-group" *ngIf="!editingId()">
         <label class="form-label">Code</label>
-        <input type="text" [(ngModel)]="formData.code" class="form-control uppercase" placeholder="e.g. HOL" />
+        <input type="text" [ngModel]="formData().code" (ngModelChange)="updateFormField('code', $event)" class="form-control uppercase" placeholder="e.g. HOL" />
       </div>
 
       <div class="form-group">
         <label class="form-label">Description</label>
-        <textarea [(ngModel)]="formData.description" class="form-control" rows="3"></textarea>
+        <textarea [ngModel]="formData().description" (ngModelChange)="updateFormField('description', $event)" class="form-control" rows="3"></textarea>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div class="form-group">
           <label class="form-label">Display Order</label>
-          <input type="number" [(ngModel)]="formData.displayOrder" class="form-control" />
+          <input type="number" [ngModel]="formData().displayOrder" (ngModelChange)="updateFormField('displayOrder', $event)" class="form-control" />
         </div>
-        <div class="form-group" *ngIf="editingId">
+        <div class="form-group" *ngIf="editingId()">
           <label class="form-label mb-2 block">Status</label>
           <label class="flex items-center cursor-pointer mt-3">
             <div class="relative">
-              <input type="checkbox" [(ngModel)]="formData.isActive" class="sr-only" />
-              <div class="block bg-gray-200 dark:bg-gray-700 w-10 h-6 rounded-full transition-colors" [ngClass]="{'bg-primary-500': formData.isActive}"></div>
-              <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform" [ngClass]="{'transform translate-x-4': formData.isActive}"></div>
+              <input type="checkbox" [ngModel]="formData().isActive" (ngModelChange)="updateFormField('isActive', $event)" class="sr-only" />
+              <div class="block bg-gray-200 dark:bg-gray-700 w-10 h-6 rounded-full transition-colors" [ngClass]="{'bg-primary-500': formData().isActive}"></div>
+              <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform" [ngClass]="{'transform translate-x-4': formData().isActive}"></div>
             </div>
             <div class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
               Active
@@ -109,7 +109,7 @@
 
     <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/20 border-t border-gray-100 dark:border-gray-800/50 flex justify-end gap-3 rounded-b-xl">
       <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm" (click)="closeModal()">Cancel</button>
-      <button class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" (click)="saveEntry()" [disabled]="!formData.name || (!editingId && !formData.code)">
+      <button class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" (click)="saveEntry()" [disabled]="!formData().name || (!editingId() && !formData().code)">
         Save Entry
       </button>
     </div>

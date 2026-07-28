@@ -11,10 +11,10 @@
 </app-page-header>
 
 <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-  <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <div class="relative overflow-x-auto">
-    <table class="w-full text-sm text-left" *ngIf="dataSource.length > 0">
+    <table class="w-full text-sm text-left" *ngIf="dataSource().length > 0">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
         <tr>
           <th scope="col" class="px-6 py-4">Date</th>
@@ -27,7 +27,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let element of dataSource" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+        <tr *ngFor="let element of dataSource()" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
           <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
             {{ element.visitDate | date:'mediumDate' }}
           </td>
@@ -65,7 +65,7 @@
     </table>
 
     <app-empty-state 
-      *ngIf="!isLoading && dataSource.length === 0"
+      *ngIf="!isLoading() && dataSource().length === 0"
       icon="local_hospital"
       title="No veterinary visits found"
       description="Log professional vet visits to track your farm's health history."
@@ -75,10 +75,10 @@
   </div>
 
   <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
-    <mat-paginator [length]="totalItems"
-                   [pageSize]="pageSize"
+    <mat-paginator [length]="totalItems()"
+                   [pageSize]="pageSize()"
                    [pageSizeOptions]="[5, 10, 25, 100]"
-                   [pageIndex]="pageIndex"
+                   [pageIndex]="pageIndex()"
                    (page)="onPageChange($event)"
                    aria-label="Select page"
                    class="!bg-transparent">

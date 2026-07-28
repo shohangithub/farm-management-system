@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -12,7 +12,8 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, PageHeaderComponent],
   templateUrl: './report-incident.component.html',
-  styleUrls: ['./report-incident.component.scss']
+  styleUrls: ['./report-incident.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReportIncidentComponent {
   private fb = inject(FormBuilder);
@@ -20,8 +21,10 @@ export class ReportIncidentComponent {
   private router = inject(Router);
 
   incidentForm: FormGroup;
-  isSubmitting = false;
-  error = '';
+  
+  // Reactive state
+  isSubmitting = signal(false);
+  error = signal('');
   
   // Hardcoded MVP farm ID
   private farmId = '11111111-1111-1111-1111-111111111111';
@@ -43,8 +46,8 @@ export class ReportIncidentComponent {
       return;
     }
 
-    this.isSubmitting = true;
-    this.error = '';
+    this.isSubmitting.set(true);
+    this.error.set('');
     
     const formValue = this.incidentForm.value;
     const request = {
@@ -53,15 +56,15 @@ export class ReportIncidentComponent {
     };
 
     this.healthService.reportIncident(request).subscribe({
-      next: (res) => {
-        this.isSubmitting = false;
+      next: () => {
+        this.isSubmitting.set(false);
         // Navigation could go to a detail page, for now just back to health dashboard
         this.router.navigate(['/health/vaccinations']);
       },
       error: (err) => {
         console.error(err);
-        this.error = err.error?.detail || err.error?.title || 'Failed to report incident. Please try again.';
-        this.isSubmitting = false;
+        this.error.set(err.error?.detail || err.error?.title || 'Failed to report incident. Please try again.');
+        this.isSubmitting.set(false);
       }
     });
   }

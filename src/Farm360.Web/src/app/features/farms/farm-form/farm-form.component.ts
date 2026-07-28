@@ -1,12 +1,12 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Subject, takeUntil } from 'rxjs';
 import { FarmService } from '../services/farm.service';
 import { CreateFarmCommand, UpdateFarmCommand } from '../models/farm.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-farm-form',
@@ -14,13 +14,13 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
   imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './farm-form.component.html'
 })
-export class FarmFormComponent implements OnInit, OnDestroy {
+export class FarmFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly farmService = inject(FarmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   farmForm!: FormGroup;
   isEditMode = signal<boolean>(false);
@@ -47,17 +47,12 @@ export class FarmFormComponent implements OnInit, OnDestroy {
 
     // Auto-uppercase farm code as the user types
     this.farmForm.get('farmCode')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => {
         if (value && value !== value.toUpperCase()) {
           this.farmForm.get('farmCode')?.setValue(value.toUpperCase(), { emitEvent: false });
         }
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   initForm(): void {

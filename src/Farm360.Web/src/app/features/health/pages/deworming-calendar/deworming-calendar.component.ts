@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../services/health.service';
@@ -6,6 +6,10 @@ import { DewormingCalendarDto } from '../../models/health.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 
 @Component({
   selector: 'app-deworming-calendar',
@@ -25,10 +29,10 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 </app-page-header>
 
 <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-  <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <div class="relative overflow-x-auto">
-    <table class="w-full text-sm text-left" *ngIf="events.length > 0">
+    <table class="w-full text-sm text-left" *ngIf="events().length > 0">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
         <tr>
           <th scope="col" class="px-6 py-4">Date</th>
@@ -38,7 +42,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let ev of events" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+        <tr *ngFor="let ev of events()" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
           <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
             {{ ev.scheduledDate | date:'mediumDate' }}
           </td>
@@ -63,7 +67,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     </table>
     
     <app-empty-state 
-      *ngIf="!isLoading && events.length === 0"
+      *ngIf="!isLoading() && events().length === 0"
       icon="event_note"
       title="No Deworming Events"
       description="There are no deworming events scheduled for this farm."
@@ -72,28 +76,36 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     </app-empty-state>
   </div>
 </div>
-  `
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DewormingCalendarComponent implements OnInit {
+export class DewormingCalendarComponent {
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   
-  events: DewormingCalendarDto[] = [];
-  isLoading = false;
-  // Hardcoded MVP farm ID
-  private farmId = '11111111-1111-1111-1111-111111111111';
+  isLoading = signal(true);
+  private refreshTrigger = signal(0);
+  private currentFarmId = toSignal(this.contextService.currentFarm$, { initialValue: null });
 
-  ngOnInit() {
-    this.loadEvents();
-  }
+  private fetchParams = computed(() => ({
+    farmId: this.currentFarmId()?.id || '11111111-1111-1111-1111-111111111111',
+    refresh: this.refreshTrigger()
+  }));
+
+  private eventsResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      tap(() => this.isLoading.set(true)),
+      switchMap(({ farmId }) => this.healthService.getDewormingCalendar(farmId).pipe(
+        catchError(() => of({ items: [], totalCount: 0 }))
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { items: [], totalCount: 0 } }
+  );
+
+  events = computed(() => this.eventsResult().items);
 
   loadEvents() {
-    this.isLoading = true;
-    this.healthService.getDewormingCalendar(this.farmId).subscribe({
-      next: (res) => {
-        this.events = res.items;
-        this.isLoading = false;
-      },
-      error: () => this.isLoading = false
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 }

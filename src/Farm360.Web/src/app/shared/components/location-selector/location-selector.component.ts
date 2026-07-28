@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, forwardRef, inject } from '@angular/core';
+import { Component, Input, OnInit, forwardRef, inject, signal, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import { LocationService } from '../../services/location.service';
 import { Country, Division, District, Upazila, Union, Village } from '../../models/location.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-location-selector',
@@ -15,7 +16,8 @@ import { Country, Division, District, Upazila, Union, Village } from '../../mode
       useExisting: forwardRef(() => LocationSelectorComponent),
       multi: true
     }
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LocationSelectorComponent implements OnInit, ControlValueAccessor {
   @Input() label: string = 'Location';
@@ -24,28 +26,29 @@ export class LocationSelectorComponent implements OnInit, ControlValueAccessor {
   @Input() selectionLevel: 'country' | 'division' | 'district' | 'upazila' | 'union' | 'village' = 'village';
 
   private locationService = inject(LocationService);
+  private destroyRef = inject(DestroyRef);
 
-  countries: Country[] = [];
-  divisions: Division[] = [];
-  districts: District[] = [];
-  upazilas: Upazila[] = [];
-  unions: Union[] = [];
-  villages: Village[] = [];
+  countries = signal<Country[]>([]);
+  divisions = signal<Division[]>([]);
+  districts = signal<District[]>([]);
+  upazilas = signal<Upazila[]>([]);
+  unions = signal<Union[]>([]);
+  villages = signal<Village[]>([]);
 
-  selectedCountryId: string = '';
-  selectedDivisionId: string = '';
-  selectedDistrictId: string = '';
-  selectedUpazilaId: string = '';
-  selectedUnionId: string = '';
-  selectedVillageId: string = '';
+  selectedCountryId = signal<string>('');
+  selectedDivisionId = signal<string>('');
+  selectedDistrictId = signal<string>('');
+  selectedUpazilaId = signal<string>('');
+  selectedUnionId = signal<string>('');
+  selectedVillageId = signal<string>('');
 
-  isDisabled: boolean = false;
+  isDisabled = signal<boolean>(false);
 
   onChange: any = () => {};
   onTouched: any = () => {};
 
   ngOnInit(): void {
-    this.locationService.getCountries().subscribe(data => this.countries = data);
+    this.locationService.getCountries().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => this.countries.set(data));
   }
 
   // Value is simply set but reconstructing the tree from bottom up requires an API that returns parents.
@@ -63,7 +66,7 @@ export class LocationSelectorComponent implements OnInit, ControlValueAccessor {
   }
 
   setDisabledState?(isDisabled: boolean): void {
-    this.isDisabled = isDisabled;
+    this.isDisabled.set(isDisabled);
   }
 
   private emitValue(val: string): void {
@@ -71,83 +74,94 @@ export class LocationSelectorComponent implements OnInit, ControlValueAccessor {
     this.onTouched();
   }
 
-  onCountryChange(): void {
-    this.divisions = [];
-    this.districts = [];
-    this.upazilas = [];
-    this.unions = [];
-    this.villages = [];
+  onCountryChange(val: string): void {
+    this.selectedCountryId.set(val);
     
-    this.selectedDivisionId = '';
-    this.selectedDistrictId = '';
-    this.selectedUpazilaId = '';
-    this.selectedUnionId = '';
-    this.selectedVillageId = '';
-
-    if (this.selectedCountryId) {
-      this.locationService.getDivisions(this.selectedCountryId).subscribe(data => this.divisions = data);
-      if (this.selectionLevel === 'country') this.emitValue(this.selectedCountryId);
-    }
-  }
-
-  onDivisionChange(): void {
-    this.districts = [];
-    this.upazilas = [];
-    this.unions = [];
-    this.villages = [];
+    this.divisions.set([]);
+    this.districts.set([]);
+    this.upazilas.set([]);
+    this.unions.set([]);
+    this.villages.set([]);
     
-    this.selectedDistrictId = '';
-    this.selectedUpazilaId = '';
-    this.selectedUnionId = '';
-    this.selectedVillageId = '';
+    this.selectedDivisionId.set('');
+    this.selectedDistrictId.set('');
+    this.selectedUpazilaId.set('');
+    this.selectedUnionId.set('');
+    this.selectedVillageId.set('');
 
-    if (this.selectedDivisionId) {
-      this.locationService.getDistricts(this.selectedDivisionId).subscribe(data => this.districts = data);
-      if (this.selectionLevel === 'division') this.emitValue(this.selectedDivisionId);
+    if (val) {
+      this.locationService.getDivisions(val).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => this.divisions.set(data));
+      if (this.selectionLevel === 'country') this.emitValue(val);
     }
   }
 
-  onDistrictChange(): void {
-    this.upazilas = [];
-    this.unions = [];
-    this.villages = [];
+  onDivisionChange(val: string): void {
+    this.selectedDivisionId.set(val);
     
-    this.selectedUpazilaId = '';
-    this.selectedUnionId = '';
-    this.selectedVillageId = '';
-
-    if (this.selectedDistrictId) {
-      this.locationService.getUpazilas(this.selectedDistrictId).subscribe(data => this.upazilas = data);
-      if (this.selectionLevel === 'district') this.emitValue(this.selectedDistrictId);
-    }
-  }
-
-  onUpazilaChange(): void {
-    this.unions = [];
-    this.villages = [];
+    this.districts.set([]);
+    this.upazilas.set([]);
+    this.unions.set([]);
+    this.villages.set([]);
     
-    this.selectedUnionId = '';
-    this.selectedVillageId = '';
+    this.selectedDistrictId.set('');
+    this.selectedUpazilaId.set('');
+    this.selectedUnionId.set('');
+    this.selectedVillageId.set('');
 
-    if (this.selectedUpazilaId) {
-      this.locationService.getUnions(this.selectedUpazilaId).subscribe(data => this.unions = data);
-      if (this.selectionLevel === 'upazila') this.emitValue(this.selectedUpazilaId);
+    if (val) {
+      this.locationService.getDistricts(val).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => this.districts.set(data));
+      if (this.selectionLevel === 'division') this.emitValue(val);
     }
   }
 
-  onUnionChange(): void {
-    this.villages = [];
-    this.selectedVillageId = '';
+  onDistrictChange(val: string): void {
+    this.selectedDistrictId.set(val);
+    
+    this.upazilas.set([]);
+    this.unions.set([]);
+    this.villages.set([]);
+    
+    this.selectedUpazilaId.set('');
+    this.selectedUnionId.set('');
+    this.selectedVillageId.set('');
 
-    if (this.selectedUnionId) {
-      this.locationService.getVillages(this.selectedUnionId).subscribe(data => this.villages = data);
-      if (this.selectionLevel === 'union') this.emitValue(this.selectedUnionId);
+    if (val) {
+      this.locationService.getUpazilas(val).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => this.upazilas.set(data));
+      if (this.selectionLevel === 'district') this.emitValue(val);
     }
   }
 
-  onVillageChange(): void {
-    if (this.selectedVillageId && this.selectionLevel === 'village') {
-      this.emitValue(this.selectedVillageId);
+  onUpazilaChange(val: string): void {
+    this.selectedUpazilaId.set(val);
+    
+    this.unions.set([]);
+    this.villages.set([]);
+    
+    this.selectedUnionId.set('');
+    this.selectedVillageId.set('');
+
+    if (val) {
+      this.locationService.getUnions(val).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => this.unions.set(data));
+      if (this.selectionLevel === 'upazila') this.emitValue(val);
+    }
+  }
+
+  onUnionChange(val: string): void {
+    this.selectedUnionId.set(val);
+    
+    this.villages.set([]);
+    this.selectedVillageId.set('');
+
+    if (val) {
+      this.locationService.getVillages(val).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => this.villages.set(data));
+      if (this.selectionLevel === 'union') this.emitValue(val);
+    }
+  }
+
+  onVillageChange(val: string): void {
+    this.selectedVillageId.set(val);
+    if (val && this.selectionLevel === 'village') {
+      this.emitValue(val);
     }
   }
 }

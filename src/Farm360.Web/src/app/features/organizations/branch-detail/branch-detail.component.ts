@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,8 +8,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { BranchService } from '../services/branch.service';
 import { Branch } from '../models/branch.model';
 import { FarmService } from '../../farms/services/farm.service';
-import { FarmList } from '../../farms/models/farm.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-branch-detail',
@@ -25,20 +27,60 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
     DatePipe
   ],
   templateUrl: './branch-detail.html',
-  styleUrls: ['./branch-detail.scss']
+  styleUrls: ['./branch-detail.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BranchDetailComponent implements OnInit {
+export class BranchDetailComponent {
   private readonly branchService = inject(BranchService);
   private readonly farmService = inject(FarmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  orgId = signal<string>('');
-  branch = signal<Branch | null>(null);
-  farms = signal<FarmList[]>([]);
-  isLoading = signal<boolean>(false);
-  isLoadingFarms = signal<boolean>(false);
-  error = signal<string | null>(null);
+  private routeParams = toSignal(
+    this.route.paramMap.pipe(
+      map(params => ({
+        orgId: params.get('orgId') || '',
+        branchId: params.get('branchId') || ''
+      }))
+    ),
+    { initialValue: { orgId: '', branchId: '' } }
+  );
+
+  readonly orgId = computed(() => this.routeParams().orgId);
+  readonly branchId = computed(() => this.routeParams().branchId);
+
+  readonly isLoading = signal<boolean>(true);
+  readonly error = signal<string | null>(null);
+
+  private refreshTrigger = signal(0);
+  private fetchParams = computed(() => ({
+    branchId: this.branchId(),
+    refresh: this.refreshTrigger()
+  }));
+
+  private dataResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(params => !!params.branchId),
+      tap(() => { this.isLoading.set(true); this.error.set(null); }),
+      switchMap(({ branchId }) => forkJoin({
+        branch: this.branchService.getBranchById(branchId).pipe(catchError(() => of(null))),
+        farms: this.farmService.getFarmsByBranch(branchId).pipe(catchError(() => of([])))
+      }).pipe(
+        tap(res => {
+          if (!res.branch) this.error.set('Failed to load branch details.');
+        }),
+        catchError(err => {
+          this.error.set('Failed to load branch details.');
+          return of({ branch: null, farms: [] });
+        })
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { branch: null, farms: [] } }
+  );
+
+  readonly branch = computed(() => this.dataResult().branch);
+  readonly farms = computed(() => this.dataResult().farms);
 
   statusLabel = computed(() => {
     const s = this.branch()?.status;
@@ -54,50 +96,14 @@ export class BranchDetailComponent implements OnInit {
     return 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700';
   });
 
-  ngOnInit(): void {
-    const orgId = this.route.snapshot.paramMap.get('orgId');
-    const branchId = this.route.snapshot.paramMap.get('branchId');
-
-    if (orgId && branchId) {
-      this.orgId.set(orgId);
-      this.loadBranch(branchId);
-    } else {
-      this.error.set('Organization ID or Branch ID not found in route.');
-    }
-  }
-
-  loadBranch(id: string): void {
-    this.isLoading.set(true);
-    this.branchService.getBranchById(id).subscribe({
-      next: (data) => {
-        this.branch.set(data);
-        this.isLoading.set(false);
-        this.loadFarms(id);
-      },
-      error: (err) => {
-        this.error.set('Failed to load branch details.');
-        this.isLoading.set(false);
-        console.error(err);
-      }
-    });
-  }
-
-  loadFarms(branchId: string): void {
-    this.isLoadingFarms.set(true);
-    this.farmService.getFarmsByBranch(branchId).subscribe({
-      next: (data) => {
-        this.farms.set(data);
-        this.isLoadingFarms.set(false);
-      },
-      error: () => {
-        this.isLoadingFarms.set(false);
-      }
-    });
+  loadBranch(id?: string): void {
+    this.refreshTrigger.update(v => v + 1);
   }
 
   onEdit(): void {
-    if (this.branch()) {
-      this.router.navigate(['/organizations', this.orgId(), 'branches', 'edit', this.branch()?.id]);
+    const b = this.branch();
+    if (b) {
+      this.router.navigate(['/organizations', this.orgId(), 'branches', 'edit', b.id]);
     }
   }
 
@@ -106,8 +112,9 @@ export class BranchDetailComponent implements OnInit {
   }
 
   onManageFarms(): void {
-    if (this.branch()) {
-      this.router.navigate(['/organizations', 'branches', this.branch()!.id, 'farms']);
+    const b = this.branch();
+    if (b) {
+      this.router.navigate(['/organizations', 'branches', b.id, 'farms']);
     }
   }
 

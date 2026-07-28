@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MasterDataService } from '../../../shared/services/master-data.service';
@@ -6,15 +6,20 @@ import { MasterDataEntry, MasterDataType, CreateMasterDataCommand, UpdateMasterD
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
+import { of, BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'app-master-data',
   standalone: true,
   imports: [CommonModule, FormsModule, DataTableComponent],
-  templateUrl: './master-data.component.html'
+  templateUrl: './master-data.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MasterDataComponent implements OnInit {
+export class MasterDataComponent {
   private masterDataService = inject(MasterDataService);
+  private dialog = inject(MatDialog);
 
   types = [
     { id: MasterDataType.Breed, name: 'Breed' },
@@ -33,22 +38,43 @@ export class MasterDataComponent implements OnInit {
     { id: MasterDataType.BusinessType, name: 'Business Type' }
   ];
 
-  selectedType: MasterDataType = MasterDataType.AnimalType;
-  entries: MasterDataEntry[] = [];
-  isLoading = false;
+  readonly selectedType = signal<MasterDataType>(MasterDataType.AnimalType);
+  readonly isLoading = signal<boolean>(false);
+
+  private refreshTrigger = signal(0);
+  private fetchParams = computed(() => ({
+    type: this.selectedType(),
+    refresh: this.refreshTrigger()
+  }));
+
+  readonly entriesResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      tap(() => this.isLoading.set(true)),
+      switchMap(({ type }) => this.masterDataService.getByType(type, true).pipe(
+        catchError(err => {
+          console.error(err);
+          return of([] as MasterDataEntry[]);
+        })
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: [] as MasterDataEntry[] }
+  );
+
+  readonly entries = computed(() => this.entriesResult());
 
   // Form State
-  isModalOpen = false;
-  editingId: string | null = null;
-  formData: any = {
+  isModalOpen = signal<boolean>(false);
+  editingId = signal<string | null>(null);
+  
+  // Create a writable signal for the form data
+  formData = signal<any>({
     name: '',
     code: '',
     description: '',
     displayOrder: 0,
     isActive: true
-  };
-
-  private dialog = inject(MatDialog);
+  });
 
   displayedColumns = ['code', 'name', 'order', 'status', 'actions'];
 
@@ -60,55 +86,47 @@ export class MasterDataComponent implements OnInit {
     { def: 'actions', header: 'Actions', cell: () => '', isAction: true }
   ];
 
-  ngOnInit(): void {
-    this.loadEntries();
-  }
-
   selectType(type: MasterDataType): void {
-    this.selectedType = type;
-    this.loadEntries();
+    this.selectedType.set(type);
   }
 
   loadEntries(): void {
-    this.isLoading = true;
-    this.masterDataService.getByType(this.selectedType, true).subscribe({
-      next: (data) => {
-        this.entries = data;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error(err);
-        this.isLoading = false;
-      }
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 
   openCreateModal(): void {
-    this.editingId = null;
-    this.formData = { name: '', code: '', description: '', displayOrder: 0, isActive: true };
-    this.isModalOpen = true;
+    this.editingId.set(null);
+    this.formData.set({ name: '', code: '', description: '', displayOrder: 0, isActive: true });
+    this.isModalOpen.set(true);
   }
 
   openEditModal(entry: MasterDataEntry): void {
-    this.editingId = entry.id;
-    this.formData = { ...entry };
-    this.isModalOpen = true;
+    this.editingId.set(entry.id);
+    this.formData.set({ ...entry });
+    this.isModalOpen.set(true);
   }
 
   closeModal(): void {
-    this.isModalOpen = false;
+    this.isModalOpen.set(false);
+  }
+
+  updateFormField(field: string, value: any): void {
+    this.formData.update(data => ({ ...data, [field]: value }));
   }
 
   saveEntry(): void {
-    if (this.editingId) {
+    const data = this.formData();
+    const id = this.editingId();
+    
+    if (id) {
       const command: UpdateMasterDataCommand = {
-        id: this.editingId,
-        name: this.formData.name,
-        description: this.formData.description,
-        displayOrder: this.formData.displayOrder,
-        isActive: this.formData.isActive
+        id: id,
+        name: data.name,
+        description: data.description,
+        displayOrder: data.displayOrder,
+        isActive: data.isActive
       };
-      this.masterDataService.update(this.editingId, command, this.selectedType).subscribe({
+      this.masterDataService.update(id, command, this.selectedType()).subscribe({
         next: () => {
           this.closeModal();
           this.loadEntries();
@@ -116,11 +134,11 @@ export class MasterDataComponent implements OnInit {
       });
     } else {
       const command: CreateMasterDataCommand = {
-        type: this.selectedType,
-        name: this.formData.name,
-        code: this.formData.code,
-        description: this.formData.description,
-        displayOrder: this.formData.displayOrder
+        type: this.selectedType(),
+        name: data.name,
+        code: data.code,
+        description: data.description,
+        displayOrder: data.displayOrder
       };
       this.masterDataService.create(command).subscribe({
         next: () => {
@@ -145,7 +163,7 @@ export class MasterDataComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.masterDataService.delete(entry.id, this.selectedType).subscribe({
+        this.masterDataService.delete(entry.id, this.selectedType()).subscribe({
           next: () => {
             this.loadEntries();
           }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,30 +9,31 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, tap, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-organization-list',
   standalone: true,
   imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent],
   templateUrl: './organization-list.html',
-  styleUrls: ['./organization-list.scss']
+  styleUrls: ['./organization-list.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OrganizationListComponent implements OnInit {
+export class OrganizationListComponent {
   private readonly organizationService = inject(OrganizationService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
-  organizations = signal<Organization[]>([]);
-  isLoading = signal<boolean>(false);
-  error = signal<string | null>(null);
+
+  readonly isLoading = signal<boolean>(false);
+  readonly error = signal<string | null>(null);
 
   // Pagination & Search State
-  totalCount = signal<number>(0);
-  pageSize = signal<number>(10);
-  pageIndex = signal<number>(0);
-  searchTerm = signal<string>('');
-  statusFilter = signal<number | null>(null);
-
-  displayedColumns = ['name', 'contact', 'type', 'status', 'actions'];
+  readonly pageIndex = signal<number>(0);
+  readonly pageSize = signal<number>(10);
+  readonly searchTerm = signal<string>('');
+  readonly statusFilter = signal<number | null>(null);
 
   // BusinessType enum label map — must match Farm360.Domain.Organizations.Enums.BusinessType
   private readonly businessTypeLabels: Record<number, string> = {
@@ -42,6 +43,35 @@ export class OrganizationListComponent implements OnInit {
     4: 'Veterinary Clinic',
     5: 'Cooperative'
   };
+
+  private refreshTrigger = signal(0);
+  private fetchParams = computed(() => ({
+    search: this.searchTerm(),
+    status: this.statusFilter(),
+    pageNumber: this.pageIndex() + 1,
+    pageSize: this.pageSize(),
+    refresh: this.refreshTrigger()
+  }));
+
+  readonly organizationsResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      tap(() => { this.isLoading.set(true); this.error.set(null); }),
+      switchMap(params => this.organizationService.getOrganizations(params.search, params.status !== null ? params.status : undefined, params.pageNumber, params.pageSize).pipe(
+        catchError(err => {
+          this.error.set('Failed to load organizations.');
+          console.error(err);
+          return of({ items: [] as Organization[], totalCount: 0 });
+        })
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { items: [] as Organization[], totalCount: 0 } }
+  );
+
+  readonly organizations = computed(() => this.organizationsResult().items);
+  readonly totalCount = computed(() => this.organizationsResult().totalCount);
+
+  displayedColumns = ['name', 'contact', 'type', 'status', 'actions'];
 
   columns: TableColumn[] = [
     {
@@ -79,32 +109,14 @@ export class OrganizationListComponent implements OnInit {
     }
   ];
 
-  ngOnInit(): void {
-    this.loadOrganizations();
-  }
-
   loadOrganizations(): void {
-    this.isLoading.set(true);
-    const status = this.statusFilter();
-    this.organizationService.getOrganizations(this.searchTerm(), status !== null ? status : undefined, this.pageIndex() + 1, this.pageSize()).subscribe({
-      next: (data) => {
-        this.organizations.set(data.items);
-        this.totalCount.set(data.totalCount);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set('Failed to load organizations.');
-        this.isLoading.set(false);
-        console.error(err);
-      }
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
     this.pageIndex.set(0); // Reset to first page
-    this.loadOrganizations();
   }
 
   onFilterStatus(event: any): void {
@@ -115,13 +127,11 @@ export class OrganizationListComponent implements OnInit {
       this.statusFilter.set(Number(val));
     }
     this.pageIndex.set(0);
-    this.loadOrganizations();
   }
 
   onPageChange(event: any): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
-    this.loadOrganizations();
   }
 
   deactivate(id: string): void {

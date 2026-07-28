@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -12,7 +12,9 @@ import { ScheduleVaccinationDialog } from '../../components/dialogs/schedule-vac
 import { LogTreatmentDialog } from '../../components/dialogs/log-treatment-dialog/log-treatment-dialog.component';
 import { RecordMortalityDialog } from '../../components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
-import { Subject, takeUntil } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
@@ -21,51 +23,59 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
   standalone: true,
   imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent],
   templateUrl: './health-dashboard.html',
-  styleUrls: ['./health-dashboard.scss']
+  styleUrls: ['./health-dashboard.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HealthDashboardComponent implements OnInit, OnDestroy {
+export class HealthDashboardComponent {
   private healthService = inject(HealthService);
   private dialog = inject(MatDialog);
-  private cdr = inject(ChangeDetectorRef);
   private contextService = inject(WorkingContextService);
 
-  dashboardData: HealthDashboardDto | null = null;
-  isLoading = true;
-  error = '';
-  private destroy$ = new Subject<void>();
+  // --- Reactive State (Signals) ---
+  isLoading = signal(true);
+  error = signal('');
+  private refreshTrigger = signal(0);
 
-  ngOnInit(): void {
-    // Reload dashboard whenever farm context changes
-    this.contextService.currentFarm$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.loadDashboard();
-      });
-  }
+  // Derive farm context as a signal
+  private currentFarm = toSignal(this.contextService.currentFarm$);
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  // Combined trigger for loading data
+  private fetchTrigger = computed(() => ({
+    farm: this.currentFarm(),
+    refresh: this.refreshTrigger()
+  }));
+
+  // Reactive Data Stream
+  dashboardData = toSignal(
+    toObservable(this.fetchTrigger).pipe(
+      tap(() => {
+        this.isLoading.set(true);
+        this.error.set('');
+      }),
+      switchMap(({ farm }) => {
+        if (!farm) {
+          this.isLoading.set(false);
+          return of(null);
+        }
+        return this.healthService.getHealthDashboard().pipe(
+          catchError((err) => {
+            console.error('Error loading health dashboard', err);
+            this.error.set('Failed to load dashboard data. Please try again.');
+            return of(null);
+          }),
+          tap(() => this.isLoading.set(false))
+        );
+      })
+    ),
+    { initialValue: null }
+  );
 
   loadDashboard(): void {
-    this.isLoading = true;
-    this.error = '';
-    this.healthService.getHealthDashboard().subscribe({
-      next: (data) => {
-        this.dashboardData = data;
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading health dashboard', err);
-        this.error = 'Failed to load dashboard data. Please try again.';
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    // Triggers reactivity naturally without manual CDR
+    this.refreshTrigger.update(v => v + 1);
   }
 
+  // --- Dialogs ---
   openScheduleVaccinationDialog(): void {
     const dialogRef = this.dialog.open(ScheduleVaccinationDialog, { width: '500px' });
     dialogRef.afterClosed().subscribe(result => {

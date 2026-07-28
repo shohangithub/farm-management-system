@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,30 +6,75 @@ import { MatIconModule } from '@angular/material/icon';
 import { PenService } from '../services/pen.service';
 import { PenList } from '../models/pen.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-pen-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent],
-  templateUrl: './pen-list.component.html'
+  templateUrl: './pen-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PenListComponent implements OnInit {
+export class PenListComponent {
   private readonly penService = inject(PenService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  pens = signal<PenList[]>([]);
   isLoading = signal<boolean>(true);
-  branchId = signal<string>('');
-  farmId = signal<string>('');
-  shedId = signal<string>('');
   Math = Math;
 
   searchTerm = signal<string>('');
   statusFilter = signal<number | null>(null);
 
+  private routeParams = toSignal(
+    this.route.paramMap.pipe(
+      map(() => {
+        let currentRoute: ActivatedRoute | null = this.route;
+        let branchId = '';
+        let farmId = '';
+        let shedId = this.route.snapshot.paramMap.get('shedId') || this.route.parent?.snapshot.paramMap.get('shedId') || '';
+        
+        while (currentRoute) {
+          if (!branchId) branchId = currentRoute.snapshot.paramMap.get('branchId') || '';
+          if (!farmId) farmId = currentRoute.snapshot.paramMap.get('farmId') || '';
+          if (!shedId) shedId = currentRoute.snapshot.paramMap.get('shedId') || '';
+          currentRoute = currentRoute.parent;
+        }
+        return { branchId, farmId, shedId };
+      })
+    ),
+    { initialValue: { branchId: '', farmId: '', shedId: '' } }
+  );
+
+  readonly branchId = computed(() => this.routeParams().branchId);
+  readonly farmId = computed(() => this.routeParams().farmId);
+  readonly shedId = computed(() => this.routeParams().shedId);
+
+  private refreshTrigger = signal(0);
+  private fetchParams = computed(() => ({
+    shedId: this.shedId(),
+    refresh: this.refreshTrigger()
+  }));
+
+  readonly pensResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(params => !!params.shedId),
+      tap(() => this.isLoading.set(true)),
+      switchMap(({ shedId }) => this.penService.getPensByShed(shedId).pipe(
+        catchError(err => {
+          console.error('Failed to load pens', err);
+          return of([] as PenList[]);
+        })
+      )),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: [] as PenList[] }
+  );
+
   filteredPens = computed(() => {
-    let result = this.pens();
+    let result = this.pensResult();
     
     const search = this.searchTerm().toLowerCase();
     if (search) {
@@ -47,53 +92,8 @@ export class PenListComponent implements OnInit {
     return result;
   });
 
-  ngOnInit(): void {
-    const getParams = () => {
-      let currentRoute: ActivatedRoute | null = this.route;
-      let branchId = '';
-      let farmId = '';
-      let shedId = this.route.snapshot.paramMap.get('shedId') || this.route.parent?.snapshot.paramMap.get('shedId') || '';
-      
-      while (currentRoute) {
-        if (!branchId) branchId = currentRoute.snapshot.paramMap.get('branchId') || '';
-        if (!farmId) farmId = currentRoute.snapshot.paramMap.get('farmId') || '';
-        if (!shedId) shedId = currentRoute.snapshot.paramMap.get('shedId') || '';
-        currentRoute = currentRoute.parent;
-      }
-      return { branchId, farmId, shedId };
-    };
-    
-    const p = getParams();
-    if (p.branchId && p.farmId && p.shedId) {
-      this.branchId.set(p.branchId);
-      this.farmId.set(p.farmId);
-      this.shedId.set(p.shedId);
-      this.loadPens();
-    }
-    
-    this.route.paramMap.subscribe(() => {
-      const updated = getParams();
-      if (updated.shedId && updated.shedId !== this.shedId()) {
-        this.branchId.set(updated.branchId);
-        this.farmId.set(updated.farmId);
-        this.shedId.set(updated.shedId);
-        this.loadPens();
-      }
-    });
-  }
-
   loadPens(): void {
-    this.isLoading.set(true);
-    this.penService.getPensByShed(this.shedId()).subscribe({
-      next: (data) => {
-        this.pens.set(data);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load pens', err);
-        this.isLoading.set(false);
-      }
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 
   onFilterStatus(event: Event): void {

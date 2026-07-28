@@ -11,10 +11,10 @@
 </app-page-header>
 
 <div class="px-6 py-8 mx-auto max-w-3xl animate-fade-in">
-  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+  <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
     <div class="flex">
       <mat-icon class="text-red-500 mr-2">error</mat-icon>
-      <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+      <p class="text-sm text-red-700 font-medium">{{ error() }}</p>
     </div>
   </div>
 
@@ -85,11 +85,11 @@
       <button type="button" routerLink="/health/vaccinations" class="px-6 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-all shadow-sm">
         Cancel
       </button>
-      <button type="submit" [disabled]="incidentForm.invalid || isSubmitting" 
+      <button type="submit" [disabled]="incidentForm.invalid || isSubmitting()" 
               class="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm shadow-blue-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-        <mat-icon *ngIf="isSubmitting" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
-        <span>{{ isSubmitting ? 'Reporting...' : 'Report Incident' }}</span>
-        <mat-icon *ngIf="!isSubmitting" class="!text-[18px] !w-[18px] !h-[18px]">arrow_forward</mat-icon>
+        <mat-icon *ngIf="isSubmitting()" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
+        <span>{{ isSubmitting() ? 'Reporting...' : 'Report Incident' }}</span>
+        <mat-icon *ngIf="!isSubmitting()" class="!text-[18px] !w-[18px] !h-[18px]">arrow_forward</mat-icon>
       </button>
     </div>
   </form>

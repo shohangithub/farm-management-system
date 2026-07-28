@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -11,6 +11,7 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
 @Component({
   selector: 'app-assign-protocol-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, 
     ReactiveFormsModule, 
@@ -20,58 +21,88 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
     AnimalMultiPickerComponent
   ],
   template: `
-    <div class="p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center m-0">
-          <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3 border border-blue-200 dark:border-blue-800">
-            <mat-icon class="text-blue-600 dark:text-blue-400">assignment</mat-icon>
-          </div>
-          Assign Protocol
-        </h2>
-        <button mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-          <mat-icon>close</mat-icon>
+    <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between shrink-0">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
+            <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-500">assignment</mat-icon>
+            Assign Protocol
+          </h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Apply {{ data?.protocol?.title }} to animals</p>
+        </div>
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
 
-      <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-xl border border-blue-200 dark:border-blue-800/50">
-        <div class="text-sm font-medium opacity-80 mb-1">Selected Protocol</div>
-        <div class="text-lg font-bold">{{ data?.protocol?.title }}</div>
-      </div>
-      
-      <form [formGroup]="form" class="space-y-5">
+      <!-- Body -->
+      <form [formGroup]="form" class="flex flex-col overflow-hidden">
         
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Select Animals <span class="text-red-500">*</span></label>
-          <app-animal-multi-picker formControlName="animalIds"></app-animal-multi-picker>
+        <!-- Error State -->
+        <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm whitespace-pre-wrap">
+          {{ error() }}
         </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Start Date <span class="text-red-500">*</span></label>
-          <input type="date" formControlName="startDate"
-                 class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
-          <p class="text-xs text-gray-500 mt-1">The date to begin calculating scheduled events.</p>
-        </div>
-        
-        <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm">
-          <div class="flex">
-            <mat-icon class="text-red-500 mr-2">error</mat-icon>
-            <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+        <div class="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+          
+          <div class="p-4 bg-primary-50 dark:bg-primary-900/20 text-primary-800 dark:text-primary-300 rounded-xl border border-primary-200 dark:border-primary-800/50 flex items-center gap-3">
+            <div class="p-2 bg-white dark:bg-primary-900/50 rounded-lg shadow-sm shrink-0">
+               <mat-icon class="!text-primary-600 dark:!text-primary-400">vaccines</mat-icon>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider opacity-80 mb-0.5">Selected Protocol</div>
+              <div class="text-base font-bold">{{ data?.protocol?.title }}</div>
+            </div>
           </div>
+          
+          <!-- Basic Info Section -->
+          <div class="grid grid-cols-1 gap-6">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animals <span class="text-red-500">*</span></label>
+              <app-animal-multi-picker formControlName="animalIds"></app-animal-multi-picker>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Start Date <span class="text-red-500">*</span></label>
+              <input type="date" formControlName="startDate"
+                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p class="text-xs text-gray-500 mt-1">The date to begin calculating scheduled events.</p>
+            </div>
+          </div>
+          
         </div>
 
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-          <button type="button" mat-dialog-close [disabled]="isSubmitting" class="px-5 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-all shadow-sm">
+        <!-- Footer Actions -->
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
+          <button type="button" mat-dialog-close [disabled]="isSubmitting()" 
+            class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
             Cancel
           </button>
-          <button type="button" [disabled]="form.invalid || isSubmitting" (click)="onSubmit()"
-                  class="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm shadow-blue-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-            <mat-icon *ngIf="isSubmitting" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
-            <span>{{ isSubmitting ? 'Assigning...' : 'Assign Protocol' }}</span>
+          <button type="button" [disabled]="form.invalid || isSubmitting()" (click)="onSubmit()"
+                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <mat-icon *ngIf="isSubmitting()" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
+            <span>{{ isSubmitting() ? 'Assigning...' : 'Assign Protocol' }}</span>
           </button>
         </div>
       </form>
     </div>
-  `
+  `,
+  styles: [`
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.5);
+      border-radius: 20px;
+    }
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.8);
+    }
+  `]
 })
 export class AssignProtocolDialog {
   private fb = inject(FormBuilder);
@@ -81,8 +112,8 @@ export class AssignProtocolDialog {
   data = inject(MAT_DIALOG_DATA);
 
   form: FormGroup;
-  isSubmitting = false;
-  error = '';
+  isSubmitting = signal(false);
+  error = signal('');
 
   constructor() {
     this.form = this.fb.group({
@@ -94,23 +125,23 @@ export class AssignProtocolDialog {
   onSubmit() {
     if (this.form.invalid) return;
 
-    this.isSubmitting = true;
-    this.error = '';
+    this.isSubmitting.set(true);
+    this.error.set('');
 
     const val = this.form.value;
     const farmId = this.contextService.currentFarmValue?.id || '';
 
     if (!farmId) {
-      this.error = 'No farm context available.';
-      this.isSubmitting = false;
+      this.error.set('No farm context available.');
+      this.isSubmitting.set(false);
       return;
     }
     
     const animalIdArray = val.animalIds;
       
     if (!animalIdArray || animalIdArray.length === 0) {
-      this.error = 'Please select at least one animal.';
-      this.isSubmitting = false;
+      this.error.set('Please select at least one animal.');
+      this.isSubmitting.set(false);
       return;
     }
 
@@ -123,12 +154,12 @@ export class AssignProtocolDialog {
 
     this.healthService.assignProtocolToAnimals(request).subscribe({
       next: () => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         this.dialogRef.close(true);
       },
       error: (err) => {
-        this.error = err.error?.detail || 'Failed to assign protocol.';
-        this.isSubmitting = false;
+        this.error.set(err.error?.detail || 'Failed to assign protocol.');
+        this.isSubmitting.set(false);
       }
     });
   }

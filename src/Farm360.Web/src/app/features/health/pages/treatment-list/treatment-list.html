@@ -12,10 +12,10 @@
 </app-page-header>
 
   <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-    <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
+    <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
     <div class="relative overflow-x-auto">
 
-      <table mat-table [dataSource]="dataSource" class="w-full">
+      <table mat-table [dataSource]="dataSource()" class="w-full">
         
         <ng-container matColumnDef="animalId">
           <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Animal ID</th>
@@ -89,7 +89,7 @@
 
       <!-- Empty State -->
       <app-empty-state 
-        *ngIf="!isLoading && dataSource.length === 0"
+        *ngIf="!isLoading() && dataSource().length === 0"
         icon="medical_services"
         title="No treatments found"
         message="Log a new treatment to start tracking animal health."
@@ -99,10 +99,10 @@
     </div>
 
     <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
-      <mat-paginator [length]="totalItems"
-                     [pageSize]="pageSize"
+      <mat-paginator [length]="totalItems()"
+                     [pageSize]="pageSize()"
                      [pageSizeOptions]="[5, 10, 25, 100]"
-                     [pageIndex]="pageIndex"
+                     [pageIndex]="pageIndex()"
                      (page)="onPageChange($event)"
                      aria-label="Select page"
                      class="!bg-transparent">

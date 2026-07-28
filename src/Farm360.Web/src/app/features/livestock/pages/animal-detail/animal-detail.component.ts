@@ -1,11 +1,10 @@
 import {
-  Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy, computed,
-  TemplateRef, ViewChild
+  Component, inject, signal, ChangeDetectionStrategy, computed,
+  ViewChild
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil }  from 'rxjs';
 import { AnimalService }       from '../../services/animal.service';
 import { ShedService }       from '../../../farms/services/shed.service';
 import { PenService }        from '../../../farms/services/pen.service';
@@ -14,7 +13,7 @@ import { ShedList }          from '../../../farms/models/shed.model';
 import { PenList }           from '../../../farms/models/pen.model';
 import { AnimalHealthHistoryDto, VaccinationStatus, TreatmentStatus } from '../../../health/models/health.models';
 import {
-  AnimalDto, AnimalStatus, AnimalSex, AnimalMovementDto,
+  AnimalDto, AnimalStatus, AnimalSex,
   SPECIES_LABELS, STATUS_LABELS, SEX_LABELS,
 } from '../../models/animal.models';
 
@@ -40,6 +39,9 @@ import { RecordBcsDialogComponent } from '../../dialogs/record-bcs-dialog/record
 import { RecordWeightDialogComponent } from '../../dialogs/record-weight-dialog/record-weight-dialog.component';
 import { UploadPhotoDialogComponent } from '../../dialogs/upload-photo-dialog/upload-photo-dialog.component';
 import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/record-sale-dialog.component';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, forkJoin, tap, filter } from 'rxjs';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-animal-detail',
@@ -52,7 +54,7 @@ import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/reco
   ],
   templateUrl: './animal-detail.component.html'
 })
-export class AnimalDetailComponent implements OnInit, OnDestroy {
+export class AnimalDetailComponent {
   private readonly svc     = inject(AnimalService);
   private readonly route   = inject(ActivatedRoute);
   private readonly shedSvc = inject(ShedService);
@@ -63,18 +65,6 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
   private readonly dialog  = inject(MatDialog);
   private readonly router  = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly destroy$ = new Subject<void>();
-
-  readonly loading = signal(true);
-  readonly error   = signal<string | null>(null);
-  readonly animal  = signal<AnimalDto | null>(null);
-  readonly healthHistory = signal<AnimalHealthHistoryDto | null>(null);
-
-  readonly farmName = signal<string | null>(null);
-  readonly shedName = signal<string | null>(null);
-  readonly penName = signal<string | null>(null);
-
-  readonly availableBatches = signal<BatchDto[]>([]);
 
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex = AnimalSex;
@@ -83,10 +73,68 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
 
   readonly Math = Math;
 
-  readonly sheds = signal<ShedList[]>([]);
-  readonly pens = signal<PenList[]>([]);
-  readonly loadingSheds = signal(false);
-  readonly loadingPens = signal(false);
+  private refreshTrigger = signal(0);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+
+  private routeId = toSignal(this.route.paramMap.pipe(map(params => params.get('id'))), { initialValue: null });
+
+  private fetchParams = computed(() => ({
+    id: this.routeId(),
+    refresh: this.refreshTrigger()
+  }));
+
+  private animalDataResult = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(params => !!params.id),
+      tap(() => { this.loading.set(true); this.error.set(null); }),
+      switchMap(({ id }) => 
+        this.svc.getById(id!).pipe(
+          switchMap(animal => {
+            // Parallel fetch related data
+            return forkJoin({
+              animal: of(animal),
+              healthHistory: this.healthSvc.getAnimalHealthHistory(animal.id).pipe(catchError(() => of(null))),
+              farmName: animal.farmId ? this.farmSvc.getFarmById(animal.farmId).pipe(map(f => f.farmName), catchError(() => of(null))) : of(null),
+              availableBatches: animal.farmId ? this.batchSvc.getBatches(animal.farmId).pipe(map(b => b.items), catchError(() => of([]))) : of([]),
+              shedName: animal.shedId ? this.shedSvc.getShedById(animal.shedId).pipe(map(s => s.shedName), catchError(() => of(null))) : of(null),
+              penName: animal.penId ? this.penSvc.getPenById(animal.penId).pipe(map(p => p.penNumber), catchError(() => of(null))) : of(null),
+              sheds: animal.farmId ? this.shedSvc.getShedsByFarm(animal.farmId).pipe(catchError(() => of([]))) : of([]),
+            }).pipe(
+              switchMap(data => {
+                // If there are sheds, fetch pens for all sheds to resolve movement history names
+                if (data.sheds.length > 0) {
+                  const penRequests = data.sheds.map(s => this.penSvc.getPensByShed(s.id).pipe(catchError(() => of([]))));
+                  return forkJoin(penRequests).pipe(
+                    map(pensArrays => {
+                      const allPens = pensArrays.flat();
+                      return { ...data, pens: allPens };
+                    })
+                  );
+                }
+                return of({ ...data, pens: [] });
+              })
+            );
+          }),
+          catchError(err => {
+            this.error.set(err?.error?.detail ?? 'Not found');
+            return of(null);
+          })
+        )
+      ),
+      tap(() => this.loading.set(false))
+    ),
+    { initialValue: null }
+  );
+
+  readonly animal = computed(() => this.animalDataResult()?.animal || null);
+  readonly healthHistory = computed(() => this.animalDataResult()?.healthHistory || null);
+  readonly farmName = computed(() => this.animalDataResult()?.farmName || null);
+  readonly shedName = computed(() => this.animalDataResult()?.shedName || null);
+  readonly penName = computed(() => this.animalDataResult()?.penName || null);
+  readonly availableBatches = computed(() => this.animalDataResult()?.availableBatches || []);
+  readonly sheds = computed(() => this.animalDataResult()?.sheds || []);
+  readonly pens = computed(() => this.animalDataResult()?.pens || []);
 
   readonly resolvedMovements = computed(() => {
     const a = this.animal();
@@ -114,61 +162,8 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
     }
   });
 
-  ngOnInit(): void { this.load(); }
-  ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
-
   load(): void {
-    const id = this.route.snapshot.paramMap.get('id')!;
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.svc.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
-      next:  a  => { 
-        this.animal.set(a); 
-        
-        // Fetch Health History in parallel
-        this.healthSvc.getAnimalHealthHistory(id).subscribe({
-          next: h => this.healthHistory.set(h),
-          error: () => this.healthHistory.set(null)
-        });
-
-        this.loading.set(false); 
-        
-        // Load Location Names and Batches
-        if (a.farmId) {
-          this.farmSvc.getFarmById(a.farmId).subscribe(f => this.farmName.set(f.farmName));
-          
-          this.batchSvc.getBatches(a.farmId).subscribe(b => {
-             this.availableBatches.set(b.items);
-          });
-          
-          // Preload Sheds and Pens for the farm to resolve movement history names
-          this.shedSvc.getShedsByFarm(a.farmId).subscribe(sheds => {
-            this.sheds.set(sheds);
-            sheds.forEach(s => {
-              this.penSvc.getPensByShed(s.id).subscribe(pens => {
-                this.pens.update(existing => {
-                  // Only add pens that aren't already in the list
-                  const newPens = pens.filter(p => !existing.some(ep => ep.id === p.id));
-                  return [...existing, ...newPens];
-                });
-              });
-            });
-          });
-        }
-        if (a.shedId) {
-          this.shedSvc.getShedById(a.shedId).subscribe(s => this.shedName.set(s.shedName));
-        } else {
-          this.shedName.set(null);
-        }
-        if (a.penId) {
-          this.penSvc.getPenById(a.penId).subscribe(p => this.penName.set(p.penNumber));
-        } else {
-          this.penName.set(null);
-        }
-      },
-      error: e  => { this.error.set(e?.error?.detail ?? 'Not found'); this.loading.set(false); }
-    });
+    this.refreshTrigger.update(v => v + 1);
   }
 
   sortedWeights() {
@@ -197,7 +192,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => { if (res) this.load(); });
+    dialogRef.afterClosed().subscribe(res => { if (res) this.load(); });
   }
 
   onRelease(): void {
@@ -212,9 +207,9 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       }
     });
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
+    dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.svc.releaseFromQuarantine(a.id).pipe(takeUntil(this.destroy$)).subscribe({ next: () => this.load() });
+        this.svc.releaseFromQuarantine(a.id).subscribe({ next: () => this.load() });
       }
     });
   }
@@ -232,7 +227,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId, latestWeightKg: a.latestWeightKg }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => { if (res) this.load(); });
+    dialogRef.afterClosed().subscribe(res => { if (res) this.load(); });
   }
 
   onTransfer(): void {
@@ -250,7 +245,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
         currentPenId: a.penId
       }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => { 
+    dialogRef.afterClosed().subscribe(res => { 
       if (res) {
         this.snackBar.open('Location assigned successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
@@ -267,7 +262,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('Mating recorded successfully!', 'Close', { duration: 3000 });
         this.load();
@@ -284,7 +279,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId, recordId }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('Pregnancy confirmed successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
@@ -301,7 +296,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId, recordId }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('Calving recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
@@ -318,7 +313,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('BCS recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
@@ -340,7 +335,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
         availableBatches: this.availableBatches()
       }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('Animal assigned to batch successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
@@ -357,7 +352,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('Weight recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
@@ -374,7 +369,7 @@ export class AnimalDetailComponent implements OnInit, OnDestroy {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId }
     });
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(res => {
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('Photo uploaded successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
         this.load();

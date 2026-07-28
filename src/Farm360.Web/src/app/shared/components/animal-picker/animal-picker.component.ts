@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, forwardRef, inject, Input, OnInit, DestroyRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,7 +14,8 @@ import { ShedList } from '../../../features/farms/models/shed.model';
 import { AnimalListItemDto, AnimalSex, AnimalStatus } from '../../../features/livestock/models/animal.models';
 import { WorkingContextService } from '../../../core/services/working-context.service';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, filter, startWith, tap } from 'rxjs/operators';
-import { BehaviorSubject, Observable, of, Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-animal-picker',
@@ -90,10 +91,11 @@ import { BehaviorSubject, Observable, of, Subject, takeUntil } from 'rxjs';
     </div>
   `
 })
-export class AnimalPickerComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class AnimalPickerComponent implements OnInit, ControlValueAccessor {
   private animalService = inject(AnimalService);
   private shedService = inject(ShedService);
   private contextService = inject(WorkingContextService);
+  private destroyRef = inject(DestroyRef);
 
   @Input() requiredStatus?: AnimalStatus = AnimalStatus.Active;
   
@@ -105,7 +107,6 @@ export class AnimalPickerComponent implements OnInit, OnDestroy, ControlValueAcc
   
   selectedAnimal: AnimalListItemDto | null = null;
   isLoading = false;
-  private destroy$ = new Subject<void>();
 
   // ControlValueAccessor methods
   onChange: any = () => {};
@@ -144,7 +145,7 @@ export class AnimalPickerComponent implements OnInit, OnDestroy, ControlValueAcc
 
   ngOnInit() {
     this.contextService.currentFarm$.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(farm => {
       this.currentFarmId = farm?.id || null;
       this.clearSelection();
@@ -165,16 +166,11 @@ export class AnimalPickerComponent implements OnInit, OnDestroy, ControlValueAcc
     });
 
     this.shedControl.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.clearSelection();
       this.searchControl.setValue(''); // Trigger new search
     });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   displayFn(animal: AnimalListItemDto): string {

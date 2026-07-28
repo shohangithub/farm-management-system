@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ViewChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ViewChild, TemplateRef, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 
 @Component({
   selector: 'app-batch-list',
@@ -18,14 +22,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   templateUrl: './batch-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BatchList implements OnInit {
+export class BatchList {
   private readonly svc = inject(BatchService);
-  private readonly farmSvc = inject(FarmService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly contextService = inject(WorkingContextService);
 
-  readonly batches = signal<BatchDto[]>([]);
-  readonly loading = signal(true);
+  readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
   @ViewChild('createBatchDialog') createBatchDialog!: TemplateRef<any>;
@@ -35,39 +38,40 @@ export class BatchList implements OnInit {
     notes: '',
     farmId: ''
   };
+
+  private currentFarmId = toSignal(this.contextService.currentFarm$.pipe(map(f => f?.id)), { initialValue: null });
+  private refreshTrigger = signal(0);
   
-  farms: any[] = [];
+  private fetchParams = computed(() => ({
+    farmId: this.currentFarmId(),
+    refresh: this.refreshTrigger()
+  }));
 
-  ngOnInit() {
-    this.farmSvc.getAllFarms().subscribe(f => {
-      this.farms = f;
-      if (f.length > 0) {
-        this.createForm.farmId = f[0].id;
-        this.load(this.createForm.farmId);
-      } else {
-        this.loading.set(false);
-      }
-    });
-  }
-
-  load(farmId: string) {
-    this.loading.set(true);
-    this.svc.getBatches(farmId).subscribe({
-      next: res => {
-        this.batches.set(res.items);
-        this.loading.set(false);
-      },
-      error: err => {
-        this.error.set(err.message);
-        this.loading.set(false);
-      }
-    });
-  }
+  readonly batches = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(({ farmId }) => !!farmId),
+      tap(() => { this.loading.set(true); this.error.set(null); }),
+      switchMap(({ farmId }) => this.svc.getBatches(farmId!).pipe(
+        map(res => res.items),
+        catchError(err => {
+          this.error.set(err.message || 'Error loading batches');
+          return of([]);
+        })
+      )),
+      tap(() => this.loading.set(false))
+    ),
+    { initialValue: [] }
+  );
 
   onCreateBatch() {
     this.createForm.name = '';
     this.createForm.notes = '';
-    this.dialog.open(this.createBatchDialog, { width: '400px' });
+    this.createForm.farmId = this.currentFarmId() || '';
+    if (this.createForm.farmId) {
+      this.dialog.open(this.createBatchDialog, { width: '400px' });
+    } else {
+      this.snackBar.open('Please select a farm context first', 'Close', { duration: 3000 });
+    }
   }
 
   submitCreateBatch() {
@@ -81,16 +85,8 @@ export class BatchList implements OnInit {
       next: () => {
         this.dialog.closeAll();
         this.snackBar.open('Batch created successfully', 'Close', { duration: 3000 });
-        this.load(this.createForm.farmId);
+        this.refreshTrigger.update(v => v + 1);
       }
     });
-  }
-
-  onFarmChange(event: any) {
-    const farmId = event.target.value;
-    if (farmId) {
-      this.createForm.farmId = farmId;
-      this.load(farmId);
-    }
   }
 }

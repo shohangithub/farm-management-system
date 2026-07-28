@@ -9,54 +9,54 @@
     <!-- Country -->
     <div class="form-control w-full">
       <select class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500"
-              [(ngModel)]="selectedCountryId" (change)="onCountryChange()" [disabled]="isDisabled">
+              [ngModel]="selectedCountryId()" (ngModelChange)="onCountryChange($event)" [disabled]="isDisabled()">
         <option value="" disabled selected>Select Country</option>
-        <option *ngFor="let c of countries" [value]="c.id">{{ c.name }}</option>
+        <option *ngFor="let c of countries()" [value]="c.id">{{ c.name }}</option>
       </select>
     </div>
 
     <!-- Division -->
     <div class="form-control w-full" *ngIf="['division', 'district', 'upazila', 'union', 'village'].includes(selectionLevel)">
       <select class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500"
-              [(ngModel)]="selectedDivisionId" (change)="onDivisionChange()" [disabled]="isDisabled || !selectedCountryId">
+              [ngModel]="selectedDivisionId()" (ngModelChange)="onDivisionChange($event)" [disabled]="isDisabled() || !selectedCountryId()">
         <option value="" disabled selected>Select Division</option>
-        <option *ngFor="let d of divisions" [value]="d.id">{{ d.name }}</option>
+        <option *ngFor="let d of divisions()" [value]="d.id">{{ d.name }}</option>
       </select>
     </div>
 
     <!-- District -->
     <div class="form-control w-full" *ngIf="['district', 'upazila', 'union', 'village'].includes(selectionLevel)">
       <select class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500"
-              [(ngModel)]="selectedDistrictId" (change)="onDistrictChange()" [disabled]="isDisabled || !selectedDivisionId">
+              [ngModel]="selectedDistrictId()" (ngModelChange)="onDistrictChange($event)" [disabled]="isDisabled() || !selectedDivisionId()">
         <option value="" disabled selected>Select District</option>
-        <option *ngFor="let d of districts" [value]="d.id">{{ d.name }}</option>
+        <option *ngFor="let d of districts()" [value]="d.id">{{ d.name }}</option>
       </select>
     </div>
 
     <!-- Upazila -->
     <div class="form-control w-full" *ngIf="['upazila', 'union', 'village'].includes(selectionLevel)">
       <select class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500"
-              [(ngModel)]="selectedUpazilaId" (change)="onUpazilaChange()" [disabled]="isDisabled || !selectedDistrictId">
+              [ngModel]="selectedUpazilaId()" (ngModelChange)="onUpazilaChange($event)" [disabled]="isDisabled() || !selectedDistrictId()">
         <option value="" disabled selected>Select Upazila</option>
-        <option *ngFor="let u of upazilas" [value]="u.id">{{ u.name }}</option>
+        <option *ngFor="let u of upazilas()" [value]="u.id">{{ u.name }}</option>
       </select>
     </div>
 
     <!-- Union -->
     <div class="form-control w-full" *ngIf="['union', 'village'].includes(selectionLevel)">
       <select class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500"
-              [(ngModel)]="selectedUnionId" (change)="onUnionChange()" [disabled]="isDisabled || !selectedUpazilaId">
+              [ngModel]="selectedUnionId()" (ngModelChange)="onUnionChange($event)" [disabled]="isDisabled() || !selectedUpazilaId()">
         <option value="" disabled selected>Select Union</option>
-        <option *ngFor="let u of unions" [value]="u.id">{{ u.name }}</option>
+        <option *ngFor="let u of unions()" [value]="u.id">{{ u.name }}</option>
       </select>
     </div>
 
     <!-- Village -->
     <div class="form-control w-full" *ngIf="['village'].includes(selectionLevel)">
       <select class="select select-bordered w-full bg-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500"
-              [(ngModel)]="selectedVillageId" (change)="onVillageChange()" [disabled]="isDisabled || !selectedUnionId">
+              [ngModel]="selectedVillageId()" (ngModelChange)="onVillageChange($event)" [disabled]="isDisabled() || !selectedUnionId()">
         <option value="" disabled selected>Select Village</option>
-        <option *ngFor="let v of villages" [value]="v.id">{{ v.name }}</option>
+        <option *ngFor="let v of villages()" [value]="v.id">{{ v.name }}</option>
       </select>
     </div>
   </div>

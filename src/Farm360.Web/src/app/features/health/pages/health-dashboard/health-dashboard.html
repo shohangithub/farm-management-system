@@ -17,21 +17,22 @@
   </div>
 </app-page-header>
 
-<app-loading *ngIf="isLoading" message="Loading health data..."></app-loading>
+<app-loading *ngIf="isLoading()" message="Loading health data..."></app-loading>
 
-  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
-    <div class="flex">
-      <div class="flex-shrink-0">
-        <mat-icon class="text-red-500">error</mat-icon>
-      </div>
-      <div class="ml-3">
-        <p class="text-sm text-red-700">{{ error }}</p>
-        <button mat-button color="warn" (click)="loadDashboard()" class="mt-2">Try Again</button>
-      </div>
+<div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+  <div class="flex">
+    <div class="flex-shrink-0">
+      <mat-icon class="text-red-500">error</mat-icon>
+    </div>
+    <div class="ml-3">
+      <p class="text-sm text-red-700">{{ error() }}</p>
+      <button mat-button color="warn" (click)="loadDashboard()" class="mt-2">Try Again</button>
     </div>
   </div>
+</div>
 
-  <div *ngIf="!isLoading && !error && dashboardData" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+<ng-container *ngIf="!isLoading() && !error() && dashboardData() as dashboardData">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     <!-- Vaccinations Due -->
     <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200 dark:border-gray-800/50 dark:hover:border-blue-500/30 cursor-pointer flex flex-col transform hover:-translate-y-1" routerLink="../vaccinations">
       <mat-icon class="absolute -right-6 -bottom-6 !text-[120px] !w-[120px] !h-[120px] text-blue-500/5 dark:text-blue-400/5 rotate-[-15deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">event_available</mat-icon>
@@ -155,7 +156,7 @@
   </div>
   
   <!-- Quick Navigation / Secondary Actions -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6" *ngIf="!isLoading && !error">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 dark:border-gray-800/50 dark:hover:border-blue-500/30 cursor-pointer flex items-center justify-between p-6 overflow-hidden transform hover:-translate-y-1" routerLink="../vaccination-protocols">
       <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-blue-50 to-transparent dark:from-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
       <div class="flex items-center relative z-10">
@@ -220,3 +221,4 @@
       </div>
     </div>
   </div>
+</ng-container>
