@@ -26,78 +26,127 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
     AnimalPickerComponent
   ],
   template: `
-    <h2 mat-dialog-title>Log Medical Treatment</h2>
-    <mat-dialog-content class="!pt-4">
-      <form [formGroup]="form" class="flex flex-col gap-4">
-        
-        <div class="mb-2">
-          <mat-label class="text-sm font-medium text-gray-700">Select Animal</mat-label>
-          <app-animal-picker formControlName="animalId"></app-animal-picker>
-        </div>
+    <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+          </div>
+          Log Medical Treatment
+        </h2>
+      </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Diagnosis</mat-label>
-          <input matInput formControlName="diagnosis" placeholder="e.g. Mastitis">
-        </mat-form-field>
-
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Medication Name</mat-label>
-            <input matInput formControlName="medicationName">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Dosage</mat-label>
-            <input matInput formControlName="dosageAmount" type="number">
-            <span matTextSuffix class="ml-2 mr-2">{{ form.get('dosageUnit')?.value || 'unit' }}</span>
-          </mat-form-field>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Milk Withdrawal (Days)</mat-label>
-            <input matInput formControlName="milkWithdrawalDays" type="number">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Meat Withdrawal (Days)</mat-label>
-            <input matInput formControlName="meatWithdrawalDays" type="number">
-          </mat-form-field>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Start Date</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="startDate">
-            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
+      <!-- Content -->
+      <div class="p-6 overflow-y-auto max-h-[70vh]">
+        <form [formGroup]="form" class="flex flex-col gap-5">
           
-          <mat-form-field appearance="outline">
-            <mat-label>Cost (BDT)</mat-label>
-            <input matInput formControlName="costBdt" type="number">
-          </mat-form-field>
-        </div>
+          <!-- Animal Selection -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Select Animal</label>
+            <app-animal-picker formControlName="animalId"></app-animal-picker>
+          </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Veterinarian Name (Optional)</mat-label>
-          <input matInput formControlName="veterinarianName">
-        </mat-form-field>
+          <!-- Diagnosis -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Diagnosis</label>
+            <input type="text" formControlName="diagnosis" placeholder="e.g. Mastitis"
+              class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white placeholder-gray-400">
+          </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Notes</mat-label>
-          <textarea matInput formControlName="notes" rows="2"></textarea>
-        </mat-form-field>
-        
-        <div *ngIf="error" class="text-red-500 text-sm mt-2">{{ error }}</div>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end" class="!pb-4 !pr-4">
-      <button mat-button mat-dialog-close [disabled]="isSubmitting">Cancel</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid || isSubmitting" (click)="onSubmit()">
-        {{ isSubmitting ? 'Saving...' : 'Save Treatment' }}
-      </button>
-    </mat-dialog-actions>
+          <!-- Medication & Dosage -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Medication Name</label>
+              <input type="text" formControlName="medicationName"
+                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white">
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Dosage Amount</label>
+              <div class="relative">
+                <input type="number" formControlName="dosageAmount"
+                  class="w-full pl-4 pr-16 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <span class="text-sm font-medium text-gray-500">{{ form.get('dosageUnit')?.value || 'unit' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Withdrawals -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Milk Withdrawal (Days)</label>
+              <input type="number" formControlName="milkWithdrawalDays"
+                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white">
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Meat Withdrawal (Days)</label>
+              <input type="number" formControlName="meatWithdrawalDays"
+                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white">
+            </div>
+          </div>
+          
+          <!-- Date & Cost -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Start Date</label>
+              <input type="date" formControlName="startDate"
+                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Cost (BDT)</label>
+              <input type="number" formControlName="costBdt"
+                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white">
+            </div>
+          </div>
+
+          <!-- Veterinarian Name -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Veterinarian Name (Optional)</label>
+            <input type="text" formControlName="veterinarianName"
+              class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white">
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
+            <textarea formControlName="notes" rows="3"
+              class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors text-gray-900 dark:text-white resize-none"></textarea>
+          </div>
+          
+          <div *ngIf="error" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <p class="text-sm text-red-600 dark:text-red-400 font-medium flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              {{ error }}
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex justify-end gap-3">
+        <button mat-dialog-close [disabled]="isSubmitting"
+          class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm focus:ring-2 focus:ring-gray-200 disabled:opacity-50">
+          Cancel
+        </button>
+        <button (click)="onSubmit()" [disabled]="form.invalid || isSubmitting"
+          class="px-5 py-2.5 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 border border-transparent rounded-xl transition-colors shadow-sm focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          <svg *ngIf="isSubmitting" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isSubmitting ? 'Saving...' : 'Save Treatment' }}
+        </button>
+      </div>
+    </div>
   `
 })
 export class LogTreatmentDialog {

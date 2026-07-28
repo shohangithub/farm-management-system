@@ -3,10 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../../services/health.service';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 
@@ -18,53 +15,74 @@ import { AnimalPickerComponent } from '../../../../../shared/components/animal-p
     ReactiveFormsModule, 
     MatDialogModule, 
     MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
+    MatIconModule,
     AnimalPickerComponent
   ],
   template: `
-    <h2 mat-dialog-title>Schedule Vaccination</h2>
-    <mat-dialog-content class="!pt-4">
-      <form [formGroup]="form" class="flex flex-col gap-4">
-        
-        <div class="mb-2">
-          <mat-label class="text-sm font-medium text-gray-700">Select Animal</mat-label>
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center m-0">
+          <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3 border border-blue-200 dark:border-blue-800">
+            <mat-icon class="text-blue-600 dark:text-blue-400">vaccines</mat-icon>
+          </div>
+          Schedule Vaccination
+        </h2>
+        <button mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+        <div class="flex">
+          <mat-icon class="text-red-500 mr-2">error</mat-icon>
+          <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+        </div>
+      </div>
+
+      <form [formGroup]="form" class="space-y-5">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Select Animal <span class="text-red-500">*</span></label>
           <app-animal-picker formControlName="animalId"></app-animal-picker>
         </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Vaccine Name</mat-label>
-          <input matInput formControlName="vaccineName" placeholder="e.g. FMD Vaccine">
-        </mat-form-field>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Vaccine Name <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="vaccineName" placeholder="e.g. FMD Vaccine"
+                 class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
+        </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Batch Number</mat-label>
-          <input matInput formControlName="batchNumber">
-        </mat-form-field>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Batch Number <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="batchNumber"
+                   class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
+          </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Scheduled Date</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="scheduledDate">
-          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Scheduled Date <span class="text-red-500">*</span></label>
+            <input type="date" formControlName="scheduledDate"
+                   class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
+          </div>
+        </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Notes (Optional)</mat-label>
-          <textarea matInput formControlName="notes" rows="2"></textarea>
-        </mat-form-field>
-        
-        <div *ngIf="error" class="text-red-500 text-sm mt-2">{{ error }}</div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes (Optional)</label>
+          <textarea formControlName="notes" rows="2" placeholder="Any additional information..."
+                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <button type="button" mat-dialog-close [disabled]="isSubmitting" class="px-5 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-all shadow-sm">
+            Cancel
+          </button>
+          <button type="button" [disabled]="form.invalid || isSubmitting" (click)="onSubmit()"
+                  class="px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm shadow-blue-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <mat-icon *ngIf="isSubmitting" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
+            <span>{{ isSubmitting ? 'Scheduling...' : 'Schedule Vaccine' }}</span>
+          </button>
+        </div>
       </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end" class="!pb-4 !pr-4">
-      <button mat-button mat-dialog-close [disabled]="isSubmitting">Cancel</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid || isSubmitting" (click)="onSubmit()">
-        {{ isSubmitting ? 'Scheduling...' : 'Schedule Vaccine' }}
-      </button>
-    </mat-dialog-actions>
+    </div>
   `
 })
 export class ScheduleVaccinationDialog {

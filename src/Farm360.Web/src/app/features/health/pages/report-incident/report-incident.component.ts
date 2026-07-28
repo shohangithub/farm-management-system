@@ -2,13 +2,15 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../services/health.service';
 import { IncidentSeverity } from '../../models/health.models';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-report-incident',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, PageHeaderComponent],
   templateUrl: './report-incident.component.html',
   styleUrls: ['./report-incident.component.scss']
 })

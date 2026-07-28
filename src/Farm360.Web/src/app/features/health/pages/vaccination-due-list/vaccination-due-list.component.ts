@@ -2,13 +2,17 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../services/health.service';
 import { VaccinationEventDto, VaccinationStatus } from '../../models/health.models';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-vaccination-due-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
   templateUrl: './vaccination-due-list.component.html',
   styleUrls: ['./vaccination-due-list.component.scss']
 })
@@ -18,6 +22,7 @@ export class VaccinationDueListComponent implements OnInit {
   upcomingVaccinations: VaccinationEventDto[] = [];
   loading = false;
   error = '';
+  readonly VaccinationStatus = VaccinationStatus;
   
   // Dummy farm ID for MVP, would normally come from ContextService
   selectedFarmId = '11111111-1111-1111-1111-111111111111';

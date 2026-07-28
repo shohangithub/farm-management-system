@@ -104,6 +104,21 @@ public sealed class VaccinationProtocol : AuditableEntity, IAggregateRoot
         return step;
     }
 
+    public void Update(string title, AnimalSpecies targetSpecies, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Protocol title is required.", nameof(title));
+
+        Title = title.Trim();
+        TargetSpecies = targetSpecies;
+        Description = description?.Trim();
+    }
+
+    public void ClearSteps()
+    {
+        _steps.Clear();
+    }
+
     public void Deactivate() => IsActive = false;
     public void Activate() => IsActive = true;
 }

@@ -1,108 +1,123 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { HealthService } from '../../services/health.service';
 import { DiseaseIncidentDetail, IncidentSeverity, IncidentStatus } from '../../models/health.models';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-incident-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule, PageHeaderComponent, LoadingComponent],
   template: `
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto" *ngIf="incident">
-      
-      <!-- Page header -->
-      <div class="mb-8">
-        <div class="flex items-center space-x-2">
-          <a routerLink="/health/incidents" class="text-slate-500 hover:text-indigo-500">
-            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
-              <path d="M10.7 18.7l-7.4-7.4 7.4-7.4 1.4 1.4-5 5H20v2H7.1l5 5z" />
-            </svg>
-          </a>
-          <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-slate-100 font-bold">Incident Details ✨</h1>
-        </div>
-      </div>
+<app-page-header 
+  title="Incident Details" 
+  description="View comprehensive information about the disease incident."
+  icon="coronavirus" 
+  iconColor="text-rose-600">
+  <div actions class="flex gap-2">
+    <button routerLink="/health/incidents" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Back to List
+    </button>
+  </div>
+</app-page-header>
 
-      <!-- Main content -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="animate-fade-in relative">
+  <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
+
+  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+    <div class="flex">
+      <mat-icon class="text-red-500 mr-2">error</mat-icon>
+      <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="incident && !isLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Left column -->
+    <div class="md:col-span-2 space-y-6">
+      <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+          <mat-icon class="mr-2 text-gray-400">info</mat-icon> Overview
+        </h2>
         
-        <!-- Left column -->
-        <div class="md:col-span-2 space-y-6">
-          <div class="bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700 p-5">
-            <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-4">Overview</h2>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div class="text-sm text-slate-500 dark:text-slate-400">Disease Name</div>
-                <div class="font-medium text-slate-800 dark:text-slate-100">{{ incident.diseaseName }}</div>
-              </div>
-              <div>
-                <div class="text-sm text-slate-500 dark:text-slate-400">Date Reported</div>
-                <div class="font-medium text-slate-800 dark:text-slate-100">{{ incident.incidentDate | date:'longDate' }}</div>
-              </div>
-              <div>
-                <div class="text-sm text-slate-500 dark:text-slate-400">Severity</div>
-                <div class="mt-1 inline-flex font-medium rounded-full text-center px-2.5 py-0.5" [ngClass]="getSeverityClass(incident.severity)">
-                  {{ getSeverityName(incident.severity) }}
-                </div>
-              </div>
-              <div>
-                <div class="text-sm text-slate-500 dark:text-slate-400">Status</div>
-                <div class="mt-1 inline-flex font-medium rounded-full text-center px-2.5 py-0.5" [ngClass]="getStatusClass(incident.status)">
-                  {{ getStatusName(incident.status) }}
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-6">
-              <div class="text-sm text-slate-500 dark:text-slate-400">Symptoms</div>
-              <p class="mt-1 text-slate-800 dark:text-slate-100">{{ incident.symptoms }}</p>
-            </div>
-            
-            <div class="mt-4" *ngIf="incident.notes">
-              <div class="text-sm text-slate-500 dark:text-slate-400">Notes</div>
-              <p class="mt-1 text-slate-800 dark:text-slate-100">{{ incident.notes }}</p>
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Disease Name</div>
+            <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident.diseaseName }}</div>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Date Reported</div>
+            <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident.incidentDate | date:'longDate' }}</div>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Severity</div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" [ngClass]="getSeverityClass(incident.severity)">
+              {{ getSeverityName(incident.severity) }}
+            </span>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Status</div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" [ngClass]="getStatusClass(incident.status)">
+              {{ getStatusName(incident.status) }}
+            </span>
           </div>
         </div>
 
-        <!-- Right column -->
-        <div class="space-y-6">
-          <div class="bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700 p-5">
-            <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-4">Affected Animals ({{ incident.affectedAnimals.length }})</h2>
-            
-            <ul class="space-y-3">
-              <li *ngFor="let animal of incident.affectedAnimals" class="flex justify-between items-center">
-                <div class="flex items-center">
-                  <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mr-3">
-                    <svg class="w-4 h-4 fill-current text-slate-400 dark:text-slate-500" viewBox="0 0 16 16">
-                      <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium text-slate-800 dark:text-slate-100">Tag: {{ animal.tagNumber }}</div>
-                    <div class="text-xs text-slate-500">{{ animal.species }} - {{ animal.breedName }}</div>
-                  </div>
-                </div>
-              </li>
-              <li *ngIf="incident.affectedAnimals.length === 0" class="text-sm text-slate-500">
-                No individual animals explicitly tracked for this incident.
-              </li>
-            </ul>
+        <div class="mt-6">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Symptoms</h3>
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 text-gray-700 dark:text-gray-300">
+            {{ incident.symptoms }}
+          </div>
+        </div>
+        
+        <div class="mt-6" *ngIf="incident.notes">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes</h3>
+          <div class="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-xl border border-yellow-100 dark:border-yellow-700/30 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            {{ incident.notes }}
           </div>
         </div>
       </div>
     </div>
-    
-    <div *ngIf="isLoading" class="flex justify-center items-center h-screen">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-    </div>
-    
-    <div *ngIf="error" class="px-4 py-8 max-w-3xl mx-auto">
-      <div class="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 p-4 rounded-sm border border-rose-200 dark:border-rose-800">
-        {{ error }}
+
+    <!-- Right column -->
+    <div class="space-y-6">
+      <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+            <mat-icon class="mr-2 text-gray-400">pets</mat-icon> Affected Animals
+          </h2>
+          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">{{ incident.affectedAnimals.length }}</span>
+        </div>
+        
+        <ul class="space-y-3" *ngIf="incident.affectedAnimals.length > 0">
+          <li *ngFor="let animal of incident.affectedAnimals" class="flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 transition-colors">
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mr-3 border border-indigo-200 dark:border-indigo-800">
+                <mat-icon class="text-indigo-600 dark:text-indigo-400">pets</mat-icon>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-gray-900 dark:text-white">{{ animal.tagNumber }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">{{ animal.species }} - {{ animal.breedName }}</div>
+              </div>
+            </div>
+            <button mat-icon-button color="primary" [routerLink]="['/livestock/animal', animal.animalId]" matTooltip="View Animal">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </li>
+        </ul>
+        
+        <div *ngIf="incident.affectedAnimals.length === 0" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+          <mat-icon class="text-gray-400 mb-2">info_outline</mat-icon>
+          <p class="text-sm text-gray-500">No individual animals explicitly tracked for this incident.</p>
+        </div>
       </div>
     </div>
+  </div>
+</div>
   `
 })
 export class IncidentDetailComponent implements OnInit {

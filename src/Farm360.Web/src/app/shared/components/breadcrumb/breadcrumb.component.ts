@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { RouterModule } from '@angular/router';
   imports: [CommonModule, MatIconModule, RouterModule],
   templateUrl: './breadcrumb.component.html'
 })
-export class BreadcrumbComponent {
+export class BreadcrumbComponent implements OnChanges {
   @Input() customLastNode?: string;
   breadcrumbs: Array<{ label: string, url: string }> = [];
 
@@ -23,6 +23,12 @@ export class BreadcrumbComponent {
     });
     // Build immediately on load
     this.breadcrumbs = this.buildBreadcrumb(this.activatedRoute.root);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['customLastNode'] && !changes['customLastNode'].firstChange) {
+      this.breadcrumbs = this.buildBreadcrumb(this.activatedRoute.root);
+    }
   }
 
   private buildBreadcrumb(route: ActivatedRoute, url: string = '', breadcrumbs: Array<{ label: string, url: string }> = []): Array<{ label: string, url: string }> {

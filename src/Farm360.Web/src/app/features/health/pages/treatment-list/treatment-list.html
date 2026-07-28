@@ -1,26 +1,19 @@
-<div class="px-6 py-8 mx-auto max-w-7xl animate-fade-in">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center">
-        <mat-icon class="mr-3 text-purple-600 scale-150 transform">healing</mat-icon>
-        Medical Treatments
-      </h1>
-      <p class="mt-2 text-sm text-gray-500 font-medium">Log and track medication, dosages, and withdrawal periods.</p>
-    </div>
-    
-    <div>
-      <button mat-flat-button color="primary" class="!rounded-full !px-6 !py-1 shadow-md hover:shadow-lg transition-shadow" (click)="openLogTreatmentDialog()">
-        <mat-icon>add</mat-icon>
-        Log Treatment
-      </button>
-    </div>
+<app-page-header 
+  title="Medical Treatments" 
+  description="Log and track medication, dosages, and withdrawal periods."
+  icon="healing" 
+  iconColor="text-purple-600">
+  <div actions>
+    <button (click)="openLogTreatmentDialog()"
+      class="px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Log Treatment
+    </button>
   </div>
+</app-page-header>
 
-  <mat-card class="!rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="relative min-h-[300px]">
-      <div *ngIf="isLoading" class="absolute inset-0 z-10 flex justify-center items-center bg-white/70 backdrop-blur-sm">
-        <mat-spinner diameter="48"></mat-spinner>
-      </div>
+  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+    <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
+    <div class="relative overflow-x-auto">
 
       <table mat-table [dataSource]="dataSource" class="w-full">
         
@@ -95,20 +88,24 @@
       </table>
 
       <!-- Empty State -->
-      <div *ngIf="!isLoading && dataSource.length === 0" class="py-16 flex flex-col items-center justify-center text-gray-500">
-        <mat-icon class="text-6xl mb-4 text-gray-300 scale-[2]">medical_services</mat-icon>
-        <p class="text-lg font-medium text-gray-600">No treatments found</p>
-        <p class="text-sm">Log a new treatment to start tracking animal health.</p>
-        <button mat-flat-button color="primary" class="mt-4 !rounded-full" (click)="openLogTreatmentDialog()">Log Treatment</button>
-      </div>
+      <app-empty-state 
+        *ngIf="!isLoading && dataSource.length === 0"
+        icon="medical_services"
+        title="No treatments found"
+        message="Log a new treatment to start tracking animal health."
+        actionLabel="Log Treatment"
+        (action)="openLogTreatmentDialog()">
+      </app-empty-state>
     </div>
 
-    <mat-paginator [length]="totalItems"
-                   [pageSize]="pageSize"
-                   [pageSizeOptions]="[5, 10, 25, 100]"
-                   [pageIndex]="pageIndex"
-                   (page)="onPageChange($event)"
-                   aria-label="Select page">
-    </mat-paginator>
-  </mat-card>
-</div>
+    <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+      <mat-paginator [length]="totalItems"
+                     [pageSize]="pageSize"
+                     [pageSizeOptions]="[5, 10, 25, 100]"
+                     [pageIndex]="pageIndex"
+                     (page)="onPageChange($event)"
+                     aria-label="Select page"
+                     class="!bg-transparent">
+      </mat-paginator>
+    </div>
+  </div>

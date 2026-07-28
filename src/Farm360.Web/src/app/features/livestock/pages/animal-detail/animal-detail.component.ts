@@ -25,6 +25,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { FarmService } from '../../../farms/services/farm.service';
 import { BatchService } from '../../services/batch.service';
 import { BatchDto } from '../../models/batch.models';
@@ -46,7 +48,7 @@ import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/reco
   imports: [
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, DatePipe, DecimalPipe,
-    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule
+    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule
   ],
   templateUrl: './animal-detail.component.html'
 })

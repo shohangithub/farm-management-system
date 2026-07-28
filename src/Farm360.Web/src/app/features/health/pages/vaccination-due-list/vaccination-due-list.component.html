@@ -1,60 +1,81 @@
-<div class="page-container">
-  <div class="command-bar">
-    <div class="left-zone">
-      <button class="btn btn-primary">+ Record Vaccination</button>
-      <button class="btn btn-secondary">+ Create Protocol</button>
-    </div>
-    <div class="center-zone">
-      <!-- Filters -->
-    </div>
-    <div class="right-zone">
-      <button class="btn-ghost">Export ↓</button>
+<app-page-header 
+  title="Due Vaccinations" 
+  description="Manage upcoming and overdue vaccinations for your herd."
+  icon="vaccines" 
+  iconColor="text-blue-600">
+  <div actions class="flex gap-2">
+    <button class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Record Vaccination
+    </button>
+    <button class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" routerLink="../vaccination-protocols">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">library_books</mat-icon> Protocols
+    </button>
+  </div>
+</app-page-header>
+
+<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+  <app-loading *ngIf="loading" [overlay]="true"></app-loading>
+
+  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 m-6 rounded-md shadow-sm">
+    <div class="flex">
+      <mat-icon class="text-red-500 mr-2">error</mat-icon>
+      <p class="text-sm text-red-700 font-medium">{{ error }}</p>
     </div>
   </div>
 
-  <div class="content-area">
-    <h1 class="page-title">Due Vaccinations</h1>
+  <div class="relative overflow-x-auto" *ngIf="!error">
+    <table class="w-full text-sm text-left" *ngIf="upcomingVaccinations.length > 0">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
+        <tr>
+          <th scope="col" class="px-6 py-4">Vaccine</th>
+          <th scope="col" class="px-6 py-4">Animal ID</th>
+          <th scope="col" class="px-6 py-4">Batch No</th>
+          <th scope="col" class="px-6 py-4">Due Date</th>
+          <th scope="col" class="px-6 py-4">Status</th>
+          <th scope="col" class="px-6 py-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ev of upcomingVaccinations" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" [ngClass]="getUrgencyClass(ev.scheduledDate)">
+          <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+            {{ ev.vaccineName }}
+          </td>
+          <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+            {{ ev.animalId | slice:0:8 }}...
+          </td>
+          <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+            {{ ev.batchNumber || '-' }}
+          </td>
+          <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+            {{ ev.scheduledDate | date:'mediumDate' }}
+          </td>
+          <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+              [ngClass]="{
+                'bg-gray-100 text-gray-800': $any(ev).status === 'Scheduled',
+                'bg-green-100 text-green-800': $any(ev).status === 'Completed' || $any(ev).status === 'Administered',
+                'bg-red-100 text-red-800': $any(ev).status === 'Overdue' || $any(ev).status === 'Missed',
+                'bg-blue-100 text-blue-800': $any(ev).status === 'Cancelled'
+              }">
+              {{ ev.status }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right space-x-2">
+            <button class="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors shadow-sm" (click)="administer(ev.id)">
+              Administer
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
     
-    <div *ngIf="loading" class="skeleton-table">
-      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]"></div>
-    </div>
-    
-    <div *ngIf="error" class="error-banner">
-      ⚠ {{ error }}
-    </div>
-
-    <div *ngIf="!loading && upcomingVaccinations.length === 0" class="empty-state">
-      <h3>All vaccinations are up to date!</h3>
-      <p>Great work keeping your herd healthy.</p>
-    </div>
-
-    <div class="table-container" *ngIf="!loading && upcomingVaccinations.length > 0">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Vaccine</th>
-            <th>Animal ID</th>
-            <th>Batch No</th>
-            <th>Due Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let ev of upcomingVaccinations" [ngClass]="getUrgencyClass(ev.scheduledDate)">
-            <td><strong>{{ ev.vaccineName }}</strong></td>
-            <td class="mono-text">{{ ev.animalId.substring(0, 8) }}...</td>
-            <td>{{ ev.batchNumber || '-' }}</td>
-            <td>{{ ev.scheduledDate | date:'mediumDate' }}</td>
-            <td>
-              <span class="status-badge status-{{ ev.status | lowercase }}">{{ ev.status }}</span>
-            </td>
-            <td>
-              <button class="btn btn-sm btn-primary" (click)="administer(ev.id)">Administer</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <app-empty-state 
+      *ngIf="!loading && upcomingVaccinations.length === 0"
+      icon="health_and_safety"
+      title="All vaccinations are up to date!"
+      description="Great work keeping your herd healthy. There are no upcoming vaccinations scheduled."
+      actionLabel="Create Protocol"
+      (action)="undefined"> <!-- Action handled via a function instead if needed -->
+    </app-empty-state>
   </div>
 </div>

@@ -35,19 +35,23 @@ export class HealthService {
       .set('pageSize', pageSize);
     if (searchTerm) params = params.set('searchTerm', searchTerm);
     
-    return this.http.get<PagedResult<VaccinationProtocolDto>>(`${this.apiUrl}/vaccination-protocols`, { params });
+    return this.http.get<PagedResult<VaccinationProtocolDto>>(`${this.apiUrl}/protocols`, { params });
   }
 
   getVaccinationProtocol(id: string): Observable<VaccinationProtocolDto> {
-    return this.http.get<VaccinationProtocolDto>(`${this.apiUrl}/vaccination-protocols/${id}`);
+    return this.http.get<VaccinationProtocolDto>(`${this.apiUrl}/protocols/${id}`);
   }
 
   createVaccinationProtocol(data: any): Observable<{ id: string }> {
-    return this.http.post<{ id: string }>(`${this.apiUrl}/vaccination-protocols`, data);
+    return this.http.post<{ id: string }>(`${this.apiUrl}/protocols`, data);
+  }
+
+  updateVaccinationProtocol(id: string, data: any): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/protocols/${id}`, data);
   }
 
   assignProtocolToAnimals(data: any): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/vaccination-protocols/assign`, data);
+    return this.http.post<void>(`${this.apiUrl}/protocols/assign`, data);
   }
 
   // --- Vaccinations ---
@@ -119,11 +123,11 @@ export class HealthService {
       .set('pageNumber', pageNumber)
       .set('pageSize', pageSize);
 
-    return this.http.get<PagedResult<MortalityRecordDto>>(`${this.apiUrl}/mortality-records`, { params });
+    return this.http.get<PagedResult<MortalityRecordDto>>(`${this.apiUrl}/mortality`, { params });
   }
 
   recordMortality(data: any): Observable<{ id: string }> {
-    return this.http.post<{ id: string }>(`${this.apiUrl}/mortality-records`, data);
+    return this.http.post<{ id: string }>(`${this.apiUrl}/mortality`, data);
   }
 
   // --- Vet Visits ---

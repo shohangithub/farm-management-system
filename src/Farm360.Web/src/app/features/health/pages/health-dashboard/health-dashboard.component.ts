@@ -13,11 +13,13 @@ import { LogTreatmentDialog } from '../../components/dialogs/log-treatment-dialo
 import { RecordMortalityDialog } from '../../components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { Subject, takeUntil } from 'rxjs';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-health-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule],
+  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent],
   templateUrl: './health-dashboard.html',
   styleUrls: ['./health-dashboard.scss']
 })

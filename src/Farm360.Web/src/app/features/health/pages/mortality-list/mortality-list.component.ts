@@ -13,6 +13,9 @@ import { HealthService } from '../../services/health.service';
 import { MortalityRecordDto } from '../../models/health.models';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RecordMortalityDialog } from '../../components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-mortality-list',
@@ -20,15 +23,14 @@ import { RecordMortalityDialog } from '../../components/dialogs/record-mortality
   imports: [
     CommonModule, 
     RouterModule, 
-    MatCardModule, 
     MatButtonModule, 
     MatIconModule, 
-    MatTableModule, 
     MatPaginatorModule, 
-    MatChipsModule, 
-    MatProgressSpinnerModule,
     MatTooltipModule,
-    MatDialogModule
+    MatDialogModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    LoadingComponent
   ],
   templateUrl: './mortality-list.html',
   styleUrls: ['./mortality-list.scss']

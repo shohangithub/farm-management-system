@@ -78,6 +78,19 @@ public static class HealthEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
         .WithSummary("Get details of a vaccination protocol");
 
+        group.MapPut("/protocols/{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromBody] UpdateVaccinationProtocolCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.Id) return Results.BadRequest("Route id must match command id.");
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Update an existing vaccination protocol");
+
         group.MapPost("/protocols/assign", async (
             [FromBody] AssignProtocolToAnimalsCommand command,
             [FromServices] ISender sender,

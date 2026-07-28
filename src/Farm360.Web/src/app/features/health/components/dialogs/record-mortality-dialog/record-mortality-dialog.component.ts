@@ -3,11 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../../services/health.service';
 import { CauseOfDeath } from '../../../models/health.models';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
@@ -21,63 +17,83 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
     ReactiveFormsModule, 
     MatDialogModule, 
     MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatSelectModule,
+    MatIconModule,
     AnimalPickerComponent
   ],
   template: `
-    <h2 mat-dialog-title>Record Mortality</h2>
-    <mat-dialog-content class="!pt-4">
-      <form [formGroup]="form" class="flex flex-col gap-4">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center m-0">
+          <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mr-3 border border-red-200 dark:border-red-800">
+            <mat-icon class="text-red-600 dark:text-red-400">warning</mat-icon>
+          </div>
+          Record Mortality
+        </h2>
+        <button mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+        <div class="flex">
+          <mat-icon class="text-red-500 mr-2">error</mat-icon>
+          <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+        </div>
+      </div>
+
+      <form [formGroup]="form" class="space-y-5">
         
-        <div class="mb-2">
-          <mat-label class="text-sm font-medium text-gray-700">Select Animal</mat-label>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Select Animal <span class="text-red-500">*</span></label>
           <app-animal-picker formControlName="animalId"></app-animal-picker>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Date of Death</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="deathDate">
-            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Date of Death <span class="text-red-500">*</span></label>
+            <input type="date" formControlName="deathDate"
+                   class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:text-white transition-all duration-200">
+          </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Cause of Death</mat-label>
-            <mat-select formControlName="causeOfDeath">
-              <mat-option *ngFor="let cause of causes" [value]="cause">{{ cause }}</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cause of Death <span class="text-red-500">*</span></label>
+            <select formControlName="causeOfDeath"
+                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:text-white transition-all duration-200">
+              <option *ngFor="let cause of causes" [value]="cause">{{ cause }}</option>
+            </select>
+          </div>
         </div>
 
-        <mat-form-field appearance="outline" *ngIf="form.get('causeOfDeath')?.value === 'Disease'">
-          <mat-label>Disease Name</mat-label>
-          <input matInput formControlName="diseaseName">
-        </mat-form-field>
+        <div *ngIf="form.get('causeOfDeath')?.value === 'Disease'">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Disease Name</label>
+          <input type="text" formControlName="diseaseName" placeholder="e.g. Unknown Disease"
+                 class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:text-white transition-all duration-200">
+        </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Estimated Economic Loss (BDT)</mat-label>
-          <input matInput formControlName="estimatedEconomicLossBdt" type="number">
-        </mat-form-field>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Estimated Economic Loss (BDT)</label>
+          <input type="number" formControlName="estimatedEconomicLossBdt" min="0" placeholder="0"
+                 class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:text-white transition-all duration-200">
+        </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Post-Mortem Notes</mat-label>
-          <textarea matInput formControlName="postMortemNotes" rows="3"></textarea>
-        </mat-form-field>
-        
-        <div *ngIf="error" class="text-red-500 text-sm mt-2">{{ error }}</div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Post-Mortem Notes</label>
+          <textarea formControlName="postMortemNotes" rows="3" placeholder="Any findings or observations..."
+                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:text-white transition-all duration-200"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <button type="button" mat-dialog-close [disabled]="isSubmitting" class="px-5 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-all shadow-sm">
+            Cancel
+          </button>
+          <button type="button" [disabled]="form.invalid || isSubmitting" (click)="onSubmit()"
+                  class="px-5 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-sm shadow-red-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <mat-icon *ngIf="isSubmitting" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
+            <span>{{ isSubmitting ? 'Recording...' : 'Record Death' }}</span>
+          </button>
+        </div>
       </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end" class="!pb-4 !pr-4">
-      <button mat-button mat-dialog-close [disabled]="isSubmitting">Cancel</button>
-      <button mat-flat-button color="warn" [disabled]="form.invalid || isSubmitting" (click)="onSubmit()">
-        {{ isSubmitting ? 'Recording...' : 'Record Death' }}
-      </button>
-    </mat-dialog-actions>
+    </div>
   `
 })
 export class RecordMortalityDialog {

@@ -1,17 +1,16 @@
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HealthService } from '../../services/health.service';
 import { VetVisitDto } from '../../models/health.models';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-vet-visit-list',
@@ -19,15 +18,14 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
   imports: [
     CommonModule, 
     RouterModule, 
-    MatCardModule, 
     MatButtonModule, 
     MatIconModule, 
-    MatTableModule, 
     MatPaginatorModule, 
-    MatChipsModule, 
-    MatProgressSpinnerModule,
     MatTooltipModule,
-    MatDialogModule
+    MatDialogModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    LoadingComponent
   ],
   templateUrl: './vet-visit-list.html',
   styleUrls: ['./vet-visit-list.scss']

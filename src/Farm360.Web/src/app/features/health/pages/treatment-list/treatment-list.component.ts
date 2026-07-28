@@ -13,6 +13,9 @@ import { MedicalTreatmentDto, TreatmentStatus } from '../../models/health.models
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { LogTreatmentDialog } from '../../components/dialogs/log-treatment-dialog/log-treatment-dialog.component';
 import { MatMenuModule } from '@angular/material/menu';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-treatment-list',
@@ -28,7 +31,10 @@ import { MatMenuModule } from '@angular/material/menu';
     MatChipsModule, 
     MatProgressSpinnerModule,
     MatDialogModule,
-    MatMenuModule
+    MatMenuModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    LoadingComponent
   ],
   templateUrl: './treatment-list.html',
   styleUrls: ['./treatment-list.scss']

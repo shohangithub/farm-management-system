@@ -1,39 +1,50 @@
-<div class="page-container centered-form-layout">
-  <div class="content-area">
-    <div class="header-section">
-      <a routerLink="/health/vaccinations" class="back-link">← Back</a>
-      <h1 class="page-title">Report Disease Incident</h1>
-      <p class="subtext">Log a new disease outbreak or incident affecting multiple animals.</p>
-    </div>
-    
-    <div *ngIf="error" class="error-banner">
-      ⚠ {{ error }}
-    </div>
+<app-page-header 
+  title="Report Disease Incident" 
+  description="Log a new disease outbreak or incident affecting multiple animals."
+  icon="report_problem" 
+  iconColor="text-rose-600">
+  <div actions class="flex gap-2">
+    <button routerLink="/health/vaccinations" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Cancel
+    </button>
+  </div>
+</app-page-header>
 
-    <form [formGroup]="incidentForm" (ngSubmit)="onSubmit()" class="data-form">
+<div class="px-6 py-8 mx-auto max-w-3xl animate-fade-in">
+  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+    <div class="flex">
+      <mat-icon class="text-red-500 mr-2">error</mat-icon>
+      <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+    </div>
+  </div>
+
+  <form [formGroup]="incidentForm" (ngSubmit)="onSubmit()">
+    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6 mb-8">
+      <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center mb-4">
+        <mat-icon class="mr-2 text-blue-600 dark:text-blue-500">info</mat-icon> Incident Details
+      </h2>
       
-      <div class="form-section">
-        <h3>Incident Details</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label for="diseaseName">Disease / Condition *</label>
-            <input id="diseaseName" type="text" formControlName="diseaseName" placeholder="e.g., FMD Outbreak">
-            <div class="error-text" *ngIf="incidentForm.get('diseaseName')?.touched && incidentForm.get('diseaseName')?.errors?.['required']">
-              Disease name is required.
-            </div>
+      <div class="space-y-6">
+        <div>
+          <label for="diseaseName" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Disease / Condition <span class="text-red-500">*</span></label>
+          <input id="diseaseName" type="text" formControlName="diseaseName" placeholder="e.g., FMD Outbreak"
+                 class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
+          <div class="mt-1 text-sm text-red-600 font-medium flex items-center" *ngIf="incidentForm.get('diseaseName')?.touched && incidentForm.get('diseaseName')?.errors?.['required']">
+            <mat-icon class="scale-75 mr-1">error_outline</mat-icon> Disease name is required.
           </div>
         </div>
 
-        <div class="form-row 2-col">
-          <div class="form-group">
-            <label for="incidentDate">Incident Date *</label>
-            <input id="incidentDate" type="date" formControlName="incidentDate">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="incidentDate" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Incident Date <span class="text-red-500">*</span></label>
+            <input id="incidentDate" type="date" formControlName="incidentDate"
+                   class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
           </div>
           
-          <div class="form-group">
-            <label for="severity">Severity *</label>
-            <select id="severity" formControlName="severity">
+          <div>
+            <label for="severity" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Severity <span class="text-red-500">*</span></label>
+            <select id="severity" formControlName="severity"
+                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
               <option [ngValue]="1">Mild</option>
               <option [ngValue]="2">Moderate</option>
               <option [ngValue]="3">Severe</option>
@@ -42,40 +53,44 @@
           </div>
         </div>
 
-        <div class="form-row 2-col">
-          <div class="form-group">
-            <label for="affectedAnimalCount">Affected Animal Count *</label>
-            <input id="affectedAnimalCount" type="number" formControlName="affectedAnimalCount" min="1">
-          </div>
+        <div>
+          <label for="affectedAnimalCount" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Affected Animal Count <span class="text-red-500">*</span></label>
+          <input id="affectedAnimalCount" type="number" formControlName="affectedAnimalCount" min="1"
+                 class="w-full md:w-1/2 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200">
         </div>
       </div>
+    </div>
 
-      <div class="form-section">
-        <h3>Clinical Information</h3>
+    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6 mb-8">
+      <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center mb-4">
+        <mat-icon class="mr-2 text-blue-600 dark:text-blue-500">healing</mat-icon> Clinical Information
+      </h2>
+      
+      <div class="space-y-6">
+        <div>
+          <label for="symptoms" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Symptoms <span class="text-red-500">*</span></label>
+          <textarea id="symptoms" formControlName="symptoms" rows="3" placeholder="Describe symptoms observed"
+                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200"></textarea>
+        </div>
         
-        <div class="form-row">
-          <div class="form-group">
-            <label for="symptoms">Symptoms *</label>
-            <textarea id="symptoms" formControlName="symptoms" rows="3" placeholder="Describe symptoms observed"></textarea>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label for="notes">Action Taken / Notes</label>
-            <textarea id="notes" formControlName="notes" rows="3" placeholder="Initial response, isolation details, etc."></textarea>
-          </div>
+        <div>
+          <label for="notes" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Action Taken / Notes</label>
+          <textarea id="notes" formControlName="notes" rows="3" placeholder="Initial response, isolation details, etc."
+                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white transition-all duration-200"></textarea>
         </div>
       </div>
+    </div>
 
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" routerLink="/health/vaccinations">Cancel</button>
-        <button type="submit" class="btn btn-primary" [disabled]="incidentForm.invalid || isSubmitting">
-          <span *ngIf="isSubmitting">Reporting...</span>
-          <span *ngIf="!isSubmitting">Report Incident →</span>
-        </button>
-      </div>
-
-    </form>
-  </div>
+    <div class="flex justify-end gap-3 pt-4">
+      <button type="button" routerLink="/health/vaccinations" class="px-6 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-all shadow-sm">
+        Cancel
+      </button>
+      <button type="submit" [disabled]="incidentForm.invalid || isSubmitting" 
+              class="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm shadow-blue-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+        <mat-icon *ngIf="isSubmitting" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
+        <span>{{ isSubmitting ? 'Reporting...' : 'Report Incident' }}</span>
+        <mat-icon *ngIf="!isSubmitting" class="!text-[18px] !w-[18px] !h-[18px]">arrow_forward</mat-icon>
+      </button>
+    </div>
+  </form>
 </div>

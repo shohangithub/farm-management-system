@@ -1,84 +1,120 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { catchError, switchMap, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
+
 import { HealthService } from '../../services/health.service';
 import { VaccinationProtocolDto } from '../../models/health.models';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AssignProtocolDialog } from '../../components/dialogs/assign-protocol-dialog/assign-protocol-dialog.component';
+import { CreateProtocolDialogComponent } from '../../components/dialogs/create-protocol-dialog/create-protocol-dialog.component';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-vaccination-protocol-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    RouterModule, 
-    MatCardModule, 
-    MatButtonModule, 
-    MatIconModule, 
-    MatTableModule, 
-    MatPaginatorModule, 
-    MatChipsModule, 
-    MatProgressSpinnerModule,
+    CommonModule,
+    RouterModule,
+    MatButtonModule,
+    MatIconModule,
+    MatPaginatorModule,
     MatTooltipModule,
-    MatDialogModule
+    MatDialogModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    LoadingComponent
   ],
   templateUrl: './vaccination-protocol-list.html',
-  styleUrls: ['./vaccination-protocol-list.scss']
+  styleUrls: ['./vaccination-protocol-list.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class VaccinationProtocolListComponent implements OnInit {
+export class VaccinationProtocolListComponent {
   private healthService = inject(HealthService);
   private dialog = inject(MatDialog);
 
   displayedColumns: string[] = ['title', 'targetSpecies', 'steps', 'status', 'actions'];
-  dataSource: VaccinationProtocolDto[] = [];
-  totalItems = 0;
-  pageSize = 10;
-  pageIndex = 0;
-  isLoading = true;
-
+  
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  ngOnInit(): void {
-    this.loadProtocols();
+  // --- Reactive State (Signals) ---
+  pageIndex = signal(0);
+  pageSize = signal(10);
+  refreshTrigger = signal(0);
+  isLoading = signal(true);
+
+  // Derived state to drive the fetch pipeline
+  private paginationParams = computed(() => ({
+    pageIndex: this.pageIndex(),
+    pageSize: this.pageSize(),
+    refresh: this.refreshTrigger()
+  }));
+
+  // Reactive Data Stream handling the HTTP request
+  private protocolsResult = toSignal(
+    toObservable(this.paginationParams).pipe(
+      tap(() => this.isLoading.set(true)),
+      switchMap(({ pageIndex, pageSize }) => 
+        this.healthService.getVaccinationProtocols(pageIndex + 1, pageSize).pipe(
+          catchError((err) => {
+            console.error('Error loading protocols', err);
+            return of({ items: [], totalCount: 0 });
+          })
+        )
+      ),
+      tap(() => this.isLoading.set(false))
+    ),
+    { initialValue: { items: [], totalCount: 0 } }
+  );
+
+  // Exposed Signals for the Template
+  dataSource = computed(() => this.protocolsResult().items);
+  totalItems = computed(() => this.protocolsResult().totalCount);
+
+  // --- Actions ---
+  onPageChange(event: any): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   loadProtocols(): void {
-    this.isLoading = true;
-    const pageNumber = this.pageIndex + 1;
-    this.healthService.getVaccinationProtocols(pageNumber, this.pageSize).subscribe({
-      next: (response) => {
-        this.dataSource = response.items;
-        this.totalItems = response.totalCount;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading protocols', err);
-        this.isLoading = false;
-      }
+    // Triggers reactivity without manual CDR
+    this.refreshTrigger.update(v => v + 1);
+  }
+
+  openCreateDialog(): void {
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, {
+      width: '700px',
+      maxWidth: '95vw'
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.loadProtocols();
     });
   }
 
-  onPageChange(event: any): void {
-    this.pageIndex = event.pageIndex;
-    this.pageSize = event.pageSize;
-    this.loadProtocols();
+  openEditDialog(protocol: VaccinationProtocolDto): void {
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, {
+      width: '700px',
+      maxWidth: '95vw',
+      data: protocol
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.loadProtocols();
+    });
   }
 
   openAssignDialog(protocol: VaccinationProtocolDto): void {
-    const dialogRef = this.dialog.open(AssignProtocolDialog, {
+    this.dialog.open(AssignProtocolDialog, {
       width: '600px',
       data: { protocol }
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      // Could show success toast
     });
   }
 }

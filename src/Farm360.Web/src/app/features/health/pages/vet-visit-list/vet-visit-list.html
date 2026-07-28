@@ -1,104 +1,87 @@
-<div class="px-6 py-8 mx-auto max-w-7xl animate-fade-in">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center">
-        <mat-icon class="mr-3 text-teal-600 scale-150 transform">local_hospital</mat-icon>
-        Veterinary Visits
-      </h1>
-      <p class="mt-2 text-sm text-gray-500 font-medium">Log and manage professional vet visits, costs, and recommendations.</p>
-    </div>
-    
-    <div>
-      <button mat-flat-button color="primary" class="!rounded-full !px-6 !py-1 shadow-md hover:shadow-lg transition-shadow" (click)="openScheduleVisitDialog()">
-        <mat-icon>add</mat-icon>
-        Log Visit
-      </button>
-    </div>
+<app-page-header 
+  title="Veterinary Visits" 
+  description="Log and manage professional vet visits, costs, and recommendations."
+  icon="local_hospital" 
+  iconColor="text-teal-600">
+  <div actions class="flex gap-2">
+    <button (click)="openScheduleVisitDialog()" class="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Log Visit
+    </button>
   </div>
+</app-page-header>
 
-  <mat-card class="!rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="relative min-h-[300px]">
-      <div *ngIf="isLoading" class="absolute inset-0 z-10 flex justify-center items-center bg-white/70 backdrop-blur-sm">
-        <mat-spinner diameter="48"></mat-spinner>
-      </div>
+<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+  <app-loading *ngIf="isLoading" [overlay]="true"></app-loading>
 
-      <table mat-table [dataSource]="dataSource" class="w-full">
-        
-        <ng-container matColumnDef="visitDate">
-          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Date</th>
-          <td mat-cell *matCellDef="let element" class="font-medium text-gray-900"> {{element.visitDate | date:'mediumDate'}} </td>
-        </ng-container>
-
-        <ng-container matColumnDef="vetName">
-          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Vet Name</th>
-          <td mat-cell *matCellDef="let element" class="text-gray-700"> {{element.vetName}} </td>
-        </ng-container>
-
-        <ng-container matColumnDef="visitType">
-          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Type</th>
-          <td mat-cell *matCellDef="let element">
-            <mat-chip-set>
-              <mat-chip [class.bg-teal-100]="element.visitType === 'Routine'" [class.text-teal-800]="element.visitType === 'Routine'"
-                        [class.bg-red-100]="element.visitType === 'Emergency'" [class.text-red-800]="element.visitType === 'Emergency'"
-                        [class.bg-indigo-100]="element.visitType === 'FollowUp'" [class.text-indigo-800]="element.visitType === 'FollowUp'"
-                        class="!text-xs !min-h-0 !py-1">
-                {{ element.visitType }}
-              </mat-chip>
-            </mat-chip-set>
+  <div class="relative overflow-x-auto">
+    <table class="w-full text-sm text-left" *ngIf="dataSource.length > 0">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
+        <tr>
+          <th scope="col" class="px-6 py-4">Date</th>
+          <th scope="col" class="px-6 py-4">Vet Name</th>
+          <th scope="col" class="px-6 py-4">Type</th>
+          <th scope="col" class="px-6 py-4">Purpose</th>
+          <th scope="col" class="px-6 py-4">Cost</th>
+          <th scope="col" class="px-6 py-4">Next Visit</th>
+          <th scope="col" class="px-6 py-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let element of dataSource" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+          <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+            {{ element.visitDate | date:'mediumDate' }}
           </td>
-        </ng-container>
-
-        <ng-container matColumnDef="purpose">
-          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Purpose</th>
-          <td mat-cell *matCellDef="let element" class="text-gray-600 truncate max-w-[200px]" [matTooltip]="element.purpose">
-            {{element.purpose || '-'}}
+          <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+            {{ element.vetName }}
           </td>
-        </ng-container>
-
-        <ng-container matColumnDef="cost">
-          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Cost</th>
-          <td mat-cell *matCellDef="let element" class="text-gray-900 font-medium">
-            <span *ngIf="element.costBdt">৳ {{element.costBdt | number:'1.2-2'}}</span>
+          <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                  [ngClass]="{
+                    'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400': element.visitType === 'Routine',
+                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': element.visitType === 'Emergency',
+                    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400': element.visitType === 'FollowUp'
+                  }">
+              {{ element.visitType }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-gray-600 dark:text-gray-400 truncate max-w-[200px]" [matTooltip]="element.purpose">
+            {{ element.purpose || '-' }}
+          </td>
+          <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+            <span *ngIf="element.costBdt">৳ {{ element.costBdt | number:'1.2-2' }}</span>
             <span *ngIf="!element.costBdt" class="text-gray-400">-</span>
           </td>
-        </ng-container>
-
-        <ng-container matColumnDef="nextVisit">
-          <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-700 uppercase text-xs tracking-wider">Next Visit</th>
-          <td mat-cell *matCellDef="let element" class="text-gray-600">
-            <span *ngIf="element.nextVisitDate">{{element.nextVisitDate | date:'mediumDate'}}</span>
+          <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+            <span *ngIf="element.nextVisitDate">{{ element.nextVisitDate | date:'mediumDate' }}</span>
             <span *ngIf="!element.nextVisitDate" class="text-gray-400">-</span>
           </td>
-        </ng-container>
-
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="text-right font-bold text-gray-700 uppercase text-xs tracking-wider">Actions</th>
-          <td mat-cell *matCellDef="let element" class="text-right">
+          <td class="px-6 py-4 text-right space-x-2">
             <button mat-icon-button color="primary" matTooltip="View Details">
               <mat-icon>visibility</mat-icon>
             </button>
           </td>
-        </ng-container>
+        </tr>
+      </tbody>
+    </table>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50 border-b border-gray-100"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50 transition-colors border-b border-gray-50"></tr>
-      </table>
+    <app-empty-state 
+      *ngIf="!isLoading && dataSource.length === 0"
+      icon="local_hospital"
+      title="No veterinary visits found"
+      description="Log professional vet visits to track your farm's health history."
+      actionLabel="Log Visit"
+      (action)="openScheduleVisitDialog()">
+    </app-empty-state>
+  </div>
 
-      <!-- Empty State -->
-      <div *ngIf="!isLoading && dataSource.length === 0" class="py-16 flex flex-col items-center justify-center text-gray-500">
-        <mat-icon class="text-6xl mb-4 text-gray-300 scale-[2]">local_hospital</mat-icon>
-        <p class="text-lg font-medium text-gray-600">No veterinary visits found</p>
-        <p class="text-sm">Log professional vet visits to track your farm's health history.</p>
-        <button mat-flat-button color="primary" class="mt-4 !rounded-full" (click)="openScheduleVisitDialog()">Log Visit</button>
-      </div>
-    </div>
-
+  <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
     <mat-paginator [length]="totalItems"
                    [pageSize]="pageSize"
                    [pageSizeOptions]="[5, 10, 25, 100]"
                    [pageIndex]="pageIndex"
                    (page)="onPageChange($event)"
-                   aria-label="Select page">
+                   aria-label="Select page"
+                   class="!bg-transparent">
     </mat-paginator>
-  </mat-card>
+  </div>
 </div>

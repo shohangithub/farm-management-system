@@ -1,89 +1,107 @@
-<div class="px-6 py-8 mx-auto max-w-4xl animate-fade-in">
-  <!-- Header -->
-  <div class="mb-6 flex items-center text-gray-500">
-    <a routerLink=".." class="hover:text-blue-600 transition-colors flex items-center">
-      <mat-icon class="mr-1 scale-75">arrow_back</mat-icon>
-      Back to Protocols
-    </a>
+<app-page-header 
+  title="Protocol Details" 
+  description="View comprehensive information about the vaccination protocol."
+  icon="library_books" 
+  iconColor="text-blue-600">
+  <div actions class="flex gap-2">
+    <button routerLink=".." class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Back to List
+    </button>
+    <button *ngIf="protocol()" (click)="openAssignDialog()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">group_add</mat-icon> Assign Protocol
+    </button>
+  </div>
+</app-page-header>
+
+<div class="animate-fade-in relative max-w-5xl mx-auto">
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+    <div class="flex">
+      <mat-icon class="text-red-500 mr-2">error</mat-icon>
+      <p class="text-sm text-red-700 font-medium">{{ error() }}</p>
+    </div>
   </div>
 
-  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
-    <mat-spinner diameter="48"></mat-spinner>
-  </div>
-
-  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
-    <p class="text-sm text-red-700 flex items-center">
-      <mat-icon class="mr-2">error</mat-icon>
-      {{ error }}
-    </p>
-  </div>
-
-  <ng-container *ngIf="!isLoading && protocol">
+  <ng-container *ngIf="!isLoading() && protocol()">
     <div class="flex items-start justify-between mb-8">
       <div>
         <div class="flex items-center gap-3 mb-2">
-          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ protocol.title }}</h1>
+          <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ protocol()?.title }}</h1>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                [ngClass]="protocol.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
-            {{ protocol.isActive ? 'Active' : 'Inactive' }}
+                [ngClass]="protocol()?.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'">
+            {{ protocol()?.isActive ? 'Active' : 'Inactive' }}
           </span>
         </div>
-        <p class="text-gray-600 flex items-center">
+        <p class="text-gray-600 dark:text-gray-400 flex items-center">
           <mat-icon class="mr-1 scale-75">pets</mat-icon>
-          Target Species: <strong class="ml-1 text-gray-900">{{ protocol.targetSpecies }}</strong>
+          Target Species: <strong class="ml-1 text-gray-900 dark:text-white">{{ protocol()?.targetSpecies }}</strong>
         </p>
       </div>
       
-      <button mat-flat-button color="primary" class="!rounded-full shadow-md">
-        <mat-icon>edit</mat-icon>
-        Edit Protocol
+      <button (click)="openEditDialog()" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon> Edit Protocol
       </button>
     </div>
 
-    <mat-card class="!rounded-2xl shadow-sm border border-gray-100 mb-8">
-      <mat-card-header class="!pb-0 !pt-6 !px-6">
-        <mat-icon mat-card-avatar class="text-blue-600 transform scale-125">info</mat-icon>
-        <mat-card-title class="!text-lg font-bold">Description</mat-card-title>
-      </mat-card-header>
-      <mat-card-content class="!p-6">
-        <p class="text-gray-700 leading-relaxed">{{ protocol.description || 'No description provided for this protocol.' }}</p>
-      </mat-card-content>
-    </mat-card>
-
-    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-      <mat-icon class="mr-2 text-indigo-600">format_list_numbered</mat-icon>
-      Vaccination Schedule
-    </h2>
-
-    <mat-card class="!rounded-2xl shadow-sm border border-gray-100">
-      <mat-list>
-        <ng-container *ngFor="let step of protocol.steps; let last = last">
-          <mat-list-item class="!h-auto !py-4">
-            <mat-icon matListItemIcon class="text-blue-500 bg-blue-50 rounded-full !p-2 !w-10 !h-10">vaccines</mat-icon>
-            <div matListItemTitle class="font-bold text-gray-900 !mb-1 text-lg">{{ step.stepName }}</div>
-            <div matListItemLine class="text-gray-600 space-y-1">
-              <div class="flex items-center">
-                <mat-icon class="scale-[0.6] -ml-1 text-gray-400">calendar_today</mat-icon>
-                <span>Target Age: <strong>{{ step.targetAgeDays }} days</strong></span>
-              </div>
-              <div class="flex items-center">
-                <mat-icon class="scale-[0.6] -ml-1 text-gray-400">medication</mat-icon>
-                <span>Vaccine: <strong>{{ step.vaccineName }}</strong></span>
-              </div>
-              <div class="flex items-center" *ngIf="step.dosageInstruction">
-                <mat-icon class="scale-[0.6] -ml-1 text-gray-400">info</mat-icon>
-                <span>Dosage: {{ step.dosageInstruction }}</span>
-              </div>
-            </div>
-          </mat-list-item>
-          <mat-divider *ngIf="!last" class="!mx-4"></mat-divider>
-        </ng-container>
-
-        <div *ngIf="!protocol.steps.length" class="p-8 text-center text-gray-500">
-          <mat-icon class="text-4xl text-gray-300 mb-2">list_alt</mat-icon>
-          <p>No steps defined for this protocol.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-5 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+          <mat-icon>vaccines</mat-icon>
         </div>
-      </mat-list>
-    </mat-card>
+        <div>
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Required Doses</p>
+          <p class="text-2xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ protocol()?.steps?.length || 0 }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-5 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <mat-icon>calendar_month</mat-icon>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Schedule Duration</p>
+          <p class="text-2xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ totalDurationDays() }} <span class="text-sm font-medium text-gray-500">Days</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 overflow-hidden mb-6" *ngIf="protocol()?.description">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50">
+        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Description</h3>
+      </div>
+      <div class="p-6">
+        <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{{ protocol()?.description }}</p>
+      </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center">
+          <mat-icon class="mr-2 text-gray-400 scale-75">format_list_numbered</mat-icon> Protocol Steps
+        </h3>
+      </div>
+      
+      <div class="divide-y divide-gray-100 dark:divide-gray-800/50">
+        <div *ngFor="let step of protocol()?.steps || []; let i = index" class="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors flex items-start">
+          <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold mr-4 flex-shrink-0 mt-1 shadow-sm">
+            {{ i + 1 }}
+          </div>
+          <div class="flex-1">
+            <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ step.stepName }}</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm text-gray-600 dark:text-gray-400 mt-3">
+              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">event</mat-icon> <span class="font-medium mr-1">Target Age:</span> {{ step.targetAgeDays }} days</div>
+              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">science</mat-icon> <span class="font-medium mr-1">Vaccine:</span> {{ step.vaccineName }}</div>
+              <div class="flex items-center md:col-span-2"><mat-icon class="scale-[0.6] mr-1 opacity-70">info</mat-icon> <span class="font-medium mr-1">Dosage:</span> {{ step.dosageInstruction }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!(protocol()?.steps?.length)" class="p-12 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50">
+          <mat-icon class="text-4xl mb-2 opacity-50">inventory_2</mat-icon>
+          <p class="font-medium">No steps defined for this protocol.</p>
+        </div>
+      </div>
+    </div>
   </ng-container>
 </div>
