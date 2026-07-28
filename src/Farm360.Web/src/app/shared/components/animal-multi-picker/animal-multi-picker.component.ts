@@ -40,52 +40,55 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   ],
   template: `
     <div class="flex flex-col gap-4">
-      <div class="grid grid-cols-2 gap-4">
-        <!-- Shed Selection -->
-        <mat-form-field appearance="outline">
-          <mat-label>Shed (Optional)</mat-label>
-          <mat-select [formControl]="shedControl">
-            <mat-option [value]="null">-- All Sheds --</mat-option>
-            <mat-option *ngFor="let shed of sheds$ | async" [value]="shed.id">
-              {{ shed.shedName }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">Shed (Optional)</label>
+        <select [formControl]="shedControl"
+                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+          <option [ngValue]="null">-- All Sheds --</option>
+          <option *ngFor="let shed of sheds$ | async" [value]="shed.id">
+            {{ shed.shedName }}
+          </option>
+        </select>
       </div>
 
       <!-- Selected Animals Chips -->
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Search and Select Animals</mat-label>
+      <div class="space-y-1.5 relative w-full">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">Search and Select Animals</label>
         
-        <mat-chip-grid #chipGrid aria-label="Selected animals">
-          <mat-chip-row *ngFor="let animal of selectedAnimals" (removed)="removeAnimal(animal)">
-            {{ animal.tagId }}
-            <button matChipRemove [attr.aria-label]="'remove ' + animal.tagId">
-              <mat-icon>cancel</mat-icon>
-            </button>
-          </mat-chip-row>
+        <div class="flex items-center min-h-[42px] px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-shadow flex-wrap gap-2">
           
-          <input 
-            placeholder="Type tag or breed..." 
-            [matChipInputFor]="chipGrid" 
-            [formControl]="searchControl" 
-            [matAutocomplete]="auto">
-        </mat-chip-grid>
+          <mat-chip-grid #chipGrid aria-label="Selected animals" class="!flex !flex-row !flex-wrap !items-center !gap-1.5">
+            <mat-chip-row *ngFor="let animal of selectedAnimals" (removed)="removeAnimal(animal)"
+                          class="!bg-primary-50 dark:!bg-primary-900/30 !text-primary-700 dark:!text-primary-300 !min-h-[28px] border border-primary-200 dark:border-primary-800/50">
+              <span class="text-xs font-medium">{{ animal.tagId }}</span>
+              <button matChipRemove [attr.aria-label]="'remove ' + animal.tagId" class="opacity-70 hover:opacity-100">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+            
+            <input 
+              class="outline-none bg-transparent text-sm flex-1 min-w-[150px] text-gray-900 dark:text-white placeholder-gray-400 py-1"
+              placeholder="Type tag or breed..." 
+              [matChipInputFor]="chipGrid" 
+              [formControl]="searchControl" 
+              [matAutocomplete]="auto">
+          </mat-chip-grid>
+          
+          <mat-spinner diameter="20" *ngIf="isLoading" class="ml-auto shrink-0"></mat-spinner>
+        </div>
         
-        <mat-spinner matSuffix diameter="20" *ngIf="isLoading"></mat-spinner>
-        
-        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onAnimalSelected($event.option.value)">
-          <mat-option *ngFor="let animal of filteredAnimals$ | async" [value]="animal">
-            <div class="flex flex-col py-1">
-              <span class="font-medium text-gray-900">{{ animal.tagId }} — {{ animal.breedName }}</span>
-              <span class="text-xs text-gray-500 flex gap-2">
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onAnimalSelected($event.option.value)" class="!rounded-lg !mt-1 shadow-lg border border-gray-100 dark:border-gray-700">
+          <mat-option *ngFor="let animal of filteredAnimals$ | async" [value]="animal" class="!h-auto !py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
+            <div class="flex flex-col">
+              <span class="font-medium text-gray-900 dark:text-white text-sm">{{ animal.tagId }} — {{ animal.breedName }}</span>
+              <span class="text-xs text-gray-500 flex gap-2 mt-0.5">
                 <span>{{ getSexLabel(animal.sex) }}</span>
                 <span *ngIf="animal.shedId"> • Shed ID: {{ animal.shedId | slice:0:8 }}</span>
               </span>
             </div>
           </mat-option>
         </mat-autocomplete>
-      </mat-form-field>
+      </div>
     </div>
   `
 })

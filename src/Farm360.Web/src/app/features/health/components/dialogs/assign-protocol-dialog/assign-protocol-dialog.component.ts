@@ -23,28 +23,28 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between shrink-0">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
-            <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-500">assignment</mat-icon>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">assignment</mat-icon>
             Assign Protocol
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Apply {{ data?.protocol?.title }} to animals</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Apply {{ data?.protocol?.title }} to animals</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
 
       <!-- Body -->
-      <form [formGroup]="form" class="flex flex-col overflow-hidden">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col overflow-hidden">
         
         <!-- Error State -->
         <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm whitespace-pre-wrap">
           {{ error() }}
         </div>
 
-        <div class="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+        <div class="p-6 space-y-5 overflow-y-auto">
           
           <div class="p-4 bg-primary-50 dark:bg-primary-900/20 text-primary-800 dark:text-primary-300 rounded-xl border border-primary-200 dark:border-primary-800/50 flex items-center gap-3">
             <div class="p-2 bg-white dark:bg-primary-900/50 rounded-lg shadow-sm shrink-0">
@@ -56,33 +56,40 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
             </div>
           </div>
           
-          <!-- Basic Info Section -->
-          <div class="grid grid-cols-1 gap-6">
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animals <span class="text-red-500">*</span></label>
-              <app-animal-multi-picker formControlName="animalIds"></app-animal-multi-picker>
-            </div>
+          <!-- Animals -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animals <span class="text-red-500">*</span></label>
+            <app-animal-multi-picker formControlName="animalIds"></app-animal-multi-picker>
+            <p class="text-xs text-red-500 mt-1" *ngIf="form.get('animalIds')?.touched && form.get('animalIds')?.invalid">
+              At least one animal must be selected.
+            </p>
+          </div>
 
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Start Date <span class="text-red-500">*</span></label>
+          <!-- Date Row -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Start Date <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">calendar_today</mat-icon>
+              </span>
               <input type="date" formControlName="startDate"
-                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <p class="text-xs text-gray-500 mt-1">The date to begin calculating scheduled events.</p>
+                     class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             </div>
+            <p class="text-xs text-gray-500 mt-1">The date to begin calculating scheduled events.</p>
           </div>
           
         </div>
 
-        <!-- Footer Actions -->
-        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
           <button type="button" mat-dialog-close [disabled]="isSubmitting()" 
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
             Cancel
           </button>
-          <button type="button" [disabled]="form.invalid || isSubmitting()" (click)="onSubmit()"
-                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-            <mat-icon *ngIf="isSubmitting()" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
-            <span>{{ isSubmitting() ? 'Assigning...' : 'Assign Protocol' }}</span>
+          <button type="submit" [disabled]="form.invalid || isSubmitting()"
+                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isSubmitting()">Assign Protocol</span>
+            <span *ngIf="isSubmitting()">Assigning...</span>
           </button>
         </div>
       </form>
