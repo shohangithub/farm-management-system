@@ -144,6 +144,14 @@ export class HealthService {
     return this.http.post<{ id: string }>(`${this.apiUrl}/vet-visits`, data);
   }
 
+  getVetVisitDetail(id: string): Observable<VetVisitDto> {
+    return this.http.get<VetVisitDto>(`${this.apiUrl}/vet-visits/${id}`);
+  }
+
+  updateVetVisit(id: string, data: any): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/vet-visits/${id}`, { id, ...data });
+  }
+
   // --- Miscellaneous ---
   getAnimalHealthHistory(animalId: string): Observable<AnimalHealthHistoryDto> {
     return this.http.get<AnimalHealthHistoryDto>(`${this.apiUrl}/animals/${animalId}/history`);

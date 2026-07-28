@@ -12,11 +12,13 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ScheduleVaccinationDialog } from '../../components/dialogs/schedule-vaccination-dialog/schedule-vaccination-dialog.component';
 
 @Component({
   selector: 'app-vaccination-due-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
   templateUrl: './vaccination-due-list.component.html',
   styleUrls: ['./vaccination-due-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -24,6 +26,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class VaccinationDueListComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
+  private dialog = inject(MatDialog);
 
   readonly VaccinationStatus = VaccinationStatus;
 
@@ -93,5 +96,19 @@ export class VaccinationDueListComponent {
           console.error('Failed to administer', err);
         }
       });
+  }
+
+  openRecordVaccinationDialog(): void {
+    const dialogRef = this.dialog.open(ScheduleVaccinationDialog, {
+      width: '600px',
+      panelClass: 'custom-dialog-container',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.refreshTrigger.update(v => v + 1);
+      }
+    });
   }
 }

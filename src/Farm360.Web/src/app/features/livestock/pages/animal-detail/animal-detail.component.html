@@ -30,8 +30,7 @@
 </app-page-header>
 
 <!-- Error State -->
-<div *ngIf="error()"
-  class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3">
+<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3 animate-fade-in-up">
   <mat-icon class="!text-red-500 mt-0.5 flex-shrink-0">error_outline</mat-icon>
   <div>
     <h3 class="text-sm font-semibold">Error</h3>
@@ -40,15 +39,9 @@
 </div>
 
 <!-- Loading State -->
-<div *ngIf="loading()" class="flex flex-col items-center justify-center py-24 space-y-4">
-  <div class="relative w-12 h-12">
-    <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
-    <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
-  </div>
-  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Profile...</p>
-</div>
+<app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
-<div *ngIf="!loading() && animal()" class="space-y-6">
+<div *ngIf="!loading() && animal()" class="space-y-6 animate-fade-in-up">
 
   <!-- Hero Layout -->
   <div class="flex flex-col md:flex-row gap-6 mb-6">

@@ -93,4 +93,26 @@ public sealed class VetVisit : BaseEntity, IAggregateRoot
 
         return visit;
     }
+    public void Update(
+        string vetName,
+        DateOnly visitDate,
+        VetVisitType visitType,
+        string? purpose,
+        string? findings,
+        string? recommendations,
+        decimal? costBdt,
+        DateOnly? nextVisitDate)
+    {
+        if (string.IsNullOrWhiteSpace(vetName))
+            throw new ArgumentException("VetName is required.", nameof(vetName));
+
+        VetName = vetName.Trim();
+        VisitDate = visitDate;
+        VisitType = visitType;
+        Purpose = purpose?.Trim();
+        Findings = findings?.Trim();
+        Recommendations = recommendations?.Trim();
+        CostBdt = costBdt;
+        NextVisitDate = nextVisitDate;
+    }
 }

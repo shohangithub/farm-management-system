@@ -41,7 +41,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   template: `
     <div class="flex flex-col gap-4">
       <div class="space-y-1.5">
-        <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">Shed (Optional)</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Shed (Optional)</label>
         <select [formControl]="shedControl"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           <option [ngValue]="null">-- All Sheds --</option>
@@ -53,7 +53,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
       <!-- Selected Animals Chips -->
       <div class="space-y-1.5 relative w-full">
-        <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">Search and Select Animals</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Search and Select Animals</label>
         
         <div class="flex items-center min-h-[42px] px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-shadow flex-wrap gap-2">
           

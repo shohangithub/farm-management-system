@@ -12,11 +12,13 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-branch-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent],
+  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, LoadingComponent, EmptyStateComponent],
   templateUrl: './branch-list.html',
   styleUrls: ['./branch-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush

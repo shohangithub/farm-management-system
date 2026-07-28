@@ -51,8 +51,10 @@ public interface IMortalityRecordRepository
 
 public interface IVetVisitRepository
 {
+    Task<VetVisit?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<(IReadOnlyList<VetVisit> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, Guid? farmId, CancellationToken ct = default);
     void Add(VetVisit visit);
+    void Update(VetVisit visit);
 }
 
 public interface IHealthDashboardRepository

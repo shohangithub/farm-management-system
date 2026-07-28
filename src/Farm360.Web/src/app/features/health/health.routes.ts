@@ -37,11 +37,6 @@ export const HEALTH_ROUTES: Routes = [
     title: 'Disease Incidents - Farm360'
   },
   {
-    path: 'incidents/report',
-    loadComponent: () => import('./pages/report-incident/report-incident.component').then(c => c.ReportIncidentComponent),
-    title: 'Report Incident - Farm360'
-  },
-  {
     path: 'incidents/:id',
     loadComponent: () => import('./pages/incident-detail/incident-detail.component').then(c => c.IncidentDetailComponent),
     title: 'Incident Details - Farm360'

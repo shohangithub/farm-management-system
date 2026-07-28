@@ -6,8 +6,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HealthService } from '../../services/health.service';
+import { CauseOfDeath } from '../../models/health.models';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RecordMortalityDialog } from '../../components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
+import { MortalityDetailDialog } from '../../components/dialogs/mortality-detail-dialog/mortality-detail-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
@@ -89,5 +91,24 @@ export class MortalityListComponent {
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadMortalities();
     });
+  }
+
+  viewDetails(element: any): void {
+    this.dialog.open(MortalityDetailDialog, {
+      width: '600px',
+      data: element
+    });
+  }
+
+  getCauseName(causeValue: number | string): string {
+    const value = Number(causeValue);
+    switch (value) {
+      case CauseOfDeath.Disease: return 'Disease';
+      case CauseOfDeath.Accident: return 'Accident';
+      case CauseOfDeath.NaturalCauses: return 'Natural Causes';
+      case CauseOfDeath.Unknown: return 'Unknown';
+      case CauseOfDeath.Slaughter: return 'Slaughter';
+      default: return 'Unknown';
+    }
   }
 }

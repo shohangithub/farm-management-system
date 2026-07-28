@@ -68,13 +68,8 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
           <!-- Date Row -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Start Date <span class="text-red-500">*</span></label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">calendar_today</mat-icon>
-              </span>
-              <input type="date" formControlName="startDate"
-                     class="block w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            </div>
+            <input type="date" formControlName="startDate"
+                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             <p class="text-xs text-gray-500 mt-1">The date to begin calculating scheduled events.</p>
           </div>
           

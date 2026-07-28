@@ -10,6 +10,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { LogVetVisitDialog } from '../../components/dialogs/log-vet-visit-dialog/log-vet-visit-dialog.component';
+import { VetVisitDetailDialogComponent } from '../../components/dialogs/vet-visit-detail-dialog/vet-visit-detail-dialog.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -82,6 +84,31 @@ export class VetVisitListComponent {
   }
 
   openScheduleVisitDialog(): void {
-    // We could create a ScheduleVetVisitDialog if required, or skip if out of scope
+    const dialogRef = this.dialog.open(LogVetVisitDialog, {
+      width: '600px',
+      panelClass: 'custom-dialog-container',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadVetVisits();
+      }
+    });
+  }
+
+  viewVisitDetails(visit: any): void {
+    const dialogRef = this.dialog.open(VetVisitDetailDialogComponent, {
+      width: '700px',
+      panelClass: 'custom-dialog-container',
+      data: { visitId: visit.id }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // If result is true, it means the visit was edited successfully
+        this.loadVetVisits();
+      }
+    });
   }
 }

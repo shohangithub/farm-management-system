@@ -9,11 +9,13 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-shed-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent, LoadingComponent, EmptyStateComponent],
   templateUrl: './shed-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

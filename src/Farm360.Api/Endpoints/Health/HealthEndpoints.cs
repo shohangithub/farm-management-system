@@ -277,6 +277,30 @@ public static class HealthEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
         .WithSummary("Get paginated list of vet visits");
 
+        group.MapGet("/vet-visits/{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetVetVisitDetailQuery(id), ct);
+            return result is not null ? Results.Ok(result) : Results.NotFound();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Get details of a vet visit");
+
+        group.MapPut("/vet-visits/{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromBody] UpdateVetVisitCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.Id) return Results.BadRequest("ID mismatch");
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Update a vet visit");
+
         // ── Animal Health History ────────────────────────────────────────────────
 
         group.MapGet("/animals/{animalId:guid}/history", async (

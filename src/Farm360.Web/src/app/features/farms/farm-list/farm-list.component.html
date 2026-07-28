@@ -6,66 +6,61 @@
   (primaryAction)="onAddFarm()">
 </app-page-header>
 
-<!-- Filters Bar -->
-<div class="mb-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
-  <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
-    <div class="relative w-full sm:w-96">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <mat-icon class="!text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
+<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+  
+  <!-- Loading State -->
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <!-- Filters Bar (Only show if we have farms at all, or if we're searching) -->
+  <div *ngIf="farmsResult().length > 0 || searchTerm()" class="px-6 py-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+    <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div class="relative w-full sm:w-96">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <mat-icon class="!text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
+        </div>
+        <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+               class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors" 
+               placeholder="Search farms by name or code...">
       </div>
-      <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
-             class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-900/20 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors" 
-             placeholder="Search farms by name or code...">
-    </div>
-    
-    <div class="w-full sm:w-auto flex items-center gap-3">
-      <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Filter by:</div>
       
-      <div class="relative">
-        <select (change)="onFilterStatus($event)" class="block w-44 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
-          <option value="">All Statuses</option>
-          <option value="1">Active</option>
-          <option value="2">Inactive</option>
-          <option value="3">Under Maintenance</option>
-          <option value="4">Closed</option>
-        </select>
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
+      <div class="w-full sm:w-auto flex items-center gap-3">
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Filter by:</div>
+        <div class="relative">
+          <select (change)="onFilterStatus($event)" class="block w-44 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
+            <option value="">All Statuses</option>
+            <option value="1">Active</option>
+            <option value="2">Inactive</option>
+            <option value="3">Under Maintenance</option>
+            <option value="4">Closed</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Loading State -->
-<div *ngIf="isLoading()" class="flex justify-center items-center py-24">
-  <div class="relative w-12 h-12">
-    <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
-    <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
+  <!-- Empty State (No Farms at all) -->
+  <app-empty-state 
+    *ngIf="!isLoading() && farmsResult().length === 0 && !searchTerm()"
+    icon="agriculture"
+    title="No Farms Found"
+    description="This branch doesn't have any farms yet. Create your first farm to start managing your agricultural operations."
+    actionLabel="Add First Farm"
+    (action)="onAddFarm()">
+  </app-empty-state>
+
+  <!-- Empty State (Search Filter) -->
+  <app-empty-state 
+    *ngIf="!isLoading() && farmsResult().length > 0 && filteredFarms().length === 0"
+    icon="search_off"
+    title="No matches found"
+    description="We couldn't find any farms matching your search or filters.">
+  </app-empty-state>
+
+  <!-- Grid -->
+  <div *ngIf="!isLoading() && filteredFarms().length > 0" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <app-farm-card *ngFor="let farm of filteredFarms()" [farm]="farm" [branchId]="branchId()"></app-farm-card>
   </div>
-</div>
-
-<!-- Empty State (No Farms at all) -->
-<div *ngIf="!isLoading() && farmsResult().length === 0" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-16 text-center">
-  <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 mb-4 shadow-sm border border-primary-100 dark:border-primary-900/30">
-    <mat-icon class="!text-[32px] !w-[32px] !h-[32px]">agriculture</mat-icon>
-  </div>
-  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 tracking-tight">No Farms Found</h3>
-  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">This branch doesn't have any farms yet. Create your first farm to start managing your agricultural operations.</p>
-  <a [routerLink]="['/organizations/branches', branchId(), 'farms', 'new']" 
-     class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-500/30">
-    <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add First Farm
-  </a>
-</div>
-
-<!-- Empty State (Search Filter) -->
-<div *ngIf="!isLoading() && farmsResult().length > 0 && filteredFarms().length === 0" class="py-16 text-center">
-  <mat-icon class="!text-[48px] !w-[48px] !h-[48px] text-gray-300 dark:text-gray-600 mb-4">search_off</mat-icon>
-  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No matches found</h3>
-  <p class="text-sm text-gray-500">We couldn't find any farms matching your search or filters.</p>
-</div>
-
-<!-- Grid -->
-<div *ngIf="!isLoading() && filteredFarms().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-  <app-farm-card *ngFor="let farm of filteredFarms()" [farm]="farm" [branchId]="branchId()"></app-farm-card>
 </div>

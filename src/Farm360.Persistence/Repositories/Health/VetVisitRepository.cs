@@ -29,4 +29,14 @@ internal sealed class VetVisitRepository(ApplicationDbContext context) : IVetVis
     }
 
     public void Add(VetVisit visit) => context.VetVisits.Add(visit);
+
+    public async Task<VetVisit?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return await context.VetVisits.FirstOrDefaultAsync(v => v.Id == id, ct);
+    }
+
+    public void Update(VetVisit visit)
+    {
+        context.VetVisits.Update(visit);
+    }
 }

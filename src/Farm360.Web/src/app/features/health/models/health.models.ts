@@ -13,31 +13,32 @@ export enum TreatmentStatus {
 }
 
 export enum IncidentSeverity {
-  Mild = 'Mild',
-  Moderate = 'Moderate',
-  Severe = 'Severe',
-  Critical = 'Critical'
+  Mild = 1,
+  Moderate = 2,
+  Severe = 3,
+  Critical = 4
 }
 
 export enum IncidentStatus {
-  Reported = 'Reported',
-  UnderTreatment = 'UnderTreatment',
-  Resolved = 'Resolved',
-  Fatal = 'Fatal'
+  Reported = 1,
+  UnderTreatment = 2,
+  Resolved = 3,
+  Fatal = 4
 }
 
 export enum CauseOfDeath {
-  Disease = 'Disease',
-  Injury = 'Injury',
-  Natural = 'Natural',
-  Predator = 'Predator',
-  Unknown = 'Unknown'
+  Disease = 1,
+  Accident = 2,
+  NaturalCauses = 3,
+  Unknown = 4,
+  Slaughter = 5
 }
 
 export enum VetVisitType {
-  Routine = 'Routine',
+  RoutineCheckup = 'RoutineCheckup',
   Emergency = 'Emergency',
-  FollowUp = 'FollowUp'
+  VaccinationDrive = 'VaccinationDrive',
+  Surgery = 'Surgery'
 }
 
 export enum AnimalSpecies {
@@ -123,20 +124,22 @@ export interface VetVisitDto {
   vetName: string;
   visitDate: string;
   visitType: string;
+  visitTypeId?: number;
   purpose?: string;
   findings?: string;
   recommendations?: string;
   costBdt?: number;
   nextVisitDate?: string;
+  createdAt?: string;
 }
 
 export interface HealthDashboardDto {
   vaccinationsDueThisWeek: number;
   vaccinationsOverdue: number;
   activeTreatments: number;
-  activeIncidents: number;
+  activeDiseaseIncidents: number;
   recentMortalityCount: number;
-  monthlyHealthCost: number;
+  monthlyHealthCostBdt: number;
 }
 
 export interface AnimalHealthHistoryDto {

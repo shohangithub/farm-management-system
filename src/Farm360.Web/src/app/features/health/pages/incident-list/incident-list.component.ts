@@ -1,12 +1,14 @@
 import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { HealthService } from '../../services/health.service';
 import { DiseaseIncident, IncidentSeverity, IncidentStatus } from '../../models/health.models';
+import { ReportIncidentDialog } from '../../components/dialogs/report-incident-dialog/report-incident-dialog.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -14,7 +16,7 @@ import { of } from 'rxjs';
 @Component({
   selector: 'app-incident-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
   template: `
 <app-page-header 
   title="Disease Incidents" 
@@ -22,7 +24,7 @@ import { of } from 'rxjs';
   icon="coronavirus" 
   iconColor="text-rose-600">
   <div actions class="flex gap-2">
-    <button routerLink="/health/incidents/report" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+    <button (click)="reportIncident()" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Report Incident
     </button>
   </div>
@@ -88,7 +90,7 @@ import { of } from 'rxjs';
 })
 export class IncidentListComponent {
   private healthService = inject(HealthService);
-  private router = inject(Router);
+  private dialog = inject(MatDialog);
 
   isLoading = signal(true);
   private refreshTrigger = signal(0);
@@ -112,7 +114,10 @@ export class IncidentListComponent {
   totalCount = computed(() => this.incidentsResult().totalCount);
 
   reportIncident() {
-    this.router.navigate(['/health/incidents/report']);
+    const dialogRef = this.dialog.open(ReportIncidentDialog, { width: '600px' });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.loadIncidents();
+    });
   }
 
   loadIncidents() {

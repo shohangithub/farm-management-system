@@ -11,6 +11,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ScheduleVaccinationDialog } from '../../components/dialogs/schedule-vaccination-dialog/schedule-vaccination-dialog.component';
 import { LogTreatmentDialog } from '../../components/dialogs/log-treatment-dialog/log-treatment-dialog.component';
 import { RecordMortalityDialog } from '../../components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
+import { ReportIncidentDialog } from '../../components/dialogs/report-incident-dialog/report-incident-dialog.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
@@ -92,6 +93,13 @@ export class HealthDashboardComponent {
 
   openRecordMortalityDialog(): void {
     const dialogRef = this.dialog.open(RecordMortalityDialog, { width: '500px' });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.loadDashboard();
+    });
+  }
+
+  openReportIncidentDialog(): void {
+    const dialogRef = this.dialog.open(ReportIncidentDialog, { width: '600px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });
