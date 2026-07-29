@@ -28,7 +28,7 @@ export class SidebarComponent {
     { icon: 'group_work', label: 'Batches', route: '/livestock/batches' },
     { icon: 'healing', label: 'Health', route: '/health' },
     { icon: 'restaurant_menu', label: 'Feeding', route: '/feeding' },
-    { icon: 'inventory', label: 'Inventory', disabled: true, badge: 'soon' },
+    { icon: 'inventory', label: 'Inventory', route: '/inventory' },
     { icon: 'account_balance_wallet', label: 'Finance', disabled: true, badge: 'soon' }
   ];
 

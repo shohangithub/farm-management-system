@@ -13,23 +13,26 @@ public abstract class BaseEntity
     protected BaseEntity(Guid id)
     {
         if (id == Guid.Empty)
-        {
-            throw new ArgumentException("Entity Id cannot be empty.", nameof(id));
-        }
+            throw new ArgumentException("Entity ID cannot be empty.", nameof(id));
 
         Id = id;
     }
 
-    /// <summary>Required by EF Core. Do not use in application code.</summary>
+    /// <summary>EF Core requires a parameterless constructor.</summary>
     protected BaseEntity() { }
 
-    public Guid Id { get; private set; }
+    public Guid Id { get; protected set; }
 
     public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     protected void RaiseDomainEvent(IDomainEvent domainEvent)
     {
         _domainEvents.Add(domainEvent);
+    }
+
+    public void RemoveDomainEvent(IDomainEvent domainEvent)
+    {
+        _domainEvents.Remove(domainEvent);
     }
 
     /// <summary>Called by the DbContext after successful SaveChanges to clear events.</summary>

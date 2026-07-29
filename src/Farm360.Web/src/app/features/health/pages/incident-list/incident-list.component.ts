@@ -7,6 +7,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { HealthService } from '../../services/health.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { DiseaseIncident, IncidentSeverity, IncidentStatus } from '../../models/health.models';
 import { ReportIncidentDialog } from '../../components/dialogs/report-incident-dialog/report-incident-dialog.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -90,19 +91,22 @@ import { of } from 'rxjs';
 })
 export class IncidentListComponent {
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
 
   isLoading = signal(true);
   private refreshTrigger = signal(0);
+  private currentFarm = toSignal(this.contextService.currentFarm$);
   
   private fetchParams = computed(() => ({
+    farmId: this.currentFarm()?.id,
     refresh: this.refreshTrigger()
   }));
 
   private incidentsResult = toSignal(
     toObservable(this.fetchParams).pipe(
       tap(() => this.isLoading.set(true)),
-      switchMap(() => this.healthService.getIncidents(1, 50).pipe(
+      switchMap(({ farmId }) => this.healthService.getIncidents({ pageNumber: 1, pageSize: 50, farmId }).pipe(
         catchError(() => of({ items: [], totalCount: 0 }))
       )),
       tap(() => this.isLoading.set(false))

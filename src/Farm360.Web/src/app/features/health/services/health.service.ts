@@ -1,11 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PagedResult } from '../../../shared/models/paged-result.model';
 import { 
   AnimalHealthHistoryDto, 
   VaccinationEventDto, 
-  IncidentSeverity,
   VaccinationProtocolDto,
   MedicalTreatmentDto,
   DiseaseIncidentDto,
@@ -13,15 +11,21 @@ import {
   VetVisitDto,
   HealthDashboardDto,
   TreatmentStatus,
-  IncidentStatus
+  IncidentStatus,
+  PagedResult,
+  VaccinationProtocolParams,
+  MedicalTreatmentParams,
+  DiseaseIncidentParams,
+  MortalityRecordParams,
+  VetVisitParams
 } from '../models/health.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HealthService {
-  private http = inject(HttpClient);
-  private apiUrl = '/api/v1/health';
+  private readonly http: HttpClient = inject(HttpClient);
+  private readonly apiUrl = '/api/v1/health';
 
   // --- Dashboard ---
   getHealthDashboard(farmId?: string): Observable<HealthDashboardDto> {
@@ -31,13 +35,16 @@ export class HealthService {
   }
 
   // --- Vaccination Protocols ---
-  getVaccinationProtocols(pageNumber = 1, pageSize = 10, searchTerm?: string): Observable<PagedResult<VaccinationProtocolDto>> {
-    let params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
-    if (searchTerm) params = params.set('searchTerm', searchTerm);
+  getVaccinationProtocols(params: VaccinationProtocolParams = {}): Observable<PagedResult<VaccinationProtocolDto>> {
+    let httpParams = new HttpParams();
+    if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
+    if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
+    if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.search)     httpParams = httpParams.set('search', params.search);
+    if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDesc != null) httpParams = httpParams.set('sortDesc', params.sortDesc);
     
-    return this.http.get<PagedResult<VaccinationProtocolDto>>(`${this.apiUrl}/protocols`, { params });
+    return this.http.get<PagedResult<VaccinationProtocolDto>>(`${this.apiUrl}/protocols`, { params: httpParams });
   }
 
   getVaccinationProtocol(id: string): Observable<VaccinationProtocolDto> {
@@ -83,13 +90,18 @@ export class HealthService {
   }
 
   // --- Treatments ---
-  getTreatments(pageNumber = 1, pageSize = 10, animalId?: string): Observable<PagedResult<MedicalTreatmentDto>> {
-    let params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
-    if (animalId) params = params.set('animalId', animalId);
+  getTreatments(params: MedicalTreatmentParams = {}): Observable<PagedResult<MedicalTreatmentDto>> {
+    let httpParams = new HttpParams();
+    if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
+    if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
+    if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.animalId)   httpParams = httpParams.set('animalId', params.animalId);
+    if (params.status)     httpParams = httpParams.set('status', params.status);
+    if (params.search)     httpParams = httpParams.set('search', params.search);
+    if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDesc != null) httpParams = httpParams.set('sortDesc', params.sortDesc);
 
-    return this.http.get<PagedResult<MedicalTreatmentDto>>(`${this.apiUrl}/treatments`, { params });
+    return this.http.get<PagedResult<MedicalTreatmentDto>>(`${this.apiUrl}/treatments`, { params: httpParams });
   }
 
   logTreatment(data: any): Observable<{ id: string }> {
@@ -100,11 +112,18 @@ export class HealthService {
     return this.http.put<void>(`${this.apiUrl}/treatments/${id}/status`, { status, notes });
   }
 
-  getIncidents(pageNumber = 1, pageSize = 10): Observable<PagedResult<DiseaseIncidentDto>> {
-    const params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
-    return this.http.get<PagedResult<DiseaseIncidentDto>>(`${this.apiUrl}/incidents`, { params });
+  getIncidents(params: DiseaseIncidentParams = {}): Observable<PagedResult<DiseaseIncidentDto>> {
+    let httpParams = new HttpParams();
+    if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
+    if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
+    if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.status != null)   httpParams = httpParams.set('status', params.status);
+    if (params.severity != null) httpParams = httpParams.set('severity', params.severity);
+    if (params.search)     httpParams = httpParams.set('search', params.search);
+    if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDesc != null) httpParams = httpParams.set('sortDesc', params.sortDesc);
+
+    return this.http.get<PagedResult<DiseaseIncidentDto>>(`${this.apiUrl}/incidents`, { params: httpParams });
   }
 
   getIncidentDetails(id: string): Observable<any> {
@@ -120,12 +139,18 @@ export class HealthService {
   }
 
   // --- Mortality Records ---
-  getMortalityRecords(pageNumber = 1, pageSize = 10): Observable<PagedResult<MortalityRecordDto>> {
-    const params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
+  getMortalityRecords(params: MortalityRecordParams = {}): Observable<PagedResult<MortalityRecordDto>> {
+    let httpParams = new HttpParams();
+    if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
+    if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
+    if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.animalId)   httpParams = httpParams.set('animalId', params.animalId);
+    if (params.reason)     httpParams = httpParams.set('reason', params.reason);
+    if (params.search)     httpParams = httpParams.set('search', params.search);
+    if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDesc != null) httpParams = httpParams.set('sortDesc', params.sortDesc);
 
-    return this.http.get<PagedResult<MortalityRecordDto>>(`${this.apiUrl}/mortality`, { params });
+    return this.http.get<PagedResult<MortalityRecordDto>>(`${this.apiUrl}/mortality`, { params: httpParams });
   }
 
   recordMortality(data: any): Observable<{ id: string }> {
@@ -133,13 +158,16 @@ export class HealthService {
   }
 
   // --- Vet Visits ---
-  getVetVisits(pageNumber = 1, pageSize = 10, farmId?: string): Observable<PagedResult<VetVisitDto>> {
-    let params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
-    if (farmId) params = params.set('farmId', farmId);
+  getVetVisits(params: VetVisitParams = {}): Observable<PagedResult<VetVisitDto>> {
+    let httpParams = new HttpParams();
+    if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
+    if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
+    if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.search)     httpParams = httpParams.set('search', params.search);
+    if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDesc != null) httpParams = httpParams.set('sortDesc', params.sortDesc);
 
-    return this.http.get<PagedResult<VetVisitDto>>(`${this.apiUrl}/vet-visits`, { params });
+    return this.http.get<PagedResult<VetVisitDto>>(`${this.apiUrl}/vet-visits`, { params: httpParams });
   }
 
   createVetVisit(data: any): Observable<{ id: string }> {
@@ -156,11 +184,7 @@ export class HealthService {
 
   // --- Miscellaneous ---
   getAnimalHealthHistory(animalId: string): Observable<AnimalHealthHistoryDto> {
-    return this.http.get<AnimalHealthHistoryDto>(`${this.apiUrl}/animals/${animalId}/history`);
-  }
-
-  getAnimalHealthReport(animalId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/reports/animals/${animalId}`);
+    return this.http.get<AnimalHealthHistoryDto>(`${this.apiUrl}/animals/${animalId}/summary`);
   }
 
   getDewormingCalendar(farmId: string, pageNumber = 1, pageSize = 10): Observable<any> {
@@ -168,11 +192,11 @@ export class HealthService {
       .set('farmId', farmId)
       .set('pageNumber', pageNumber)
       .set('pageSize', pageSize);
-    return this.http.get<any>(`${this.apiUrl}/deworming/calendar`, { params });
+    return this.http.get<any>(`${this.apiUrl}/reports/deworming`, { params });
   }
 
   getMilkWithdrawals(farmId: string): Observable<any[]> {
     const params = new HttpParams().set('farmId', farmId);
-    return this.http.get<any[]>(`${this.apiUrl}/reports/withdrawals`, { params });
+    return this.http.get<any[]>(`${this.apiUrl}/reports/withdrawal`, { params });
   }
 }

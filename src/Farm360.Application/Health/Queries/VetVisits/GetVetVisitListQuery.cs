@@ -1,4 +1,3 @@
-using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Common.Models;
 using Farm360.Application.Health.DTOs;
 using Farm360.Application.Health.Mappings;
@@ -8,9 +7,12 @@ using MediatR;
 namespace Farm360.Application.Health.Queries.VetVisits;
 
 public sealed record GetVetVisitListQuery(
-    Guid? FarmId = null,
     int PageNumber = 1,
-    int PageSize = 10
+    int PageSize = 20,
+    Guid? FarmId = null,
+    string? Search = null,
+    string? SortBy = null,
+    bool SortDesc = false
 ) : IRequest<PagedResult<VetVisitDto>>;
 
 internal sealed class GetVetVisitListQueryHandler : IRequestHandler<GetVetVisitListQuery, PagedResult<VetVisitDto>>
@@ -24,13 +26,19 @@ internal sealed class GetVetVisitListQueryHandler : IRequestHandler<GetVetVisitL
 
     public async Task<PagedResult<VetVisitDto>> Handle(GetVetVisitListQuery request, CancellationToken cancellationToken)
     {
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize = Math.Clamp(request.PageSize, 1, 100);
+
         var (items, count) = await _repository.GetPagedAsync(
-            request.PageNumber,
-            request.PageSize,
+            pageNumber,
+            pageSize,
             request.FarmId,
+            request.Search,
+            request.SortBy,
+            request.SortDesc,
             cancellationToken);
 
         var dtos = items.Select(v => v.ToDto()).ToList();
-        return new PagedResult<VetVisitDto>(dtos, count, request.PageNumber, request.PageSize);
+        return new PagedResult<VetVisitDto>(dtos, count, pageNumber, pageSize);
     }
 }

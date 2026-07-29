@@ -43,7 +43,6 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
 
     public async Task<IReadOnlyList<VaccinationEvent>> GetUpcomingEventsAsync(Guid farmId, DateOnly beforeDate, CancellationToken ct = default)
     {
-        // This query joins with Animal to filter by FarmId (since Event itself doesn't have FarmId)
         return await context.VaccinationEvents
             .Join(context.Animals,
                 ve => ve.AnimalId,
@@ -84,21 +83,39 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
         return (items, totalCount);
     }
 
-    public async Task<(IReadOnlyList<VaccinationProtocol> Items, int TotalCount)> GetPagedProtocolsAsync(int pageNumber, int pageSize, string? searchTerm, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<VaccinationProtocol> Items, int TotalCount)> GetPagedProtocolsAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default)
     {
         var query = context.VaccinationProtocols
             .Include(p => p.Steps)
+            .AsNoTracking()
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            query = query.Where(p => p.Title.Contains(searchTerm));
+            var term = searchTerm.Trim();
+            query = query.Where(p => EF.Functions.Like(p.Title, $"%{term}%") || (p.Description != null && EF.Functions.Like(p.Description, $"%{term}%")));
         }
 
         var totalCount = await query.CountAsync(ct);
 
+        query = (sortBy?.ToLowerInvariant(), sortDescending) switch
+        {
+            ("title", false)       => query.OrderBy(p => p.Title),
+            ("title", true)        => query.OrderByDescending(p => p.Title),
+            ("targetspecies", false) => query.OrderBy(p => p.TargetSpecies),
+            ("targetspecies", true)  => query.OrderByDescending(p => p.TargetSpecies),
+            ("createdat", false)   => query.OrderBy(p => p.CreatedAtUtc),
+            _                      => query.OrderByDescending(p => p.CreatedAtUtc)
+        };
+
         var items = await query
-            .OrderBy(p => p.Title)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

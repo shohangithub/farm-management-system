@@ -31,19 +31,58 @@ internal sealed class MedicalTreatmentRepository(ApplicationDbContext context) :
                             mt.Status == TreatmentStatus.Ongoing, ct);
     }
 
-    public async Task<(IReadOnlyList<MedicalTreatment> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, Guid? animalId, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<MedicalTreatment> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        Guid? animalId = null,
+        TreatmentStatus? status = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default)
     {
-        var query = context.MedicalTreatments.AsQueryable();
+        var query = context.MedicalTreatments.AsNoTracking().AsQueryable();
+
+        if (farmId.HasValue)
+        {
+            var animalIdsInFarm = context.Animals.Where(a => a.FarmId == farmId.Value).Select(a => a.Id);
+            query = query.Where(mt => animalIdsInFarm.Contains(mt.AnimalId));
+        }
 
         if (animalId.HasValue)
         {
             query = query.Where(mt => mt.AnimalId == animalId.Value);
         }
 
+        if (status.HasValue)
+        {
+            query = query.Where(mt => mt.Status == status.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(mt => EF.Functions.Like(mt.Diagnosis, $"%{term}%") ||
+                                      EF.Functions.Like(mt.MedicationName, $"%{term}%") ||
+                                      (mt.VeterinarianName != null && EF.Functions.Like(mt.VeterinarianName, $"%{term}%")));
+        }
+
         var totalCount = await query.CountAsync(ct);
 
+        query = (sortBy?.ToLowerInvariant(), sortDescending) switch
+        {
+            ("startdate", false)       => query.OrderBy(mt => mt.StartDate),
+            ("startdate", true)        => query.OrderByDescending(mt => mt.StartDate),
+            ("medicationname", false)  => query.OrderBy(mt => mt.MedicationName),
+            ("medicationname", true)   => query.OrderByDescending(mt => mt.MedicationName),
+            ("costbdt", false)         => query.OrderBy(mt => mt.CostBdt),
+            ("costbdt", true)          => query.OrderByDescending(mt => mt.CostBdt),
+            ("createdat", false)       => query.OrderBy(mt => mt.CreatedAtUtc),
+            _                          => query.OrderByDescending(mt => mt.StartDate)
+        };
+
         var items = await query
-            .OrderByDescending(mt => mt.StartDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

@@ -9,6 +9,7 @@ using Farm360.Domain.Tenancy;
 using Farm360.Domain.Organizations;
 using Farm360.Domain.Farms;
 using Farm360.Domain.Feeding;
+using Farm360.Domain.Inventory;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -128,6 +129,11 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<FeedFormula> FeedFormulas => Set<FeedFormula>();
     public DbSet<FeedingSchedule> FeedingSchedules => Set<FeedingSchedule>();
     public DbSet<FeedConsumptionLog> FeedConsumptionLogs => Set<FeedConsumptionLog>();
+
+    // ── Inventory Control Module ──────────────────────────────────────────────
+    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
 
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;

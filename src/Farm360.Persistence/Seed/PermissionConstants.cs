@@ -40,16 +40,17 @@ public static class PermissionConstants
     }
 
     // ── Inventory ─────────────────────────────────────────────────────────────
-    public static class Inventory
+    public static class InventoryModule
     {
         public const string View   = "inventory.view";
         public const string Create = "inventory.create";
         public const string Edit   = "inventory.edit";
         public const string Delete = "inventory.delete";
+        public const string Manage = "inventory.manage";
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────
-    public static class Reports
+    public static class ReportsModule
     {
         public const string View   = "reports.view";
         public const string Export = "reports.export";
@@ -158,14 +159,15 @@ public static class PermissionConstants
         (FeedingModule.Edit,   "Feeding", "Edit feeding records"),
         (FeedingModule.Delete, "Feeding", "Delete feeding records"),
 
-        (Inventory.View,   "Inventory", "View inventory and stock levels"),
-        (Inventory.Create, "Inventory", "Add inventory items and stock"),
-        (Inventory.Edit,   "Inventory", "Update inventory records"),
-        (Inventory.Delete, "Inventory", "Remove inventory items"),
+        (InventoryModule.View,   "Inventory", "View inventory and stock levels"),
+        (InventoryModule.Create, "Inventory", "Add inventory items and stock"),
+        (InventoryModule.Edit,   "Inventory", "Update inventory records"),
+        (InventoryModule.Delete, "Inventory", "Remove inventory items"),
+        (InventoryModule.Manage, "Inventory", "Manage suppliers and stock adjustments"),
 
-        (Reports.View,     "Reports", "View reports and analytics"),
-        (Reports.Export,   "Reports", "Export reports to Excel/PDF"),
-        (Reports.Schedule, "Reports", "Schedule automated report delivery"),
+        (ReportsModule.View,     "Reports", "View reports and analytics"),
+        (ReportsModule.Export,   "Reports", "Export reports to Excel/PDF"),
+        (ReportsModule.Schedule, "Reports", "Schedule automated report delivery"),
 
         (Users.View,       "Users", "View team members"),
         (Users.Invite,     "Users", "Invite new users to the tenant"),

@@ -9,6 +9,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HealthService } from '../../services/health.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { MedicalTreatmentDto, TreatmentStatus } from '../../models/health.models';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { LogTreatmentDialog } from '../../components/dialogs/log-treatment-dialog/log-treatment-dialog.component';
@@ -45,6 +46,7 @@ import { of } from 'rxjs';
 })
 export class TreatmentListComponent {
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
 
   displayedColumns: string[] = ['animalId', 'diagnosis', 'medicationName', 'startDate', 'status', 'cost', 'actions'];
@@ -58,17 +60,20 @@ export class TreatmentListComponent {
   refreshTrigger = signal(0);
   isLoading = signal(true);
 
+  private currentFarm = toSignal(this.contextService.currentFarm$);
+
   private paginationParams = computed(() => ({
     pageIndex: this.pageIndex(),
     pageSize: this.pageSize(),
+    farmId: this.currentFarm()?.id,
     refresh: this.refreshTrigger()
   }));
 
   private treatmentsResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => this.isLoading.set(true)),
-      switchMap(({ pageIndex, pageSize }) => 
-        this.healthService.getTreatments(pageIndex + 1, pageSize).pipe(
+      switchMap(({ pageIndex, pageSize, farmId }) => 
+        this.healthService.getTreatments({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
           catchError((err) => {
             console.error('Error loading treatments', err);
             return of({ items: [], totalCount: 0 });

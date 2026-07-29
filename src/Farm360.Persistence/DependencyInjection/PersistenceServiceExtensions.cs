@@ -80,6 +80,11 @@ public static class PersistenceServiceExtensions
         services.AddScoped<IFeedingScheduleRepository, FeedingScheduleRepository>();
         services.AddScoped<IFeedConsumptionLogRepository, FeedConsumptionLogRepository>();
 
+        // ── Inventory repositories ──────────────────────────────────────────────
+        services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository, Farm360.Persistence.Repositories.Inventory.InventoryItemRepository>();
+        services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.ISupplierRepository, Farm360.Persistence.Repositories.Inventory.SupplierRepository>();
+        services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IStockTransactionRepository, Farm360.Persistence.Repositories.Inventory.StockTransactionRepository>();
+
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();
         services.AddScoped<IShedRepository, ShedRepository>();

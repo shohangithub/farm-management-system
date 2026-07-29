@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HealthService } from '../../services/health.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -37,6 +38,7 @@ import { of } from 'rxjs';
 })
 export class VetVisitListComponent {
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
 
   displayedColumns: string[] = ['visitDate', 'vetName', 'visitType', 'purpose', 'cost', 'nextVisit', 'actions'];
@@ -49,17 +51,20 @@ export class VetVisitListComponent {
   refreshTrigger = signal(0);
   isLoading = signal(true);
 
+  private currentFarm = toSignal(this.contextService.currentFarm$);
+
   private paginationParams = computed(() => ({
     pageIndex: this.pageIndex(),
     pageSize: this.pageSize(),
+    farmId: this.currentFarm()?.id,
     refresh: this.refreshTrigger()
   }));
 
   private vetVisitsResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => this.isLoading.set(true)),
-      switchMap(({ pageIndex, pageSize }) => 
-        this.healthService.getVetVisits(pageIndex + 1, pageSize).pipe(
+      switchMap(({ pageIndex, pageSize, farmId }) => 
+        this.healthService.getVetVisits({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
           catchError((err) => {
             console.error('Error loading vet visits', err);
             return of({ items: [], totalCount: 0 });
@@ -106,7 +111,6 @@ export class VetVisitListComponent {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        // If result is true, it means the visit was edited successfully
         this.loadVetVisits();
       }
     });

@@ -1,4 +1,3 @@
-using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Common.Models;
 using Farm360.Application.Health.DTOs;
 using Farm360.Application.Health.Mappings;
@@ -9,8 +8,11 @@ namespace Farm360.Application.Health.Queries.VaccinationProtocols;
 
 public sealed record GetVaccinationProtocolsQuery(
     int PageNumber = 1,
-    int PageSize = 10,
-    string? SearchTerm = null
+    int PageSize = 20,
+    Guid? FarmId = null,
+    string? Search = null,
+    string? SortBy = null,
+    bool SortDesc = false
 ) : IRequest<PagedResult<VaccinationProtocolDto>>;
 
 internal sealed class GetVaccinationProtocolsQueryHandler : IRequestHandler<GetVaccinationProtocolsQuery, PagedResult<VaccinationProtocolDto>>
@@ -24,13 +26,19 @@ internal sealed class GetVaccinationProtocolsQueryHandler : IRequestHandler<GetV
 
     public async Task<PagedResult<VaccinationProtocolDto>> Handle(GetVaccinationProtocolsQuery request, CancellationToken cancellationToken)
     {
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize = Math.Clamp(request.PageSize, 1, 100);
+
         var (items, count) = await _repository.GetPagedProtocolsAsync(
-            request.PageNumber,
-            request.PageSize,
-            request.SearchTerm,
+            pageNumber,
+            pageSize,
+            request.FarmId,
+            request.Search,
+            request.SortBy,
+            request.SortDesc,
             cancellationToken);
 
         var dtos = items.Select(p => p.ToDto()).ToList();
-        return new PagedResult<VaccinationProtocolDto>(dtos, count, request.PageNumber, request.PageSize);
+        return new PagedResult<VaccinationProtocolDto>(dtos, count, pageNumber, pageSize);
     }
 }

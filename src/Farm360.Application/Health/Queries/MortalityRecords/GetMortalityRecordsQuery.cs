@@ -1,4 +1,3 @@
-using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Common.Models;
 using Farm360.Application.Health.DTOs;
 using Farm360.Application.Health.Mappings;
@@ -9,7 +8,13 @@ namespace Farm360.Application.Health.Queries.MortalityRecords;
 
 public sealed record GetMortalityRecordsQuery(
     int PageNumber = 1,
-    int PageSize = 10
+    int PageSize = 20,
+    Guid? FarmId = null,
+    Guid? AnimalId = null,
+    string? Reason = null,
+    string? Search = null,
+    string? SortBy = null,
+    bool SortDesc = false
 ) : IRequest<PagedResult<MortalityRecordDto>>;
 
 internal sealed class GetMortalityRecordsQueryHandler : IRequestHandler<GetMortalityRecordsQuery, PagedResult<MortalityRecordDto>>
@@ -23,12 +28,21 @@ internal sealed class GetMortalityRecordsQueryHandler : IRequestHandler<GetMorta
 
     public async Task<PagedResult<MortalityRecordDto>> Handle(GetMortalityRecordsQuery request, CancellationToken cancellationToken)
     {
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize = Math.Clamp(request.PageSize, 1, 100);
+
         var (items, count) = await _repository.GetPagedAsync(
-            request.PageNumber,
-            request.PageSize,
+            pageNumber,
+            pageSize,
+            request.FarmId,
+            request.AnimalId,
+            request.Reason,
+            request.Search,
+            request.SortBy,
+            request.SortDesc,
             cancellationToken);
 
         var dtos = items.Select(m => m.ToDto()).ToList();
-        return new PagedResult<MortalityRecordDto>(dtos, count, request.PageNumber, request.PageSize);
+        return new PagedResult<MortalityRecordDto>(dtos, count, pageNumber, pageSize);
     }
 }

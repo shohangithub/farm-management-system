@@ -141,7 +141,7 @@ public sealed class DataSeeder(
             PermissionConstants.HealthModule.Delete,
             PermissionConstants.HealthModule.Prescribe,
             PermissionConstants.FeedingModule.View,
-            PermissionConstants.Reports.View,
+            PermissionConstants.ReportsModule.View,
             PermissionConstants.Notifications.View,
         };
         foreach (var code in vetPerms)
@@ -153,7 +153,7 @@ public sealed class DataSeeder(
         {
             PermissionConstants.Animals.View, PermissionConstants.Animals.Create,
             PermissionConstants.FeedingModule.View, PermissionConstants.FeedingModule.Create, PermissionConstants.FeedingModule.Edit,
-            PermissionConstants.Inventory.View,
+            PermissionConstants.InventoryModule.View,
             PermissionConstants.Notifications.View,
         };
         foreach (var code in workerPerms)

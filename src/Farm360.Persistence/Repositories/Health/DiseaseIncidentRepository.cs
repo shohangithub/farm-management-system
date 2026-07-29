@@ -32,14 +32,56 @@ internal sealed class DiseaseIncidentRepository(ApplicationDbContext context) : 
             .ToListAsync(ct);
     }
 
-    public async Task<(IReadOnlyList<DiseaseIncident> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<DiseaseIncident> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        IncidentStatus? status = null,
+        IncidentSeverity? severity = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default)
     {
-        var query = context.DiseaseIncidents.AsQueryable();
+        var query = context.DiseaseIncidents.AsNoTracking().AsQueryable();
+
+        if (farmId.HasValue)
+        {
+            query = query.Where(di => di.FarmId == farmId.Value);
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(di => di.Status == status.Value);
+        }
+
+        if (severity.HasValue)
+        {
+            query = query.Where(di => di.Severity == severity.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(di => EF.Functions.Like(di.DiseaseName, $"%{term}%") ||
+                                      (di.Notes != null && EF.Functions.Like(di.Notes, $"%{term}%")));
+        }
 
         var totalCount = await query.CountAsync(ct);
 
+        query = (sortBy?.ToLowerInvariant(), sortDescending) switch
+        {
+            ("incidentdate", false)  => query.OrderBy(di => di.IncidentDate),
+            ("incidentdate", true)   => query.OrderByDescending(di => di.IncidentDate),
+            ("diseasename", false)   => query.OrderBy(di => di.DiseaseName),
+            ("diseasename", true)    => query.OrderByDescending(di => di.DiseaseName),
+            ("severity", false)      => query.OrderBy(di => di.Severity),
+            ("severity", true)       => query.OrderByDescending(di => di.Severity),
+            ("createdat", false)     => query.OrderBy(di => di.CreatedAtUtc),
+            _                        => query.OrderByDescending(di => di.IncidentDate)
+        };
+
         var items = await query
-            .OrderByDescending(di => di.IncidentDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

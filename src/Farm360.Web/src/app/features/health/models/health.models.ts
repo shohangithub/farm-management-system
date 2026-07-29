@@ -48,6 +48,67 @@ export enum AnimalSpecies {
   Poultry = 'Poultry'
 }
 
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface VaccinationProtocolParams {
+  pageNumber?: number;
+  pageSize?: number;
+  farmId?: string;
+  search?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+
+export interface MedicalTreatmentParams {
+  pageNumber?: number;
+  pageSize?: number;
+  farmId?: string;
+  animalId?: string;
+  status?: TreatmentStatus;
+  search?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+
+export interface DiseaseIncidentParams {
+  pageNumber?: number;
+  pageSize?: number;
+  farmId?: string;
+  status?: IncidentStatus;
+  severity?: IncidentSeverity;
+  search?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+
+export interface MortalityRecordParams {
+  pageNumber?: number;
+  pageSize?: number;
+  farmId?: string;
+  animalId?: string;
+  reason?: string;
+  search?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+
+export interface VetVisitParams {
+  pageNumber?: number;
+  pageSize?: number;
+  farmId?: string;
+  search?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+
 export interface VaccinationProtocolStepDto {
   id: string;
   stepName: string;

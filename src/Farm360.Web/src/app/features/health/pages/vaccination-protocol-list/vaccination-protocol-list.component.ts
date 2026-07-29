@@ -11,6 +11,7 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import { HealthService } from '../../services/health.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { VaccinationProtocolDto } from '../../models/health.models';
 import { AssignProtocolDialog } from '../../components/dialogs/assign-protocol-dialog/assign-protocol-dialog.component';
 import { CreateProtocolDialogComponent } from '../../components/dialogs/create-protocol-dialog/create-protocol-dialog.component';
@@ -39,6 +40,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 })
 export class VaccinationProtocolListComponent {
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
 
   displayedColumns: string[] = ['title', 'targetSpecies', 'steps', 'status', 'actions'];
@@ -51,10 +53,13 @@ export class VaccinationProtocolListComponent {
   refreshTrigger = signal(0);
   isLoading = signal(true);
 
+  private currentFarm = toSignal(this.contextService.currentFarm$);
+
   // Derived state to drive the fetch pipeline
   private paginationParams = computed(() => ({
     pageIndex: this.pageIndex(),
     pageSize: this.pageSize(),
+    farmId: this.currentFarm()?.id,
     refresh: this.refreshTrigger()
   }));
 
@@ -62,8 +67,8 @@ export class VaccinationProtocolListComponent {
   private protocolsResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => this.isLoading.set(true)),
-      switchMap(({ pageIndex, pageSize }) => 
-        this.healthService.getVaccinationProtocols(pageIndex + 1, pageSize).pipe(
+      switchMap(({ pageIndex, pageSize, farmId }) => 
+        this.healthService.getVaccinationProtocols({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
           catchError((err) => {
             console.error('Error loading protocols', err);
             return of({ items: [], totalCount: 0 });
@@ -86,7 +91,6 @@ export class VaccinationProtocolListComponent {
   }
 
   loadProtocols(): void {
-    // Triggers reactivity without manual CDR
     this.refreshTrigger.update(v => v + 1);
   }
 

@@ -8,7 +8,14 @@ public interface IVaccinationRepository
     // Protocols
     Task<VaccinationProtocol?> GetProtocolByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<VaccinationProtocol>> GetProtocolsBySpeciesAsync(AnimalSpecies species, CancellationToken ct = default);
-    Task<(IReadOnlyList<VaccinationProtocol> Items, int TotalCount)> GetPagedProtocolsAsync(int pageNumber, int pageSize, string? searchTerm, CancellationToken ct = default);
+    Task<(IReadOnlyList<VaccinationProtocol> Items, int TotalCount)> GetPagedProtocolsAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default);
     void AddProtocol(VaccinationProtocol protocol);
     void UpdateProtocol(VaccinationProtocol protocol);
 
@@ -26,7 +33,16 @@ public interface IMedicalTreatmentRepository
 {
     Task<MedicalTreatment?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<MedicalTreatment>> GetByAnimalIdAsync(Guid animalId, CancellationToken ct = default);
-    Task<(IReadOnlyList<MedicalTreatment> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, Guid? animalId, CancellationToken ct = default);
+    Task<(IReadOnlyList<MedicalTreatment> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        Guid? animalId = null,
+        TreatmentStatus? status = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default);
     Task<bool> HasActiveTreatmentForMedicationAsync(Guid animalId, string medicationName, CancellationToken ct = default);
     Task<IReadOnlyList<(MedicalTreatment Treatment, string AnimalTag)>> GetActiveMilkWithdrawalsAsync(Guid farmId, CancellationToken ct = default);
     void Add(MedicalTreatment treatment);
@@ -38,7 +54,16 @@ public interface IDiseaseIncidentRepository
     Task<DiseaseIncident?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<DiseaseIncident>> GetActiveIncidentsByFarmAsync(Guid farmId, CancellationToken ct = default);
     Task<IReadOnlyList<DiseaseIncident>> GetIncidentsByAnimalIdAsync(Guid animalId, CancellationToken ct = default);
-    Task<(IReadOnlyList<DiseaseIncident> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default);
+    Task<(IReadOnlyList<DiseaseIncident> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        IncidentStatus? status = null,
+        IncidentSeverity? severity = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default);
     void Add(DiseaseIncident incident);
     void Update(DiseaseIncident incident);
 }
@@ -46,14 +71,30 @@ public interface IDiseaseIncidentRepository
 public interface IMortalityRecordRepository
 {
     Task<bool> ExistsByAnimalIdAsync(Guid animalId, CancellationToken ct = default);
-    Task<(IReadOnlyList<MortalityRecord> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default);
+    Task<(IReadOnlyList<MortalityRecord> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        Guid? animalId = null,
+        string? reason = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default);
     void Add(MortalityRecord record);
 }
 
 public interface IVetVisitRepository
 {
     Task<VetVisit?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<(IReadOnlyList<VetVisit> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, Guid? farmId, CancellationToken ct = default);
+    Task<(IReadOnlyList<VetVisit> Items, int TotalCount)> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Guid? farmId = null,
+        string? searchTerm = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken ct = default);
     void Add(VetVisit visit);
     void Update(VetVisit visit);
 }

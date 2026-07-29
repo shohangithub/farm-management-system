@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HealthService } from '../../services/health.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { CauseOfDeath } from '../../models/health.models';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RecordMortalityDialog } from '../../components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
@@ -38,6 +39,7 @@ import { of } from 'rxjs';
 })
 export class MortalityListComponent {
   private healthService = inject(HealthService);
+  private contextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
 
   displayedColumns: string[] = ['animalId', 'deathDate', 'causeOfDeath', 'diseaseName', 'loss', 'actions'];
@@ -50,17 +52,20 @@ export class MortalityListComponent {
   refreshTrigger = signal(0);
   isLoading = signal(true);
 
+  private currentFarm = toSignal(this.contextService.currentFarm$);
+
   private paginationParams = computed(() => ({
     pageIndex: this.pageIndex(),
     pageSize: this.pageSize(),
+    farmId: this.currentFarm()?.id,
     refresh: this.refreshTrigger()
   }));
 
   private mortalitiesResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => this.isLoading.set(true)),
-      switchMap(({ pageIndex, pageSize }) => 
-        this.healthService.getMortalityRecords(pageIndex + 1, pageSize).pipe(
+      switchMap(({ pageIndex, pageSize, farmId }) => 
+        this.healthService.getMortalityRecords({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
           catchError((err) => {
             console.error('Error loading mortality records', err);
             return of({ items: [], totalCount: 0 });
