@@ -33,7 +33,7 @@ public sealed class AnimalCommandValidatorTests
         TagId:               "B-001",
         TagType:             TagType.EarTag,
         Species:             AnimalSpecies.CattleBeef,
-        BreedName:           "Shahiwal",
+        BreedId:             Guid.NewGuid(),
         Sex:                 AnimalSex.Male,
         DateOfBirth:         new DateOnly(2023, 1, 1),
         AcquisitionType:     AcquisitionType.Purchased,
@@ -125,13 +125,13 @@ public sealed class AnimalCommandValidatorTests
     }
 
     [Fact]
-    public async Task RegisterAnimal_EmptyBreedName_FailsValidation()
+    public async Task RegisterAnimal_EmptyBreedId_FailsValidation()
     {
-        var cmd = ValidRegisterCommand() with { BreedName = string.Empty };
+        var cmd = ValidRegisterCommand() with { BreedId = Guid.Empty };
 
         var result = await _registerValidator.TestValidateAsync(cmd);
 
-        result.ShouldHaveValidationErrorFor(x => x.BreedName);
+        result.ShouldHaveValidationErrorFor(x => x.BreedId);
     }
 
     [Fact]

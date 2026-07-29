@@ -65,6 +65,7 @@ public static class PersistenceServiceExtensions
         // ── Livestock repositories ──────────────────────────────────────────────
         services.AddScoped<IAnimalRepository, AnimalRepository>();
         services.AddScoped<IAnimalBatchRepository, AnimalBatchRepository>();
+        services.AddScoped<IBreedRepository, BreedRepository>();
 
         // ── Health repositories ─────────────────────────────────────────────────
         services.AddScoped<IVaccinationRepository, VaccinationRepository>();
@@ -87,7 +88,6 @@ public static class PersistenceServiceExtensions
 
         // ── Intelligence repositories ───────────────────────────────────────────
         services.AddScoped<Farm360.Domain.Intelligence.Interfaces.Repositories.IInsightRepository, Farm360.Persistence.Repositories.Intelligence.InsightRepository>();
-        services.AddScoped<Farm360.Domain.Intelligence.Interfaces.Repositories.IPerformanceTargetRepository, Farm360.Persistence.Repositories.Intelligence.PerformanceTargetRepository>();
 
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();

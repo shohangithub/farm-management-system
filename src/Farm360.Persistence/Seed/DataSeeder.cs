@@ -29,6 +29,7 @@ public sealed class DataSeeder(
         await SeedPermissionsAsync(cancellationToken);
         await SeedSystemRolesAsync(cancellationToken);
         await SeedRolePermissionsAsync(cancellationToken);
+        await SeedBreedsAsync(cancellationToken);
 
         logger.LogInformation("Farm360 DataSeeder: Completed.");
     }
@@ -177,5 +178,99 @@ public sealed class DataSeeder(
         var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(input));
         // Take first 16 bytes to form a valid GUID
         return new Guid(hash.AsSpan(0, 16));
+    }
+
+    // ── 4. Breeds (Tenant-Scoped Master Data) ─────────────────────────────────
+    private async Task SeedBreedsAsync(CancellationToken cancellationToken)
+    {
+        var tenants = await context.Tenants
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        int addedCount = 0;
+
+        foreach (var tenantId in tenants)
+        {
+            var existingBreeds = await context.Breeds
+                .IgnoreQueryFilters()
+                .Where(b => b.TenantId == tenantId)
+                .Select(b => b.Name)
+                .ToHashSetAsync(cancellationToken);
+
+            var breedsToAdd = new List<Farm360.Domain.Livestock.Breed>();
+
+            // Helper to add breed if it doesn't exist
+            void AddBreed(string name, string desc, string cat, string orig, string purp, 
+                          decimal adgPoor, decimal adgAvg, decimal adgGood, decimal adgInt, 
+                          decimal fcrMin, decimal fcrMax, decimal stdAdgMin, decimal stdAdgMax, 
+                          decimal milkMin, decimal milkMax, decimal fatMin, decimal fatMax, string bestFor)
+            {
+                if (!existingBreeds.Contains(name))
+                {
+                    breedsToAdd.Add(new Farm360.Domain.Livestock.Breed(
+                        Guid.NewGuid(), tenantId, name, desc, cat, orig, purp,
+                        adgPoor, adgAvg, adgGood, adgInt, fcrMin, fcrMax, stdAdgMin, stdAdgMax,
+                        milkMin, milkMax, fatMin, fatMax, bestFor));
+                }
+            }
+
+            // ── Indigenous (Native) ──────────────────────────────────────────
+            AddBreed("Deshi (Local)", "Hardy, disease-resistant native breed.", "Indigenous", "Bangladesh", "Dual-purpose",
+                0.2m, 0.3m, 0.4m, 0.5m, 8.0m, 10.0m, 0.2m, 0.4m, 1.0m, 3.0m, 4.5m, 5.5m, "Low-cost farming");
+
+            AddBreed("Red Chittagong (RCC)", "Native breed known for quality milk and meat.", "Indigenous", "Bangladesh", "Dairy",
+                0.2m, 0.3m, 0.4m, 0.5m, 7.0m, 9.0m, 0.3m, 0.5m, 2.0m, 5.0m, 4.5m, 5.0m, "Small dairy farms");
+
+            AddBreed("Pabna", "Native milking breed.", "Indigenous", "Bangladesh", "Dairy",
+                0.2m, 0.3m, 0.4m, 0.5m, 8.0m, 10.0m, 0.3m, 0.5m, 5.0m, 10.0m, 4.0m, 4.5m, "Native dairy");
+
+            // ── Exotic (Imported) ────────────────────────────────────────────
+            AddBreed("Holstein Friesian", "High-yielding dairy breed.", "Exotic", "Netherlands", "Dairy",
+                0.4m, 0.6m, 0.8m, 1.0m, 6.0m, 8.0m, 0.6m, 1.0m, 20.0m, 35.0m, 3.4m, 3.8m, "High-volume commercial dairy");
+
+            AddBreed("Jersey", "High butterfat dairy breed.", "Exotic", "UK", "Dairy",
+                0.4m, 0.5m, 0.6m, 0.8m, 6.0m, 8.0m, 0.5m, 0.8m, 15.0m, 25.0m, 4.8m, 5.5m, "Premium milk (high butterfat)");
+
+            AddBreed("Sahiwal", "Heat-tolerant dairy breed.", "Exotic", "Pakistan", "Dairy",
+                0.4m, 0.5m, 0.7m, 0.8m, 6.5m, 8.5m, 0.5m, 0.8m, 8.0m, 15.0m, 4.5m, 5.0m, "Heat-tolerant dairy");
+
+            AddBreed("Red Sindhi", "Heat-tolerant dairy breed.", "Exotic", "Pakistan", "Dairy",
+                0.3m, 0.4m, 0.6m, 0.7m, 6.5m, 8.5m, 0.4m, 0.7m, 8.0m, 12.0m, 4.5m, 5.0m, "Dairy");
+
+            AddBreed("Hariana", "Dual-purpose exotic breed.", "Exotic", "India", "Dual-purpose",
+                0.3m, 0.4m, 0.6m, 0.7m, 7.0m, 9.0m, 0.4m, 0.7m, 6.0m, 10.0m, 4.0m, 4.5m, "Dual-purpose");
+
+            AddBreed("Brahman", "Heat-tolerant beef breed.", "Exotic", "USA/India", "Beef",
+                0.5m, 0.8m, 1.0m, 1.2m, 5.0m, 7.0m, 0.8m, 1.2m, 2.0m, 5.0m, 4.0m, 4.5m, "Beef");
+
+            // ── Crossbred ────────────────────────────────────────────────────
+            AddBreed("Holstein Cross", "High-yielding commercial dairy cross.", "Crossbred", "Local Cross", "Dairy",
+                0.5m, 0.7m, 0.9m, 1.0m, 6.0m, 8.0m, 0.7m, 1.0m, 12.0m, 25.0m, 3.8m, 4.2m, "Commercial dairy");
+
+            AddBreed("Jersey Cross", "High quality milk cross.", "Crossbred", "Local Cross", "Dairy",
+                0.4m, 0.5m, 0.7m, 0.8m, 6.0m, 8.0m, 0.5m, 0.8m, 8.0m, 18.0m, 4.5m, 5.2m, "Quality milk");
+
+            AddBreed("Sahiwal Cross", "Balanced dairy crossbred.", "Crossbred", "Local Cross", "Dairy",
+                0.4m, 0.6m, 0.8m, 0.9m, 6.5m, 8.5m, 0.6m, 0.9m, 8.0m, 15.0m, 4.2m, 4.8m, "Balanced dairy");
+
+            AddBreed("Brahman Cross", "High-yielding beef crossbred.", "Crossbred", "Local Cross", "Beef",
+                0.6m, 0.9m, 1.1m, 1.3m, 5.0m, 7.0m, 0.9m, 1.3m, 2.0m, 6.0m, 4.0m, 4.5m, "Beef with limited milk");
+
+
+            if (breedsToAdd.Count > 0)
+            {
+                context.Breeds.AddRange(breedsToAdd);
+                addedCount += breedsToAdd.Count;
+            }
+        }
+
+        if (addedCount > 0)
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
+                logger.LogInformation("Farm360 DataSeeder: Seeded {Count} default breeds across {TenantCount} tenants", addedCount, tenants.Count);
+        }
     }
 }

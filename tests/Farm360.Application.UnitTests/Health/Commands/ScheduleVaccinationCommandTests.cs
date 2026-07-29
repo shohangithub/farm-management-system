@@ -39,7 +39,7 @@ public class ScheduleVaccinationCommandTests
         var animalId = Guid.NewGuid();
         var farmId = Guid.NewGuid();
         var tag = AnimalTag.Create("BD-1234", TagType.Manual);
-        var animal = Animal.Create(_tenantServiceMock.Object.TenantId, farmId, tag, AnimalSpecies.CattleBeef, "Local", AnimalSex.Male, DateOnly.FromDateTime(DateTime.UtcNow), AcquisitionType.Purchased, DateOnly.FromDateTime(DateTime.UtcNow), null, null);
+        var animal = Animal.Create(_tenantServiceMock.Object.TenantId, farmId, tag, AnimalSpecies.CattleBeef, Guid.NewGuid(), AnimalSex.Male, DateOnly.FromDateTime(DateTime.UtcNow), AcquisitionType.Purchased, DateOnly.FromDateTime(DateTime.UtcNow), null, null);
         
         _animalRepositoryMock.Setup(r => r.GetByIdAsync(animalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(animal);

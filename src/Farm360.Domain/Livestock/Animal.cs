@@ -39,7 +39,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         Guid farmId,
         AnimalTag tag,
         AnimalSpecies species,
-        string breedName,
+        Guid breedId,
         AnimalSex sex,
         DateOnly dateOfBirth,
         AcquisitionType acquisitionType,
@@ -51,7 +51,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         FarmId = farmId;
         Tag = tag;
         Species = species;
-        BreedName = breedName;
+        BreedId = breedId;
         Sex = sex;
         DateOfBirth = dateOfBirth;
         AcquisitionType = acquisitionType;
@@ -71,8 +71,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     // ── Classification ────────────────────────────────────────────────────────
     public AnimalSpecies Species { get; private set; }
 
-    /// <summary>Free-text breed name (Shahibal, Holstein-Friesian, Black Bengal, etc.).</summary>
-    public string BreedName { get; private set; } = string.Empty;
+    /// <summary>Foreign key to the Breed master data.</summary>
+    public Guid BreedId { get; private set; }
 
     public AnimalSex Sex { get; private set; }
     
@@ -132,7 +132,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         Guid farmId,
         AnimalTag tag,
         AnimalSpecies species,
-        string breedName,
+        Guid breedId,
         AnimalSex sex,
         DateOnly dateOfBirth,
         AcquisitionType acquisitionType,
@@ -146,7 +146,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             farmId,
             tag,
             species,
-            breedName,
+            breedId,
             sex,
             dateOfBirth,
             acquisitionType,
@@ -162,7 +162,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             farmId,
             tag.TagId,
             species,
-            breedName,
+            breedId,
             acquisitionPriceBdt));
 
         return animal;

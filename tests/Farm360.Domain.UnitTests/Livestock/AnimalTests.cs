@@ -32,7 +32,7 @@ public sealed class AnimalTests
             farmId:             FarmId,
             tag:                tag ?? DefaultTag,
             species:            species,
-            breedName:          "Shahiwal",
+            breedId:            Guid.NewGuid(),
             sex:                sex,
             dateOfBirth:        dob ?? new DateOnly(2023, 1, 15),
             acquisitionType:    AcquisitionType.Purchased,
@@ -55,7 +55,7 @@ public sealed class AnimalTests
         animal.FarmId.Should().Be(FarmId);
         animal.Tag.TagId.Should().Be("B-001");
         animal.Tag.TagType.Should().Be(TagType.EarTag);
-        animal.BreedName.Should().Be("Shahiwal");
+        animal.BreedId.Should().NotBe(Guid.Empty);
         animal.IsDeleted.Should().BeFalse();
     }
 
@@ -75,7 +75,7 @@ public sealed class AnimalTests
             farmId:          FarmId,
             tag:             DefaultTag,
             species:         AnimalSpecies.CattleBeef,
-            breedName:       "Test",
+            breedId:         Guid.NewGuid(),
             sex:             AnimalSex.Male,
             dateOfBirth:     new DateOnly(2023, 1, 1),
             acquisitionType: AcquisitionType.Purchased,
@@ -96,7 +96,7 @@ public sealed class AnimalTests
             farmId:          Guid.Empty,
             tag:             DefaultTag,
             species:         AnimalSpecies.CattleBeef,
-            breedName:       "Test",
+            breedId:         Guid.NewGuid(),
             sex:             AnimalSex.Male,
             dateOfBirth:     new DateOnly(2023, 1, 1),
             acquisitionType: AcquisitionType.Purchased,

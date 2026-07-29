@@ -77,14 +77,15 @@
 
       <!-- Breed -->
       <div class="sm:col-span-3 space-y-1.5">
-        <label for="breedName" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <label for="breedId" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
           Breed Name <span class="text-red-500">*</span>
         </label>
-        <input type="text" formControlName="breedName" id="breedName" 
-               placeholder="e.g. Holstein-Friesian"
-               class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-                      [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
-        <p *ngIf="getError('breedName')" class="text-xs text-red-500 mt-1">{{ getError('breedName') }}</p>
+        <select formControlName="breedId" id="breedId"
+                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
+          <option value="" disabled selected>Select a breed...</option>
+          <option *ngFor="let b of breeds()" [value]="b.id">{{ b.name }} ({{ b.category }})</option>
+        </select>
+        <p *ngIf="getError('breedId')" class="text-xs text-red-500 mt-1">{{ getError('breedId') }}</p>
       </div>
 
       <!-- Sex -->

@@ -109,6 +109,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<TenantUser> TenantUsers => Set<TenantUser>();
 
     // ── Livestock Module ───────────────────────────────────────────────────────
+    public DbSet<Breed> Breeds => Set<Breed>();
     public DbSet<Animal> Animals => Set<Animal>();
     public DbSet<AnimalBatch> AnimalBatches => Set<AnimalBatch>();
     public DbSet<BodyConditionScore> BodyConditionScores => Set<BodyConditionScore>();
@@ -137,7 +138,6 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 
     // ── Intelligence & Analytics Module ───────────────────────────────────────
     public DbSet<Farm360.Domain.Intelligence.ActionableInsight> ActionableInsights => Set<Farm360.Domain.Intelligence.ActionableInsight>();
-    public DbSet<Farm360.Domain.Intelligence.PerformanceTarget> PerformanceTargets => Set<Farm360.Domain.Intelligence.PerformanceTarget>();
 
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;

@@ -12,6 +12,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
+import { BreedService } from '../../services/breed.service';
+import { BreedDto } from '../../models/breed.models';
 
 @Component({
   selector: 'app-animal-register',
@@ -30,10 +32,12 @@ export class AnimalRegisterComponent implements OnInit {
   private readonly fb       = inject(FormBuilder);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly breedSvc = inject(BreedService);
   
   readonly submitting  = signal(false);
   readonly error       = signal<string | null>(null);
   readonly today       = new Date().toISOString().split('T')[0];
+  readonly breeds      = signal<BreedDto[]>([]);
 
   form!: FormGroup;
 
@@ -51,7 +55,7 @@ export class AnimalRegisterComponent implements OnInit {
       tagId:              ['', [Validators.required, Validators.maxLength(50)]],
       tagType:            [TagType.Manual, Validators.required],
       species:            [AnimalSpecies.CattleBeef, Validators.required],
-      breedName:          ['', [Validators.required, Validators.maxLength(100)]],
+      breedId:            ['', [Validators.required]],
       sex:                [AnimalSex.Male, Validators.required],
       dateOfBirth:        ['', Validators.required],
       acquisitionType:    [AcquisitionType.Purchased, Validators.required],
@@ -68,6 +72,10 @@ export class AnimalRegisterComponent implements OnInit {
           this.form.get('tagId')?.setValue(value.toUpperCase(), { emitEvent: false });
         }
       });
+
+    this.breedSvc.getBreeds({ pageSize: 1000 }).subscribe({
+      next: (b) => this.breeds.set(b.items)
+    });
   }
 
   getError(field: string): string {
@@ -113,7 +121,7 @@ export class AnimalRegisterComponent implements OnInit {
       tagId:               v.tagId!,
       tagType:             +v.tagType!,
       species:             +v.species!,
-      breedName:           v.breedName!,
+      breedId:             v.breedId!,
       sex:                 +v.sex!,
       dateOfBirth:         v.dateOfBirth!,
       acquisitionType:     +v.acquisitionType!,

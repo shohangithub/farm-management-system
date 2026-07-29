@@ -11,10 +11,12 @@ namespace Farm360.Application.Intelligence.Services;
 public class GrowthPredictionEngine : IGrowthPredictionEngine
 {
     private readonly IAnimalRepository _animalRepository;
+    private readonly IBreedRepository _breedRepository;
 
-    public GrowthPredictionEngine(IAnimalRepository animalRepository)
+    public GrowthPredictionEngine(IAnimalRepository animalRepository, IBreedRepository breedRepository)
     {
         _animalRepository = animalRepository;
+        _breedRepository = breedRepository;
     }
 
     public async Task<GrowthCurve?> CalculateGrowthCurveAsync(Guid animalId, CancellationToken cancellationToken = default)
@@ -27,10 +29,21 @@ public class GrowthPredictionEngine : IGrowthPredictionEngine
         
         if (weights.Count < 2)
         {
-            // Cannot calculate ADG with less than 2 records.
-            // Just use the latest weight or initial weight.
+            // Use breed expected ADG as baseline when historical data is insufficient
+            decimal baselineAdg = 0;
+            var breed = await _breedRepository.GetByIdAsync(animal.BreedId, cancellationToken);
+            if (breed != null)
+            {
+                // Defaulting to Average Farm condition ADG for baseline
+                baselineAdg = breed.AdgAverageFarm > 0 ? breed.AdgAverageFarm : breed.StandardAdgMin;
+            }
+
             var currentW = weights.LastOrDefault()?.Weight.WeightKg ?? weights.FirstOrDefault()?.Weight.WeightKg ?? 0m;
-            return new GrowthCurve(currentW, currentW, currentW, currentW, 0);
+            var w30_baseline = currentW + (baselineAdg * 30);
+            var w60_baseline = currentW + (baselineAdg * 60);
+            var w90_baseline = currentW + (baselineAdg * 90);
+            
+            return new GrowthCurve(currentW, w30_baseline, w60_baseline, w90_baseline, baselineAdg);
         }
 
         var firstRecord = weights.First();

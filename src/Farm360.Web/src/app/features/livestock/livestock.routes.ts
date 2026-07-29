@@ -27,6 +27,12 @@ export const livestockRoutes: Routes = [
     title: 'Batch Detail — Farm360',
   },
   {
+    path: 'breeds',
+    loadComponent: () =>
+      import('./pages/breed-list/breed-list').then(m => m.BreedList),
+    title: 'Breeds — Farm360',
+  },
+  {
     path: ':id',
     loadComponent: () =>
       import('./pages/animal-detail/animal-detail.component').then(m => m.AnimalDetailComponent),

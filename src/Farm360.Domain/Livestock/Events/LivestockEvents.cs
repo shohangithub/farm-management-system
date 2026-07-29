@@ -15,7 +15,7 @@ public sealed record AnimalRegisteredEvent(
     Guid FarmId,
     string TagId,
     AnimalSpecies Species,
-    string BreedName,
+    Guid BreedId,
     decimal? AcquisitionPriceBdt) : IDomainEvent;
 
 /// <summary>

@@ -210,6 +210,7 @@ try
 
     // ── Livestock module ────────────────────────────────────────────────────
     app.MapGroup("/api/v1/livestock").MapLivestockEndpoints();
+    app.MapGroup("/api/v1/livestock").MapBreedEndpoints();
 
     // ── Health module ───────────────────────────────────────────────────────
     app.MapHealthEndpoints();

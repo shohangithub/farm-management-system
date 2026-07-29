@@ -23,7 +23,7 @@ public sealed record RegisterAnimalCommand(
     string TagId,
     TagType TagType,
     AnimalSpecies Species,
-    string BreedName,
+    Guid BreedId,
     AnimalSex Sex,
     DateOnly DateOfBirth,
     AcquisitionType AcquisitionType,
@@ -47,9 +47,8 @@ public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterA
             .MustAsync(async (tagId, ct) => !await repository.TagExistsAsync(tagId, null, ct))
             .WithMessage("An animal with this Tag ID already exists in your farm.");
 
-        RuleFor(x => x.BreedName)
-            .NotEmpty().WithMessage("Breed name is required.")
-            .MaximumLength(100).WithMessage("Breed name cannot exceed 100 characters.");
+        RuleFor(x => x.BreedId)
+            .NotEmpty().WithMessage("Breed is required.");
 
         RuleFor(x => x.DateOfBirth)
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
@@ -85,7 +84,7 @@ public sealed class RegisterAnimalCommandHandler(
             farmId: request.FarmId,
             tag: tag,
             species: request.Species,
-            breedName: request.BreedName,
+            breedId: request.BreedId,
             sex: request.Sex,
             dateOfBirth: request.DateOfBirth,
             acquisitionType: request.AcquisitionType,

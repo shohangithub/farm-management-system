@@ -104,8 +104,7 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         {
             var normalized = searchTerm.Trim().ToUpperInvariant();
             query = query.Where(a =>
-                a.Tag.TagId.Contains(normalized) ||
-                a.BreedName.Contains(searchTerm));
+                a.Tag.TagId.Contains(normalized));
         }
 
         // ── Count (before pagination) ─────────────────────────────────────────
@@ -116,8 +115,8 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         {
             ("tagid", false)           => query.OrderBy(a => a.Tag.TagId),
             ("tagid", true)            => query.OrderByDescending(a => a.Tag.TagId),
-            ("breed", false)           => query.OrderBy(a => a.BreedName),
-            ("breed", true)            => query.OrderByDescending(a => a.BreedName),
+            ("breed", false)           => query.OrderBy(a => a.BreedId),
+            ("breed", true)            => query.OrderByDescending(a => a.BreedId),
             ("dateofbirth", false)     => query.OrderBy(a => a.DateOfBirth),
             ("dateofbirth", true)      => query.OrderByDescending(a => a.DateOfBirth),
             ("weight", false)          => query.OrderBy(a => a.LatestWeightKg),

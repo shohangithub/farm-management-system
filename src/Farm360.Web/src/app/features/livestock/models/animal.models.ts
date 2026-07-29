@@ -108,6 +108,7 @@ export interface AnimalDto {
   tagId: string;
   tagType: TagType;
   species: AnimalSpecies;
+  breedId: string;
   breedName: string;
   sex: AnimalSex;
   dateOfBirth: string;
@@ -140,6 +141,7 @@ export interface AnimalListItemDto {
   tagId: string;
   tagType: TagType;
   species: AnimalSpecies;
+  breedId: string;
   breedName: string;
   sex: AnimalSex;
   dateOfBirth: string;
@@ -173,7 +175,7 @@ export interface RegisterAnimalRequest {
   tagId: string;
   tagType: TagType;
   species: AnimalSpecies;
-  breedName: string;
+  breedId: string;
   sex: AnimalSex;
   dateOfBirth: string;
   acquisitionType: AcquisitionType;

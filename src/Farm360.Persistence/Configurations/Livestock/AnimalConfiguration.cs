@@ -67,8 +67,7 @@ public sealed class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .HasConversion<int>()
             .IsRequired();
 
-        builder.Property(a => a.BreedName)
-            .HasMaxLength(100)
+        builder.Property(a => a.BreedId)
             .IsRequired();
 
         builder.Property(a => a.Sex)

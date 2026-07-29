@@ -24,7 +24,7 @@ public sealed class AnimalQueryHandlerTests
         farmId:          Guid.NewGuid(),
         tag:             AnimalTag.Create(tagId, TagType.EarTag),
         species:         AnimalSpecies.CattleBeef,
-        breedName:       "Shahiwal",
+        breedId:         Guid.NewGuid(),
         sex:             AnimalSex.Male,
         dateOfBirth:     new DateOnly(2023, 1, 1),
         acquisitionType: AcquisitionType.Purchased,
@@ -72,7 +72,7 @@ public sealed class AnimalQueryHandlerTests
         var handler = new GetAnimalByIdQueryHandler(_repo);
         var result  = await handler.Handle(new GetAnimalByIdQuery(animal.Id), CancellationToken.None);
 
-        result!.BreedName.Should().Be("Shahiwal");
+        result!.BreedId.Should().NotBe(Guid.Empty);
         result.WeightRecords.Should().BeEmpty();
         result.BreedingRecords.Should().BeEmpty();
         result.Photos.Should().BeEmpty();

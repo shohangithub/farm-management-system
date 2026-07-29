@@ -13,16 +13,16 @@ namespace Farm360.Application.Intelligence.Services;
 public class RuleEngine : IRuleEngine
 {
     private readonly IAnimalRepository _animalRepository;
-    private readonly IPerformanceTargetRepository _performanceTargetRepository;
+    private readonly IBreedRepository _breedRepository;
     private readonly IGrowthPredictionEngine _growthPredictionEngine;
 
     public RuleEngine(
         IAnimalRepository animalRepository,
-        IPerformanceTargetRepository performanceTargetRepository,
+        IBreedRepository breedRepository,
         IGrowthPredictionEngine growthPredictionEngine)
     {
         _animalRepository = animalRepository;
-        _performanceTargetRepository = performanceTargetRepository;
+        _breedRepository = breedRepository;
         _growthPredictionEngine = growthPredictionEngine;
     }
 
@@ -38,44 +38,42 @@ public class RuleEngine : IRuleEngine
         if (growthCurve is null || growthCurve.CurrentAdgKg == 0)
             return insights; // Not enough data yet
 
-        // Simplified for this phase: assuming we match on Breed and Stage = "Grower"
-        // In a real system, Stage would be calculated based on Age.
-        var target = await _performanceTargetRepository.GetTargetForBreedAndStageAsync(
-            animal.BreedName, 
-            "Grower", 
-            cancellationToken);
+        var target = await _breedRepository.GetByIdAsync(animal.BreedId, cancellationToken);
+        
+        if (target == null)
+            return insights;
 
-        if (target != null)
+        // Using Good Commercial Farm ADG as a baseline target for now
+        var targetAdg = target.AdgGoodCommercialFarm > 0 ? target.AdgGoodCommercialFarm : target.StandardAdgMax;
+
+        if (growthCurve.CurrentAdgKg < targetAdg)
         {
-            if (growthCurve.CurrentAdgKg < target.TargetAdgKg)
-            {
-                var diff = Math.Round(target.TargetAdgKg - growthCurve.CurrentAdgKg, 2);
-                var insight = new ActionableInsight(
-                    id: Guid.NewGuid(),
-                    tenantId: animal.TenantId,
-                    farmId: animal.FarmId,
-                    type: InsightType.Nutrition,
-                    severity: InsightSeverity.Warning,
-                    title: "Underperforming Growth Detected",
-                    message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) is below the target ({target.TargetAdgKg}kg). Consider increasing feed energy/protein by 10%.",
-                    animalId: animal.Id
-                );
-                insights.Add(insight);
-            }
-            else
-            {
-                var insight = new ActionableInsight(
-                    id: Guid.NewGuid(),
-                    tenantId: animal.TenantId,
-                    farmId: animal.FarmId,
-                    type: InsightType.Growth,
-                    severity: InsightSeverity.Success,
-                    title: "Growth On Track",
-                    message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) meets or exceeds target ({target.TargetAdgKg}kg). Maintain current feeding regimen.",
-                    animalId: animal.Id
-                );
-                insights.Add(insight);
-            }
+            var diff = Math.Round(targetAdg - growthCurve.CurrentAdgKg, 2);
+            var insight = new ActionableInsight(
+                id: Guid.NewGuid(),
+                tenantId: animal.TenantId,
+                farmId: animal.FarmId,
+                type: InsightType.Nutrition,
+                severity: InsightSeverity.Warning,
+                title: "Underperforming Growth Detected",
+                message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) is below the target ({targetAdg}kg) for breed {target.Name}. Consider increasing feed energy/protein by 10%.",
+                animalId: animal.Id
+            );
+            insights.Add(insight);
+        }
+        else
+        {
+            var insight = new ActionableInsight(
+                id: Guid.NewGuid(),
+                tenantId: animal.TenantId,
+                farmId: animal.FarmId,
+                type: InsightType.Growth,
+                severity: InsightSeverity.Success,
+                title: "Growth On Track",
+                message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) meets or exceeds target ({targetAdg}kg) for breed {target.Name}. Maintain current feeding regimen.",
+                animalId: animal.Id
+            );
+            insights.Add(insight);
         }
 
         return insights;
