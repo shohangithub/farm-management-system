@@ -135,6 +135,10 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
 
+    // ── Intelligence & Analytics Module ───────────────────────────────────────
+    public DbSet<Farm360.Domain.Intelligence.ActionableInsight> ActionableInsights => Set<Farm360.Domain.Intelligence.ActionableInsight>();
+    public DbSet<Farm360.Domain.Intelligence.PerformanceTarget> PerformanceTargets => Set<Farm360.Domain.Intelligence.PerformanceTarget>();
+
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;
 

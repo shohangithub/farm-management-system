@@ -40,6 +40,8 @@ import { RecordBcsDialogComponent } from '../../dialogs/record-bcs-dialog/record
 import { RecordWeightDialogComponent } from '../../dialogs/record-weight-dialog/record-weight-dialog.component';
 import { UploadPhotoDialogComponent } from '../../dialogs/upload-photo-dialog/upload-photo-dialog.component';
 import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/record-sale-dialog.component';
+import { IntelligencePanelComponent } from '../../components/intelligence-panel/intelligence-panel.component';
+import { WhatIfSimulatorComponent } from '../../components/what-if-simulator/what-if-simulator.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, forkJoin, tap, filter } from 'rxjs';
 import { of } from 'rxjs';
@@ -51,6 +53,7 @@ import { of } from 'rxjs';
   imports: [
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
+    IntelligencePanelComponent, WhatIfSimulatorComponent,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule
   ],
   templateUrl: './animal-detail.component.html'

@@ -88,6 +88,10 @@ public static class InfrastructureServiceExtensions
         // ── Storage Services ──────────────────────────────────────────────────
         services.AddScoped<IFileStorageService, Farm360.Infrastructure.Storage.LocalFileStorageService>();
 
+        // ── Intelligence Background Services ──────────────────────────────────
+        services.AddSingleton<Farm360.Application.Intelligence.Interfaces.IIntelligenceEventChannel, Farm360.Infrastructure.BackgroundServices.Intelligence.IntelligenceEventChannel>();
+        services.AddHostedService<Farm360.Infrastructure.BackgroundServices.Intelligence.IntelligenceBackgroundService>();
+
         return services;
     }
 }

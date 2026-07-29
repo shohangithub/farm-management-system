@@ -35,6 +35,11 @@ public static class ApplicationServiceExtensions
         // ── FluentValidation (auto-discover all validators in assembly) ───────
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
 
+        services.AddScoped<Farm360.Application.Intelligence.Interfaces.ICostAndProfitEngine, Farm360.Application.Intelligence.Services.CostAndProfitEngine>();
+        services.AddScoped<Farm360.Application.Intelligence.Interfaces.IGrowthPredictionEngine, Farm360.Application.Intelligence.Services.GrowthPredictionEngine>();
+        services.AddScoped<Farm360.Application.Intelligence.Interfaces.IRuleEngine, Farm360.Application.Intelligence.Services.RuleEngine>();
+        services.AddScoped<Farm360.Application.Intelligence.Interfaces.ISimulationEngine, Farm360.Application.Intelligence.Services.SimulationEngine>();
+
         // ── AutoMapper (auto-discover all mapping profiles in assembly) ────────
         services.AddAutoMapper(assembly);
 

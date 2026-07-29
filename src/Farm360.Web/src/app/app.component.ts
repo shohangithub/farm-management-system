@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, effect } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
+import { IntelligenceSignalRService } from './core/services/intelligence-signalr.service';
 
 @Component({
   selector: 'app-root',
@@ -20,4 +21,16 @@ import { AuthService } from './core/services/auth.service';
 })
 export class AppComponent {
   readonly authService = inject(AuthService);
+  private readonly signalR = inject(IntelligenceSignalRService);
+
+  constructor() {
+    effect(() => {
+      const user = this.authService.currentUserSignal();
+      if (user) {
+        this.signalR.startConnection();
+      } else {
+        this.signalR.stopConnection();
+      }
+    });
+  }
 }

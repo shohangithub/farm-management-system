@@ -43,6 +43,12 @@
 
 <div *ngIf="!loading() && animal()" class="space-y-6 animate-fade-in-up">
 
+  <!-- Intelligence Panel -->
+  <app-intelligence-panel [animalId]="animal()!.id"></app-intelligence-panel>
+  
+  <!-- What-If Simulator -->
+  <app-what-if-simulator [animalId]="animal()!.id"></app-what-if-simulator>
+
   <!-- Hero Layout -->
   <div class="flex flex-col md:flex-row gap-6 mb-6">
 

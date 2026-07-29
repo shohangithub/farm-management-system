@@ -7,6 +7,7 @@ using Farm360.Api.Endpoints.Livestock;
 using Farm360.Api.Endpoints.MasterData;
 using Farm360.Api.Endpoints.Organizations;
 using Farm360.Api.Endpoints.Tenants;
+using Farm360.Api.Endpoints;
 using Farm360.Api.Endpoints.Auth;
 using Farm360.Api.Middleware;
 using Farm360.Api.Authorization;
@@ -231,6 +232,7 @@ try
     app.MapInventoryEndpoints();
     app.MapGroup("/api/v1/auth").MapAuthEndpoints();
     app.MapGroup("/api/v1/users").MapUsersEndpoints();
+    app.MapIntelligenceEndpoints();
 
     Log.Information("Farm360 API started. Environment: {Environment}", app.Environment.EnvironmentName);
 
