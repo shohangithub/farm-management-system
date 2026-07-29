@@ -25,13 +25,15 @@ public class GrowthPredictionEngine : IGrowthPredictionEngine
         if (animal is null)
             return null;
 
+        var breed = await _breedRepository.GetByIdAsync(animal.BreedId, cancellationToken);
+        var maxAdg = breed?.StandardAdgMax > 0 ? breed.StandardAdgMax : 1.5m; // Fallback max 1.5kg
+
         var weights = animal.WeightRecords.OrderBy(w => w.RecordedDate).ToList();
         
         if (weights.Count < 2)
         {
             // Use breed expected ADG as baseline when historical data is insufficient
             decimal baselineAdg = 0;
-            var breed = await _breedRepository.GetByIdAsync(animal.BreedId, cancellationToken);
             if (breed != null)
             {
                 // Defaulting to Average Farm condition ADG for baseline
@@ -59,6 +61,7 @@ public class GrowthPredictionEngine : IGrowthPredictionEngine
         }
         
         if (adg < 0) adg = 0; // Prevent negative projection
+        if (adg > maxAdg) adg = maxAdg; // Cap at breed's maximum genetic potential
         
         var currentWeight = lastRecord.Weight.WeightKg;
         

@@ -38,13 +38,17 @@ public class RuleEngine : IRuleEngine
         if (growthCurve is null || growthCurve.CurrentAdgKg == 0)
             return insights; // Not enough data yet
 
-        var target = await _breedRepository.GetByIdAsync(animal.BreedId, cancellationToken);
+        var breed = await _breedRepository.GetByIdAsync(animal.BreedId, cancellationToken);
         
-        if (target == null)
+        if (breed == null)
             return insights;
 
         // Using Good Commercial Farm ADG as a baseline target for now
-        var targetAdg = target.AdgGoodCommercialFarm > 0 ? target.AdgGoodCommercialFarm : target.StandardAdgMax;
+        var targetAdg = breed.AdgGoodCommercialFarm > 0 ? breed.AdgGoodCommercialFarm : breed.StandardAdgMax;
+
+        var fcr = breed.FcrMin > 0 ? breed.FcrMin : 8m; // Default FCR
+        if (breed.FcrMin > 0 && breed.FcrMax > 0)
+            fcr = (breed.FcrMin + breed.FcrMax) / 2m;
 
         if (growthCurve.CurrentAdgKg < targetAdg)
         {
@@ -56,7 +60,7 @@ public class RuleEngine : IRuleEngine
                 type: InsightType.Nutrition,
                 severity: InsightSeverity.Warning,
                 title: "Underperforming Growth Detected",
-                message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) is below the target ({targetAdg}kg) for breed {target.Name}. Consider increasing feed energy/protein by 10%.",
+                message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) is below the target ({targetAdg}kg) for breed {breed.Name}. Ensure feed rations meet the optimal Feed Conversion Ratio (FCR) of {fcr}.",
                 animalId: animal.Id
             );
             insights.Add(insight);
@@ -70,7 +74,7 @@ public class RuleEngine : IRuleEngine
                 type: InsightType.Growth,
                 severity: InsightSeverity.Success,
                 title: "Growth On Track",
-                message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) meets or exceeds target ({targetAdg}kg) for breed {target.Name}. Maintain current feeding regimen.",
+                message: $"Current ADG ({growthCurve.CurrentAdgKg}kg) meets or exceeds target ({targetAdg}kg) for breed {breed.Name}. Maintain current feeding regimen.",
                 animalId: animal.Id
             );
             insights.Add(insight);

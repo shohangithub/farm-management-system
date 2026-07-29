@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, input, effect, inject, signal } fro
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
+import { IntelligenceSignalRService } from '../../../../core/services/intelligence-signalr.service';
 
 export interface AnimalFinancialSnapshot {
   animalId: string;
@@ -19,6 +20,7 @@ export interface AnimalIntelligenceData {
 
 export interface ActionableInsight {
   id: string;
+  animalId?: string;
   type: string;
   severity: string;
   title: string;
@@ -82,10 +84,10 @@ export interface GrowthCurve {
       </div>
 
       <!-- Intelligence Data & Growth Projection -->
-      <div *ngIf="intelData()" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div *ngIf="intelData()" class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
         <!-- Growth Projection Card -->
-        <div *ngIf="intelData()?.growthCurve as curve" class="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-2xl shadow-lg border border-indigo-700/50 p-6 text-white relative overflow-hidden">
+        <div *ngIf="intelData()?.growthCurve as curve" class="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-2xl shadow-lg border border-indigo-700/50 p-6 text-white relative overflow-hidden h-full">
           <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-indigo-500/10 rotate-[-15deg] pointer-events-none">trending_up</mat-icon>
           <div class="relative z-10">
             <div class="flex items-center gap-2 mb-2">
@@ -95,14 +97,22 @@ export interface GrowthCurve {
             </div>
             <h3 class="text-xl font-bold text-white tracking-tight mb-4">Growth Trajectory</h3>
             
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-2 gap-4 mb-2">
                <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-xs text-indigo-200 uppercase tracking-wide">Current ADG</p>
-                 <p class="text-2xl font-bold mt-1">{{ curve.currentAdgKg | number:'1.2-2' }} <span class="text-sm font-normal text-indigo-300">kg/day</span></p>
+                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">Current ADG</p>
+                 <p class="text-2xl font-bold mt-1">{{ curve.currentAdgKg | number:'1.2-2' }} <span class="text-xs font-normal text-indigo-300">kg/day</span></p>
                </div>
                <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-xs text-indigo-200 uppercase tracking-wide">30-Day Projection</p>
-                 <p class="text-2xl font-bold mt-1">{{ curve.projected30DayWeightKg | number:'1.1-1' }} <span class="text-sm font-normal text-indigo-300">kg</span></p>
+                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">30-Day Projection</p>
+                 <p class="text-2xl font-bold mt-1">{{ curve.projected30DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">kg</span></p>
+               </div>
+               <div class="bg-black/20 rounded-xl p-4">
+                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">60-Day Projection</p>
+                 <p class="text-xl font-bold mt-1">{{ curve.projected60DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">kg</span></p>
+               </div>
+               <div class="bg-black/20 rounded-xl p-4">
+                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">90-Day Projection</p>
+                 <p class="text-xl font-bold mt-1">{{ curve.projected90DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">kg</span></p>
                </div>
             </div>
           </div>
@@ -118,7 +128,7 @@ export interface GrowthCurve {
             
             <div class="space-y-3">
               <div *ngFor="let insight of intelData()?.activeInsights" 
-                   class="p-4 rounded-xl border flex gap-3"
+                   class="p-4 rounded-xl border flex gap-3 animate-fade-in-up"
                    [ngClass]="{
                      'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/30': insight.severity === 'Warning',
                      'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700/30': insight.severity === 'Critical',
@@ -160,11 +170,13 @@ export interface GrowthCurve {
 })
 export class IntelligencePanelComponent {
   animalId = input.required<string>();
-  
+
   private readonly http = inject(HttpClient);
+  private readonly signalR = inject(IntelligenceSignalRService);
+
   readonly snapshot = signal<AnimalFinancialSnapshot | null>(null);
   readonly intelData = signal<AnimalIntelligenceData | null>(null);
-  
+
   readonly Math = Math;
 
   constructor() {
@@ -175,6 +187,23 @@ export class IntelligencePanelComponent {
         this.loadIntelligenceData(id);
       }
     });
+
+    effect(() => {
+      const insight = this.signalR.latestInsight();
+      if (insight && insight.animalId === this.animalId()) {
+        const currentData = this.intelData();
+        if (currentData) {
+          // Add the new insight to the top of the list if it's not already there
+          if (!currentData.activeInsights.some(x => x.id === insight.id)) {
+            // Clone the object to trigger change detection
+            this.intelData.set({
+              ...currentData,
+              activeInsights: [insight, ...currentData.activeInsights]
+            });
+          }
+        }
+      }
+    }, { allowSignalWrites: true });
   }
 
   private loadSnapshot(id: string) {

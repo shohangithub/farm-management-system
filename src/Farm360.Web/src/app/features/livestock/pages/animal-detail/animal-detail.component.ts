@@ -5,12 +5,12 @@ import {
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { AnimalService }       from '../../services/animal.service';
-import { ShedService }       from '../../../farms/services/shed.service';
-import { PenService }        from '../../../farms/services/pen.service';
-import { HealthService }     from '../../../health/services/health.service';
-import { ShedList }          from '../../../farms/models/shed.model';
-import { PenList }           from '../../../farms/models/pen.model';
+import { AnimalService } from '../../services/animal.service';
+import { ShedService } from '../../../farms/services/shed.service';
+import { PenService } from '../../../farms/services/pen.service';
+import { HealthService } from '../../../health/services/health.service';
+import { ShedList } from '../../../farms/models/shed.model';
+import { PenList } from '../../../farms/models/pen.model';
 import { AnimalHealthHistoryDto, VaccinationStatus, TreatmentStatus } from '../../../health/models/health.models';
 import {
   AnimalDto, AnimalStatus, AnimalSex,
@@ -40,8 +40,7 @@ import { RecordBcsDialogComponent } from '../../dialogs/record-bcs-dialog/record
 import { RecordWeightDialogComponent } from '../../dialogs/record-weight-dialog/record-weight-dialog.component';
 import { UploadPhotoDialogComponent } from '../../dialogs/upload-photo-dialog/upload-photo-dialog.component';
 import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/record-sale-dialog.component';
-import { IntelligencePanelComponent } from '../../components/intelligence-panel/intelligence-panel.component';
-import { WhatIfSimulatorComponent } from '../../components/what-if-simulator/what-if-simulator.component';
+import { AnimalIntelligenceDialogComponent } from '../../dialogs/animal-intelligence-dialog/animal-intelligence-dialog.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, forkJoin, tap, filter } from 'rxjs';
 import { of } from 'rxjs';
@@ -53,21 +52,20 @@ import { of } from 'rxjs';
   imports: [
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
-    IntelligencePanelComponent, WhatIfSimulatorComponent,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule
   ],
   templateUrl: './animal-detail.component.html'
 })
 export class AnimalDetailComponent {
-  private readonly svc     = inject(AnimalService);
-  private readonly route   = inject(ActivatedRoute);
+  private readonly svc = inject(AnimalService);
+  private readonly route = inject(ActivatedRoute);
   private readonly shedSvc = inject(ShedService);
-  private readonly penSvc  = inject(PenService);
+  private readonly penSvc = inject(PenService);
   private readonly farmSvc = inject(FarmService);
   private readonly healthSvc = inject(HealthService);
   private readonly batchSvc = inject(BatchService);
-  private readonly dialog  = inject(MatDialog);
-  private readonly router  = inject(Router);
+  private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly AnimalStatus = AnimalStatus;
@@ -92,7 +90,7 @@ export class AnimalDetailComponent {
     toObservable(this.fetchParams).pipe(
       filter(params => !!params.id),
       tap(() => { this.loading.set(true); this.error.set(null); }),
-      switchMap(({ id }) => 
+      switchMap(({ id }) =>
         this.svc.getById(id!).pipe(
           switchMap(animal => {
             // Parallel fetch related data
@@ -177,7 +175,7 @@ export class AnimalDetailComponent {
   }
 
   speciesLabel(s: number): string { return (SPECIES_LABELS as any)[s] ?? '—'; }
-  sexLabel(s: number):     string { return (SEX_LABELS as any)[s]     ?? '—'; }
+  sexLabel(s: number): string { return (SEX_LABELS as any)[s] ?? '—'; }
   tagTypeLabel(t: number): string { return t === 1 ? 'Manual' : t === 2 ? 'Ear Tag' : 'RFID'; }
   speciesEmoji(s: number): string { return s === 3 ? '🐐' : s === 4 ? '🐑' : '🐄'; }
 
@@ -249,7 +247,7 @@ export class AnimalDetailComponent {
         currentPenId: a.penId
       }
     });
-    dialogRef.afterClosed().subscribe(res => { 
+    dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.snackBar.open('Location assigned successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
         this.load();
@@ -332,8 +330,8 @@ export class AnimalDetailComponent {
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
-      data: { 
-        animalId: a.id, 
+      data: {
+        animalId: a.id,
         animalTag: a.tagId,
         currentBatchId: a.batchId,
         availableBatches: this.availableBatches()
@@ -378,6 +376,18 @@ export class AnimalDetailComponent {
         this.snackBar.open('Photo uploaded successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
         this.load();
       }
+    });
+  }
+
+  onOpenIntelligence(): void {
+    const a = this.animal();
+    if (!a) return;
+    this.dialog.open(AnimalIntelligenceDialogComponent, {
+      width: '90vw',
+      maxWidth: '1200px',
+      autoFocus: false,
+      panelClass: 'bg-transparent',
+      data: { animalId: a.id, tagId: a.tagId }
     });
   }
 
