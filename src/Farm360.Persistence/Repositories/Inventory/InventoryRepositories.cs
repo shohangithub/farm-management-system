@@ -195,6 +195,11 @@ public sealed class SupplierRepository : ISupplierRepository
     {
         _dbContext.Suppliers.Update(supplier);
     }
+
+    public void Delete(Supplier supplier)
+    {
+        _dbContext.Suppliers.Remove(supplier);
+    }
 }
 
 public sealed class StockTransactionRepository : IStockTransactionRepository

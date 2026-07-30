@@ -50,6 +50,10 @@ export class InventoryService {
     return this.http.put<void>(`${this.baseUrl}/items/${id}`, { id, ...request });
   }
 
+  deleteItem(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/items/${id}`);
+  }
+
   // ── Stock Transactions ──────────────────────────────────────────────────────
   recordStockIn(request: RecordStockInRequest): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(`${this.baseUrl}/transactions/stock-in`, request);
@@ -93,6 +97,10 @@ export class InventoryService {
 
   updateSupplier(id: string, request: CreateSupplierRequest & { isActive?: boolean }): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/suppliers/${id}`, { id, ...request });
+  }
+
+  deleteSupplier(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/suppliers/${id}`);
   }
 
   // ── Reports ────────────────────────────────────────────────────────────────

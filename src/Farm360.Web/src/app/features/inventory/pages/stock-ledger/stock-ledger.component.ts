@@ -139,19 +139,33 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex items-center justify-between relative z-10">
+      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
           Showing <span class="font-bold text-gray-900 dark:text-white">{{ pageStart() }}</span> to <span class="font-bold text-gray-900 dark:text-white">{{ pageEnd() }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ result()?.totalCount }}</span> transactions
         </div>
-        <div class="flex items-center gap-2">
-          <button (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
-                  class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-            <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
-          </button>
-          <button (click)="nextPage()" [disabled]="!result()?.hasNextPage"
-                  class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-            <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
-          </button>
+        <div class="flex items-center gap-4">
+          <!-- Page Size Filter -->
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-500 dark:text-gray-400">Rows per page:</label>
+            <select [ngModel]="params().pageSize" (ngModelChange)="onPageSizeChange($event)"
+              class="px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+                    class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
+            </button>
+            <button (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+                    class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -306,6 +320,10 @@ export class StockLedgerComponent {
     if (res && res.hasNextPage) {
       this.params.update(p => ({ ...p, pageNumber: (p.pageNumber || 1) + 1 }));
     }
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.params.update(p => ({ ...p, pageSize, pageNumber: 1 }));
   }
 
   reload(): void {

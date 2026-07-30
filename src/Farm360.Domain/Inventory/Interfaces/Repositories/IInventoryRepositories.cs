@@ -35,6 +35,7 @@ public interface ISupplierRepository
         CancellationToken cancellationToken = default);
     Task AddAsync(Supplier supplier, CancellationToken cancellationToken = default);
     void Update(Supplier supplier);
+    void Delete(Supplier supplier);
 }
 
 public interface IStockTransactionRepository

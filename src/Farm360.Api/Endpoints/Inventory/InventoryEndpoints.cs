@@ -76,6 +76,18 @@ public static class InventoryEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
         .WithName("UpdateInventoryItem");
 
+        group.MapDelete("/items/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new DeleteInventoryItemCommand(id);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Delete}")
+        .WithName("DeleteInventoryItem");
+
         // ── Stock Transactions & Ledger ───────────────────────────────────────
         group.MapPost("/transactions/stock-in", async (
             [FromBody] RecordStockInCommand command,
@@ -160,6 +172,18 @@ public static class InventoryEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
         .WithName("UpdateSupplier");
+
+        group.MapDelete("/suppliers/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new DeleteSupplierCommand(id);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Delete}")
+        .WithName("DeleteSupplier");
 
         // ── Valuation Report ─────────────────────────────────────────────────
         group.MapGet("/reports/valuation", async (
