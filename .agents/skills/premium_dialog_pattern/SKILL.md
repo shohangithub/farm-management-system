@@ -96,3 +96,41 @@ The footer anchors to the bottom with an animated primary save button and a grey
 - Use **Signals** for local UI state (`isLoading = signal(false)`, `error = signal('')`).
 - Utilize `parseApiError` from the utility folder for consistent API error parsing.
 - Always implement `ChangeDetectionStrategy.OnPush`.
+
+## 8. Delete Functionality (List Pages)
+Delete functionality should **NOT** be placed inside the setup/edit dialog itself. Instead, it should be placed directly on the list page (e.g., as an action icon on a grid card or data table row). 
+
+When implementing a delete action, NEVER use the native browser `confirm()`. Instead, use the shared `ConfirmationDialogComponent`.
+
+```typescript
+import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+
+// ... inside your component class
+onDelete(entity: EntityDto, event: Event): void {
+  event.stopPropagation(); // If the button is inside a clickable card/row
+  
+  const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    width: '450px',
+    panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
+    data: {
+      title: 'Delete Entity',
+      message: `Are you sure you want to delete "${entity.name}"? This action cannot be undone.`,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      isDestructive: true // Highlights the confirm button in red
+    }
+  });
+
+  dialogRef.afterClosed().subscribe(confirmed => {
+    if (confirmed) {
+      this.entityService.deleteEntity(entity.id).subscribe({
+        next: () => this.reloadList(),
+        error: (err) => {
+          console.error('Failed to delete entity', err);
+          // Handle error (e.g., via a toast notification service)
+        }
+      });
+    }
+  });
+}
+```

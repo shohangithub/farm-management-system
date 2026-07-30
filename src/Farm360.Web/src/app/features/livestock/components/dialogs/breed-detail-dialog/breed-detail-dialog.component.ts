@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { BreedService } from '../../../services/breed.service';
 import { BreedDto } from '../../../models/breed.models';
 import { LoadingComponent } from '../../../../../shared/components/loading/loading.component';
+import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dialog.component';
 
 @Component({
   selector: 'app-breed-detail-dialog',
@@ -157,6 +158,9 @@ import { LoadingComponent } from '../../../../../shared/components/loading/loadi
       
       <!-- Footer -->
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 shrink-0 flex items-center justify-end gap-3 rounded-b-2xl">
+        <button mat-button (click)="onEdit()" class="!rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors font-semibold px-4 py-2">
+          Edit
+        </button>
         <button mat-flat-button mat-dialog-close class="!rounded-xl !bg-emerald-600 hover:!bg-emerald-700 !text-white">
           Close
         </button>
@@ -167,6 +171,8 @@ import { LoadingComponent } from '../../../../../shared/components/loading/loadi
 })
 export class BreedDetailDialogComponent implements OnInit {
   private readonly breedService = inject(BreedService);
+  private readonly dialog = inject(MatDialog);
+  private readonly dialogRef = inject(MatDialogRef<BreedDetailDialogComponent>);
   public readonly data = inject<{ id: string }>(MAT_DIALOG_DATA);
 
   breed = signal<BreedDto | null>(null);
@@ -188,6 +194,24 @@ export class BreedDetailDialogComponent implements OnInit {
       error: (err) => {
         console.error('Failed to load breed', err);
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  onEdit(): void {
+    const breed = this.breed();
+    if (!breed) return;
+
+    const setupDialogRef = this.dialog.open(BreedSetupDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
+      data: { breed }
+    });
+
+    setupDialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.dialogRef.close(true); // Close details and signal list to refresh
       }
     });
   }

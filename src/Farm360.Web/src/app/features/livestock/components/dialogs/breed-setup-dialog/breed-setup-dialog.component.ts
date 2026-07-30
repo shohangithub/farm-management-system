@@ -1,13 +1,14 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BreedService } from '../../../services/breed.service';
 import { BreedDto, CreateBreedRequest } from '../../../models/breed.models';
 import { finalize } from 'rxjs';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-reference-dialog.component';
 
 @Component({
   selector: 'app-breed-setup-dialog',
@@ -22,7 +23,12 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">pets</mat-icon>
             {{ isEdit() ? 'Edit Breed' : 'Add New Breed' }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Define intelligence targets</p>
+          <div class="flex items-center gap-3 mt-1">
+            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Define intelligence targets</p>
+            <button type="button" (click)="openReference()" class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold flex items-center gap-1 transition-colors bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 px-2 py-0.5 rounded-md">
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">menu_book</mat-icon> View Reference Guide
+            </button>
+          </div>
         </div>
         <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
@@ -195,6 +201,8 @@ export class BreedSetupDialogComponent implements OnInit {
     fatPercentageMax: [this.data?.breed?.fatPercentageMax ?? 0]
   });
 
+  private readonly dialog = inject(MatDialog);
+
   ngOnInit(): void {
     // Data initialized directly in form builder
   }
@@ -226,5 +234,15 @@ export class BreedSetupDialogComponent implements OnInit {
           this.error.set(parsedMsg);
         }
       });
+  }
+
+  openReference(): void {
+    if (this.dialog.openDialogs.some(d => d.componentInstance instanceof BreedReferenceDialogComponent)) return;
+    
+    this.dialog.open(BreedReferenceDialogComponent, {
+      width: '700px',
+      maxWidth: '95vw',
+      panelClass: ['!rounded-2xl', '!bg-transparent']
+    });
   }
 }
