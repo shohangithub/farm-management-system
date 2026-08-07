@@ -23,12 +23,12 @@ export class SidebarComponent {
   @Input() isCollapsed = false;
 
   menuItems: MenuItem[] = [
-    { icon: 'dashboard', label: 'Dashboard', route: '/dashboard', disabled: true, badge: 'soon' },
+    { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
     { icon: 'pets', label: 'Livestock', route: '/livestock' },
     { icon: 'healing', label: 'Health', route: '/health' },
     { icon: 'restaurant_menu', label: 'Feeding', route: '/feeding' },
     { icon: 'inventory', label: 'Inventory', route: '/inventory' },
-    { icon: 'account_balance_wallet', label: 'Finance', disabled: true, badge: 'soon' }
+    { icon: 'account_balance_wallet', label: 'Finance', route: '/finance' }
   ];
 
   bottomMenuItems: MenuItem[] = [

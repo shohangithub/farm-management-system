@@ -67,7 +67,7 @@ export class ShedFormComponent implements OnInit {
       hasVentilation: [false],
       hasWaterLine: [false],
       hasFeedLine: [false],
-      status: [1]
+      status: ['Active']
     });
   }
 
@@ -124,6 +124,13 @@ export class ShedFormComponent implements OnInit {
     this.error.set(null);
 
     const formValue = this.shedForm.getRawValue();
+
+    // Sanitize empty strings to null to prevent BadHttpRequestException during deserialization
+    Object.keys(formValue).forEach(key => {
+      if (formValue[key] === '') {
+        formValue[key] = null;
+      }
+    });
 
     if (this.isEditMode() && this.shedId()) {
       const command: UpdateShedCommand = {

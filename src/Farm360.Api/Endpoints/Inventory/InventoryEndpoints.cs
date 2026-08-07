@@ -1,4 +1,6 @@
 using Farm360.Application.Inventory.Commands.InventoryItems;
+using Farm360.Application.Inventory.Commands.PurchaseOrders;
+using Farm360.Application.Inventory.Queries.PurchaseOrders;
 using Farm360.Application.Inventory.Commands.StockTransactions;
 using Farm360.Application.Inventory.Commands.Suppliers;
 using Farm360.Application.Inventory.Queries.InventoryItems;
@@ -197,6 +199,73 @@ public static class InventoryEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
         .WithName("GetInventoryValuationReport");
+
+        // ── Purchase Orders ───────────────────────────────────────────────────
+        group.MapGet("/purchase-orders", async (
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] Guid? farmId = null,
+            [FromQuery] Guid? supplierId = null,
+            [FromQuery] PurchaseOrderStatus? status = null,
+            [FromQuery] string? search = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool sortDesc = false,
+            ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var query = new GetPurchaseOrdersQuery(pageNumber, pageSize, farmId, supplierId, status, search, sortBy, sortDesc);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetPurchaseOrders");
+
+        group.MapGet("/purchase-orders/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetPurchaseOrderByIdQuery(id);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetPurchaseOrderById");
+
+        group.MapPost("/purchase-orders", async (
+            [FromBody] CreatePurchaseOrderCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Created($"/api/v1/inventory/purchase-orders/{id}", new { id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}")
+        .WithName("CreatePurchaseOrder");
+
+        group.MapPost("/purchase-orders/{id:guid}/approve", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new ApprovePurchaseOrderCommand(id);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("ApprovePurchaseOrder");
+
+        group.MapPost("/purchase-orders/{id:guid}/fulfill", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new FulfillPurchaseOrderCommand(id);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("FulfillPurchaseOrder");
 
         return app;
     }

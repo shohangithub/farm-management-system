@@ -21,5 +21,17 @@ export const INVENTORY_ROUTES: Routes = [
   {
     path: 'suppliers',
     loadComponent: () => import('./pages/supplier-list/supplier-list.component').then(m => m.SupplierListComponent)
+  },
+  {
+    path: 'purchase-orders',
+    loadComponent: () => import('./components/purchase-order-list/purchase-order-list').then(m => m.PurchaseOrderList)
+  },
+  {
+    path: 'purchase-orders/new',
+    loadComponent: () => import('./components/purchase-order-form/purchase-order-form').then(m => m.PurchaseOrderForm)
+  },
+  {
+    path: 'purchase-orders/:id',
+    loadComponent: () => import('./components/purchase-order-detail/purchase-order-detail').then(m => m.PurchaseOrderDetail)
   }
 ];

@@ -44,10 +44,10 @@
             <div class="flex items-center gap-3 mt-1 text-sm text-gray-600 dark:text-gray-400 font-medium">
               <span class="flex items-center gap-1.5"><mat-icon class="!text-[16px] !w-[16px] !h-[16px]">business</mat-icon> {{ getBusinessTypeLabel(organization()!.businessType) }}</span>
               <span>&bull;</span>
-              <span *ngIf="organization()?.status === 1" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+              <span *ngIf="organization()?.status === 'Active'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                 Active
               </span>
-              <span *ngIf="organization()?.status === 2" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
+              <span *ngIf="organization()?.status !== 'Active'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
                 Inactive
               </span>
             </div>

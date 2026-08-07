@@ -13,7 +13,10 @@ import {
   PagedResult,
   InventoryItemParams,
   StockTransactionParams,
-  SupplierParams
+  SupplierParams,
+  PurchaseOrder,
+  CreatePurchaseOrderRequest,
+  PurchaseOrderParams
 } from '../models/inventory.models';
 
 @Injectable({
@@ -108,5 +111,36 @@ export class InventoryService {
     return this.http.get<InventoryValuationReport>(`${this.baseUrl}/reports/valuation`, {
       params: new HttpParams().set('farmId', farmId)
     });
+  }
+
+  // ── Purchase Orders ─────────────────────────────────────────────────────────
+  getPurchaseOrders(params: PurchaseOrderParams = {}): Observable<PagedResult<PurchaseOrder>> {
+    let httpParams = new HttpParams();
+    if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
+    if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
+    if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.supplierId) httpParams = httpParams.set('supplierId', params.supplierId);
+    if (params.status != null) httpParams = httpParams.set('status', params.status);
+    if (params.search)     httpParams = httpParams.set('search', params.search);
+    if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDesc != null) httpParams = httpParams.set('sortDesc', params.sortDesc);
+
+    return this.http.get<PagedResult<PurchaseOrder>>(`${this.baseUrl}/purchase-orders`, { params: httpParams });
+  }
+
+  getPurchaseOrderById(id: string): Observable<PurchaseOrder> {
+    return this.http.get<PurchaseOrder>(`${this.baseUrl}/purchase-orders/${id}`);
+  }
+
+  createPurchaseOrder(request: CreatePurchaseOrderRequest): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${this.baseUrl}/purchase-orders`, request);
+  }
+
+  approvePurchaseOrder(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/approve`, {});
+  }
+
+  fulfillPurchaseOrder(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, {});
   }
 }

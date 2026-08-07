@@ -34,7 +34,7 @@ export class FarmListComponent {
   );
 
   searchTerm = signal<string>('');
-  statusFilter = signal<number | null>(null);
+  statusFilter = signal<string | null>(null);
 
   private refreshTrigger = signal(0);
   private fetchParams = computed(() => ({
@@ -82,7 +82,7 @@ export class FarmListComponent {
 
   onFilterStatus(event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
-    this.statusFilter.set(val ? parseInt(val, 10) : null);
+    this.statusFilter.set(val ? val : null);
   }
 
   onAddFarm(): void {

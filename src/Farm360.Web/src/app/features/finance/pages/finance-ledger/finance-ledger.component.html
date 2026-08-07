@@ -1,0 +1,120 @@
+<app-page-header
+  title="Finance Ledger"
+  description="Manage incomes, expenses, and view your farm's financial health."
+  breadcrumbActiveNode="Finance">
+  <div actions>
+    <button mat-flat-button color="primary" class="rounded-xl shadow-md" (click)="openAddTransactionDialog()">
+      <mat-icon>add</mat-icon>
+      Add Transaction
+    </button>
+  </div>
+</app-page-header>
+
+<div class="px-6 py-4 mx-auto max-w-7xl">
+
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" *ngIf="summary() as data">
+    
+    <!-- Total Income -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 flex flex-col group hover:shadow-lg transition-all duration-300 cursor-default">
+      <div class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+        <mat-icon inline="true">arrow_upward</mat-icon>
+      </div>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+          <mat-icon>arrow_upward</mat-icon>
+        </div>
+        <h3 class="text-gray-500 dark:text-gray-400 font-medium tracking-wide text-sm uppercase">Total Income</h3>
+      </div>
+      <div class="text-3xl font-bold text-gray-900 dark:text-white">
+        {{ data.totalIncomeBdt | currency:'BDT':'symbol':'1.2-2' }}
+      </div>
+    </div>
+
+    <!-- Total Expense -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 flex flex-col group hover:shadow-lg transition-all duration-300 cursor-default">
+      <div class="absolute -right-4 -bottom-4 text-[100px] text-rose-500/5 rotate-[-10deg] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+        <mat-icon inline="true">arrow_downward</mat-icon>
+      </div>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+          <mat-icon>arrow_downward</mat-icon>
+        </div>
+        <h3 class="text-gray-500 dark:text-gray-400 font-medium tracking-wide text-sm uppercase">Total Expense</h3>
+      </div>
+      <div class="text-3xl font-bold text-gray-900 dark:text-white">
+        {{ data.totalExpenseBdt | currency:'BDT':'symbol':'1.2-2' }}
+      </div>
+    </div>
+
+    <!-- Net Balance -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 flex flex-col group hover:shadow-lg transition-all duration-300 cursor-default">
+      <div class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+        <mat-icon inline="true">account_balance_wallet</mat-icon>
+      </div>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+          <mat-icon>account_balance_wallet</mat-icon>
+        </div>
+        <h3 class="text-gray-500 dark:text-gray-400 font-medium tracking-wide text-sm uppercase">Net Balance</h3>
+      </div>
+      <div class="text-3xl font-bold text-gray-900 dark:text-white" [ngClass]="data.netBalanceBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+        {{ data.netBalanceBdt | currency:'BDT':'symbol':'1.2-2' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+    
+    <app-empty-state 
+      *ngIf="!isLoading() && transactions().length === 0"
+      icon="receipt_long"
+      title="No Transactions Found"
+      description="You haven't recorded any incomes or expenses yet."
+      actionLabel="Add Transaction"
+      (action)="openAddTransactionDialog()">
+    </app-empty-state>
+
+    <div *ngIf="transactions().length > 0" class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800/50">
+            <th class="py-4 px-6 font-medium">Date</th>
+            <th class="py-4 px-6 font-medium">Type</th>
+            <th class="py-4 px-6 font-medium">Category</th>
+            <th class="py-4 px-6 font-medium">Amount (BDT)</th>
+            <th class="py-4 px-6 font-medium">Notes</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
+          <tr *ngFor="let txn of transactions()" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+            <td class="py-4 px-6 text-sm text-gray-900 dark:text-gray-100">
+              {{ txn.transactionDate | date:'mediumDate' }}
+            </td>
+            <td class="py-4 px-6 text-sm">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="txn.type === 'Income' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'">
+                {{ txn.type }}
+              </span>
+            </td>
+            <td class="py-4 px-6 text-sm text-gray-600 dark:text-gray-300">
+              {{ txn.category }}
+            </td>
+            <td class="py-4 px-6 text-sm font-semibold"
+              [ngClass]="txn.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | currency:'BDT':'symbol':'1.2-2' }}
+            </td>
+            <td class="py-4 px-6 text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+              {{ txn.notes || '-' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>

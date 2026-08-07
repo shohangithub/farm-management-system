@@ -75,11 +75,11 @@
           <div class="sm:col-span-2 form-group relative">
             <label for="businessType" class="form-label font-medium mb-1.5 block">Business Type <span class="text-red-500">*</span></label>
             <select id="businessType" formControlName="businessType" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
-              <option [ngValue]="1">Farm / Producer</option>
-              <option [ngValue]="2">Supplier / Vendor</option>
-              <option [ngValue]="3">Buyer / Distributor</option>
-              <option [ngValue]="4">Veterinary Clinic</option>
-              <option [ngValue]="5">Cooperative</option>
+              <option value="Farm">Farm / Producer</option>
+              <option value="Supplier">Supplier / Vendor</option>
+              <option value="Buyer">Buyer / Distributor</option>
+              <option value="VeterinaryClinic">Veterinary Clinic</option>
+              <option value="Cooperative">Cooperative</option>
             </select>
           </div>
         </div>

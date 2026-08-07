@@ -1,0 +1,99 @@
+<div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+  
+  <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between shrink-0">
+    <div>
+      <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-500">receipt_long</mat-icon>
+        Add Transaction
+      </h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Record a new income or expense for the farm.</p>
+    </div>
+    <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col overflow-hidden h-full">
+    
+    <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-sm whitespace-pre-wrap flex items-start gap-2">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-red-500 mt-0.5 shrink-0">error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+
+    <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+      
+      <!-- Type Selection -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+          Transaction Type <span class="text-red-500">*</span>
+        </label>
+        <select formControlName="type"
+               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow appearance-none">
+          <option value="Income">Income</option>
+          <option value="Expense">Expense</option>
+        </select>
+      </div>
+
+      <!-- Category Selection -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+          Category <span class="text-red-500">*</span>
+        </label>
+        <select formControlName="category"
+               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow appearance-none">
+          <option *ngFor="let cat of categories" [value]="cat.value">{{ cat.label }}</option>
+        </select>
+      </div>
+
+      <!-- Amount -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+          Amount (BDT) <span class="text-red-500">*</span>
+        </label>
+        <input type="number" formControlName="amountBdt" step="0.01" placeholder="0.00"
+               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+      </div>
+
+      <!-- Date -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+          Transaction Date <span class="text-red-500">*</span>
+        </label>
+        <input type="date" formControlName="transactionDate"
+               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+      </div>
+
+      <!-- Reference -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+          Reference ID
+        </label>
+        <input type="text" formControlName="referenceId" placeholder="e.g., Invoice #123"
+               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+      </div>
+
+      <!-- Notes -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+          Notes
+        </label>
+        <textarea formControlName="notes" placeholder="Additional details..." rows="3"
+               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
+      </div>
+
+    </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
+      <button type="button" mat-dialog-close [disabled]="isLoading()"
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+        Cancel
+      </button>
+      <button type="submit" [disabled]="form.invalid || isLoading()"
+              class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+        <mat-icon *ngIf="isLoading()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
+        <span>{{ isLoading() ? 'Saving...' : 'Save Transaction' }}</span>
+      </button>
+    </div>
+  </form>
+
+</div>

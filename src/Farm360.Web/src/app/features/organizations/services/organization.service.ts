@@ -14,7 +14,7 @@ export class OrganizationService {
   private readonly authService = inject(AuthService);
   private readonly baseUrl = '/api/v1/organizations';
 
-  getOrganizations(search?: string, status?: number, page: number = 1, size: number = 10): Observable<PagedResult<Organization>> {
+  getOrganizations(search?: string, status?: string, page: number = 1, size: number = 10): Observable<PagedResult<Organization>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());

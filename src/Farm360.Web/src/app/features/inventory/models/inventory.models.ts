@@ -185,3 +185,59 @@ export interface CreateSupplierRequest {
   address?: string;
   notes?: string;
 }
+
+export enum PurchaseOrderStatus {
+  Draft = 1,
+  PendingApproval = 2,
+  Approved = 3,
+  Fulfilled = 4,
+  Cancelled = 5
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  inventoryItemId: string;
+  quantity: number;
+  unitCostBdt: number;
+  totalCostBdt: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  farmId: string;
+  poNumber: string;
+  supplierId: string;
+  status: PurchaseOrderStatus;
+  orderDate: string;
+  expectedDeliveryDate?: string;
+  notes?: string;
+  totalAmountBdt: number;
+  items: PurchaseOrderItem[];
+}
+
+export interface PurchaseOrderItemDto {
+  inventoryItemId: string;
+  quantity: number;
+  unitCostBdt: number;
+}
+
+export interface CreatePurchaseOrderRequest {
+  farmId: string;
+  supplierId: string;
+  orderDate: string;
+  expectedDeliveryDate?: string;
+  notes?: string;
+  items: PurchaseOrderItemDto[];
+}
+
+export interface PurchaseOrderParams {
+  pageNumber?: number;
+  pageSize?: number;
+  farmId?: string;
+  supplierId?: string;
+  status?: PurchaseOrderStatus;
+  search?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+

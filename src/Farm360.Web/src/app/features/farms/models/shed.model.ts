@@ -11,7 +11,7 @@ export interface Shed {
   hasVentilation: boolean;
   hasWaterLine: boolean;
   hasFeedLine: boolean;
-  status: number; // enum ShedStatus
+  status: string; // enum ShedStatus
   createdAtUtc?: string;
   createdBy?: string;
   modifiedAtUtc?: string;
@@ -25,7 +25,7 @@ export interface ShedList {
   capacity?: number;
   currentOccupancy: number;
   animalType?: string;
-  status: number;
+  status: string;
 }
 
 export interface CreateShedCommand {
@@ -43,5 +43,5 @@ export interface CreateShedCommand {
 
 export interface UpdateShedCommand extends CreateShedCommand {
   id: string;
-  status: number;
+  status: string;
 }

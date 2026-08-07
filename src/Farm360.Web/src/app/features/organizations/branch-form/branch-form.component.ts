@@ -63,7 +63,7 @@ export class BranchFormComponent implements OnInit {
       contactEmail: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       contactPhone: ['', Validators.maxLength(30)],
       isHeadOffice: [false],
-      status: [1],
+      status: ['Active'],
       street: [''],
       city: [''],
       state: [''],
@@ -132,6 +132,13 @@ export class BranchFormComponent implements OnInit {
     this.error.set(null);
 
     const formValue = this.branchForm.getRawValue();
+
+    // Sanitize empty strings to null to prevent BadHttpRequestException during deserialization
+    Object.keys(formValue).forEach(key => {
+      if (formValue[key] === '') {
+        formValue[key] = null;
+      }
+    });
 
     if (this.isEditMode() && this.branchId()) {
       const command: UpdateBranchCommand = {

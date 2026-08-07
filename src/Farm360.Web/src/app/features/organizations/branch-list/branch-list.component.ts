@@ -41,7 +41,7 @@ export class BranchListComponent {
   readonly pageIndex = signal<number>(0);
   readonly pageSize = signal<number>(10);
   readonly searchTerm = signal<string>('');
-  readonly statusFilter = signal<number | null>(null);
+  readonly statusFilter = signal<string | null>(null);
 
   private refreshTrigger = signal(0);
   private fetchParams = computed(() => ({
@@ -106,8 +106,8 @@ export class BranchListComponent {
       cell: (row: BranchList) => {
         let cls = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
         let txt = 'Closed';
-        if (row.status === 1) { cls = 'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400'; txt = 'Active'; }
-        else if (row.status === 2) { cls = 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'; txt = 'Inactive'; }
+        if (row.status === 'Active') { cls = 'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400'; txt = 'Active'; }
+        else if (row.status === 'Inactive') { cls = 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'; txt = 'Inactive'; }
         return `<span class="px-2 py-0.5 inline-flex text-[11px] leading-5 font-bold rounded-md uppercase tracking-wider ${cls}">${txt}</span>`;
       },
       isAction: false
@@ -135,7 +135,7 @@ export class BranchListComponent {
     if (val === '') {
       this.statusFilter.set(null);
     } else {
-      this.statusFilter.set(Number(val));
+      this.statusFilter.set(val);
     }
     this.pageIndex.set(0);
   }

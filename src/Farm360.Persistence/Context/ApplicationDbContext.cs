@@ -10,6 +10,7 @@ using Farm360.Domain.Organizations;
 using Farm360.Domain.Farms;
 using Farm360.Domain.Feeding;
 using Farm360.Domain.Inventory;
+using Farm360.Domain.Finance;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -135,6 +136,11 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
+
+    // ── Financial Module ──────────────────────────────────────────────────────
+    public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
 
     // ── Intelligence & Analytics Module ───────────────────────────────────────
     public DbSet<Farm360.Domain.Intelligence.ActionableInsight> ActionableInsights => Set<Farm360.Domain.Intelligence.ActionableInsight>();

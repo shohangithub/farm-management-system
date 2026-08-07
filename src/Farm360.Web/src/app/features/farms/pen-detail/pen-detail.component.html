@@ -50,7 +50,7 @@
       <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider"
             [ngClass]="statusClass()">
         <span class="w-2 h-2 rounded-full mr-2"
-              [ngClass]="{'bg-emerald-500': pen()?.status === 1, 'bg-gray-400': pen()?.status === 2, 'bg-amber-500': pen()?.status === 3}"></span>
+              [ngClass]="{'bg-emerald-500': pen()?.status === 'Active', 'bg-gray-400': pen()?.status === 'Inactive', 'bg-amber-500': pen()?.status === 'UnderMaintenance'}"></span>
         {{ statusLabel() }}
       </span>
     </div>

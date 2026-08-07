@@ -24,9 +24,10 @@
   - [x] Feeding schedule assignment to sheds, pens, and animal batches
   - [x] Daily feed consumption & wastage logger
   - [x] Feed Conversion Ratio (FCR = Feed / Weight Gain) trend analytics & chart UI
-- [ ] **6. Inventory Control Module**
-  - Feed & medicine stock management
-  - Purchase order workflows
+- [~] **6. Inventory Control Module** (In Progress)
+  - [x] Basic Inventory items & supplier list with full CRUD
+  - [ ] Feed & medicine stock management workflows
+  - [ ] Purchase order workflows
 - [ ] **7. Finance & Accounting Module**
   - Expense tracking & financial period closing
   - Profitability analytics per animal batch

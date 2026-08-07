@@ -54,7 +54,7 @@
       <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider"
             [ngClass]="statusClass()">
         <span class="w-2 h-2 rounded-full mr-2"
-              [ngClass]="branch()?.status === 1 ? 'bg-emerald-500' : branch()?.status === 2 ? 'bg-amber-500' : 'bg-gray-400'"></span>
+              [ngClass]="branch()?.status === 'Active' ? 'bg-emerald-500' : branch()?.status === 'Inactive' ? 'bg-amber-500' : 'bg-gray-400'"></span>
         {{ statusLabel() }}
       </span>
     </div>
@@ -224,7 +224,7 @@
                   <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-white">{{ f.farmName }}</td>
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="px-2 py-0.5 text-[10px] uppercase font-bold rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-                      {{ f.type === 1 ? 'Dairy' : f.type === 2 ? 'Beef' : f.type === 3 ? 'Poultry' : 'Mixed' }}
+                      {{ f.type }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-sm font-semibold text-right text-gray-700 dark:text-gray-300">
@@ -232,8 +232,8 @@
                   </td>
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
-                          [ngClass]="f.status === 1 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
-                      {{ f.status === 1 ? 'Active' : 'Inactive' }}
+                          [ngClass]="f.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
+                      {{ f.status }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right">

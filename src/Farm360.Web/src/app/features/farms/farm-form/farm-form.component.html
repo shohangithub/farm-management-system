@@ -67,11 +67,11 @@
         </label>
         <select formControlName="type" id="type"
                 class="block w-full px-3 py-2.5 border rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer">
-          <option [ngValue]="1">Dairy</option>
-          <option [ngValue]="2">Poultry</option>
-          <option [ngValue]="3">Mixed</option>
-          <option [ngValue]="4">Crop</option>
-          <option [ngValue]="5">Aquaculture</option>
+          <option value="Dairy">Dairy</option>
+          <option value="Poultry">Poultry</option>
+          <option value="Mixed">Mixed</option>
+          <option value="Crop">Crop</option>
+          <option value="Aquaculture">Aquaculture</option>
         </select>
       </div>
 
@@ -80,10 +80,10 @@
         <label for="status" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Status</label>
         <select formControlName="status" id="status"
                 class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-          <option [ngValue]="1">Active</option>
-          <option [ngValue]="2">Inactive</option>
-          <option [ngValue]="3">Under Maintenance</option>
-          <option [ngValue]="4">Closed</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="UnderMaintenance">Under Maintenance</option>
+          <option value="Closed">Closed</option>
         </select>
       </div>
     </div>

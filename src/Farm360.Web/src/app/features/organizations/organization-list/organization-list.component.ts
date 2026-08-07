@@ -33,15 +33,15 @@ export class OrganizationListComponent {
   readonly pageIndex = signal<number>(0);
   readonly pageSize = signal<number>(10);
   readonly searchTerm = signal<string>('');
-  readonly statusFilter = signal<number | null>(null);
+  readonly statusFilter = signal<string | null>(null);
 
   // BusinessType enum label map — must match Farm360.Domain.Organizations.Enums.BusinessType
-  private readonly businessTypeLabels: Record<number, string> = {
-    1: 'Farm',
-    2: 'Supplier',
-    3: 'Buyer',
-    4: 'Veterinary Clinic',
-    5: 'Cooperative'
+  private readonly businessTypeLabels: Record<string, string> = {
+    'Farm': 'Farm',
+    'Supplier': 'Supplier',
+    'Buyer': 'Buyer',
+    'VeterinaryClinic': 'Veterinary Clinic',
+    'Cooperative': 'Cooperative'
   };
 
   private refreshTrigger = signal(0);
@@ -96,7 +96,7 @@ export class OrganizationListComponent {
       def: 'status',
       header: 'Status',
       cell: (row: Organization) => {
-        const isActive = row.status === 1;
+        const isActive = row.status === 'Active';
         return `<span class="px-2 py-0.5 inline-flex text-[11px] leading-5 font-bold rounded-md uppercase tracking-wider ${isActive ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}">${isActive ? 'Active' : 'Inactive'}</span>`;
       },
       isAction: false
@@ -124,7 +124,7 @@ export class OrganizationListComponent {
     if (val === '') {
       this.statusFilter.set(null);
     } else {
-      this.statusFilter.set(Number(val));
+      this.statusFilter.set(val);
     }
     this.pageIndex.set(0);
   }

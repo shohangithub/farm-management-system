@@ -75,7 +75,7 @@ export class PenFormComponent implements OnInit {
       capacity: [null, [Validators.required, Validators.min(1)]],
       animalGroup: ['', Validators.maxLength(100)],
       notes: ['', Validators.maxLength(1000)],
-      status: [1]
+      status: ['Active']
     });
   }
 
@@ -128,6 +128,13 @@ export class PenFormComponent implements OnInit {
     this.error.set(null);
 
     const formValue = this.penForm.getRawValue();
+
+    // Sanitize empty strings to null to prevent BadHttpRequestException during deserialization
+    Object.keys(formValue).forEach(key => {
+      if (formValue[key] === '') {
+        formValue[key] = null;
+      }
+    });
 
     if (this.isEditMode() && this.penId()) {
       const command: UpdatePenCommand = {

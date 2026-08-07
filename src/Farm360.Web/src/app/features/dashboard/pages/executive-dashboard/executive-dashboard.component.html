@@ -1,0 +1,159 @@
+<app-page-header
+  title="Executive Dashboard"
+  description="Real-time farm intelligence and key performance indicators."
+  breadcrumbActiveNode="Dashboard"
+>
+  <div actions class="flex gap-3">
+    <button mat-flat-button color="primary" class="!rounded-xl">
+      <mat-icon>assessment</mat-icon>
+      Generate Report
+    </button>
+  </div>
+</app-page-header>
+
+<div class="flex-1 p-6 overflow-y-auto relative">
+  <!-- Loading State -->
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <!-- Error State -->
+  <app-empty-state
+    *ngIf="hasError()"
+    icon="error_outline"
+    title="Failed to load dashboard"
+    description="There was an error communicating with the intelligence service. Please try again later."
+    buttonText="Retry"
+  ></app-empty-state>
+
+  <!-- Main Content -->
+  <div *ngIf="data() as dashboard" class="space-y-6 max-w-7xl mx-auto">
+    
+    <!-- KPI Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      
+      <!-- Animals KPI -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none group-hover:scale-110 transition-transform duration-500">pets</mat-icon>
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+            <mat-icon>pets</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Animals</p>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboard.totalAnimals }}</h3>
+          </div>
+        </div>
+        <div class="flex items-center text-sm">
+          <span class="text-emerald-500 font-medium flex items-center"><mat-icon class="text-[16px] w-[16px] h-[16px]">trending_up</mat-icon> Active</span>
+        </div>
+      </div>
+
+      <!-- Health KPI -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-rose-500/5 rotate-[-10deg] pointer-events-none group-hover:scale-110 transition-transform duration-500">medical_services</mat-icon>
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+            <mat-icon>medical_services</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Sick Animals</p>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboard.sickAnimals }}</h3>
+          </div>
+        </div>
+        <div class="flex items-center text-sm">
+          <span class="text-rose-500 font-medium flex items-center" *ngIf="dashboard.sickAnimals > 0"><mat-icon class="text-[16px] w-[16px] h-[16px]">warning</mat-icon> Needs attention</span>
+          <span class="text-emerald-500 font-medium flex items-center" *ngIf="dashboard.sickAnimals === 0"><mat-icon class="text-[16px] w-[16px] h-[16px]">check_circle</mat-icon> All healthy</span>
+        </div>
+      </div>
+
+      <!-- Inventory KPI -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-amber-500/5 rotate-[-10deg] pointer-events-none group-hover:scale-110 transition-transform duration-500">inventory_2</mat-icon>
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+            <mat-icon>inventory_2</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Low Stock Items</p>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboard.feedLowStockCount }}</h3>
+          </div>
+        </div>
+        <div class="flex items-center text-sm">
+          <span class="text-amber-500 font-medium flex items-center" *ngIf="dashboard.feedLowStockCount > 0"><mat-icon class="text-[16px] w-[16px] h-[16px]">shopping_cart</mat-icon> Reorder required</span>
+          <span class="text-emerald-500 font-medium flex items-center" *ngIf="dashboard.feedLowStockCount === 0"><mat-icon class="text-[16px] w-[16px] h-[16px]">check_circle</mat-icon> Stock healthy</span>
+        </div>
+      </div>
+
+      <!-- Finance KPI -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden group hover:shadow-md transition-all duration-300">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none group-hover:scale-110 transition-transform duration-500">account_balance_wallet</mat-icon>
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Net Profit (MTD)</p>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ getNetProfit() | currency:'BDT ' }}</h3>
+          </div>
+        </div>
+        <div class="flex items-center text-sm gap-3">
+          <span class="text-emerald-500 font-medium flex items-center" title="Income"><mat-icon class="text-[16px] w-[16px] h-[16px]">arrow_upward</mat-icon> {{ dashboard.currentMonthIncome | currency:'BDT ' }}</span>
+          <span class="text-rose-500 font-medium flex items-center" title="Expense"><mat-icon class="text-[16px] w-[16px] h-[16px]">arrow_downward</mat-icon> {{ dashboard.currentMonthExpense | currency:'BDT ' }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- AI Intelligence Center -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden relative">
+      <!-- Header -->
+      <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+            <mat-icon>psychology</mat-icon>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0 leading-tight">AI Predictive Alerts</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Smart farm intelligence and actionable insights</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insights List -->
+      <div class="p-6">
+        <div *ngIf="dashboard.actionableInsights.length === 0" class="text-center py-10">
+          <div class="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-gray-700">
+            <mat-icon class="text-gray-400 text-3xl h-auto w-auto">verified</mat-icon>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">All Clear</h3>
+          <p class="text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">No critical predictive alerts at this time. The AI engine is continuously monitoring your farm.</p>
+        </div>
+
+        <div *ngIf="dashboard.actionableInsights.length > 0" class="space-y-4">
+          <div *ngFor="let insight of dashboard.actionableInsights" 
+               class="flex gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow duration-300">
+            
+            <div class="flex-shrink-0 mt-1">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center border" [ngClass]="getSeverityColorClass(insight.severity)">
+                <mat-icon>{{ getSeverityIcon(insight.severity) }}</mat-icon>
+              </div>
+            </div>
+            
+            <div class="flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h4 class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ insight.title }}</h4>
+                <span class="text-xs text-gray-400">{{ insight.createdAtUtc | date:'short' }}</span>
+              </div>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">{{ insight.message }}</p>
+              
+              <div class="flex gap-2">
+                <button mat-stroked-button class="!rounded-lg !text-sm h-8 px-3" color="primary">Review Details</button>
+                <button mat-button class="!rounded-lg !text-sm h-8 px-3 text-gray-500">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

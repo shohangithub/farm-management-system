@@ -42,6 +42,9 @@ All notable changes to the Farm360 AI project will be documented in this file.
 - **Test Suite Alignment** — Aligned MediatR transactional expectations across `ScheduleVaccinationCommandTests`, `LogMedicalTreatmentCommandTests`, `ReportDiseaseIncidentCommandTests`, and `CreateOrganizationCommandHandlerTests`. Updated Architecture test layer namespace rules. All 150 unit, integration, architecture, and functional tests pass with 100% success rate.
 
 ### Fixed
+- **Backend Build & Architecture Violations**: Fixed Application layer build failures caused by missing namespaces (`Farm360.Application.Common.Exceptions` and `Farm360.Application.Common.Interfaces`). Removed direct `ApplicationDbContext` references from Application layer commands, strictly enforcing the usage of Repositories and `IUnitOfWork`.
+- **Null Checks (IDE0270)**: Simplified null checking in CQRS handlers by utilizing the null-coalescing operator (`?? throw new NotFoundException(...)`).
+- **Inventory UI Mismatches**: Corrected gradient anomalies in the Supplier list page by enforcing the globally standard emerald-teal `bg-gradient-to-br` pattern.
 - **Authentication System (IDX10703 Error)** - Fixed `IDX10703: Cannot create a 'Microsoft.IdentityModel.Tokens.SymmetricSecurityKey', key length is zero` error by renaming `SecretKey` to `Secret` in `appsettings.Development.json` to match the binding class, and added startup validation to enforce minimum JWT secret length.
 - **Organization Module CRUD HTTP 500 Errors** — Root cause: Command handlers (`CreateOrganizationCommand`, `UpdateOrganizationCommand`, `DeactivateOrganizationCommand`) were manually calling `BeginTransactionAsync`/`CommitTransactionAsync` inside the handler body while the `TransactionBehavior` MediatR pipeline was simultaneously managing a transaction, causing a double-nested transaction SQL Server exception. Fixed by:
   - Removing manual `BeginTransactionAsync`/`CommitTransactionAsync` calls from all three handlers.
@@ -61,6 +64,12 @@ All notable changes to the Farm360 AI project will be documented in this file.
 
 
 ### Added
+- **Inventory Module**:
+  - Implemented backend CQRS Commands (`DeleteSupplierCommand`, `DeleteInventoryItemCommand`), Handlers, and Minimal API Endpoints for deleting Suppliers and Inventory Items.
+  - Implemented frontend deletion functionality using `ConfirmationDialogComponent` (Premium Dialog Pattern) on `supplier-list.component.ts` and `inventory-item-list.component.ts`.
+- **Backend Architecture Skill (Customization)**: Massively upgraded the `backend_architecture_pattern` SKILL.md file to serve as a definitive, full CRUD + Pagination reference guide. It explicitly outlines how to prevent common architectural faults (e.g., namespace errors, leaky context boundaries).
+
+### Changed
 - **Authentication API & UI**
   - Added `IAuthService` and implementation for Login, Token Refresh, Logout, and User Registration.
   - Added `/api/v1/auth/login`, `/refresh`, `/logout`, `/register`, and `/me` endpoints.

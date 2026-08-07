@@ -10,13 +10,18 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'livestock',
+        redirectTo: 'dashboard',
         pathMatch: 'full',
       },
       {
         path: 'livestock',
         loadChildren: () =>
           import('./features/livestock/livestock.routes').then(m => m.livestockRoutes),
+      },
+      {
+        path: 'dashboard',
+        loadChildren: () =>
+          import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
       },
       {
         path: 'health',
@@ -32,6 +37,11 @@ export const routes: Routes = [
         path: 'inventory',
         loadChildren: () =>
           import('./features/inventory/inventory.routes').then(m => m.INVENTORY_ROUTES),
+      },
+      {
+        path: 'finance',
+        loadChildren: () =>
+          import('./features/finance/finance.routes').then(m => m.FINANCE_ROUTES),
       },
       {
         path: 'organizations',
@@ -57,6 +67,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'livestock',
+    redirectTo: 'dashboard',
   },
 ];

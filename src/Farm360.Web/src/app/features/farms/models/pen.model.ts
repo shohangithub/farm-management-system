@@ -7,7 +7,7 @@ export interface Pen {
   currentOccupancy: number;
   animalGroup?: string;
   notes?: string;
-  status: number; // enum PenStatus
+  status: string; // enum PenStatus
   createdAtUtc?: string;
   createdBy?: string;
   modifiedAtUtc?: string;
@@ -21,7 +21,7 @@ export interface PenList {
   capacity: number;
   currentOccupancy: number;
   animalGroup?: string;
-  status: number;
+  status: string;
 }
 
 export interface CreatePenCommand {
@@ -39,5 +39,5 @@ export interface UpdatePenCommand {
   capacity: number;
   animalGroup?: string;
   notes?: string;
-  status: number;
+  status: string;
 }

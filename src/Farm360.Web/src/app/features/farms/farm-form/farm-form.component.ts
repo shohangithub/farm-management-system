@@ -59,14 +59,14 @@ export class FarmFormComponent implements OnInit {
     this.farmForm = this.fb.group({
       farmCode: ['', [Validators.required, Validators.maxLength(50)]],
       farmName: ['', [Validators.required, Validators.maxLength(200)]],
-      type: [1, Validators.required],
+      type: ['Dairy', Validators.required],
       farmSize: [null],
       landArea: [null],
       latitude: [null],
       longitude: [null],
       mapPolygon: [''],
       capacity: [null, Validators.min(0)],
-      status: [1],
+      status: ['Active'],
       description: ['', Validators.maxLength(1000)]
     });
   }
@@ -125,6 +125,13 @@ export class FarmFormComponent implements OnInit {
     this.error.set(null);
 
     const formValue = this.farmForm.getRawValue();
+
+    // Sanitize empty strings to null to prevent BadHttpRequestException during deserialization
+    Object.keys(formValue).forEach(key => {
+      if (formValue[key] === '') {
+        formValue[key] = null;
+      }
+    });
 
     if (this.isEditMode() && this.farmId()) {
       const command: UpdateFarmCommand = {

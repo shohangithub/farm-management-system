@@ -29,6 +29,7 @@ public sealed class DataSeeder(
         await SeedPermissionsAsync(cancellationToken);
         await SeedSystemRolesAsync(cancellationToken);
         await SeedRolePermissionsAsync(cancellationToken);
+        await SeedOrganizationsAndTenantsAsync(cancellationToken);
         await SeedBreedsAsync(cancellationToken);
 
         logger.LogInformation("Farm360 DataSeeder: Completed.");
@@ -271,6 +272,71 @@ public sealed class DataSeeder(
             await context.SaveChangesAsync(cancellationToken);
             if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
                 logger.LogInformation("Farm360 DataSeeder: Seeded {Count} default breeds across {TenantCount} tenants", addedCount, tenants.Count);
+        }
+    }
+
+    // ── 5. Default Tenant & Organization ──────────────────────────────────────
+    private async Task SeedOrganizationsAndTenantsAsync(CancellationToken cancellationToken)
+    {
+        var defaultTenantSlug = "demo";
+        var tenant = await context.Tenants
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Slug == defaultTenantSlug, cancellationToken);
+            
+        if (tenant == null)
+        {
+            tenant = Farm360.Domain.Tenancy.Tenant.Create("Demo Farm Ltd", defaultTenantSlug, Farm360.Domain.Tenancy.SubscriptionTier.Enterprise);
+            context.Tenants.Add(tenant);
+            await context.SaveChangesAsync(cancellationToken);
+            
+            if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
+                logger.LogInformation("Farm360 DataSeeder: Seeded default Tenant.");
+        }
+
+        var org = await context.Organizations
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(o => o.TenantId == tenant.Id, cancellationToken);
+            
+        if (org == null)
+        {
+            var address = Farm360.Domain.Organizations.ValueObjects.Address.Create("123 Farm Rd", "Farmville", "Dhaka", "BD", "1200");
+            org = Farm360.Domain.Organizations.Organization.Create(
+                tenant.Id, "Demo Farm Org", null, "contact@demofarm.ai", "+8801800000000", null, null, null, 
+                "BDT", "Asia/Dhaka", "en", address, Farm360.Domain.Organizations.Enums.BusinessType.Farm);
+            context.Organizations.Add(org);
+            await context.SaveChangesAsync(cancellationToken);
+            
+            if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
+                logger.LogInformation("Farm360 DataSeeder: Seeded default Organization.");
+        }
+
+        var branch = await context.Branches
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(b => b.OrganizationId == org.Id, cancellationToken);
+            
+        if (branch == null)
+        {
+            branch = Farm360.Domain.Organizations.Branch.Create(tenant.Id, org.Id, "HQ", "Headquarters", "hq@demofarm.ai", true);
+            context.Branches.Add(branch);
+            await context.SaveChangesAsync(cancellationToken);
+            
+            if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
+                logger.LogInformation("Farm360 DataSeeder: Seeded default Branch.");
+        }
+
+        var adminUserId = new Guid("11111111-1111-1111-1111-111111111111");
+        var tenantUser = await context.TenantUsers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(tu => tu.TenantId == tenant.Id && tu.UserId == adminUserId, cancellationToken);
+
+        if (tenantUser == null)
+        {
+            tenantUser = Farm360.Domain.Identity.TenantUser.CreateOwner(tenant.Id, adminUserId, SystemRoleIds.Owner);
+            context.TenantUsers.Add(tenantUser);
+            await context.SaveChangesAsync(cancellationToken);
+            
+            if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
+                logger.LogInformation("Farm360 DataSeeder: Seeded default TenantUser.");
         }
     }
 }

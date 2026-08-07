@@ -46,7 +46,7 @@ export class OrganizationFormComponent implements OnInit {
   initForm(): void {
     this.orgForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(200)]],
-      businessType: [1, Validators.required],
+      businessType: ['Farm', Validators.required],
       contactEmail: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       contactPhone: ['', Validators.maxLength(30)],
       currencyCode: ['BDT', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
@@ -68,7 +68,7 @@ export class OrganizationFormComponent implements OnInit {
       next: (org) => {
         this.orgForm.patchValue({
           name: org.name,
-          businessType: +org.businessType, // Ensure integer
+          businessType: org.businessType,
           contactEmail: org.contactEmail,
           contactPhone: org.contactPhone || '',
           currencyCode: org.currencyCode,
@@ -110,10 +110,15 @@ export class OrganizationFormComponent implements OnInit {
 
     const formValue = this.orgForm.getRawValue();
 
-    // Ensure businessType is sent as a number, not a string
+    // Sanitize empty strings to null to prevent BadHttpRequestException during deserialization
+    Object.keys(formValue).forEach(key => {
+      if (formValue[key] === '') {
+        formValue[key] = null;
+      }
+    });
+
     const sanitizedValues = {
-      ...formValue,
-      businessType: +formValue.businessType
+      ...formValue
     };
 
     const handleLogoUpload = (id: string, callback: () => void) => {

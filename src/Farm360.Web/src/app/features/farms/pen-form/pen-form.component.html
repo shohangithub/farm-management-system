@@ -88,9 +88,9 @@
         <label for="status" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Status</label>
         <select formControlName="status" id="status"
                 class="block w-full sm:w-1/2 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-          <option [ngValue]="1">Active</option>
-          <option [ngValue]="2">Inactive</option>
-          <option [ngValue]="3">Maintenance</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="UnderMaintenance">Maintenance</option>
         </select>
       </div>
     </div>

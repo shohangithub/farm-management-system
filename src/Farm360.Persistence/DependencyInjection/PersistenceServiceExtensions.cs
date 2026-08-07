@@ -85,9 +85,16 @@ public static class PersistenceServiceExtensions
         services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository, Farm360.Persistence.Repositories.Inventory.InventoryItemRepository>();
         services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.ISupplierRepository, Farm360.Persistence.Repositories.Inventory.SupplierRepository>();
         services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IStockTransactionRepository, Farm360.Persistence.Repositories.Inventory.StockTransactionRepository>();
+        services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IPurchaseOrderRepository, Farm360.Persistence.Repositories.Inventory.PurchaseOrderRepository>();
 
         // ── Intelligence repositories ───────────────────────────────────────────
         services.AddScoped<Farm360.Domain.Intelligence.Interfaces.Repositories.IInsightRepository, Farm360.Persistence.Repositories.Intelligence.InsightRepository>();
+        
+        // ── Dashboard repositories ──────────────────────────────────────────────
+        services.AddScoped<Farm360.Domain.Dashboard.Interfaces.IExecutiveDashboardRepository, Farm360.Persistence.Repositories.Dashboard.ExecutiveDashboardRepository>();
+
+        // ── Finance repositories ──────────────────────────────────────────────
+        services.AddScoped<Farm360.Application.Finance.Repositories.IFinancialTransactionRepository, Farm360.Persistence.Repositories.Finance.FinancialTransactionRepository>();
 
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();

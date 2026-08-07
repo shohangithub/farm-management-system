@@ -19,8 +19,8 @@ export interface Organization {
   timeZoneId: string;
   languageCode: string;
   address?: Address;
-  businessType: number; // enum BusinessType
-  status: number; // enum OrganizationStatus
+  businessType: string; // enum BusinessType
+  status: string; // enum OrganizationStatus
   createdAt: string;
   createdBy?: string;
   lastModifiedAt?: string;
@@ -44,7 +44,7 @@ export interface CreateOrganizationCommand {
   state?: string;
   country?: string;
   zipCode?: string;
-  businessType: number;
+  businessType: string;
 }
 
 export interface UpdateOrganizationCommand extends CreateOrganizationCommand {

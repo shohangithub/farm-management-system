@@ -50,7 +50,7 @@
       <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider"
             [ngClass]="statusClass()">
         <span class="w-2 h-2 rounded-full mr-2"
-              [ngClass]="{'bg-emerald-500': shed()?.status === 1, 'bg-gray-400': shed()?.status === 2, 'bg-amber-500': shed()?.status === 3}"></span>
+              [ngClass]="{'bg-emerald-500': shed()?.status === 'Active', 'bg-gray-400': shed()?.status === 'Inactive', 'bg-amber-500': shed()?.status === 'UnderMaintenance'}"></span>
         {{ statusLabel() }}
       </span>
     </div>
@@ -217,8 +217,8 @@
                   </td>
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
-                          [ngClass]="p.status === 1 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
-                      {{ p.status === 1 ? 'Active' : 'Inactive' }}
+                          [ngClass]="p.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
+                      {{ p.status }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right">

@@ -11,7 +11,7 @@ export interface Branch {
   address?: Address;
   latitude?: number;
   longitude?: number;
-  status: number; // enum: 1=Active, 2=Inactive, 3=Closed
+  status: string; // enum: Active, Inactive, Closed
   workingHours?: string;
   holidayCalendar?: string;
   isHeadOffice: boolean;
@@ -27,7 +27,7 @@ export interface BranchList {
   name: string;
   contactEmail: string;
   contactPhone?: string;
-  status: number;
+  status: string;
   isHeadOffice: boolean;
 }
 
@@ -51,4 +51,5 @@ export interface CreateBranchCommand {
 
 export interface UpdateBranchCommand extends CreateBranchCommand {
   id: string;
+  status: string;
 }

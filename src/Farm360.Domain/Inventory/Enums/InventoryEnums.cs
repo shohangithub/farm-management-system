@@ -27,3 +27,12 @@ public enum InventoryStatus
     OutOfStock = 3,
     Excess = 4
 }
+
+public enum PurchaseOrderStatus
+{
+    Draft = 1,
+    PendingApproval = 2,
+    Approved = 3,
+    Fulfilled = 4,
+    Cancelled = 5
+}

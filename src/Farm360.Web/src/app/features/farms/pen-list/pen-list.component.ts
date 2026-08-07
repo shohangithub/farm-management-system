@@ -26,7 +26,7 @@ export class PenListComponent {
   Math = Math;
 
   searchTerm = signal<string>('');
-  statusFilter = signal<number | null>(null);
+  statusFilter = signal<string | null>(null);
 
   private routeParams = toSignal(
     this.route.paramMap.pipe(
@@ -98,27 +98,27 @@ export class PenListComponent {
 
   onFilterStatus(event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
-    this.statusFilter.set(val ? parseInt(val, 10) : null);
+    this.statusFilter.set(val ? val : null);
   }
 
   onAddPen(): void {
     this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens', 'new']);
   }
 
-  getStatusName(status: number): string {
+  getStatusName(status: string): string {
     switch (status) {
-      case 1: return 'Active';
-      case 2: return 'Inactive';
-      case 3: return 'Maintenance';
-      default: return 'Unknown';
+      case 'Active': return 'Active';
+      case 'Inactive': return 'Inactive';
+      case 'UnderMaintenance': return 'Maintenance';
+      default: return status || 'Unknown';
     }
   }
 
-  getStatusClass(status: number): string {
+  getStatusClass(status: string): string {
     switch (status) {
-      case 1: return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
-      case 2: return 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700';
-      case 3: return 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
+      case 'Active': return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
+      case 'Inactive': return 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700';
+      case 'UnderMaintenance': return 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
       default: return 'bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400 border border-gray-200 dark:border-gray-800';
     }
   }

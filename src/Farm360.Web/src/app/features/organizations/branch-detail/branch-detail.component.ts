@@ -84,15 +84,15 @@ export class BranchDetailComponent {
 
   statusLabel = computed(() => {
     const s = this.branch()?.status;
-    if (s === 1) return 'Active';
-    if (s === 2) return 'Inactive';
+    if (s === 'Active') return 'Active';
+    if (s === 'Inactive') return 'Inactive';
     return 'Closed';
   });
 
   statusClass = computed(() => {
     const s = this.branch()?.status;
-    if (s === 1) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
-    if (s === 2) return 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
+    if (s === 'Active') return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
+    if (s === 'Inactive') return 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
     return 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700';
   });
 

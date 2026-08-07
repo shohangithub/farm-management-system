@@ -24,6 +24,7 @@ public sealed class IdentitySeeder(
 
             var adminUser = new ApplicationUser
             {
+                Id = new Guid("11111111-1111-1111-1111-111111111111"),
                 UserName = adminPhone,
                 PhoneNumber = adminPhone,
                 Email = "admin@farm360.ai",

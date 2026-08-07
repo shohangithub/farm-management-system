@@ -3,7 +3,7 @@ export interface Farm {
   branchId: string;
   farmCode: string;
   farmName: string;
-  type: number; // enum FarmType
+  type: string; // enum FarmType
   farmSize?: number;
   landArea?: number;
   latitude?: number;
@@ -13,7 +13,7 @@ export interface Farm {
   currentAnimalCount: number;
   ownerId?: string;
   managerId?: string;
-  status: number; // enum FarmStatus
+  status: string; // enum FarmStatus
   description?: string;
   createdAtUtc?: string;
   createdBy?: string;
@@ -25,17 +25,17 @@ export interface FarmList {
   id: string;
   farmCode: string;
   farmName: string;
-  type: number;
+  type: string;
   currentAnimalCount: number;
   capacity?: number;
-  status: number;
+  status: string;
 }
 
 export interface CreateFarmCommand {
   branchId: string;
   farmCode: string;
   farmName: string;
-  type: number;
+  type: string;
   farmSize?: number;
   landArea?: number;
   latitude?: number;
@@ -49,5 +49,5 @@ export interface CreateFarmCommand {
 
 export interface UpdateFarmCommand extends CreateFarmCommand {
   id: string;
-  status: number;
+  status: string;
 }

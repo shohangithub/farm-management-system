@@ -10,7 +10,7 @@ import { PagedResult } from '../../../shared/models/paged-result.model';
 export class BranchService {
   private readonly http = inject(HttpClient);
 
-  getBranchesByOrganization(orgId: string, search?: string, status?: number, page: number = 1, size: number = 10): Observable<PagedResult<BranchList>> {
+  getBranchesByOrganization(orgId: string, search?: string, status?: string, page: number = 1, size: number = 10): Observable<PagedResult<BranchList>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());

@@ -39,7 +39,7 @@ export class OrganizationDetailComponent {
   branchColumns: TableColumn[] = [
     { def: 'branch', header: 'Branch', cell: (row: BranchList) => row.name },
     { def: 'contact', header: 'Contact', cell: (row: BranchList) => row.contactEmail },
-    { def: 'status', header: 'Status', cell: (row: BranchList) => row.status === 1 ? 'Active' : 'Inactive' },
+    { def: 'status', header: 'Status', cell: (row: BranchList) => row.status === 'Active' ? 'Active' : 'Inactive' },
     { def: 'actions', header: 'Actions', cell: () => '' }
   ];
   branchDisplayedColumns = ['branch', 'contact', 'status', 'actions'];
@@ -88,13 +88,13 @@ export class OrganizationDetailComponent {
     }
   }
 
-  getBusinessTypeLabel(type: number): string {
+  getBusinessTypeLabel(type: string): string {
     switch (type) {
-      case 1: return 'Farm / Producer';
-      case 2: return 'Supplier / Vendor';
-      case 3: return 'Buyer / Distributor';
-      case 4: return 'Veterinary Clinic';
-      case 5: return 'Cooperative';
+      case 'Farm': return 'Farm / Producer';
+      case 'Supplier': return 'Supplier / Vendor';
+      case 'Buyer': return 'Buyer / Distributor';
+      case 'VeterinaryClinic': return 'Veterinary Clinic';
+      case 'Cooperative': return 'Cooperative';
       default: return 'Unknown';
     }
   }
