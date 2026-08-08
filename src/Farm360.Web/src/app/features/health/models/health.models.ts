@@ -13,25 +13,25 @@ export enum TreatmentStatus {
 }
 
 export enum IncidentSeverity {
-  Mild = 1,
-  Moderate = 2,
-  Severe = 3,
-  Critical = 4
+  Mild = 'Mild',
+  Moderate = 'Moderate',
+  Severe = 'Severe',
+  Critical = 'Critical'
 }
 
 export enum IncidentStatus {
-  Reported = 1,
-  UnderTreatment = 2,
-  Contained = 3,
-  Resolved = 4
+  Reported = 'Reported',
+  UnderTreatment = 'UnderTreatment',
+  Contained = 'Contained',
+  Resolved = 'Resolved'
 }
 
 export enum CauseOfDeath {
-  Disease = 1,
-  Accident = 2,
-  NaturalCauses = 3,
-  Unknown = 4,
-  Slaughter = 5
+  Disease = 'Disease',
+  Accident = 'Accident',
+  NaturalCauses = 'NaturalCauses',
+  Unknown = 'Unknown',
+  Slaughter = 'Slaughter'
 }
 
 export enum VetVisitType {

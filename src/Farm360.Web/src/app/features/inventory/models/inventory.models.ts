@@ -1,10 +1,10 @@
 export enum InventoryCategory {
-  Feed = 1,
-  Medicine = 2,
-  Vaccine = 3,
-  Chemical = 4,
-  Equipment = 5,
-  Other = 6
+  Feed = 'Feed',
+  Medicine = 'Medicine',
+  Vaccine = 'Vaccine',
+  Chemical = 'Chemical',
+  Equipment = 'Equipment',
+  Other = 'Other'
 }
 
 export const InventoryCategoryNames: Record<InventoryCategory, string> = {
@@ -17,12 +17,12 @@ export const InventoryCategoryNames: Record<InventoryCategory, string> = {
 };
 
 export enum StockTransactionType {
-  StockIn = 1,
-  ManualStockOut = 2,
-  AutoFeedConsumption = 3,
-  AutoMedicineConsumption = 4,
-  Adjustment = 5,
-  WriteOff = 6
+  StockIn = 'StockIn',
+  ManualStockOut = 'ManualStockOut',
+  AutoFeedConsumption = 'AutoFeedConsumption',
+  AutoMedicineConsumption = 'AutoMedicineConsumption',
+  Adjustment = 'Adjustment',
+  WriteOff = 'WriteOff'
 }
 
 export const StockTransactionTypeNames: Record<StockTransactionType, string> = {
@@ -35,10 +35,10 @@ export const StockTransactionTypeNames: Record<StockTransactionType, string> = {
 };
 
 export enum InventoryStatus {
-  Sufficient = 1,
-  LowStock = 2,
-  OutOfStock = 3,
-  Excess = 4
+  Sufficient = 'Sufficient',
+  LowStock = 'LowStock',
+  OutOfStock = 'OutOfStock',
+  Excess = 'Excess'
 }
 
 export interface PagedResult<T> {
@@ -187,11 +187,11 @@ export interface CreateSupplierRequest {
 }
 
 export enum PurchaseOrderStatus {
-  Draft = 1,
-  PendingApproval = 2,
-  Approved = 3,
-  Fulfilled = 4,
-  Cancelled = 5
+  Draft = 'Draft',
+  PendingApproval = 'PendingApproval',
+  Approved = 'Approved',
+  Fulfilled = 'Fulfilled',
+  Cancelled = 'Cancelled'
 }
 
 export interface PurchaseOrderItem {

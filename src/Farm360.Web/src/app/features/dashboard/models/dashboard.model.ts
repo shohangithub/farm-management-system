@@ -1,17 +1,17 @@
 export enum InsightType {
-  Prediction = 0,
-  Optimization = 1,
-  Anomaly = 2,
-  Risk = 3,
-  Performance = 4
+  Prediction = 'Prediction',
+  Optimization = 'Optimization',
+  Anomaly = 'Anomaly',
+  Risk = 'Risk',
+  Performance = 'Performance'
 }
 
 export enum InsightSeverity {
-  Info = 0,
-  Low = 1,
-  Medium = 2,
-  High = 3,
-  Critical = 4
+  Info = 'Info',
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+  Critical = 'Critical'
 }
 
 export interface ActionableInsight {

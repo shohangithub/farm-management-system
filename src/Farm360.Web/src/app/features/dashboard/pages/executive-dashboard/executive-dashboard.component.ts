@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { switchMap, of, filter, catchError, map } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { WorkingContextService } from '../../../../core/services/working-context.service';
@@ -24,7 +24,8 @@ import { ExecutiveDashboardData, InsightSeverity, InsightType, ActionableInsight
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    CurrencyPipe
+    CurrencyPipe,
+    RouterModule
   ],
   templateUrl: './executive-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

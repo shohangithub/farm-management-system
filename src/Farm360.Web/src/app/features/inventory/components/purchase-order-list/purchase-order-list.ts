@@ -174,7 +174,7 @@ export class PurchaseOrderList {
       pageNumber: qp['pageNumber'] ? parseInt(qp['pageNumber'], 10) : 1,
       pageSize: qp['pageSize'] ? parseInt(qp['pageSize'], 10) : 20,
       search: qp['search'] || undefined,
-      status: qp['status'] != null ? parseInt(qp['status'], 10) : undefined
+      status: qp['status'] != null ? qp['status'] as PurchaseOrderStatus : undefined
     });
 
     this.contextService.currentFarm$.pipe(takeUntilDestroyed()).subscribe(farm => {

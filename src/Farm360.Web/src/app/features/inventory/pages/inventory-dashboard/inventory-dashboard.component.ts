@@ -8,7 +8,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { InventoryService } from '../../services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
-import { InventoryItem, InventoryValuationReport, StockTransaction, StockTransactionType } from '../../models/inventory.models';
+import { InventoryItem, InventoryValuationReport, StockTransaction, StockTransactionType, InventoryStatus } from '../../models/inventory.models';
 import { StockInDialogComponent } from '../../components/dialogs/stock-in-dialog/stock-in-dialog.component';
 import { StockOutDialogComponent } from '../../components/dialogs/stock-out-dialog/stock-out-dialog.component';
 import { CreateItemDialogComponent } from '../../components/dialogs/create-item-dialog/create-item-dialog.component';
@@ -259,7 +259,7 @@ export class InventoryDashboardComponent {
     this.inventoryService.getValuationReport(farmId).subscribe({
       next: (res) => {
         this.report.set(res);
-        this.lowStockItems.set(res.items.filter(i => i.status === 2 || i.status === 3));
+        this.lowStockItems.set(res.items.filter(i => i.status === InventoryStatus.LowStock || i.status === InventoryStatus.OutOfStock));
       },
       error: () => {}
     });

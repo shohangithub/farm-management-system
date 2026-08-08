@@ -28,30 +28,18 @@ internal sealed class GetExecutiveDashboardQueryHandler : IRequestHandler<GetExe
     {
         var tenantId = _tenantService.TenantId;
 
-        var totalAnimalsTask = _repository.GetTotalAnimalsAsync(tenantId, request.FarmId, cancellationToken);
-        var sickAnimalsTask = _repository.GetSickAnimalsAsync(tenantId, request.FarmId, cancellationToken);
-        var lowStockTask = _repository.GetFeedLowStockCountAsync(tenantId, request.FarmId, cancellationToken);
-        var incomeTask = _repository.GetCurrentMonthIncomeAsync(tenantId, request.FarmId, cancellationToken);
-        var expenseTask = _repository.GetCurrentMonthExpenseAsync(tenantId, request.FarmId, cancellationToken);
-        var birthsTask = _repository.GetBirthsThisMonthAsync(tenantId, request.FarmId, cancellationToken);
-        var deathsTask = _repository.GetDeathsThisMonthAsync(tenantId, request.FarmId, cancellationToken);
-        var dueVaccinationsTask = _repository.GetDueVaccinationsAsync(tenantId, request.FarmId, cancellationToken);
-        var pregnantAnimalsTask = _repository.GetPregnantAnimalsAsync(tenantId, request.FarmId, cancellationToken);
-        var insightsTask = _repository.GetActiveInsightsAsync(tenantId, request.FarmId, cancellationToken);
+        var totalAnimals = await _repository.GetTotalAnimalsAsync(tenantId, request.FarmId, cancellationToken);
+        var sickAnimals = await _repository.GetSickAnimalsAsync(tenantId, request.FarmId, cancellationToken);
+        var lowStock = await _repository.GetFeedLowStockCountAsync(tenantId, request.FarmId, cancellationToken);
+        var income = await _repository.GetCurrentMonthIncomeAsync(tenantId, request.FarmId, cancellationToken);
+        var expense = await _repository.GetCurrentMonthExpenseAsync(tenantId, request.FarmId, cancellationToken);
+        var births = await _repository.GetBirthsThisMonthAsync(tenantId, request.FarmId, cancellationToken);
+        var deaths = await _repository.GetDeathsThisMonthAsync(tenantId, request.FarmId, cancellationToken);
+        var dueVaccinations = await _repository.GetDueVaccinationsAsync(tenantId, request.FarmId, cancellationToken);
+        var pregnantAnimals = await _repository.GetPregnantAnimalsAsync(tenantId, request.FarmId, cancellationToken);
+        var insightsList = await _repository.GetActiveInsightsAsync(tenantId, request.FarmId, cancellationToken);
 
-        await Task.WhenAll(
-            totalAnimalsTask, 
-            sickAnimalsTask, 
-            lowStockTask, 
-            incomeTask, 
-            expenseTask, 
-            birthsTask,
-            deathsTask,
-            dueVaccinationsTask,
-            pregnantAnimalsTask,
-            insightsTask);
-
-        var insights = (await insightsTask).Select(i => new ActionableInsightDto(
+        var insights = insightsList.Select(i => new ActionableInsightDto(
             i.Id,
             i.FarmId,
             i.AnimalId,
@@ -66,15 +54,15 @@ internal sealed class GetExecutiveDashboardQueryHandler : IRequestHandler<GetExe
         )).ToList();
 
         return new ExecutiveDashboardDto(
-            await totalAnimalsTask,
-            await sickAnimalsTask,
-            await lowStockTask,
-            await incomeTask,
-            await expenseTask,
-            await birthsTask,
-            await deathsTask,
-            await dueVaccinationsTask,
-            await pregnantAnimalsTask,
+            totalAnimals,
+            sickAnimals,
+            lowStock,
+            income,
+            expense,
+            births,
+            deaths,
+            dueVaccinations,
+            pregnantAnimals,
             insights
         );
     }

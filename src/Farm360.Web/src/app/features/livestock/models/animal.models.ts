@@ -1,44 +1,44 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
 export enum AnimalSpecies {
-  CattleBeef  = 1,
-  CattleDairy = 2,
-  Goat        = 3,
-  Sheep       = 4,
+  CattleBeef  = 'CattleBeef',
+  CattleDairy = 'CattleDairy',
+  Goat        = 'Goat',
+  Sheep       = 'Sheep',
 }
 
 export enum AnimalSex {
-  Male   = 1,
-  Female = 2,
+  Male   = 'Male',
+  Female = 'Female',
 }
 
 export enum AnimalStatus {
-  Active      = 1,
-  Quarantined = 2,
-  Sold        = 3,
-  Slaughtered = 4,
-  Dead        = 5,
-  Transferred = 6,
+  Active      = 'Active',
+  Quarantined = 'Quarantined',
+  Sold        = 'Sold',
+  Slaughtered = 'Slaughtered',
+  Dead        = 'Dead',
+  Transferred = 'Transferred',
 }
 
 export enum AcquisitionType {
-  Purchased   = 1,
-  BornOnFarm  = 2,
+  Purchased   = 'Purchased',
+  BornOnFarm  = 'BornOnFarm',
 }
 
 export enum DisposalReason {
-  Sale         = 1,
-  Slaughter    = 2,
-  NaturalDeath = 3,
-  Disease      = 4,
-  Accident     = 5,
-  Unknown      = 6,
+  Sale         = 'Sale',
+  Slaughter    = 'Slaughter',
+  NaturalDeath = 'NaturalDeath',
+  Disease      = 'Disease',
+  Accident     = 'Accident',
+  Unknown      = 'Unknown',
 }
 
 export enum TagType {
-  Manual = 1,
-  EarTag = 2,
-  Rfid   = 3,
+  Manual = 'Manual',
+  EarTag = 'EarTag',
+  Rfid   = 'Rfid',
 }
 
 // ── DTOs ──────────────────────────────────────────────────────────────────────

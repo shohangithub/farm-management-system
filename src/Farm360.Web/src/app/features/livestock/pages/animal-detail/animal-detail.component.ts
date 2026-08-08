@@ -13,7 +13,7 @@ import { ShedList } from '../../../farms/models/shed.model';
 import { PenList } from '../../../farms/models/pen.model';
 import { AnimalHealthHistoryDto, VaccinationStatus, TreatmentStatus } from '../../../health/models/health.models';
 import {
-  AnimalDto, AnimalStatus, AnimalSex,
+  AnimalDto, AnimalStatus, AnimalSex, AnimalSpecies, TagType,
   SPECIES_LABELS, STATUS_LABELS, SEX_LABELS,
 } from '../../models/animal.models';
 
@@ -303,10 +303,38 @@ export class AnimalDetailComponent {
     return [...a.weightRecords].sort((x, y) => y.recordedDate.localeCompare(x.recordedDate));
   }
 
-  speciesLabel(s: number): string { return (SPECIES_LABELS as any)[s] ?? '—'; }
-  sexLabel(s: number): string { return (SEX_LABELS as any)[s] ?? '—'; }
-  tagTypeLabel(t: number): string { return t === 1 ? 'Manual' : t === 2 ? 'Ear Tag' : 'RFID'; }
-  speciesEmoji(s: number): string { return s === 3 ? '🐐' : s === 4 ? '🐑' : '🐄'; }
+  speciesLabel(s: AnimalSpecies): string {
+    switch (s) {
+      case AnimalSpecies.CattleBeef: return 'Cattle (Beef)';
+      case AnimalSpecies.CattleDairy: return 'Cattle (Dairy)';
+      case AnimalSpecies.Goat: return 'Goat';
+      case AnimalSpecies.Sheep: return 'Sheep';
+      default: return 'Unknown';
+    }
+  }
+
+  speciesEmoji(s: AnimalSpecies): string {
+    switch (s) {
+      case AnimalSpecies.CattleBeef: return '🐄';
+      case AnimalSpecies.CattleDairy: return '🐄';
+      case AnimalSpecies.Goat: return '🐐';
+      case AnimalSpecies.Sheep: return '🐑';
+      default: return '🐾';
+    }
+  }
+
+  sexLabel(s: AnimalSex): string {
+    return s === AnimalSex.Male ? 'Male' : 'Female';
+  }
+
+  tagTypeLabel(t: TagType): string {
+    switch (t) {
+      case TagType.Manual: return 'Manual/Collar';
+      case TagType.EarTag: return 'Ear Tag';
+      case TagType.Rfid: return 'RFID';
+      default: return 'Unknown';
+    }
+  }
 
   ageLabel(dob: string): string {
     const days = Math.floor((Date.now() - new Date(dob).getTime()) / 86_400_000);

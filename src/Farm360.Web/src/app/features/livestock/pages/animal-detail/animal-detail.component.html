@@ -365,7 +365,7 @@
                 <div>
                   <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Acquisition</dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200 flex flex-col gap-0.5">
-                    <span>{{ animal()!.acquisitionType === 1 ? 'Purchased' : 'Born on Farm' }}</span>
+                    <span>{{ animal()!.acquisitionType === 'Purchased' ? 'Purchased' : 'Born on Farm' }}</span>
                     <span class="text-xs text-gray-500">{{ animal()!.acquisitionDate | date:'mediumDate' }}</span>
                   </dd>
                 </div>
@@ -382,10 +382,7 @@
                 </div>
                 <div *ngIf="animal()!.disposalReason">
                   <dt class="text-[10px] uppercase tracking-wider font-semibold text-red-500 mb-1">Disposal Reason</dt>
-                  <dd class="text-sm font-medium text-red-700 dark:text-red-400">{{ animal()!.disposalReason === 1 ?
-                    'Sale' : animal()!.disposalReason === 2 ? 'Slaughter' : animal()!.disposalReason === 3 ? 'Natural
-                    Death' : animal()!.disposalReason === 4 ? 'Disease' : animal()!.disposalReason === 5 ? 'Accident' :
-                    'Unknown' }}</dd>
+                  <dd class="text-sm font-medium text-red-700 dark:text-red-400">{{ animal()!.disposalReason === 'Sale' ? 'Sale' : animal()!.disposalReason === 'Slaughter' ? 'Slaughter' : animal()!.disposalReason === 'NaturalDeath' ? 'Natural Death' : animal()!.disposalReason === 'Disease' ? 'Disease' : animal()!.disposalReason === 'Accident' ? 'Accident' : 'Unknown' }}</dd>
                 </div>
                 <div *ngIf="animal()!.notes" class="col-span-1 sm:col-span-2 md:col-span-3">
                   <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Notes</dt>

@@ -1,13 +1,13 @@
 export enum FeedCategory {
-  Forage = 1,
-  Concentrate = 2,
-  Mineral = 3,
-  Additive = 4,
-  Silage = 5,
-  Byproduct = 6
+  Forage = 'Forage',
+  Concentrate = 'Concentrate',
+  Mineral = 'Mineral',
+  Additive = 'Additive',
+  Silage = 'Silage',
+  Byproduct = 'Byproduct'
 }
 
-export const FeedCategoryNames: Record<number, string> = {
+export const FeedCategoryNames: Record<FeedCategory, string> = {
   [FeedCategory.Forage]: 'Forage',
   [FeedCategory.Concentrate]: 'Concentrate',
   [FeedCategory.Mineral]: 'Mineral Supplement',
@@ -17,13 +17,13 @@ export const FeedCategoryNames: Record<number, string> = {
 };
 
 export enum TargetAnimalType {
-  Cattle = 1,
-  Goat = 2,
-  Sheep = 3,
-  Buffalo = 4
+  Cattle = 'Cattle',
+  Goat = 'Goat',
+  Sheep = 'Sheep',
+  Buffalo = 'Buffalo'
 }
 
-export const TargetAnimalTypeNames: Record<number, string> = {
+export const TargetAnimalTypeNames: Record<TargetAnimalType, string> = {
   [TargetAnimalType.Cattle]: 'Cattle',
   [TargetAnimalType.Goat]: 'Goat',
   [TargetAnimalType.Sheep]: 'Sheep',
@@ -31,13 +31,13 @@ export const TargetAnimalTypeNames: Record<number, string> = {
 };
 
 export enum ScheduleFrequency {
-  OnceDaily = 1,
-  TwiceDaily = 2,
-  ThriceDaily = 3,
-  AdLibitum = 4
+  OnceDaily = 'OnceDaily',
+  TwiceDaily = 'TwiceDaily',
+  ThriceDaily = 'ThriceDaily',
+  AdLibitum = 'AdLibitum'
 }
 
-export const ScheduleFrequencyNames: Record<number, string> = {
+export const ScheduleFrequencyNames: Record<ScheduleFrequency, string> = {
   [ScheduleFrequency.OnceDaily]: 'Once Daily (1x)',
   [ScheduleFrequency.TwiceDaily]: 'Twice Daily (2x)',
   [ScheduleFrequency.ThriceDaily]: 'Thrice Daily (3x)',
@@ -45,9 +45,9 @@ export const ScheduleFrequencyNames: Record<number, string> = {
 };
 
 export enum FormulaStatus {
-  Draft = 1,
-  Active = 2,
-  Archived = 3
+  Draft = 'Draft',
+  Active = 'Active',
+  Archived = 'Archived'
 }
 
 export interface FeedIngredient {

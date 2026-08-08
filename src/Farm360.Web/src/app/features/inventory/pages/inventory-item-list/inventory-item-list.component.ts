@@ -241,8 +241,8 @@ export class InventoryItemListComponent {
     // 1. Initialize from URL Query Parameters
     const qp = this.route.snapshot.queryParams;
     const initialSearch = qp['search'] || '';
-    const initialCategory = qp['category'] != null ? parseInt(qp['category'], 10) : undefined;
-    const initialStatus = qp['status'] != null ? parseInt(qp['status'], 10) : undefined;
+    const initialCategory = qp['category'] != null ? qp['category'] as InventoryCategory : undefined;
+    const initialStatus = qp['status'] != null ? qp['status'] as InventoryStatus : undefined;
     const initialPage = qp['pageNumber'] ? parseInt(qp['pageNumber'], 10) : 1;
     const initialPageSize = qp['pageSize'] ? parseInt(qp['pageSize'], 10) : 20;
     const initialSortBy = qp['sortBy'] || undefined;

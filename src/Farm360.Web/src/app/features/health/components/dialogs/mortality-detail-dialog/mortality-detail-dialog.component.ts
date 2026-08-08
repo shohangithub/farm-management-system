@@ -147,9 +147,8 @@ export class MortalityDetailDialog {
     });
   }
 
-  getCauseName(causeValue: number | string): string {
-    const value = Number(causeValue);
-    switch (value) {
+  getCauseName(causeValue: CauseOfDeath | string): string {
+    switch (causeValue) {
       case CauseOfDeath.Disease: return 'Disease';
       case CauseOfDeath.Accident: return 'Accident';
       case CauseOfDeath.NaturalCauses: return 'Natural Causes';

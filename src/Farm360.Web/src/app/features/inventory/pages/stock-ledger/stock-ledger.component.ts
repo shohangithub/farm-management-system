@@ -191,7 +191,7 @@ export class StockLedgerComponent {
     // 1. Initialize from URL Query Parameters
     const qp = this.route.snapshot.queryParams;
     const initialSearch = qp['search'] || '';
-    const initialType = qp['transactionType'] != null ? parseInt(qp['transactionType'], 10) : undefined;
+    const initialType = qp['transactionType'] != null ? qp['transactionType'] as StockTransactionType : undefined;
     const initialPage = qp['pageNumber'] ? parseInt(qp['pageNumber'], 10) : 1;
     const initialPageSize = qp['pageSize'] ? parseInt(qp['pageSize'], 10) : 20;
     const initialSortBy = qp['sortBy'] || undefined;
