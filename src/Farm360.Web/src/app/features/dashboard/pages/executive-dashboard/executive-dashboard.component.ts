@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { switchMap, of, filter, catchError, map } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -13,6 +14,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ExecutiveDashboardData, InsightSeverity, InsightType, ActionableInsight } from '../../models/dashboard.model';
+import { FarmGuidelinesDialogComponent } from '../../../../shared/components/farm-guidelines-dialog/farm-guidelines-dialog';
 
 @Component({
   selector: 'app-executive-dashboard',
@@ -38,6 +40,7 @@ export class ExecutiveDashboardComponent {
   private readonly dashboardService = inject(DashboardService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   private readonly farmId$ = this.contextService.currentFarm$.pipe(
     map(farm => farm?.id)
@@ -69,6 +72,14 @@ export class ExecutiveDashboardComponent {
       actionableInsights: d.actionableInsights.filter(i => !dismissed.has(i.id))
     };
   });
+
+  public openGuidelines(): void {
+    this.dialog.open(FarmGuidelinesDialogComponent, {
+      width: '90vw',
+      maxWidth: '800px',
+      panelClass: ['rounded-2xl', 'overflow-hidden', 'bg-transparent', 'shadow-2xl']
+    });
+  }
 
   public getSeverityIcon(severity: InsightSeverity): string {
     switch (severity) {

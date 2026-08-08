@@ -7,6 +7,7 @@ import {
   AnimalListParams,
   PagedAnimalListDto,
   RegisterAnimalRequest,
+  UpdateAnimalRequest,
   RecordWeightRequest,
   SellAnimalRequest,
   QuarantineAnimalRequest,
@@ -64,6 +65,10 @@ export class AnimalService {
 
   register(request: RegisterAnimalRequest): Observable<AnimalDto> {
     return this.http.post<AnimalDto>(this.base, request);
+  }
+
+  update(id: string, request: UpdateAnimalRequest): Observable<AnimalDto> {
+    return this.http.put<AnimalDto>(`${this.base}/${id}`, request);
   }
 
   recordWeight(id: string, request: RecordWeightRequest): Observable<WeightRecordDto> {

@@ -99,6 +99,32 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     public DisposalReason? DisposalReason { get; private set; }
     public string? Notes { get; private set; }
 
+    // ── Update Method ─────────────────────────────────────────────────────────
+    public void UpdateDetails(
+        AnimalTag tag,
+        AnimalSpecies species,
+        Guid breedId,
+        AnimalSex sex,
+        DateOnly dateOfBirth,
+        AcquisitionType acquisitionType,
+        DateOnly acquisitionDate,
+        decimal? acquisitionPriceBdt,
+        string? notes)
+    {
+        // Not allowing updates if status is not active/quarantined as it messes with financials/inventory? 
+        // We'll trust the caller to enforce rules if needed.
+        
+        Tag = tag;
+        Species = species;
+        BreedId = breedId;
+        Sex = sex;
+        DateOfBirth = dateOfBirth;
+        AcquisitionType = acquisitionType;
+        AcquisitionDate = acquisitionDate;
+        AcquisitionPriceBdt = acquisitionPriceBdt;
+        Notes = notes;
+    }
+
     // ── Denormalized fields (updated by domain event handlers for query perf) ─
     /// <summary>Most recent weight in kg. Denormalized from last WeightRecord.</summary>
     public decimal? LatestWeightKg { get; private set; }

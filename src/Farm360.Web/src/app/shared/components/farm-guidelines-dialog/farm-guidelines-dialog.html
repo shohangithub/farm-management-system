@@ -1,0 +1,147 @@
+<div class="flex flex-col h-[85vh] max-h-[800px] w-full overflow-hidden bg-white dark:bg-gray-900 rounded-2xl">
+  <!-- Header -->
+  <div class="relative flex items-center justify-between p-6 pb-4 border-b border-gray-100 dark:border-gray-800 shrink-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+        <mat-icon class="!w-6 !h-6 !text-[24px]">menu_book</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">গরু মোটাতাজাকরণ ও খামার ব্যবস্থাপনা গাইডলাইন</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">কমপ্লিট এসওপি ও বিস্তারিত নির্দেশিকা (ড. মেহদি হাসান কাজল)</p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 overflow-y-auto p-6 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar">
+    <div class="max-w-3xl mx-auto space-y-8 pb-6">
+      
+      <!-- Module 1 -->
+      <section class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-indigo-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">local_shipping</mat-icon>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm">১</div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">হাট থেকে গরু কেনার পর প্রাথমিক ও পরিবহন ব্যবস্থাপনা</h3>
+        </div>
+        
+        <div class="space-y-5 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2"><mat-icon class="text-[16px] w-[16px] h-[16px] text-indigo-500">pets</mat-icon> গরু নির্বাচন ও জাত বাছাই</h4>
+            <ul class="list-disc pl-5 space-y-1.5 marker:text-indigo-400">
+              <li><strong>নতুন খামারিদের জন্য:</strong> ছোট বা মাঝারি সাইজের গরু দিয়ে ৩-৬ মাসের প্রজেক্ট শুরু করা সবচেয়ে নিরাপদ ও লাভজনক।</li>
+              <li><strong>দেশি বনাম ক্রস ষাঁড়:</strong> বাজেট কম হলে ও সহজ ব্যবস্থাপনার জন্য দেশি ষাঁড়। দ্রুত ওজন বৃদ্ধি ও ভালো বাজেটের জন্য ক্রস জাতের ষাঁড় সেরা।</li>
+              <li><strong>কুরবানির জন্য:</strong> বয়স অন্তত ২-আড়াই বছর, লাইভ ওয়েট ২০০-২৫০ কেজি। সুন্দর দৃশ্যমান গরু (লাল শাহিওয়াল বা সাদা মীর কাদিম) বাজারে ভালো দাম পায়।</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2"><mat-icon class="text-[16px] w-[16px] h-[16px] text-indigo-500">airport_shuttle</mat-icon> পরিবহন সতর্কতা</h4>
+            <ul class="list-disc pl-5 space-y-1.5 marker:text-indigo-400">
+              <li>দীর্ঘ যাত্রাপথে প্রতি ১০০-১৫০ কিমি পর গাড়ি থামিয়ে অন্তত ৩০-৪০ মিনিট গরুকে ছায়াঘেরা স্থানে বিশ্রাম দিতে হবে।</li>
+              <li>গাড়িতে অতিরিক্ত গাদাগাদি করে গরু তোলা বা শক্ত করে রশি বাঁধা যাবে না।</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2"><mat-icon class="text-[16px] w-[16px] h-[16px] text-indigo-500">gite</mat-icon> কোয়ারেন্টাইন ও ফিডিং</h4>
+            <ul class="list-disc pl-5 space-y-1.5 marker:text-indigo-400">
+              <li>নতুন গরুকে অন্তত <strong>১৪ দিন</strong> সম্পূর্ণ আলাদা (কোয়ারেন্টাইন) রাখতে হবে।</li>
+              <li>প্রথম ২-৩ দিন কোনো ভারী দানাদার খাবার দেওয়া যাবে না। শুধু পর্যাপ্ত পরিষ্কার পানি, শুকনো খড় এবং সামান্য কাঁচা ঘাস দিয়ে বিশ্রামে রাখতে হবে।</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Module 2 -->
+      <section class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-rose-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">vaccines</mat-icon>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold text-sm">২</div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">কৃমিনাশক ও স্বাস্থ্য ব্যবস্থাপনা</h3>
+        </div>
+        
+        <div class="space-y-5 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2"><mat-icon class="text-[16px] w-[16px] h-[16px] text-rose-500">medication</mat-icon> কৃমিনাশক প্রয়োগের নিয়ম</h4>
+            <ul class="list-disc pl-5 space-y-1.5 marker:text-rose-400">
+              <li>গরু বাড়িতে আনার ৩-৪ দিন পর (বিশ্রাম শেষে) ওজন মেপে ভালো মানের ব্রড স্পেকট্রাম (Broad-spectrum) অ্যান্টিহেলমিন্থিক খাওয়াতে হবে।</li>
+              <li>এই রুটিন প্রতি <strong>৩ মাস পর পর</strong> নিয়মিত পুনরাবৃত্তি করতে হবে।</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2"><mat-icon class="text-[16px] w-[16px] h-[16px] text-rose-500">health_and_safety</mat-icon> ভ্যাকসিনেশন শিডিউল</h4>
+            <ul class="list-decimal pl-5 space-y-1.5 marker:text-rose-400 font-medium">
+              <li><span class="font-semibold text-gray-900 dark:text-gray-100">এফএমডি (FMD - খুরা রোগ):</span> গরু খামারে আসার পর প্রাথমিক পর্যায়েই।</li>
+              <li><span class="font-semibold text-gray-900 dark:text-gray-100">এন্থ্রাক্স (Anthrax):</span> এফএমডি ভ্যাকসিন দেওয়ার অন্তত ১৪ দিন পর।</li>
+              <li><span class="font-semibold text-gray-900 dark:text-gray-100">এলএসডি (LSD):</span> এন্থ্রাক্স দেওয়ার ১৪ দিন পর।</li>
+              <li><span class="font-semibold text-gray-900 dark:text-gray-100">অন্যান্য (BQ ও HS):</span> শিডিউল অনুযায়ী।</li>
+            </ul>
+            <div class="mt-3 p-3 bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-400 rounded-r text-amber-800 dark:text-amber-400 text-xs font-medium">
+              <strong>সতর্কতা:</strong> অসুস্থ বা দুর্বল প্রাণীকে কদাচিৎ ভ্যাকসিন দেওয়া যাবে না। অপ্রয়োজনীয় ভিটামিন ইনজেকশনে অর্থ নষ্ট না করে হাইজিন ও ভ্যাকসিনে জোর দিন।
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Module 3 -->
+      <section class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-amber-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">grass</mat-icon>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm">৩</div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">খাদ্য ব্যবস্থাপনা ও সুষম রেশন</h3>
+        </div>
+        
+        <div class="space-y-5 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2"><mat-icon class="text-[16px] w-[16px] h-[16px] text-amber-500">restaurant</mat-icon> ধীরে ধীরে অভ্যস্ত করার নিয়ম</h4>
+            <p class="mb-2">হুট করে অতিরিক্ত দানাদার দেওয়া যাবে না। ১০০ কেজি ওজনের গরুর জন্য প্রতিদিন সর্বোচ্চ ১.৫ কেজি খাবার দিয়ে শুরু করে ১ মাস সময় নিয়ে তা বাড়াতে হবে。</p>
+            <p><strong>উদাহরণ (৪০০ কেজির ষাঁড়):</strong> শরীর ধরে রাখতে ৪ কেজি এবং ওজন বৃদ্ধির জন্য অতিরিক্ত ১-১.৫ কেজি (মোট ৪.৫ - ৫ কেজি) দানাদার লাগবে।</p>
+          </div>
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2"><mat-icon class="text-[16px] w-[16px] h-[16px] text-amber-500">science</mat-icon> ১০০ কেজির আদর্শ দানাদার (১৫% প্রোটিন)</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">গমের ভুসি</span><strong class="text-gray-900 dark:text-gray-100">৪০ কেজি</strong></div>
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">ভুট্টা ভাঙ্গা</span><strong class="text-gray-900 dark:text-gray-100">১৫-৩০ কেজি</strong></div>
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">সরিষার খইল</span><strong class="text-gray-900 dark:text-gray-100">৭-২০ কেজি</strong></div>
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">সয়াবিন মিল</span><strong class="text-gray-900 dark:text-gray-100">১০ কেজি</strong></div>
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">ধানের গুঁড়া</span><strong class="text-gray-900 dark:text-gray-100">১০-১৫ কেজি</strong></div>
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">ডাল ভাঙ্গা</span><strong class="text-gray-900 dark:text-gray-100">৭-১০ কেজি</strong></div>
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">লবণ ও ভিটামিন</span><strong class="text-gray-900 dark:text-gray-100">১ কেজি করে</strong></div>
+              <div class="bg-gray-50 dark:bg-gray-700/30 p-2 rounded text-center border border-gray-100 dark:border-gray-700/50"><span class="block text-xs text-gray-500 uppercase">ডিসিপি/চুনাপাথর</span><strong class="text-gray-900 dark:text-gray-100">১-২ কেজি</strong></div>
+            </div>
+          </div>
+          <div>
+            <ul class="list-disc pl-5 space-y-1.5 marker:text-amber-400">
+              <li>দানাদার দিনে দুই ভাগে (সকালে ও বিকেলে) সামান্য পানি ছিটিয়ে দিন।</li>
+              <li>প্রতিদিন ১৫-২০ কেজি কাঁচা ঘাস এবং পর্যাপ্ত পানি নিশ্চিত করুন।</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Module 4 -->
+      <section class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
+        <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">trending_up</mat-icon>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">৪</div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">খামার ব্যবসায়িক ও আর্থিক কৌশল</h3>
+        </div>
+        
+        <div class="space-y-4 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+          <ul class="list-disc pl-5 space-y-3 marker:text-emerald-400">
+            <li><strong>প্রজেক্টের সময়কাল:</strong> নতুন উদ্যোক্তাদের জন্য ৬ মাসের প্রজেক্ট উপযুক্ত। অভিজ্ঞদের জন্য ৩ মাসের শর্ট প্রজেক্ট ভালো।</li>
+            <li><strong>লাভের রিয়েলিস্টিক লক্ষ্য:</strong> গরু প্রতি যৌক্তিক লাভ (২৫-৪০ হাজার টাকা) নির্ধারণ করুন। এতে স্থায়ী কাস্টমার তৈরি হবে।</li>
+            <li><strong>খরচ নিয়ন্ত্রণ:</strong> অপ্রয়োজনীয় ওষুধ বা চটকদার সাপ্লিমেন্টে ব্যয় না করে ভালো দানাদার, ঘাস ও সঠিক ভ্যাক্সিনেশনে ফোকাস করুন।</li>
+          </ul>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="p-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-end shrink-0">
+    <button mat-flat-button color="primary" class="!rounded-lg !px-6" (click)="dialogRef.close()">Got it</button>
+  </div>
+</div>

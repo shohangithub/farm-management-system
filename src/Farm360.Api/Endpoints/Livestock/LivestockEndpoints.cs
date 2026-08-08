@@ -72,6 +72,14 @@ public static class LivestockEndpoints
             .Produces(422)
             .RequireAuthorization("Permission:animals.create");
 
+        group.MapPut("/animals/{id:guid}", UpdateAnimal)
+            .WithName("UpdateAnimal")
+            .WithSummary("Update existing animal details")
+            .Produces<AnimalDto>(200)
+            .Produces(404)
+            .Produces(422)
+            .RequireAuthorization("Permission:animals.update");
+
         group.MapDelete("/animals/{id:guid}", DeleteAnimal)
             .WithName("DeleteAnimal")
             .WithSummary("Soft-delete an animal (IsDeleted = true, data retained)")
@@ -221,10 +229,25 @@ public static class LivestockEndpoints
     }
 
     private static async Task<IResult> RegisterAnimal(
-        RegisterAnimalCommand command, ISender sender, CancellationToken cancellationToken)
+        IMediator mediator,
+        [FromBody] RegisterAnimalCommand command,
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, cancellationToken);
+        var result = await mediator.Send(command, cancellationToken);
         return Results.Created($"/api/v1/livestock/animals/{result.Id}", result);
+    }
+
+    private static async Task<IResult> UpdateAnimal(
+        IMediator mediator,
+        Guid id,
+        [FromBody] UpdateAnimalCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (id != command.Id)
+            return Results.BadRequest("ID mismatch in URL and body.");
+            
+        var result = await mediator.Send(command, cancellationToken);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> DeleteAnimal(

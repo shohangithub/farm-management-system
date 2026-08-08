@@ -188,6 +188,20 @@ export interface RegisterAnimalRequest {
   notes?: string;
 }
 
+export interface UpdateAnimalRequest {
+  id: string;
+  tagId: string;
+  tagType: TagType;
+  species: AnimalSpecies;
+  breedId: string;
+  sex: AnimalSex;
+  dateOfBirth: string;
+  acquisitionType: AcquisitionType;
+  acquisitionDate: string;
+  acquisitionPriceBdt?: number;
+  notes?: string;
+}
+
 export interface RecordWeightRequest {
   weightKg: number;
   recordedDate: string;

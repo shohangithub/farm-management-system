@@ -100,6 +100,96 @@ public sealed class RegisterAnimalCommandHandler(
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// UPDATE ANIMAL
+// ══════════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Updates existing animal details.
+/// Permission: animals:update
+/// </summary>
+public sealed record UpdateAnimalCommand(
+    Guid Id,
+    string TagId,
+    TagType TagType,
+    AnimalSpecies Species,
+    Guid BreedId,
+    AnimalSex Sex,
+    DateOnly DateOfBirth,
+    AcquisitionType AcquisitionType,
+    DateOnly AcquisitionDate,
+    decimal? AcquisitionPriceBdt,
+    string? Notes) : IRequest<AnimalDto>;
+
+public sealed class UpdateAnimalCommandValidator : AbstractValidator<UpdateAnimalCommand>
+{
+    public UpdateAnimalCommandValidator(IAnimalRepository repository)
+    {
+        RuleFor(x => x.Id)
+            .NotEmpty().WithMessage("Animal ID is required.");
+
+        RuleFor(x => x.TagId)
+            .NotEmpty().WithMessage("Tag ID is required.")
+            .MaximumLength(50).WithMessage("Tag ID cannot exceed 50 characters.");
+
+        // Unique tag check (excluding current animal)
+        RuleFor(x => x)
+            .MustAsync(async (command, ct) => !await repository.TagExistsAsync(command.TagId, command.Id, ct))
+            .WithMessage("An animal with this Tag ID already exists in your farm.");
+
+        RuleFor(x => x.BreedId)
+            .NotEmpty().WithMessage("Breed is required.");
+
+        RuleFor(x => x.DateOfBirth)
+            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Date of birth cannot be in the future.");
+
+        RuleFor(x => x.AcquisitionDate)
+            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Acquisition date cannot be in the future.")
+            .GreaterThanOrEqualTo(x => x.DateOfBirth)
+            .WithMessage("Acquisition date cannot be before date of birth.");
+
+        RuleFor(x => x.AcquisitionPriceBdt)
+            .GreaterThan(0).WithMessage("Acquisition price must be greater than zero.")
+            .When(x => x.AcquisitionPriceBdt.HasValue);
+
+        RuleFor(x => x.Notes)
+            .MaximumLength(2000).WithMessage("Notes cannot exceed 2000 characters.")
+            .When(x => x.Notes is not null);
+    }
+}
+
+public sealed class UpdateAnimalCommandHandler(
+    IAnimalRepository repository,
+    IUnitOfWork unitOfWork) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
+{
+    public async Task<AnimalDto> Handle(UpdateAnimalCommand request, CancellationToken cancellationToken)
+    {
+        var animal = await repository.GetByIdAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(Animal), request.Id);
+
+        var tag = AnimalTag.Create(request.TagId, request.TagType);
+
+        animal.UpdateDetails(
+            tag: tag,
+            species: request.Species,
+            breedId: request.BreedId,
+            sex: request.Sex,
+            dateOfBirth: request.DateOfBirth,
+            acquisitionType: request.AcquisitionType,
+            acquisitionDate: request.AcquisitionDate,
+            acquisitionPriceBdt: request.AcquisitionPriceBdt,
+            notes: request.Notes);
+
+        // Note: EF Core tracks changes automatically. No need for repository.Update(animal)
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return animal.ToDto();
+    }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
 // RECORD WEIGHT
 // ══════════════════════════════════════════════════════════════════════════════
 

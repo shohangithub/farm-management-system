@@ -1,0 +1,116 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col h-[90vh] max-h-[800px] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-xl">
+  <!-- Header -->
+  <div class="relative flex items-center justify-between p-6 pb-4 border-b border-gray-100 dark:border-gray-800 shrink-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+        <mat-icon class="!w-6 !h-6 !text-[24px]">edit</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Edit Animal details</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ animal.tagId }}</p>
+      </div>
+    </div>
+    <button type="button" mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Error Banner -->
+  <div *ngIf="error()" class="mx-6 mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 flex items-start gap-3">
+    <mat-icon class="text-red-500 shrink-0">error_outline</mat-icon>
+    <div class="text-sm text-red-800 dark:text-red-300">{{ error() }}</div>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 overflow-y-auto p-6 bg-gray-50/50 dark:bg-gray-900/50 custom-scrollbar space-y-6">
+    <!-- ID Section -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Identification</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Tag ID</label>
+          <input type="text" formControlName="tagId" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all uppercase" placeholder="e.g. TAG-123" />
+          <span class="text-xs text-red-500 mt-1" *ngIf="getError('tagId')">{{ getError('tagId') }}</span>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Tag Type</label>
+          <select formControlName="tagType" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+            <option [value]="TagType.Manual">Manual</option>
+            <option [value]="TagType.EarTag">Ear Tag</option>
+            <option [value]="TagType.Rfid">RFID</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Biology Section -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Biology</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Species</label>
+          <select formControlName="species" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+            <option *ngFor="let s of speciesOptions" [value]="s.value">{{ s.label }}</option>
+          </select>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Breed</label>
+          <select formControlName="breedId" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+            <option value="" disabled>Select Breed</option>
+            <option *ngFor="let b of breeds()" [value]="b.id">{{ b.name }}</option>
+          </select>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Sex</label>
+          <select formControlName="sex" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+            <option [value]="AnimalSex.Male">Male</option>
+            <option [value]="AnimalSex.Female">Female</option>
+          </select>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Date of Birth</label>
+          <input type="date" formControlName="dateOfBirth" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Acquisition Section -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Acquisition</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Acquisition Type</label>
+          <select formControlName="acquisitionType" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+            <option [value]="AcquisitionType.Purchased">Purchased</option>
+            <option [value]="AcquisitionType.BornOnFarm">Born on Farm</option>
+          </select>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Acquisition Date</label>
+          <input type="date" formControlName="acquisitionDate" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+        </div>
+        <div class="flex flex-col md:col-span-2">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Price (BDT) - Optional</label>
+          <input type="number" formControlName="acquisitionPriceBdt" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" placeholder="0.00" />
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notes Section -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
+      <div class="flex flex-col">
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes (Optional)</label>
+        <textarea formControlName="notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="p-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 shrink-0">
+    <button type="button" mat-button mat-dialog-close [disabled]="submitting()">Cancel</button>
+    <button type="submit" mat-flat-button color="primary" class="!rounded-lg !px-6" [disabled]="submitting() || form.invalid">
+      <mat-icon *ngIf="submitting()" class="animate-spin">refresh</mat-icon>
+      {{ submitting() ? 'Saving...' : 'Save Changes' }}
+    </button>
+  </div>
+</form>

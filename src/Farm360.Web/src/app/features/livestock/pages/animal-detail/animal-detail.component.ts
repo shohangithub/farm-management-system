@@ -41,6 +41,7 @@ import { RecordWeightDialogComponent } from '../../dialogs/record-weight-dialog/
 import { UploadPhotoDialogComponent } from '../../dialogs/upload-photo-dialog/upload-photo-dialog.component';
 import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/record-sale-dialog.component';
 import { AnimalIntelligenceDialogComponent } from '../../dialogs/animal-intelligence-dialog/animal-intelligence-dialog.component';
+import { AnimalEditDialogComponent } from '../../components/animal-edit-dialog/animal-edit-dialog';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, forkJoin, tap, filter } from 'rxjs';
 import { of } from 'rxjs';
@@ -375,6 +376,18 @@ export class AnimalDetailComponent {
 
   goBack(): void {
     this.router.navigate(['/livestock']);
+  }
+
+  onEdit(): void {
+    const a = this.animal();
+    if (!a) return;
+    const dialogRef = this.dialog.open(AnimalEditDialogComponent, {
+      width: '600px',
+      autoFocus: false,
+      panelClass: 'bg-transparent',
+      data: a
+    });
+    dialogRef.afterClosed().subscribe(res => { if (res) this.load(); });
   }
 
   onSell(): void {
