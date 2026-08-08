@@ -7,6 +7,8 @@ import { OrganizationService } from '../services/organization.service';
 import { Organization } from '../models/organization.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -16,7 +18,7 @@ import { of } from 'rxjs';
 @Component({
   selector: 'app-organization-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent],
+  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, LoadingComponent],
   templateUrl: './organization-list.html',
   styleUrls: ['./organization-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -136,7 +138,7 @@ export class OrganizationListComponent {
 
   deactivate(id: string): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      width: '400px',
+      width: '450px',
       data: {
         title: 'Deactivate Organization',
         message: 'Are you sure you want to deactivate this organization?',
@@ -174,7 +176,7 @@ export class OrganizationListComponent {
 
   onRestore(org: Organization): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      width: '400px',
+      width: '450px',
       data: {
         title: 'Restore Organization',
         message: 'Are you sure you want to restore this organization? It will become active again.',

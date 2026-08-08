@@ -147,7 +147,7 @@ export class BranchListComponent {
 
   delete(id: string): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      width: '400px',
+      width: '450px',
       data: {
         title: 'Delete Branch',
         message: 'Are you sure you want to delete this branch? This action cannot be undone.',
@@ -185,7 +185,7 @@ export class BranchListComponent {
 
   onRestore(branch: BranchList): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      width: '400px',
+      width: '450px',
       data: {
         title: 'Restore Branch',
         message: 'Are you sure you want to restore this branch? It will become active again.',

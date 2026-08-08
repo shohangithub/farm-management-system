@@ -6,6 +6,7 @@ using Farm360.Domain.Identity.Repositories;
 using Farm360.Persistence.Context;
 using Farm360.Persistence.Interceptors;
 using Farm360.Persistence.Permissions;
+using Farm360.Persistence.Queries;
 using Farm360.Persistence.Repositories;
 using Farm360.Persistence.Repositories.Livestock;
 using Farm360.Persistence.Repositories.MasterData;
@@ -58,6 +59,9 @@ public static class PersistenceServiceExtensions
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        
+        // Register Queries
+        services.AddScoped<Farm360.Application.Analytics.Queries.IAnalyticsQueryService, AnalyticsQueryService>();
 
         // ── Permission service (Redis-cached, DB-backed) ──────────────────────
         services.AddScoped<IPermissionService, PermissionService>();

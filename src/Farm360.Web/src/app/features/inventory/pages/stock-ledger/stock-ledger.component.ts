@@ -334,7 +334,7 @@ export class StockLedgerComponent {
     const farmId = this.params().farmId;
     if (!farmId) return;
     const dialogRef = this.dialog.open(StockInDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -346,7 +346,7 @@ export class StockLedgerComponent {
     const farmId = this.params().farmId;
     if (!farmId) return;
     const dialogRef = this.dialog.open(StockOutDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {

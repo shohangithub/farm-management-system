@@ -33,6 +33,10 @@ internal sealed class GetExecutiveDashboardQueryHandler : IRequestHandler<GetExe
         var lowStockTask = _repository.GetFeedLowStockCountAsync(tenantId, request.FarmId, cancellationToken);
         var incomeTask = _repository.GetCurrentMonthIncomeAsync(tenantId, request.FarmId, cancellationToken);
         var expenseTask = _repository.GetCurrentMonthExpenseAsync(tenantId, request.FarmId, cancellationToken);
+        var birthsTask = _repository.GetBirthsThisMonthAsync(tenantId, request.FarmId, cancellationToken);
+        var deathsTask = _repository.GetDeathsThisMonthAsync(tenantId, request.FarmId, cancellationToken);
+        var dueVaccinationsTask = _repository.GetDueVaccinationsAsync(tenantId, request.FarmId, cancellationToken);
+        var pregnantAnimalsTask = _repository.GetPregnantAnimalsAsync(tenantId, request.FarmId, cancellationToken);
         var insightsTask = _repository.GetActiveInsightsAsync(tenantId, request.FarmId, cancellationToken);
 
         await Task.WhenAll(
@@ -41,6 +45,10 @@ internal sealed class GetExecutiveDashboardQueryHandler : IRequestHandler<GetExe
             lowStockTask, 
             incomeTask, 
             expenseTask, 
+            birthsTask,
+            deathsTask,
+            dueVaccinationsTask,
+            pregnantAnimalsTask,
             insightsTask);
 
         var insights = (await insightsTask).Select(i => new ActionableInsightDto(
@@ -63,6 +71,10 @@ internal sealed class GetExecutiveDashboardQueryHandler : IRequestHandler<GetExe
             await lowStockTask,
             await incomeTask,
             await expenseTask,
+            await birthsTask,
+            await deathsTask,
+            await dueVaccinationsTask,
+            await pregnantAnimalsTask,
             insights
         );
     }

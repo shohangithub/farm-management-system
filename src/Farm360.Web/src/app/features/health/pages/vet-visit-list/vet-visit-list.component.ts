@@ -90,7 +90,7 @@ export class VetVisitListComponent {
 
   openScheduleVisitDialog(): void {
     const dialogRef = this.dialog.open(LogVetVisitDialog, {
-      width: '600px',
+      width: '720px',
       panelClass: 'custom-dialog-container',
       disableClose: true
     });

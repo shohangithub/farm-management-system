@@ -177,17 +177,14 @@
         </div>
 
         <!-- Empty State -->
-        <div *ngIf="branches().length === 0" class="py-16 flex flex-col items-center justify-center text-center">
-          <div class="w-16 h-16 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center mb-4">
-            <mat-icon class="!text-[32px] !w-[32px] !h-[32px] !text-gray-400">location_city</mat-icon>
-          </div>
-          <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">No Branches Yet</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs mb-6">Create your first branch to start organizing farms, users, and operations by location.</p>
-          <a [routerLink]="['/organizations', organization()?.id, 'branches', 'new']"
-             class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition-all shadow-sm shadow-primary-500/30">
-            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add First Branch
-          </a>
-        </div>
+        <app-empty-state 
+          *ngIf="branches().length === 0"
+          icon="location_city"
+          title="No Branches Yet"
+          description="Create your first branch to start organizing farms, users, and operations by location."
+          actionLabel="Add First Branch"
+          (action)="onAddBranch()">
+        </app-empty-state>
 
         <!-- Branch Table -->
         <app-data-table

@@ -277,7 +277,7 @@ export class InventoryDashboardComponent {
     const farmId = this.activeFarmId();
     if (!farmId) return;
     const dialogRef = this.dialog.open(CreateItemDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -289,7 +289,7 @@ export class InventoryDashboardComponent {
     const farmId = this.activeFarmId();
     if (!farmId) return;
     const dialogRef = this.dialog.open(StockInDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -299,7 +299,7 @@ export class InventoryDashboardComponent {
 
   openStockInDialogForItem(item: InventoryItem): void {
     const dialogRef = this.dialog.open(StockInDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { item, farmId: item.farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -311,7 +311,7 @@ export class InventoryDashboardComponent {
     const farmId = this.activeFarmId();
     if (!farmId) return;
     const dialogRef = this.dialog.open(StockOutDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {

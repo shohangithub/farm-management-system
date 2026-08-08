@@ -19,13 +19,7 @@
 </div>
 
 <!-- Loading State -->
-<div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-24 space-y-4">
-  <div class="relative w-12 h-12">
-    <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
-    <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
-  </div>
-  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Farm...</p>
-</div>
+<app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
 <div *ngIf="!isLoading() && farm()" class="space-y-6">
 
@@ -194,9 +188,7 @@
             </button>
           </div>
 
-          <div *ngIf="isLoading()" class="py-12 flex justify-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-          </div>
+          <app-loading *ngIf="isLoading()" [overlay]="false"></app-loading>
 
           <div *ngIf="!isLoading() && sheds().length === 0" class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-16 px-6 text-center">
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">

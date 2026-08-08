@@ -89,6 +89,16 @@ export class HealthService {
     });
   }
 
+  batchAdministerVaccination(animalIds: string[], vaccineName: string, batchNumber: string, administeredDate: string, notes?: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/vaccinations/batch`, {
+      animalIds,
+      vaccineName,
+      batchNumber,
+      administeredDate,
+      notes
+    });
+  }
+
   // --- Treatments ---
   getTreatments(params: MedicalTreatmentParams = {}): Observable<PagedResult<MedicalTreatmentDto>> {
     let httpParams = new HttpParams();

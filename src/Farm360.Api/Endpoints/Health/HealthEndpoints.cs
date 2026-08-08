@@ -132,6 +132,17 @@ public static class HealthEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
         .WithSummary("Record administration of a scheduled vaccination");
 
+        group.MapPost("/vaccinations/batch", async (
+            [FromBody] BatchRecordVaccinationCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(command, ct);
+            return Results.Ok();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
+        .WithSummary("Administer a vaccination to multiple animals at once");
+
         group.MapGet("/vaccinations/upcoming", async (
             [FromQuery] Guid farmId,
             [FromQuery] DateOnly beforeDate,

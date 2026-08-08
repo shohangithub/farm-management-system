@@ -10,10 +10,15 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of, BehaviorSubject } from 'rxjs';
 
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+
 @Component({
   selector: 'app-master-data',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, MatIconModule, MatButtonModule, PageHeaderComponent, LoadingComponent],
   templateUrl: './master-data.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -151,7 +156,7 @@ export class MasterDataComponent {
 
   deleteEntry(entry: MasterDataEntry): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      width: '400px',
+      width: '450px',
       data: {
         title: 'Delete Master Data',
         message: `Are you sure you want to delete ${entry.name}? This action cannot be undone.`,

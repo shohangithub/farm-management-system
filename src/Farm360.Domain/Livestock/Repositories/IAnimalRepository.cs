@@ -22,6 +22,11 @@ public interface IAnimalRepository
     Task<Animal?> GetByIdAsync(Guid animalId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Returns the animals by IDs.
+    /// </summary>
+    Task<IReadOnlyList<Animal>> GetByIdsAsync(IEnumerable<Guid> animalIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns the animal by ID with only weight records loaded.
     /// Optimized for weight history page.
     /// </summary>

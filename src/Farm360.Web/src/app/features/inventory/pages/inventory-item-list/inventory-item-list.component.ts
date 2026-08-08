@@ -21,6 +21,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-inventory-item-list',
@@ -85,6 +86,12 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           <option value="stock_asc">Sort: Lowest Stock</option>
           <option value="value_desc">Sort: Highest Total Value</option>
         </select>
+        
+        <!-- Export Button -->
+        <button (click)="exportToCsv()" class="ml-auto sm:ml-2 px-3 py-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">download</mat-icon>
+          Export
+        </button>
       </div>
 
       <!-- Empty State -->
@@ -212,15 +219,15 @@ export class InventoryItemListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly exportSvc = inject(ExportService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly params = signal<InventoryItemParams>({ pageNumber: 1, pageSize: 20 });
   private readonly refreshTrigger = signal(0);
-
+  private readonly InventoryCategoryNames = InventoryCategoryNames;
   readonly InventoryStatus = InventoryStatus;
-
   readonly categoryOptions = [
     { value: InventoryCategory.Feed, label: InventoryCategoryNames[InventoryCategory.Feed] },
     { value: InventoryCategory.Medicine, label: InventoryCategoryNames[InventoryCategory.Medicine] },
@@ -385,7 +392,7 @@ export class InventoryItemListComponent {
     const farmId = this.params().farmId;
     if (!farmId) return;
     const dialogRef = this.dialog.open(CreateItemDialogComponent, {
-      width: '600px',
+      width: '560px',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -395,7 +402,7 @@ export class InventoryItemListComponent {
 
   openEditDialog(item: InventoryItem): void {
     const dialogRef = this.dialog.open(CreateItemDialogComponent, {
-      width: '600px',
+      width: '560px',
       data: { item, farmId: item.farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -405,7 +412,7 @@ export class InventoryItemListComponent {
 
   openStockInDialog(item: InventoryItem): void {
     const dialogRef = this.dialog.open(StockInDialogComponent, {
-      width: '600px',
+      width: '560px',
       data: { item, farmId: item.farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -415,7 +422,7 @@ export class InventoryItemListComponent {
 
   openStockOutDialog(item: InventoryItem): void {
     const dialogRef = this.dialog.open(StockOutDialogComponent, {
-      width: '600px',
+      width: '560px',
       data: { item, farmId: item.farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -449,5 +456,24 @@ export class InventoryItemListComponent {
         });
       }
     });
+  }
+
+  exportToCsv(): void {
+    const data = this.result()?.items;
+    if (!data || data.length === 0) return;
+    
+    const formattedData = data.map(item => ({
+      'Item Name': item.name,
+      'SKU': item.sku || '',
+      'Category': item.categoryName,
+      'Status': item.statusName,
+      'Quantity Available': item.currentStock,
+      'Unit of Measure': item.unitOfMeasure,
+      'Unit Cost': item.weightedAverageCostBdt || 0,
+      'Total Value': item.totalValueBdt || 0,
+      'Reorder Point': item.reorderThreshold || ''
+    }));
+
+    this.exportSvc.exportToCsv(formattedData, 'inventory_export');
   }
 }

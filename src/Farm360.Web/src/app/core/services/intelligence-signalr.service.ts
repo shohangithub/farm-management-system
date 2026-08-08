@@ -9,6 +9,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class IntelligenceSignalRService {
   private hubConnection: signalR.HubConnection | null = null;
   public readonly latestInsight = signal<ActionableInsight | null>(null);
+  public readonly notifications = signal<ActionableInsight[]>([]);
+  public readonly unreadCount = signal<number>(0);
 
   constructor(private snackBar: MatSnackBar) {}
 
@@ -38,8 +40,14 @@ export class IntelligenceSignalRService {
     
     this.hubConnection.on('NewIntelligenceInsight', (data: ActionableInsight) => {
       this.latestInsight.set(data);
+      this.notifications.update(n => [data, ...n]);
+      this.unreadCount.update(c => c + 1);
       this.showToast(data);
     });
+  }
+
+  public markAllAsRead(): void {
+    this.unreadCount.set(0);
   }
 
   private showToast(insight: ActionableInsight): void {

@@ -13,5 +13,9 @@ public interface IExecutiveDashboardRepository
     Task<int> GetFeedLowStockCountAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
     Task<decimal> GetCurrentMonthIncomeAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
     Task<decimal> GetCurrentMonthExpenseAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
+    Task<int> GetBirthsThisMonthAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
+    Task<int> GetDeathsThisMonthAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
+    Task<int> GetDueVaccinationsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
+    Task<int> GetPregnantAnimalsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ActionableInsight>> GetActiveInsightsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default);
 }

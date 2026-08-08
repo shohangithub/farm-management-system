@@ -88,6 +88,67 @@ public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
         return await query.SumAsync(t => t.AmountBdt, cancellationToken);
     }
 
+    public async Task<int> GetBirthsThisMonthAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        
+        var query = _context.Animals.AsNoTracking().Where(a => a.TenantId == tenantId && a.AcquisitionType == Domain.Livestock.Enums.AcquisitionType.BornOnFarm && a.DateOfBirth >= DateOnly.FromDateTime(startOfMonth));
+        if (farmId.HasValue)
+        {
+            query = query.Where(a => a.FarmId == farmId.Value);
+        }
+        return await query.CountAsync(cancellationToken);
+    }
+
+    public async Task<int> GetDeathsThisMonthAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        
+        var query = _context.Animals.AsNoTracking().Where(a => a.TenantId == tenantId && a.Status == Domain.Livestock.Enums.AnimalStatus.Dead && a.ModifiedAtUtc != null && a.ModifiedAtUtc >= startOfMonth);
+        if (farmId.HasValue)
+        {
+            query = query.Where(a => a.FarmId == farmId.Value);
+        }
+        return await query.CountAsync(cancellationToken);
+    }
+
+    public async Task<int> GetDueVaccinationsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        
+        var query = _context.VaccinationEvents.AsNoTracking().Where(v => v.TenantId == tenantId && 
+            (v.Status == Domain.Health.Enums.VaccinationStatus.Scheduled || v.Status == Domain.Health.Enums.VaccinationStatus.Overdue) &&
+            v.ScheduledDate <= today.AddDays(7)); // Due within next 7 days or overdue
+            
+        if (farmId.HasValue)
+        {
+            var count = await (from v in query
+                               join a in _context.Animals on v.AnimalId equals a.Id
+                               where a.FarmId == farmId.Value
+                               select v).CountAsync(cancellationToken);
+            return count;
+        }
+        
+        return await query.CountAsync(cancellationToken);
+    }
+
+    public async Task<int> GetPregnantAnimalsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        var query = from br in _context.BreedingRecords.AsNoTracking()
+                    join a in _context.Animals.AsNoTracking() on br.AnimalId equals a.Id
+                    where a.TenantId == tenantId && br.IsPregnancyConfirmed && br.ActualCalvingDate == null
+                    select new { br, a };
+
+        if (farmId.HasValue)
+        {
+            query = query.Where(x => x.a.FarmId == farmId.Value);
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<ActionableInsight>> GetActiveInsightsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
     {
         var query = _context.ActionableInsights.AsNoTracking()

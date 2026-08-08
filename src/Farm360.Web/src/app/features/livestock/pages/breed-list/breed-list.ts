@@ -328,7 +328,7 @@ export class BreedList {
     if (this.dialog.openDialogs.length > 0) return;
 
     this.dialog.open(BreedDetailDialogComponent, {
-      width: '800px',
+      width: '720px',
       maxWidth: '95vw',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: { id }
@@ -339,7 +339,7 @@ export class BreedList {
     if (this.dialog.openDialogs.length > 0) return;
 
     const dialogRef = this.dialog.open(BreedSetupDialogComponent, {
-      width: '800px',
+      width: '720px',
       maxWidth: '95vw',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: { breed }

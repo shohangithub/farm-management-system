@@ -141,7 +141,7 @@
   </div>
 
   <!-- KPI Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
     <!-- Latest Weight -->
     <div
@@ -175,6 +175,42 @@
       </div>
     </div>
 
+    <!-- Financial Summary -->
+    <div
+      class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between group relative overflow-hidden">
+      <!-- Watermark -->
+      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] opacity-[0.03] rotate-[-10deg] pointer-events-none transition-transform group-hover:scale-110 duration-500">payments</mat-icon>
+      
+      <div class="relative z-10 w-full">
+        <div class="flex justify-between items-start mb-2">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Financial Summary</p>
+          <div *ngIf="isSold()" class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+               [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'">
+            {{ netProfit() >= 0 ? 'PROFIT' : 'LOSS' }}
+          </div>
+        </div>
+        
+        <p class="text-3xl font-bold mt-1" [ngClass]="isSold() ? (netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
+          <span *ngIf="isSold()">{{ netProfit() >= 0 ? '+' : '' }}</span>৳ {{ (isSold() ? netProfit() : totalCost()) | number:'1.0-0' }}
+        </p>
+        
+        <div class="mt-3 space-y-1 w-full text-[11px] font-medium text-gray-500 dark:text-gray-400">
+          <div class="flex justify-between">
+            <span>Purchase</span>
+            <span>৳ {{ (animal()!.acquisitionPriceBdt || 0) | number:'1.0-0' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Health Care</span>
+            <span>৳ {{ totalTreatmentCost() | number:'1.0-0' }}</span>
+          </div>
+          <div class="flex justify-between" *ngIf="isSold()">
+            <span>Sale Rev.</span>
+            <span class="text-emerald-600 dark:text-emerald-400">৳ {{ totalRevenue() | number:'1.0-0' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Tabbed Details -->
@@ -205,6 +241,11 @@
             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No weight records</h4>
             <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Start tracking weight to automatically
               calculate Average Daily Gain (ADG).</p>
+          </div>
+
+          <div *ngIf="weightChartOptions()" class="mb-8 bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm">
+            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Growth Trend</h4>
+            <div echarts [options]="weightChartOptions()!" class="h-64 w-full"></div>
           </div>
 
           <div *ngIf="animal()!.weightRecords.length > 0"

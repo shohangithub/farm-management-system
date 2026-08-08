@@ -1,0 +1,29 @@
+<app-page-header 
+  title="Sales & Finance Analytics" 
+  description="Monthly revenue and expense tracking."
+  breadcrumbActiveNode="Finance Analytics">
+</app-page-header>
+
+<div class="p-6 relative min-h-[400px]">
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <app-empty-state 
+    *ngIf="!isLoading() && !hasData()"
+    icon="account_balance_wallet"
+    title="No Financial Data Found"
+    description="There are no financial records to analyze for this farm."
+    actionLabel="Add Transaction"
+    (action)="isLoading.set(true)">
+  </app-empty-state>
+
+  <div *ngIf="!isLoading() && hasData()" class="grid grid-cols-1 gap-6">
+    
+    <!-- Chart: Revenue vs Expense -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Revenue vs Expense ({{ currentYear() }})</h3>
+      </div>
+      <div echarts [options]="chartOptions()" class="w-full h-[400px]"></div>
+    </div>
+  </div>
+</div>

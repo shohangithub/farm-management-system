@@ -191,7 +191,7 @@ export class IngredientListComponent implements OnInit {
   }
 
   openCreateIngredientDialog(): void {
-    const dialogRef = this.dialog.open(CreateIngredientDialogComponent, { width: '600px' });
+    const dialogRef = this.dialog.open(CreateIngredientDialogComponent, { width: '720px' });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadIngredients();
     });
@@ -199,7 +199,7 @@ export class IngredientListComponent implements OnInit {
 
   openEditDialog(ingredient: FeedIngredient): void {
     const dialogRef = this.dialog.open(CreateIngredientDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: ingredient
     });
     dialogRef.afterClosed().subscribe((res) => {

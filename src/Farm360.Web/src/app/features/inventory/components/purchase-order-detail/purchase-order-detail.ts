@@ -218,7 +218,7 @@ export class PurchaseOrderDetail {
     if (!data) return;
 
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      width: '500px',
+      width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
         title: 'Fulfill Purchase Order',

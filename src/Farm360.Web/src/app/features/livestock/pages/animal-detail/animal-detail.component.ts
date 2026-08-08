@@ -44,6 +44,9 @@ import { AnimalIntelligenceDialogComponent } from '../../dialogs/animal-intellig
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, forkJoin, tap, filter } from 'rxjs';
 import { of } from 'rxjs';
+import { NgxEchartsModule } from 'ngx-echarts';
+import type { EChartsOption } from 'echarts';
+import { RecentlyViewedService } from '../../services/recently-viewed.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -52,7 +55,8 @@ import { of } from 'rxjs';
   imports: [
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
-    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule
+    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule,
+    NgxEchartsModule
   ],
   templateUrl: './animal-detail.component.html'
 })
@@ -67,6 +71,7 @@ export class AnimalDetailComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly recentSvc = inject(RecentlyViewedService);
 
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex = AnimalSex;
@@ -103,6 +108,35 @@ export class AnimalDetailComponent {
               penName: animal.penId ? this.penSvc.getPenById(animal.penId).pipe(map(p => p.penNumber), catchError(() => of(null))) : of(null),
               sheds: animal.farmId ? this.shedSvc.getShedsByFarm(animal.farmId).pipe(catchError(() => of([]))) : of([]),
             }).pipe(
+              tap(result => {
+                // Add to recently viewed
+                if (result.animal) {
+                  this.recentSvc.add({
+                    id: result.animal.id,
+                    tagId: result.animal.tagId,
+                    tagType: result.animal.tagType,
+                    species: result.animal.species,
+                    breedId: result.animal.breedId,
+                    breedName: result.animal.breedName,
+                    sex: result.animal.sex,
+                    dateOfBirth: result.animal.dateOfBirth,
+                    status: result.animal.status,
+                    farmId: result.animal.farmId,
+                    batchId: result.animal.batchId,
+                    shedId: result.animal.shedId,
+                    shedName: result.animal.shedId ? result.sheds.find((s: ShedList) => s.id === result.animal.shedId)?.shedName : undefined,
+                    penId: result.animal.penId,
+                    penName: result.animal.penId ? result.animal.penId : undefined,
+                    latestWeightKg: result.animal.latestWeightKg,
+                    latestWeightDate: result.animal.latestWeightDate,
+                    adgKgPerDay: result.animal.adgKgPerDay,
+                    latestBcs: result.animal.latestBcs,
+                    primaryPhotoUrl: result.animal.primaryPhotoUrl,
+                    hasHealthAlert: false, // Approximate for now
+                    createdAtUtc: result.animal.createdAtUtc
+                  });
+                }
+              }),
               switchMap(data => {
                 // If there are sheds, fetch pens for all sheds to resolve movement history names
                 if (data.sheds.length > 0) {
@@ -129,11 +163,106 @@ export class AnimalDetailComponent {
     { initialValue: null }
   );
 
-  readonly animal = computed(() => this.animalDataResult()?.animal || null);
-  readonly healthHistory = computed(() => this.animalDataResult()?.healthHistory || null);
-  readonly farmName = computed(() => this.animalDataResult()?.farmName || null);
-  readonly shedName = computed(() => this.animalDataResult()?.shedName || null);
-  readonly penName = computed(() => this.animalDataResult()?.penName || null);
+  readonly animal = computed(() => this.animalDataResult()?.animal ?? null);
+  readonly healthHistory = computed(() => this.animalDataResult()?.healthHistory ?? null);
+  readonly farmName = computed(() => this.animalDataResult()?.farmName ?? null);
+  readonly shedName = computed(() => this.animalDataResult()?.shedName ?? null);
+  readonly penName = computed(() => this.animalDataResult()?.penName ?? null);
+
+  // Financial calculations
+  readonly totalTreatmentCost = computed(() => {
+    const history = this.healthHistory();
+    if (!history || !history.treatments) return 0;
+    return history.treatments.reduce((sum, t) => sum + (t.costBdt || 0), 0);
+  });
+
+  readonly totalFeedCost = computed(() => 0); // Not currently tracked per animal
+
+  readonly totalCost = computed(() => {
+    const a = this.animal();
+    if (!a) return 0;
+    return (a.acquisitionPriceBdt || 0) + this.totalTreatmentCost() + this.totalFeedCost();
+  });
+
+  readonly totalRevenue = computed(() => {
+    const a = this.animal();
+    if (!a) return 0;
+    return a.salePriceBdt || 0;
+  });
+
+  readonly netProfit = computed(() => this.totalRevenue() - this.totalCost());
+  
+  readonly isSold = computed(() => this.animal()?.status === AnimalStatus.Sold);
+
+  readonly weightChartOptions = computed<EChartsOption | null>(() => {
+    const a = this.animal();
+    if (!a || !a.weightRecords || a.weightRecords.length === 0) return null;
+
+    // Sort chronologically for chart
+    const sorted = [...a.weightRecords].sort((x, y) => 
+      new Date(x.recordedDate).getTime() - new Date(y.recordedDate).getTime()
+    );
+
+    const dates = sorted.map(w => this.datePipe.transform(w.recordedDate, 'MMM d, yyyy') || '');
+    const weights = sorted.map(w => w.weightKg);
+
+    return {
+      tooltip: {
+        trigger: 'axis',
+        formatter: '{b} <br/> <b>{c} kg</b>',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderColor: '#e5e7eb',
+        textStyle: { color: '#111827' }
+      },
+      grid: {
+        left: '2%',
+        right: '4%',
+        bottom: '3%',
+        top: '10%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: dates,
+        axisLine: { lineStyle: { color: '#9ca3af' } },
+        axisLabel: { color: '#6b7280' }
+      },
+      yAxis: {
+        type: 'value',
+        name: 'Weight (kg)',
+        nameTextStyle: { color: '#6b7280', padding: [0, 0, 0, 10] },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { lineStyle: { type: 'dashed', color: '#e5e7eb' } },
+        axisLabel: { color: '#6b7280' }
+      },
+      series: [
+        {
+          name: 'Weight',
+          type: 'line',
+          data: weights,
+          smooth: true,
+          symbolSize: 8,
+          itemStyle: { color: '#10b981' },
+          lineStyle: { width: 3, color: '#10b981' },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
+                { offset: 1, color: 'rgba(16, 185, 129, 0.0)' }
+              ]
+            }
+          }
+        }
+      ]
+    };
+  });
+
+  private datePipe = new DatePipe('en-US');
+
   readonly availableBatches = computed(() => this.animalDataResult()?.availableBatches || []);
   readonly sheds = computed(() => this.animalDataResult()?.sheds || []);
   readonly pens = computed(() => this.animalDataResult()?.pens || []);

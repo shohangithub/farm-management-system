@@ -193,7 +193,8 @@ public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCom
 public sealed class SellAnimalCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser) : IRequestHandler<SellAnimalCommand>
+    ICurrentUserService currentUser,
+    MediatR.IPublisher publisher) : IRequestHandler<SellAnimalCommand>
 {
     public async Task Handle(SellAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -202,6 +203,13 @@ public sealed class SellAnimalCommandHandler(
 
         animal.Sell(request.SalePriceBdt, request.SaleDate, currentUser.UserId ?? Guid.Empty, request.BuyerName, request.SaleWeightKg);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Publish event for Finance integration
+        var domainEvent = animal.DomainEvents.OfType<Farm360.Domain.Livestock.Events.AnimalSoldEvent>().FirstOrDefault();
+        if (domainEvent != null)
+        {
+            await publisher.Publish(new Farm360.Application.Finance.EventHandlers.Integration.AnimalSoldNotification(domainEvent), cancellationToken);
+        }
     }
 }
 

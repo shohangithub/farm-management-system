@@ -14,7 +14,7 @@ public record UpdatePenCommand(
     int Capacity,
     string? AnimalGroup,
     string? Notes,
-    int Status) : IRequest, ITransactionalCommand;
+    PenStatus Status) : IRequest, ITransactionalCommand;
 
 public class UpdatePenCommandValidator : AbstractValidator<UpdatePenCommand>
 {
@@ -25,7 +25,7 @@ public class UpdatePenCommandValidator : AbstractValidator<UpdatePenCommand>
         RuleFor(v => v.Capacity).GreaterThanOrEqualTo(0);
         RuleFor(v => v.AnimalGroup).MaximumLength(100);
         RuleFor(v => v.Notes).MaximumLength(500);
-        RuleFor(v => v.Status).InclusiveBetween(1, 3);
+        RuleFor(v => v.Status).IsInEnum();
     }
 }
 
@@ -58,7 +58,7 @@ public class UpdatePenCommandHandler : IRequestHandler<UpdatePenCommand>
             request.AnimalGroup,
             request.Notes);
 
-        pen.ChangeStatus((PenStatus)request.Status);
+        pen.ChangeStatus(request.Status);
 
         _repository.Update(pen);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -15,13 +15,17 @@ import { DestroyRef } from '@angular/core';
 import { BreedService } from '../../services/breed.service';
 import { BreedDto } from '../../models/breed.models';
 
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+
 @Component({
   selector: 'app-animal-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, RouterModule, ReactiveFormsModule,
-    PageHeaderComponent, MatSnackBarModule
+    PageHeaderComponent, MatSnackBarModule, MatStepperModule, MatButtonModule, MatIconModule
   ],
   templateUrl: './animal-register.component.html'
 })
@@ -39,7 +43,9 @@ export class AnimalRegisterComponent implements OnInit {
   readonly today       = new Date().toISOString().split('T')[0];
   readonly breeds      = signal<BreedDto[]>([]);
 
-  form!: FormGroup;
+  idForm!: FormGroup;
+  acquisitionForm!: FormGroup;
+  notesForm!: FormGroup;
 
   // Expose enums to template
   readonly TagType         = TagType;
@@ -51,25 +57,31 @@ export class AnimalRegisterComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    this.form = this.fb.group({
+    this.idForm = this.fb.group({
       tagId:              ['', [Validators.required, Validators.maxLength(50)]],
       tagType:            [TagType.Manual, Validators.required],
       species:            [AnimalSpecies.CattleBeef, Validators.required],
       breedId:            ['', [Validators.required]],
       sex:                [AnimalSex.Male, Validators.required],
+    });
+
+    this.acquisitionForm = this.fb.group({
       dateOfBirth:        ['', Validators.required],
       acquisitionType:    [AcquisitionType.Purchased, Validators.required],
       acquisitionDate:    ['', Validators.required],
       acquisitionPriceBdt:[null as number | null, Validators.min(0)],
+    });
+
+    this.notesForm = this.fb.group({
       notes:              [null as string | null, Validators.maxLength(1000)],
     });
 
     // Auto-uppercase tagId
-    this.form.get('tagId')?.valueChanges
+    this.idForm.get('tagId')?.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => {
         if (value && value !== value.toUpperCase()) {
-          this.form.get('tagId')?.setValue(value.toUpperCase(), { emitEvent: false });
+          this.idForm.get('tagId')?.setValue(value.toUpperCase(), { emitEvent: false });
         }
       });
 
@@ -78,8 +90,8 @@ export class AnimalRegisterComponent implements OnInit {
     });
   }
 
-  getError(field: string): string {
-    const control = this.form.get(field);
+  getError(formGroup: FormGroup, field: string): string {
+    const control = formGroup.get(field);
     if (!control || !control.touched || control.valid) return '';
     if (control.hasError('required')) return 'This field is required.';
     if (control.hasError('maxlength')) {
@@ -93,8 +105,10 @@ export class AnimalRegisterComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) { 
-      this.form.markAllAsTouched(); 
+    if (this.idForm.invalid || this.acquisitionForm.invalid || this.notesForm.invalid) { 
+      this.idForm.markAllAsTouched(); 
+      this.acquisitionForm.markAllAsTouched();
+      this.notesForm.markAllAsTouched();
       this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
         duration: 4000,
         panelClass: ['snack-error']
@@ -105,7 +119,9 @@ export class AnimalRegisterComponent implements OnInit {
     this.submitting.set(true);
     this.error.set(null);
 
-    const v = this.form.getRawValue();
+    const idVals = this.idForm.getRawValue();
+    const acqVals = this.acquisitionForm.getRawValue();
+    const notesVals = this.notesForm.getRawValue();
     const farmId = this.contextSvc.currentFarmValue?.id;
     
     if (!farmId) {
@@ -118,16 +134,16 @@ export class AnimalRegisterComponent implements OnInit {
 
     this.svc.register({
       farmId:              farmId,
-      tagId:               v.tagId!,
-      tagType:             +v.tagType!,
-      species:             +v.species!,
-      breedId:             v.breedId!,
-      sex:                 +v.sex!,
-      dateOfBirth:         v.dateOfBirth!,
-      acquisitionType:     +v.acquisitionType!,
-      acquisitionDate:     v.acquisitionDate!,
-      acquisitionPriceBdt: v.acquisitionPriceBdt ?? undefined,
-      notes:               v.notes ?? undefined,
+      tagId:               idVals.tagId!,
+      tagType:             +idVals.tagType!,
+      species:             +idVals.species!,
+      breedId:             idVals.breedId!,
+      sex:                 +idVals.sex!,
+      dateOfBirth:         acqVals.dateOfBirth!,
+      acquisitionType:     +acqVals.acquisitionType!,
+      acquisitionDate:     acqVals.acquisitionDate!,
+      acquisitionPriceBdt: acqVals.acquisitionPriceBdt ?? undefined,
+      notes:               notesVals.notes ?? undefined,
     }).subscribe({
       next:  a => {
         this.snackBar.open('Animal registered successfully!', 'Close', {

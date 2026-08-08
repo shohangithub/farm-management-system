@@ -22,6 +22,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, debounceTime, distinctUntilChanged, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { BatchWeightDialogComponent, BatchWeightDialogData } from '../../components/dialogs/batch-weight-dialog.component';
+import { BatchVaccinationDialogComponent, BatchVaccinationDialogData } from '../../components/dialogs/batch-vaccination-dialog.component';
+import { RecentlyViewedService } from '../../services/recently-viewed.service';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-animal-list',
@@ -38,12 +42,16 @@ export class AnimalListComponent {
   private readonly router   = inject(Router);
   private readonly dialog   = inject(MatDialog);
   private readonly contextService = inject(WorkingContextService);
+  private readonly recentSvc = inject(RecentlyViewedService);
+  private readonly exportSvc = inject(ExportService);
 
   // ── Signals ──────────────────────────────────────────────────────────────
+  readonly recentAnimals = this.recentSvc.recentAnimals;
   readonly loading    = signal(true);
   readonly error      = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly params     = signal<AnimalListParams>({ pageNumber: 1, pageSize: 20 });
+  readonly selectedAnimals = signal<Set<AnimalListItemDto>>(new Set());
 
   readonly Math = Math;
   readonly AnimalStatus = AnimalStatus;
@@ -98,12 +106,35 @@ export class AnimalListComponent {
           return of(null);
         })
       )),
-      tap(() => this.loading.set(false))
+      tap(() => {
+        this.loading.set(false);
+        this.selectedAnimals.set(new Set()); // Clear selection on new fetch
+      })
     ),
     { initialValue: null }
   );
 
   refresh(): void { this.refreshTrigger.update(v => v + 1); }
+
+  exportToCsv(): void {
+    const data = this.result()?.items;
+    if (!data || data.length === 0) return;
+    
+    const formattedData = data.map(a => ({
+      'Tag ID': a.tagId,
+      'Species': this.speciesLabel(a.species),
+      'Breed': a.breedName,
+      'Sex': this.sexLabel(a.sex),
+      'Status': this.statusLabel(a.status),
+      'Date of Birth': a.dateOfBirth,
+      'Age': this.ageLabel(a.dateOfBirth),
+      'Latest Weight (kg)': a.latestWeightKg || '',
+      'ADG': a.adgKgPerDay || '',
+      'Location': a.shedId ? 'Assigned' : 'Not Assigned'
+    }));
+
+    this.exportSvc.exportToCsv(formattedData, 'animals_export');
+  }
 
   // ── Filters ───────────────────────────────────────────────────────────────
   onSearchChange(term: string): void {
@@ -170,6 +201,57 @@ export class AnimalListComponent {
   // ── Actions ───────────────────────────────────────────────────────────────
   onRegister(): void {
     this.router.navigate(['/livestock/register']);
+  }
+
+  toggleSelection(animal: AnimalListItemDto, event: Event): void {
+    event.stopPropagation();
+    const set = new Set(this.selectedAnimals());
+    if (set.has(animal)) {
+      set.delete(animal);
+    } else {
+      set.add(animal);
+    }
+    this.selectedAnimals.set(set);
+  }
+
+  clearSelection(): void {
+    this.selectedAnimals.set(new Set());
+  }
+
+  openBatchWeightDialog(): void {
+    const animals = Array.from(this.selectedAnimals());
+    if (animals.length === 0) return;
+
+    const dialogRef = this.dialog.open(BatchWeightDialogComponent, {
+      width: '720px',
+      disableClose: true,
+      data: { animals } as BatchWeightDialogData
+    });
+
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) {
+        this.clearSelection();
+        this.refresh();
+      }
+    });
+  }
+
+  openBatchVaccinationDialog(): void {
+    const animals = Array.from(this.selectedAnimals());
+    if (animals.length === 0) return;
+
+    const dialogRef = this.dialog.open(BatchVaccinationDialogComponent, {
+      width: '560px',
+      disableClose: true,
+      data: { animals } as BatchVaccinationDialogData
+    });
+
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) {
+        this.clearSelection();
+        this.refresh();
+      }
+    });
   }
 
   onDelete(animal: AnimalListItemDto): void {

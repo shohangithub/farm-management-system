@@ -66,7 +66,7 @@ export class FinanceLedgerComponent implements OnInit {
 
   openAddTransactionDialog(): void {
     const dialogRef = this.dialog.open(FinancialTransactionFormComponent, {
-      width: '600px',
+      width: '720px',
       disableClose: true,
       panelClass: ['premium-dialog-panel']
     });

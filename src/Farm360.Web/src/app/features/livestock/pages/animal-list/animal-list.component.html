@@ -6,6 +6,30 @@
   (primaryAction)="onRegister()">
 </app-page-header>
 
+<!-- Recently Viewed Widget -->
+<div *ngIf="recentAnimals().length > 0" class="mb-6 animate-fade-in-up">
+  <div class="flex items-center gap-2 mb-3">
+    <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-500">history</mat-icon>
+    <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Recently Viewed</h3>
+  </div>
+  <div class="flex overflow-x-auto gap-4 pb-2 snap-x hide-scrollbar">
+    <a *ngFor="let animal of recentAnimals()" 
+       [routerLink]="['/livestock', animal.id]"
+       class="snap-start shrink-0 w-48 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all duration-300 group flex items-center p-3 gap-3 cursor-pointer">
+      
+      <div class="w-12 h-12 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex-shrink-0 relative overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-700">
+        <img *ngIf="animal.primaryPhotoUrl" [src]="animal.primaryPhotoUrl" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <div *ngIf="!animal.primaryPhotoUrl" class="text-2xl opacity-30">{{ speciesEmoji(animal.species) }}</div>
+      </div>
+      
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-primary-600 transition-colors">{{ animal.tagId }}</p>
+        <p class="text-[10px] text-gray-500 truncate">{{ animal.breedName }}</p>
+      </div>
+    </a>
+  </div>
+</div>
+
 <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
   
   <div *ngIf="error()" class="m-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md shadow-sm flex items-start gap-3 animate-fade-in-up relative z-10">
@@ -61,6 +85,12 @@
         <button *ngIf="hasActiveFilters()" (click)="clearFilters()" class="text-sm font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 transition-colors">
           Clear
         </button>
+
+        <!-- Export Button -->
+        <button (click)="exportToCsv()" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">download</mat-icon>
+          Export
+        </button>
       </div>
     </div>
   </div>
@@ -88,13 +118,22 @@
     <div *ngFor="let animal of result()?.items" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group flex flex-col h-full relative">
       
       <!-- Photo Area -->
-      <div class="h-40 w-full bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden flex items-center justify-center border-b border-gray-100 dark:border-gray-700/50">
-        <img *ngIf="animal.primaryPhotoUrl" [src]="animal.primaryPhotoUrl" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      <div class="h-40 w-full bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden flex items-center justify-center border-b border-gray-100 dark:border-gray-700/50 cursor-pointer"
+           (click)="toggleSelection(animal, $event)">
+        
+        <!-- Selection Checkbox Area -->
+        <div class="absolute top-3 left-3 z-20 flex items-center justify-center w-6 h-6 rounded-md transition-colors shadow-sm cursor-pointer border backdrop-blur-md"
+             [ngClass]="selectedAnimals().has(animal) ? 'bg-primary-600 border-primary-600' : 'bg-white/90 border-gray-300 dark:bg-gray-800/90 dark:border-gray-600'">
+          <mat-icon *ngIf="selectedAnimals().has(animal)" class="text-white !text-[16px] !w-[16px] !h-[16px]">check</mat-icon>
+        </div>
+        
+        <img *ngIf="animal.primaryPhotoUrl" [src]="animal.primaryPhotoUrl" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" [class.opacity-90]="selectedAnimals().has(animal)" />
         <div *ngIf="!animal.primaryPhotoUrl" class="text-6xl opacity-20 filter drop-shadow-sm transition-transform duration-500 group-hover:scale-110">{{ speciesEmoji(animal.species) }}</div>
         
         <!-- Status Badge Overlay -->
-        <div class="absolute top-3 right-3 shadow-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border backdrop-blur-md"
+        <div class="absolute top-3 right-3 shadow-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border backdrop-blur-md flex items-center gap-1.5"
              [ngClass]="statusClass(animal.status)">
+          <mat-icon *ngIf="animal.hasHealthAlert" class="!text-[14px] !w-[14px] !h-[14px] animate-pulse">warning</mat-icon>
           {{ statusLabel(animal.status) }}
         </div>
         
@@ -113,6 +152,10 @@
               <a [routerLink]="['/livestock', animal.id]">{{ animal.tagId }}</a>
             </h3>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-semibold uppercase tracking-wider">{{ animal.breedName }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1" *ngIf="animal.shedId || animal.penId">
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">place</mat-icon>
+              {{ animal.shedName || 'Shed Assigned' }} <span *ngIf="animal.penId || animal.penName">• {{ animal.penName || 'Pen Assigned' }}</span>
+            </p>
           </div>
           <div class="text-right">
             <div class="text-sm font-bold text-gray-900 dark:text-white">{{ animal.latestWeightKg ? (animal.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}</div>
@@ -122,17 +165,21 @@
         
         <div class="grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50">
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Sex</div>
+            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Sex & Age</div>
             <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
               <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [class.text-blue-500]="animal.sex === AnimalSex.Male" [class.text-pink-500]="animal.sex === AnimalSex.Female">
                 {{ animal.sex === AnimalSex.Male ? 'male' : 'female' }}
               </mat-icon>
-              {{ sexLabel(animal.sex) }}
+              {{ sexLabel(animal.sex) }} • {{ ageLabel(animal.dateOfBirth) }}
             </div>
           </div>
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Age</div>
-            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ ageLabel(animal.dateOfBirth) }}</div>
+            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Last Vax</div>
+            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-1">
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-emerald-500" *ngIf="animal.lastVaccinationDate">vaccines</mat-icon>
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-gray-400" *ngIf="!animal.lastVaccinationDate">do_not_disturb_on</mat-icon>
+              {{ animal.lastVaccinationDate ? (animal.lastVaccinationDate | date:'mediumDate') : 'None' }}
+            </div>
           </div>
         </div>
       </div>
@@ -174,4 +221,25 @@
     </div>
   </div>
 
+</div>
+
+<!-- Floating Action Bar for Selections -->
+<div *ngIf="selectedAnimals().size > 0" 
+     class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-3 bg-gray-900 dark:bg-gray-800 text-white rounded-full shadow-2xl animate-fade-in-up border border-gray-700 dark:border-gray-600 backdrop-blur-xl">
+  <div class="flex items-center gap-2">
+    <div class="flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-xs font-bold">{{ selectedAnimals().size }}</div>
+    <span class="text-sm font-semibold">animals selected</span>
+  </div>
+  <div class="h-6 w-[1px] bg-gray-700"></div>
+  <button (click)="openBatchWeightDialog()" class="px-4 py-1.5 bg-primary-600 hover:bg-primary-500 rounded-full text-sm font-bold transition-colors shadow-md flex items-center gap-1.5">
+    <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">scale</mat-icon>
+    Record Weights
+  </button>
+  <button (click)="openBatchVaccinationDialog()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-sm font-bold transition-colors shadow-md flex items-center gap-1.5">
+    <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">vaccines</mat-icon>
+    Batch Vaccinate
+  </button>
+  <button (click)="clearSelection()" class="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded-full transition-colors">
+    <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon>
+  </button>
 </div>

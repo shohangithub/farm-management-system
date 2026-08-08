@@ -149,12 +149,16 @@ export interface AnimalListItemDto {
   farmId: string;
   batchId?: string;
   shedId?: string;
+  shedName?: string;
   penId?: string;
+  penName?: string;
   latestWeightKg?: number;
   latestWeightDate?: string;
   adgKgPerDay?: number;
   latestBcs?: number;
   primaryPhotoUrl?: string;
+  hasHealthAlert?: boolean;
+  lastVaccinationDate?: string;
   createdAtUtc: string;
 }
 

@@ -1,0 +1,68 @@
+<app-page-header 
+  title="Breeding Analytics" 
+  description="Insights into conception rates and upcoming calvings."
+  breadcrumbActiveNode="Breeding Analytics">
+  <div actions>
+    <button mat-flat-button color="primary">
+      <mat-icon>file_download</mat-icon>
+      Export Report
+    </button>
+  </div>
+</app-page-header>
+
+<div class="p-6 relative min-h-[400px]">
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <app-empty-state 
+    *ngIf="!isLoading() && !hasData()"
+    icon="pets"
+    title="No Breeding Data Found"
+    description="There are no breeding records to analyze for this farm."
+    actionLabel="Add Breeding Record"
+    (action)="isLoading.set(true)">
+  </app-empty-state>
+
+  <div *ngIf="!isLoading() && hasData()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- KPI Card: Total Confirmed Pregnancies -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Confirmed Pregnancies</p>
+          <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalConfirmedPregnancies }}</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+          <mat-icon>favorite</mat-icon>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
+        <mat-icon class="text-[14px] w-[14px] h-[14px] mr-1 text-emerald-500">trending_up</mat-icon>
+        Active pregnancies across the herd.
+      </p>
+      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">favorite</mat-icon>
+    </div>
+
+    <!-- KPI Card: Expected Calvings Next 30 Days -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Calvings (Next 30 Days)</p>
+          <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.expectedCalvingsNext30Days }}</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+          <mat-icon>calendar_today</mat-icon>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
+        Upcoming births based on expected calving dates.
+      </p>
+      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">calendar_today</mat-icon>
+    </div>
+
+    <!-- Chart: Conception Rate -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden col-span-1 lg:col-span-3">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Conception Rate</h3>
+      <div echarts [options]="chartOptions()" class="w-full h-[300px]"></div>
+    </div>
+  </div>
+</div>

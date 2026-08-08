@@ -99,7 +99,7 @@ export class TreatmentListComponent {
 
   openLogTreatmentDialog(): void {
     const dialogRef = this.dialog.open(LogTreatmentDialog, {
-      width: '600px'
+      width: '720px'
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadTreatments();

@@ -133,7 +133,7 @@ export class FeedingScheduleListComponent implements OnInit {
 
   openCreateScheduleDialog(): void {
     const dialogRef = this.dialog.open(CreateScheduleDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { farmId: this.activeFarmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -143,7 +143,7 @@ export class FeedingScheduleListComponent implements OnInit {
 
   openEditDialog(schedule: FeedingSchedule): void {
     const dialogRef = this.dialog.open(CreateScheduleDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { schedule, farmId: this.activeFarmId }
     });
     dialogRef.afterClosed().subscribe((res) => {

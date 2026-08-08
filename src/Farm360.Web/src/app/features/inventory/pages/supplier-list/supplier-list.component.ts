@@ -300,7 +300,7 @@ export class SupplierListComponent {
 
   openCreateSupplierDialog(): void {
     const dialogRef = this.dialog.open(CreateSupplierDialogComponent, {
-      width: '600px'
+      width: '560px'
     });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.reload();
@@ -309,7 +309,7 @@ export class SupplierListComponent {
 
   openEditDialog(supplier: Supplier): void {
     const dialogRef = this.dialog.open(CreateSupplierDialogComponent, {
-      width: '600px',
+      width: '560px',
       data: supplier
     });
     dialogRef.afterClosed().subscribe((res) => {

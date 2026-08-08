@@ -33,6 +33,12 @@ export const livestockRoutes: Routes = [
     title: 'Breeds — Farm360',
   },
   {
+    path: 'breeding-analytics',
+    loadComponent: () =>
+      import('./components/breeding-dashboard/breeding-dashboard').then(m => m.BreedingDashboardComponent),
+    title: 'Breeding Analytics — Farm360',
+  },
+  {
     path: ':id',
     loadComponent: () =>
       import('./pages/animal-detail/animal-detail.component').then(m => m.AnimalDetailComponent),

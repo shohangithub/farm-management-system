@@ -91,4 +91,4 @@ public record UpdatePenRequest(
     int Capacity,
     string? AnimalGroup,
     string? Notes,
-    int Status);
+    Farm360.Domain.Farms.Enums.PenStatus Status);

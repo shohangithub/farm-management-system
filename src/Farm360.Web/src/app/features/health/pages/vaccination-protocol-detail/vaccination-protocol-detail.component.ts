@@ -114,7 +114,7 @@ export class VaccinationProtocolDetailComponent {
     if (!p) return;
     
     this.dialog.open(AssignProtocolDialog, {
-      width: '600px',
+      width: '720px',
       data: { protocol: p }
     });
   }

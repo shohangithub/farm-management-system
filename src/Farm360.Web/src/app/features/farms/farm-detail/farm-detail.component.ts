@@ -10,6 +10,7 @@ import { Farm } from '../models/farm.model';
 import { ShedService } from '../services/shed.service';
 import { ShedList } from '../models/shed.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
@@ -25,6 +26,7 @@ import { forkJoin, of } from 'rxjs';
     MatTabsModule,
     MatDividerModule,
     PageHeaderComponent,
+    LoadingComponent,
     DatePipe,
     DecimalPipe
   ],

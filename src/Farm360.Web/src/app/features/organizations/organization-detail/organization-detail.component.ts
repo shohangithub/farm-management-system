@@ -9,6 +9,7 @@ import { Organization } from '../models/organization.model';
 import { BranchList } from '../models/branch.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
@@ -16,7 +17,7 @@ import { forkJoin, of } from 'rxjs';
 @Component({
   selector: 'app-organization-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatTabsModule, PageHeaderComponent, DataTableComponent, DatePipe],
+  imports: [CommonModule, RouterModule, MatIconModule, MatTabsModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, DatePipe],
   templateUrl: './organization-detail.html',
   styleUrls: ['./organization-detail.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -103,6 +104,13 @@ export class OrganizationDetailComponent {
     const org = this.organization();
     if (org) {
       this.router.navigate(['/organizations', org.id, 'branches', 'detail', branch.id]);
+    }
+  }
+
+  onAddBranch(): void {
+    const org = this.organization();
+    if (org) {
+      this.router.navigate(['/organizations', org.id, 'branches', 'new']);
     }
   }
 }

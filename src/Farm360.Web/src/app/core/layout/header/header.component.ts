@@ -1,7 +1,9 @@
-import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Output, inject, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextSelectorComponent } from '../context-selector/context-selector.component';
+import { GlobalSearchComponent } from '../../../shared/components/global-search/global-search.component';
 import { AuthService } from '../../services/auth.service';
+import { IntelligenceSignalRService } from '../../services/intelligence-signalr.service';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,13 +24,23 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatDividerModule,
     MatBadgeModule,
     MatTooltipModule,
-    ContextSelectorComponent
+    ContextSelectorComponent,
+    GlobalSearchComponent
   ],
-  templateUrl: './header.component.html'
+  templateUrl: './header.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   @Output() toggleSidebar = new EventEmitter<void>();
   isDarkMode = false;
+
+  ngOnInit(): void {
+    const savedTheme = localStorage.getItem('theme-preference');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      this.isDarkMode = true;
+      document.documentElement.classList.add('dark');
+    }
+  }
 
   onToggleSidebar(): void {
     this.toggleSidebar.emit();
@@ -38,14 +50,21 @@ export class HeaderComponent {
     this.isDarkMode = !this.isDarkMode;
     if (this.isDarkMode) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('theme-preference', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme-preference', 'light');
     }
   }
 
   private authService = inject(AuthService);
+  readonly signalRService = inject(IntelligenceSignalRService);
 
   logout(): void {
     this.authService.logout();
+  }
+
+  onNotificationsOpen(): void {
+    this.signalRService.markAllAsRead();
   }
 }

@@ -117,7 +117,7 @@ export class VaccinationProtocolListComponent {
 
   openAssignDialog(protocol: VaccinationProtocolDto): void {
     this.dialog.open(AssignProtocolDialog, {
-      width: '600px',
+      width: '720px',
       data: { protocol }
     });
   }

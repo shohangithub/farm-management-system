@@ -11,6 +11,10 @@
   
   <div class="flex items-center gap-2">
     <ng-content select="[actions]"></ng-content>
+    <button *ngIf="secondaryActionLabel" mat-stroked-button (click)="onSecondaryAction()" class="!rounded-md shadow-sm !font-semibold !border-gray-300 dark:!border-gray-600">
+      <mat-icon *ngIf="secondaryActionIcon" class="mr-2">{{ secondaryActionIcon }}</mat-icon>
+      {{ secondaryActionLabel }}
+    </button>
     <button *ngIf="primaryActionLabel" mat-flat-button color="primary" (click)="onPrimaryAction()" class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-md shadow-sm !font-semibold">
       <mat-icon *ngIf="primaryActionIcon" class="mr-2">{{ primaryActionIcon }}</mat-icon>
       {{ primaryActionLabel }}

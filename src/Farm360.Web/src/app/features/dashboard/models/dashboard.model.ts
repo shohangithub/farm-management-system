@@ -34,5 +34,9 @@ export interface ExecutiveDashboardData {
   feedLowStockCount: number;
   currentMonthIncome: number;
   currentMonthExpense: number;
+  birthsThisMonth: number;
+  deathsThisMonth: number;
+  dueVaccinations: number;
+  pregnantAnimals: number;
   actionableInsights: ActionableInsight[];
 }

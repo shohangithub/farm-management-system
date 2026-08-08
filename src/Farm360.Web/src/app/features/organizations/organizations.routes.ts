@@ -1,11 +1,8 @@
 import { Routes } from '@angular/router';
-import { OrganizationListComponent } from './organization-list/organization-list.component';
-import { OrganizationFormComponent } from './organization-form/organization-form.component';
-
 export const ORGANIZATION_ROUTES: Routes = [
-  { path: '', component: OrganizationListComponent },
-  { path: 'new', component: OrganizationFormComponent },
-  { path: 'edit/:id', component: OrganizationFormComponent },
+  { path: '', loadComponent: () => import('./organization-list/organization-list.component').then(c => c.OrganizationListComponent) },
+  { path: 'new', loadComponent: () => import('./organization-form/organization-form.component').then(c => c.OrganizationFormComponent) },
+  { path: 'edit/:id', loadComponent: () => import('./organization-form/organization-form.component').then(c => c.OrganizationFormComponent) },
   { path: 'detail/:id', loadComponent: () => import('./organization-detail/organization-detail.component').then(c => c.OrganizationDetailComponent) },
   { path: ':orgId/branches', loadComponent: () => import('./branch-list/branch-list.component').then(c => c.BranchListComponent) },
   { path: ':orgId/branches/new', loadComponent: () => import('./branch-form/branch-form.component').then(c => c.BranchFormComponent) },

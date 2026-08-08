@@ -254,6 +254,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             DateTime.UtcNow,
             Id,
             TenantId,
+            FarmId,
             soldBy,
             salePriceBdt,
             saleDate,

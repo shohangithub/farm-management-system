@@ -1,17 +1,23 @@
-<div class="h-full flex flex-col md:flex-row gap-6 p-6">
+<app-page-header 
+  title="Master Data Settings" 
+  description="Manage lookup references and dropdown values across the system."
+  breadcrumbActiveNode="Master Data">
+</app-page-header>
+
+<div class="h-[calc(100vh-14rem)] flex flex-col md:flex-row gap-6 p-6">
   <!-- Sidebar -->
-  <div class="w-full md:w-64 flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-    <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-      <h2 class="font-semibold text-gray-900 dark:text-white">Master Data</h2>
+  <div class="w-full md:w-64 flex-shrink-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden flex flex-col">
+    <div class="p-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+      <h2 class="font-semibold text-gray-900 dark:text-white">Master Data Types</h2>
     </div>
-    <div class="p-2 h-[calc(100vh-16rem)] overflow-y-auto">
+    <div class="p-3 flex-1 overflow-y-auto custom-scrollbar">
       <ul class="space-y-1">
         <li *ngFor="let type of types">
           <button 
             (click)="selectType(type.id)"
             [class]="type.id === selectedType() 
-              ? 'w-full text-left px-4 py-2 rounded-lg bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium'
-              : 'w-full text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+              ? 'w-full text-left px-4 py-2.5 rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-semibold shadow-sm transition-all'
+              : 'w-full text-left px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 font-medium transition-colors'">
             {{ type.name }}
           </button>
         </li>
@@ -20,31 +26,27 @@
   </div>
 
   <!-- Content -->
-  <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+  <div class="flex-1 flex flex-col bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
     
     <!-- Header -->
-    <div class="p-6 border-b border-gray-100 dark:border-gray-800/50 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-surface-dark z-10 gap-4">
+    <div class="p-6 border-b border-gray-100 dark:border-gray-800/50 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-transparent z-10 gap-4">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-          {{ types[selectedType() - 1]?.name }} Management
-        </h1>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+          {{ types[selectedType() - 1]?.name }}
+        </h2>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Manage references and properties for {{ types[selectedType() - 1]?.name | lowercase }}.
         </p>
       </div>
-      <button (click)="openCreateModal()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white transition-colors bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-900 shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-        </svg>
+      <button mat-flat-button color="primary" (click)="openCreateModal()" class="!rounded-lg">
+        <mat-icon>add</mat-icon>
         Add New
       </button>
     </div>
 
     <!-- Table -->
     <div class="flex-1 overflow-auto p-0 relative">
-      <div *ngIf="isLoading()" class="absolute inset-0 bg-white/50 dark:bg-gray-800/50 flex items-center justify-center z-10">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
+      <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
       <app-data-table
         *ngIf="!isLoading()"

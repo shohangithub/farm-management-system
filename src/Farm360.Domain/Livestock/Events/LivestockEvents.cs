@@ -27,6 +27,7 @@ public sealed record AnimalSoldEvent(
     DateTime OccurredOnUtc,
     Guid AnimalId,
     Guid TenantId,
+    Guid FarmId,
     Guid SoldBy,
     decimal SalePriceBdt,
     DateOnly SaleDate,

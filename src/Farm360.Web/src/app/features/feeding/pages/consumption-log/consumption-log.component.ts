@@ -110,7 +110,7 @@ export class ConsumptionLogComponent implements OnInit {
 
   openLogDialog(): void {
     const dialogRef = this.dialog.open(LogConsumptionDialogComponent, {
-      width: '600px',
+      width: '720px',
       data: { farmId: this.activeFarmId }
     });
     dialogRef.afterClosed().subscribe((res) => {

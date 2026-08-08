@@ -91,7 +91,7 @@ export class MortalityListComponent {
 
   openRecordMortalityDialog(): void {
     const dialogRef = this.dialog.open(RecordMortalityDialog, {
-      width: '500px'
+      width: '560px'
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadMortalities();
@@ -100,7 +100,7 @@ export class MortalityListComponent {
 
   viewDetails(element: any): void {
     this.dialog.open(MortalityDetailDialog, {
-      width: '600px',
+      width: '720px',
       data: element
     });
   }

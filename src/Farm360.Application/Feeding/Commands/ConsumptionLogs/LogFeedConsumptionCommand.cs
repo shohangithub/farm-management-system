@@ -43,6 +43,7 @@ public sealed class LogFeedConsumptionCommandHandler : IRequestHandler<LogFeedCo
     private readonly ITenantService _tenantService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPublisher _publisher;
 
     public LogFeedConsumptionCommandHandler(
         IFeedConsumptionLogRepository logRepository,
@@ -50,7 +51,8 @@ public sealed class LogFeedConsumptionCommandHandler : IRequestHandler<LogFeedCo
         IFeedIngredientRepository ingredientRepository,
         ITenantService tenantService,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IPublisher publisher)
     {
         _logRepository = logRepository;
         _formulaRepository = formulaRepository;
@@ -58,6 +60,7 @@ public sealed class LogFeedConsumptionCommandHandler : IRequestHandler<LogFeedCo
         _tenantService = tenantService;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _publisher = publisher;
     }
 
     public async Task<Guid> Handle(LogFeedConsumptionCommand request, CancellationToken cancellationToken)
@@ -95,6 +98,13 @@ public sealed class LogFeedConsumptionCommandHandler : IRequestHandler<LogFeedCo
 
         await _logRepository.AddAsync(log, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Publish event for Inventory integration
+        var domainEvent = log.DomainEvents.OfType<Farm360.Domain.Feeding.Events.FeedConsumptionLoggedEvent>().FirstOrDefault();
+        if (domainEvent != null)
+        {
+            await _publisher.Publish(new Farm360.Application.Inventory.EventHandlers.FeedConsumptionLoggedNotification(domainEvent), cancellationToken);
+        }
 
         return log.Id;
     }

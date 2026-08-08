@@ -1,4 +1,5 @@
 using Farm360.Domain.Farms;
+using Farm360.Domain.Farms.Enums;
 
 namespace Farm360.Application.Farms.Pens.DTOs;
 
@@ -11,7 +12,7 @@ public record PenDto(
     int CurrentOccupancy,
     string? AnimalGroup,
     string? Notes,
-    int Status,
+    PenStatus Status,
     DateTime CreatedAtUtc,
     Guid CreatedBy,
     DateTime? ModifiedAtUtc,
@@ -24,7 +25,7 @@ public record PenListDto(
     int Capacity,
     int CurrentOccupancy,
     string? AnimalGroup,
-    int Status);
+    PenStatus Status);
 
 public static class PenMappingExtensions
 {
@@ -39,7 +40,7 @@ public static class PenMappingExtensions
             pen.CurrentOccupancy,
             pen.AnimalGroup,
             pen.Notes,
-            (int)pen.Status,
+            pen.Status,
             pen.CreatedAtUtc,
             pen.CreatedBy,
             pen.ModifiedAtUtc,
@@ -55,6 +56,6 @@ public static class PenMappingExtensions
             pen.Capacity,
             pen.CurrentOccupancy,
             pen.AnimalGroup,
-            (int)pen.Status);
+            pen.Status);
     }
 }

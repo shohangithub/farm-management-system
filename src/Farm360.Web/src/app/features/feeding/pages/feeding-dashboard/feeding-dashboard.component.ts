@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { FeedingService } from '../../services/feeding.service';
 import { FcrAnalytics, FeedConsumptionLog, FeedingSchedule } from '../../models/feeding.models';
 import { LogConsumptionDialogComponent } from '../../components/dialogs/log-consumption-dialog/log-consumption-dialog.component';
@@ -227,35 +229,49 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FeedingDashboardComponent implements OnInit {
+export class FeedingDashboardComponent {
   private readonly feedingService = inject(FeedingService);
   private readonly dialog = inject(MatDialog);
+  private readonly contextService = inject(WorkingContextService);
 
   readonly isLoading = signal(true);
   readonly fcrAnalytics = signal<FcrAnalytics | null>(null);
   readonly activeSchedules = signal<FeedingSchedule[]>([]);
   readonly recentLogs = signal<FeedConsumptionLog[]>([]);
 
-  readonly activeFarmId = '00000000-0000-0000-0000-000000000001';
+  readonly activeFarmId = signal<string | null>(null);
 
-  ngOnInit(): void {
-    this.loadDashboardData();
+  constructor() {
+    this.contextService.currentFarm$.pipe(
+      takeUntilDestroyed()
+    ).subscribe(farm => {
+      const farmId = farm?.id || null;
+      this.activeFarmId.set(farmId);
+      if (farmId) {
+        this.loadDashboardData(farmId);
+      } else {
+        this.fcrAnalytics.set(null);
+        this.activeSchedules.set([]);
+        this.recentLogs.set([]);
+        this.isLoading.set(false);
+      }
+    });
   }
 
-  loadDashboardData(): void {
+  loadDashboardData(farmId: string): void {
     this.isLoading.set(true);
 
-    this.feedingService.getFcrAnalytics(this.activeFarmId).subscribe({
+    this.feedingService.getFcrAnalytics(farmId).subscribe({
       next: (res) => this.fcrAnalytics.set(res),
       error: () => {}
     });
 
-    this.feedingService.getSchedules(this.activeFarmId).subscribe({
+    this.feedingService.getSchedules(farmId).subscribe({
       next: (res) => this.activeSchedules.set(res.slice(0, 5)),
       error: () => {}
     });
 
-    this.feedingService.getConsumptionLogs(this.activeFarmId).subscribe({
+    this.feedingService.getConsumptionLogs(farmId).subscribe({
       next: (res) => {
         this.recentLogs.set(res.slice(0, 5));
         this.isLoading.set(false);
@@ -265,24 +281,30 @@ export class FeedingDashboardComponent implements OnInit {
   }
 
   openLogConsumptionDialog(): void {
+    const farmId = this.activeFarmId();
+    if (!farmId) return;
+
     const dialogRef = this.dialog.open(LogConsumptionDialogComponent, {
-      width: '600px',
-      data: { farmId: this.activeFarmId }
+      width: '720px',
+      data: { farmId }
     });
 
     dialogRef.afterClosed().subscribe((res) => {
-      if (res) this.loadDashboardData();
+      if (res) this.loadDashboardData(farmId);
     });
   }
 
   openCreateScheduleDialog(): void {
+    const farmId = this.activeFarmId();
+    if (!farmId) return;
+    
     const dialogRef = this.dialog.open(CreateScheduleDialogComponent, {
-      width: '600px',
-      data: { farmId: this.activeFarmId }
+      width: '720px',
+      data: { farmId }
     });
 
     dialogRef.afterClosed().subscribe((res) => {
-      if (res) this.loadDashboardData();
+      if (res) this.loadDashboardData(farmId);
     });
   }
 }

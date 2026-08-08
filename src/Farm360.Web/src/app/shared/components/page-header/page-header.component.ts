@@ -16,10 +16,17 @@ export class PageHeaderComponent {
   @Input() breadcrumbActiveNode?: string;
   @Input() primaryActionLabel?: string;
   @Input() primaryActionIcon?: string;
+  @Input() secondaryActionLabel?: string;
+  @Input() secondaryActionIcon?: string;
   
   @Output() primaryAction = new EventEmitter<void>();
+  @Output() secondaryAction = new EventEmitter<void>();
 
   onPrimaryAction(): void {
     this.primaryAction.emit();
+  }
+
+  onSecondaryAction(): void {
+    this.secondaryAction.emit();
   }
 }

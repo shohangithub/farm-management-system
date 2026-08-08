@@ -1,0 +1,51 @@
+<app-page-header 
+  title="Health & Mortality Analytics" 
+  description="Trends on mortality and vaccination compliance."
+  breadcrumbActiveNode="Health Analytics">
+  <div actions>
+    <button mat-flat-button color="primary">
+      <mat-icon>assessment</mat-icon>
+      Export Report
+    </button>
+  </div>
+</app-page-header>
+
+<div class="p-6 relative min-h-[400px]">
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <app-empty-state 
+    *ngIf="!isLoading() && !hasData()"
+    icon="health_and_safety"
+    title="No Health Data Found"
+    description="There are no health records to analyze for this farm."
+    actionLabel="Add Health Record"
+    (action)="isLoading.set(true)">
+  </app-empty-state>
+
+  <div *ngIf="!isLoading() && hasData()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- KPI Card: Total Deaths Last 12 Months -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Mortality (Last 12 Mos)</p>
+          <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalDeathsLast12Months }}</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-red-500/20">
+          <mat-icon>warning</mat-icon>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
+        <mat-icon class="text-[14px] w-[14px] h-[14px] mr-1 text-red-500">trending_down</mat-icon>
+        Total animal deaths recorded.
+      </p>
+      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-red-500/5 rotate-[-10deg] pointer-events-none">warning</mat-icon>
+    </div>
+
+    <!-- Chart: Vaccination Compliance -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden col-span-1 lg:col-span-2">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Vaccination Compliance</h3>
+      <div echarts [options]="chartOptions()" class="w-full h-[300px]"></div>
+    </div>
+  </div>
+</div>

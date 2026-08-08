@@ -9,6 +9,7 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using Xunit;
+using MediatR;
 
 namespace Farm360.Application.UnitTests.Livestock;
 
@@ -25,6 +26,7 @@ public sealed class AnimalCommandHandlerTests
     private readonly IUnitOfWork       _uow         = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly ITenantService    _tenantSvc   = Substitute.For<ITenantService>();
+    private readonly IPublisher        _publisher   = Substitute.For<IPublisher>();
 
     private static readonly Guid TenantId = Guid.NewGuid();
     private static readonly Guid UserId   = Guid.NewGuid();
@@ -144,7 +146,7 @@ public sealed class AnimalCommandHandlerTests
         var animal = CreateAnimal();
         _repo.GetByIdAsync(animal.Id, Arg.Any<CancellationToken>()).Returns(animal);
 
-        var handler = new SellAnimalCommandHandler(_repo, _uow, _currentUser);
+        var handler = new SellAnimalCommandHandler(_repo, _uow, _currentUser, _publisher);
         var command = new SellAnimalCommand(animal.Id, 80_000m, new DateOnly(2025, 7, 1), null, null);
 
         await handler.Handle(command, CancellationToken.None);
@@ -159,7 +161,7 @@ public sealed class AnimalCommandHandlerTests
     {
         _repo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).ReturnsNull();
 
-        var handler = new SellAnimalCommandHandler(_repo, _uow, _currentUser);
+        var handler = new SellAnimalCommandHandler(_repo, _uow, _currentUser, _publisher);
         var act = async () => await handler.Handle(
             new SellAnimalCommand(Guid.NewGuid(), 80_000m, new DateOnly(2025, 7, 1), null, null),
             CancellationToken.None);

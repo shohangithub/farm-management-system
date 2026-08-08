@@ -1,16 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { switchMap, of, filter, catchError, map } from 'rxjs';
+import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { ExecutiveDashboardData, InsightSeverity, InsightType } from '../../models/dashboard.model';
+import { ExecutiveDashboardData, InsightSeverity, InsightType, ActionableInsight } from '../../models/dashboard.model';
 
 @Component({
   selector: 'app-executive-dashboard',
@@ -33,6 +35,8 @@ import { ExecutiveDashboardData, InsightSeverity, InsightType } from '../../mode
 export class ExecutiveDashboardComponent {
   private readonly contextService = inject(WorkingContextService);
   private readonly dashboardService = inject(DashboardService);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
 
   private readonly farmId$ = this.contextService.currentFarm$.pipe(
     map(farm => farm?.id)
@@ -49,10 +53,21 @@ export class ExecutiveDashboardComponent {
     ))
   );
 
+  private readonly dismissedInsightIds = signal<Set<string>>(new Set());
+
   public readonly dashboardData = toSignal(this.dashboardData$, { initialValue: undefined });
   public readonly isLoading = computed(() => this.dashboardData() === undefined);
   public readonly hasError = computed(() => this.dashboardData() === null);
-  public readonly data = computed(() => this.dashboardData() as ExecutiveDashboardData | undefined);
+  public readonly data = computed(() => {
+    const d = this.dashboardData() as ExecutiveDashboardData | undefined;
+    if (!d) return d;
+    
+    const dismissed = this.dismissedInsightIds();
+    return {
+      ...d,
+      actionableInsights: d.actionableInsights.filter(i => !dismissed.has(i.id))
+    };
+  });
 
   public getSeverityIcon(severity: InsightSeverity): string {
     switch (severity) {
@@ -78,5 +93,22 @@ export class ExecutiveDashboardComponent {
     const d = this.data();
     if (!d) return 0;
     return d.currentMonthIncome - d.currentMonthExpense;
+  }
+
+  public dismissInsight(insight: ActionableInsight): void {
+    const current = this.dismissedInsightIds();
+    const next = new Set(current);
+    next.add(insight.id);
+    this.dismissedInsightIds.set(next);
+  }
+
+  public reviewInsight(insight: ActionableInsight): void {
+    if (insight.animalId) {
+      this.router.navigate(['/livestock', insight.animalId]);
+    } else if (insight.batchId) {
+      this.router.navigate(['/livestock/batches', insight.batchId]);
+    } else {
+      this.snackBar.open('Module specific navigation not implemented yet.', 'OK', { duration: 2000 });
+    }
   }
 }

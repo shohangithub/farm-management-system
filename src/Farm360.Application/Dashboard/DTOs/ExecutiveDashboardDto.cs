@@ -8,5 +8,9 @@ public sealed record ExecutiveDashboardDto(
     int FeedLowStockCount,
     decimal CurrentMonthIncome,
     decimal CurrentMonthExpense,
+    int BirthsThisMonth,
+    int DeathsThisMonth,
+    int DueVaccinations,
+    int PregnantAnimals,
     IReadOnlyList<ActionableInsightDto> ActionableInsights
 );

@@ -32,6 +32,18 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
             .FirstOrDefaultAsync(a => a.Id == animalId, cancellationToken);
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<Animal>> GetByIdsAsync(IEnumerable<Guid> animalIds, CancellationToken cancellationToken = default)
+    {
+        var idList = animalIds.ToList();
+        if (idList.Count == 0)
+            return new List<Animal>();
+
+        return await _animals
+            .Where(a => idList.Contains(a.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Animal?> GetByIdWithWeightsAsync(Guid animalId, CancellationToken cancellationToken = default) =>
         await _animals
             .Include(a => a.WeightRecords)
