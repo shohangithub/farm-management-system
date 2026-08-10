@@ -72,17 +72,17 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
           <div class="grid grid-cols-3 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>DM %</mat-label>
+              <mat-label title="Dry Matter %">DM %</mat-label>
               <input matInput type="number" formControlName="dryMatterPct" step="0.1" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>CP %</mat-label>
+              <mat-label title="Crude Protein %">CP %</mat-label>
               <input matInput type="number" formControlName="crudeProteinPct" step="0.1" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>ME (MJ/kg)</mat-label>
+              <mat-label title="Metabolizable Energy (MJ/kg)">ME (MJ/kg)</mat-label>
               <input matInput type="number" formControlName="metabolizableEnergyMjPerKg" step="0.1" />
             </mat-form-field>
           </div>
