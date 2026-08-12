@@ -21,10 +21,12 @@ public sealed record GetTreatmentListQuery(
 internal sealed class GetTreatmentListQueryHandler : IRequestHandler<GetTreatmentListQuery, PagedResult<MedicalTreatmentDto>>
 {
     private readonly IMedicalTreatmentRepository _repository;
+    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository _animalRepository;
 
-    public GetTreatmentListQueryHandler(IMedicalTreatmentRepository repository)
+    public GetTreatmentListQueryHandler(IMedicalTreatmentRepository repository, Farm360.Domain.Livestock.Repositories.IAnimalRepository animalRepository)
     {
         _repository = repository;
+        _animalRepository = animalRepository;
     }
 
     public async Task<PagedResult<MedicalTreatmentDto>> Handle(GetTreatmentListQuery request, CancellationToken cancellationToken)
@@ -43,7 +45,11 @@ internal sealed class GetTreatmentListQueryHandler : IRequestHandler<GetTreatmen
             request.SortDesc,
             cancellationToken);
 
-        var dtos = items.Select(t => t.ToDto()).ToList();
+        var animalIds = items.Select(t => t.AnimalId).Distinct().ToList();
+        var animals = animalIds.Count != 0 ? await _animalRepository.GetByIdsAsync(animalIds, cancellationToken) : [];
+        var animalDict = animals.ToDictionary(a => a.Id, a => a.Tag.TagId);
+
+        var dtos = items.Select(t => t.ToDto(animalDict.GetValueOrDefault(t.AnimalId))).ToList();
         return new PagedResult<MedicalTreatmentDto>(dtos, count, pageNumber, pageSize);
     }
 }

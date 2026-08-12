@@ -57,7 +57,7 @@ public sealed class AnimalCommandHandlerTests
     [Fact]
     public async Task RegisterAnimal_ValidCommand_AddsToRepositoryAndSaves()
     {
-        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc);
+        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
             TagId:               "B-001",
@@ -69,7 +69,9 @@ public sealed class AnimalCommandHandlerTests
             AcquisitionType:     AcquisitionType.Purchased,
             AcquisitionDate:     new DateOnly(2024, 1, 1),
             AcquisitionPriceBdt: 50_000m,
-            Notes:               null);
+            Notes:               null,
+            ShedId:              null,
+            PenId:               null);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
@@ -82,7 +84,7 @@ public sealed class AnimalCommandHandlerTests
     [Fact]
     public async Task RegisterAnimal_ValidCommand_ReturnsDtoWithCorrectTenantId()
     {
-        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc);
+        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
             TagId:               "B-999",
@@ -94,7 +96,9 @@ public sealed class AnimalCommandHandlerTests
             AcquisitionType:     AcquisitionType.BornOnFarm,
             AcquisitionDate:     new DateOnly(2022, 6, 1),
             AcquisitionPriceBdt: null,
-            Notes:               "Born on farm");
+            Notes:               "Born on farm",
+            ShedId:              null,
+            PenId:               null);
 
         var result = await handler.Handle(command, CancellationToken.None);
 

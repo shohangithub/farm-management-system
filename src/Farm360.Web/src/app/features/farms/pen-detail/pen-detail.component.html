@@ -1,6 +1,7 @@
 <app-page-header 
   [title]="pen() ? pen()!.penName : 'Pen Details'"
   [description]="pen() ? 'Pen Number: ' + pen()!.penNumber : ''"
+  [breadcrumbActiveNode]="pen()?.penName || 'Pen Details'"
   primaryActionLabel="Edit Pen"
   primaryActionIcon="edit"
   secondaryActionLabel="Back"

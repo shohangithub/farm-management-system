@@ -107,6 +107,20 @@ public sealed class InventoryItemRepository : IInventoryItemRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<(int TotalItems, decimal TotalValueBdt, int LowStockCount, int OutOfStockCount)> GetSummaryAsync(Guid farmId, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.InventoryItems
+            .AsNoTracking()
+            .Where(x => x.FarmId == farmId && x.TenantId == _tenantService.TenantId);
+
+        var totalItems = await query.CountAsync(cancellationToken);
+        var totalValue = await query.SumAsync(x => x.CurrentStock * x.WeightedAverageCostBdt, cancellationToken);
+        var lowStock = await query.CountAsync(x => x.CurrentStock > 0 && x.CurrentStock <= x.ReorderThreshold, cancellationToken);
+        var outOfStock = await query.CountAsync(x => x.CurrentStock == 0, cancellationToken);
+
+        return (totalItems, Math.Round(totalValue, 2), lowStock, outOfStock);
+    }
+
     public async Task AddAsync(InventoryItem item, CancellationToken cancellationToken = default)
     {
         await _dbContext.InventoryItems.AddAsync(item, cancellationToken);

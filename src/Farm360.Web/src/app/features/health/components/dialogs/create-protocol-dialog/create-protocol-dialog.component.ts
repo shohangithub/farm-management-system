@@ -166,7 +166,7 @@ export class CreateProtocolDialogComponent {
   isEditMode = false;
   protocolId?: string;
 
-  speciesOptions = Object.entries(SPECIES_LABELS).map(([k, v]) => ({ value: Number(k), label: v }));
+  speciesOptions = Object.entries(SPECIES_LABELS).map(([k, v]) => ({ value: k, label: v }));
 
   constructor(@Optional() @Inject(MAT_DIALOG_DATA) public data: any) {
     this.isEditMode = !!data;

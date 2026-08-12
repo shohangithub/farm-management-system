@@ -14,6 +14,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { BreedService } from '../../services/breed.service';
 import { BreedDto } from '../../models/breed.models';
+import { ShedService } from '../../../farms/services/shed.service';
+import { PenService } from '../../../farms/services/pen.service';
 
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
@@ -42,17 +44,23 @@ export class AnimalRegisterComponent implements OnInit {
   readonly error       = signal<string | null>(null);
   readonly today       = new Date().toISOString().split('T')[0];
   readonly breeds      = signal<BreedDto[]>([]);
+  
+  private readonly shedSvc = inject(ShedService);
+  private readonly penSvc = inject(PenService);
+  readonly sheds = signal<any[]>([]);
+  readonly pens = signal<any[]>([]);
 
   idForm!: FormGroup;
   acquisitionForm!: FormGroup;
   notesForm!: FormGroup;
+  placementForm!: FormGroup;
 
   // Expose enums to template
   readonly TagType         = TagType;
   readonly AnimalSex       = AnimalSex;
   readonly AcquisitionType = AcquisitionType;
 
-  readonly speciesOptions = Object.entries(SPECIES_LABELS).map(([v, l]) => ({ value: +v, label: l }));
+  readonly speciesOptions = Object.entries(SPECIES_LABELS).map(([v, l]) => ({ value: v, label: l }));
 
   constructor() {}
 
@@ -76,6 +84,11 @@ export class AnimalRegisterComponent implements OnInit {
       notes:              [null as string | null, Validators.maxLength(1000)],
     });
 
+    this.placementForm = this.fb.group({
+      shedId:             [null as string | null],
+      penId:              [null as string | null],
+    });
+
     // Auto-uppercase tagId
     this.idForm.get('tagId')?.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -88,6 +101,32 @@ export class AnimalRegisterComponent implements OnInit {
     this.breedSvc.getBreeds({ pageSize: 1000 }).subscribe({
       next: (b) => this.breeds.set(b.items)
     });
+
+    // Load Sheds
+    this.contextSvc.currentFarm$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(farm => {
+      if (farm) {
+        this.shedSvc.getShedsByFarm(farm.id).subscribe({
+          next: (s) => this.sheds.set(s)
+        });
+      } else {
+        this.sheds.set([]);
+      }
+      this.placementForm.patchValue({ shedId: null, penId: null });
+    });
+
+    // Load Pens when Shed changes
+    this.placementForm.get('shedId')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(shedId => {
+        this.placementForm.get('penId')?.setValue(null, { emitEvent: false });
+        if (shedId) {
+          this.penSvc.getPensByShed(shedId).subscribe({
+            next: (p) => this.pens.set(p)
+          });
+        } else {
+          this.pens.set([]);
+        }
+      });
   }
 
   getError(formGroup: FormGroup, field: string): string {
@@ -122,6 +161,7 @@ export class AnimalRegisterComponent implements OnInit {
     const idVals = this.idForm.getRawValue();
     const acqVals = this.acquisitionForm.getRawValue();
     const notesVals = this.notesForm.getRawValue();
+    const placementVals = this.placementForm.getRawValue();
     const farmId = this.contextSvc.currentFarmValue?.id;
     
     if (!farmId) {
@@ -144,6 +184,8 @@ export class AnimalRegisterComponent implements OnInit {
       acquisitionDate:     acqVals.acquisitionDate!,
       acquisitionPriceBdt: acqVals.acquisitionPriceBdt ?? undefined,
       notes:               notesVals.notes ?? undefined,
+      shedId:              placementVals.shedId ?? undefined,
+      penId:               placementVals.penId ?? undefined,
     }).subscribe({
       next:  a => {
         this.snackBar.open('Animal registered successfully!', 'Close', {

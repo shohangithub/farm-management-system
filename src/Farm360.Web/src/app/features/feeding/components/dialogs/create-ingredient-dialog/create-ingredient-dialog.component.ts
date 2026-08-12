@@ -89,8 +89,9 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Unit Cost (BDT)</mat-label>
+              <mat-label>Unit Cost</mat-label>
               <input matInput type="number" formControlName="unitCostBdt" step="0.5" required />
+              <span matTextSuffix class="text-gray-500 px-2 font-medium">BDT</span>
               <mat-error>Unit cost is required</mat-error>
             </mat-form-field>
 

@@ -142,6 +142,13 @@ export interface InventoryValuationReport {
   items: InventoryItem[];
 }
 
+export interface CurrentStockSummary {
+  totalItems: number;
+  totalValueBdt: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+}
+
 export interface CreateInventoryItemRequest {
   farmId: string;
   name: string;

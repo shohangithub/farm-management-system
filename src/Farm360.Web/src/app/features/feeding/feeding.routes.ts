@@ -19,7 +19,7 @@ export const FEEDING_ROUTES: Routes = [
   {
     path: 'formulas',
     loadComponent: () => import('./pages/formula-list/formula-list.component').then(m => m.FormulaListComponent),
-    title: 'Feed Formulas — Farm360 AI'
+    title: 'Feed Rations — Farm360 AI'
   },
   {
     path: 'schedules',
@@ -29,6 +29,6 @@ export const FEEDING_ROUTES: Routes = [
   {
     path: 'logs',
     loadComponent: () => import('./pages/consumption-log/consumption-log.component').then(m => m.ConsumptionLogComponent),
-    title: 'Daily Consumption Logs — Farm360 AI'
+    title: 'Daily Feeding Records — Farm360 AI'
   }
 ];

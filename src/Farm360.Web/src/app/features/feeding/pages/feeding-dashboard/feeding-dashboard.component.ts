@@ -139,7 +139,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
             <div class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">history</mat-icon>
             </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Consumption Logs</span>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Feeding Records</span>
           </div>
           <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
         </a>

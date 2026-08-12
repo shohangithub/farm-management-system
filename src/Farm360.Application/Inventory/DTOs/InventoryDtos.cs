@@ -56,3 +56,9 @@ public sealed record InventoryValuationReportDto(
     int LowStockCount,
     int OutOfStockCount,
     IReadOnlyList<InventoryItemDto> Items);
+
+public sealed record CurrentStockSummaryDto(
+    int TotalItems,
+    decimal TotalValueBdt,
+    int LowStockCount,
+    int OutOfStockCount);

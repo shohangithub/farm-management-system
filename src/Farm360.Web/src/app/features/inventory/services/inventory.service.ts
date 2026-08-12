@@ -10,6 +10,7 @@ import {
   RecordStockInRequest,
   RecordStockOutRequest,
   InventoryValuationReport,
+  CurrentStockSummary,
   PagedResult,
   InventoryItemParams,
   StockTransactionParams,
@@ -109,6 +110,12 @@ export class InventoryService {
   // ── Reports ────────────────────────────────────────────────────────────────
   getValuationReport(farmId: string): Observable<InventoryValuationReport> {
     return this.http.get<InventoryValuationReport>(`${this.baseUrl}/reports/valuation`, {
+      params: new HttpParams().set('farmId', farmId)
+    });
+  }
+
+  getCurrentStockSummary(farmId: string): Observable<CurrentStockSummary> {
+    return this.http.get<CurrentStockSummary>(`${this.baseUrl}/reports/current-stock/summary`, {
       params: new HttpParams().set('farmId', farmId)
     });
   }

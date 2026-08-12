@@ -29,7 +29,9 @@ public sealed record RegisterAnimalCommand(
     AcquisitionType AcquisitionType,
     DateOnly AcquisitionDate,
     decimal? AcquisitionPriceBdt,
-    string? Notes) : IRequest<AnimalDto>;
+    string? Notes,
+    Guid? ShedId,
+    Guid? PenId) : IRequest<AnimalDto>;
 
 public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterAnimalCommand>
 {
@@ -73,7 +75,8 @@ public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterA
 public sealed class RegisterAnimalCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,
-    ITenantService tenantService) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
+    ITenantService tenantService,
+    ICurrentUserService currentUser) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(RegisterAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -91,6 +94,17 @@ public sealed class RegisterAnimalCommandHandler(
             acquisitionDate: request.AcquisitionDate,
             acquisitionPriceBdt: request.AcquisitionPriceBdt,
             notes: request.Notes);
+
+        if (request.ShedId.HasValue)
+        {
+            var userId = currentUser.UserId ?? Guid.Empty;
+            animal.TransferToShed(
+                request.ShedId.Value, 
+                request.PenId, 
+                DateOnly.FromDateTime(DateTime.UtcNow), 
+                userId, 
+                "Initial Placement");
+        }
 
         repository.Add(animal);
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -645,3 +645,28 @@ select.form-control {
   .page-header   { flex-direction: column; }
   .filter-bar    { flex-direction: column; }
 }
+
+/* ── SAP Style Print Report CSS ──────────────────────────── */
+@media print {
+  body, html {
+    background: white !important;
+    color: black !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  app-sidebar, app-header, mat-sidenav, .sidebar, .header, .nav, .app-sidebar, .app-header {
+    display: none !important;
+  }
+  mat-sidenav-container, mat-sidenav-content, .main-content, main, .app-main, .app-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

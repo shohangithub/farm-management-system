@@ -39,7 +39,9 @@ public sealed class AnimalCommandValidatorTests
         AcquisitionType:     AcquisitionType.Purchased,
         AcquisitionDate:     new DateOnly(2024, 1, 1),
         AcquisitionPriceBdt: 50_000m,
-        Notes:               null);
+        Notes:               null,
+        ShedId:              null,
+        PenId:               null);
 
     [Fact]
     public async Task RegisterAnimal_ValidCommand_PassesValidation()

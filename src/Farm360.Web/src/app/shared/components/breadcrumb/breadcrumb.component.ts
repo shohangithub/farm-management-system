@@ -34,19 +34,27 @@ export class BreadcrumbComponent implements OnChanges {
   private buildBreadcrumb(route: ActivatedRoute, url: string = '', breadcrumbs: Array<{ label: string, url: string }> = []): Array<{ label: string, url: string }> {
     let label = route.routeConfig && route.routeConfig.data ? route.routeConfig.data['breadcrumb'] : '';
     let path = route.routeConfig && route.routeConfig.data ? route.routeConfig.path : '';
-    
-    // Auto-generate if no data is provided but path exists
+
+    // Auto-generate label from the path if no explicit breadcrumb data exists
     if (!label && route.routeConfig && route.routeConfig.path) {
       if (route.routeConfig.path !== '**') {
         const segments = route.routeConfig.path.split('/');
-        label = segments[segments.length - 1];
-        // Capitalize
-        label = label.charAt(0).toUpperCase() + label.slice(1);
+        const lastSegment = segments[segments.length - 1];
+
+        // Skip dynamic parameter segments (e.g. :id, :branchId) — they will be
+        // resolved to a human-readable name via `customLastNode` (breadcrumbActiveNode).
+        if (!lastSegment.startsWith(':')) {
+          // Convert kebab-case to Title Case for readability (e.g. "vet-visits" → "Vet Visits")
+          label = lastSegment
+            .split('-')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }
       }
     }
 
     const nextUrl = path ? `${url}/${path}` : url;
-    
+
     if (label) {
       breadcrumbs.push({ label, url: nextUrl });
     }
@@ -54,12 +62,13 @@ export class BreadcrumbComponent implements OnChanges {
     if (route.firstChild) {
       return this.buildBreadcrumb(route.firstChild, nextUrl, breadcrumbs);
     }
-    
-    // Override the very last node if customLastNode is provided
+
+    // Override the very last node if customLastNode is provided by the page
+    // (e.g. the animal Tag ID, incident title, protocol name, etc.)
     if (this.customLastNode && breadcrumbs.length > 0) {
       breadcrumbs[breadcrumbs.length - 1].label = this.customLastNode;
     }
-    
+
     return breadcrumbs;
   }
 }

@@ -35,6 +35,7 @@ public sealed record VaccinationEventDto(
 public sealed record MedicalTreatmentDto(
     Guid Id,
     Guid AnimalId,
+    string? AnimalTagId,
     string Diagnosis,
     string MedicationName,
     decimal DosageAmount,

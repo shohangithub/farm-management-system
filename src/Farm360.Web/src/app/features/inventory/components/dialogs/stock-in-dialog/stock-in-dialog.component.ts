@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -141,11 +142,12 @@ export class StockInDialogComponent implements OnInit {
   readonly error = signal('');
   readonly availableItems = signal<InventoryItem[]>([]);
   readonly suppliers = signal<Supplier[]>([]);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly form = this.fb.group({
     inventoryItemId: [this.data?.item?.id || '', [Validators.required]],
-    quantity: [100, [Validators.required, Validators.min(0.1)]],
-    unitCostBdt: [this.data?.item?.weightedAverageCostBdt ?? 50, [Validators.required, Validators.min(0)]],
+    quantity: [null as number | null, [Validators.required, Validators.min(0.1)]],
+    unitCostBdt: [this.data?.item?.weightedAverageCostBdt || null as number | null, [Validators.required, Validators.min(0)]],
     supplierId: [null as string | null],
     transactionDate: [new Date().toISOString().split('T')[0], [Validators.required]],
     invoiceNumber: [''],
@@ -164,6 +166,20 @@ export class StockInDialogComponent implements OnInit {
       next: (res) => this.suppliers.set(res.items),
       error: () => {}
     });
+
+    this.form.get('inventoryItemId')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(itemId => {
+        if (itemId) {
+          const selectedItem = this.availableItems().find(x => x.id === itemId);
+          if (selectedItem) {
+            this.form.patchValue({
+              unitCostBdt: selectedItem.weightedAverageCostBdt > 0 ? selectedItem.weightedAverageCostBdt : null,
+              quantity: null as any
+            });
+          }
+        }
+      });
   }
 
   onSubmit(): void {

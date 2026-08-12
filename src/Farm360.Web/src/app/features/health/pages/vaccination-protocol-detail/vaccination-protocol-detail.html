@@ -1,6 +1,7 @@
 <app-page-header 
   title="Protocol Details" 
   description="View comprehensive information about the vaccination protocol."
+  [breadcrumbActiveNode]="protocol()?.title || 'Protocol Details'"
   icon="library_books" 
   iconColor="text-blue-600">
   <div actions class="flex gap-2">

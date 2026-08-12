@@ -77,14 +77,16 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Total Feed Offered (kg)</mat-label>
+              <mat-label>Total Feed Offered</mat-label>
               <input matInput type="number" formControlName="totalFeedOfferedKg" step="1" min="0" required />
+              <span matTextSuffix class="text-gray-500 px-2 font-medium">kg</span>
               <mat-error>Feed offered is required</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Refusal / Wastage (kg)</mat-label>
+              <mat-label>Refusal / Wastage</mat-label>
               <input matInput type="number" formControlName="totalRefusalKg" step="0.5" min="0" required />
+              <span matTextSuffix class="text-gray-500 px-2 font-medium">kg</span>
               <mat-error>Refusal is required</mat-error>
             </mat-form-field>
           </div>

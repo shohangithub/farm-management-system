@@ -15,6 +15,10 @@ export const INVENTORY_ROUTES: Routes = [
     loadComponent: () => import('./pages/inventory-item-list/inventory-item-list.component').then(m => m.InventoryItemListComponent)
   },
   {
+    path: 'current-stock',
+    loadComponent: () => import('./pages/current-stock/current-stock.component').then(m => m.CurrentStockComponent)
+  },
+  {
     path: 'transactions',
     loadComponent: () => import('./pages/stock-ledger/stock-ledger.component').then(m => m.StockLedgerComponent)
   },

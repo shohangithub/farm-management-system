@@ -186,6 +186,8 @@ export interface RegisterAnimalRequest {
   acquisitionDate: string;
   acquisitionPriceBdt?: number;
   notes?: string;
+  shedId?: string;
+  penId?: string;
 }
 
 export interface UpdateAnimalRequest {

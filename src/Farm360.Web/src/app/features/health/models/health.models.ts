@@ -140,6 +140,7 @@ export interface VaccinationEventDto {
 export interface MedicalTreatmentDto {
   id: string;
   animalId: string;
+  animalTagId?: string;
   diagnosis: string;
   medicationName: string;
   dosageAmount: number;

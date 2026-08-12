@@ -57,9 +57,9 @@ export class AnimalListComponent {
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex    = AnimalSex;
 
-  readonly speciesOptions = Object.entries(SPECIES_LABELS).map(([v, l]) => ({ value: +v, label: l }));
-  readonly statusOptions  = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: +v, label: l }));
-  readonly sexOptions     = Object.entries(SEX_LABELS).map(([v, l]) => ({ value: +v, label: l }));
+  readonly speciesOptions = Object.entries(SPECIES_LABELS).map(([v, l]) => ({ value: v, label: l }));
+  readonly statusOptions  = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
+  readonly sexOptions     = Object.entries(SEX_LABELS).map(([v, l]) => ({ value: v, label: l }));
 
   readonly hasActiveFilters = computed(() => {
     const p = this.params();

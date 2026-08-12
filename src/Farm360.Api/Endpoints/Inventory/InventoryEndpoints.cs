@@ -200,6 +200,19 @@ public static class InventoryEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
         .WithName("GetInventoryValuationReport");
 
+        // ── Current Stock Summary ────────────────────────────────────────────
+        group.MapGet("/reports/current-stock/summary", async (
+            [FromQuery] Guid farmId,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetCurrentStockSummaryQuery(farmId);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetCurrentStockSummary");
+
         // ── Purchase Orders ───────────────────────────────────────────────────
         group.MapGet("/purchase-orders", async (
             [FromQuery] int pageNumber = 1,

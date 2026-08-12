@@ -1,6 +1,7 @@
 <app-page-header 
   [title]="branch() ? branch()!.name : 'Branch Details'"
   [description]="branch() ? 'Branch Code: ' + branch()!.branchCode : ''"
+  [breadcrumbActiveNode]="branch()?.name || 'Branch Details'"
   primaryActionLabel="Edit Branch"
   primaryActionIcon="edit"
   secondaryActionLabel="Back"

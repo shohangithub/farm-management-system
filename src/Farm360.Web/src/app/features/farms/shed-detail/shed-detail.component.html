@@ -1,6 +1,7 @@
 <app-page-header 
   [title]="shed() ? shed()!.shedName : 'Shed Details'"
   [description]="shed() ? 'Shed Number: ' + shed()!.shedNumber : ''"
+  [breadcrumbActiveNode]="shed()?.shedName || 'Shed Details'"
   primaryActionLabel="Edit Shed"
   primaryActionIcon="edit"
   secondaryActionLabel="Back"

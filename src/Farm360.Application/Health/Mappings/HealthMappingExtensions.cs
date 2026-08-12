@@ -38,11 +38,12 @@ public static class HealthMappingExtensions
         );
     }
 
-    public static MedicalTreatmentDto ToDto(this MedicalTreatment treatment)
+    public static MedicalTreatmentDto ToDto(this MedicalTreatment treatment, string? animalTagId = null)
     {
         return new MedicalTreatmentDto(
             treatment.Id,
             treatment.AnimalId,
+            animalTagId,
             treatment.Diagnosis,
             treatment.MedicationName,
             treatment.Dosage.Amount,

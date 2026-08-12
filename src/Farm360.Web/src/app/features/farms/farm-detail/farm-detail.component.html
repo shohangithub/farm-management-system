@@ -1,6 +1,7 @@
 <app-page-header 
   [title]="farm() ? farm()!.farmName : 'Farm Details'"
   [description]="farm() ? 'Farm Code: ' + farm()!.farmCode : ''"
+  [breadcrumbActiveNode]="farm()?.farmName || 'Farm Details'"
   primaryActionLabel="Edit Farm"
   primaryActionIcon="edit"
   secondaryActionLabel="Back"

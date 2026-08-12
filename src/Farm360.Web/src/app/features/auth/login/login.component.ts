@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -9,7 +9,8 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);
@@ -24,8 +25,8 @@ export class LoginComponent {
     password: ['', [Validators.required]]
   });
 
-  isLoading = false;
-  errorMessage = '';
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
@@ -33,21 +34,21 @@ export class LoginComponent {
       return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: () => {
         const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
         this.router.navigateByUrl(returnUrl).then(navigated => {
           if (!navigated) {
-            this.isLoading = false;
+            this.isLoading.set(false);
           }
         });
       },
       error: (err) => {
-        this.isLoading = false;
-        this.errorMessage = err.error?.detail || err.error?.title || 'Invalid credentials. Please try again.';
+        this.isLoading.set(false);
+        this.errorMessage.set(err.error?.detail || err.error?.title || 'Invalid credentials. Please try again.');
       }
     });
   }

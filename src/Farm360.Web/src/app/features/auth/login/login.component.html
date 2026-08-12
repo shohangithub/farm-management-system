@@ -11,9 +11,9 @@
     </div>
 
     <!-- Error Alert -->
-    <div *ngIf="errorMessage" class="login-error" role="alert">
+    <div *ngIf="errorMessage()" class="login-error" role="alert">
       <span class="material-icons">error_outline</span>
-      <span>{{ errorMessage }}</span>
+      <span>{{ errorMessage() }}</span>
     </div>
 
     <!-- Login Form -->
@@ -62,10 +62,10 @@
         id="btn-login-submit"
         type="submit"
         class="btn-login"
-        [disabled]="isLoading">
-        <span *ngIf="isLoading" class="login-spinner"></span>
-        <span class="material-icons" *ngIf="!isLoading" style="font-size:18px;">login</span>
-        {{ isLoading ? 'Signing in…' : 'Sign In' }}
+        [disabled]="isLoading()">
+        <span *ngIf="isLoading()" class="login-spinner"></span>
+        <span class="material-icons" *ngIf="!isLoading()" style="font-size:18px;">login</span>
+        {{ isLoading() ? 'Signing in…' : 'Sign In' }}
       </button>
 
     </form>

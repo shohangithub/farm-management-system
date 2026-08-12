@@ -17,6 +17,7 @@ public interface IInventoryItemRepository
         bool sortDescending = false,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<InventoryItem>> GetLowStockItemsAsync(Guid farmId, CancellationToken cancellationToken = default);
+    Task<(int TotalItems, decimal TotalValueBdt, int LowStockCount, int OutOfStockCount)> GetSummaryAsync(Guid farmId, CancellationToken cancellationToken = default);
     Task AddAsync(InventoryItem item, CancellationToken cancellationToken = default);
     void Update(InventoryItem item);
     void Delete(InventoryItem item);

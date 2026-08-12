@@ -1,0 +1,193 @@
+<app-page-header class="print:hidden"
+  title="Current Stock Report"
+  description="Real-time snapshot of current inventory balance and valuation."
+  breadcrumbActiveNode="Current Stock">
+  <div actions class="flex items-center gap-2 print:hidden">
+    <button (click)="printReport()"
+      class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">print</mat-icon> Print Report
+    </button>
+  </div>
+</app-page-header>
+
+<!-- SAP-like Print Header (Only visible during printing) -->
+<div class="hidden print:block mb-8 font-sans">
+  <div class="flex justify-between items-start border-b-2 border-black pb-4 mb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-black m-0 leading-tight">Farm360 ERP</h1>
+      <div class="text-sm font-semibold text-gray-800 uppercase tracking-widest mt-1">Materials Management</div>
+    </div>
+    <div class="text-right text-sm text-black">
+      <div><strong>Report:</strong> Current Stock Balance</div>
+      <div><strong>Date:</strong> {{ today | date:'medium' }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="space-y-6 print:space-y-4">
+  
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <!-- KPI Summary Cards Grid (Screen) / Text Summary (Print) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 print:hidden" *ngIf="summary() as data">
+    <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl p-5 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center gap-4 relative overflow-hidden">
+      <mat-icon class="absolute -right-3 -bottom-3 text-[80px] text-blue-500/5 rotate-[-10deg] pointer-events-none">category</mat-icon>
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+        <mat-icon class="!w-6 !h-6 !text-[24px]">category</mat-icon>
+      </div>
+      <div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Items</div>
+        <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
+          {{ data.totalItems }}
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl p-5 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center gap-4 relative overflow-hidden">
+      <mat-icon class="absolute -right-3 -bottom-3 text-[80px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">account_balance_wallet</mat-icon>
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+        <mat-icon class="!w-6 !h-6 !text-[24px]">account_balance_wallet</mat-icon>
+      </div>
+      <div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Valuation</div>
+        <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
+          ৳ {{ data.totalValueBdt | number:'1.0-0' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl p-5 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center gap-4 relative overflow-hidden">
+      <mat-icon class="absolute -right-3 -bottom-3 text-[80px] text-amber-500/5 rotate-[-10deg] pointer-events-none">warning</mat-icon>
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+        <mat-icon class="!w-6 !h-6 !text-[24px]">warning</mat-icon>
+      </div>
+      <div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Low Stock SKUs</div>
+        <div class="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">
+          {{ data.lowStockCount }}
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl p-5 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center gap-4 relative overflow-hidden">
+      <mat-icon class="absolute -right-3 -bottom-3 text-[80px] text-red-500/5 rotate-[-10deg] pointer-events-none">remove_shopping_cart</mat-icon>
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-red-500/20">
+        <mat-icon class="!w-6 !h-6 !text-[24px]">remove_shopping_cart</mat-icon>
+      </div>
+      <div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Out of Stock</div>
+        <div class="text-2xl font-extrabold text-red-600 dark:text-red-400 mt-0.5">
+          {{ data.outOfStockCount }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print-only KPI Summary -->
+  <div class="hidden print:grid grid-cols-4 gap-4 mb-6 border-b-2 border-black pb-4" *ngIf="summary() as data">
+    <div class="text-black">
+      <div class="text-xs uppercase font-bold text-gray-600">Total Items</div>
+      <div class="text-lg font-bold">{{ data.totalItems }}</div>
+    </div>
+    <div class="text-black">
+      <div class="text-xs uppercase font-bold text-gray-600">Total Valuation</div>
+      <div class="text-lg font-bold">BDT {{ data.totalValueBdt | number:'1.0-0' }}</div>
+    </div>
+    <div class="text-black">
+      <div class="text-xs uppercase font-bold text-gray-600">Low Stock SKUs</div>
+      <div class="text-lg font-bold">{{ data.lowStockCount }}</div>
+    </div>
+    <div class="text-black">
+      <div class="text-xs uppercase font-bold text-gray-600">Out of Stock</div>
+      <div class="text-lg font-bold">{{ data.outOfStockCount }}</div>
+    </div>
+  </div>
+
+  <!-- Main Report Table -->
+  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative print:shadow-none print:border-none print:!rounded-none print:bg-transparent">
+    
+    <app-empty-state
+      *ngIf="!isLoading() && items().length === 0"
+      icon="inventory_2"
+      title="No inventory items found"
+      description="Start by adding items to your stock catalog."
+      actionLabel="Go to Catalog"
+      [routerLink]="['../items']">
+    </app-empty-state>
+
+    <div class="overflow-x-auto print:overflow-visible" *ngIf="items().length > 0">
+      <table mat-table [dataSource]="items()" class="w-full !bg-transparent print:border-collapse print:table-fixed">
+
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Item</th>
+          <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 py-4 print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
+            <div class="font-medium text-gray-900 dark:text-white print:text-black">{{ item.name }}</div>
+            <div class="text-xs text-gray-500 mt-0.5">SKU: {{ item.sku }}</div>
+          </td>
+        </ng-container>
+
+        <!-- Category Column -->
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Category</th>
+          <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 print:bg-transparent print:p-0 print:text-black print:font-normal">
+              {{ item.categoryName }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Status</th>
+          <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold print:bg-transparent print:p-0 print:border-none print:text-black print:font-normal" [ngClass]="getStatusClass(item.status)">
+              {{ item.statusName }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Current Stock Column -->
+        <ng-container matColumnDef="currentStock">
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Current Stock</th>
+          <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 text-right print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
+            <div class="font-extrabold text-gray-900 dark:text-white print:text-black print:font-semibold">{{ item.currentStock }}</div>
+            <div class="text-[11px] text-gray-500">{{ item.unitOfMeasure }}</div>
+          </td>
+        </ng-container>
+
+        <!-- Valuation Column -->
+        <ng-container matColumnDef="valuation">
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Valuation (WAC)</th>
+          <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 text-right print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 print:text-black">৳ {{ item.totalValueBdt | number:'1.2-2' }}</div>
+            <div class="text-[11px] text-gray-500">@ ৳{{ item.weightedAverageCostBdt | number:'1.2-2' }}/{{ item.unitOfMeasure }}</div>
+          </td>
+        </ng-container>
+
+        <!-- Last Updated Column -->
+        <ng-container matColumnDef="updated">
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Location</th>
+          <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 text-right print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
+            <div class="text-sm text-gray-600 dark:text-gray-400 print:text-black">{{ item.storageLocation || 'Unassigned' }}</div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"></tr>
+      </table>
+
+      <!-- Paginator -->
+      <div class="border-t border-gray-100 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/30 px-4 py-2 print:hidden">
+        <mat-paginator
+          [length]="totalItemsCount()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[10, 20, 50, 100]"
+          (page)="onPageChange($event)"
+          class="!bg-transparent">
+        </mat-paginator>
+      </div>
+    </div>
+  </div>
+</div>

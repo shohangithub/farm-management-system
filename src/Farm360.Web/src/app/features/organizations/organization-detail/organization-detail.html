@@ -1,6 +1,7 @@
 <app-page-header 
   title="Organization Details" 
   description="View comprehensive information about this organization."
+  [breadcrumbActiveNode]="organization()?.name || 'Organization Details'"
   primaryActionLabel="Edit Organization"
   primaryActionIcon="edit"
   (primaryAction)="onEdit()">
