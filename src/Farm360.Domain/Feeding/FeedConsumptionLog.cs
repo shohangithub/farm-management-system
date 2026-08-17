@@ -12,6 +12,7 @@ public sealed class FeedConsumptionLog : AuditableEntity, IAggregateRoot
     public Guid? PenId { get; private set; }
     public Guid? BatchId { get; private set; }
     public Guid FormulaId { get; private set; }
+    public Guid? FeedingPlanId { get; private set; }
 
     public DateOnly LogDate { get; private set; }
     public int HeadCount { get; private set; }
@@ -39,6 +40,7 @@ public sealed class FeedConsumptionLog : AuditableEntity, IAggregateRoot
         Guid? shedId = null,
         Guid? penId = null,
         Guid? batchId = null,
+        Guid? feedingPlanId = null,
         string? loggedByUserId = null,
         string? notes = null)
         : base(id, tenantId)
@@ -48,6 +50,7 @@ public sealed class FeedConsumptionLog : AuditableEntity, IAggregateRoot
         ShedId = shedId;
         PenId = penId;
         BatchId = batchId;
+        FeedingPlanId = feedingPlanId;
         LogDate = logDate;
         HeadCount = Math.Max(1, headCount);
         TotalFeedOfferedKg = Math.Max(0, totalFeedOfferedKg);

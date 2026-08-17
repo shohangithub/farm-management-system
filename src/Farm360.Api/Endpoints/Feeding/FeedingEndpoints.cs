@@ -7,6 +7,14 @@ using Farm360.Application.Feeding.Queries.ConsumptionLogs;
 using Farm360.Application.Feeding.Queries.FeedFormulas;
 using Farm360.Application.Feeding.Queries.FeedIngredients;
 using Farm360.Application.Feeding.Queries.FeedingSchedules;
+using Farm360.Application.Feeding.Commands.FeedingRuleSets;
+using Farm360.Application.Feeding.Queries.FeedingRuleSets;
+using Farm360.Application.Feeding.Commands.AnimalFeedingPlans;
+using Farm360.Application.Feeding.Queries.AnimalFeedingPlans;
+using Farm360.Application.Feeding.Commands.DailyFeedingEntries;
+using Farm360.Application.Feeding.Queries.DailyFeedingEntries;
+using Farm360.Application.Feeding.Commands.FeedingReconciliations;
+using Farm360.Application.Feeding.Queries.FeedingReconciliations;
 using Farm360.Persistence.Seed;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -153,6 +161,149 @@ public static class FeedingEndpoints
             var result = await sender.Send(new GetFcrAnalyticsQuery(farmId, shedId), ct);
             return Results.Ok(result);
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        // ── Feeding Rule Sets ─────────────────────────────────────────────────
+        group.MapGet("/rule-sets", async (
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetFeedingRuleSetsQuery(), ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/rule-sets", async (
+            [FromBody] CreateFeedingRuleSetCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Created($"/api/v1/feeding/rule-sets/{id}", new { id });
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Create}");
+
+        group.MapPut("/rule-sets/{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromBody] UpdateFeedingRuleSetCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.Id) return Results.BadRequest("Route ID does not match request body ID.");
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        // ── Animal Feeding Plans ──────────────────────────────────────────────
+        group.MapGet("/plans", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] string? status,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetFeedingPlansQuery(farmId, status), ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/plans/assign", async (
+            [FromBody] AssignAnimalFeedingPlanCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Created($"/api/v1/feeding/plans/{id}", new { id });
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Create}");
+
+        group.MapPut("/plans/{id:guid}/cancel", async (
+            [FromRoute] Guid id,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new CancelFeedingPlanCommand(id), ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+        
+        group.MapPut("/plans/{id:guid}/exclude", async (
+            [FromRoute] Guid id,
+            [FromBody] ExcludeAnimalFromPlanCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.PlanId) return Results.BadRequest();
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        // ── Daily Feeding Entries ─────────────────────────────────────────────
+        group.MapGet("/entries/today", async (
+            [FromQuery] Guid farmId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetTodayFeedingEntriesQuery(farmId), ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/entries/{id:guid}/confirm", async (
+            [FromRoute] Guid id,
+            [FromBody] ConfirmDailyFeedingEntryCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.EntryId) return Results.BadRequest();
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        group.MapPost("/entries/{id:guid}/adjust", async (
+            [FromRoute] Guid id,
+            [FromBody] AdjustDailyFeedingEntryCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.EntryId) return Results.BadRequest();
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        group.MapPost("/entries/{id:guid}/skip", async (
+            [FromRoute] Guid id,
+            [FromBody] SkipDailyFeedingEntryCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.EntryId) return Results.BadRequest();
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        // ── Reconciliations ───────────────────────────────────────────────────
+        group.MapGet("/reconciliations", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] string? status,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetReconciliationsQuery(farmId, status), ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/reconciliations/{id:guid}/approve", async (
+            [FromRoute] Guid id,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new ApproveFeedingReconciliationCommand(id), ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        group.MapPost("/reconciliations/{id:guid}/reject", async (
+            [FromRoute] Guid id,
+            [FromBody] RejectFeedingReconciliationCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.Id) return Results.BadRequest();
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
 
         return app;
     }

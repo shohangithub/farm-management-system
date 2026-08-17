@@ -30,5 +30,25 @@ export const FEEDING_ROUTES: Routes = [
     path: 'logs',
     loadComponent: () => import('./pages/consumption-log/consumption-log.component').then(m => m.ConsumptionLogComponent),
     title: 'Daily Feeding Records — Farm360 AI'
+  },
+  {
+    path: 'rules',
+    loadComponent: () => import('./pages/rule-set-list/rule-set-list.component').then(m => m.RuleSetListComponent),
+    title: 'Feeding Rule Sets — Farm360 AI'
+  },
+  {
+    path: 'plans',
+    loadComponent: () => import('./pages/animal-feeding-plan-list/animal-feeding-plan-list.component').then(m => m.AnimalFeedingPlanListComponent),
+    title: 'Animal Feeding Plans — Farm360 AI'
+  },
+  {
+    path: 'today',
+    loadComponent: () => import('./pages/today-feeding-dashboard/today-feeding-dashboard.component').then(m => m.TodayFeedingDashboardComponent),
+    title: 'Today\'s Feeding Workflow — Farm360 AI'
+  },
+  {
+    path: 'reconciliations',
+    loadComponent: () => import('./pages/reconciliation-list/reconciliation-list.component').then(m => m.ReconciliationListComponent),
+    title: 'Feeding Reconciliations — Farm360 AI'
   }
 ];

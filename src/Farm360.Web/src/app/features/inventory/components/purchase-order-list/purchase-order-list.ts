@@ -211,14 +211,18 @@ export class PurchaseOrderList {
 
   readonly result = toSignal(
     toObservable(this.combinedParams).pipe(
-      filter(({ params }) => !!params.farmId),
       tap(() => { this.loading.set(true); this.error.set(null); }),
-      switchMap(({ params }) => this.inventoryService.getPurchaseOrders(params).pipe(
-        catchError(e => {
-          this.error.set(e?.error?.detail ?? 'Failed to load purchase orders');
-          return of(null);
-        })
-      )),
+      switchMap(({ params }) => {
+        if (!params.farmId) {
+          return of({ items: [], totalCount: 0, pageNumber: params.pageNumber ?? 1, pageSize: params.pageSize ?? 20, totalPages: 0, hasPreviousPage: false, hasNextPage: false } as any);
+        }
+        return this.inventoryService.getPurchaseOrders(params).pipe(
+          catchError(e => {
+            this.error.set(e?.error?.detail ?? 'Failed to load purchase orders');
+            return of(null);
+          })
+        );
+      }),
       tap(() => this.loading.set(false))
     )
   );

@@ -14,4 +14,8 @@
   <ItemGroup Label="Project References — Inward Dependency Rule">
     <ProjectReference Include="..\Farm360.Shared\Farm360.Shared.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR.Contracts" />
+  </ItemGroup>
 </Project>

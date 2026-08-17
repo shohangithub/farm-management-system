@@ -41,5 +41,6 @@ public sealed class FeedIngredientConfiguration : IEntityTypeConfiguration<FeedI
         });
 
         builder.HasIndex(i => new { i.TenantId, i.Name });
+        builder.HasIndex(i => i.InventoryItemId);
     }
 }

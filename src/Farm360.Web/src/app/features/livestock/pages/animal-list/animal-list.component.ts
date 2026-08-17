@@ -97,15 +97,18 @@ export class AnimalListComponent {
 
   readonly result = toSignal(
     toObservable(this.combinedParams).pipe(
-      // Ensure farmId is present before fetching, unless your API allows farm-less fetches
-      filter(({ params }) => !!params.farmId), 
       tap(() => { this.loading.set(true); this.error.set(null); }),
-      switchMap(({ params }) => this.svc.getList(params).pipe(
-        catchError(e => {
-          this.error.set(e?.error?.detail ?? 'An error occurred');
-          return of(null);
-        })
-      )),
+      switchMap(({ params }) => {
+        if (!params.farmId) {
+          return of({ items: [], totalCount: 0, pageNumber: params.pageNumber ?? 1, pageSize: params.pageSize ?? 20, totalPages: 0, hasPreviousPage: false, hasNextPage: false } as PagedAnimalListDto);
+        }
+        return this.svc.getList(params).pipe(
+          catchError(e => {
+            this.error.set(e?.error?.detail ?? 'An error occurred');
+            return of(null);
+          })
+        );
+      }),
       tap(() => {
         this.loading.set(false);
         this.selectedAnimals.set(new Set()); // Clear selection on new fetch

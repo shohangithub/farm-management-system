@@ -17,7 +17,9 @@ public enum StockTransactionType
     AutoFeedConsumption = 3,
     AutoMedicineConsumption = 4,
     Adjustment = 5,
-    WriteOff = 6
+    WriteOff = 6,
+    PlannedFeedConsumption = 7,
+    ReconciliationAdjustment = 8
 }
 
 public enum InventoryStatus

@@ -286,6 +286,100 @@ namespace Farm360.Persistence.Migrations
                     b.ToTable("Sheds", "app");
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Feeding.AnimalFeedingPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AnimalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("CurrentConcentrateKgPerDay")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("CurrentRoughageKgPerDay")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("CurrentRuleLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FeedingRuleSetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PenId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("PlanType")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid?>("ShedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("TriggeredByWeightKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("PenId");
+
+                    b.HasIndex("ShedId");
+
+                    b.HasIndex("TenantId", "FarmId", "Status");
+
+                    b.ToTable("AnimalFeedingPlans", "feeding");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Feeding.ConsumptionDetail", b =>
                 {
                     b.Property<Guid>("Id")
@@ -321,6 +415,90 @@ namespace Farm360.Persistence.Migrations
                     b.ToTable("ConsumptionDetails", "feeding");
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Feeding.DailyFeedingEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("ActualKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("AdjustmentReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("EntryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("ExpectedKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FeedingPlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormulaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("InventoryTransactionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PenId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid?>("ShedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeedingPlanId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId", "FarmId", "EntryDate");
+
+                    b.ToTable("DailyFeedingEntries", "feeding");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Feeding.FeedConsumptionLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -343,6 +521,9 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FeedingPlanId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FormulaId")
@@ -400,6 +581,8 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FeedingPlanId");
 
                     b.HasIndex("TenantId", "FarmId", "LogDate");
 
@@ -495,6 +678,9 @@ namespace Farm360.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid?>("InventoryItemId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -535,9 +721,271 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("InventoryItemId");
+
                     b.HasIndex("TenantId", "Name");
 
                     b.ToTable("FeedIngredients", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingCycleReconciliation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("PlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TotalActualKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalExpectedKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "FarmId", "PeriodStart", "PeriodEnd");
+
+                    b.ToTable("FeedingCycleReconciliations", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingCycleReconciliationLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ActualQty")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("AdjustmentTransactionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ExpectedQty")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("FeedingCycleReconciliationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("InventoryItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeedingCycleReconciliationId");
+
+                    b.ToTable("FeedingCycleReconciliationLines", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingPlanExclusion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AnimalFeedingPlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("ExclusionDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateOnly?>("ResumesOn")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimalFeedingPlanId");
+
+                    b.ToTable("FeedingPlanExclusions", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingRuleLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ConcentrateKgPerDay")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("FeedType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("FeedingRuleSetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormulaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("MaxAgeDays")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MaxWeightKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("MinAgeDays")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MinWeightKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ProteinTargetPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("QuantityValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("RoughageKgPerDay")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SessionsPerDay")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("WeightFromKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("WeightToKg")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeedingRuleSetId");
+
+                    b.ToTable("FeedingRuleLines", "feeding");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingRuleSet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("AgeFromDays")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AgeToDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BaseNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("BreedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("PlanType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("Species")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Species", "Purpose");
+
+                    b.ToTable("FeedingRuleSets", "feeding");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Feeding.FeedingSchedule", b =>
@@ -3138,6 +3586,33 @@ namespace Farm360.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingCycleReconciliationLine", b =>
+                {
+                    b.HasOne("Farm360.Domain.Feeding.FeedingCycleReconciliation", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("FeedingCycleReconciliationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingPlanExclusion", b =>
+                {
+                    b.HasOne("Farm360.Domain.Feeding.AnimalFeedingPlan", null)
+                        .WithMany("Exclusions")
+                        .HasForeignKey("AnimalFeedingPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingRuleLine", b =>
+                {
+                    b.HasOne("Farm360.Domain.Feeding.FeedingRuleSet", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("FeedingRuleSetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Farm360.Domain.Feeding.FormulaIngredient", b =>
                 {
                     b.HasOne("Farm360.Domain.Feeding.FeedFormula", null)
@@ -3637,6 +4112,11 @@ namespace Farm360.Persistence.Migrations
                     b.Navigation("Address");
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Feeding.AnimalFeedingPlan", b =>
+                {
+                    b.Navigation("Exclusions");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Feeding.FeedConsumptionLog", b =>
                 {
                     b.Navigation("Details");
@@ -3645,6 +4125,16 @@ namespace Farm360.Persistence.Migrations
             modelBuilder.Entity("Farm360.Domain.Feeding.FeedFormula", b =>
                 {
                     b.Navigation("Ingredients");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingCycleReconciliation", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Feeding.FeedingRuleSet", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Identity.Permission", b =>

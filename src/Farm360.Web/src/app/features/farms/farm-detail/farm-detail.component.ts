@@ -53,20 +53,22 @@ export class FarmDetailComponent {
 
   private dataResult = toSignal(
     toObservable(this.fetchParams).pipe(
-      filter(params => !!params.farmId),
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
-      switchMap(({ farmId }) => forkJoin({
-        farm: this.farmService.getFarmById(farmId!).pipe(catchError(() => of(null))),
-        sheds: this.shedService.getShedsByFarm(farmId!).pipe(catchError(() => of([])))
-      }).pipe(
-        tap(res => {
-          if (!res.farm) this.error.set('Failed to load farm details.');
-        }),
-        catchError(err => {
-          this.error.set('Failed to load farm details.');
-          return of({ farm: null, sheds: [] });
-        })
-      )),
+      switchMap(({ farmId }) => {
+        if (!farmId) return of({ farm: null, sheds: [] });
+        return forkJoin({
+          farm: this.farmService.getFarmById(farmId!).pipe(catchError(() => of(null))),
+          sheds: this.shedService.getShedsByFarm(farmId!).pipe(catchError(() => of([])))
+        }).pipe(
+          tap(res => {
+            if (!res.farm) this.error.set('Failed to load farm details.');
+          }),
+          catchError(err => {
+            this.error.set('Failed to load farm details.');
+            return of({ farm: null, sheds: [] });
+          })
+        );
+      }),
       tap(() => this.isLoading.set(false))
     ),
     { initialValue: { farm: null, sheds: [] } }

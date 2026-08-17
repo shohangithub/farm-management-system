@@ -251,6 +251,19 @@ try
 
         var identitySeeder = scope.ServiceProvider.GetRequiredService<Farm360.Identity.Seed.IdentitySeeder>();
         await identitySeeder.SeedAsync();
+        
+        // Register Hangfire Recurring Jobs
+        var jobService = scope.ServiceProvider.GetRequiredService<Farm360.Application.Common.Interfaces.IBackgroundJobService>();
+        
+        jobService.AddOrUpdateRecurring<MediatR.ISender>(
+            "daily-feeding-entries",
+            sender => sender.Send(new Farm360.Application.Feeding.Jobs.CreateDailyFeedingEntriesCommand(), CancellationToken.None),
+            Hangfire.Cron.Daily(0, 0)); // Runs at 12:00 AM
+
+        jobService.AddOrUpdateRecurring<MediatR.ISender>(
+            "close-feeding-cycles",
+            sender => sender.Send(new Farm360.Application.Feeding.Jobs.CloseFeedingCycleCommand(), CancellationToken.None),
+            Hangfire.Cron.Daily(23, 59)); // Runs at 11:59 PM
     }
 
     await app.RunAsync();

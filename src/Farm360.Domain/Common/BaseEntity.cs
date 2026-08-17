@@ -43,7 +43,7 @@ public abstract class BaseEntity
 /// Marker interface for domain events.
 /// Domain events are dispatched in-process via MediatR after commit.
 /// </summary>
-public interface IDomainEvent
+public interface IDomainEvent : MediatR.INotification
 {
     Guid EventId { get; }
     DateTime OccurredOnUtc { get; }

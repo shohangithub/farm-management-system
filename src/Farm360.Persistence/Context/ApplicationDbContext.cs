@@ -131,6 +131,10 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<FeedFormula> FeedFormulas => Set<FeedFormula>();
     public DbSet<FeedingSchedule> FeedingSchedules => Set<FeedingSchedule>();
     public DbSet<FeedConsumptionLog> FeedConsumptionLogs => Set<FeedConsumptionLog>();
+    public DbSet<FeedingRuleSet> FeedingRuleSets => Set<FeedingRuleSet>();
+    public DbSet<AnimalFeedingPlan> AnimalFeedingPlans => Set<AnimalFeedingPlan>();
+    public DbSet<DailyFeedingEntry> DailyFeedingEntries => Set<DailyFeedingEntry>();
+    public DbSet<FeedingCycleReconciliation> FeedingCycleReconciliations => Set<FeedingCycleReconciliation>();
 
     // ── Inventory Control Module ──────────────────────────────────────────────
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();

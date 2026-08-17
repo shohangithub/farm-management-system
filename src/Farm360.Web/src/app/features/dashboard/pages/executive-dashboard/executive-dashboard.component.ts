@@ -48,13 +48,28 @@ export class ExecutiveDashboardComponent {
 
   // Fetch Dashboard data reactively when the farm changes
   private readonly dashboardData$ = this.farmId$.pipe(
-    filter((farmId): farmId is string => !!farmId),
-    switchMap(farmId => this.dashboardService.getExecutiveDashboard(farmId).pipe(
-      catchError(err => {
-        console.error('Failed to load dashboard data', err);
-        return of(null);
-      })
-    ))
+    switchMap(farmId => {
+      if (!farmId) {
+        return of({
+          totalAnimals: 0,
+          sickAnimals: 0,
+          feedLowStockCount: 0,
+          currentMonthIncome: 0,
+          currentMonthExpense: 0,
+          birthsThisMonth: 0,
+          deathsThisMonth: 0,
+          dueVaccinations: 0,
+          pregnantAnimals: 0,
+          actionableInsights: []
+        } as ExecutiveDashboardData);
+      }
+      return this.dashboardService.getExecutiveDashboard(farmId).pipe(
+        catchError(err => {
+          console.error('Failed to load dashboard data', err);
+          return of(null);
+        })
+      );
+    })
   );
 
   private readonly dismissedInsightIds = signal<Set<string>>(new Set());

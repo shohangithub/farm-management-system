@@ -145,6 +145,50 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         </a>
       </div>
 
+      <!-- Smart Feeding Module Quick Links (Phase 5) -->
+      <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mt-6 mb-2">Smart Feeding Module</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <a routerLink="../rules" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">rule</mat-icon>
+            </div>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Rule Sets</span>
+          </div>
+          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+        </a>
+
+        <a routerLink="../plans" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">assignment</mat-icon>
+            </div>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Animal Plans</span>
+          </div>
+          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+        </a>
+
+        <a routerLink="../today" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">today</mat-icon>
+            </div>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Today's Entries</span>
+          </div>
+          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+        </a>
+
+        <a routerLink="../reconciliations" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">fact_check</mat-icon>
+            </div>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Reconciliations</span>
+          </div>
+          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+        </a>
+      </div>
+
       <!-- Content Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Active Schedules -->

@@ -134,3 +134,30 @@ onDelete(entity: EntityDto, event: Event): void {
   });
 }
 ```
+
+## 9. Animal Selection (Shared Picker)
+Whenever a form or dialog needs the user to select an animal (by tag, ID, or breed), NEVER use a standard `<input type="text">`. 
+Always use the shared `<app-animal-picker>` component with Reactive Forms.
+
+```html
+<div class="space-y-1.5">
+  <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+    Search Animal (Tag, Breed) <span class="text-red-500">*</span>
+  </label>
+  <app-animal-picker formControlName="animalId"></app-animal-picker>
+  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Search and select the target animal.</p>
+</div>
+```
+
+**TypeScript setup:**
+```typescript
+import { AnimalPickerComponent } from 'path/to/shared/components/animal-picker/animal-picker.component';
+
+@Component({
+  // ...
+  imports: [
+    // ...
+    AnimalPickerComponent
+  ]
+})
+```

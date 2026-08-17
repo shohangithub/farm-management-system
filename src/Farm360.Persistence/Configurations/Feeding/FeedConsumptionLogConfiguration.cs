@@ -33,6 +33,7 @@ public sealed class FeedConsumptionLogConfiguration : IEntityTypeConfiguration<F
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(l => new { l.TenantId, l.FarmId, l.LogDate });
+        builder.HasIndex(l => l.FeedingPlanId);
     }
 }
 

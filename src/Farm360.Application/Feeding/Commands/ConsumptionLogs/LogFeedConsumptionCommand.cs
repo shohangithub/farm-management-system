@@ -81,6 +81,7 @@ public sealed class LogFeedConsumptionCommandHandler : IRequestHandler<LogFeedCo
             request.ShedId,
             request.PenId,
             request.BatchId,
+            null, // feedingPlanId
             _currentUserService.UserId?.ToString(),
             request.Notes);
 

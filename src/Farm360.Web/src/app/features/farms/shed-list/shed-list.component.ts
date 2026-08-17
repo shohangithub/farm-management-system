@@ -51,14 +51,16 @@ export class ShedListComponent {
 
   readonly shedsResult = toSignal(
     toObservable(this.fetchParams).pipe(
-      filter(params => !!params.farmId),
       tap(() => this.isLoading.set(true)),
-      switchMap(({ farmId }) => this.shedService.getShedsByFarm(farmId).pipe(
-        catchError(err => {
-          console.error('Failed to load sheds', err);
-          return of([] as ShedList[]);
-        })
-      )),
+      switchMap(({ farmId }) => {
+        if (!farmId) return of([] as ShedList[]);
+        return this.shedService.getShedsByFarm(farmId).pipe(
+          catchError(err => {
+            console.error('Failed to load sheds', err);
+            return of([] as ShedList[]);
+          })
+        );
+      }),
       tap(() => this.isLoading.set(false))
     ),
     { initialValue: [] as ShedList[] }

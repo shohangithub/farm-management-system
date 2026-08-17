@@ -224,3 +224,156 @@ export interface LogFeedConsumptionRequest {
   batchId?: string;
   notes?: string;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMART FEEDING MODULE (PHASE 4)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export enum FeedingPlanType {
+  FixedQuantity = 'FixedQuantity',
+  WeightPercentage = 'WeightPercentage',
+  AgeBased = 'AgeBased'
+}
+
+export enum DailyFeedingEntryStatus {
+  Pending = 'Pending',
+  Confirmed = 'Confirmed',
+  Skipped = 'Skipped',
+  Adjusted = 'Adjusted'
+}
+
+export enum FeedingPurpose {
+  Maintenance = 'Maintenance',
+  Growth = 'Growth',
+  Gestation = 'Gestation',
+  Lactation = 'Lactation',
+  Finishing = 'Finishing',
+  Starter = 'Starter',
+  Transition = 'Transition'
+}
+
+export enum ReconciliationStatus {
+  Pending = 'Pending',
+  Reviewed = 'Reviewed',
+  Approved = 'Approved',
+  Rejected = 'Rejected'
+}
+
+export interface FeedingRuleLine {
+  id: string;
+  minWeightKg?: number;
+  maxWeightKg?: number;
+  minAgeDays?: number;
+  maxAgeDays?: number;
+  feedType: FeedCategory;
+  quantityValue: number;
+}
+
+export interface FeedingRuleSet {
+  id: string;
+  name: string;
+  planType: FeedingPlanType;
+  targetAnimalType: TargetAnimalType;
+  feedingPurpose: FeedingPurpose;
+  isActive: boolean;
+  baseNotes?: string;
+  rules: FeedingRuleLine[];
+}
+
+export interface FeedingPlanExclusion {
+  id: string;
+  exclusionDate: string;
+  reason: string;
+  resumesOn?: string;
+}
+
+export interface AnimalFeedingPlan {
+  id: string;
+  animalId: string;
+  ruleSetId: string;
+  ruleSetName: string;
+  assignedOn: string;
+  canceledOn?: string;
+  isActive: boolean;
+  expectedDailyFeedKg: number;
+  exclusions: FeedingPlanExclusion[];
+}
+
+export interface DailyFeedingEntry {
+  id: string;
+  animalId: string;
+  animalTag: string;
+  shedName?: string;
+  penName?: string;
+  ruleSetId: string;
+  targetDate: string;
+  expectedKg: number;
+  actualKg?: number;
+  status: DailyFeedingEntryStatus;
+  notes?: string;
+  confirmedAtUtc?: string;
+}
+
+export interface FeedingCycleReconciliationLine {
+  id: string;
+  ruleSetId: string;
+  expectedTotalKg: number;
+  actualTotalKg: number;
+  varianceKg: number;
+}
+
+export interface FeedingCycleReconciliation {
+  id: string;
+  cycleDate: string;
+  totalExpectedKg: number;
+  totalActualKg: number;
+  varianceKg: number;
+  status: ReconciliationStatus;
+  approvedByUserId?: string;
+  approvedAtUtc?: string;
+  lines: FeedingCycleReconciliationLine[];
+}
+
+export interface CreateFeedingRuleSetRequest {
+  name: string;
+  planType: FeedingPlanType;
+  targetAnimalType: TargetAnimalType;
+  feedingPurpose: FeedingPurpose;
+  isActive: boolean;
+  baseNotes?: string;
+  rules: {
+    minWeightKg?: number;
+    maxWeightKg?: number;
+    minAgeDays?: number;
+    maxAgeDays?: number;
+    feedType: FeedCategory;
+    quantityValue: number;
+  }[];
+}
+
+export interface UpdateFeedingRuleSetRequest {
+  name: string;
+  planType: FeedingPlanType;
+  targetAnimalType: TargetAnimalType;
+  feedingPurpose: FeedingPurpose;
+  isActive: boolean;
+  baseNotes?: string;
+  rules: {
+    minWeightKg?: number;
+    maxWeightKg?: number;
+    minAgeDays?: number;
+    maxAgeDays?: number;
+    feedType: FeedCategory;
+    quantityValue: number;
+  }[];
+}
+
+export interface AssignAnimalFeedingPlanRequest {
+  farmId: string;
+  feedingRuleSetId: string;
+  planType: FeedingPlanType;
+  startDate: string;
+  animalId: string;
+  expectedDailyFeedKg?: number;
+}
+

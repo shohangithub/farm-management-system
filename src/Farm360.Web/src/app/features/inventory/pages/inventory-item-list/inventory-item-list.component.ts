@@ -306,14 +306,18 @@ export class InventoryItemListComponent {
 
   readonly result = toSignal(
     toObservable(this.combinedParams).pipe(
-      filter(({ params }) => !!params.farmId),
       tap(() => { this.loading.set(true); this.error.set(null); }),
-      switchMap(({ params }) => this.inventoryService.getItems(params).pipe(
-        catchError(e => {
-          this.error.set(e?.error?.detail ?? 'Failed to load inventory items');
-          return of(null);
-        })
-      )),
+      switchMap(({ params }) => {
+        if (!params.farmId) {
+          return of({ items: [], totalCount: 0, pageNumber: params.pageNumber ?? 1, pageSize: params.pageSize ?? 20, totalPages: 0, hasPreviousPage: false, hasNextPage: false } as any);
+        }
+        return this.inventoryService.getItems(params).pipe(
+          catchError(e => {
+            this.error.set(e?.error?.detail ?? 'Failed to load inventory items');
+            return of(null);
+          })
+        );
+      }),
       tap(() => this.loading.set(false))
     )
   );
@@ -462,7 +466,7 @@ export class InventoryItemListComponent {
     const data = this.result()?.items;
     if (!data || data.length === 0) return;
     
-    const formattedData = data.map(item => ({
+    const formattedData = data.map((item: InventoryItem) => ({
       'Item Name': item.name,
       'SKU': item.sku || '',
       'Category': item.categoryName,

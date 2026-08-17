@@ -14,6 +14,7 @@ public sealed class FeedIngredient : AuditableEntity, IAggregateRoot
     public bool IsPreloaded { get; private set; }
     public bool IsActive { get; private set; } = true;
     public string? Description { get; private set; }
+    public Guid? InventoryItemId { get; private set; }
 
     private FeedIngredient() { } // EF Core
 
@@ -26,7 +27,8 @@ public sealed class FeedIngredient : AuditableEntity, IAggregateRoot
         decimal unitCostBdt,
         string unit = "kg",
         bool isPreloaded = false,
-        string? description = null)
+        string? description = null,
+        Guid? inventoryItemId = null)
         : base(id, tenantId)
     {
         Name = name;
@@ -37,6 +39,7 @@ public sealed class FeedIngredient : AuditableEntity, IAggregateRoot
         IsPreloaded = isPreloaded;
         IsActive = true;
         Description = description;
+        InventoryItemId = inventoryItemId;
     }
 
     public void UpdateDetails(
@@ -45,7 +48,8 @@ public sealed class FeedIngredient : AuditableEntity, IAggregateRoot
         NutritionalProfile nutritionalProfile,
         decimal unitCostBdt,
         string unit = "kg",
-        string? description = null)
+        string? description = null,
+        Guid? inventoryItemId = null)
     {
         Name = name;
         Category = category;
@@ -53,6 +57,7 @@ public sealed class FeedIngredient : AuditableEntity, IAggregateRoot
         UnitCostBdt = Math.Max(0, unitCostBdt);
         Unit = string.IsNullOrWhiteSpace(unit) ? "kg" : unit;
         Description = description;
+        InventoryItemId = inventoryItemId;
     }
 
     public void UpdateCost(decimal newCostBdt)
