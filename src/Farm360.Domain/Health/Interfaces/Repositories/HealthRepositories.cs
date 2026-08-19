@@ -23,7 +23,7 @@ public interface IVaccinationRepository
     Task<VaccinationEvent?> GetEventByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<VaccinationEvent>> GetEventsByAnimalIdAsync(Guid animalId, CancellationToken ct = default);
     Task<IReadOnlyList<VaccinationEvent>> GetUpcomingEventsAsync(Guid farmId, DateOnly beforeDate, CancellationToken ct = default);
-    Task<(IReadOnlyList<VaccinationEvent> Items, int TotalCount)> GetDewormingEventsAsync(Guid farmId, int pageNumber, int pageSize, CancellationToken ct = default);
+    Task<(IReadOnlyList<(VaccinationEvent Event, string AnimalTag)> Items, int TotalCount)> GetDewormingEventsAsync(Guid farmId, int pageNumber, int pageSize, CancellationToken ct = default);
     void AddEvent(VaccinationEvent @event);
     void AddEvents(IEnumerable<VaccinationEvent> events);
     void UpdateEvent(VaccinationEvent @event);

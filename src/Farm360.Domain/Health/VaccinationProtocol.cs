@@ -17,7 +17,9 @@ public sealed class VaccinationProtocolStep : BaseEntity
         string stepName,
         int targetAgeDays,
         string vaccineName,
-        string dosageInstruction)
+        string dosageInstruction,
+        Guid? inventoryItemId = null,
+        decimal? dosageQuantity = null)
         : base(id)
     {
         ProtocolId = protocolId;
@@ -26,6 +28,8 @@ public sealed class VaccinationProtocolStep : BaseEntity
         TargetAgeDays = targetAgeDays;
         VaccineName = vaccineName;
         DosageInstruction = dosageInstruction;
+        InventoryItemId = inventoryItemId;
+        DosageQuantity = dosageQuantity;
     }
 
     public Guid ProtocolId { get; private set; }
@@ -34,6 +38,8 @@ public sealed class VaccinationProtocolStep : BaseEntity
     public int TargetAgeDays { get; private set; }
     public string VaccineName { get; private set; } = string.Empty;
     public string DosageInstruction { get; private set; } = string.Empty;
+    public Guid? InventoryItemId { get; private set; }
+    public decimal? DosageQuantity { get; private set; }
 }
 
 /// <summary>
@@ -86,7 +92,9 @@ public sealed class VaccinationProtocol : AuditableEntity, IAggregateRoot
         string stepName,
         int targetAgeDays,
         string vaccineName,
-        string dosageInstruction)
+        string dosageInstruction,
+        Guid? inventoryItemId = null,
+        decimal? dosageQuantity = null)
     {
         if (string.IsNullOrWhiteSpace(vaccineName))
             throw new ArgumentException("Vaccine name is required.", nameof(vaccineName));
@@ -98,7 +106,9 @@ public sealed class VaccinationProtocol : AuditableEntity, IAggregateRoot
             stepName,
             targetAgeDays,
             vaccineName.Trim(),
-            dosageInstruction);
+            dosageInstruction,
+            inventoryItemId,
+            dosageQuantity);
 
         _steps.Add(step);
         return step;

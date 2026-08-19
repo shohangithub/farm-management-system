@@ -10,6 +10,8 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { MatDialog } from '@angular/material/dialog';
+import { CreateProtocolDialogComponent } from '../../components/dialogs/create-protocol-dialog/create-protocol-dialog.component';
 
 @Component({
   selector: 'app-deworming-calendar',
@@ -22,6 +24,9 @@ import { WorkingContextService } from '../../../../core/services/working-context
   icon="event_note" 
   iconColor="text-emerald-600">
   <div actions class="flex gap-2">
+    <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="openScheduleDialog()">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Schedule Deworming
+    </button>
     <button class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="loadEvents()">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> Refresh
     </button>
@@ -82,22 +87,26 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class DewormingCalendarComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
+  private dialog = inject(MatDialog);
   
   isLoading = signal(true);
   private refreshTrigger = signal(0);
   private currentFarmId = toSignal(this.contextService.currentFarm$, { initialValue: null });
 
   private fetchParams = computed(() => ({
-    farmId: this.currentFarmId()?.id || '11111111-1111-1111-1111-111111111111',
+    farmId: this.currentFarmId()?.id || '',
     refresh: this.refreshTrigger()
   }));
 
   private eventsResult = toSignal(
     toObservable(this.fetchParams).pipe(
       tap(() => this.isLoading.set(true)),
-      switchMap(({ farmId }) => this.healthService.getDewormingCalendar(farmId).pipe(
-        catchError(() => of({ items: [], totalCount: 0 }))
-      )),
+      switchMap(({ farmId }) => {
+        if (!farmId) return of({ items: [], totalCount: 0 });
+        return this.healthService.getDewormingCalendar(farmId).pipe(
+          catchError(() => of({ items: [], totalCount: 0 }))
+        );
+      }),
       tap(() => this.isLoading.set(false))
     ),
     { initialValue: { items: [], totalCount: 0 } }
@@ -107,5 +116,28 @@ export class DewormingCalendarComponent {
 
   loadEvents() {
     this.refreshTrigger.update(v => v + 1);
+  }
+
+  openScheduleDialog() {
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, {
+      width: '800px',
+      data: {
+        title: 'Deworming: ',
+        isDeworming: true,
+        lockIsDeworming: true,
+        steps: [{
+          stepName: 'First Dose',
+          targetAgeDays: 0,
+          vaccineName: '',
+          dosageInstruction: ''
+        }]
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      // NOTE: Creating protocol doesn't automatically assign it.
+      // After protocol creation, the user will need to assign it.
+      // We could add a prompt here to navigate to protocol list to assign it.
+    });
   }
 }

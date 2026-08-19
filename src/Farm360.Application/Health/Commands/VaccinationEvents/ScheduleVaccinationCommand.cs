@@ -14,7 +14,9 @@ public sealed record ScheduleVaccinationCommand(
     string VaccineName,
     string BatchNumber,
     DateOnly ScheduledDate,
-    string? Notes
+    string? Notes,
+    Guid? InventoryItemId,
+    decimal? DosageQuantity
 ) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class ScheduleVaccinationCommandValidator : AbstractValidator<ScheduleVaccinationCommand>
@@ -53,7 +55,9 @@ internal sealed class ScheduleVaccinationCommandHandler(
             request.VaccineName,
             request.BatchNumber,
             request.ScheduledDate,
-            request.Notes);
+            request.Notes,
+            request.InventoryItemId,
+            request.DosageQuantity);
 
         vaccinationRepository.AddEvent(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);

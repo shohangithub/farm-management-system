@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
+import { InventoryService } from '../../../../inventory/services/inventory.service';
+import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
 import { AnimalSpecies, SPECIES_LABELS } from '../../../../livestock/models/animal.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 
@@ -73,6 +75,14 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
 
+          <div class="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <input type="checkbox" id="isDeworming" formControlName="isDeworming"
+                   class="w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600">
+            <label for="isDeworming" class="text-sm font-medium text-blue-900 dark:text-blue-300 cursor-pointer">
+              This is a Deworming Protocol
+            </label>
+          </div>
+
           <!-- Protocol Steps Section -->
           <div class="pt-2 border-t border-gray-100 dark:border-gray-800">
             <div class="flex items-center justify-between mb-3">
@@ -107,16 +117,35 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500">Vaccine Name <span class="text-red-500">*</span></label>
-                    <input type="text" formControlName="vaccineName" placeholder="e.g. Anthrax Vaccine"
+                    <label class="block text-[11px] font-semibold text-gray-500">Link Inventory Item</label>
+                    <select formControlName="inventoryItemId" (change)="onInventoryItemChange(i)"
+                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                      <option [ngValue]="null">-- Not Tracked / Custom --</option>
+                      <option *ngFor="let item of inventoryItems()" [ngValue]="item.id">
+                        {{ item.name }} ({{ item.categoryName }})
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ form.get('isDeworming')?.value ? 'Medicine Name' : 'Vaccine Name' }} <span class="text-red-500">*</span></label>
+                    <input type="text" formControlName="vaccineName" placeholder="e.g. {{ form.get('isDeworming')?.value ? 'Ivermectin' : 'Anthrax Vaccine' }}"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
                   </div>
                 </div>
 
-                <div class="mt-2 space-y-1">
-                  <label class="block text-[11px] font-semibold text-gray-500">Dosage Instructions</label>
-                  <input type="text" formControlName="dosageInstruction" placeholder="e.g. 2ml Subcutaneous"
-                         class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-gray-500">Dosage Instructions</label>
+                    <input type="text" formControlName="dosageInstruction" placeholder="e.g. 2ml Subcutaneous"
+                           class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                  </div>
+                  
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-gray-500" title="Quantity deducted from inventory per administration">Deduct Quantity</label>
+                    <input type="number" formControlName="dosageQuantity" step="0.01" min="0" placeholder="e.g. 2"
+                           class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 disabled:opacity-50">
+                  </div>
                 </div>
               </div>
             </div>
@@ -157,6 +186,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 export class CreateProtocolDialogComponent {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
+  private inventoryService = inject(InventoryService);
   private dialogRef = inject(MatDialogRef<CreateProtocolDialogComponent>);
   private snackBar = inject(MatSnackBar);
 
@@ -165,6 +195,7 @@ export class CreateProtocolDialogComponent {
   error = signal('');
   isEditMode = false;
   protocolId?: string;
+  inventoryItems = signal<InventoryItem[]>([]);
 
   speciesOptions = Object.entries(SPECIES_LABELS).map(([k, v]) => ({ value: k, label: v }));
 
@@ -173,11 +204,14 @@ export class CreateProtocolDialogComponent {
     if (this.isEditMode) {
       this.protocolId = data.id;
     }
+    
+    this.loadInventoryItems();
 
     this.form = this.fb.group({
       title: [data?.title || '', [Validators.required, Validators.maxLength(200)]],
       targetSpecies: [data?.targetSpecies ?? null, Validators.required],
       description: [data?.description || ''],
+      isDeworming: [{ value: data?.isDeworming || false, disabled: this.isEditMode || data?.lockIsDeworming }],
       steps: this.fb.array([])
     });
     
@@ -187,7 +221,9 @@ export class CreateProtocolDialogComponent {
           stepName: [step.stepName, [Validators.required, Validators.maxLength(100)]],
           targetAgeDays: [step.targetAgeDays, [Validators.required, Validators.min(0)]],
           vaccineName: [step.vaccineName, [Validators.required, Validators.maxLength(100)]],
-          dosageInstruction: [step.dosageInstruction || '']
+          dosageInstruction: [step.dosageInstruction || ''],
+          inventoryItemId: [step.inventoryItemId || null],
+          dosageQuantity: [{ value: step.dosageQuantity || null, disabled: !step.inventoryItemId }]
         }));
       });
     } else {
@@ -204,8 +240,27 @@ export class CreateProtocolDialogComponent {
       stepName: ['', [Validators.required, Validators.maxLength(100)]],
       targetAgeDays: [null, [Validators.required, Validators.min(0)]],
       vaccineName: ['', [Validators.required, Validators.maxLength(100)]],
-      dosageInstruction: ['']
+      dosageInstruction: [''],
+      inventoryItemId: [null],
+      dosageQuantity: [{ value: null, disabled: true }]
     }));
+  }
+
+  onInventoryItemChange(index: number) {
+    const stepForm = this.steps.at(index) as FormGroup;
+    const itemId = stepForm.get('inventoryItemId')?.value;
+    const qtyCtrl = stepForm.get('dosageQuantity');
+    
+    if (itemId) {
+      qtyCtrl?.enable();
+      const item = this.inventoryItems().find(i => i.id === itemId);
+      if (item && !stepForm.get('vaccineName')?.value) {
+        stepForm.get('vaccineName')?.setValue(item.name);
+      }
+    } else {
+      qtyCtrl?.disable();
+      qtyCtrl?.setValue(null);
+    }
   }
 
   removeStep(index: number) {
@@ -230,9 +285,13 @@ export class CreateProtocolDialogComponent {
     const request = {
       id: this.protocolId,
       title: val.title,
-      targetSpecies: Number(val.targetSpecies),
+      targetSpecies: val.targetSpecies,
       description: val.description,
-      steps: val.steps
+      isDeworming: this.form.get('isDeworming')?.value || false,
+      steps: val.steps.map((s: any) => ({
+        ...s,
+        dosageQuantity: s.inventoryItemId ? s.dosageQuantity : null
+      }))
     };
 
     if (this.isEditMode) {
@@ -276,5 +335,19 @@ export class CreateProtocolDialogComponent {
         }
       });
     }
+  }
+
+  private loadInventoryItems() {
+    // Load both Medicine and Vaccine for flexibility
+    this.inventoryService.getItems({ pageSize: 500 }).subscribe({
+      next: (res) => {
+        const relevant = res.items.filter(i => 
+          i.category === InventoryCategory.Medicine || 
+          i.category === InventoryCategory.Vaccine
+        );
+        this.inventoryItems.set(relevant);
+      },
+      error: (err) => console.error('Failed to load inventory items', err)
+    });
   }
 }

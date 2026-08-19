@@ -1,6 +1,5 @@
 using Farm360.Application.Common.Models;
 using Farm360.Application.Health.DTOs;
-using Farm360.Application.Health.Mappings;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using MediatR;
 
@@ -10,12 +9,12 @@ public sealed record GetDewormingCalendarQuery(
     Guid FarmId,
     int PageNumber = 1, 
     int PageSize = 10
-) : IRequest<PagedResult<VaccinationEventDto>>;
+) : IRequest<PagedResult<DewormingCalendarEventDto>>;
 
 internal sealed class GetDewormingCalendarQueryHandler(IVaccinationRepository repository)
-    : IRequestHandler<GetDewormingCalendarQuery, PagedResult<VaccinationEventDto>>
+    : IRequestHandler<GetDewormingCalendarQuery, PagedResult<DewormingCalendarEventDto>>
 {
-    public async Task<PagedResult<VaccinationEventDto>> Handle(GetDewormingCalendarQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<DewormingCalendarEventDto>> Handle(GetDewormingCalendarQuery request, CancellationToken cancellationToken)
     {
         var (items, count) = await repository.GetDewormingEventsAsync(
             request.FarmId,
@@ -23,7 +22,15 @@ internal sealed class GetDewormingCalendarQueryHandler(IVaccinationRepository re
             request.PageSize,
             cancellationToken);
 
-        var dtos = items.Select(x => x.ToDto()).ToList();
-        return new PagedResult<VaccinationEventDto>(dtos, count, request.PageNumber, request.PageSize);
+        var dtos = items.Select(x => new DewormingCalendarEventDto(
+            x.Event.Id,
+            x.Event.AnimalId,
+            x.AnimalTag,
+            x.Event.VaccineName,
+            x.Event.ScheduledDate,
+            x.Event.Status
+        )).ToList();
+
+        return new PagedResult<DewormingCalendarEventDto>(dtos, count, request.PageNumber, request.PageSize);
     }
 }

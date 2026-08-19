@@ -21,7 +21,9 @@ public sealed record VaccinationAdministeredEvent(
     Guid AnimalId,
     string VaccineName,
     DateOnly AdministeredDate,
-    Guid AdministeredBy
+    Guid AdministeredBy,
+    Guid? InventoryItemId,
+    decimal? DosageQuantity
 ) : IDomainEvent;
 
 public sealed record TreatmentLoggedEvent(

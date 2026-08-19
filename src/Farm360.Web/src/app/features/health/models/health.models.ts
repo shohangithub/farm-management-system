@@ -114,7 +114,9 @@ export interface VaccinationProtocolStepDto {
   stepName: string;
   targetAgeDays: number;
   vaccineName: string;
-  dosageInstruction: string;
+  dosageInstruction?: string;
+  inventoryItemId?: string;
+  dosageQuantity?: number;
 }
 
 export interface VaccinationProtocolDto {
@@ -123,6 +125,7 @@ export interface VaccinationProtocolDto {
   targetSpecies: string;
   description?: string;
   isActive: boolean;
+  isDeworming: boolean;
   steps: VaccinationProtocolStepDto[];
 }
 

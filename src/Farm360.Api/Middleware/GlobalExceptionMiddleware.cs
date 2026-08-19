@@ -180,6 +180,18 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
+            // Bad HTTP Request (e.g. JSON binding failure, missing required fields) → 400
+            BadHttpRequestException badReqEx => (
+                HttpStatusCode.BadRequest,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/bad-request",
+                    Title = "Bad Request",
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Detail = badReqEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
             // Database constraint violation / unique key conflict → 409 Conflict
             Microsoft.EntityFrameworkCore.DbUpdateException dbUpdateEx when dbUpdateEx.InnerException != null &&
                 (dbUpdateEx.InnerException.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ||

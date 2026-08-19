@@ -11,6 +11,7 @@ public sealed record CreateVaccinationProtocolCommand(
     string Title,
     AnimalSpecies TargetSpecies,
     string? Description,
+    bool IsDeworming,
     IReadOnlyList<CreateVaccinationProtocolStepDto> Steps
 ) : IRequest<Guid>;
 
@@ -18,7 +19,9 @@ public sealed record CreateVaccinationProtocolStepDto(
     string StepName,
     int TargetAgeDays,
     string VaccineName,
-    string DosageInstruction
+    string DosageInstruction,
+    Guid? InventoryItemId,
+    decimal? DosageQuantity
 );
 
 public sealed class CreateVaccinationProtocolCommandValidator : AbstractValidator<CreateVaccinationProtocolCommand>
@@ -60,7 +63,8 @@ internal sealed class CreateVaccinationProtocolCommandHandler : IRequestHandler<
             _tenantService.TenantId,
             request.Title,
             request.TargetSpecies,
-            request.Description);
+            request.Description,
+            request.IsDeworming);
 
         foreach (var step in request.Steps)
         {
@@ -68,7 +72,9 @@ internal sealed class CreateVaccinationProtocolCommandHandler : IRequestHandler<
                 step.StepName,
                 step.TargetAgeDays,
                 step.VaccineName,
-                step.DosageInstruction);
+                step.DosageInstruction,
+                step.InventoryItemId,
+                step.DosageQuantity);
         }
 
         _repository.AddProtocol(protocol);

@@ -40,6 +40,9 @@
             <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800">
               {{ element.targetSpecies }}
             </span>
+            <span *ngIf="element.isDeworming" class="inline-flex items-center px-2 py-0.5 mt-1 ml-2 rounded text-[10px] font-bold uppercase tracking-wider bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-100 dark:border-orange-800">
+              🐛 Deworming
+            </span>
           </div>
         </div>
         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" 

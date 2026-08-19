@@ -56,28 +56,29 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
             .ToListAsync(ct);
     }
 
-    public async Task<(IReadOnlyList<VaccinationEvent> Items, int TotalCount)> GetDewormingEventsAsync(Guid farmId, int pageNumber, int pageSize, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<(VaccinationEvent Event, string AnimalTag)> Items, int TotalCount)> GetDewormingEventsAsync(Guid farmId, int pageNumber, int pageSize, CancellationToken ct = default)
     {
         var dewormingStepIds = context.VaccinationProtocols
             .Where(p => p.IsDeworming)
             .SelectMany(p => p.Steps)
             .Select(s => s.Id);
 
-        var animalIdsInFarm = context.Animals
-            .Where(a => a.FarmId == farmId)
-            .Select(a => a.Id);
-
         var query = context.VaccinationEvents
-            .Where(ve => animalIdsInFarm.Contains(ve.AnimalId) && 
-                         ve.ProtocolStepId != null && 
-                         dewormingStepIds.Contains(ve.ProtocolStepId.Value));
+            .Join(context.Animals,
+                ve => ve.AnimalId,
+                a => a.Id,
+                (ve, a) => new { Event = ve, Animal = a })
+            .Where(x => x.Animal.FarmId == farmId && 
+                        x.Event.ProtocolStepId != null && 
+                        dewormingStepIds.Contains(x.Event.ProtocolStepId.Value));
 
         var totalCount = await query.CountAsync(ct);
 
         var items = await query
-            .OrderBy(e => e.ScheduledDate)
+            .OrderBy(x => x.Event.ScheduledDate)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
+            .Select(x => new ValueTuple<VaccinationEvent, string>(x.Event, x.Animal.Tag.TagId))
             .ToListAsync(ct);
 
         return (items, totalCount);

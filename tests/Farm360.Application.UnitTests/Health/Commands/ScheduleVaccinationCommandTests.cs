@@ -50,7 +50,9 @@ public class ScheduleVaccinationCommandTests
             "FMD",
             "B-001",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)),
-            "Notes"
+            "Notes",
+            null,
+            null
         );
 
         var handler = new ScheduleVaccinationCommandHandler(
@@ -78,6 +80,8 @@ public class ScheduleVaccinationCommandTests
             "FMD",
             "B-001",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)),
+            null,
+            null,
             null
         );
 

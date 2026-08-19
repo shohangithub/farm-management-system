@@ -20,7 +20,9 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
         string vaccineName,
         string batchNumber,
         DateOnly scheduledDate,
-        string? notes)
+        string? notes,
+        Guid? inventoryItemId = null,
+        decimal? dosageQuantity = null)
         : base(id, tenantId)
     {
         AnimalId = animalId;
@@ -29,6 +31,8 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
         BatchNumber = batchNumber;
         ScheduledDate = scheduledDate;
         Notes = notes;
+        InventoryItemId = inventoryItemId;
+        DosageQuantity = dosageQuantity;
         Status = VaccinationStatus.Scheduled;
     }
 
@@ -41,6 +45,8 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
     public Guid? AdministeredBy { get; private set; }
     public VaccinationStatus Status { get; private set; }
     public string? Notes { get; private set; }
+    public Guid? InventoryItemId { get; private set; }
+    public decimal? DosageQuantity { get; private set; }
 
     public static VaccinationEvent Schedule(
         Guid tenantId,
@@ -49,7 +55,9 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
         string vaccineName,
         string batchNumber,
         DateOnly scheduledDate,
-        string? notes)
+        string? notes,
+        Guid? inventoryItemId = null,
+        decimal? dosageQuantity = null)
     {
         if (animalId == Guid.Empty)
             throw new ArgumentException("AnimalId is required.", nameof(animalId));
@@ -65,7 +73,9 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
             vaccineName.Trim(),
             batchNumber?.Trim() ?? string.Empty,
             scheduledDate,
-            notes);
+            notes,
+            inventoryItemId,
+            dosageQuantity);
 
         @event.RaiseDomainEvent(new VaccinationScheduledEvent(
             Guid.NewGuid(),
@@ -97,7 +107,9 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
             AnimalId,
             VaccineName,
             administeredDate,
-            administeredBy));
+            administeredBy,
+            InventoryItemId,
+            DosageQuantity));
     }
 
     public void Cancel(string? reason)

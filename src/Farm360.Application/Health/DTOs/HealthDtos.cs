@@ -9,6 +9,7 @@ public sealed record VaccinationProtocolDto(
     AnimalSpecies TargetSpecies,
     string? Description,
     bool IsActive,
+    bool IsDeworming,
     IReadOnlyList<VaccinationProtocolStepDto> Steps
 );
 
@@ -30,6 +31,15 @@ public sealed record VaccinationEventDto(
     DateOnly? AdministeredDate,
     VaccinationStatus Status,
     string? Notes
+);
+
+public sealed record DewormingCalendarEventDto(
+    Guid EventId,
+    Guid AnimalId,
+    string AnimalTag,
+    string VaccineName,
+    DateOnly ScheduledDate,
+    VaccinationStatus Status
 );
 
 public sealed record MedicalTreatmentDto(

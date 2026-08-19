@@ -13,6 +13,7 @@ public static class HealthMappingExtensions
             protocol.TargetSpecies,
             protocol.Description,
             protocol.IsActive,
+            protocol.IsDeworming,
             protocol.Steps.Select(s => new VaccinationProtocolStepDto(
                 s.Id,
                 s.StepOrder,
