@@ -23,7 +23,8 @@ public static class FeedingMappingExtensions
             entity.UnitCostBdt,
             entity.IsPreloaded,
             entity.IsActive,
-            entity.Description);
+            entity.Description,
+            entity.InventoryItemId);
     }
 
     public static FeedFormulaDto ToDto(this FeedFormula entity, Dictionary<Guid, string>? ingredientNames = null)

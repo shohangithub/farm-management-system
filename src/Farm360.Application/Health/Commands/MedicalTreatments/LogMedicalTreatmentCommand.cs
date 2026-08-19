@@ -22,7 +22,9 @@ public sealed record LogMedicalTreatmentCommand(
     DateOnly StartDate,
     decimal CostBdt,
     string? VeterinarianName,
-    string? Notes
+    string? Notes,
+    Guid? InventoryItemId = null,
+    decimal? ConsumptionQuantity = null
 ) : IRequest<Guid>, ITransactionalCommand;
 
 public sealed class LogMedicalTreatmentCommandValidator : AbstractValidator<LogMedicalTreatmentCommand>
@@ -77,7 +79,9 @@ internal sealed class LogMedicalTreatmentCommandHandler(
             null, // Ongoing
             request.CostBdt,
             request.VeterinarianName,
-            request.Notes);
+            request.Notes,
+            request.InventoryItemId,
+            request.ConsumptionQuantity);
 
         medicalTreatmentRepository.Add(treatment);
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -20,7 +20,8 @@ public sealed record UpdateFeedIngredientCommand(
     decimal PhosphorusPct,
     decimal UnitCostBdt,
     string Unit = "kg",
-    string? Description = null) : IRequest;
+    string? Description = null,
+    Guid? InventoryItemId = null) : IRequest;
 
 public sealed class UpdateFeedIngredientCommandValidator : AbstractValidator<UpdateFeedIngredientCommand>
 {
@@ -68,7 +69,8 @@ public sealed class UpdateFeedIngredientCommandHandler : IRequestHandler<UpdateF
             profile,
             request.UnitCostBdt,
             request.Unit,
-            request.Description);
+            request.Description,
+            request.InventoryItemId);
 
         _repository.Update(ingredient);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

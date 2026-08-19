@@ -18,7 +18,8 @@ public record FeedIngredientDto(
     decimal UnitCostBdt,
     bool IsPreloaded,
     bool IsActive,
-    string? Description);
+    string? Description,
+    Guid? InventoryItemId);
 
 public record FormulaIngredientDto(
     Guid Id,

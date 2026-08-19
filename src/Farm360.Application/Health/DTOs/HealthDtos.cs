@@ -19,7 +19,9 @@ public sealed record VaccinationProtocolStepDto(
     string StepName,
     int TargetAgeDays,
     string VaccineName,
-    string DosageInstruction
+    string DosageInstruction,
+    Guid? InventoryItemId,
+    decimal? DosageQuantity
 );
 
 public sealed record VaccinationEventDto(
@@ -57,7 +59,9 @@ public sealed record MedicalTreatmentDto(
     decimal CostBdt,
     string? VeterinarianName,
     TreatmentStatus Status,
-    string? Notes
+    string? Notes,
+    Guid? InventoryItemId,
+    decimal? ConsumptionQuantity
 );
 
 public sealed record DiseaseIncidentDto(

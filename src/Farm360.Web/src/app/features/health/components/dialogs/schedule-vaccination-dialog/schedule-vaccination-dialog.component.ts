@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
+import { InventoryService } from '../../../../inventory/services/inventory.service';
+import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 
@@ -54,13 +56,31 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             <app-animal-picker formControlName="animalId"></app-animal-picker>
           </div>
 
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Vaccine Name <span class="text-red-500">*</span></label>
-            <input type="text" formControlName="vaccineName" placeholder="e.g. FMD Vaccine"
-                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="space-y-1.5 md:col-span-1">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Inventory Item</label>
+              <select formControlName="inventoryItemId"
+                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+                <option [value]="null">-- Select (Optional) --</option>
+                @for (item of inventoryItems(); track item.id) {
+                  <option [value]="item.id">{{ item.name }} ({{ item.currentStock }} {{ item.unitOfMeasure }})</option>
+                }
+              </select>
+            </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5 md:col-span-2">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Vaccine Name <span class="text-red-500">*</span></label>
+              <input type="text" formControlName="vaccineName" placeholder="e.g. FMD Vaccine"
+                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            </div>
+            
+            <div class="space-y-1.5 md:col-span-1">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Dosage Qty</label>
+              <input type="number" formControlName="dosageQuantity" min="0" step="0.1" placeholder="Qty"
+                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 md:col-span-2">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Batch Number</label>
               <input type="text" formControlName="batchNumber" placeholder="Optional batch #"
@@ -72,6 +92,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
               <input type="date" formControlName="scheduledDate"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             </div>
+          </div>
           </div>
 
           <div class="space-y-1.5">
@@ -115,12 +136,14 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 export class ScheduleVaccinationDialog {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
+  private inventoryService = inject(InventoryService);
   private dialogRef = inject(MatDialogRef<ScheduleVaccinationDialog>);
   private snackBar = inject(MatSnackBar);
 
   form: FormGroup;
   isSubmitting = signal(false);
   error = signal('');
+  inventoryItems = signal<InventoryItem[]>([]);
 
   constructor() {
     this.form = this.fb.group({
@@ -128,7 +151,24 @@ export class ScheduleVaccinationDialog {
       vaccineName: ['', Validators.required],
       batchNumber: [''],
       scheduledDate: [new Date(), Validators.required],
-      notes: ['']
+      notes: [''],
+      inventoryItemId: [null],
+      dosageQuantity: [null, [Validators.min(0)]]
+    });
+  }
+
+  ngOnInit() {
+    this.inventoryService.getItems({ category: InventoryCategory.Vaccine, pageSize: 100 }).subscribe({
+      next: (res) => this.inventoryItems.set(res.items)
+    });
+
+    this.form.get('inventoryItemId')?.valueChanges.subscribe(id => {
+      if (id) {
+        const item = this.inventoryItems().find(i => i.id === id);
+        if (item) {
+          this.form.patchValue({ vaccineName: item.name });
+        }
+      }
     });
   }
 
@@ -153,7 +193,9 @@ export class ScheduleVaccinationDialog {
       val.vaccineName, 
       val.batchNumber, 
       formattedDate, 
-      val.notes
+      val.notes,
+      val.inventoryItemId,
+      val.dosageQuantity
     ).subscribe({
       next: () => {
         this.isSubmitting.set(false);

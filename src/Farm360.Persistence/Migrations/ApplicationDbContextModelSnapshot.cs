@@ -1259,6 +1259,9 @@ namespace Farm360.Persistence.Migrations
                     b.Property<Guid>("AnimalId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("ConsumptionQuantity")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("CostBdt")
                         .HasPrecision(12, 2)
                         .HasColumnType("decimal(12,2)");
@@ -1282,6 +1285,9 @@ namespace Farm360.Persistence.Migrations
 
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
+
+                    b.Property<Guid?>("InventoryItemId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");

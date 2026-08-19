@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
+import { InventoryService } from '../../../../inventory/services/inventory.service';
+import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
@@ -68,13 +70,30 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="space-y-1.5 md:col-span-1">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Inventory Item</label>
+              <select formControlName="inventoryItemId"
+                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+                <option [value]="null">-- Select (Optional) --</option>
+                @for (item of inventoryItems(); track item.id) {
+                  <option [value]="item.id">{{ item.name }} ({{ item.currentStock }} {{ item.unitOfMeasure }})</option>
+                }
+              </select>
+            </div>
+            
             <div class="space-y-1.5 md:col-span-2">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Medication Name <span class="text-red-500">*</span></label>
               <input type="text" formControlName="medicationName" placeholder="e.g. Oxytet 20%"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="space-y-1.5 md:col-span-1">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Consumption Qty</label>
+              <input type="number" formControlName="consumptionQuantity" min="0" step="0.1" placeholder="Stock to deduct"
+                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 md:col-span-2">
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Dosage <span class="text-red-500">*</span></label>
                 <input type="number" formControlName="dosageAmount" min="0.1" step="0.1"
@@ -169,6 +188,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 export class LogTreatmentDialog {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
+  private inventoryService = inject(InventoryService);
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<LogTreatmentDialog>);
   private snackBar = inject(MatSnackBar);
@@ -176,6 +196,7 @@ export class LogTreatmentDialog {
   form: FormGroup;
   isSubmitting = signal(false);
   error = signal('');
+  inventoryItems = signal<InventoryItem[]>([]);
 
   constructor() {
     this.form = this.fb.group({
@@ -189,7 +210,27 @@ export class LogTreatmentDialog {
       startDate: [new Date().toISOString().split('T')[0], Validators.required],
       costBdt: [0, [Validators.required, Validators.min(0)]],
       veterinarianName: [''],
-      notes: ['']
+      notes: [''],
+      inventoryItemId: [null],
+      consumptionQuantity: [null, [Validators.min(0)]]
+    });
+  }
+
+  ngOnInit() {
+    this.inventoryService.getItems({ category: InventoryCategory.Medicine, pageSize: 100 }).subscribe({
+      next: (res) => this.inventoryItems.set(res.items)
+    });
+
+    this.form.get('inventoryItemId')?.valueChanges.subscribe(id => {
+      if (id) {
+        const item = this.inventoryItems().find(i => i.id === id);
+        if (item) {
+          this.form.patchValue({ 
+            medicationName: item.name,
+            consumptionQuantity: this.form.get('dosageAmount')?.value // Default to dosage
+          });
+        }
+      }
     });
   }
 
@@ -229,7 +270,9 @@ export class LogTreatmentDialog {
       startDate: new Date(val.startDate).toISOString().split('T')[0],
       costBdt: val.costBdt,
       veterinarianName: val.veterinarianName,
-      notes: val.notes
+      notes: val.notes,
+      inventoryItemId: val.inventoryItemId,
+      consumptionQuantity: val.consumptionQuantity
     };
 
     this.healthService.logTreatment(request).subscribe({

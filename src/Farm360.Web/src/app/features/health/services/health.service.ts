@@ -72,13 +72,15 @@ export class HealthService {
     return this.http.get<VaccinationEventDto[]>(`${this.apiUrl}/vaccinations/upcoming`, { params });
   }
 
-  scheduleVaccination(animalId: string, vaccineName: string, batchNumber: string, scheduledDate: string, notes?: string): Observable<{ id: string }> {
+  scheduleVaccination(animalId: string, vaccineName: string, batchNumber: string, scheduledDate: string, notes?: string, inventoryItemId?: string, dosageQuantity?: number): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(`${this.apiUrl}/vaccinations/schedule`, {
       animalId,
       vaccineName,
       batchNumber,
       scheduledDate,
-      notes
+      notes,
+      inventoryItemId,
+      dosageQuantity
     });
   }
 

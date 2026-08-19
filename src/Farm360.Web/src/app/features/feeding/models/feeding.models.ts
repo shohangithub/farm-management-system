@@ -67,6 +67,7 @@ export interface FeedIngredient {
   isPreloaded: boolean;
   isActive: boolean;
   description?: string;
+  inventoryItemId?: string;
 }
 
 export interface FormulaIngredient {
@@ -181,8 +182,9 @@ export interface CreateFeedIngredientRequest {
   calciumPct: number;
   phosphorusPct: number;
   unitCostBdt: number;
-  unit?: string;
+  unit: string;
   description?: string;
+  inventoryItemId?: string;
 }
 
 export interface CreateFormulaIngredientRequest {

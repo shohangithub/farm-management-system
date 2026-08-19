@@ -20,7 +20,8 @@ public sealed record CreateFeedIngredientCommand(
     decimal PhosphorusPct,
     decimal UnitCostBdt,
     string Unit = "kg",
-    string? Description = null) : IRequest<Guid>;
+    string? Description = null,
+    Guid? InventoryItemId = null) : IRequest<Guid>;
 
 public sealed class CreateFeedIngredientCommandValidator : AbstractValidator<CreateFeedIngredientCommand>
 {
@@ -70,7 +71,8 @@ public sealed class CreateFeedIngredientCommandHandler : IRequestHandler<CreateF
             request.UnitCostBdt,
             request.Unit,
             false,
-            request.Description);
+            request.Description,
+            request.InventoryItemId);
 
         await _repository.AddAsync(ingredient, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -20,7 +20,9 @@ public static class HealthMappingExtensions
                 s.StepName,
                 s.TargetAgeDays,
                 s.VaccineName,
-                s.DosageInstruction
+                s.DosageInstruction,
+                s.InventoryItemId,
+                s.DosageQuantity
             )).ToList()
         );
     }
@@ -56,7 +58,9 @@ public static class HealthMappingExtensions
             treatment.CostBdt,
             treatment.VeterinarianName,
             treatment.Status,
-            treatment.Notes
+            treatment.Notes,
+            treatment.InventoryItemId,
+            treatment.ConsumptionQuantity
         );
     }
 

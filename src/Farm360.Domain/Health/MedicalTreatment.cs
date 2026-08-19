@@ -24,7 +24,9 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
         DateOnly? endDate,
         decimal costBdt,
         string? veterinarianName,
-        string? notes)
+        string? notes,
+        Guid? inventoryItemId = null,
+        decimal? consumptionQuantity = null)
         : base(id, tenantId)
     {
         AnimalId = animalId;
@@ -37,6 +39,8 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
         CostBdt = costBdt;
         VeterinarianName = veterinarianName;
         Notes = notes;
+        InventoryItemId = inventoryItemId;
+        ConsumptionQuantity = consumptionQuantity;
         Status = TreatmentStatus.Ongoing;
     }
 
@@ -51,6 +55,8 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
     public string? VeterinarianName { get; private set; }
     public TreatmentStatus Status { get; private set; }
     public string? Notes { get; private set; }
+    public Guid? InventoryItemId { get; private set; }
+    public decimal? ConsumptionQuantity { get; private set; }
 
     public static MedicalTreatment LogTreatment(
         Guid tenantId,
@@ -63,7 +69,9 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
         DateOnly? endDate,
         decimal costBdt,
         string? veterinarianName,
-        string? notes)
+        string? notes,
+        Guid? inventoryItemId = null,
+        decimal? consumptionQuantity = null)
     {
         if (animalId == Guid.Empty)
             throw new ArgumentException("AnimalId is required.", nameof(animalId));
@@ -89,7 +97,9 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
             endDate,
             costBdt,
             veterinarianName?.Trim(),
-            notes);
+            notes,
+            inventoryItemId,
+            consumptionQuantity);
 
         treatment.RaiseDomainEvent(new TreatmentLoggedEvent(
             Guid.NewGuid(),
@@ -100,7 +110,9 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
             diagnosis,
             medicationName,
             costBdt,
-            startDate));
+            startDate,
+            inventoryItemId,
+            consumptionQuantity));
 
         return treatment;
     }

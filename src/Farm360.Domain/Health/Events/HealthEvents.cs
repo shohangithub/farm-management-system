@@ -35,7 +35,9 @@ public sealed record TreatmentLoggedEvent(
     string Diagnosis,
     string MedicationName,
     decimal CostBdt,
-    DateOnly StartDate
+    DateOnly StartDate,
+    Guid? InventoryItemId,
+    decimal? ConsumptionQuantity
 ) : IDomainEvent;
 
 public sealed record DiseaseIncidentReportedEvent(

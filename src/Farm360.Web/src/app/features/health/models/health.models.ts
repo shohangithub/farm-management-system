@@ -156,6 +156,8 @@ export interface MedicalTreatmentDto {
   veterinarianName?: string;
   status: TreatmentStatus;
   notes?: string;
+  inventoryItemId?: string;
+  consumptionQuantity?: number;
 }
 
 export interface DiseaseIncidentDto {
