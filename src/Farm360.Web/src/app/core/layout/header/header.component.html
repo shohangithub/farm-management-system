@@ -74,11 +74,11 @@
         <p class="text-sm font-semibold text-gray-900 dark:text-white">Farm Admin</p>
         <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate mt-0.5">admin@farm360.ai</p>
       </div>
-      <button mat-menu-item class="text-sm text-gray-700 dark:text-gray-300">
+      <button mat-menu-item [routerLink]="['/settings/profile']" class="text-sm text-gray-700 dark:text-gray-300">
         <mat-icon class="text-gray-400">person_outline</mat-icon>
         <span>My Profile</span>
       </button>
-      <button mat-menu-item class="text-sm text-gray-700 dark:text-gray-300">
+      <button mat-menu-item [routerLink]="['/settings']" class="text-sm text-gray-700 dark:text-gray-300">
         <mat-icon class="text-gray-400">settings_applications</mat-icon>
         <span>Settings</span>
       </button>

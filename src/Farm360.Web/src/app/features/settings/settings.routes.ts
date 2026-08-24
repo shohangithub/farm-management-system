@@ -10,5 +10,10 @@ export const SETTINGS_ROUTES: Routes = [
   {
     path: 'master-data',
     component: MasterDataComponent,
+  },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./profile/profile.component').then(m => m.ProfileComponent),
   }
 ];

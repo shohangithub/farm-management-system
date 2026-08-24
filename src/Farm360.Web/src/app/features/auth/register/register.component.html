@@ -1,0 +1,90 @@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[url('/assets/images/pattern-bg.svg')] dark:bg-none bg-cover bg-center">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md animate-fade-in-up">
+    <div class="flex justify-center">
+      <div class="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-600/30">
+        <mat-icon class="text-white">agriculture</mat-icon>
+      </div>
+    </div>
+    <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+      Create your account
+    </h2>
+    <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+      Or
+      <a routerLink="/auth/login" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors">
+        sign in to an existing account
+      </a>
+    </p>
+  </div>
+
+  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-fade-in-up" style="animation-delay: 100ms;">
+    <div class="bg-white/80 dark:bg-gray-800/80 py-8 px-4 shadow-xl shadow-gray-200/50 dark:shadow-none sm:rounded-2xl sm:px-10 border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl">
+      
+      <div *ngIf="error()" class="mb-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r-md">
+        <div class="flex items-center">
+          <mat-icon class="text-red-400 mr-3">error_outline</mat-icon>
+          <p class="text-sm text-red-700 dark:text-red-400">{{ error() }}</p>
+        </div>
+      </div>
+
+      <form class="space-y-5" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+          <div class="mt-1 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <mat-icon class="text-gray-400 !text-[20px] !w-[20px] !h-[20px]">person</mat-icon>
+            </div>
+            <input id="name" type="text" formControlName="name" class="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-shadow" placeholder="John Doe">
+          </div>
+        </div>
+
+        <div>
+          <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+          <div class="mt-1 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <mat-icon class="text-gray-400 !text-[20px] !w-[20px] !h-[20px]">phone</mat-icon>
+            </div>
+            <input id="phone" type="tel" formControlName="phone" class="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-shadow" placeholder="+1234567890">
+          </div>
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+          <div class="mt-1 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <mat-icon class="text-gray-400 !text-[20px] !w-[20px] !h-[20px]">email</mat-icon>
+            </div>
+            <input id="email" type="email" formControlName="email" class="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-shadow" placeholder="you@example.com">
+          </div>
+        </div>
+
+        <div>
+          <label for="farmName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Farm Name</label>
+          <div class="mt-1 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <mat-icon class="text-gray-400 !text-[20px] !w-[20px] !h-[20px]">landscape</mat-icon>
+            </div>
+            <input id="farmName" type="text" formControlName="farmName" class="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-shadow" placeholder="Green Valley Farm">
+          </div>
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          <div class="mt-1 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <mat-icon class="text-gray-400 !text-[20px] !w-[20px] !h-[20px]">lock</mat-icon>
+            </div>
+            <input id="password" type="password" formControlName="password" class="appearance-none block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-shadow" placeholder="••••••••">
+          </div>
+        </div>
+
+        <div>
+          <button type="submit" [disabled]="isLoading()" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+            <mat-icon *ngIf="isLoading()" class="animate-spin mr-2 !text-[20px] !w-[20px] !h-[20px]">autorenew</mat-icon>
+            <span *ngIf="!isLoading()">Create Account</span>
+            <span *ngIf="isLoading()">Creating...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -146,8 +146,7 @@ export class AnimalListComponent {
 
   setFilter(key: keyof AnimalListParams, event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
-    const numVal = val ? parseInt(val, 10) : null;
-    this.params.update(p => ({ ...p, [key]: numVal ?? undefined, pageNumber: 1 }));
+    this.params.update(p => ({ ...p, [key]: val || undefined, pageNumber: 1 }));
   }
 
   clearFilters(): void {

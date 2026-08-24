@@ -146,6 +146,25 @@ export class AuthService {
     );
   }
 
+  // --- Mock Features for MVP ---
+  register(request: any): Observable<any> {
+    // Simulate API delay and return success
+    return of({ success: true }).pipe(tap(() => {
+      console.log('Mock registration successful', request);
+    }));
+  }
+
+  updateProfile(data: UserProfile): Observable<UserProfile> {
+    // Simulate API delay and return updated profile
+    return of(data).pipe(
+      tap(user => {
+        this.setUserData(user);
+        console.log('Mock profile update successful', user);
+      })
+    );
+  }
+  // -----------------------------
+
   /**
    * H2 Fix: Logout properly awaits the server-side session revocation before clearing local state.
    * If the API call fails (network error, etc.), we still clear the local session — the server-side

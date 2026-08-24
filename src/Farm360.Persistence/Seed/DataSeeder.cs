@@ -312,7 +312,7 @@ public sealed class DataSeeder(
 
         var branch = await context.Branches
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(b => b.OrganizationId == org.Id, cancellationToken);
+            .FirstOrDefaultAsync(b => b.TenantId == tenant.Id && b.BranchCode == "HQ", cancellationToken);
             
         if (branch == null)
         {
