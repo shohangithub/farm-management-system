@@ -9,7 +9,11 @@ public record FinancialTransactionDto(
     string Category,
     decimal AmountBdt,
     DateTime TransactionDate,
+    string Description,
     string ReferenceId,
     string Notes,
+    Guid? AnimalId,
+    Guid? BatchId,
+    Guid? ShedId,
     DateTime CreatedAtUtc
 );

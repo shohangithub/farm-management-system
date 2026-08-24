@@ -97,12 +97,15 @@ public static class PersistenceServiceExtensions
 
         // ── Intelligence repositories ───────────────────────────────────────────
         services.AddScoped<Farm360.Domain.Intelligence.Interfaces.Repositories.IInsightRepository, Farm360.Persistence.Repositories.Intelligence.InsightRepository>();
+        services.AddScoped<Farm360.Domain.Intelligence.Repositories.IProjectionScenarioRepository, Farm360.Persistence.Repositories.Intelligence.ProjectionScenarioRepository>();
         
         // ── Dashboard repositories ──────────────────────────────────────────────
         services.AddScoped<Farm360.Domain.Dashboard.Interfaces.IExecutiveDashboardRepository, Farm360.Persistence.Repositories.Dashboard.ExecutiveDashboardRepository>();
 
         // ── Finance repositories ──────────────────────────────────────────────
         services.AddScoped<Farm360.Application.Finance.Repositories.IFinancialTransactionRepository, Farm360.Persistence.Repositories.Finance.FinancialTransactionRepository>();
+        services.AddScoped<Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository, Farm360.Persistence.Repositories.Finance.AnimalCostLedgerRepository>();
+        services.AddScoped<Farm360.Domain.Finance.Interfaces.ILoanRecordRepository, Farm360.Persistence.Repositories.Finance.LoanRecordRepository>();
 
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();

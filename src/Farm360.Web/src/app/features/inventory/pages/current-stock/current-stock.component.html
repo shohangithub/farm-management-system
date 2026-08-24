@@ -173,6 +173,16 @@
           </td>
         </ng-container>
 
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="w-16 !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 print:hidden"></th>
+          <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 text-right print:hidden">
+            <button mat-icon-button class="text-gray-400 hover:text-rose-600 dark:hover:text-rose-400" (click)="openStockWriteOffDialog(item)" matTooltip="Write Off Stock">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">delete_sweep</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"></tr>
       </table>

@@ -145,9 +145,12 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 
     // ── Financial Module ──────────────────────────────────────────────────────
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
+    public DbSet<AnimalCostLedger> AnimalCostLedgers => Set<AnimalCostLedger>();
+    public DbSet<LoanRecord> LoanRecords => Set<LoanRecord>();
 
     // ── Intelligence & Analytics Module ───────────────────────────────────────
     public DbSet<Farm360.Domain.Intelligence.ActionableInsight> ActionableInsights => Set<Farm360.Domain.Intelligence.ActionableInsight>();
+    public DbSet<Farm360.Domain.Intelligence.Projections.ProjectionScenario> ProjectionScenarios => Set<Farm360.Domain.Intelligence.Projections.ProjectionScenario>();
 
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;

@@ -15,6 +15,7 @@ import { CreateItemDialogComponent } from '../../components/dialogs/create-item-
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiring-items-panel';
 
 @Component({
   selector: 'app-inventory-dashboard',
@@ -27,7 +28,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    ExpiringItemsPanel
   ],
   template: `
     <app-page-header
@@ -146,7 +148,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       </div>
 
       <!-- Dashboard Content Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Low Stock Alerts -->
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6 shadow-sm relative overflow-hidden">
           <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
@@ -188,6 +190,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
               </div>
             }
           </div>
+        </div>
+
+        <!-- Expiring Items Panel -->
+        <div class="flex flex-col h-full min-h-[300px]">
+          <app-expiring-items-panel [farmId]="activeFarmId() || ''" [daysThreshold]="30"></app-expiring-items-panel>
         </div>
 
         <!-- Recent Stock Transactions -->

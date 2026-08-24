@@ -11,8 +11,9 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
-import { FinancialTransaction, FinancialTransactionSummary } from '../../models/finance.model';
-import { FinancialTransactionFormComponent } from '../../components/financial-transaction-form/financial-transaction-form.component';
+import { FinancialTransaction } from '../../models/finance.model';
+import { IncomeFormDialogComponent } from '../../components/income-form-dialog/income-form-dialog';
+import { ExpenseFormDialogComponent } from '../../components/expense-form-dialog/expense-form-dialog';
 
 @Component({
   selector: 'app-finance-ledger',
@@ -38,16 +39,14 @@ export class FinanceLedgerComponent implements OnInit {
 
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
 
-  // Using a BehaviorSubject to trigger re-fetches via switchMap
   private readonly ledgerData$ = this.refreshTrigger$.pipe(
     switchMap(() => {
       const currentFarmId = this.workingContextService.currentFarmValue?.id;
       if (!currentFarmId) {
-        return of({ transactions: [], summary: null });
+        return of({ transactions: [] });
       }
       return forkJoin({
-        transactions: this.financeService.getTransactions(currentFarmId).pipe(catchError(() => of([]))),
-        summary: this.financeService.getSummary(currentFarmId).pipe(catchError(() => of(null)))
+        transactions: this.financeService.getTransactions(currentFarmId).pipe(catchError(() => of([])))
       });
     })
   );
@@ -55,26 +54,34 @@ export class FinanceLedgerComponent implements OnInit {
   private readonly ledgerData = toSignal(this.ledgerData$);
 
   readonly transactions = computed(() => this.ledgerData()?.transactions ?? []);
-  readonly summary = computed(() => this.ledgerData()?.summary ?? null);
   
   // Loading is true if we are waiting for the initial emission or data is undefined
   readonly isLoading = computed(() => this.ledgerData() === undefined);
 
   ngOnInit(): void {
-    // Component init logic if needed
   }
 
-  openAddTransactionDialog(): void {
-    const dialogRef = this.dialog.open(FinancialTransactionFormComponent, {
-      width: '720px',
+  openIncomeDialog(): void {
+    const dialogRef = this.dialog.open(IncomeFormDialogComponent, {
+      width: '600px',
       disableClose: true,
       panelClass: ['premium-dialog-panel']
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.refreshTrigger$.next(); // Refresh data on success
-      }
+      if (result) this.refreshTrigger$.next();
+    });
+  }
+
+  openExpenseDialog(): void {
+    const dialogRef = this.dialog.open(ExpenseFormDialogComponent, {
+      width: '600px',
+      disableClose: true,
+      panelClass: ['premium-dialog-panel']
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.refreshTrigger$.next();
     });
   }
 }

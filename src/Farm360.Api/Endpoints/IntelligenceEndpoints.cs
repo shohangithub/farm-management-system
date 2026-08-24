@@ -31,6 +31,61 @@ public static class IntelligenceEndpoints
             .WithName("SimulateSale")
             .WithSummary("Projects weight and costs to a future target date.")
             .WithTags("Intelligence");
+        var projectionGroup = app.MapGroup("/api/v1/intelligence/projections")
+            .RequireAuthorization();
+
+        projectionGroup.MapPost("/calculate", CalculateProfitProjection)
+            .WithName("CalculateProfitProjection")
+            .WithSummary("Calculates detailed profit and loss projections for an animal over a fattening period.")
+            .WithTags("Intelligence");
+
+        projectionGroup.MapPost("/solve-break-even", SolveBreakEven)
+            .WithName("SolveBreakEven")
+            .WithSummary("Solves for break-even targets based on projection inputs.")
+            .WithTags("Intelligence");
+
+        projectionGroup.MapGet("/defaults/{animalId:guid}", GetProjectionDefaults)
+            .WithName("GetProjectionDefaults")
+            .WithSummary("Gets the default projection inputs for a specific animal based on breed and farm settings.")
+            .WithTags("Intelligence");
+
+        projectionGroup.MapPost("/scenarios", SaveProjectionScenario)
+            .WithName("SaveProjectionScenario")
+            .WithSummary("Saves a custom projection scenario for future comparison.")
+            .WithTags("Intelligence");
+    }
+
+    private static async Task<IResult> SaveProjectionScenario(
+        [FromBody] Farm360.Application.Intelligence.Commands.SaveProjectionScenario.SaveProjectionScenarioCommand command,
+        [FromServices] ISender sender)
+    {
+        var result = await sender.Send(command);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> CalculateProfitProjection(
+        [FromBody] Farm360.Application.Intelligence.Queries.CalculateProfitProjection.CalculateProfitProjectionQuery query,
+        [FromServices] ISender sender)
+    {
+        var result = await sender.Send(query);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> SolveBreakEven(
+        [FromBody] Farm360.Application.Intelligence.Queries.SolveBreakEven.SolveBreakEvenQuery query,
+        [FromServices] ISender sender)
+    {
+        var result = await sender.Send(query);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetProjectionDefaults(
+        Guid animalId,
+        [FromServices] ISender sender)
+    {
+        var query = new Farm360.Application.Intelligence.Queries.GetProjectionDefaults.GetProjectionDefaultsQuery(animalId);
+        var result = await sender.Send(query);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetAnimalFinancialSnapshot(

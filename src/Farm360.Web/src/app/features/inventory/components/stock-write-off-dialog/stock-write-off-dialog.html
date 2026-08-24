@@ -1,0 +1,87 @@
+<div class="flex flex-col max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden relative shadow-2xl">
+
+  <!-- Header -->
+  <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between shrink-0 relative overflow-hidden">
+    <!-- Premium Watermark Background -->
+    <div class="absolute -right-4 -top-4 text-[80px] text-rose-500/5 rotate-[15deg] pointer-events-none">
+      <mat-icon inline="true">delete_sweep</mat-icon>
+    </div>
+    
+    <div class="flex items-center gap-4 relative z-10">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+        <mat-icon>delete_sweep</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0">Write Off Stock</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Discard expired or damaged inventory</p>
+      </div>
+    </div>
+    <button mat-icon-button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" (click)="onCancel()" [disabled]="isSubmitting()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content (Scrollable) -->
+  <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+    
+    <!-- RFC 7807 Error Banner -->
+    <div *ngIf="error()" class="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 flex gap-3 items-start animate-fade-in">
+      <mat-icon class="text-rose-500 shrink-0 mt-0.5">error_outline</mat-icon>
+      <div class="text-sm text-rose-700 dark:text-rose-300">
+        {{ error() }}
+      </div>
+    </div>
+
+    <div class="mb-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50">
+      <div class="text-sm font-medium text-blue-900 dark:text-blue-100">Item: {{ item.name }}</div>
+      <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">Available Stock: {{ item.currentStock }} {{ item.unitOfMeasure }}</div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Write-off Quantity ({{ item.unitOfMeasure }})</mat-label>
+        <input matInput type="number" step="0.01" formControlName="quantity" placeholder="e.g. 5.5">
+        <mat-icon matPrefix class="text-gray-400 mr-2">balance</mat-icon>
+        <mat-error *ngIf="form.get('quantity')?.hasError('required')">Quantity is required.</mat-error>
+        <mat-error *ngIf="form.get('quantity')?.hasError('min')">Must be greater than 0.</mat-error>
+        <mat-error *ngIf="form.get('quantity')?.hasError('max')">Cannot exceed available stock ({{ item.currentStock }}).</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Reason</mat-label>
+        <input matInput formControlName="reason" placeholder="e.g. Expired, Damaged in transit">
+        <mat-icon matPrefix class="text-gray-400 mr-2">report_problem</mat-icon>
+        <mat-error *ngIf="form.get('reason')?.hasError('required')">Reason is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Transaction Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="transactionDate">
+        <mat-hint>MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-error *ngIf="form.get('transactionDate')?.hasError('required')">Date is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Notes (Optional)</mat-label>
+        <textarea matInput formControlName="notes" rows="3" placeholder="Additional details..."></textarea>
+      </mat-form-field>
+
+    </form>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
+    <button mat-button class="rounded-xl px-5 text-gray-600 dark:text-gray-300" (click)="onCancel()" [disabled]="isSubmitting()" type="button">
+      Cancel
+    </button>
+    <button mat-flat-button color="warn" class="rounded-xl px-6 py-1 shadow-md bg-rose-600 hover:bg-rose-700 text-white" (click)="onSubmit()" [disabled]="form.invalid || isSubmitting()" type="button">
+      <mat-icon class="animate-spin mr-2" *ngIf="isSubmitting()">autorenew</mat-icon>
+      <mat-icon *ngIf="!isSubmitting()">delete_sweep</mat-icon>
+      {{ isSubmitting() ? 'Writing Off...' : 'Write Off Stock' }}
+    </button>
+  </div>
+
+</div>

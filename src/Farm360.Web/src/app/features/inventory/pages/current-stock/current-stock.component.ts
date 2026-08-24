@@ -10,9 +10,11 @@ import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { InventoryService } from '../../services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { CurrentStockSummary, InventoryItem, InventoryStatus } from '../../models/inventory.models';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { StockWriteOffDialog } from '../../components/stock-write-off-dialog/stock-write-off-dialog';
 
 @Component({
   selector: 'app-current-stock',
@@ -24,6 +26,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     MatIconModule,
     MatTableModule,
     MatPaginatorModule,
+    MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
     LoadingComponent
@@ -34,13 +37,14 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 export class CurrentStockComponent implements OnInit {
   private readonly inventoryService = inject(InventoryService);
   private readonly contextService = inject(WorkingContextService);
+  private readonly dialog = inject(MatDialog);
 
   readonly isLoading = signal(false);
   readonly summary = signal<CurrentStockSummary | null>(null);
   readonly items = signal<InventoryItem[]>([]);
   readonly totalItemsCount = signal(0);
   
-  readonly displayedColumns = ['name', 'category', 'status', 'currentStock', 'valuation', 'updated'];
+  readonly displayedColumns = ['name', 'category', 'status', 'currentStock', 'valuation', 'updated', 'actions'];
 
   readonly activeFarmId = signal<string | null>(null);
   readonly pageIndex = signal(0);
@@ -107,5 +111,15 @@ export class CurrentStockComponent implements OnInit {
 
   printReport(): void {
     window.print();
+  }
+
+  openStockWriteOffDialog(item: InventoryItem): void {
+    const dialogRef = this.dialog.open(StockWriteOffDialog, {
+      width: '600px',
+      data: { item }
+    });
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res) this.loadData();
+    });
   }
 }

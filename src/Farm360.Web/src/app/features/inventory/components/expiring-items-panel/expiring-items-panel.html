@@ -1,0 +1,63 @@
+<div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative flex flex-col h-full">
+
+  <!-- Header -->
+  <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/30 dark:bg-gray-800/30 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+        <mat-icon>warning_amber</mat-icon>
+      </div>
+      <div>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0">Expiring Soon</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Next {{ daysThreshold }} days</p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="refresh()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="p-0 flex-1 relative min-h-[200px]">
+    
+    <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+    
+    <app-empty-state 
+      *ngIf="!isLoading() && items().length === 0"
+      icon="check_circle_outline"
+      title="All Good!"
+      description="No items are expiring within {{ daysThreshold }} days.">
+    </app-empty-state>
+
+    <div *ngIf="items().length > 0" class="divide-y divide-gray-100 dark:divide-gray-700/50 overflow-y-auto custom-scrollbar max-h-[300px]">
+      <div *ngFor="let item of items()" class="p-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200 flex items-center justify-between gap-4">
+        
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.itemName }}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              {{ item.category }}
+            </span>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <span class="flex items-center gap-1">
+              <mat-icon class="text-[14px] w-[14px] h-[14px]">tag</mat-icon>
+              {{ item.batchNumber || 'N/A' }}
+            </span>
+            <span class="flex items-center gap-1" [ngClass]="item.daysUntilExpiry <= 7 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-amber-600 dark:text-amber-500'">
+              <mat-icon class="text-[14px] w-[14px] h-[14px]">event</mat-icon>
+              {{ item.expiryDate | date:'shortDate' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="shrink-0 text-right">
+          <div class="text-sm font-bold" [ngClass]="item.daysUntilExpiry <= 7 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-500'">
+            {{ item.daysUntilExpiry === 0 ? 'Today' : 'In ' + item.daysUntilExpiry + ' days' }}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

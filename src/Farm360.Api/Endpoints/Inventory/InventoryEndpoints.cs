@@ -113,6 +113,17 @@ public static class InventoryEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}")
         .WithName("RecordStockOut");
 
+        group.MapPost("/transactions/write-off", async (
+            [FromBody] Farm360.Application.Inventory.Commands.RecordStockWriteOff.RecordStockWriteOffCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Created($"/api/v1/inventory/transactions/{id}", new { id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}")
+        .WithName("RecordStockWriteOff");
+
         group.MapGet("/transactions", async (
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 20,
@@ -212,6 +223,33 @@ public static class InventoryEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
         .WithName("GetCurrentStockSummary");
+
+        group.MapGet("/reports/movement", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] DateOnly startDate,
+            [FromQuery] DateOnly endDate,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new Farm360.Application.Inventory.Queries.GetInventoryMovementReport.GetInventoryMovementReportQuery(farmId, startDate, endDate);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetInventoryMovementReport");
+
+        group.MapGet("/reports/expiring", async (
+            [FromQuery] Guid farmId,
+            ISender sender,
+            CancellationToken ct,
+            [FromQuery] int daysThreshold = 30) =>
+        {
+            var query = new Farm360.Application.Inventory.Queries.GetExpiringItems.GetExpiringItemsQuery(farmId, daysThreshold);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetExpiringItems");
 
         // ── Purchase Orders ───────────────────────────────────────────────────
         group.MapGet("/purchase-orders", async (

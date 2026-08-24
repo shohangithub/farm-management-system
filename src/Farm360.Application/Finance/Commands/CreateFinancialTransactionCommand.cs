@@ -61,8 +61,12 @@ public class CreateFinancialTransactionCommandHandler : IRequestHandler<CreateFi
             transaction.Category.ToString(),
             transaction.AmountBdt,
             transaction.TransactionDate,
+            transaction.Description,
             transaction.ReferenceId,
             transaction.Notes,
+            transaction.AnimalId,
+            transaction.BatchId,
+            transaction.ShedId,
             transaction.CreatedAtUtc
         );
     }

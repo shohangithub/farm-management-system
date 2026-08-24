@@ -24,7 +24,7 @@ public sealed class AnimalSoldEventHandler(
             tenantId: domainEvent.TenantId,
             farmId: domainEvent.FarmId,
             type: TransactionType.Income,
-            category: TransactionCategory.LivestockSale,
+            category: TransactionCategory.AnimalSale,
             amountBdt: domainEvent.SalePriceBdt,
             transactionDate: domainEvent.SaleDate.ToDateTime(System.TimeOnly.MinValue), // Convert DateOnly to DateTime
             referenceId: domainEvent.AnimalId.ToString(),

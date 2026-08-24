@@ -14,8 +14,9 @@ Welcome to **Farm360 AI**, an end-to-end Enterprise Livestock & Farm Management 
 7. [Smart Feeding & Nutrition Intelligence](#7-smart-feeding--nutrition-intelligence)
 8. [Inventory & Stock Management](#8-inventory--stock-management)
 9. [Finance & Cost Analytics](#9-finance--cost-analytics)
-10. [User Roles & Standard Operating Procedures (SOPs)](#10-user-roles--standard-operating-procedures-sops)
-11. [Troubleshooting & FAQs](#11-troubleshooting--faqs)
+10. [AI Intelligence & Profit Projections](#10-ai-intelligence--profit-projections)
+11. [User Roles & Standard Operating Procedures (SOPs)](#11-user-roles--standard-operating-procedures-sops)
+12. [Troubleshooting & FAQs](#12-troubleshooting--faqs)
 
 ---
 
@@ -214,7 +215,28 @@ When receiving new feed, medicine, or equipment:
 
 ---
 
-## 10. User Roles & Standard Operating Procedures (SOPs)
+## 10. AI Intelligence & Profit Projections (`/livestock/:id`)
+
+The **Cattle Profit & Loss Projection** module helps farm managers simulate and predict the financial outcome of fattening an animal before making operational decisions. It models daily weight gain, feed intake, cumulative investment, and solves for the exact break-even day.
+
+### 10.1 Running a Simulation
+1. Navigate to the **Livestock** section and open the details page for a specific animal.
+2. Click the **Profit Projections** tab.
+3. The system will pre-load default assumptions based on the animal's breed and current weight. You can dynamically adjust "Levers":
+   * Target/Fattening Days
+   * Target Daily Weight Gain (ADG)
+   * Daily Feed Quantity
+   * Feed Unit Cost
+4. The system calculates and plots the exact trajectory in real-time.
+
+### 10.2 Understanding the Simulation Outputs
+* **Summary Cards**: At-a-glance KPI cards displaying Final Live Weight, Total Feed Cost, Total Investment, Net Profit, Final ROI, and the precise **Break-Even Day**.
+* **Financial Trajectory Chart**: A visual graph tracking Cumulative Feed Costs, Total Investment, and current Meat Value over time. Where the Meat Value line crosses the Total Investment line is your Break-Even point!
+* **Daily Breakdown Table**: A day-by-day tabular view showing weight, daily feed consumed, total investment to date, and net profit for that specific day. The specific Break-Even day is highlighted in green.
+
+---
+
+## 11. User Roles & Standard Operating Procedures (SOPs)
 
 | Role | Primary Responsibilities & Features Used |
 | :--- | :--- |
@@ -231,7 +253,7 @@ When receiving new feed, medicine, or equipment:
 
 ---
 
-## 11. Troubleshooting & FAQs
+## 12. Troubleshooting & FAQs
 
 #### Q1: Why are today's feeding entries not appearing in `/feeding/today`?
 **A**: Ensure that animals are assigned to an active Feeding Plan (`/feeding/plans`) and that your active Working Context is set to the correct Farm.

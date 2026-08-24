@@ -35,11 +35,20 @@ public class FinancialTransactionConfiguration : IEntityTypeConfiguration<Financ
         builder.Property(t => t.ReferenceId)
             .HasMaxLength(100);
 
+        builder.Property(t => t.Description)
+            .HasMaxLength(500);
+
         builder.Property(t => t.Notes)
             .HasMaxLength(1000);
+
+        // ── Entity link columns (nullable FK references) ────────────────────
+        builder.Property(t => t.AnimalId);
+        builder.Property(t => t.BatchId);
+        builder.Property(t => t.ShedId);
 
         builder.HasIndex(t => t.FarmId);
         builder.HasIndex(t => t.TenantId);
         builder.HasIndex(t => t.TransactionDate);
+        builder.HasIndex(t => t.AnimalId);
     }
 }

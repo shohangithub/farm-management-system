@@ -72,7 +72,17 @@ Manage veterinary interventions and health monitoring.
 
 ---
 
-## 7. Security and Authentication
+## 7. AI Intelligence & Profit Projections
+
+The **Cattle Profit & Loss Projection** module allows you to simulate the financial outcome of fattening an animal before committing to operational decisions. 
+
+- **Run Simulations**: Open an animal's details page and navigate to the **Profit Projections** tab.
+- **Dynamic Levers**: Adjust target days, target daily weight gain, and feed costs.
+- **Break-Even Analysis**: The system automatically calculates the exact day your total investment breaks even against the projected meat value, providing actionable insight for the optimal day to sell.
+
+---
+
+## 8. Security and Authentication
 
 Farm360 utilizes enterprise-grade security protocols:
 

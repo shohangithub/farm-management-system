@@ -15,6 +15,12 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ExecutiveDashboardData, InsightSeverity, InsightType, ActionableInsight } from '../../models/dashboard.model';
 import { FarmGuidelinesDialogComponent } from '../../../../shared/components/farm-guidelines-dialog/farm-guidelines-dialog';
+import { HerdCompositionChartComponent } from '../../widgets/herd-composition-chart/herd-composition-chart';
+import { AdgTrendChartComponent } from '../../widgets/adg-trend-chart/adg-trend-chart';
+import { FeedCostTrendChartComponent } from '../../widgets/feed-cost-trend-chart/feed-cost-trend-chart';
+import { VaccinationComplianceChartComponent } from '../../widgets/vaccination-compliance-chart/vaccination-compliance-chart';
+import { FarmSummaryCardsComponent } from '../../widgets/farm-summary-cards/farm-summary-cards';
+import { RecentActivityFeedComponent } from '../../widgets/recent-activity-feed/recent-activity-feed';
 
 @Component({
   selector: 'app-executive-dashboard',
@@ -27,7 +33,13 @@ import { FarmGuidelinesDialogComponent } from '../../../../shared/components/far
     LoadingComponent,
     EmptyStateComponent,
     CurrencyPipe,
-    RouterModule
+    RouterModule,
+    HerdCompositionChartComponent,
+    AdgTrendChartComponent,
+    FeedCostTrendChartComponent,
+    VaccinationComplianceChartComponent,
+    FarmSummaryCardsComponent,
+    RecentActivityFeedComponent
   ],
   templateUrl: './executive-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,9 +84,40 @@ export class ExecutiveDashboardComponent {
     })
   );
 
+  private readonly herdComposition$ = this.farmId$.pipe(
+    switchMap(farmId => farmId ? this.dashboardService.getHerdComposition(farmId).pipe(catchError(() => of(null))) : of(null))
+  );
+
+  private readonly adgTrends$ = this.farmId$.pipe(
+    switchMap(farmId => farmId ? this.dashboardService.getAdgTrends(farmId).pipe(catchError(() => of(null))) : of(null))
+  );
+
+  private readonly feedCostTrends$ = this.farmId$.pipe(
+    switchMap(farmId => farmId ? this.dashboardService.getFeedCostTrends(farmId).pipe(catchError(() => of(null))) : of(null))
+  );
+
+  private readonly vaccinationCompliance$ = this.farmId$.pipe(
+    switchMap(farmId => farmId ? this.dashboardService.getVaccinationCompliance(farmId).pipe(catchError(() => of(null))) : of(null))
+  );
+
+  private readonly farmSummaryCards$ = this.farmId$.pipe(
+    switchMap(farmId => farmId ? this.dashboardService.getFarmSummaryCards(farmId).pipe(catchError(() => of(null))) : of(null))
+  );
+
+  private readonly recentActivityFeed$ = this.farmId$.pipe(
+    switchMap(farmId => farmId ? this.dashboardService.getRecentActivityFeed(farmId).pipe(catchError(() => of(null))) : of(null))
+  );
+
   private readonly dismissedInsightIds = signal<Set<string>>(new Set());
 
   public readonly dashboardData = toSignal(this.dashboardData$, { initialValue: undefined });
+  public readonly herdComposition = toSignal(this.herdComposition$, { initialValue: undefined });
+  public readonly adgTrends = toSignal(this.adgTrends$, { initialValue: undefined });
+  public readonly feedCostTrends = toSignal(this.feedCostTrends$, { initialValue: undefined });
+  public readonly vaccinationCompliance = toSignal(this.vaccinationCompliance$, { initialValue: undefined });
+  public readonly farmSummaryCards = toSignal(this.farmSummaryCards$, { initialValue: undefined });
+  public readonly recentActivityFeed = toSignal(this.recentActivityFeed$, { initialValue: undefined });
+
   public readonly isLoading = computed(() => this.dashboardData() === undefined);
   public readonly hasError = computed(() => this.dashboardData() === null);
   public readonly data = computed(() => {

@@ -31,8 +31,12 @@ public class GetFinancialTransactionsQueryHandler : IRequestHandler<GetFinancial
             t.Category.ToString(),
             t.AmountBdt,
             t.TransactionDate,
+            t.Description,
             t.ReferenceId,
             t.Notes,
+            t.AnimalId,
+            t.BatchId,
+            t.ShedId,
             t.CreatedAtUtc
         )).ToList();
     }

@@ -10,6 +10,8 @@ public interface IFinancialTransactionRepository
 {
     Task<FinancialTransaction?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<FinancialTransaction>> GetAllByFarmIdAsync(Guid farmId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<FinancialTransaction>> GetAllByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<FinancialTransaction>> GetAllByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
     Task AddAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default);
     Task UpdateAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default);
     Task DeleteAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default);

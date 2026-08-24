@@ -39,6 +39,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.IGrowthPredictionEngine, Farm360.Application.Intelligence.Services.GrowthPredictionEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.IRuleEngine, Farm360.Application.Intelligence.Services.RuleEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.ISimulationEngine, Farm360.Application.Intelligence.Services.SimulationEngine>();
+        services.AddScoped<Farm360.Application.Intelligence.Services.IProjectionDefaultsResolver, Farm360.Application.Intelligence.Services.ProjectionDefaultsResolver>();
 
         // ── AutoMapper (auto-discover all mapping profiles in assembly) ────────
         services.AddAutoMapper(assembly);

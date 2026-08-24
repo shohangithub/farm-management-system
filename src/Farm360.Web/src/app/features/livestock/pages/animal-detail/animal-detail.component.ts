@@ -48,6 +48,7 @@ import { of } from 'rxjs';
 import { NgxEchartsModule } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
+import { CattleProfitProjectionComponent } from '../../../intelligence/components/projections/cattle-profit-projection.component';
 
 @Component({
   selector: 'app-animal-detail',
@@ -57,7 +58,8 @@ import { RecentlyViewedService } from '../../services/recently-viewed.service';
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule,
-    NgxEchartsModule
+    NgxEchartsModule,
+    CattleProfitProjectionComponent
   ],
   templateUrl: './animal-detail.component.html'
 })

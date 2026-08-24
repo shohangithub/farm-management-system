@@ -1,0 +1,27 @@
+namespace Farm360.Domain.Intelligence.Projections;
+
+public sealed record FatteningProjectionSummary(
+    decimal StartingWeightKg,
+    decimal FinalWeightKg,
+    decimal TotalGainKg,
+    decimal PurchaseCostBdt,
+    decimal TotalFeedCostBdt,
+    decimal TotalGrassCostBdt,
+    decimal TotalOtherCostBdt,
+    decimal TotalLaborCostBdt,
+    decimal TotalFarmingCostBdt,
+    decimal TotalInvestmentBdt,
+    decimal FinalMeatWeightKg,
+    decimal ExpectedSaleValueBdt,
+    decimal ProfitLossBdt,
+    decimal ProfitPercent,
+    decimal BreakEvenPricePerLiveKgBdt,
+    decimal BreakEvenPricePerMeatKgBdt,
+    int? BreakEvenDay,
+    int OptimalSaleDay,
+    decimal OptimalProfitBdt,
+    decimal TotalFeedQtyKg,
+    decimal CostPerKgGainBdt,
+    decimal RoiPercent,
+    decimal DailyProfitRateBdt,
+    decimal MeatPriceUsedBdtPerKg);

@@ -67,6 +67,10 @@ export class InventoryService {
     return this.http.post<{ id: string }>(`${this.baseUrl}/transactions/stock-out`, request);
   }
 
+  recordStockWriteOff(request: any): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${this.baseUrl}/transactions/write-off`, request);
+  }
+
   getTransactions(params: StockTransactionParams = {}): Observable<PagedResult<StockTransaction>> {
     let httpParams = new HttpParams();
     if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
@@ -118,6 +122,21 @@ export class InventoryService {
     return this.http.get<CurrentStockSummary>(`${this.baseUrl}/reports/current-stock/summary`, {
       params: new HttpParams().set('farmId', farmId)
     });
+  }
+
+  getMovementReport(farmId: string, startDate: string, endDate: string): Observable<any> {
+    let params = new HttpParams()
+      .set('farmId', farmId)
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+    return this.http.get<any>(`${this.baseUrl}/reports/movement`, { params });
+  }
+
+  getExpiringItems(farmId: string, daysThreshold: number = 30): Observable<any[]> {
+    let params = new HttpParams()
+      .set('farmId', farmId)
+      .set('daysThreshold', daysThreshold);
+    return this.http.get<any[]>(`${this.baseUrl}/reports/expiring`, { params });
   }
 
   // ── Purchase Orders ─────────────────────────────────────────────────────────

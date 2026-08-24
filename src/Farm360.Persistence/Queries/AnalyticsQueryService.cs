@@ -126,4 +126,82 @@ public class AnalyticsQueryService : IAnalyticsQueryService
             deaths,
             Math.Round(compliance, 2));
     }
+
+    public async Task<HerdCompositionDto> GetHerdCompositionAsync(Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Animals.AsNoTracking();
+        if (farmId.HasValue) query = query.Where(a => a.FarmId == farmId.Value);
+
+        var animals = await query.Select(a => new { a.Species, a.BreedId, a.Sex, a.Status }).ToListAsync(cancellationToken);
+
+        var bySpecies = animals.GroupBy(a => a.Species.ToString()).ToDictionary(g => g.Key, g => g.Count());
+        var byBreed = animals.GroupBy(a => a.BreedId.ToString()).ToDictionary(g => g.Key, g => g.Count());
+        var bySex = animals.GroupBy(a => a.Sex.ToString()).ToDictionary(g => g.Key, g => g.Count());
+        var byStatus = animals.GroupBy(a => a.Status.ToString()).ToDictionary(g => g.Key, g => g.Count());
+
+        return new HerdCompositionDto(bySpecies, byBreed, bySex, byStatus);
+    }
+
+    public async Task<IReadOnlyList<AdgTrendDto>> GetAdgTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        return await Task.FromResult(Array.Empty<AdgTrendDto>());
+    }
+
+    public async Task<IReadOnlyList<FeedCostTrendDto>> GetFeedCostTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        return await Task.FromResult(Array.Empty<FeedCostTrendDto>());
+    }
+
+    public async Task<VaccinationComplianceDto> GetVaccinationComplianceAsync(Guid? farmId, CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var query = _context.VaccinationEvents.AsNoTracking();
+        if (farmId.HasValue)
+        {
+            query = query.Where(v => _context.Animals.Any(a => a.Id == v.AnimalId && a.FarmId == farmId.Value));
+        }
+
+        var completed = await query.CountAsync(v => v.Status == VaccinationStatus.Completed, cancellationToken);
+        var due = await query.CountAsync(v => v.Status == VaccinationStatus.Scheduled && v.ScheduledDate <= today.AddDays(7) && v.ScheduledDate >= today, cancellationToken);
+        var overdue = await query.CountAsync(v => v.Status == VaccinationStatus.Overdue || (v.Status == VaccinationStatus.Scheduled && v.ScheduledDate < today), cancellationToken);
+
+        return new VaccinationComplianceDto(completed, due, overdue);
+    }
+
+    public async Task<IReadOnlyList<FarmSummaryCardDto>> GetFarmSummaryCardsAsync(CancellationToken cancellationToken = default)
+    {
+        var farms = await _context.Farms.AsNoTracking().ToListAsync(cancellationToken);
+        var cards = new List<FarmSummaryCardDto>();
+
+        foreach (var farm in farms)
+        {
+            var animalCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id, cancellationToken);
+            var sickCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id && a.Status == AnimalStatus.Quarantined, cancellationToken);
+            var monthlyRevenue = await _context.FinancialTransactions.AsNoTracking()
+                .Where(t => t.FarmId == farm.Id && t.Type == TransactionType.Income && t.TransactionDate.Month == DateTime.UtcNow.Month && t.TransactionDate.Year == DateTime.UtcNow.Year)
+                .SumAsync(t => t.AmountBdt, cancellationToken);
+
+            cards.Add(new FarmSummaryCardDto(farm.Id, farm.FarmName, animalCount, sickCount, monthlyRevenue));
+        }
+        return cards;
+    }
+
+    public async Task<IReadOnlyList<ActivityFeedItemDto>> GetRecentActivityFeedAsync(Guid? farmId, int count = 20, CancellationToken cancellationToken = default)
+    {
+        var query = _context.AuditLogs.AsNoTracking();
+        
+        var recentLogs = await query.OrderByDescending(a => a.OccurredAtUtc)
+                                    .Take(count)
+                                    .ToListAsync(cancellationToken);
+
+        return recentLogs.Select(l => new ActivityFeedItemDto(
+            l.Id,
+            l.Action,
+            l.EntityName,
+            $"{l.Action} on {l.EntityName}",
+            l.ChangedBy?.ToString() ?? "System",
+            l.OccurredAtUtc
+        )).ToList();
+    }
 }

@@ -118,6 +118,23 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
         }
     }
 
+    public void WriteOffStock(decimal quantity, string reason, Guid transactionId)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InventoryDomainException("Write-off reason must be provided.");
+
+        DeductStock(quantity, transactionId);
+
+        RaiseDomainEvent(new StockWriteOffEvent(
+            transactionId, 
+            Id, 
+            TenantId, 
+            FarmId, 
+            quantity, 
+            reason, 
+            WeightedAverageCostBdt));
+    }
+
     public void SetActiveStatus(bool isActive)
     {
         IsActive = isActive;

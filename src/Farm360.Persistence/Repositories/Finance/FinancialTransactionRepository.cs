@@ -33,6 +33,22 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<FinancialTransaction>> GetAllByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FinancialTransactions
+            .Where(t => t.BatchId == batchId)
+            .OrderByDescending(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<FinancialTransaction>> GetAllByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FinancialTransactions
+            .Where(t => t.TenantId == tenantId)
+            .OrderByDescending(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default)
     {
         await _context.FinancialTransactions.AddAsync(transaction, cancellationToken);
