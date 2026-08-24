@@ -663,7 +663,7 @@
                 <table class="w-full text-left border-collapse">
                   <thead>
                     <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Diagnosis</th>
+                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Diagnosis & Vet</th>
                       <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Medication</th>
                       <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Dates</th>
                       <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Cost</th>
@@ -673,7 +673,13 @@
                   <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     <tr *ngFor="let t of healthHistory()!.treatments"
                       class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                      <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ t.diagnosis }}</td>
+                      <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                        {{ t.diagnosis }}
+                        <div *ngIf="t.veterinarianName" class="text-xs text-gray-500 font-normal mt-0.5 flex items-center gap-1">
+                          <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">person</mat-icon>
+                          {{ t.veterinarianName }}
+                        </div>
+                      </td>
                       <td class="px-4 py-3 text-sm text-gray-500">
                         {{ t.medicationName }}<br />
                         <span class="text-[10px] text-gray-400">{{ t.dosageAmount }} {{ t.dosageUnit }}</span>
