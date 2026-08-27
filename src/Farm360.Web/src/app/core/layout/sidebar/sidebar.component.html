@@ -12,7 +12,7 @@
   </div>
 
   <!-- Navigation List -->
-  <mat-nav-list class="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar">
+  <mat-nav-list class="flex-1 overflow-y-auto py-4 custom-scrollbar" [class.px-3]="!isCollapsed" [class.px-1]="isCollapsed">
     <ng-container *ngFor="let item of menuItems">
       <a mat-list-item
          [routerLink]="item.disabled ? null : item.route"
@@ -39,7 +39,7 @@
   </mat-nav-list>
 
   <!-- Bottom Settings/Org Nav -->
-  <div class="shrink-0 border-t border-gray-100 dark:border-gray-800/50 p-3">
+  <div class="shrink-0 border-t border-gray-100 dark:border-gray-800/50" [class.p-3]="!isCollapsed" [class.p-1]="isCollapsed">
     <mat-nav-list class="pt-0">
       <ng-container *ngFor="let item of bottomMenuItems">
         <a mat-list-item
