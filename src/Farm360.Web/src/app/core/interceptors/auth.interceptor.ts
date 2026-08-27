@@ -22,12 +22,19 @@ function resetRefreshState(): void {
   refreshTokenSubject.next(null);
 }
 
+import { environment } from '../../../environments/environment';
+
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
   const snackBar = inject(MatSnackBar);
   const token = authService.accessToken;
 
-  if (token && req.url.startsWith('/api/')) {
+  // Prepend API URL from environment if configured (for production cross-domain hosting)
+  if (environment.apiUrl && req.url.startsWith('/api/')) {
+    req = req.clone({ url: `${environment.apiUrl}${req.url}` });
+  }
+
+  if (token && req.url.includes('/api/')) {
     req = addTokenHeader(req, token);
   }
 
