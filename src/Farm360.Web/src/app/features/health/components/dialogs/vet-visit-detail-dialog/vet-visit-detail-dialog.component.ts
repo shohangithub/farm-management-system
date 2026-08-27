@@ -2,16 +2,19 @@ import { ChangeDetectionStrategy, Component, DestroyRef, Inject, OnInit, signal 
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
 import { HealthService } from '../../../services/health.service';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { VetVisitDto } from '../../../models/health.models';
-import { finalize } from 'rxjs/operators';
+import { finalize, map, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-vet-visit-detail-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule],
   templateUrl: './vet-visit-detail-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -21,6 +24,9 @@ export class VetVisitDetailDialogComponent implements OnInit {
   isSaving = signal(false);
   
   visitData = signal<VetVisitDto | null>(null);
+  
+  knownVetNames = signal<string[]>([]);
+  filteredVetNames$!: Observable<string[]>;
 
   form = this.fb.group({
     vetName: ['', [Validators.required]],
@@ -42,7 +48,16 @@ export class VetVisitDetailDialogComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.filteredVetNames$ = this.form.get('vetName')!.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filterVets(value || ''))
+    );
     this.loadVisitData();
+  }
+
+  private _filterVets(value: string): string[] {
+    const filterValue = value.toLowerCase();
+    return this.knownVetNames().filter(name => name.toLowerCase().includes(filterValue));
   }
 
   loadVisitData(): void {
@@ -65,6 +80,13 @@ export class VetVisitDetailDialogComponent implements OnInit {
             costBdt: visit.costBdt || 0,
             nextVisitDate: visit.nextVisitDate || ''
           });
+          
+          if (visit.farmId) {
+            this.healthService.getVetVisits({ farmId: visit.farmId, pageSize: 100 }).subscribe(res => {
+              const uniqueNames = Array.from(new Set(res.items.map(v => v.vetName).filter(Boolean)));
+              this.knownVetNames.set(uniqueNames);
+            });
+          }
         },
         error: (err) => {
           console.error('Failed to load visit details', err);

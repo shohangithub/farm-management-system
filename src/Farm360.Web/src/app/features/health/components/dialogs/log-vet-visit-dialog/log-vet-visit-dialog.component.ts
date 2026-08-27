@@ -3,16 +3,19 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
 import { HealthService } from '../../../services/health.service';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs/operators';
+import { finalize, map, startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-log-vet-visit-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule],
   templateUrl: './log-vet-visit-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -25,6 +28,8 @@ export class LogVetVisitDialog {
 
   isSubmitting = signal(false);
   error = signal('');
+  knownVetNames = signal<string[]>([]);
+  filteredVetNames$!: Observable<string[]>;
 
   farms$ = this.contextService.farms$;
 
@@ -39,6 +44,26 @@ export class LogVetVisitDialog {
     costBdt: [null as number | null, [Validators.min(0)]],
     nextVisitDate: ['']
   });
+
+  ngOnInit() {
+    this.filteredVetNames$ = this.form.get('vetName')!.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filterVets(value || ''))
+    );
+
+    const farmId = this.contextService.currentFarmValue?.id;
+    if (farmId) {
+      this.healthService.getVetVisits({ farmId, pageSize: 100 }).subscribe(res => {
+        const uniqueNames = Array.from(new Set(res.items.map(v => v.vetName).filter(Boolean)));
+        this.knownVetNames.set(uniqueNames);
+      });
+    }
+  }
+
+  private _filterVets(value: string): string[] {
+    const filterValue = value.toLowerCase();
+    return this.knownVetNames().filter(name => name.toLowerCase().includes(filterValue));
+  }
 
   onSubmit(): void {
     if (this.form.invalid) {

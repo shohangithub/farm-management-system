@@ -9,8 +9,10 @@ import { AnimalService } from '../../services/animal.service';
 import { ShedService } from '../../../farms/services/shed.service';
 import { PenService } from '../../../farms/services/pen.service';
 import { HealthService } from '../../../health/services/health.service';
+import { FinanceService } from '../../../finance/services/finance.service';
 import { ShedList } from '../../../farms/models/shed.model';
 import { PenList } from '../../../farms/models/pen.model';
+import { AnimalCostLedger } from '../../../finance/models/finance.model';
 import { AnimalHealthHistoryDto, VaccinationStatus, TreatmentStatus } from '../../../health/models/health.models';
 import {
   AnimalDto, AnimalStatus, AnimalSex, AnimalSpecies, TagType,
@@ -70,6 +72,7 @@ export class AnimalDetailComponent {
   private readonly penSvc = inject(PenService);
   private readonly farmSvc = inject(FarmService);
   private readonly healthSvc = inject(HealthService);
+  private readonly financeSvc = inject(FinanceService);
   private readonly batchSvc = inject(BatchService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
@@ -84,6 +87,7 @@ export class AnimalDetailComponent {
   readonly Math = Math;
 
   private refreshTrigger = signal(0);
+  readonly liveWeightPrice = signal<number>(400);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -104,6 +108,7 @@ export class AnimalDetailComponent {
             // Parallel fetch related data
             return forkJoin({
               animal: of(animal),
+              ledger: animal.farmId ? this.financeSvc.getAnimalCostLedger(animal.farmId, animal.id).pipe(catchError(() => of(null))) : of(null),
               healthHistory: this.healthSvc.getAnimalHealthHistory(animal.id).pipe(catchError(() => of(null))),
               farmName: animal.farmId ? this.farmSvc.getFarmById(animal.farmId).pipe(map(f => f.farmName), catchError(() => of(null))) : of(null),
               availableBatches: animal.farmId ? this.batchSvc.getBatches(animal.farmId).pipe(map(b => b.items), catchError(() => of([]))) : of([]),
@@ -167,6 +172,7 @@ export class AnimalDetailComponent {
   );
 
   readonly animal = computed(() => this.animalDataResult()?.animal ?? null);
+  readonly ledger = computed(() => this.animalDataResult()?.ledger ?? null);
   readonly healthHistory = computed(() => this.animalDataResult()?.healthHistory ?? null);
   readonly farmName = computed(() => this.animalDataResult()?.farmName ?? null);
   readonly shedName = computed(() => this.animalDataResult()?.shedName ?? null);
@@ -174,28 +180,52 @@ export class AnimalDetailComponent {
 
   // Financial calculations
   readonly totalTreatmentCost = computed(() => {
+    const l = this.ledger();
+    if (l) return l.totalVetCostBdt;
+    
+    // Fallback if ledger not initialized
     const history = this.healthHistory();
     if (!history || !history.treatments) return 0;
     return history.treatments.reduce((sum, t) => sum + (t.costBdt || 0), 0);
   });
 
-  readonly totalFeedCost = computed(() => 0); // Not currently tracked per animal
+  readonly totalFeedCost = computed(() => {
+    return this.ledger()?.totalFeedCostBdt || 0;
+  });
 
   readonly totalCost = computed(() => {
+    const l = this.ledger();
+    if (l) return l.totalCostBdt;
+
     const a = this.animal();
     if (!a) return 0;
     return (a.acquisitionPriceBdt || 0) + this.totalTreatmentCost() + this.totalFeedCost();
   });
 
   readonly totalRevenue = computed(() => {
+    const l = this.ledger();
+    if (l && l.saleRevenueBdt) return l.saleRevenueBdt;
+    
     const a = this.animal();
     if (!a) return 0;
     return a.salePriceBdt || 0;
   });
 
-  readonly netProfit = computed(() => this.totalRevenue() - this.totalCost());
-  
+  readonly currentEstimatedValue = computed(() => {
+    const a = this.animal();
+    if (!a) return 0;
+    return (a.latestWeightKg || 0) * this.liveWeightPrice();
+  });
+
   readonly isSold = computed(() => this.animal()?.status === AnimalStatus.Sold);
+
+  readonly netProfit = computed(() => {
+    if (this.isSold()) {
+      return this.totalRevenue() - this.totalCost();
+    } else {
+      return this.currentEstimatedValue() - this.totalCost();
+    }
+  });
 
   readonly weightChartOptions = computed<EChartsOption | null>(() => {
     const a = this.animal();

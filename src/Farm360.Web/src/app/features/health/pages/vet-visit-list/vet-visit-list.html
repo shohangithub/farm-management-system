@@ -19,8 +19,9 @@
       <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-teal-500/5 dark:text-teal-400/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">local_hospital</mat-icon>
       
       <!-- Card Header -->
-      <div class="p-5 flex items-start justify-between border-b border-gray-50 dark:border-gray-700/50 relative z-10">
-        <div class="flex items-center gap-3">
+      <div class="p-5 flex flex-col gap-3 border-b border-gray-50 dark:border-gray-700/50 relative z-10">
+        <!-- Top Row: Icon and Badge -->
+        <div class="flex items-start justify-between">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300"
                [ngClass]="{
                  'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-teal-500/20': element.visitType === 'RoutineCheckup',
@@ -30,26 +31,27 @@
                }">
             <mat-icon class="!w-5 !h-5 !text-[20px]">{{ element.visitType === 'Emergency' ? 'warning' : 'medical_services' }}</mat-icon>
           </div>
-          <div>
-            <h3 class="font-bold text-gray-900 dark:text-white text-lg leading-tight group-hover:text-teal-600 transition-colors">{{ element.vetName }}</h3>
-            <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-              <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mr-1">event</mat-icon>
-              {{ element.visitDate | date:'mediumDate' }}
-            </span>
-          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                [ngClass]="{
+                  'bg-teal-50 text-teal-700 border-teal-200': element.visitType === 'RoutineCheckup',
+                  'bg-red-50 text-red-700 border-red-200': element.visitType === 'Emergency',
+                  'bg-emerald-50 text-emerald-700 border-emerald-200': element.visitType === 'VaccinationDrive',
+                  'bg-indigo-50 text-indigo-700 border-indigo-200': element.visitType === 'Surgery'
+                }">
+            {{ element.visitType === 'RoutineCheckup' ? 'Routine Checkup' : 
+               element.visitType === 'VaccinationDrive' ? 'Vaccination Drive' : 
+               element.visitType }}
+          </span>
         </div>
         
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
-              [ngClass]="{
-                'bg-teal-50 text-teal-700 border-teal-200': element.visitType === 'RoutineCheckup',
-                'bg-red-50 text-red-700 border-red-200': element.visitType === 'Emergency',
-                'bg-emerald-50 text-emerald-700 border-emerald-200': element.visitType === 'VaccinationDrive',
-                'bg-indigo-50 text-indigo-700 border-indigo-200': element.visitType === 'Surgery'
-              }">
-          {{ element.visitType === 'RoutineCheckup' ? 'Routine Checkup' : 
-             element.visitType === 'VaccinationDrive' ? 'Vaccination Drive' : 
-             element.visitType }}
-        </span>
+        <!-- Name and Date Row -->
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white text-lg leading-tight group-hover:text-teal-600 transition-colors break-words">{{ element.vetName }}</h3>
+          <span class="inline-flex items-center mt-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mr-1.5">event</mat-icon>
+            {{ element.visitDate | date:'mediumDate' }}
+          </span>
+        </div>
       </div>
 
       <!-- Card Body -->

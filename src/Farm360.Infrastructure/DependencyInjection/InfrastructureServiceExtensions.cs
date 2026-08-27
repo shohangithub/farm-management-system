@@ -27,15 +27,23 @@ public static class InfrastructureServiceExtensions
         services.AddSerilog((_, loggerConfig) =>
             SerilogConfiguration.Configure(loggerConfig, configuration, environment));
 
-        // ── Redis Distributed Cache ────────────────────────────────────────
-        var redisConnectionString = configuration.GetConnectionString("Redis")
-            ?? throw new InvalidOperationException("'Redis' connection string is not configured.");
-
-        services.AddStackExchangeRedisCache(options =>
+        // ── Distributed Cache ──────────────────────────────────────────────
+        if (environment.IsProduction())
         {
-            options.Configuration = redisConnectionString;
-            options.InstanceName = "Farm360:";
-        });
+            // Fallback for Shared Hosting without Redis
+            services.AddDistributedMemoryCache();
+        }
+        else
+        {
+            var redisConnectionString = configuration.GetConnectionString("Redis")
+                ?? throw new InvalidOperationException("'Redis' connection string is not configured.");
+
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = "Farm360:";
+            });
+        }
 
         services.AddScoped<ICacheService, RedisCacheService>();
 

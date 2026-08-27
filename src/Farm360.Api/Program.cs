@@ -169,15 +169,15 @@ try
     app.UseCors("AngularClient");
 
     // [6] OpenAPI + Scalar UI (dev only)
-    if (app.Environment.IsDevelopment())
-    {
+    //if (app.Environment.IsDevelopment())
+    //{
         app.MapOpenApi();
         app.MapScalarApiReference(options =>
         {
             options.Title = "Farm360 AI API";
             options.Theme = ScalarTheme.DeepSpace;
         });
-    }
+   // }
 
     // [7] Authentication — MUST be before Authorization
     app.UseAuthentication();
