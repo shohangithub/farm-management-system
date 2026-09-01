@@ -23,6 +23,7 @@ public sealed class GetShedByIdQueryHandler : IRequestHandler<GetShedByIdQuery, 
         var shed = await _repository.GetByIdAsync(_tenantService.TenantId, request.Id, cancellationToken)
             ?? throw new Farm360.Application.Common.Exceptions.NotFoundException(nameof(Domain.Farms.Shed), request.Id);
 
-        return shed.ToDto();
+        var occupancy = await _repository.GetOccupancyByShedAsync(_tenantService.TenantId, request.Id, cancellationToken);
+        return shed.ToDto() with { CurrentOccupancy = occupancy };
     }
 }

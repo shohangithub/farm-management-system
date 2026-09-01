@@ -40,6 +40,29 @@ public sealed class ShedRepository : IShedRepository
             .AnyAsync(s => s.TenantId == tenantId && s.FarmId == farmId && s.ShedNumber == shedNumber, cancellationToken);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, int>> GetOccupancyByFarmAsync(Guid tenantId, Guid farmId, CancellationToken cancellationToken = default)
+    {
+        var animalQuery = _context.Set<Farm360.Domain.Livestock.Animal>()
+            .Where(a => a.TenantId == tenantId && a.FarmId == farmId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null));
+
+        var grouped = await animalQuery
+            .Where(m => m.ShedId != null)
+            .GroupBy(m => m.ShedId!.Value)
+            .Select(g => new { ShedId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ShedId, x => x.Count, cancellationToken);
+
+        return grouped;
+    }
+
+    public async Task<int> GetOccupancyByShedAsync(Guid tenantId, Guid shedId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<Farm360.Domain.Livestock.Animal>()
+            .Where(a => a.TenantId == tenantId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null))
+            .CountAsync(m => m.ShedId == shedId, cancellationToken);
+    }
+
     public void Add(Shed shed)
     {
         _context.Set<Shed>().Add(shed);

@@ -8,6 +8,8 @@ public interface IFarmRepository
     Task<IReadOnlyList<Farm>> GetAllByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Farm360.Domain.Common.LookupItem>> GetLookupsAsync(Guid tenantId, Guid? branchId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByCodeAsync(Guid tenantId, string farmCode, CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<Guid, int>> GetOccupancyByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
+    Task<int> GetOccupancyByFarmAsync(Guid tenantId, Guid farmId, CancellationToken cancellationToken = default);
     
     void Add(Farm farm);
     void Update(Farm farm);

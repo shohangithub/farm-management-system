@@ -21,6 +21,10 @@ public sealed class GetShedsByFarmQueryHandler : IRequestHandler<GetShedsByFarmQ
     public async Task<IReadOnlyList<ShedListDto>> Handle(GetShedsByFarmQuery request, CancellationToken cancellationToken)
     {
         var sheds = await _repository.GetAllByFarmAsync(_tenantService.TenantId, request.FarmId, cancellationToken);
-        return sheds.Select(s => s.ToListDto()).ToList();
+        var occupancies = await _repository.GetOccupancyByFarmAsync(_tenantService.TenantId, request.FarmId, cancellationToken);
+
+        return sheds.Select(s => s.ToListDto() with { 
+            CurrentOccupancy = occupancies.TryGetValue(s.Id, out var count) ? count : 0 
+        }).ToList();
     }
 }

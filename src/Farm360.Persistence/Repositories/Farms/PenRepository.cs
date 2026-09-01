@@ -40,6 +40,29 @@ public class PenRepository : IPenRepository
             .AnyAsync(p => p.TenantId == tenantId && p.ShedId == shedId && p.PenNumber == penNumber, cancellationToken);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, int>> GetOccupancyByShedAsync(Guid tenantId, Guid shedId, CancellationToken cancellationToken = default)
+    {
+        var animalQuery = _context.Set<Farm360.Domain.Livestock.Animal>()
+            .Where(a => a.TenantId == tenantId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null && m.ShedId == shedId));
+
+        var grouped = await animalQuery
+            .Where(m => m.PenId != null)
+            .GroupBy(m => m.PenId!.Value)
+            .Select(g => new { PenId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.PenId, x => x.Count, cancellationToken);
+
+        return grouped;
+    }
+
+    public async Task<int> GetOccupancyByPenAsync(Guid tenantId, Guid penId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<Farm360.Domain.Livestock.Animal>()
+            .Where(a => a.TenantId == tenantId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null))
+            .CountAsync(m => m.PenId == penId, cancellationToken);
+    }
+
     public void Add(Pen pen)
     {
         _context.Pens.Add(pen);

@@ -23,6 +23,7 @@ public sealed class GetFarmByIdQueryHandler : IRequestHandler<GetFarmByIdQuery, 
         var farm = await _repository.GetByIdAsync(_tenantService.TenantId, request.Id, cancellationToken)
             ?? throw new Farm360.Application.Common.Exceptions.NotFoundException(nameof(Domain.Farms.Farm), request.Id);
 
-        return farm.ToDto();
+        var occupancy = await _repository.GetOccupancyByFarmAsync(_tenantService.TenantId, request.Id, cancellationToken);
+        return farm.ToDto() with { CurrentAnimalCount = occupancy };
     }
 }

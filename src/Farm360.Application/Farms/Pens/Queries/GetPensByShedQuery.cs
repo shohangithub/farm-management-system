@@ -21,6 +21,10 @@ public class GetPensByShedQueryHandler : IRequestHandler<GetPensByShedQuery, IRe
     public async Task<IReadOnlyList<PenListDto>> Handle(GetPensByShedQuery request, CancellationToken cancellationToken)
     {
         var pens = await _repository.GetAllByShedAsync(_tenantService.TenantId, request.ShedId, cancellationToken);
-        return pens.Select(p => p.ToListDto()).ToList();
+        var occupancies = await _repository.GetOccupancyByShedAsync(_tenantService.TenantId, request.ShedId, cancellationToken);
+
+        return pens.Select(p => p.ToListDto() with { 
+            CurrentOccupancy = occupancies.TryGetValue(p.Id, out var count) ? count : 0 
+        }).ToList();
     }
 }

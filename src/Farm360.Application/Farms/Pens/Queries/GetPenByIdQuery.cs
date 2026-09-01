@@ -24,6 +24,7 @@ public class GetPenByIdQueryHandler : IRequestHandler<GetPenByIdQuery, PenDto>
         var pen = await _repository.GetByIdAsync(_tenantService.TenantId, request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Domain.Farms.Pen), request.Id);
 
-        return pen.ToDto();
+        var occupancy = await _repository.GetOccupancyByPenAsync(_tenantService.TenantId, request.Id, cancellationToken);
+        return pen.ToDto() with { CurrentOccupancy = occupancy };
     }
 }

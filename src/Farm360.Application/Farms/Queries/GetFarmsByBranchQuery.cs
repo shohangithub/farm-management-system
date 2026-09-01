@@ -21,6 +21,10 @@ public sealed class GetFarmsByBranchQueryHandler : IRequestHandler<GetFarmsByBra
     public async Task<IReadOnlyList<FarmListDto>> Handle(GetFarmsByBranchQuery request, CancellationToken cancellationToken)
     {
         var farms = await _repository.GetAllByBranchAsync(_tenantService.TenantId, request.BranchId, cancellationToken);
-        return farms.Select(f => f.ToListDto()).ToList();
+        var occupancies = await _repository.GetOccupancyByTenantAsync(_tenantService.TenantId, cancellationToken);
+
+        return farms.Select(f => f.ToListDto() with { 
+            CurrentAnimalCount = occupancies.TryGetValue(f.Id, out var count) ? count : 0 
+        }).ToList();
     }
 }
