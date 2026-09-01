@@ -141,7 +141,10 @@ export class RuleSetListComponent implements OnInit {
   }
 
   openCreateDialog(): void {
-    const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, { width: '1000px' });
+    const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, { 
+      width: '95vw', 
+      maxWidth: '800px' 
+    });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadRuleSets();
     });
@@ -149,7 +152,8 @@ export class RuleSetListComponent implements OnInit {
 
   openEditDialog(ruleSet: FeedingRuleSet): void {
     const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, {
-      width: '1000px',
+      width: '95vw',
+      maxWidth: '800px',
       data: ruleSet
     });
     dialogRef.afterClosed().subscribe((res) => {

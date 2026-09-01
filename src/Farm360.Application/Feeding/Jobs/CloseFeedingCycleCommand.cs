@@ -15,7 +15,6 @@ public sealed class CloseFeedingCycleCommandHandler : IRequestHandler<CloseFeedi
     private readonly IFeedingReconciliationRepository _reconciliationRepository;
     private readonly IDailyFeedingEntryRepository _entryRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITenantService _tenantService;
     private readonly ILogger<CloseFeedingCycleCommandHandler> _logger;
 
     public CloseFeedingCycleCommandHandler(
@@ -23,22 +22,19 @@ public sealed class CloseFeedingCycleCommandHandler : IRequestHandler<CloseFeedi
         IFeedingReconciliationRepository reconciliationRepository,
         IDailyFeedingEntryRepository entryRepository,
         IUnitOfWork unitOfWork,
-        ITenantService tenantService,
         ILogger<CloseFeedingCycleCommandHandler> logger)
     {
         _planRepository = planRepository;
         _reconciliationRepository = reconciliationRepository;
         _entryRepository = entryRepository;
         _unitOfWork = unitOfWork;
-        _tenantService = tenantService;
         _logger = logger;
     }
 
     public async Task Handle(CloseFeedingCycleCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _tenantService.TenantId;
         if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Closing feeding cycles for Tenant {TenantId}", tenantId);
+            _logger.LogInformation("Closing feeding cycles across all tenants");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 

@@ -5,6 +5,7 @@ namespace Farm360.Domain.Feeding.Interfaces.Repositories;
 public interface IFeedingRuleSetRepository
 {
     Task<FeedingRuleSet?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<FeedingRuleSet?> GetByIdAcrossTenantsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<FeedingRuleSet>> GetAllAsync(CancellationToken cancellationToken = default);
     Task AddAsync(FeedingRuleSet entity, CancellationToken cancellationToken = default);
     void Update(FeedingRuleSet entity);
@@ -18,6 +19,7 @@ public interface IAnimalFeedingPlanRepository
     void Update(AnimalFeedingPlan entity);
     Task<IReadOnlyList<AnimalFeedingPlan>> GetActivePlansByFarmAsync(Guid tenantId, Guid farmId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AnimalFeedingPlan>> GetActivePlansAsync(Guid tenantId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<AnimalFeedingPlan>> GetAllActivePlansAcrossTenantsAsync(CancellationToken cancellationToken);
     Task<AnimalFeedingPlan?> GetActivePlanForAnimalAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken);
 }
 

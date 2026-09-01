@@ -25,6 +25,12 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
     MatSelectModule,
     AnimalPickerComponent
   ],
+  styles: [`
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.4); border-radius: 20px; }
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.7); }
+  `],
   template: `
     <div class="p-0 flex flex-col h-full max-h-[85vh] bg-gray-50 dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
       <!-- Header -->
@@ -46,7 +52,7 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
       </div>
 
       <!-- Form Content -->
-      <div class="flex-1 p-6" [formGroup]="form">
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-6" [formGroup]="form">
         <div class="space-y-5">
           
           <div>

@@ -292,6 +292,7 @@ export interface FeedingPlanExclusion {
 export interface AnimalFeedingPlan {
   id: string;
   animalId: string;
+  animalTag: string;
   ruleSetId: string;
   ruleSetName: string;
   assignedOn: string;

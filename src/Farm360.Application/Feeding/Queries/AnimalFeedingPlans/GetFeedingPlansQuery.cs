@@ -10,6 +10,7 @@ public sealed record GetFeedingPlansQuery(Guid FarmId, string? Status) : IReques
 public sealed record AnimalFeedingPlanDto(
     Guid Id,
     Guid AnimalId,
+    string AnimalTag,
     Guid RuleSetId,
     string RuleSetName,
     DateOnly AssignedOn,
@@ -22,12 +23,18 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
 {
     private readonly IAnimalFeedingPlanRepository _repository;
     private readonly IFeedingRuleSetRepository _ruleSetRepository;
+    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository _animalRepository;
     private readonly ITenantService _tenantService;
 
-    public GetFeedingPlansQueryHandler(IAnimalFeedingPlanRepository repository, IFeedingRuleSetRepository ruleSetRepository, ITenantService tenantService)
+    public GetFeedingPlansQueryHandler(
+        IAnimalFeedingPlanRepository repository, 
+        IFeedingRuleSetRepository ruleSetRepository, 
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository animalRepository,
+        ITenantService tenantService)
     {
         _repository = repository;
         _ruleSetRepository = ruleSetRepository;
+        _animalRepository = animalRepository;
         _tenantService = tenantService;
     }
     
@@ -35,10 +42,15 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
     {
         var plans = await _repository.GetActivePlansByFarmAsync(_tenantService.TenantId, request.FarmId, cancellationToken);
         var ruleSets = await _ruleSetRepository.GetAllAsync(cancellationToken);
+        
+        var animalIds = plans.Where(p => p.AnimalId.HasValue).Select(p => p.AnimalId!.Value).Distinct().ToList();
+        var animals = await _animalRepository.GetByIdsAsync(animalIds, cancellationToken);
+        var animalDict = animals.ToDictionary(a => a.Id, a => a.Tag.TagId);
 
         return plans.Select(p => new AnimalFeedingPlanDto(
             p.Id,
             p.AnimalId ?? Guid.Empty,
+            p.AnimalId.HasValue && animalDict.TryGetValue(p.AnimalId.Value, out var tag) ? tag : "Unknown",
             p.FeedingRuleSetId,
             ruleSets.FirstOrDefault(r => r.Id == p.FeedingRuleSetId)?.Name ?? "Unknown Rule Set",
             p.StartDate,

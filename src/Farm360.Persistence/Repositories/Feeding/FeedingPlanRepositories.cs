@@ -17,6 +17,9 @@ public sealed class FeedingRuleSetRepository : IFeedingRuleSetRepository
     public async Task<FeedingRuleSet?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await _dbContext.FeedingRuleSets.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public async Task<FeedingRuleSet?> GetByIdAcrossTenantsAsync(Guid id, CancellationToken cancellationToken = default) =>
+        await _dbContext.FeedingRuleSets.IgnoreQueryFilters().Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public async Task<IReadOnlyList<FeedingRuleSet>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await _dbContext.FeedingRuleSets.Include(x => x.Lines).AsNoTracking().ToListAsync(cancellationToken);
 
@@ -66,6 +69,15 @@ public sealed class AnimalFeedingPlanRepository : IAnimalFeedingPlanRepository
         return await _dbContext.AnimalFeedingPlans
             .Include(x => x.Exclusions)
             .Where(x => x.TenantId == tenantId && x.Status == Farm360.Domain.Feeding.Enums.FeedingPlanStatus.Active)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AnimalFeedingPlan>> GetAllActivePlansAcrossTenantsAsync(CancellationToken cancellationToken)
+    {
+        return await _dbContext.AnimalFeedingPlans
+            .IgnoreQueryFilters()
+            .Include(x => x.Exclusions)
+            .Where(x => x.Status == Farm360.Domain.Feeding.Enums.FeedingPlanStatus.Active)
             .ToListAsync(cancellationToken);
     }
 

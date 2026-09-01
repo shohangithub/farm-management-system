@@ -255,10 +255,12 @@ try
         // Register Hangfire Recurring Jobs
         var jobService = scope.ServiceProvider.GetRequiredService<Farm360.Application.Common.Interfaces.IBackgroundJobService>();
         
+        var dailyCron = app.Environment.IsDevelopment() ? Hangfire.Cron.Minutely() : Hangfire.Cron.Daily(0, 0);
+        
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "daily-feeding-entries",
             sender => sender.Send(new Farm360.Application.Feeding.Jobs.CreateDailyFeedingEntriesCommand(), CancellationToken.None),
-            Hangfire.Cron.Daily(0, 0)); // Runs at 12:00 AM
+            dailyCron); // Runs minutely in dev, at 12:00 AM otherwise
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "close-feeding-cycles",

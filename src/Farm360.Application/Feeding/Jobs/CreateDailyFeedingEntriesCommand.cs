@@ -17,7 +17,6 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
     private readonly IDailyFeedingEntryRepository _entryRepository;
     private readonly IAnimalRepository _animalRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITenantService _tenantService;
     private readonly ILogger<CreateDailyFeedingEntriesCommandHandler> _logger;
 
     public CreateDailyFeedingEntriesCommandHandler(
@@ -26,7 +25,6 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
         IDailyFeedingEntryRepository entryRepository,
         IAnimalRepository animalRepository,
         IUnitOfWork unitOfWork,
-        ITenantService tenantService,
         ILogger<CreateDailyFeedingEntriesCommandHandler> logger)
     {
         _planRepository = planRepository;
@@ -34,21 +32,17 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
         _entryRepository = entryRepository;
         _animalRepository = animalRepository;
         _unitOfWork = unitOfWork;
-        _tenantService = tenantService;
         _logger = logger;
     }
 
     public async Task Handle(CreateDailyFeedingEntriesCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _tenantService.TenantId;
         if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Creating daily feeding entries for Tenant {TenantId}", tenantId);
+            _logger.LogInformation("Creating daily feeding entries across all tenants");
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         
-        // F360-MTA-2026-001: tenant scope is guaranteed by DI and the job runner.
-        
-        var activePlans = await _planRepository.GetActivePlansAsync(tenantId, cancellationToken);
+        var activePlans = await _planRepository.GetAllActivePlansAcrossTenantsAsync(cancellationToken);
         var ruleSets = new Dictionary<Guid, FeedingRuleSet>();
 
         foreach (var plan in activePlans)
@@ -57,7 +51,7 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
             {
                 if (!ruleSets.TryGetValue(plan.FeedingRuleSetId, out var ruleSet))
                 {
-                    var fetchedRuleSet = await _ruleSetRepository.GetByIdAsync(plan.FeedingRuleSetId, cancellationToken);
+                    var fetchedRuleSet = await _ruleSetRepository.GetByIdAcrossTenantsAsync(plan.FeedingRuleSetId, cancellationToken);
                     if (fetchedRuleSet != null)
                     {
                         ruleSets[plan.FeedingRuleSetId] = fetchedRuleSet;
@@ -70,7 +64,7 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
 
                 var entry = new DailyFeedingEntry(
                     id: Guid.NewGuid(),
-                    tenantId: tenantId,
+                    tenantId: plan.TenantId,
                     feedingPlanId: plan.Id,
                     farmId: plan.FarmId,
                     entryDate: today,

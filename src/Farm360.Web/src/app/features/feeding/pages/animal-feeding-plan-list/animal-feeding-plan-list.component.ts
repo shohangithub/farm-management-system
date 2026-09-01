@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +13,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { AssignFeedingPlanDialogComponent } from '../../components/dialogs/assign-feeding-plan-dialog/assign-feeding-plan-dialog.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-animal-feeding-plan-list',
@@ -74,7 +75,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                     <div class="w-8 h-8 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                       <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">pets</mat-icon>
                     </div>
-                    {{ plan.animalId.split('-')[0] | uppercase }}-...{{ plan.animalId.slice(-4) }}
+                    {{ plan.animalTag }}
                   </div>
                 </td>
                 <td class="px-6 py-4">
@@ -94,7 +95,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                 </td>
                 <td class="px-6 py-4 text-right">
                   <button *ngIf="plan.isActive" (click)="cancelPlan(plan)"
-                    class="opacity-0 group-hover:opacity-100 px-3 py-1.5 text-xs font-semibold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg border border-red-200 transition-all shadow-sm inline-flex items-center gap-1">
+                    class="px-3 py-1.5 text-xs font-semibold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg border border-red-200 transition-all shadow-sm inline-flex items-center gap-1">
                     <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> Cancel
                   </button>
                 </td>
@@ -112,16 +113,26 @@ export class AnimalFeedingPlanListComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly contextService = inject(WorkingContextService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly isLoading = signal(true);
   readonly plans = signal<AnimalFeedingPlan[]>([]);
 
   ngOnInit(): void {
-    this.loadPlans();
+    this.contextService.currentFarm$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(farm => {
+        if (farm) {
+          this.loadPlans(farm.id);
+        } else {
+          this.plans.set([]);
+          this.isLoading.set(false);
+        }
+      });
   }
 
-  loadPlans(): void {
-    const farmId = this.contextService.currentFarmValue?.id;
+  loadPlans(farmId?: string): void {
+    farmId = farmId || this.contextService.currentFarmValue?.id;
     if (!farmId) {
       this.isLoading.set(false);
       return;
@@ -138,7 +149,10 @@ export class AnimalFeedingPlanListComponent implements OnInit {
   }
 
   openAssignDialog(): void {
-    const dialogRef = this.dialog.open(AssignFeedingPlanDialogComponent, { width: '600px' });
+    const dialogRef = this.dialog.open(AssignFeedingPlanDialogComponent, { 
+      width: '95vw', 
+      maxWidth: '600px' 
+    });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadPlans();
     });
