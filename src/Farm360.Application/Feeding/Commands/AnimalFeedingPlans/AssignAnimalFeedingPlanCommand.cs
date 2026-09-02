@@ -87,10 +87,17 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
 
             if (matchingRule != null)
             {
+                decimal expectedKg = matchingRule.ConcentrateKgPerDay;
+
+                if (ruleSet.PlanType == FeedingPlanType.WeightPercentage)
+                {
+                    expectedKg = (currentWeight * matchingRule.ConcentrateKgPerDay) / 100m;
+                }
+
                 plan.UpdateCurrentRule(
                     matchingRule.Id,
                     currentWeight,
-                    matchingRule.ConcentrateKgPerDay,
+                    expectedKg,
                     matchingRule.RoughageKgPerDay
                 );
             }

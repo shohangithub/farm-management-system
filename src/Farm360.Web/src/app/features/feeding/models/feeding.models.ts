@@ -234,7 +234,8 @@ export interface LogFeedConsumptionRequest {
 export enum FeedingPlanType {
   FixedQuantity = 'FixedQuantity',
   WeightPercentage = 'WeightPercentage',
-  AgeBased = 'AgeBased'
+  AgeBased = 'AgeBased',
+  WeightQuantity = 'WeightQuantity'
 }
 
 export enum DailyFeedingEntryStatus {
@@ -268,6 +269,7 @@ export interface FeedingRuleLine {
   minAgeDays?: number;
   maxAgeDays?: number;
   feedType: FeedCategory;
+  formulaId?: string;
   quantityValue: number;
 }
 
@@ -350,6 +352,7 @@ export interface CreateFeedingRuleSetRequest {
     minAgeDays?: number;
     maxAgeDays?: number;
     feedType: FeedCategory;
+    formulaId?: string;
     quantityValue: number;
   }[];
 }
@@ -367,6 +370,7 @@ export interface UpdateFeedingRuleSetRequest {
     minAgeDays?: number;
     maxAgeDays?: number;
     feedType: FeedCategory;
+    formulaId?: string;
     quantityValue: number;
   }[];
 }

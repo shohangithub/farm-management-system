@@ -13,7 +13,8 @@ public record FeedingRuleLineDto(
     [property: JsonPropertyName("minAgeDays")] int? MinAgeDays,
     [property: JsonPropertyName("maxAgeDays")] int? MaxAgeDays,
     [property: JsonPropertyName("feedType")] FeedCategory FeedType,
-    [property: JsonPropertyName("quantityValue")] decimal QuantityValue);
+    [property: JsonPropertyName("quantityValue")] decimal QuantityValue,
+    [property: JsonPropertyName("formulaId")] Guid? FormulaId = null);
 
 public record FeedingRuleSetDto(
     [property: JsonPropertyName("id")] Guid Id,
@@ -67,7 +68,8 @@ public sealed class GetFeedingRuleSetsQueryHandler : IRequestHandler<GetFeedingR
                 l.MinAgeDays,
                 l.MaxAgeDays,
                 l.FeedType,
-                l.QuantityValue
+                l.QuantityValue,
+                l.FormulaId == Guid.Empty ? null : l.FormulaId
             )).ToList(),
             r.Species,
             r.Purpose)).ToList();

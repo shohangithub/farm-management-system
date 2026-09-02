@@ -41,7 +41,8 @@ public enum FeedingPlanType
     SevenDay = 4,
     FifteenDay = 5,
     ThirtyDay = 6,
-    Custom = 7
+    Custom = 7,
+    WeightQuantity = 8
 }
 
 public enum DailyFeedingEntryStatus

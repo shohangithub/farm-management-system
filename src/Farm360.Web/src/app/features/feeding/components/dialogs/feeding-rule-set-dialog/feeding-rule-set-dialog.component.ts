@@ -15,7 +15,8 @@ import {
   TargetAnimalType,
   FeedingPurpose,
   FeedCategory,
-  FeedCategoryNames
+  FeedCategoryNames,
+  FeedFormula
 } from '../../../models/feeding.models';
 
 @Component({
@@ -77,6 +78,7 @@ import {
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm font-medium">
               <option value="FixedQuantity" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Fixed Quantity per Head</option>
               <option value="WeightPercentage" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Percentage of Body Weight</option>
+              <option value="WeightQuantity" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Weight-Based Fixed Quantity</option>
               <option value="AgeBased" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Age Based Rules</option>
             </select>
           </div>
@@ -145,6 +147,11 @@ import {
                 <br/><span class="text-emerald-700 dark:text-emerald-300 font-medium">Example: For 300kg – 500kg cattle, feed 3.0% of body weight (e.g., 400kg cow receives 12kg feed).</span>
               </p>
 
+              <p *ngSwitchCase="'WeightQuantity'">
+                <strong>Weight-Based Fixed Quantity:</strong> Define a fixed daily feed amount in <strong>kg</strong> for specific live weight ranges.
+                <br/><span class="text-emerald-700 dark:text-emerald-300 font-medium">Example: For 101kg – 150kg cattle, feed 2.0 kg daily.</span>
+              </p>
+
               <p *ngSwitchCase="'AgeBased'">
                 <strong>Age Based Rules:</strong> Adjusts feed automatically as the animal matures. Define age brackets in days (<strong>Min/Max Age in Days</strong>) and fixed daily feed amount in <strong>kg</strong>.
                 <br/><span class="text-emerald-700 dark:text-emerald-300 font-medium">Example: 0 – 60 Days (Calf Starter): 1.5 kg/day | 61 – 180 Days: 3.5 kg/day.</span>
@@ -172,7 +179,7 @@ import {
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <!-- Dynamic Fields based on Plan Type -->
-              <ng-container *ngIf="form.get('planType')?.value === 'WeightPercentage'">
+              <ng-container *ngIf="form.get('planType')?.value === 'WeightPercentage' || form.get('planType')?.value === 'WeightQuantity'">
                 <div>
                   <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">Min Weight (kg)</label>
                   <input formControlName="minWeightKg" type="number" step="0.01" placeholder="e.g. 250"
@@ -198,12 +205,23 @@ import {
                 </div>
               </ng-container>
 
-              <div [ngClass]="{'md:col-span-2': form.get('planType')?.value === 'FixedQuantity'}">
+              <div [ngClass]="{'md:col-span-2': form.get('planType')?.value === 'FixedQuantity', 'hidden': !!rule.get('formulaId')?.value}">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">Feed Category <span class="text-red-500">*</span></label>
                 <select formControlName="feedType"
                   class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium">
                   @for (cat of categoryOptions; track cat.value) {
                     <option [value]="cat.value" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ cat.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <div [ngClass]="{'md:col-span-2': form.get('planType')?.value === 'FixedQuantity'}">
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">Formula / Ration</label>
+                <select formControlName="formulaId"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium">
+                  <option [ngValue]="null" class="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">-- Pick Formula (Optional) --</option>
+                  @for (f of formulas(); track f.id) {
+                    <option [value]="f.id" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ f.title }}</option>
                   }
                 </select>
               </div>
@@ -255,6 +273,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
 
   readonly isEditing = !!this.data;
   readonly isSubmitting = signal(false);
+  readonly formulas = signal<FeedFormula[]>([]);
 
   readonly categoryOptions = [
     { value: FeedCategory.Forage, label: FeedCategoryNames[FeedCategory.Forage] },
@@ -280,6 +299,11 @@ export class FeedingRuleSetDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Fetch active formulas
+    this.feedingService.getFormulas(1, 100).subscribe({
+      next: (res) => this.formulas.set(res.items)
+    });
+
     if (this.isEditing) {
       this.form.patchValue({
         name: this.data.name,
@@ -306,6 +330,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
       minAgeDays: [rule?.minAgeDays || null],
       maxAgeDays: [rule?.maxAgeDays || null],
       feedType: [rule?.feedType || FeedCategory.Forage, [Validators.required]],
+      formulaId: [rule?.formulaId || null],
       quantityValue: [rule?.quantityValue || null, [Validators.required, Validators.min(0.001)]]
     });
   }
@@ -335,6 +360,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
       minAgeDays: r.minAgeDays === "" ? null : r.minAgeDays,
       maxAgeDays: r.maxAgeDays === "" ? null : r.maxAgeDays,
       feedType: r.feedType,
+      formulaId: r.formulaId || undefined,
       quantityValue: r.quantityValue
     }));
 
