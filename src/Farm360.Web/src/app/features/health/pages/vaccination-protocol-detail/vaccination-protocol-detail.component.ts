@@ -99,7 +99,7 @@ export class VaccinationProtocolDetailComponent {
     const p = this.protocol();
     if (!p) return;
     
-    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, {
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, { disableClose: true,
       width: '700px',
       maxWidth: '95vw',
       data: p
@@ -113,7 +113,7 @@ export class VaccinationProtocolDetailComponent {
     const p = this.protocol();
     if (!p) return;
     
-    this.dialog.open(AssignProtocolDialog, {
+    this.dialog.open(AssignProtocolDialog, { disableClose: true,
       width: '720px',
       data: { protocol: p }
     });

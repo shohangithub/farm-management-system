@@ -328,7 +328,7 @@ export class FeedingDashboardComponent {
     const farmId = this.activeFarmId();
     if (!farmId) return;
 
-    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, {
+    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -342,7 +342,7 @@ export class FeedingDashboardComponent {
     const farmId = this.activeFarmId();
     if (!farmId) return;
     
-    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, {
+    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });

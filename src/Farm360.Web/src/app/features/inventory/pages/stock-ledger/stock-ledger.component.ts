@@ -333,7 +333,7 @@ export class StockLedgerComponent {
   openStockInDialog(): void {
     const farmId = this.params().farmId;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockInDialogComponent, {
+    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -345,7 +345,7 @@ export class StockLedgerComponent {
   openStockOutDialog(): void {
     const farmId = this.params().farmId;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockOutDialogComponent, {
+    const dialogRef = this.dialog.open(StockOutDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });

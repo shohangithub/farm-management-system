@@ -327,7 +327,7 @@ export class BreedList {
   goToDetails(id: string): void {
     if (this.dialog.openDialogs.length > 0) return;
 
-    this.dialog.open(BreedDetailDialogComponent, {
+    this.dialog.open(BreedDetailDialogComponent, { disableClose: true,
       width: '720px',
       maxWidth: '95vw',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
@@ -338,7 +338,7 @@ export class BreedList {
   openSetupDialog(breed?: BreedDto): void {
     if (this.dialog.openDialogs.length > 0) return;
 
-    const dialogRef = this.dialog.open(BreedSetupDialogComponent, {
+    const dialogRef = this.dialog.open(BreedSetupDialogComponent, { disableClose: true,
       width: '720px',
       maxWidth: '95vw',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
@@ -355,7 +355,7 @@ export class BreedList {
   onDelete(breed: BreedDto, event: Event): void {
     event.stopPropagation();
     
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {

@@ -119,7 +119,7 @@ export class DewormingCalendarComponent {
   }
 
   openScheduleDialog() {
-    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, {
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, { disableClose: true,
       width: '800px',
       data: {
         title: 'Deworming: ',

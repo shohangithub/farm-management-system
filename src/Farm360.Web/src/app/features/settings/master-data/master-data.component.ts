@@ -155,7 +155,7 @@ export class MasterDataComponent {
   }
 
   deleteEntry(entry: MasterDataEntry): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       data: {
         title: 'Delete Master Data',

@@ -132,7 +132,7 @@ export class FeedingScheduleListComponent implements OnInit {
   }
 
   openCreateScheduleDialog(): void {
-    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, {
+    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId: this.activeFarmId }
     });
@@ -142,7 +142,7 @@ export class FeedingScheduleListComponent implements OnInit {
   }
 
   openEditDialog(schedule: FeedingSchedule): void {
-    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, {
+    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, { disableClose: true,
       width: '720px',
       data: { schedule, farmId: this.activeFarmId }
     });

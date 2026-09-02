@@ -202,7 +202,7 @@ export class BreedDetailDialogComponent implements OnInit {
     const breed = this.breed();
     if (!breed) return;
 
-    const setupDialogRef = this.dialog.open(BreedSetupDialogComponent, {
+    const setupDialogRef = this.dialog.open(BreedSetupDialogComponent, { disableClose: true,
       width: '720px',
       maxWidth: '95vw',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],

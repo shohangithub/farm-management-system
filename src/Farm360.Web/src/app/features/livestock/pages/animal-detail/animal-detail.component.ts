@@ -378,7 +378,7 @@ export class AnimalDetailComponent {
   onQuarantine(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(QuarantineDialogComponent, {
+    const dialogRef = this.dialog.open(QuarantineDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -390,7 +390,7 @@ export class AnimalDetailComponent {
   onRelease(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       data: {
         title: 'Release from Quarantine',
         message: `Are you sure you want to release ${a.tagId} from quarantine?`,
@@ -413,7 +413,7 @@ export class AnimalDetailComponent {
   onEdit(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(AnimalEditDialogComponent, {
+    const dialogRef = this.dialog.open(AnimalEditDialogComponent, { disableClose: true,
       width: '600px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -425,7 +425,7 @@ export class AnimalDetailComponent {
   onSell(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordSaleDialogComponent, {
+    const dialogRef = this.dialog.open(RecordSaleDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -437,7 +437,7 @@ export class AnimalDetailComponent {
   onTransfer(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(TransferAnimalDialogComponent, {
+    const dialogRef = this.dialog.open(TransferAnimalDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -460,7 +460,7 @@ export class AnimalDetailComponent {
   onRecordMating(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(MatingDialogComponent, {
+    const dialogRef = this.dialog.open(MatingDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -477,7 +477,7 @@ export class AnimalDetailComponent {
   onConfirmPregnancy(recordId: string): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(ConfirmPregnancyDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmPregnancyDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -494,7 +494,7 @@ export class AnimalDetailComponent {
   onRecordCalving(recordId: string): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordCalvingDialogComponent, {
+    const dialogRef = this.dialog.open(RecordCalvingDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -511,7 +511,7 @@ export class AnimalDetailComponent {
   onRecordBcs(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordBcsDialogComponent, {
+    const dialogRef = this.dialog.open(RecordBcsDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -528,7 +528,7 @@ export class AnimalDetailComponent {
   onAssignBatch(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(AssignBatchDialogComponent, {
+    const dialogRef = this.dialog.open(AssignBatchDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -550,7 +550,7 @@ export class AnimalDetailComponent {
   onRecordWeight(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordWeightDialogComponent, {
+    const dialogRef = this.dialog.open(RecordWeightDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -567,7 +567,7 @@ export class AnimalDetailComponent {
   onUploadPhoto(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(UploadPhotoDialogComponent, {
+    const dialogRef = this.dialog.open(UploadPhotoDialogComponent, { disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -584,7 +584,7 @@ export class AnimalDetailComponent {
   onOpenIntelligence(): void {
     const a = this.animal();
     if (!a) return;
-    this.dialog.open(AnimalIntelligenceDialogComponent, {
+    this.dialog.open(AnimalIntelligenceDialogComponent, { disableClose: true,
       width: '90vw',
       maxWidth: '1200px',
       autoFocus: false,

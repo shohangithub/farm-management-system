@@ -134,7 +134,7 @@ export class LoanListComponent implements OnInit {
   readonly loans = toSignal(this.loans$);
   readonly isLoading = computed(() => this.loans() === undefined);
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   openLoanDialog(): void {
     const dialogRef = this.dialog.open(LoanFormDialogComponent, {

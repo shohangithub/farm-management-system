@@ -1,10 +1,10 @@
 import {
   Component, inject, signal, computed, ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule }      from '@angular/common';
-import { RouterModule, Router }      from '@angular/router';
-import { FormsModule }       from '@angular/forms';
-import { AnimalService }     from '../../services/animal.service';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AnimalService } from '../../services/animal.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import {
   AnimalListItemDto, AnimalListParams, AnimalSpecies, AnimalStatus, AnimalSex,
@@ -32,34 +32,34 @@ import { ExportService } from '../../../../shared/services/export.service';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, RouterModule, FormsModule, 
+    CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, EmptyStateComponent, MatIconModule, MatMenuModule, MatButtonModule
   ],
   templateUrl: './animal-list.component.html'
 })
 export class AnimalListComponent {
-  private readonly svc      = inject(AnimalService);
-  private readonly router   = inject(Router);
-  private readonly dialog   = inject(MatDialog);
+  private readonly svc = inject(AnimalService);
+  private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   private readonly contextService = inject(WorkingContextService);
   private readonly recentSvc = inject(RecentlyViewedService);
   private readonly exportSvc = inject(ExportService);
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly recentAnimals = this.recentSvc.recentAnimals;
-  readonly loading    = signal(true);
-  readonly error      = signal<string | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
   readonly searchTerm = signal('');
-  readonly params     = signal<AnimalListParams>({ pageNumber: 1, pageSize: 20 });
+  readonly params = signal<AnimalListParams>({ pageNumber: 1, pageSize: 20 });
   readonly selectedAnimals = signal<Set<AnimalListItemDto>>(new Set());
 
   readonly Math = Math;
   readonly AnimalStatus = AnimalStatus;
-  readonly AnimalSex    = AnimalSex;
+  readonly AnimalSex = AnimalSex;
 
   readonly speciesOptions = Object.entries(SPECIES_LABELS).map(([v, l]) => ({ value: v, label: l }));
-  readonly statusOptions  = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
-  readonly sexOptions     = Object.entries(SEX_LABELS).map(([v, l]) => ({ value: v, label: l }));
+  readonly statusOptions = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
+  readonly sexOptions = Object.entries(SEX_LABELS).map(([v, l]) => ({ value: v, label: l }));
 
   readonly hasActiveFilters = computed(() => {
     const p = this.params();
@@ -122,7 +122,7 @@ export class AnimalListComponent {
   exportToCsv(): void {
     const data = this.result()?.items;
     if (!data || data.length === 0) return;
-    
+
     const formattedData = data.map(a => ({
       'Tag ID': a.tagId,
       'Species': this.speciesLabel(a.species),
@@ -174,8 +174,8 @@ export class AnimalListComponent {
 
   // ── Display helpers ───────────────────────────────────────────────────────
   speciesLabel(s: AnimalSpecies): string { return SPECIES_LABELS[s] ?? '—'; }
-  statusLabel(s: AnimalStatus):  string  { return STATUS_LABELS[s]  ?? '—'; }
-  sexLabel(s: AnimalSex):        string  { return SEX_LABELS[s]     ?? '—'; }
+  statusLabel(s: AnimalStatus): string { return STATUS_LABELS[s] ?? '—'; }
+  sexLabel(s: AnimalSex): string { return SEX_LABELS[s] ?? '—'; }
 
   statusClass(status: AnimalStatus): string {
     switch (status) {
@@ -193,7 +193,7 @@ export class AnimalListComponent {
 
   ageLabel(dob: string): string {
     const days = Math.floor((Date.now() - new Date(dob).getTime()) / 86_400_000);
-    if (days < 30)  return `${days}d`;
+    if (days < 30) return `${days}d`;
     if (days < 365) return `${Math.floor(days / 30)}mo`;
     const y = Math.floor(days / 365);
     const m = Math.floor((days % 365) / 30);
@@ -225,8 +225,8 @@ export class AnimalListComponent {
     if (animals.length === 0) return;
 
     const dialogRef = this.dialog.open(BatchWeightDialogComponent, {
-      width: '720px',
       disableClose: true,
+      width: '720px',
       data: { animals } as BatchWeightDialogData
     });
 
@@ -243,8 +243,8 @@ export class AnimalListComponent {
     if (animals.length === 0) return;
 
     const dialogRef = this.dialog.open(BatchVaccinationDialogComponent, {
-      width: '560px',
       disableClose: true,
+      width: '560px',
       data: { animals } as BatchVaccinationDialogData
     });
 
@@ -258,6 +258,7 @@ export class AnimalListComponent {
 
   onDelete(animal: AnimalListItemDto): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      disableClose: true,
       data: {
         title: 'Delete Animal',
         message: `Are you sure you want to delete animal ${animal.tagId}? This action cannot be undone.`,

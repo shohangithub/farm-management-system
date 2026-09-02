@@ -21,11 +21,11 @@ import { of } from 'rxjs';
   selector: 'app-vet-visit-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    RouterModule, 
-    MatButtonModule, 
-    MatIconModule, 
-    MatPaginatorModule, 
+    CommonModule,
+    RouterModule,
+    MatButtonModule,
+    MatIconModule,
+    MatPaginatorModule,
     MatTooltipModule,
     MatDialogModule,
     PageHeaderComponent,
@@ -63,7 +63,7 @@ export class VetVisitListComponent {
   private vetVisitsResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => this.isLoading.set(true)),
-      switchMap(({ pageIndex, pageSize, farmId }) => 
+      switchMap(({ pageIndex, pageSize, farmId }) =>
         this.healthService.getVetVisits({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
           catchError((err) => {
             console.error('Error loading vet visits', err);

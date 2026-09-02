@@ -78,28 +78,28 @@ export class HealthDashboardComponent {
 
   // --- Dialogs ---
   openScheduleVaccinationDialog(): void {
-    const dialogRef = this.dialog.open(ScheduleVaccinationDialog, { width: '560px' });
+    const dialogRef = this.dialog.open(ScheduleVaccinationDialog, { disableClose: true, width: '560px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });
   }
 
   openLogTreatmentDialog(): void {
-    const dialogRef = this.dialog.open(LogTreatmentDialog, { width: '720px' });
+    const dialogRef = this.dialog.open(LogTreatmentDialog, { disableClose: true, width: '720px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });
   }
 
   openRecordMortalityDialog(): void {
-    const dialogRef = this.dialog.open(RecordMortalityDialog, { width: '560px' });
+    const dialogRef = this.dialog.open(RecordMortalityDialog, { disableClose: true, width: '560px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });
   }
 
   openReportIncidentDialog(): void {
-    const dialogRef = this.dialog.open(ReportIncidentDialog, { width: '720px' });
+    const dialogRef = this.dialog.open(ReportIncidentDialog, { disableClose: true, width: '720px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });

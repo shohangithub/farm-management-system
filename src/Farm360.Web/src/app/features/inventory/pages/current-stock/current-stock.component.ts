@@ -114,7 +114,7 @@ export class CurrentStockComponent implements OnInit {
   }
 
   openStockWriteOffDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockWriteOffDialog, {
+    const dialogRef = this.dialog.open(StockWriteOffDialog, { disableClose: true,
       width: '600px',
       data: { item }
     });

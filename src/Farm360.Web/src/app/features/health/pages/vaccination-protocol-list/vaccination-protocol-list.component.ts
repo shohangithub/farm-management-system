@@ -95,7 +95,7 @@ export class VaccinationProtocolListComponent {
   }
 
   openCreateDialog(): void {
-    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, {
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, { disableClose: true,
       width: '700px',
       maxWidth: '95vw'
     });
@@ -105,7 +105,7 @@ export class VaccinationProtocolListComponent {
   }
 
   openEditDialog(protocol: VaccinationProtocolDto): void {
-    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, {
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, { disableClose: true,
       width: '700px',
       maxWidth: '95vw',
       data: protocol
@@ -116,7 +116,7 @@ export class VaccinationProtocolListComponent {
   }
 
   openAssignDialog(protocol: VaccinationProtocolDto): void {
-    this.dialog.open(AssignProtocolDialog, {
+    this.dialog.open(AssignProtocolDialog, { disableClose: true,
       width: '720px',
       data: { protocol }
     });

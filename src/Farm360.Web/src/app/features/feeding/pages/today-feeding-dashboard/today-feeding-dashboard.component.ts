@@ -282,7 +282,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
   }
 
   openAdjustDialog(entry: DailyFeedingEntry, action: 'adjust' | 'skip'): void {
-    const dialogRef = this.dialog.open(AdjustFeedingEntryDialogComponent, {
+    const dialogRef = this.dialog.open(AdjustFeedingEntryDialogComponent, { disableClose: true,
       width: '500px',
       data: { entry, action }
     });

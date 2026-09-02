@@ -98,7 +98,7 @@ export class TreatmentListComponent {
   }
 
   openLogTreatmentDialog(): void {
-    const dialogRef = this.dialog.open(LogTreatmentDialog, {
+    const dialogRef = this.dialog.open(LogTreatmentDialog, { disableClose: true,
       width: '720px'
     });
     dialogRef.afterClosed().subscribe(result => {

@@ -149,7 +149,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
   }
 
   openAssignDialog(): void {
-    const dialogRef = this.dialog.open(AssignFeedingPlanDialogComponent, { 
+    const dialogRef = this.dialog.open(AssignFeedingPlanDialogComponent, { disableClose: true, 
       width: '95vw', 
       maxWidth: '600px' 
     });
@@ -159,7 +159,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
   }
 
   cancelPlan(plan: AnimalFeedingPlan): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {

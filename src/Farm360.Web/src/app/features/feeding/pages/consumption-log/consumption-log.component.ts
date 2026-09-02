@@ -151,7 +151,7 @@ export class ConsumptionLogComponent implements OnInit {
   openLogDialog(): void {
     const farmId = this.contextService.currentFarmValue?.id;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, {
+    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });

@@ -160,7 +160,7 @@ export class FormulaListComponent implements OnInit {
   }
 
   openCreateFormulaDialog(): void {
-    const dialogRef = this.dialog.open(CreateFormulaDialogComponent, { width: '700px' });
+    const dialogRef = this.dialog.open(CreateFormulaDialogComponent, { disableClose: true, width: '700px' });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadFormulas();
     });
@@ -168,6 +168,7 @@ export class FormulaListComponent implements OnInit {
 
   openEditDialog(formula: FeedFormula): void {
     const dialogRef = this.dialog.open(CreateFormulaDialogComponent, {
+      disableClose: true,
       width: '700px',
       data: formula
     });

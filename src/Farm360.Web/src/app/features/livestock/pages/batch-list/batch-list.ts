@@ -68,7 +68,7 @@ export class BatchList {
     this.createForm.notes = '';
     this.createForm.farmId = this.currentFarmId() || '';
     if (this.createForm.farmId) {
-      this.dialog.open(this.createBatchDialog, { width: '560px' });
+      this.dialog.open(this.createBatchDialog, { disableClose: true, width: '560px' });
     } else {
       this.snackBar.open('Please select a farm context first', 'Close', { duration: 3000 });
     }

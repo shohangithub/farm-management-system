@@ -54,7 +54,7 @@ export class FinanceLedgerComponent implements OnInit {
   private readonly ledgerData = toSignal(this.ledgerData$);
 
   readonly transactions = computed(() => this.ledgerData()?.transactions ?? []);
-  
+
   // Loading is true if we are waiting for the initial emission or data is undefined
   readonly isLoading = computed(() => this.ledgerData() === undefined);
 

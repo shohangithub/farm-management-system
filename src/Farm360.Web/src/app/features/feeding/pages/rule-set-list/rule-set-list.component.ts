@@ -141,7 +141,7 @@ export class RuleSetListComponent implements OnInit {
   }
 
   openCreateDialog(): void {
-    const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, { 
+    const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, { disableClose: true, 
       width: '95vw', 
       maxWidth: '800px' 
     });
@@ -151,7 +151,7 @@ export class RuleSetListComponent implements OnInit {
   }
 
   openEditDialog(ruleSet: FeedingRuleSet): void {
-    const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, {
+    const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, { disableClose: true,
       width: '95vw',
       maxWidth: '800px',
       data: ruleSet

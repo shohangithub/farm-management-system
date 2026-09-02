@@ -29,9 +29,9 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
     MatProgressSpinnerModule
   ],
   template: `
-    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-3xl">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-3xl flex flex-col max-h-[90vh]">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <div class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">science</mat-icon>
@@ -44,7 +44,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
       </div>
 
       <!-- Content -->
-      <div class="p-6">
+      <div class="p-6 overflow-y-auto flex-1">
         @if (error()) {
           <div class="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs border border-red-200 dark:border-red-800 font-medium">
             {{ error() }}
@@ -93,8 +93,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
             <div formArrayName="ingredients" class="flex flex-col gap-3">
               @for (item of ingredientsArray.controls; track $index) {
-                <div [formGroupName]="$index" class="flex items-center gap-3">
-                  <mat-form-field appearance="outline" class="flex-1">
+                <div [formGroupName]="$index" class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                  <mat-form-field appearance="outline" class="flex-1 min-w-[200px]">
                     <mat-label>Ingredient</mat-label>
                     <mat-select formControlName="ingredientId" required>
                       @for (ing of availableIngredients(); track ing.id) {
@@ -103,12 +103,12 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                     </mat-select>
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="w-32">
+                  <mat-form-field appearance="outline" class="w-32 shrink-0">
                     <mat-label>Ratio (%)</mat-label>
                     <input matInput type="number" formControlName="percentage" min="1" max="100" required />
                   </mat-form-field>
 
-                  <button mat-icon-button type="button" color="warn" (click)="removeIngredientRow($index)" [disabled]="ingredientsArray.length <= 1">
+                  <button mat-icon-button type="button" color="warn" class="shrink-0" (click)="removeIngredientRow($index)" [disabled]="ingredientsArray.length <= 1">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -119,7 +119,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
       </div>
 
       <!-- Actions -->
-      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
+      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2 shrink-0">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
           Cancel
         </button>
@@ -208,7 +208,8 @@ export class CreateFormulaDialogComponent implements OnInit {
     const val = {
       ...formVal,
       targetStage: formVal.targetStage ? formVal.targetStage : null,
-      description: formVal.description ? formVal.description : null
+      description: formVal.description ? formVal.description : null,
+      status: this.isEdit && this.data ? this.data.status : 1
     };
 
     const request$: Observable<any> = this.isEdit && this.data

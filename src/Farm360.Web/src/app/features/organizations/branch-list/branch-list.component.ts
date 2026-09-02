@@ -146,7 +146,7 @@ export class BranchListComponent {
   }
 
   delete(id: string): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       data: {
         title: 'Delete Branch',
@@ -184,7 +184,7 @@ export class BranchListComponent {
   }
 
   onRestore(branch: BranchList): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       data: {
         title: 'Restore Branch',

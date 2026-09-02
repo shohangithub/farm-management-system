@@ -293,7 +293,7 @@ export class InventoryDashboardComponent {
   openCreateItemDialog(): void {
     const farmId = this.activeFarmId();
     if (!farmId) return;
-    const dialogRef = this.dialog.open(CreateItemDialogComponent, {
+    const dialogRef = this.dialog.open(CreateItemDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -305,7 +305,7 @@ export class InventoryDashboardComponent {
   openStockInDialog(): void {
     const farmId = this.activeFarmId();
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockInDialogComponent, {
+    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -315,7 +315,7 @@ export class InventoryDashboardComponent {
   }
 
   openStockInDialogForItem(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockInDialogComponent, {
+    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
       width: '720px',
       data: { item, farmId: item.farmId }
     });
@@ -327,7 +327,7 @@ export class InventoryDashboardComponent {
   openStockOutDialog(): void {
     const farmId = this.activeFarmId();
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockOutDialogComponent, {
+    const dialogRef = this.dialog.open(StockOutDialogComponent, { disableClose: true,
       width: '720px',
       data: { farmId }
     });

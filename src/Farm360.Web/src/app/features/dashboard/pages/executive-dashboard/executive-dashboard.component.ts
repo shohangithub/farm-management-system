@@ -132,7 +132,7 @@ export class ExecutiveDashboardComponent {
   });
 
   public openGuidelines(): void {
-    this.dialog.open(FarmGuidelinesDialogComponent, {
+    this.dialog.open(FarmGuidelinesDialogComponent, { disableClose: true,
       width: '90vw',
       maxWidth: '800px',
       panelClass: ['rounded-2xl', 'overflow-hidden', 'bg-transparent', 'shadow-2xl']

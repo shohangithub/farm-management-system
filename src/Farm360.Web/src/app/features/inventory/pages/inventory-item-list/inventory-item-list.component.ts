@@ -395,7 +395,7 @@ export class InventoryItemListComponent {
   openCreateItemDialog(): void {
     const farmId = this.params().farmId;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(CreateItemDialogComponent, {
+    const dialogRef = this.dialog.open(CreateItemDialogComponent, { disableClose: true,
       width: '560px',
       data: { farmId }
     });
@@ -405,7 +405,7 @@ export class InventoryItemListComponent {
   }
 
   openEditDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(CreateItemDialogComponent, {
+    const dialogRef = this.dialog.open(CreateItemDialogComponent, { disableClose: true,
       width: '560px',
       data: { item, farmId: item.farmId }
     });
@@ -415,7 +415,7 @@ export class InventoryItemListComponent {
   }
 
   openStockInDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockInDialogComponent, {
+    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
       width: '560px',
       data: { item, farmId: item.farmId }
     });
@@ -425,7 +425,7 @@ export class InventoryItemListComponent {
   }
 
   openStockOutDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockOutDialogComponent, {
+    const dialogRef = this.dialog.open(StockOutDialogComponent, { disableClose: true,
       width: '560px',
       data: { item, farmId: item.farmId }
     });
@@ -437,7 +437,7 @@ export class InventoryItemListComponent {
   onDelete(item: InventoryItem, event: Event): void {
     event.stopPropagation();
     
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {

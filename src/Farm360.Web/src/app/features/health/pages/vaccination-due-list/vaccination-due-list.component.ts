@@ -56,7 +56,7 @@ export class VaccinationDueListComponent {
   upcomingVaccinations = toSignal(
     toObservable(this.fetchParams).pipe(
       tap(() => { this.isLoading.set(true); this.error.set(''); }),
-      switchMap(({ farmId, dateStr }) => 
+      switchMap(({ farmId, dateStr }) =>
         this.healthService.getUpcomingVaccinations(farmId, dateStr).pipe(
           catchError((err) => {
             console.error(err);

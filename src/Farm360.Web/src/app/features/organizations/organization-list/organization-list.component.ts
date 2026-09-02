@@ -137,7 +137,7 @@ export class OrganizationListComponent {
   }
 
   deactivate(id: string): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       data: {
         title: 'Deactivate Organization',
@@ -175,7 +175,7 @@ export class OrganizationListComponent {
   }
 
   onRestore(org: Organization): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       data: {
         title: 'Restore Organization',

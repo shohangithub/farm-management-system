@@ -299,7 +299,7 @@ export class SupplierListComponent {
   }
 
   openCreateSupplierDialog(): void {
-    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, {
+    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, { disableClose: true,
       width: '560px'
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -308,7 +308,7 @@ export class SupplierListComponent {
   }
 
   openEditDialog(supplier: Supplier): void {
-    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, {
+    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, { disableClose: true,
       width: '560px',
       data: supplier
     });
@@ -320,7 +320,7 @@ export class SupplierListComponent {
   onDelete(supplier: Supplier, event: Event): void {
     event.stopPropagation();
     
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {

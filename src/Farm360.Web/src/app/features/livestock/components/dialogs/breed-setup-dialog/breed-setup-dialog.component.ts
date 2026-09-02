@@ -239,7 +239,7 @@ export class BreedSetupDialogComponent implements OnInit {
   openReference(): void {
     if (this.dialog.openDialogs.some(d => d.componentInstance instanceof BreedReferenceDialogComponent)) return;
     
-    this.dialog.open(BreedReferenceDialogComponent, {
+    this.dialog.open(BreedReferenceDialogComponent, { disableClose: true,
       width: '700px',
       maxWidth: '95vw',
       panelClass: ['!rounded-2xl', '!bg-transparent']
