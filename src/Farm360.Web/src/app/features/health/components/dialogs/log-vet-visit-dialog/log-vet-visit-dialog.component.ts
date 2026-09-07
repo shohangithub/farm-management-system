@@ -53,9 +53,21 @@ export class LogVetVisitDialog {
 
     const farmId = this.contextService.currentFarmValue?.id;
     if (farmId) {
-      this.healthService.getVetVisits({ farmId, pageSize: 100 }).subscribe(res => {
+      this.healthService.getVetVisits({ farmId, pageSize: 100 }).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(res => {
         const uniqueNames = Array.from(new Set(res.items.map(v => v.vetName).filter(Boolean)));
-        this.knownVetNames.set(uniqueNames);
+        this.knownVetNames.update(names => Array.from(new Set([...names, ...uniqueNames])));
+      });
+
+      this.healthService.getTreatments({ farmId, pageSize: 100 }).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: (res) => {
+          const uniqueNames = Array.from(new Set(res.items.map(t => t.veterinarianName).filter(Boolean))) as string[];
+          this.knownVetNames.update(names => Array.from(new Set([...names, ...uniqueNames])));
+        },
+        error: () => {}
       });
     }
   }

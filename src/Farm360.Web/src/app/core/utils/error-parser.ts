@@ -7,6 +7,18 @@ export function parseApiError(err: any, fallbackMessage = 'An unexpected error o
 
   const errorObj = err.error || err;
 
+  // 1.5 Handle JSON string
+  if (typeof errorObj === 'string' && (errorObj.trim().startsWith('{') || errorObj.trim().startsWith('['))) {
+    try {
+      const parsed = JSON.parse(errorObj);
+      if (parsed?.detail && typeof parsed.detail === 'string') return parsed.detail;
+      if (parsed?.message && typeof parsed.message === 'string') return parsed.message;
+      if (parsed?.title && typeof parsed.title === 'string' && parsed.title !== 'Validation Failed' && parsed.title !== 'Bad Request') return parsed.title;
+    } catch {
+      // not valid JSON, proceed
+    }
+  }
+
   // 1. Handle ASP.NET Core / FluentValidation errors dictionary: { errors: { FieldName: ["Msg1", "Msg2"] } }
   if (errorObj?.errors && typeof errorObj.errors === 'object') {
     const errorEntries = Object.entries(errorObj.errors);

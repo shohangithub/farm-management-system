@@ -1,3 +1,5 @@
+using Farm360.Domain.Exceptions;
+
 namespace Farm360.Domain.Livestock.Exceptions;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace Farm360.Domain.Livestock.Exceptions;
 /// Constitution §10: Domain exceptions are thrown by entities and domain services.
 /// GlobalExceptionMiddleware maps these to HTTP 422 Unprocessable Entity.
 /// </summary>
-public abstract class LivestockDomainException(string message) : Exception(message);
+public abstract class LivestockDomainException(string message) : DomainException(message);
 
 /// <summary>
 /// Thrown when a state transition is attempted that the domain state machine does not allow.

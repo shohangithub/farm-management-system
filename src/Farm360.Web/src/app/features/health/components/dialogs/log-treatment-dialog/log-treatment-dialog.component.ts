@@ -1,4 +1,5 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -6,7 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 import { HealthService } from '../../../services/health.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
 import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
@@ -26,6 +30,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
+    MatAutocompleteModule,
     MatSnackBarModule,
     AnimalPickerComponent
   ],
@@ -142,9 +147,14 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Attending Veterinarian</label>
-            <input type="text" formControlName="veterinarianName" placeholder="Dr. Jane Smith"
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Veterinarian Name</label>
+            <input type="text" formControlName="veterinarianName" placeholder="Dr. John Doe" [matAutocomplete]="autoVet"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <mat-autocomplete #autoVet="matAutocomplete">
+              <mat-option *ngFor="let option of filteredVetNames$ | async" [value]="option">
+                {{ option }}
+              </mat-option>
+            </mat-autocomplete>
           </div>
 
           <div class="space-y-1.5">
@@ -192,11 +202,14 @@ export class LogTreatmentDialog {
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<LogTreatmentDialog>);
   private snackBar = inject(MatSnackBar);
+  private destroyRef = inject(DestroyRef);
 
   form: FormGroup;
   isSubmitting = signal(false);
   error = signal('');
   inventoryItems = signal<InventoryItem[]>([]);
+  knownVetNames = signal<string[]>([]);
+  filteredVetNames$!: Observable<string[]>;
 
   constructor() {
     this.form = this.fb.group({
@@ -217,11 +230,43 @@ export class LogTreatmentDialog {
   }
 
   ngOnInit() {
-    this.inventoryService.getItems({ category: InventoryCategory.Medicine, pageSize: 100 }).subscribe({
+    this.filteredVetNames$ = this.form.get('veterinarianName')!.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filterVets(value || ''))
+    );
+
+    const farmId = this.contextService.currentFarmValue?.id;
+    if (farmId) {
+      this.healthService.getVetVisits({ farmId, pageSize: 100 }).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: (res) => {
+          const uniqueNames = Array.from(new Set(res.items.map(v => v.vetName).filter(Boolean)));
+          this.knownVetNames.update(names => Array.from(new Set([...names, ...uniqueNames])));
+        },
+        error: () => {}
+      });
+
+      this.healthService.getTreatments({ farmId, pageSize: 100 }).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: (res) => {
+          const uniqueNames = Array.from(new Set(res.items.map(t => t.veterinarianName).filter(Boolean))) as string[];
+          this.knownVetNames.update(names => Array.from(new Set([...names, ...uniqueNames])));
+        },
+        error: () => {}
+      });
+    }
+
+    this.inventoryService.getItems({ category: InventoryCategory.Medicine, pageSize: 100 }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (res) => this.inventoryItems.set(res.items)
     });
 
-    this.form.get('inventoryItemId')?.valueChanges.subscribe(id => {
+    this.form.get('inventoryItemId')?.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(id => {
       if (id) {
         const item = this.inventoryItems().find(i => i.id === id);
         if (item) {
@@ -232,6 +277,11 @@ export class LogTreatmentDialog {
         }
       }
     });
+  }
+
+  private _filterVets(value: string): string[] {
+    const filterValue = (value || '').toLowerCase();
+    return this.knownVetNames().filter(name => name.toLowerCase().includes(filterValue));
   }
 
   onSubmit() {

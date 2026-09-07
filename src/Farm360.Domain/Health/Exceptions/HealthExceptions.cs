@@ -1,9 +1,11 @@
+using Farm360.Domain.Exceptions;
+
 namespace Farm360.Domain.Health.Exceptions;
 
 /// <summary>
 /// Base exception for all health domain violations.
 /// </summary>
-public abstract class HealthDomainException(string message) : Exception(message);
+public abstract class HealthDomainException(string message) : DomainException(message);
 
 /// <summary>
 /// Thrown when attempting to log a duplicate/overlapping treatment for the same drug on an active treatment.

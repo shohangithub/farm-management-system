@@ -6,7 +6,7 @@ namespace Farm360.Domain.Exceptions;
 /// These are caught by GlobalExceptionMiddleware and returned as 422 Unprocessable Entity.
 /// NEVER use for infrastructure or technical failures.
 /// </summary>
-public sealed class DomainException : Exception
+public class DomainException : Exception
 {
     public DomainException(string message)
         : base(message)

@@ -14,7 +14,10 @@ namespace Farm360.Api.Middleware;
 /// NEVER expose internal exception details to the client in production.
 /// CorrelationId always included in error response for support tracing.
 /// </summary>
-public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
+public sealed class GlobalExceptionMiddleware(
+    RequestDelegate next,
+    ILogger<GlobalExceptionMiddleware> logger,
+    IHostEnvironment environment)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -68,15 +71,50 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
-            // Domain rule violation → 422
-            DomainException domainEx => (
+            KeyNotFoundException keyNotFoundEx => (
+                HttpStatusCode.NotFound,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/not-found",
+                    Title = "Resource Not Found",
+                    Status = (int)HttpStatusCode.NotFound,
+                    Detail = keyNotFoundEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
+            // Health domain rule violation → 422
+            Farm360.Domain.Health.Exceptions.HealthDomainException healthEx => (
                 HttpStatusCode.UnprocessableEntity,
                 new ProblemDetails
                 {
-                    Type = "https://farm360.ai/errors/domain-rule",
-                    Title = "Business Rule Violated",
+                    Type = "https://farm360.ai/errors/health-rule",
+                    Title = "Health Business Rule Violated",
                     Status = (int)HttpStatusCode.UnprocessableEntity,
-                    Detail = domainEx.Message,
+                    Detail = healthEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
+            // Livestock domain rule violation → 422
+            Farm360.Domain.Livestock.Exceptions.LivestockDomainException livestockEx => (
+                HttpStatusCode.UnprocessableEntity,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/livestock-rule",
+                    Title = "Livestock Business Rule Violated",
+                    Status = (int)HttpStatusCode.UnprocessableEntity,
+                    Detail = livestockEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
+            // Feeding domain rule violation → 422
+            Farm360.Domain.Feeding.Exceptions.FeedingDomainException feedingEx => (
+                HttpStatusCode.UnprocessableEntity,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/feeding-rule",
+                    Title = "Feeding Business Rule Violated",
+                    Status = (int)HttpStatusCode.UnprocessableEntity,
+                    Detail = feedingEx.Message,
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
@@ -89,6 +127,18 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     Title = "Inventory Rule Violated",
                     Status = (int)HttpStatusCode.UnprocessableEntity,
                     Detail = inventoryEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
+            // Domain rule violation → 422
+            DomainException domainEx => (
+                HttpStatusCode.UnprocessableEntity,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/domain-rule",
+                    Title = "Business Rule Violated",
+                    Status = (int)HttpStatusCode.UnprocessableEntity,
+                    Detail = domainEx.Message,
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
@@ -240,8 +290,14 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     Type = "https://farm360.ai/errors/server-error",
                     Title = "Server Error",
                     Status = (int)HttpStatusCode.InternalServerError,
-                    Detail = "An unexpected error occurred. Please try again later.",
-                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                    Detail = environment.IsDevelopment()
+                        ? $"{exception.GetType().Name}: {exception.Message}"
+                        : "An unexpected error occurred. Please try again later.",
+                    Extensions = new Dictionary<string, object?>
+                    {
+                        ["correlationId"] = correlationId,
+                        ["exception"] = environment.IsDevelopment() ? exception.ToString() : null,
+                    },
                 }),
         };
 
