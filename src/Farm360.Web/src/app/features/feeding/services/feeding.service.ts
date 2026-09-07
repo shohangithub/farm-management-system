@@ -18,7 +18,8 @@ import {
   AssignAnimalFeedingPlanRequest,
   DailyFeedingEntry,
   FeedingCycleReconciliation,
-  FeedingEntryCostBreakdown
+  FeedingEntryCostBreakdown,
+  AnimalFeedingSummary
 } from '../models/feeding.models';
 
 export interface PagedResult<T> {
@@ -163,6 +164,10 @@ export class FeedingService {
     if (targetDate) params = params.set('targetDate', targetDate);
 
     return this.http.get<DailyFeedingEntry[]>(`${this.baseUrl}/entries/today`, { params });
+  }
+
+  getAnimalFeedingSummary(animalId: string): Observable<AnimalFeedingSummary> {
+    return this.http.get<AnimalFeedingSummary>(`${this.baseUrl}/animals/${animalId}/summary`);
   }
 
   getEntryCostBreakdown(id: string): Observable<FeedingEntryCostBreakdown> {

@@ -738,6 +738,251 @@
         </div>
       </mat-tab>
 
+      <!-- ─── Feeding & Nutrition Tab ───────────────────────────────── -->
+      <mat-tab label="Feeding & Nutrition">
+        <div class="p-6 sm:p-8 space-y-8">
+
+          <!-- Loading state -->
+          <div *ngIf="!feedingSummary()" class="flex justify-center py-12">
+            <div class="animate-pulse flex gap-2 items-center text-gray-500">
+              <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce"></div>
+              <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+              <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
+          </div>
+
+          <ng-container *ngIf="feedingSummary()">
+            <!-- KPI Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Total Feed Cost -->
+              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
+                <div>
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Total Feed Cost</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">৳ {{ (feedingSummary()!.totalFeedCostBdt || 0) | number:'1.0-0' }}</p>
+                  <p class="text-xs text-gray-400 mt-1">Confirmed consumption expenses</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                  <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">payments</mat-icon>
+                </div>
+              </div>
+
+              <!-- Total Intake in Kg -->
+              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
+                <div>
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Total Feed Intake</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ (feedingSummary()!.totalFeedConsumedKg || 0) | number:'1.1-1' }} kg</p>
+                  <p class="text-xs text-gray-400 mt-1">Accumulated intake</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                  <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">scale</mat-icon>
+                </div>
+              </div>
+
+              <!-- Average Feed Cost / kg -->
+              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
+                <div>
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Avg Cost / kg</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">৳ {{ (feedingSummary()!.averageCostPerKgBdt || 0) | number:'1.2-2' }}</p>
+                  <p class="text-xs text-gray-400 mt-1">Weighted ration cost</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+                  <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">calculate</mat-icon>
+                </div>
+              </div>
+
+              <!-- Active Feeding Plan & Daily Target -->
+              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
+                <div class="min-w-0 pr-2">
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Active Plan</p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white mt-1 truncate" [title]="activeFeedingPlan()?.ruleSetName || 'None'">
+                    {{ activeFeedingPlan()?.ruleSetName || 'No Active Plan' }}
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1" *ngIf="activeFeedingPlan()">
+                    Target: {{ (activeFeedingPlan()?.currentConcentrateKgPerDay | number:'1.1-1') || '—' }} kg/day conc.
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1" *ngIf="!activeFeedingPlan()">
+                    Not enrolled in active plan
+                  </p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 shrink-0">
+                  <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">restaurant_menu</mat-icon>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Feeding Plan Banner -->
+            <div *ngIf="activeFeedingPlan()" class="bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white dark:from-emerald-950/20 dark:via-gray-800/40 dark:to-gray-800/20 rounded-2xl p-5 border border-emerald-200/60 dark:border-emerald-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="flex items-start gap-3.5">
+                <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-700 dark:text-emerald-300">
+                  <mat-icon class="!text-[22px] !w-[22px] !h-[22px]">assignment_turned_in</mat-icon>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">{{ activeFeedingPlan()!.ruleSetName }}</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+                      ACTIVE
+                    </span>
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Enrolled since {{ activeFeedingPlan()!.startDate | date:'mediumDate' }}
+                    <span *ngIf="activeFeedingPlan()!.triggeredByWeightKg"> • Evaluated at {{ activeFeedingPlan()!.triggeredByWeightKg | number:'1.1-1' }} kg</span>
+                  </p>
+                  <div class="flex flex-wrap items-center gap-3 mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <span class="flex items-center gap-1">
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-emerald-600">grain</mat-icon>
+                      Concentrate: <strong>{{ (activeFeedingPlan()!.currentConcentrateKgPerDay | number:'1.1-1') || '0' }} kg/day</strong>
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-teal-600">grass</mat-icon>
+                      Roughage: <strong>{{ (activeFeedingPlan()!.currentRoughageKgPerDay | number:'1.1-1') || '0' }} kg/day</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 self-end md:self-center">
+                <a routerLink="/feeding/plans" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">tune</mat-icon>
+                  Manage Feeding Plans
+                </a>
+              </div>
+            </div>
+
+            <!-- Feeding Logs Table Section -->
+            <div class="space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-emerald-600">history_edu</mat-icon>
+                    Feeding Logs & Consumption History ({{ filteredFeedingEntries().length }})
+                  </h3>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of daily rations, actual intake, and ingredient costs.</p>
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button type="button" 
+                          (click)="feedingStatusFilter.set('ALL')"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          [ngClass]="feedingStatusFilter() === 'ALL' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
+                    All ({{ feedingEntries().length }})
+                  </button>
+                  <button type="button" 
+                          (click)="feedingStatusFilter.set('Confirmed')"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          [ngClass]="feedingStatusFilter() === 'Confirmed' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
+                    Confirmed
+                  </button>
+                  <button type="button" 
+                          (click)="feedingStatusFilter.set('Adjusted')"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          [ngClass]="feedingStatusFilter() === 'Adjusted' ? 'bg-amber-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
+                    Adjusted
+                  </button>
+                  <button type="button" 
+                          (click)="feedingStatusFilter.set('Pending')"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          [ngClass]="feedingStatusFilter() === 'Pending' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
+                    Pending
+                  </button>
+                  <button type="button" 
+                          (click)="feedingStatusFilter.set('Skipped')"
+                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          [ngClass]="feedingStatusFilter() === 'Skipped' ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
+                    Skipped
+                  </button>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="filteredFeedingEntries().length === 0"
+                   class="bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 py-12 text-center">
+                <div class="w-12 h-12 mx-auto rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3">
+                  <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">restaurant</mat-icon>
+                </div>
+                <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">No Feeding Records Found</h4>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
+                  {{ feedingStatusFilter() !== 'ALL' ? 'No feeding logs match the "' + feedingStatusFilter() + '" filter.' : 'This animal does not have any recorded daily feeding logs yet. Enroll the animal in a feeding plan to begin tracking consumption.' }}
+                </p>
+                <div class="mt-4" *ngIf="feedingStatusFilter() !== 'ALL'">
+                  <button type="button" (click)="feedingStatusFilter.set('ALL')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                    Clear Filter
+                  </button>
+                </div>
+              </div>
+
+              <!-- Feeding Logs Table -->
+              <div *ngIf="filteredFeedingEntries().length > 0"
+                   class="overflow-x-auto bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Date</th>
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Formula / Ration</th>
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Intake Quantity</th>
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Unit Cost</th>
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Cost</th>
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Location</th>
+                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <tr *ngFor="let entry of filteredFeedingEntries()" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                      <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                        {{ entry.entryDate | date:'mediumDate' }}
+                      </td>
+                      <td class="px-4 py-3 text-sm">
+                        <div class="font-semibold text-gray-900 dark:text-white">{{ entry.formulaName }}</div>
+                        <div class="text-[11px] text-gray-400" *ngIf="entry.ruleSetName">{{ entry.ruleSetName }}</div>
+                      </td>
+                      <td class="px-4 py-3 text-sm">
+                        <div class="font-semibold text-gray-900 dark:text-white">
+                          {{ (entry.actualKg !== null && entry.actualKg !== undefined) ? (entry.actualKg | number:'1.2-2') + ' kg' : '—' }}
+                        </div>
+                        <div class="text-[10px] text-gray-400" *ngIf="entry.actualKg !== entry.expectedKg">
+                          Plan: {{ entry.expectedKg | number:'1.2-2' }} kg
+                        </div>
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        <span *ngIf="entry.unitCostAtConsumptionBdt">৳ {{ entry.unitCostAtConsumptionBdt | number:'1.2-2' }}/kg</span>
+                        <span *ngIf="!entry.unitCostAtConsumptionBdt">—</span>
+                      </td>
+                      <td class="px-4 py-3 text-sm whitespace-nowrap">
+                        <span *ngIf="entry.totalCostBdt !== null && entry.totalCostBdt !== undefined" class="font-bold text-emerald-600 dark:text-emerald-400">
+                          ৳ {{ entry.totalCostBdt | number:'1.2-2' }}
+                        </span>
+                        <span *ngIf="entry.totalCostBdt === null || entry.totalCostBdt === undefined" class="text-gray-400">—</span>
+                      </td>
+                      <td class="px-4 py-3 text-sm whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                              [ngClass]="{
+                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300': entry.status.toString() === 'Confirmed',
+                                'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300': entry.status.toString() === 'Adjusted',
+                                'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300': entry.status.toString() === 'Pending',
+                                'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300': entry.status.toString() === 'Skipped'
+                              }">
+                          {{ entry.status }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        <span *ngIf="entry.shedName || entry.penName">{{ entry.shedName || 'Shed' }} / {{ entry.penName || 'Pen' }}</span>
+                        <span *ngIf="!entry.shedName && !entry.penName">—</span>
+                      </td>
+                      <td class="px-4 py-3 text-xs text-gray-400 max-w-[200px] truncate" [title]="entry.adjustmentReason || ''">
+                        {{ entry.adjustmentReason || '—' }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </ng-container>
+
+        </div>
+      </mat-tab>
+
       <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
       <mat-tab label="Audit Info">
         <div class="p-6 sm:p-8">

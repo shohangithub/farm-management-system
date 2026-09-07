@@ -103,6 +103,15 @@ public sealed class AnimalFeedingPlanRepository : IAnimalFeedingPlanRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AnimalFeedingPlan>> GetAllPlansForAnimalAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.AnimalFeedingPlans
+            .Include(x => x.Exclusions)
+            .Where(x => x.TenantId == tenantId && x.AnimalId == animalId)
+            .OrderByDescending(x => x.StartDate)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<AnimalFeedingPlan>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
     {
         var idList = ids.Distinct().ToList();
@@ -144,6 +153,22 @@ public sealed class DailyFeedingEntryRepository : IDailyFeedingEntryRepository
         }
 
         return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<DailyFeedingEntry>> GetEntriesByAnimalIdAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken)
+    {
+        var planIds = await _dbContext.AnimalFeedingPlans
+            .Where(p => p.TenantId == tenantId && p.AnimalId == animalId)
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+
+        if (planIds.Count == 0)
+            return Array.Empty<DailyFeedingEntry>();
+
+        return await _dbContext.DailyFeedingEntries
+            .Where(e => e.TenantId == tenantId && planIds.Contains(e.FeedingPlanId))
+            .OrderByDescending(e => e.EntryDate)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<HashSet<(Guid PlanId, Guid? RuleLineId)>> GetEntryPlanIdsAcrossTenantsByDateAsync(DateOnly date, CancellationToken cancellationToken)

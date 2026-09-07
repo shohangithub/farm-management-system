@@ -1,6 +1,7 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Feeding.Events;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
+using Farm360.Domain.Finance.Interfaces;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
     private readonly IFeedFormulaRepository _formulaRepository;
     private readonly IFeedIngredientRepository _feedIngredientRepository;
     private readonly IDailyFeedingEntryRepository _entryRepository;
+    private readonly IAnimalFeedingPlanRepository _planRepository;
+    private readonly IAnimalCostLedgerRepository _ledgerRepository;
     private readonly IInventoryItemRepository _inventoryRepository;
     private readonly IStockTransactionRepository _transactionRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -21,6 +24,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
         IFeedFormulaRepository formulaRepository,
         IFeedIngredientRepository feedIngredientRepository,
         IDailyFeedingEntryRepository entryRepository,
+        IAnimalFeedingPlanRepository planRepository,
+        IAnimalCostLedgerRepository ledgerRepository,
         IInventoryItemRepository inventoryRepository,
         IStockTransactionRepository transactionRepository,
         IUnitOfWork unitOfWork,
@@ -29,6 +34,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
         _formulaRepository = formulaRepository;
         _feedIngredientRepository = feedIngredientRepository;
         _entryRepository = entryRepository;
+        _planRepository = planRepository;
+        _ledgerRepository = ledgerRepository;
         _inventoryRepository = inventoryRepository;
         _transactionRepository = transactionRepository;
         _unitOfWork = unitOfWork;
@@ -133,6 +140,49 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             }
 
             _entryRepository.Update(entry);
+
+            // Synchronize AnimalCostLedger if plan belongs to an individual animal
+            try
+            {
+                var plan = await _planRepository.GetByIdAsync(entry.FeedingPlanId, cancellationToken);
+                if (plan?.AnimalId != null)
+                {
+                    var animalId = plan.AnimalId.Value;
+                    var animalEntries = await _entryRepository.GetEntriesByAnimalIdAsync(notification.TenantId, animalId, cancellationToken);
+                    
+                    decimal trueTotalFeedCost = animalEntries
+                        .Where(e => (e.Status == Farm360.Domain.Feeding.Enums.DailyFeedingEntryStatus.Confirmed || 
+                                     e.Status == Farm360.Domain.Feeding.Enums.DailyFeedingEntryStatus.Adjusted) && 
+                                    e.TotalCostBdt.HasValue)
+                        .Sum(e => e.TotalCostBdt!.Value);
+
+                    // Also include current entry if not yet saved/retrieved in animalEntries
+                    if (!animalEntries.Any(e => e.Id == entry.Id) && entry.TotalCostBdt.HasValue)
+                    {
+                        trueTotalFeedCost += entry.TotalCostBdt.Value;
+                    }
+
+                    var ledger = await _ledgerRepository.GetByAnimalIdAsync(animalId, cancellationToken);
+                    if (ledger == null)
+                    {
+                        ledger = Farm360.Domain.Finance.AnimalCostLedger.Create(notification.TenantId, animalId, notification.FarmId);
+                        ledger.UpdateFeedCost(trueTotalFeedCost);
+                        _ledgerRepository.Add(ledger);
+                    }
+                    else
+                    {
+                        ledger.UpdateFeedCost(trueTotalFeedCost);
+                        _ledgerRepository.Update(ledger);
+                    }
+                }
+            }
+#pragma warning disable CA1031
+            catch (Exception ledgerEx)
+            {
+                _logger.LogWarning(ledgerEx, "Failed to synchronize AnimalCostLedger for entry {EntryId}", entry.Id);
+            }
+#pragma warning restore CA1031
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             if (_logger.IsEnabled(LogLevel.Information))

@@ -242,6 +242,17 @@ public static class FeedingEndpoints
             return Results.Ok(result);
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
 
+        group.MapGet("/animals/{animalId:guid}/summary", async (
+            [FromRoute] Guid animalId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetAnimalFeedingSummaryQuery(animalId), ct);
+            return result is not null ? Results.Ok(result) : Results.NotFound();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}")
+        .WithSummary("Get feeding history, consumption metrics, active plans, and costs for a single animal");
+
         group.MapGet("/entries/{id:guid}/cost-breakdown", async (
             [FromRoute] Guid id,
             [FromServices] ISender sender,

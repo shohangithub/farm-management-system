@@ -245,6 +245,13 @@ export enum DailyFeedingEntryStatus {
   Adjusted = 'Adjusted'
 }
 
+export enum FeedingPlanStatus {
+  Draft = 'Draft',
+  Active = 'Active',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled'
+}
+
 export enum FeedingPurpose {
   Maintenance = 'Maintenance',
   Growth = 'Growth',
@@ -410,4 +417,48 @@ export interface AssignAnimalFeedingPlanRequest {
   animalIds: string[];
   expectedDailyFeedKg?: number;
 }
+
+export interface AnimalDailyFeedingLog {
+  id: string;
+  entryDate: string;
+  formulaId: string;
+  formulaName: string;
+  expectedKg: number;
+  actualKg?: number;
+  unitCostAtConsumptionBdt?: number;
+  totalCostBdt?: number;
+  status: DailyFeedingEntryStatus;
+  adjustmentReason?: string;
+  ruleSetName?: string;
+  shedName?: string;
+  penName?: string;
+}
+
+export interface AnimalFeedingPlanBrief {
+  planId: string;
+  ruleSetId: string;
+  ruleSetName: string;
+  planType: FeedingPlanType;
+  startDate: string;
+  endDate?: string;
+  status: FeedingPlanStatus;
+  currentConcentrateKgPerDay?: number;
+  currentRoughageKgPerDay?: number;
+  triggeredByWeightKg?: number;
+}
+
+export interface AnimalFeedingSummary {
+  animalId: string;
+  totalFeedCostBdt: number;
+  totalFeedConsumedKg: number;
+  averageCostPerKgBdt: number;
+  totalEntriesCount: number;
+  confirmedEntriesCount: number;
+  pendingEntriesCount: number;
+  skippedEntriesCount: number;
+  activePlan?: AnimalFeedingPlanBrief;
+  plans: AnimalFeedingPlanBrief[];
+  entries: AnimalDailyFeedingLog[];
+}
+
 

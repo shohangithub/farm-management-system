@@ -98,6 +98,17 @@ public sealed class AnimalCostLedger : AuditableEntity, IAggregateRoot
     }
 
     /// <summary>
+    /// Updates the total feed cost bucket directly from synchronized daily feeding entry consumption logs.
+    /// </summary>
+    public void UpdateFeedCost(decimal totalFeedCostBdt)
+    {
+        if (totalFeedCostBdt < 0)
+            throw new ArgumentException("Feed cost cannot be negative.", nameof(totalFeedCostBdt));
+
+        TotalFeedCostBdt = Math.Round(totalFeedCostBdt, 2);
+    }
+
+    /// <summary>
     /// Records the sale revenue when the animal is sold.
     /// </summary>
     public void RecordSaleRevenue(decimal salePriceBdt)
