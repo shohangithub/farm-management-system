@@ -40,6 +40,9 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
     private readonly IFeedingRuleSetRepository _ruleSetRepository;
     private readonly IAnimalRepository _animalRepository;
     private readonly IDailyFeedingEntryRepository _entryRepository;
+    private readonly IFeedFormulaRepository _formulaRepository;
+    private readonly IFeedIngredientRepository _feedIngredientRepository;
+    private readonly Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository _inventoryRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
 
@@ -48,6 +51,9 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         IFeedingRuleSetRepository ruleSetRepository,
         IAnimalRepository animalRepository,
         IDailyFeedingEntryRepository entryRepository,
+        IFeedFormulaRepository formulaRepository,
+        IFeedIngredientRepository feedIngredientRepository,
+        Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository inventoryRepository,
         IUnitOfWork unitOfWork,
         ITenantService tenantService)
     {
@@ -55,6 +61,9 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         _ruleSetRepository = ruleSetRepository;
         _animalRepository = animalRepository;
         _entryRepository = entryRepository;
+        _formulaRepository = formulaRepository;
+        _feedIngredientRepository = feedIngredientRepository;
+        _inventoryRepository = inventoryRepository;
         _unitOfWork = unitOfWork;
         _tenantService = tenantService;
     }
@@ -102,6 +111,55 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         else
         {
             targets.Add(null); // to run at least once for Batch/Shed/Pen
+        }
+
+        var formulaCostCache = new Dictionary<Guid, decimal>();
+
+        async Task<decimal> ResolveUnitCostAsync(Guid formulaId)
+        {
+            if (formulaCostCache.TryGetValue(formulaId, out var cached))
+                return cached;
+
+            var formula = await _formulaRepository.GetByIdAsync(formulaId, cancellationToken);
+            if (formula == null)
+            {
+                formulaCostCache[formulaId] = 0m;
+                return 0m;
+            }
+
+            decimal cost = formula.TotalCostPerKgBdt;
+
+            if (formula.Ingredients.Count > 0)
+            {
+                decimal totalWeightedCost = 0m;
+                decimal totalPercentage = formula.Ingredients.Sum(i => i.Percentage);
+                if (totalPercentage <= 0) totalPercentage = 100m;
+
+                bool hasInventoryCost = false;
+                foreach (var fi in formula.Ingredients)
+                {
+                    decimal ingCost = fi.IngredientCostPerKg;
+                    var feedIng = await _feedIngredientRepository.GetByIdAsync(fi.IngredientId, cancellationToken);
+                    if (feedIng?.InventoryItemId != null)
+                    {
+                        var invItem = await _inventoryRepository.GetByIdAsync(feedIng.InventoryItemId.Value, cancellationToken);
+                        if (invItem != null && invItem.WeightedAverageCostBdt > 0)
+                        {
+                            ingCost = invItem.WeightedAverageCostBdt;
+                            hasInventoryCost = true;
+                        }
+                    }
+                    totalWeightedCost += ingCost * (fi.Percentage / totalPercentage);
+                }
+
+                if (hasInventoryCost && totalWeightedCost > 0)
+                {
+                    cost = Math.Round(totalWeightedCost, 2);
+                }
+            }
+
+            formulaCostCache[formulaId] = cost;
+            return cost;
         }
 
         foreach (var ruleSetId in distinctRuleSetIds)
@@ -192,6 +250,9 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                             penId: request.PenId,
                             batchId: request.BatchId
                         );
+
+                        decimal unitCost = await ResolveUnitCostAsync(ruleLine.FormulaId);
+                        entry.SetConsumptionCost(unitCost);
 
                         await _entryRepository.AddAsync(entry, cancellationToken);
                     }

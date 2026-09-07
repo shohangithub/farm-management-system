@@ -242,6 +242,15 @@ public static class FeedingEndpoints
             return Results.Ok(result);
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
 
+        group.MapGet("/entries/{id:guid}/cost-breakdown", async (
+            [FromRoute] Guid id,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetFeedingEntryCostBreakdownQuery(id), ct);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
         group.MapPost("/entries/generate", async (
             [FromServices] ISender sender,
             CancellationToken ct) =>

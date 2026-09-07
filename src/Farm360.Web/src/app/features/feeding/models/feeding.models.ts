@@ -318,6 +318,32 @@ export interface DailyFeedingEntry {
   notes?: string;
   confirmedAtUtc?: string;
   formulaName?: string;
+  unitCostBdt?: number;
+  totalCostBdt?: number;
+}
+
+export interface FeedingEntryIngredientCost {
+  ingredientId: string;
+  ingredientName: string;
+  percentage: number;
+  allocatedKg: number;
+  unitCostBdt: number;
+  totalCostBdt: number;
+  inventoryItemName?: string;
+  costSource: string;
+}
+
+export interface FeedingEntryCostBreakdown {
+  entryId: string;
+  formulaId: string;
+  formulaName: string;
+  entryDate: string;
+  expectedKg: number;
+  actualKg?: number;
+  blendedUnitCostBdt?: number;
+  totalCostBdt?: number;
+  status: string;
+  ingredients: FeedingEntryIngredientCost[];
 }
 
 export interface FeedingCycleReconciliationLine {

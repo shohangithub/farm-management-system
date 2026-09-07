@@ -80,6 +80,18 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
+            // Inventory domain rule violation → 422
+            Farm360.Domain.Inventory.Exceptions.InventoryDomainException inventoryEx => (
+                HttpStatusCode.UnprocessableEntity,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/inventory-rule",
+                    Title = "Inventory Rule Violated",
+                    Status = (int)HttpStatusCode.UnprocessableEntity,
+                    Detail = inventoryEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
             // Forbidden → 403
             ForbiddenAccessException forbiddenEx => (
                 HttpStatusCode.Forbidden,

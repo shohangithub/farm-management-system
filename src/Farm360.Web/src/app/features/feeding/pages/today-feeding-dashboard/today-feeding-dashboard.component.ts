@@ -17,6 +17,8 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { AdjustFeedingEntryDialogComponent } from '../../components/dialogs/adjust-feeding-entry-dialog/adjust-feeding-entry-dialog.component';
+import { FeedingCostBreakdownDialogComponent } from '../../components/dialogs/feeding-cost-breakdown-dialog/feeding-cost-breakdown-dialog.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 interface PenGroup {
   penName: string;
@@ -187,39 +189,48 @@ interface ShedGroup {
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
       <!-- Dashboard Header Stats -->
-      <div class="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div class="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div>
           <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Planned Feed</div>
-          <div class="text-2xl md:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+          <div class="text-xl md:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
             {{ totalExpectedKg() | number:'1.2-2' }} <span class="text-xs font-normal text-gray-500">kg</span>
           </div>
         </div>
         <div>
           <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Feed Consumed</div>
-          <div class="text-2xl md:text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">
+          <div class="text-xl md:text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">
             {{ totalActualKg() | number:'1.2-2' }} <span class="text-xs font-normal text-gray-500">kg</span>
           </div>
         </div>
         <div>
+          <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Feed Cost</div>
+          <div class="text-xl md:text-2xl font-extrabold text-teal-600 dark:text-teal-400 mt-1">
+            ৳{{ totalFeedCost() | number:'1.2-2' }}
+          </div>
+          <div class="text-[10px] text-gray-400 mt-0.5">
+            Avg ৳{{ averageBlendedCost() | number:'1.2-2' }}/kg
+          </div>
+        </div>
+        <div>
           <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Feeding Entries</div>
-          <div class="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white mt-1">
+          <div class="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-white mt-1">
             {{ filteredEntries().length }}
             <span class="text-xs font-normal text-gray-500" *ngIf="filteredEntries().length !== allEntries().length">
               (of {{ allEntries().length }})
             </span>
           </div>
         </div>
-        <div>
+        <div class="col-span-2 sm:col-span-1">
           <div class="text-xs uppercase font-bold text-gray-400 tracking-wider flex items-center justify-between">
             <span>Workflow Progress</span>
             <span class="text-emerald-600 font-extrabold">{{ progressPct() | number:'1.0-0' }}%</span>
           </div>
-          <div class="mt-2 w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 overflow-hidden">
-            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2.5 rounded-full transition-all duration-500" [style.width]="progressPct() + '%'"></div>
+          <div class="mt-2 w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500" [style.width]="progressPct() + '%'"></div>
           </div>
-          <div class="text-xs font-medium text-gray-500 mt-1.5 flex items-center justify-between">
+          <div class="text-[11px] font-medium text-gray-500 mt-1.5 flex items-center justify-between">
             <span>{{ countPending() }} pending</span>
-            <span>Target Date: {{ selectedDate() }}</span>
+            <span>{{ selectedDate() }}</span>
           </div>
         </div>
       </div>
@@ -306,11 +317,32 @@ interface ShedGroup {
                     {{ entry.formulaName || 'Base Ration' }}
                   </div>
 
-                  <!-- Quantity Metrics -->
-                  <div class="text-2xl font-extrabold text-gray-900 dark:text-white mb-2">
-                    {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : entry.expectedKg) | number:'1.2-2' }} <span class="text-xs font-normal text-gray-400">kg</span>
-                    <span *ngIf="entry.status === 'Adjusted' && entry.actualKg !== entry.expectedKg" class="text-xs font-medium text-gray-400 line-through ml-1.5">
-                      {{ entry.expectedKg | number:'1.2-2' }}kg
+                  <!-- Quantity & Cost Metrics -->
+                  <div class="flex items-baseline justify-between mb-1">
+                    <div class="text-2xl font-extrabold text-gray-900 dark:text-white">
+                      {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : entry.expectedKg) | number:'1.2-2' }} <span class="text-xs font-normal text-gray-400">kg</span>
+                      <span *ngIf="entry.status === 'Adjusted' && entry.actualKg !== entry.expectedKg" class="text-xs font-medium text-gray-400 line-through ml-1.5">
+                        {{ entry.expectedKg | number:'1.2-2' }}kg
+                      </span>
+                    </div>
+
+                    <!-- Blended Unit Cost Badge & Drill-down -->
+                    <button type="button" (click)="openCostBreakdown(entry)"
+                      [matTooltip]="entry.unitCostBdt != null ? 'Snapshotted cost: ৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg. Click for breakdown.' : 'Click to inspect planned cost breakdown.'"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold transition-all shadow-2xs"
+                      [ngClass]="entry.unitCostBdt != null 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/80' 
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'">
+                      <mat-icon class="!w-3.5 !h-3.5 !text-[14px] text-emerald-600 dark:text-emerald-400">payments</mat-icon>
+                      <span>{{ entry.unitCostBdt != null ? '৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg' : 'Breakdown' }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Total Entry Cost if available -->
+                  <div *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-[11px] font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between mb-2 pb-1 border-b border-gray-100 dark:border-gray-800">
+                    <span>Entry Cost:</span>
+                    <span class="font-bold text-teal-700 dark:text-teal-300 font-mono">
+                      ৳{{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | number:'1.2-2' }}
                     </span>
                   </div>
 
@@ -364,6 +396,8 @@ interface ShedGroup {
               <th class="py-3.5 px-4">Ration Formula</th>
               <th class="py-3.5 px-4">Planned (kg)</th>
               <th class="py-3.5 px-4">Consumed (kg)</th>
+              <th class="py-3.5 px-4">Unit Cost</th>
+              <th class="py-3.5 px-4">Total Cost</th>
               <th class="py-3.5 px-4">Status</th>
               <th class="py-3.5 px-4">Notes / Reason</th>
               <th class="py-3.5 px-4 text-right">Actions</th>
@@ -403,6 +437,22 @@ interface ShedGroup {
                 {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : '-') }} {{ entry.actualKg !== null && entry.actualKg !== undefined ? 'kg' : '' }}
               </td>
 
+              <!-- Unit Cost -->
+              <td class="py-3.5 px-4 font-mono text-xs">
+                <span *ngIf="entry.unitCostBdt != null" class="font-semibold text-emerald-600 dark:text-emerald-400">
+                  ৳{{ entry.unitCostBdt | number:'1.2-2' }}/kg
+                </span>
+                <span *ngIf="entry.unitCostBdt == null" class="text-gray-400">-</span>
+              </td>
+
+              <!-- Total Cost -->
+              <td class="py-3.5 px-4 font-mono text-xs font-bold">
+                <span *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-teal-700 dark:text-teal-300">
+                  ৳{{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | number:'1.2-2' }}
+                </span>
+                <span *ngIf="entry.totalCostBdt == null && entry.unitCostBdt == null" class="text-gray-400">-</span>
+              </td>
+
               <!-- Status Badge -->
               <td class="py-3.5 px-4">
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1"
@@ -423,22 +473,26 @@ interface ShedGroup {
 
               <!-- Actions -->
               <td class="py-3.5 px-4 text-right">
-                <div class="flex items-center justify-end gap-1.5" *ngIf="entry.status === 'Pending'">
-                  <button (click)="confirmEntry(entry)" matTooltip="Confirm Planned Amount"
-                    class="p-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors">
-                    <mat-icon class="!w-4 !h-4 !text-[16px]">check</mat-icon>
+                <div class="flex items-center justify-end gap-1.5">
+                  <button (click)="openCostBreakdown(entry)" matTooltip="Cost Breakdown"
+                    class="p-1.5 text-xs font-semibold text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-colors">
+                    <mat-icon class="!w-4 !h-4 !text-[16px]">payments</mat-icon>
                   </button>
-                  <button (click)="openAdjustDialog(entry, 'adjust')" matTooltip="Adjust Amount"
-                    class="p-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-lg transition-colors">
-                    <mat-icon class="!w-4 !h-4 !text-[16px]">tune</mat-icon>
-                  </button>
-                  <button (click)="openAdjustDialog(entry, 'skip')" matTooltip="Skip Entry"
-                    class="p-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors">
-                    <mat-icon class="!w-4 !h-4 !text-[16px]">block</mat-icon>
-                  </button>
-                </div>
-                <div *ngIf="entry.status !== 'Pending'" class="text-xs text-gray-400 italic">
-                  Processed
+
+                  <ng-container *ngIf="entry.status === 'Pending'">
+                    <button (click)="confirmEntry(entry)" matTooltip="Confirm Planned Amount"
+                      class="p-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors">
+                      <mat-icon class="!w-4 !h-4 !text-[16px]">check</mat-icon>
+                    </button>
+                    <button (click)="openAdjustDialog(entry, 'adjust')" matTooltip="Adjust Amount"
+                      class="p-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-lg transition-colors">
+                      <mat-icon class="!w-4 !h-4 !text-[16px]">tune</mat-icon>
+                    </button>
+                    <button (click)="openAdjustDialog(entry, 'skip')" matTooltip="Skip Entry"
+                      class="p-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors">
+                      <mat-icon class="!w-4 !h-4 !text-[16px]">block</mat-icon>
+                    </button>
+                  </ng-container>
                 </div>
               </td>
             </tr>
@@ -502,6 +556,22 @@ export class TodayFeedingDashboardComponent implements OnInit {
 
   readonly totalActualKg = computed(() => {
     return this.filteredEntries().reduce((sum, e) => sum + (e.actualKg ?? 0), 0);
+  });
+
+  readonly totalFeedCost = computed(() => {
+    return this.filteredEntries().reduce((sum, e) => {
+      if (e.totalCostBdt != null) return sum + e.totalCostBdt;
+      if (e.unitCostBdt != null && (e.actualKg != null || e.status !== 'Pending')) {
+        return sum + ((e.actualKg ?? e.expectedKg) * e.unitCostBdt);
+      }
+      return sum;
+    }, 0);
+  });
+
+  readonly averageBlendedCost = computed(() => {
+    const consumedKg = this.totalActualKg();
+    const totalCost = this.totalFeedCost();
+    return consumedKg > 0 ? (totalCost / consumedKg) : 0;
   });
 
   readonly progressPct = computed(() => {
@@ -603,7 +673,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
         this.loadEntries();
       },
       error: (err) => {
-        this.snackBar.open(err.error?.detail || 'Failed to confirm entry', 'Close', { duration: 5000 });
+        this.snackBar.open(parseApiError(err, 'Failed to confirm entry'), 'Close', { duration: 6000 });
       }
     });
   }
@@ -617,6 +687,15 @@ export class TodayFeedingDashboardComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(res => {
       if (res) this.loadEntries();
+    });
+  }
+
+  openCostBreakdown(entry: DailyFeedingEntry): void {
+    this.dialog.open(FeedingCostBreakdownDialogComponent, {
+      width: '720px',
+      maxWidth: '95vw',
+      panelClass: 'cost-breakdown-dialog-container',
+      data: { entry }
     });
   }
 
@@ -636,8 +715,8 @@ export class TodayFeedingDashboardComponent implements OnInit {
         this.snackBar.open(`Confirmed ${pendingEntries.length} entries for ${pen.penName}`, 'Close', { duration: 3000 });
         this.loadEntries();
       },
-      error: () => {
-        this.snackBar.open('Some confirmations failed', 'Close', { duration: 5000 });
+      error: (err) => {
+        this.snackBar.open(parseApiError(err, 'Some confirmations failed'), 'Close', { duration: 6000 });
         this.loadEntries();
       }
     });

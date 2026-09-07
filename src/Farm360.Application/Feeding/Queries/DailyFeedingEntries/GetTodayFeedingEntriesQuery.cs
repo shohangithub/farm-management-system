@@ -20,7 +20,9 @@ public record DailyFeedingEntryDto(
     DailyFeedingEntryStatus Status,
     string? Notes,
     DateTime? ConfirmedAtUtc,
-    string? FormulaName);
+    string? FormulaName,
+    decimal? UnitCostBdt = null,
+    decimal? TotalCostBdt = null);
 
 public sealed record GetTodayFeedingEntriesQuery(Guid? FarmId = null, DateOnly? TargetDate = null) : IRequest<IReadOnlyList<DailyFeedingEntryDto>>;
 
@@ -121,7 +123,9 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
                 e.Status,
                 e.AdjustmentReason,
                 null,
-                formulaName
+                formulaName,
+                e.UnitCostAtConsumptionBdt,
+                e.TotalCostBdt
             );
         }).ToList();
     }

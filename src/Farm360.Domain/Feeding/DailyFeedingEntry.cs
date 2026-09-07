@@ -16,6 +16,8 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
     public Guid? RuleLineId { get; private set; }
     public decimal ExpectedKg { get; private set; }
     public decimal? ActualKg { get; private set; }
+    public decimal? UnitCostAtConsumptionBdt { get; private set; }
+    public decimal? TotalCostBdt { get; private set; }
     public DailyFeedingEntryStatus Status { get; private set; }
     public string? AdjustmentReason { get; private set; }
     public Guid? InventoryTransactionId { get; private set; }
@@ -66,7 +68,19 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
             Status = DailyFeedingEntryStatus.Adjusted;
         }
 
+        if (UnitCostAtConsumptionBdt.HasValue)
+        {
+            TotalCostBdt = Math.Round(actualKg * UnitCostAtConsumptionBdt.Value, 2);
+        }
+
         RaiseDomainEvent(new DailyEntryConfirmedEvent(Guid.NewGuid(), DateTime.UtcNow, Id, TenantId, FarmId, actualKg, inventoryTransactionId));
+    }
+
+    public void SetConsumptionCost(decimal unitCostBdt)
+    {
+        UnitCostAtConsumptionBdt = Math.Max(0, unitCostBdt);
+        var kg = ActualKg ?? ExpectedKg;
+        TotalCostBdt = Math.Round(kg * UnitCostAtConsumptionBdt.Value, 2);
     }
 
     public void SetInventoryTransactionId(Guid transactionId)

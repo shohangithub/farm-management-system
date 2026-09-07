@@ -18,6 +18,12 @@ public sealed class DailyFeedingEntryConfiguration : IEntityTypeConfiguration<Da
         builder.Property(e => e.ActualKg)
             .HasPrecision(18, 2);
 
+        builder.Property(e => e.UnitCostAtConsumptionBdt)
+            .HasPrecision(18, 2);
+
+        builder.Property(e => e.TotalCostBdt)
+            .HasPrecision(18, 2);
+
         builder.Property(e => e.AdjustmentReason)
             .HasMaxLength(250);
 

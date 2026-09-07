@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FeedingService } from '../../../services/feeding.service';
 import { DailyFeedingEntry } from '../../../models/feeding.models';
+import { parseApiError } from '../../../../../core/utils/error-parser';
 
 export interface AdjustDialogData {
   entry: DailyFeedingEntry;
@@ -127,7 +128,7 @@ export class AdjustFeedingEntryDialogComponent {
           this.dialogRef.close(true);
         },
         error: (err) => {
-          this.snackBar.open(err.error?.detail || 'Failed to adjust entry', 'Close', { duration: 5000 });
+          this.snackBar.open(parseApiError(err, 'Failed to adjust entry'), 'Close', { duration: 6000 });
           this.isSubmitting.set(false);
         }
       });
@@ -138,7 +139,7 @@ export class AdjustFeedingEntryDialogComponent {
           this.dialogRef.close(true);
         },
         error: (err) => {
-          this.snackBar.open(err.error?.detail || 'Failed to skip entry', 'Close', { duration: 5000 });
+          this.snackBar.open(parseApiError(err, 'Failed to skip entry'), 'Close', { duration: 6000 });
           this.isSubmitting.set(false);
         }
       });
