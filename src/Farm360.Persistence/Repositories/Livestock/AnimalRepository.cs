@@ -39,6 +39,7 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
             return new List<Animal>();
 
         return await _animals
+            .Include(a => a.Movements)
             .Where(a => idList.Contains(a.Id))
             .ToListAsync(cancellationToken);
     }

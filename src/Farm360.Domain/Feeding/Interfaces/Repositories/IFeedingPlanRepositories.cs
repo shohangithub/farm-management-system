@@ -18,9 +18,11 @@ public interface IAnimalFeedingPlanRepository
     Task AddAsync(AnimalFeedingPlan entity, CancellationToken cancellationToken = default);
     void Update(AnimalFeedingPlan entity);
     Task<IReadOnlyList<AnimalFeedingPlan>> GetActivePlansByFarmAsync(Guid tenantId, Guid farmId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<AnimalFeedingPlan>> GetPlansByFarmAsync(Guid tenantId, Guid farmId, Enums.FeedingPlanStatus? status = null, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AnimalFeedingPlan>> GetActivePlansAsync(Guid tenantId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AnimalFeedingPlan>> GetAllActivePlansAcrossTenantsAsync(CancellationToken cancellationToken);
-    Task<AnimalFeedingPlan?> GetActivePlanForAnimalAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<AnimalFeedingPlan>> GetActivePlansForAnimalAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<AnimalFeedingPlan>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 }
 
 public interface IDailyFeedingEntryRepository
@@ -29,6 +31,7 @@ public interface IDailyFeedingEntryRepository
     Task AddAsync(DailyFeedingEntry entity, CancellationToken cancellationToken = default);
     void Update(DailyFeedingEntry entity);
     Task<IReadOnlyList<DailyFeedingEntry>> GetEntriesByDateAsync(Guid tenantId, Guid farmId, DateOnly date, CancellationToken cancellationToken);
+    Task<HashSet<(Guid PlanId, Guid? RuleLineId)>> GetEntryPlanIdsAcrossTenantsByDateAsync(DateOnly date, CancellationToken cancellationToken);
 }
 
 public interface IFeedingReconciliationRepository

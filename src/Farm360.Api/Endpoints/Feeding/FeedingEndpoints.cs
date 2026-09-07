@@ -207,8 +207,8 @@ public static class FeedingEndpoints
             [FromServices] ISender sender,
             CancellationToken ct) =>
         {
-            var id = await sender.Send(command, ct);
-            return Results.Created($"/api/v1/feeding/plans/{id}", new { id });
+            var ids = await sender.Send(command, ct);
+            return Results.Ok(new { ids });
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Create}");
 
         group.MapPut("/plans/{id:guid}/cancel", async (
@@ -233,13 +233,22 @@ public static class FeedingEndpoints
 
         // ── Daily Feeding Entries ─────────────────────────────────────────────
         group.MapGet("/entries/today", async (
-            [FromQuery] Guid farmId,
+            [FromQuery] Guid? farmId,
+            [FromQuery] DateOnly? targetDate,
             [FromServices] ISender sender,
             CancellationToken ct) =>
         {
-            var result = await sender.Send(new GetTodayFeedingEntriesQuery(farmId), ct);
+            var result = await sender.Send(new GetTodayFeedingEntriesQuery(farmId, targetDate), ct);
             return Results.Ok(result);
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/entries/generate", async (
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new Farm360.Application.Feeding.Jobs.CreateDailyFeedingEntriesCommand(), ct);
+            return Results.Ok(new { message = "Daily feeding entries generated successfully." });
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
 
         group.MapPost("/entries/{id:guid}/confirm", async (
             [FromRoute] Guid id,

@@ -1,0 +1,967 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "Farm360.Infrastructure/1.0.0": {
+        "dependencies": {
+          "AWSSDK.Extensions.NETCore.Setup": "3.7.400",
+          "AWSSDK.S3": "3.7.407",
+          "AWSSDK.SimpleNotificationService": "3.7.400",
+          "Farm360.Application": "1.0.0",
+          "Farm360.Contracts": "1.0.0",
+          "Farm360.Domain": "1.0.0",
+          "Farm360.Shared": "1.0.0",
+          "Hangfire.AspNetCore": "1.8.17",
+          "Hangfire.Core": "1.8.17",
+          "Hangfire.SqlServer": "1.8.17",
+          "Microsoft.Extensions.Caching.StackExchangeRedis": "10.0.0",
+          "Microsoft.Extensions.Http.Resilience": "9.6.0",
+          "Polly": "8.5.0",
+          "Serilog": "4.2.0",
+          "Serilog.AspNetCore": "9.0.0",
+          "Serilog.Enrichers.Environment": "3.0.0",
+          "Serilog.Enrichers.Process": "3.0.0",
+          "Serilog.Enrichers.Span": "3.1.0",
+          "Serilog.Enrichers.Thread": "4.0.0",
+          "Serilog.Expressions": "5.0.0",
+          "Serilog.Sinks.Console": "6.0.0",
+          "Serilog.Sinks.File": "6.0.0",
+          "Serilog.Sinks.Seq": "9.0.0",
+          "StackExchange.Redis": "2.8.16"
+        },
+        "runtime": {
+          "Farm360.Infrastructure.dll": {}
+        }
+      },
+      "AutoMapper/14.0.0": {
+        "runtime": {
+          "lib/net8.0/AutoMapper.dll": {
+            "assemblyVersion": "14.0.0.0",
+            "fileVersion": "14.0.0.0"
+          }
+        }
+      },
+      "AWSSDK.Core/3.7.402": {
+        "runtime": {
+          "lib/net8.0/AWSSDK.Core.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.402.0"
+          }
+        }
+      },
+      "AWSSDK.Extensions.NETCore.Setup/3.7.400": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.402"
+        },
+        "runtime": {
+          "lib/net8.0/AWSSDK.Extensions.NETCore.Setup.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.400.0"
+          }
+        }
+      },
+      "AWSSDK.S3/3.7.407": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.402"
+        },
+        "runtime": {
+          "lib/net8.0/AWSSDK.S3.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.407.0"
+          }
+        }
+      },
+      "AWSSDK.SimpleNotificationService/3.7.400": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.402"
+        },
+        "runtime": {
+          "lib/net8.0/AWSSDK.SimpleNotificationService.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.400.0"
+          }
+        }
+      },
+      "FluentValidation/11.11.0": {
+        "runtime": {
+          "lib/net8.0/FluentValidation.dll": {
+            "assemblyVersion": "11.0.0.0",
+            "fileVersion": "11.11.0.0"
+          }
+        }
+      },
+      "FluentValidation.DependencyInjectionExtensions/11.11.0": {
+        "dependencies": {
+          "FluentValidation": "11.11.0"
+        },
+        "runtime": {
+          "lib/netstandard2.1/FluentValidation.DependencyInjectionExtensions.dll": {
+            "assemblyVersion": "11.0.0.0",
+            "fileVersion": "11.11.0.0"
+          }
+        }
+      },
+      "Hangfire.AspNetCore/1.8.17": {
+        "dependencies": {
+          "Hangfire.NetCore": "1.8.17"
+        },
+        "runtime": {
+          "lib/netcoreapp3.0/Hangfire.AspNetCore.dll": {
+            "assemblyVersion": "1.8.17.0",
+            "fileVersion": "1.8.17.0"
+          }
+        }
+      },
+      "Hangfire.Core/1.8.17": {
+        "dependencies": {
+          "Newtonsoft.Json": "11.0.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Hangfire.Core.dll": {
+            "assemblyVersion": "1.8.17.0",
+            "fileVersion": "1.8.17.0"
+          }
+        },
+        "resources": {
+          "lib/netstandard2.0/ca/Hangfire.Core.resources.dll": {
+            "locale": "ca"
+          },
+          "lib/netstandard2.0/de/Hangfire.Core.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard2.0/es/Hangfire.Core.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard2.0/fa/Hangfire.Core.resources.dll": {
+            "locale": "fa"
+          },
+          "lib/netstandard2.0/fr/Hangfire.Core.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard2.0/nb/Hangfire.Core.resources.dll": {
+            "locale": "nb"
+          },
+          "lib/netstandard2.0/nl/Hangfire.Core.resources.dll": {
+            "locale": "nl"
+          },
+          "lib/netstandard2.0/pt-BR/Hangfire.Core.resources.dll": {
+            "locale": "pt-BR"
+          },
+          "lib/netstandard2.0/pt-PT/Hangfire.Core.resources.dll": {
+            "locale": "pt-PT"
+          },
+          "lib/netstandard2.0/pt/Hangfire.Core.resources.dll": {
+            "locale": "pt"
+          },
+          "lib/netstandard2.0/sv/Hangfire.Core.resources.dll": {
+            "locale": "sv"
+          },
+          "lib/netstandard2.0/tr-TR/Hangfire.Core.resources.dll": {
+            "locale": "tr-TR"
+          },
+          "lib/netstandard2.0/zh-TW/Hangfire.Core.resources.dll": {
+            "locale": "zh-TW"
+          },
+          "lib/netstandard2.0/zh/Hangfire.Core.resources.dll": {
+            "locale": "zh"
+          }
+        }
+      },
+      "Hangfire.NetCore/1.8.17": {
+        "dependencies": {
+          "Hangfire.Core": "1.8.17"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Hangfire.NetCore.dll": {
+            "assemblyVersion": "1.8.17.0",
+            "fileVersion": "1.8.17.0"
+          }
+        }
+      },
+      "Hangfire.SqlServer/1.8.17": {
+        "dependencies": {
+          "Hangfire.Core": "1.8.17"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Hangfire.SqlServer.dll": {
+            "assemblyVersion": "1.8.17.0",
+            "fileVersion": "1.8.17.0"
+          }
+        }
+      },
+      "MediatR/12.4.1": {
+        "dependencies": {
+          "MediatR.Contracts": "2.0.1"
+        },
+        "runtime": {
+          "lib/net6.0/MediatR.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.4.1.0"
+          }
+        }
+      },
+      "MediatR.Contracts/2.0.1": {
+        "runtime": {
+          "lib/netstandard2.0/MediatR.Contracts.dll": {
+            "assemblyVersion": "2.0.1.0",
+            "fileVersion": "2.0.1.0"
+          }
+        }
+      },
+      "Microsoft.Extensions.AmbientMetadata.Application/9.6.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.AmbientMetadata.Application.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.Caching.StackExchangeRedis/10.0.0": {
+        "dependencies": {
+          "StackExchange.Redis": "2.8.16"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.Extensions.Caching.StackExchangeRedis.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "Microsoft.Extensions.Compliance.Abstractions/9.6.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Compliance.Abstractions.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.AutoActivation/9.6.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.DependencyInjection.AutoActivation.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyModel/9.0.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.DependencyModel.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.24.52809"
+          }
+        }
+      },
+      "Microsoft.Extensions.Diagnostics.ExceptionSummarization/9.6.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.Http.Diagnostics/9.6.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.AutoActivation": "9.6.0",
+          "Microsoft.Extensions.Telemetry": "9.6.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Http.Diagnostics.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.Http.Resilience/9.6.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Http.Diagnostics": "9.6.0",
+          "Microsoft.Extensions.Resilience": "9.6.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Http.Resilience.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.Resilience/9.6.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Diagnostics.ExceptionSummarization": "9.6.0",
+          "Microsoft.Extensions.Telemetry.Abstractions": "9.6.0",
+          "Polly.Extensions": "8.4.2",
+          "Polly.RateLimiting": "8.4.2"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Resilience.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.Telemetry/9.6.0": {
+        "dependencies": {
+          "Microsoft.Extensions.AmbientMetadata.Application": "9.6.0",
+          "Microsoft.Extensions.DependencyInjection.AutoActivation": "9.6.0",
+          "Microsoft.Extensions.Telemetry.Abstractions": "9.6.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Telemetry.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Microsoft.Extensions.Telemetry.Abstractions/9.6.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "9.6.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Telemetry.Abstractions.dll": {
+            "assemblyVersion": "9.6.0.0",
+            "fileVersion": "9.600.25.31002"
+          }
+        }
+      },
+      "Newtonsoft.Json/11.0.1": {
+        "runtime": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "assemblyVersion": "11.0.0.0",
+            "fileVersion": "11.0.1.21818"
+          }
+        }
+      },
+      "Pipelines.Sockets.Unofficial/2.2.8": {
+        "runtime": {
+          "lib/net5.0/Pipelines.Sockets.Unofficial.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "2.2.8.1080"
+          }
+        }
+      },
+      "Polly/8.5.0": {
+        "dependencies": {
+          "Polly.Core": "8.5.0"
+        },
+        "runtime": {
+          "lib/net6.0/Polly.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.5.0.4130"
+          }
+        }
+      },
+      "Polly.Core/8.5.0": {
+        "runtime": {
+          "lib/net8.0/Polly.Core.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.5.0.4130"
+          }
+        }
+      },
+      "Polly.Extensions/8.4.2": {
+        "dependencies": {
+          "Polly.Core": "8.5.0"
+        },
+        "runtime": {
+          "lib/net8.0/Polly.Extensions.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.4.2.3950"
+          }
+        }
+      },
+      "Polly.RateLimiting/8.4.2": {
+        "dependencies": {
+          "Polly.Core": "8.5.0"
+        },
+        "runtime": {
+          "lib/net8.0/Polly.RateLimiting.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.4.2.3950"
+          }
+        }
+      },
+      "Serilog/4.2.0": {
+        "runtime": {
+          "lib/net9.0/Serilog.dll": {
+            "assemblyVersion": "4.2.0.0",
+            "fileVersion": "4.2.0.0"
+          }
+        }
+      },
+      "Serilog.AspNetCore/9.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0",
+          "Serilog.Extensions.Hosting": "9.0.0",
+          "Serilog.Formatting.Compact": "3.0.0",
+          "Serilog.Settings.Configuration": "9.0.0",
+          "Serilog.Sinks.Console": "6.0.0",
+          "Serilog.Sinks.Debug": "3.0.0",
+          "Serilog.Sinks.File": "6.0.0"
+        },
+        "runtime": {
+          "lib/net9.0/Serilog.AspNetCore.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "Serilog.Enrichers.Environment/3.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Enrichers.Environment.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "Serilog.Enrichers.Process/3.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Enrichers.Process.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "Serilog.Enrichers.Span/3.1.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net7.0/Serilog.Enrichers.Span.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.1.0.0"
+          }
+        }
+      },
+      "Serilog.Enrichers.Thread/4.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Enrichers.Thread.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "Serilog.Expressions/5.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Expressions.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.0.0"
+          }
+        }
+      },
+      "Serilog.Extensions.Hosting/9.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0",
+          "Serilog.Extensions.Logging": "9.0.0"
+        },
+        "runtime": {
+          "lib/net9.0/Serilog.Extensions.Hosting.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "Serilog.Extensions.Logging/9.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net9.0/Serilog.Extensions.Logging.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "Serilog.Formatting.Compact/3.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Formatting.Compact.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "Serilog.Settings.Configuration/9.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyModel": "9.0.0",
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net9.0/Serilog.Settings.Configuration.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Console/6.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Sinks.Console.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Debug/3.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Sinks.Debug.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.File/6.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Sinks.File.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Seq/9.0.0": {
+        "dependencies": {
+          "Serilog": "4.2.0",
+          "Serilog.Sinks.File": "6.0.0"
+        },
+        "runtime": {
+          "lib/net6.0/Serilog.Sinks.Seq.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "StackExchange.Redis/2.8.16": {
+        "dependencies": {
+          "Pipelines.Sockets.Unofficial": "2.2.8"
+        },
+        "runtime": {
+          "lib/net6.0/StackExchange.Redis.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.8.16.12844"
+          }
+        }
+      },
+      "Farm360.Application/1.0.0": {
+        "dependencies": {
+          "AutoMapper": "14.0.0",
+          "Farm360.Contracts": "1.0.0",
+          "Farm360.Domain": "1.0.0",
+          "Farm360.Shared": "1.0.0",
+          "FluentValidation": "11.11.0",
+          "FluentValidation.DependencyInjectionExtensions": "11.11.0",
+          "MediatR": "12.4.1"
+        },
+        "runtime": {
+          "Farm360.Application.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Farm360.Contracts/1.0.0": {
+        "dependencies": {
+          "Farm360.Domain": "1.0.0",
+          "Farm360.Shared": "1.0.0"
+        },
+        "runtime": {
+          "Farm360.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Farm360.Domain/1.0.0": {
+        "dependencies": {
+          "Farm360.Shared": "1.0.0",
+          "MediatR.Contracts": "2.0.1"
+        },
+        "runtime": {
+          "Farm360.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Farm360.Shared/1.0.0": {
+        "runtime": {
+          "Farm360.Shared.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Farm360.Infrastructure/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AutoMapper/14.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OC+1neAPM4oCCqQj3g2GJ2shziNNhOkxmNB9cVS8jtx4JbgmRzLcUOxB9Tsz6cVPHugdkHgCaCrTjjSI0Z5sCQ==",
+      "path": "automapper/14.0.0",
+      "hashPath": "automapper.14.0.0.nupkg.sha512"
+    },
+    "AWSSDK.Core/3.7.402": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ALsX3gul5Q1HgDmKUhF1McPbLaVwIZb34garD28vOMaaVof/SeYzj+ViOMe7mDW/gJdOSnRDUmaAuD1EcKHxgA==",
+      "path": "awssdk.core/3.7.402",
+      "hashPath": "awssdk.core.3.7.402.nupkg.sha512"
+    },
+    "AWSSDK.Extensions.NETCore.Setup/3.7.400": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-i4ta6n+QuGKt1RBCIbRU2wohz5DYJ+wRPR9EI7YkzC8eaWSbmMXTNL+s4HpYUsoxM7uyUrYoW0gC52/9KnK7xw==",
+      "path": "awssdk.extensions.netcore.setup/3.7.400",
+      "hashPath": "awssdk.extensions.netcore.setup.3.7.400.nupkg.sha512"
+    },
+    "AWSSDK.S3/3.7.407": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-s0QLDmmFayUmBZJijCVokkmCS5uQRF93ancGh+maXaI4vLW1fXIXfjd1xL8oHbpduFrT0H8jtNXc7m0HqaW/jg==",
+      "path": "awssdk.s3/3.7.407",
+      "hashPath": "awssdk.s3.3.7.407.nupkg.sha512"
+    },
+    "AWSSDK.SimpleNotificationService/3.7.400": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-x5jqxMywc4/WEh3Mz5qFPi3YaqIgYpPpJLyAWSi1Ie5jpOsqeWKqJ/BZYQV4OvbNnlOMWoEwHIN85p3cLp5KhQ==",
+      "path": "awssdk.simplenotificationservice/3.7.400",
+      "hashPath": "awssdk.simplenotificationservice.3.7.400.nupkg.sha512"
+    },
+    "FluentValidation/11.11.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cyIVdQBwSipxWG8MA3Rqox7iNbUNUTK5bfJi9tIdm4CAfH71Oo5ABLP4/QyrUwuakqpUEPGtE43BDddvEehuYw==",
+      "path": "fluentvalidation/11.11.0",
+      "hashPath": "fluentvalidation.11.11.0.nupkg.sha512"
+    },
+    "FluentValidation.DependencyInjectionExtensions/11.11.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-viTKWaMbL3yJYgGI0DiCeavNbE9UPMWFVK2XS9nYXGbm3NDMd0/L5ER4wBzmTtW3BYh3SrlSXm9RACiKZ6stlA==",
+      "path": "fluentvalidation.dependencyinjectionextensions/11.11.0",
+      "hashPath": "fluentvalidation.dependencyinjectionextensions.11.11.0.nupkg.sha512"
+    },
+    "Hangfire.AspNetCore/1.8.17": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6sFVmIySXX4n8GDrXYRxlXdFzsF6H+q5WPeDDBIQ2qiGDIEzMQvO8P01s3Kq9rRL3YwPuwjhrVcLI6c+ESIVig==",
+      "path": "hangfire.aspnetcore/1.8.17",
+      "hashPath": "hangfire.aspnetcore.1.8.17.nupkg.sha512"
+    },
+    "Hangfire.Core/1.8.17": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-PJbESth45US95kcFn3P2xd//l5C34YPskcU9q/mdIutVcYbd2kvsZDBFmz0/HYxa0nrocdjSpO6MGwPU4kE8Pw==",
+      "path": "hangfire.core/1.8.17",
+      "hashPath": "hangfire.core.1.8.17.nupkg.sha512"
+    },
+    "Hangfire.NetCore/1.8.17": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-COFpdp1JOMj9gd76NObq0ejZv0UAfpa6d3uKdtc96+NT/PhjXVOT5im2Mff3jqBdwEcQodw2xS8oFUs863clvw==",
+      "path": "hangfire.netcore/1.8.17",
+      "hashPath": "hangfire.netcore.1.8.17.nupkg.sha512"
+    },
+    "Hangfire.SqlServer/1.8.17": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-RX6lkRX1dl1an6EXZGSRKG1YlHt14stETzUrvhlMxvu96esSpVWR0EPAAiyTNOwOMH0uFdPxy3NNl25fgFJQIA==",
+      "path": "hangfire.sqlserver/1.8.17",
+      "hashPath": "hangfire.sqlserver.1.8.17.nupkg.sha512"
+    },
+    "MediatR/12.4.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0tLxCgEC5+r1OCuumR3sWyiVa+BMv3AgiU4+pz8xqTc+2q1WbUEXFOr7Orm96oZ9r9FsldgUtWvB2o7b9jDOaw==",
+      "path": "mediatr/12.4.1",
+      "hashPath": "mediatr.12.4.1.nupkg.sha512"
+    },
+    "MediatR.Contracts/2.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-FYv95bNT4UwcNA+G/J1oX5OpRiSUxteXaUt2BJbRSdRNiIUNbggJF69wy6mnk2wYToaanpdXZdCwVylt96MpwQ==",
+      "path": "mediatr.contracts/2.0.1",
+      "hashPath": "mediatr.contracts.2.0.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.AmbientMetadata.Application/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-voKvEpXEsYtEhSiIVrYrZsMP7zEkBjquhqcvhxOCUen1i9TwdSwBmz7tN93IthTPA1nzXzWnz9huCZyegiYM8A==",
+      "path": "microsoft.extensions.ambientmetadata.application/9.6.0",
+      "hashPath": "microsoft.extensions.ambientmetadata.application.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Caching.StackExchangeRedis/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-LTduPLaoP8T8I/SEKTEks7a7ZCnqlGmX6/7Y4k/nFlbKFsv8oLxhLQ44ktF9ve0lAmEGkLuuvRhunG/LQuhP7Q==",
+      "path": "microsoft.extensions.caching.stackexchangeredis/10.0.0",
+      "hashPath": "microsoft.extensions.caching.stackexchangeredis.10.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Compliance.Abstractions/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EsW9aUhkHYfb75wkx24BuusOQbh2BRTSh052Fki2APn3puH1q9owynut1jWMq0Rm/C4zhyw6LAd+F6PX8HUi4Q==",
+      "path": "microsoft.extensions.compliance.abstractions/9.6.0",
+      "hashPath": "microsoft.extensions.compliance.abstractions.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection.AutoActivation/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-71KqPTemVxSAYf4iv4lYFrL684MLwcTciLOHfoaWzxHG0U7ASWy/cQG8mNGB5Wy59H7eKTeuiNjvKXTebxlKWA==",
+      "path": "microsoft.extensions.dependencyinjection.autoactivation/9.6.0",
+      "hashPath": "microsoft.extensions.dependencyinjection.autoactivation.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyModel/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-saxr2XzwgDU77LaQfYFXmddEDRUKHF4DaGMZkNB3qjdVSZlax3//dGJagJkKrGMIPNZs2jVFXITyCCR6UHJNdA==",
+      "path": "microsoft.extensions.dependencymodel/9.0.0",
+      "hashPath": "microsoft.extensions.dependencymodel.9.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Diagnostics.ExceptionSummarization/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cquw9eHjO7sJ+t6hC++Zd+UjelvxfAnmmfwIq7KnGllcxBg24VEsmIq5gODxYhxXN4rWOvmnIwix0ze2p5GbgA==",
+      "path": "microsoft.extensions.diagnostics.exceptionsummarization/9.6.0",
+      "hashPath": "microsoft.extensions.diagnostics.exceptionsummarization.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Http.Diagnostics/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-FEhMpnH7OANl7ux2wuByvRYqqdRQGC7l2RKOd5FDFXySeWhqJnYWEaQPMqgNk1v108N3fIFmIEnGTOBHDpVP+Q==",
+      "path": "microsoft.extensions.http.diagnostics/9.6.0",
+      "hashPath": "microsoft.extensions.http.diagnostics.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Http.Resilience/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Np2a8u0ttPzqSrfVlVNRavKNzrzrbLAEsd0gR0KX5jIVOp7SVlPQdAHBTBh8/Hd7Amni9STSBWE2hoxq2pu3XA==",
+      "path": "microsoft.extensions.http.resilience/9.6.0",
+      "hashPath": "microsoft.extensions.http.resilience.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Resilience/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JhfQk0u4XYGD21fMUvAxmzzVM3CMN2Xy3yemutEBECoSP5ND/7jEG4daL0NODSPtq6rd9Pk7SumnBfxyV3+zxw==",
+      "path": "microsoft.extensions.resilience/9.6.0",
+      "hashPath": "microsoft.extensions.resilience.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Telemetry/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4k56GlByl+4gxwMHDMJ/MglbmjPPddLgd21RHZlSfx4WWLqiES/GJ/sHVCrKVjdIQHdcR5MLWvplfuqgj4H+VQ==",
+      "path": "microsoft.extensions.telemetry/9.6.0",
+      "hashPath": "microsoft.extensions.telemetry.9.6.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Telemetry.Abstractions/9.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-LKkpXv0KCFC7oPzkqwNMgBfBImd8I57e6W1mtnvw5KCwMZ/1iS5PsWQiSxp17J91crAyKv5KosRF6lNK2j9EBQ==",
+      "path": "microsoft.extensions.telemetry.abstractions/9.6.0",
+      "hashPath": "microsoft.extensions.telemetry.abstractions.9.6.0.nupkg.sha512"
+    },
+    "Newtonsoft.Json/11.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pNN4l+J6LlpIvHOeNdXlwxv39NPJ2B5klz+Rd2UQZIx30Squ5oND1Yy3wEAUoKn0GPUj6Yxt9lxlYWQqfZcvKg==",
+      "path": "newtonsoft.json/11.0.1",
+      "hashPath": "newtonsoft.json.11.0.1.nupkg.sha512"
+    },
+    "Pipelines.Sockets.Unofficial/2.2.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zG2FApP5zxSx6OcdJQLbZDk2AVlN2BNQD6MorwIfV6gVj0RRxWPEp2LXAxqDGZqeNV1Zp0BNPcNaey/GXmTdvQ==",
+      "path": "pipelines.sockets.unofficial/2.2.8",
+      "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
+    },
+    "Polly/8.5.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GBNZPy7i7OpkaIruWPRJ0+AWzdGDQDnKY91b7Ic2aAch4lKhPjUc5KSffpH9krIWe0MoyghqaRxwRC0Uwz2PkA==",
+      "path": "polly/8.5.0",
+      "hashPath": "polly.8.5.0.nupkg.sha512"
+    },
+    "Polly.Core/8.5.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-VYYMZNitZ85UEhwOKkTQI63WEMvzUqwQc74I2mm8h/DBVAMcBBxqYPni4DmuRtbCwngmuONuK2yBJfWNRKzI+A==",
+      "path": "polly.core/8.5.0",
+      "hashPath": "polly.core.8.5.0.nupkg.sha512"
+    },
+    "Polly.Extensions/8.4.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GZ9vRVmR0jV2JtZavt+pGUsQ1O1cuRKG7R7VOZI6ZDy9y6RNPvRvXK1tuS4ffUrv8L0FTea59oEuQzgS0R7zSA==",
+      "path": "polly.extensions/8.4.2",
+      "hashPath": "polly.extensions.8.4.2.nupkg.sha512"
+    },
+    "Polly.RateLimiting/8.4.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ehTImQ/eUyO07VYW2WvwSmU9rRH200SKJ/3jku9rOkyWE0A2JxNFmAVms8dSn49QLSjmjFRRSgfNyOgr/2PSmA==",
+      "path": "polly.ratelimiting/8.4.2",
+      "hashPath": "polly.ratelimiting.8.4.2.nupkg.sha512"
+    },
+    "Serilog/4.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gmoWVOvKgbME8TYR+gwMf7osROiWAURterc6Rt2dQyX7wtjZYpqFiA/pY6ztjGQKKV62GGCyOcmtP1UKMHgSmA==",
+      "path": "serilog/4.2.0",
+      "hashPath": "serilog.4.2.0.nupkg.sha512"
+    },
+    "Serilog.AspNetCore/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JslDajPlBsn3Pww1554flJFTqROvK9zz9jONNQgn0D8Lx2Trw8L0A8/n6zEQK1DAZWXrJwiVLw8cnTR3YFuYsg==",
+      "path": "serilog.aspnetcore/9.0.0",
+      "hashPath": "serilog.aspnetcore.9.0.0.nupkg.sha512"
+    },
+    "Serilog.Enrichers.Environment/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-RKtJC4MkEpwapJFMtXUN2eeaxePSStllCM8388OmVH+bKn7rMvpTz5C9gzGH7+Aygk4iFTFOSPBrGCV13N7V8Q==",
+      "path": "serilog.enrichers.environment/3.0.0",
+      "hashPath": "serilog.enrichers.environment.3.0.0.nupkg.sha512"
+    },
+    "Serilog.Enrichers.Process/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/wPYz2PDCJGSHNI+Z0PAacZvrgZgrGduWqLXeC2wvW6pgGM/Bi45JrKy887MRcRPHIZVU0LAlkmJ7TkByC0boQ==",
+      "path": "serilog.enrichers.process/3.0.0",
+      "hashPath": "serilog.enrichers.process.3.0.0.nupkg.sha512"
+    },
+    "Serilog.Enrichers.Span/3.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-xNxy5FxIuLLusRHBpJwJ/YqVw5S7Dtbt79NUsPQxDtu4+CYG4kJgjLs9fjZhKPMjZQL8GZRewT8brap9h2r+Vw==",
+      "path": "serilog.enrichers.span/3.1.0",
+      "hashPath": "serilog.enrichers.span.3.1.0.nupkg.sha512"
+    },
+    "Serilog.Enrichers.Thread/4.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-C7BK25a1rhUyr+Tp+1BYcVlBJq7M2VCHlIgnwoIUVJcicM9jYcvQK18+OeHiXw7uLPSjqWxJIp1EfaZ/RGmEwA==",
+      "path": "serilog.enrichers.thread/4.0.0",
+      "hashPath": "serilog.enrichers.thread.4.0.0.nupkg.sha512"
+    },
+    "Serilog.Expressions/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QhZjXtUcA2QfQRA60m+DfyIfidKsQV7HBstbYEDqzJKMbJH/KnKthkkjciRuYrmFE+scWv1JibC5LlXrdtOUmw==",
+      "path": "serilog.expressions/5.0.0",
+      "hashPath": "serilog.expressions.5.0.0.nupkg.sha512"
+    },
+    "Serilog.Extensions.Hosting/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-u2TRxuxbjvTAldQn7uaAwePkWxTHIqlgjelekBtilAGL5sYyF3+65NWctN4UrwwGLsDC7c3Vz3HnOlu+PcoxXg==",
+      "path": "serilog.extensions.hosting/9.0.0",
+      "hashPath": "serilog.extensions.hosting.9.0.0.nupkg.sha512"
+    },
+    "Serilog.Extensions.Logging/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-NwSSYqPJeKNzl5AuXVHpGbr6PkZJFlNa14CdIebVjK3k/76kYj/mz5kiTRNVSsSaxM8kAIa1kpy/qyT9E4npRQ==",
+      "path": "serilog.extensions.logging/9.0.0",
+      "hashPath": "serilog.extensions.logging.9.0.0.nupkg.sha512"
+    },
+    "Serilog.Formatting.Compact/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wQsv14w9cqlfB5FX2MZpNsTawckN4a8dryuNGbebB/3Nh1pXnROHZov3swtu3Nj5oNG7Ba+xdu7Et/ulAUPanQ==",
+      "path": "serilog.formatting.compact/3.0.0",
+      "hashPath": "serilog.formatting.compact.3.0.0.nupkg.sha512"
+    },
+    "Serilog.Settings.Configuration/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4/Et4Cqwa+F88l5SeFeNZ4c4Z6dEAIKbu3MaQb2Zz9F/g27T5a3wvfMcmCOaAiACjfUb4A6wrlTVfyYUZk3RRQ==",
+      "path": "serilog.settings.configuration/9.0.0",
+      "hashPath": "serilog.settings.configuration.9.0.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.Console/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fQGWqVMClCP2yEyTXPIinSr5c+CBGUvBybPxjAGcf7ctDhadFhrQw03Mv8rJ07/wR5PDfFjewf2LimvXCDzpbA==",
+      "path": "serilog.sinks.console/6.0.0",
+      "hashPath": "serilog.sinks.console.6.0.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.Debug/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4BzXcdrgRX7wde9PmHuYd9U6YqycCC28hhpKonK7hx0wb19eiuRj16fPcPSVp0o/Y1ipJuNLYQ00R3q2Zs8FDA==",
+      "path": "serilog.sinks.debug/3.0.0",
+      "hashPath": "serilog.sinks.debug.3.0.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.File/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lxjg89Y8gJMmFxVkbZ+qDgjl+T4yC5F7WSLTvA+5q0R04tfKVLRL/EHpYoJ/MEQd2EeCKDuylBIVnAYMotmh2A==",
+      "path": "serilog.sinks.file/6.0.0",
+      "hashPath": "serilog.sinks.file.6.0.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.Seq/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-aNU8A0K322q7+voPNmp1/qNPH+9QK8xvM1p72sMmCG0wGlshFzmtDW9QnVSoSYCj0MgQKcMOlgooovtBhRlNHw==",
+      "path": "serilog.sinks.seq/9.0.0",
+      "hashPath": "serilog.sinks.seq.9.0.0.nupkg.sha512"
+    },
+    "StackExchange.Redis/2.8.16": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-WaoulkOqOC9jHepca3JZKFTqndCWab5uYS7qCzmiQDlrTkFaDN7eLSlEfHycBxipRnQY9ppZM7QSsWAwUEGblw==",
+      "path": "stackexchange.redis/2.8.16",
+      "hashPath": "stackexchange.redis.2.8.16.nupkg.sha512"
+    },
+    "Farm360.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Farm360.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Farm360.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Farm360.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

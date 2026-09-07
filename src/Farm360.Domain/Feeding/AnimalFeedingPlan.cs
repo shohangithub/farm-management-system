@@ -74,6 +74,7 @@ public sealed class AnimalFeedingPlan : AuditableEntity, IAggregateRoot
             return;
             
         Status = FeedingPlanStatus.Cancelled;
+        EndDate = DateOnly.FromDateTime(DateTime.UtcNow);
     }
 
     public void UpdateLocation(Guid? shedId, Guid? penId)

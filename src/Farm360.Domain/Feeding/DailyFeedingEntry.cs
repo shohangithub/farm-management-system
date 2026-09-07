@@ -13,6 +13,7 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
     public Guid? BatchId { get; private set; }
     public DateOnly EntryDate { get; private set; }
     public Guid FormulaId { get; private set; }
+    public Guid? RuleLineId { get; private set; }
     public decimal ExpectedKg { get; private set; }
     public decimal? ActualKg { get; private set; }
     public DailyFeedingEntryStatus Status { get; private set; }
@@ -29,6 +30,7 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
         DateOnly entryDate,
         Guid formulaId,
         decimal expectedKg,
+        Guid? ruleLineId = null,
         Guid? shedId = null,
         Guid? penId = null,
         Guid? batchId = null)
@@ -38,6 +40,7 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
         FarmId = farmId;
         EntryDate = entryDate;
         FormulaId = formulaId;
+        RuleLineId = ruleLineId;
         ExpectedKg = expectedKg;
         ShedId = shedId;
         PenId = penId;

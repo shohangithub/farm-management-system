@@ -40,11 +40,20 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
     
     public async Task<IReadOnlyList<AnimalFeedingPlanDto>> Handle(GetFeedingPlansQuery request, CancellationToken cancellationToken)
     {
-        var plans = await _repository.GetActivePlansByFarmAsync(_tenantService.TenantId, request.FarmId, cancellationToken);
+        FeedingPlanStatus? statusFilter = null;
+        if (!string.IsNullOrWhiteSpace(request.Status) && !request.Status.Equals("all", StringComparison.OrdinalIgnoreCase))
+        {
+            if (Enum.TryParse<FeedingPlanStatus>(request.Status, true, out var parsed))
+            {
+                statusFilter = parsed;
+            }
+        }
+
+        var plans = await _repository.GetPlansByFarmAsync(_tenantService.TenantId, request.FarmId, statusFilter, cancellationToken);
         var ruleSets = await _ruleSetRepository.GetAllAsync(cancellationToken);
         
         var animalIds = plans.Where(p => p.AnimalId.HasValue).Select(p => p.AnimalId!.Value).Distinct().ToList();
-        var animals = await _animalRepository.GetByIdsAsync(animalIds, cancellationToken);
+        var animals = animalIds.Count > 0 ? await _animalRepository.GetByIdsAsync(animalIds, cancellationToken) : [];
         var animalDict = animals.ToDictionary(a => a.Id, a => a.Tag.TagId);
 
         return plans.Select(p => new AnimalFeedingPlanDto(

@@ -21,14 +21,17 @@ public sealed class AnimalTransferredEventHandler : INotificationHandler<AnimalT
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Processing AnimalTransferredEvent for AnimalId: {AnimalId}. Updating active feeding plans location.", notification.AnimalId);
 
-        var activePlan = await _planRepository.GetActivePlanForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
-        if (activePlan != null)
+        var activePlans = await _planRepository.GetActivePlansForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
+        if (activePlans.Count > 0)
         {
-            activePlan.UpdateLocation(notification.ToShedId, null);
-            _planRepository.Update(activePlan);
-            
-            if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Updated active feeding plan {PlanId} location for transferred animal {AnimalId}", activePlan.Id, notification.AnimalId);
+            foreach (var activePlan in activePlans)
+            {
+                activePlan.UpdateLocation(notification.ToShedId, null);
+                _planRepository.Update(activePlan);
+                
+                if (_logger.IsEnabled(LogLevel.Information))
+                    _logger.LogInformation("Updated active feeding plan {PlanId} location for transferred animal {AnimalId}", activePlan.Id, notification.AnimalId);
+            }
         }
     }
 }

@@ -138,8 +138,8 @@ export class FeedingService {
     return this.http.get<AnimalFeedingPlan[]>(`${this.baseUrl}/plans`, { params });
   }
 
-  assignPlan(request: AssignAnimalFeedingPlanRequest): Observable<{ id: string }> {
-    return this.http.post<{ id: string }>(`${this.baseUrl}/plans/assign`, request);
+  assignPlan(request: AssignAnimalFeedingPlanRequest): Observable<{ ids: string[] }> {
+    return this.http.post<{ ids: string[] }>(`${this.baseUrl}/plans/assign`, request);
   }
 
   cancelPlan(id: string): Observable<void> {
@@ -156,12 +156,16 @@ export class FeedingService {
   }
 
   // ── Daily Feeding Entries ──
-  getTodayEntries(farmId: string, targetDate: string): Observable<DailyFeedingEntry[]> {
-    return this.http.get<DailyFeedingEntry[]>(`${this.baseUrl}/entries/today`, {
-      params: new HttpParams()
-        .set('farmId', farmId)
-        .set('targetDate', targetDate)
-    });
+  getTodayEntries(farmId?: string, targetDate?: string): Observable<DailyFeedingEntry[]> {
+    let params = new HttpParams();
+    if (farmId) params = params.set('farmId', farmId);
+    if (targetDate) params = params.set('targetDate', targetDate);
+
+    return this.http.get<DailyFeedingEntry[]>(`${this.baseUrl}/entries/today`, { params });
+  }
+
+  generateEntries(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/entries/generate`, {});
   }
 
   confirmEntry(id: string, actualKg: number, notes?: string): Observable<void> {

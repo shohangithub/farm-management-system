@@ -21,14 +21,17 @@ public sealed class AnimalDiedEventHandler : INotificationHandler<AnimalDiedEven
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Processing AnimalDiedEvent for AnimalId: {AnimalId}. Cancelling any active feeding plans.", notification.AnimalId);
 
-        var activePlan = await _planRepository.GetActivePlanForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
-        if (activePlan != null)
+        var activePlans = await _planRepository.GetActivePlansForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
+        if (activePlans.Count > 0)
         {
-            activePlan.Cancel();
-            _planRepository.Update(activePlan);
-            
-            if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Cancelled active feeding plan {PlanId} for dead animal {AnimalId}", activePlan.Id, notification.AnimalId);
+            foreach (var activePlan in activePlans)
+            {
+                activePlan.Cancel();
+                _planRepository.Update(activePlan);
+                
+                if (_logger.IsEnabled(LogLevel.Information))
+                    _logger.LogInformation("Cancelled active feeding plan {PlanId} for dead animal {AnimalId}", activePlan.Id, notification.AnimalId);
+            }
         }
     }
 }

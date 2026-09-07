@@ -317,6 +317,7 @@ export interface DailyFeedingEntry {
   status: DailyFeedingEntryStatus;
   notes?: string;
   confirmedAtUtc?: string;
+  formulaName?: string;
 }
 
 export interface FeedingCycleReconciliationLine {
@@ -377,10 +378,10 @@ export interface UpdateFeedingRuleSetRequest {
 
 export interface AssignAnimalFeedingPlanRequest {
   farmId: string;
-  feedingRuleSetId: string;
+  feedingRuleSetIds: string[];
   planType: FeedingPlanType;
   startDate: string;
-  animalId: string;
+  animalIds: string[];
   expectedDailyFeedKg?: number;
 }
 

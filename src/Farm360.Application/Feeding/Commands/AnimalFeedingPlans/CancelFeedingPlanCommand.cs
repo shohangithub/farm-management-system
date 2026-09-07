@@ -1,4 +1,5 @@
 using Farm360.Application.Common.Exceptions;
+using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -10,13 +11,16 @@ public record CancelFeedingPlanCommand(Guid Id) : IRequest;
 public class CancelFeedingPlanCommandHandler : IRequestHandler<CancelFeedingPlanCommand>
 {
     private readonly IAnimalFeedingPlanRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CancelFeedingPlanCommandHandler> _logger;
 
     public CancelFeedingPlanCommandHandler(
         IAnimalFeedingPlanRepository repository,
+        IUnitOfWork unitOfWork,
         ILogger<CancelFeedingPlanCommandHandler> logger)
     {
         _repository = repository;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -27,6 +31,7 @@ public class CancelFeedingPlanCommandHandler : IRequestHandler<CancelFeedingPlan
 
         plan.Cancel();
         _repository.Update(plan);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Cancelled feeding plan {PlanId}", plan.Id);

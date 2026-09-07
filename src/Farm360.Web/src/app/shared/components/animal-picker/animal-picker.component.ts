@@ -77,22 +77,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           </mat-option>
         </mat-autocomplete>
       </div>
-      
-      <!-- Selected Animal Chip -->
-      <div *ngIf="selectedAnimal" class="p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/50 rounded-lg flex items-center justify-between transition-colors">
-        <div class="flex items-center gap-3">
-          <div class="bg-primary-200 dark:bg-primary-800/60 text-primary-800 dark:text-primary-300 rounded-full h-10 w-10 flex items-center justify-center font-bold text-lg shadow-sm">
-            🐄
+      <!-- Selected Animal Chips -->
+      <div *ngIf="selectedAnimals.length > 0" class="flex flex-wrap gap-2 mt-2">
+        <div *ngFor="let animal of selectedAnimals" class="p-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/50 rounded-lg flex items-center justify-between transition-colors gap-3">
+          <div class="flex items-center gap-2">
+            <div class="bg-primary-200 dark:bg-primary-800/60 text-primary-800 dark:text-primary-300 rounded-full h-8 w-8 flex items-center justify-center font-bold shadow-sm text-sm">
+              🐄
+            </div>
+            <div class="flex flex-col">
+              <span class="font-bold text-primary-900 dark:text-primary-100 text-sm">{{ animal.tagId }}</span>
+            </div>
           </div>
-          <div class="flex flex-col">
-            <span class="font-bold text-primary-900 dark:text-primary-100">{{ selectedAnimal.tagId }}</span>
-            <span class="text-xs font-medium text-primary-700 dark:text-primary-400 mt-0.5">{{ selectedAnimal.breedName }} • {{ getSexLabel(selectedAnimal.sex) }}</span>
-          </div>
+          <button type="button" (click)="removeAnimal(animal)" title="Remove"
+                  class="w-6 h-6 flex items-center justify-center rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">close</mat-icon>
+          </button>
         </div>
-        <button type="button" (click)="clearSelection()" title="Clear selection"
-                class="w-8 h-8 flex items-center justify-center rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-          <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
-        </button>
       </div>
     </div>
   `
@@ -104,6 +104,7 @@ export class AnimalPickerComponent implements OnInit, ControlValueAccessor {
   private destroyRef = inject(DestroyRef);
 
   @Input() requiredStatus?: AnimalStatus = AnimalStatus.Active;
+  @Input() multiSelect = false;
   
   shedControl = new FormControl<string | null>({ value: null, disabled: true });
   searchControl = new FormControl<string | AnimalListItemDto>({ value: '', disabled: true });
@@ -111,7 +112,7 @@ export class AnimalPickerComponent implements OnInit, ControlValueAccessor {
   sheds$ = new BehaviorSubject<ShedList[]>([]);
   filteredAnimals$: Observable<AnimalListItemDto[]>;
   
-  selectedAnimal: AnimalListItemDto | null = null;
+  selectedAnimals: AnimalListItemDto[] = [];
   isLoading = false;
 
   // ControlValueAccessor methods
@@ -184,14 +185,35 @@ export class AnimalPickerComponent implements OnInit, ControlValueAccessor {
   }
 
   onAnimalSelected(animal: AnimalListItemDto) {
-    this.selectedAnimal = animal;
-    this.onChange(animal.id);
+    if (this.multiSelect) {
+      if (!this.selectedAnimals.find(a => a.id === animal.id)) {
+        this.selectedAnimals = [...this.selectedAnimals, animal];
+      }
+      this.searchControl.setValue('');
+      this.onChange(this.selectedAnimals.map(a => a.id));
+    } else {
+      this.selectedAnimals = [animal];
+      this.onChange(animal.id);
+    }
+  }
+
+  removeAnimal(animal: AnimalListItemDto) {
+    this.selectedAnimals = this.selectedAnimals.filter(a => a.id !== animal.id);
+    if (this.multiSelect) {
+      this.onChange(this.selectedAnimals.map(a => a.id));
+    } else {
+      this.onChange(null);
+    }
   }
 
   clearSelection() {
-    this.selectedAnimal = null;
+    this.selectedAnimals = [];
     this.searchControl.setValue('');
-    this.onChange(null);
+    if (this.multiSelect) {
+      this.onChange([]);
+    } else {
+      this.onChange(null);
+    }
   }
 
   getSexLabel(sex: AnimalSex): string {
@@ -199,24 +221,26 @@ export class AnimalPickerComponent implements OnInit, ControlValueAccessor {
   }
 
   writeValue(obj: any): void {
-    if (!obj) {
-      this.selectedAnimal = null;
+    if (!obj || (Array.isArray(obj) && obj.length === 0)) {
+      this.selectedAnimals = [];
       this.searchControl.setValue('', { emitEvent: false });
       return;
     }
     
-    if (typeof obj === 'string' && (!this.selectedAnimal || this.selectedAnimal.id !== obj)) {
-      this.isLoading = true;
-      this.animalService.getById(obj).subscribe({
-        next: (animal) => {
-          this.selectedAnimal = animal as unknown as AnimalListItemDto;
-          this.searchControl.setValue(this.selectedAnimal, { emitEvent: false });
-          this.isLoading = false;
-        },
-        error: () => {
-          this.isLoading = false;
-        }
-      });
+    if (!this.multiSelect && typeof obj === 'string') {
+      if (this.selectedAnimals.length === 0 || this.selectedAnimals[0].id !== obj) {
+        this.isLoading = true;
+        this.animalService.getById(obj).subscribe({
+          next: (animal) => {
+            this.selectedAnimals = [animal as unknown as AnimalListItemDto];
+            this.searchControl.setValue(this.selectedAnimals[0], { emitEvent: false });
+            this.isLoading = false;
+          },
+          error: () => {
+            this.isLoading = false;
+          }
+        });
+      }
     }
   }
 
