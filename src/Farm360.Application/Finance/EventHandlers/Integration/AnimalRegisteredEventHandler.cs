@@ -71,7 +71,9 @@ public sealed class AnimalRegisteredEventHandler :
                 referenceId: domainEvent.TagId ?? domainEvent.AnimalId.ToString(),
                 notes: $"Acquisition cost for animal {domainEvent.TagId}",
                 description: $"Animal Purchase - Tag: {domainEvent.TagId}",
-                animalId: domainEvent.AnimalId
+                animalId: domainEvent.AnimalId,
+                isAutomated: true,
+                sourceModule: "Livestock"
             );
 
             await _transactionRepository.AddAsync(transaction, cancellationToken);

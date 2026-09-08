@@ -59,7 +59,9 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
             po.TotalAmountBdt,
             DateTime.UtcNow,
             referenceId: po.PoNumber,
-            notes: $"Auto-generated expense from Purchase Order {po.PoNumber}"
+            notes: $"Auto-generated expense from Purchase Order {po.PoNumber}",
+            isAutomated: true,
+            sourceModule: "Inventory"
         );
 
         await _financialTransactionRepository.AddAsync(expense, cancellationToken);

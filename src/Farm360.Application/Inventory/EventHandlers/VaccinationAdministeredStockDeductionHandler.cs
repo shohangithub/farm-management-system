@@ -10,7 +10,9 @@ namespace Farm360.Application.Inventory.EventHandlers;
 
 public sealed record VaccinationAdministeredNotification(VaccinationAdministeredEvent DomainEvent) : INotification;
 
-public sealed class VaccinationAdministeredStockDeductionHandler : INotificationHandler<VaccinationAdministeredNotification>
+public sealed class VaccinationAdministeredStockDeductionHandler : 
+    INotificationHandler<VaccinationAdministeredNotification>,
+    INotificationHandler<VaccinationAdministeredEvent>
 {
     private readonly IInventoryItemRepository _inventoryItemRepository;
     private readonly IStockTransactionRepository _transactionRepository;
@@ -29,9 +31,13 @@ public sealed class VaccinationAdministeredStockDeductionHandler : INotification
         _logger = logger;
     }
 
-    public async Task Handle(VaccinationAdministeredNotification wrapper, CancellationToken cancellationToken)
+    public Task Handle(VaccinationAdministeredNotification wrapper, CancellationToken cancellationToken)
     {
-        var notification = wrapper.DomainEvent;
+        return Handle(wrapper.DomainEvent, cancellationToken);
+    }
+
+    public async Task Handle(VaccinationAdministeredEvent notification, CancellationToken cancellationToken)
+    {
 
         if (notification.InventoryItemId == null || notification.DosageQuantity == null || notification.DosageQuantity <= 0)
         {

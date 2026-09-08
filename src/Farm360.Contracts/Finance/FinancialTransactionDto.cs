@@ -15,5 +15,7 @@ public record FinancialTransactionDto(
     Guid? AnimalId,
     Guid? BatchId,
     Guid? ShedId,
-    DateTime CreatedAtUtc
+    DateTime CreatedAtUtc,
+    bool IsAutomated = false,
+    string? SourceModule = null
 );

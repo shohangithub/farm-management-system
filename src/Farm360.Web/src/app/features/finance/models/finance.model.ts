@@ -12,6 +12,8 @@ export interface FinancialTransaction {
   batchId?: string;
   shedId?: string;
   createdAtUtc: string;
+  isAutomated?: boolean;
+  sourceModule?: string;
 }
 
 export interface PagedFinancialTransactionsResult {
@@ -38,6 +40,8 @@ export interface FinancialTransactionParams {
   batchId?: string;
   sortBy?: string;
   sortDesc?: boolean;
+  isAutomated?: boolean;
+  sourceModule?: string;
 }
 
 export interface FinancialTransactionSummary {

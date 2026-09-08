@@ -82,7 +82,9 @@ public sealed class TreatmentLoggedEventHandler :
             referenceId: domainEvent.MedicalTreatmentId.ToString(),
             notes: $"Treatment: {domainEvent.MedicationName} for {domainEvent.Diagnosis}",
             description: $"Medical Treatment - Drug: {domainEvent.MedicationName}",
-            animalId: domainEvent.AnimalId
+            animalId: domainEvent.AnimalId,
+            isAutomated: true,
+            sourceModule: "Health"
         );
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);

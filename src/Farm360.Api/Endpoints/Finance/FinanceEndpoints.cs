@@ -41,6 +41,8 @@ public static class FinanceEndpoints
             [FromQuery] Guid? batchId = null,
             [FromQuery] string? sortBy = null,
             [FromQuery] bool sortDesc = true,
+            [FromQuery] bool? isAutomated = null,
+            [FromQuery] string? sourceModule = null,
             IMediator mediator = null!) =>
         {
             Domain.Finance.Enums.TransactionType? parsedType = null;
@@ -63,7 +65,9 @@ public static class FinanceEndpoints
                 animalId,
                 batchId,
                 sortBy,
-                sortDesc
+                sortDesc,
+                isAutomated,
+                sourceModule
             );
 
             var result = await mediator.Send(query);
@@ -112,6 +116,8 @@ public static class FinanceEndpoints
             [FromQuery] string? category = null,
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null,
+            [FromQuery] bool? isAutomated = null,
+            [FromQuery] string? sourceModule = null,
             IMediator mediator = null!) =>
         {
             Domain.Finance.Enums.TransactionType? parsedType = null;
@@ -131,18 +137,22 @@ public static class FinanceEndpoints
                 parsedType,
                 parsedCategory,
                 startDate,
-                endDate
+                endDate,
+                IsAutomated: isAutomated,
+                SourceModule: sourceModule
             );
 
             var result = await mediator.Send(query);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("TransactionId,Date,Type,Category,AmountBDT,Description,ReferenceId,Notes,CreatedAtUtc");
+            sb.AppendLine("TransactionId,Date,Type,Category,AmountBDT,Description,ReferenceId,Notes,IsAutomated,SourceModule,CreatedAtUtc");
             foreach (var item in result.Items)
             {
                 var desc = item.Description?.Replace(",", " ") ?? "";
                 var refId = item.ReferenceId?.Replace(",", " ") ?? "";
                 var notes = item.Notes?.Replace(",", " ") ?? "";
-                sb.AppendLine($"{item.Id},{item.TransactionDate:yyyy-MM-dd},{item.Type},{item.Category},{item.AmountBdt},{desc},{refId},{notes},{item.CreatedAtUtc:yyyy-MM-dd HH:mm:ss}");
+                var isAuto = item.IsAutomated ? "Yes" : "No";
+                var srcMod = item.SourceModule ?? "Manual";
+                sb.AppendLine($"{item.Id},{item.TransactionDate:yyyy-MM-dd},{item.Type},{item.Category},{item.AmountBdt},{desc},{refId},{notes},{isAuto},{srcMod},{item.CreatedAtUtc:yyyy-MM-dd HH:mm:ss}");
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());

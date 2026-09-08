@@ -45,6 +45,8 @@ export class FinanceService {
       if (params.batchId) httpParams = httpParams.set('batchId', params.batchId);
       if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
       if (params.sortDesc !== undefined) httpParams = httpParams.set('sortDesc', params.sortDesc.toString());
+      if (params.isAutomated !== undefined) httpParams = httpParams.set('isAutomated', params.isAutomated.toString());
+      if (params.sourceModule) httpParams = httpParams.set('sourceModule', params.sourceModule);
     }
     return this.http.get<PagedFinancialTransactionsResult>(`${this.getBaseUrl(farmId)}/transactions`, { params: httpParams });
   }
@@ -83,6 +85,8 @@ export class FinanceService {
       if (params.category) httpParams = httpParams.set('category', params.category);
       if (params.startDate) httpParams = httpParams.set('startDate', params.startDate);
       if (params.endDate) httpParams = httpParams.set('endDate', params.endDate);
+      if (params.isAutomated !== undefined) httpParams = httpParams.set('isAutomated', params.isAutomated.toString());
+      if (params.sourceModule) httpParams = httpParams.set('sourceModule', params.sourceModule);
     }
     return this.http.get(`${this.getBaseUrl(farmId)}/transactions/export`, {
       params: httpParams,

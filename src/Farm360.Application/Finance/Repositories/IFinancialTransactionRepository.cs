@@ -28,5 +28,7 @@ public interface IFinancialTransactionRepository
         Guid? batchId,
         string? sortBy,
         bool sortDesc,
+        bool? isAutomated = null,
+        string? sourceModule = null,
         CancellationToken cancellationToken = default);
 }

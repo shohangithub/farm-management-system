@@ -83,11 +83,11 @@
     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
       
       <!-- Search Input -->
-      <div class="md:col-span-4 relative">
+      <div class="md:col-span-3 relative">
         <mat-icon class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xl">search</mat-icon>
         <input 
           type="text" 
-          placeholder="Search by notes, category, reference..." 
+          placeholder="Search notes, category, reference..." 
           [value]="searchTerm()"
           (input)="onSearchChange($event)"
           class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
@@ -100,7 +100,7 @@
           (click)="onTypeChange('')" 
           class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all"
           [ngClass]="selectedType() === '' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">
-          All
+          All Types
         </button>
         <button 
           type="button" 
@@ -118,8 +118,35 @@
         </button>
       </div>
 
+      <!-- Origin Filter Pills (All / Auto / Manual) -->
+      <div class="md:col-span-3 flex items-center gap-1 bg-gray-50 dark:bg-gray-900/60 p-1 border border-gray-200 dark:border-gray-700/60 rounded-xl">
+        <button 
+          type="button" 
+          (click)="onOriginChange('')" 
+          class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all"
+          [ngClass]="selectedOrigin() === '' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">
+          All Origins
+        </button>
+        <button 
+          type="button" 
+          (click)="onOriginChange('automated')" 
+          class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1"
+          [ngClass]="selectedOrigin() === 'automated' ? 'bg-sky-600 text-white shadow-sm' : 'text-sky-700 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30'">
+          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">smart_toy</mat-icon>
+          Auto
+        </button>
+        <button 
+          type="button" 
+          (click)="onOriginChange('manual')" 
+          class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1"
+          [ngClass]="selectedOrigin() === 'manual' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'">
+          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_note</mat-icon>
+          Manual
+        </button>
+      </div>
+
       <!-- Category Selector -->
-      <div class="md:col-span-3">
+      <div class="md:col-span-2">
         <select 
           [value]="selectedCategory()"
           (change)="onCategoryChange($any($event.target).value)"
@@ -130,13 +157,13 @@
       </div>
 
       <!-- Reset Filter Button -->
-      <div class="md:col-span-2 flex items-center justify-end">
+      <div class="md:col-span-1 flex items-center justify-end">
         <button *ngIf="hasActiveFilters()"
           type="button"
           (click)="clearFilters()"
-          class="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:underline px-2 py-1">
+          title="Reset all filters"
+          class="inline-flex items-center justify-center p-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
           <mat-icon class="text-base">clear_all</mat-icon>
-          Reset Filters
         </button>
       </div>
 
@@ -181,6 +208,7 @@
           <tr class="bg-gray-50/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800/50">
             <th class="py-4 px-6 font-medium">Date</th>
             <th class="py-4 px-6 font-medium">Type</th>
+            <th class="py-4 px-6 font-medium">Origin</th>
             <th class="py-4 px-6 font-medium">Category</th>
             <th class="py-4 px-6 font-medium">Reference</th>
             <th class="py-4 px-6 font-medium">Notes</th>
@@ -198,6 +226,21 @@
                 [ngClass]="txn.type === 'Income' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'">
                 {{ txn.type }}
               </span>
+            </td>
+            <td class="py-4 px-6 text-sm whitespace-nowrap">
+              <div *ngIf="txn.isAutomated; else manualBadge">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                      [ngClass]="getSourceModuleBadge(txn.sourceModule).bgClass">
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px] leading-none">{{ getSourceModuleBadge(txn.sourceModule).icon }}</mat-icon>
+                  Auto: {{ getSourceModuleBadge(txn.sourceModule).label }}
+                </span>
+              </div>
+              <ng-template #manualBadge>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700/60">
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px] leading-none">edit_note</mat-icon>
+                  Manual
+                </span>
+              </ng-template>
             </td>
             <td class="py-4 px-6 text-sm text-gray-700 dark:text-gray-300 font-medium">
               {{ txn.category }}

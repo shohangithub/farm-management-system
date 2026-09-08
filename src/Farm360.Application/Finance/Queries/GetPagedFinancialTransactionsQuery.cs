@@ -21,7 +21,9 @@ public sealed record GetPagedFinancialTransactionsQuery(
     Guid? AnimalId = null,
     Guid? BatchId = null,
     string? SortBy = null,
-    bool SortDesc = true
+    bool SortDesc = true,
+    bool? IsAutomated = null,
+    string? SourceModule = null
 ) : IRequest<PagedFinancialTransactionsResult>;
 
 public sealed class GetPagedFinancialTransactionsQueryHandler : IRequestHandler<GetPagedFinancialTransactionsQuery, PagedFinancialTransactionsResult>
@@ -48,6 +50,8 @@ public sealed class GetPagedFinancialTransactionsQueryHandler : IRequestHandler<
             request.BatchId,
             request.SortBy,
             request.SortDesc,
+            request.IsAutomated,
+            request.SourceModule,
             cancellationToken
         );
 
@@ -64,7 +68,9 @@ public sealed class GetPagedFinancialTransactionsQueryHandler : IRequestHandler<
             t.AnimalId,
             t.BatchId,
             t.ShedId,
-            t.CreatedAtUtc
+            t.CreatedAtUtc,
+            t.IsAutomated,
+            t.SourceModule
         )).ToList();
 
         var netCashFlow = totalIncome - totalExpense;

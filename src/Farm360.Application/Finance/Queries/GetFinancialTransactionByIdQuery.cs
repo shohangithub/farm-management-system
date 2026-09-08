@@ -38,7 +38,9 @@ public sealed class GetFinancialTransactionByIdQueryHandler : IRequestHandler<Ge
             transaction.AnimalId,
             transaction.BatchId,
             transaction.ShedId,
-            transaction.CreatedAtUtc
+            transaction.CreatedAtUtc,
+            transaction.IsAutomated,
+            transaction.SourceModule
         );
     }
 }

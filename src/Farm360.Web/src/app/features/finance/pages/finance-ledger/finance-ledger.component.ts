@@ -81,8 +81,14 @@ export class FinanceLedgerComponent implements OnInit {
   readonly startDate = computed(() => this.params().startDate ?? '');
   readonly endDate = computed(() => this.params().endDate ?? '');
   readonly searchTerm = computed(() => this.params().search ?? '');
+  readonly selectedOrigin = computed(() => {
+    const isAuto = this.params().isAutomated;
+    if (isAuto === true) return 'automated';
+    if (isAuto === false) return 'manual';
+    return '';
+  });
   readonly hasActiveFilters = computed(() => 
-    !!(this.params().search || this.params().type || this.params().category || this.params().startDate || this.params().endDate)
+    !!(this.params().search || this.params().type || this.params().category || this.params().startDate || this.params().endDate || this.params().isAutomated !== undefined)
   );
 
   private readonly combinedParams = computed(() => ({
@@ -165,6 +171,30 @@ export class FinanceLedgerComponent implements OnInit {
   onCategoryChange(category: string): void {
     this.params.update(p => ({ ...p, category: category || undefined, pageNumber: 1 }));
     this.refresh();
+  }
+
+  onOriginChange(origin: string): void {
+    let isAutomated: boolean | undefined = undefined;
+    if (origin === 'automated') isAutomated = true;
+    else if (origin === 'manual') isAutomated = false;
+
+    this.params.update(p => ({ ...p, isAutomated, pageNumber: 1 }));
+    this.refresh();
+  }
+
+  getSourceModuleBadge(sourceModule?: string): { label: string; icon: string; bgClass: string; textClass: string } {
+    switch (sourceModule?.toLowerCase()) {
+      case 'feeding':
+        return { label: 'Feeding', icon: 'restaurant', bgClass: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800/40', textClass: 'text-amber-700 dark:text-amber-300' };
+      case 'health':
+        return { label: 'Health', icon: 'medical_services', bgClass: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800/40', textClass: 'text-blue-700 dark:text-blue-300' };
+      case 'livestock':
+        return { label: 'Livestock', icon: 'pets', bgClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40', textClass: 'text-emerald-700 dark:text-emerald-300' };
+      case 'inventory':
+        return { label: 'Inventory', icon: 'inventory_2', bgClass: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800/40', textClass: 'text-purple-700 dark:text-purple-300' };
+      default:
+        return { label: 'System', icon: 'smart_toy', bgClass: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border-sky-200 dark:border-sky-800/40', textClass: 'text-sky-700 dark:text-sky-300' };
+    }
   }
 
   onStartDateChange(val: string): void {

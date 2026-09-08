@@ -26,6 +26,8 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
     public string ReferenceId { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public string Notes { get; private set; } = string.Empty;
+    public bool IsAutomated { get; private set; }
+    public string? SourceModule { get; private set; }
 
     private FinancialTransaction() { } // For EF Core
 
@@ -41,7 +43,9 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
         string description = "",
         Guid? animalId = null,
         Guid? batchId = null,
-        Guid? shedId = null)
+        Guid? shedId = null,
+        bool isAutomated = false,
+        string? sourceModule = null)
     {
         if (amountBdt < 0)
             throw new ArgumentException("Transaction amount cannot be negative.", nameof(amountBdt));
@@ -59,7 +63,9 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
             Description = description?.Trim() ?? string.Empty,
             AnimalId = animalId,
             BatchId = batchId,
-            ShedId = shedId
+            ShedId = shedId,
+            IsAutomated = isAutomated,
+            SourceModule = sourceModule
         };
         
         // Use the protected SetTenantId pattern from AuditableEntity

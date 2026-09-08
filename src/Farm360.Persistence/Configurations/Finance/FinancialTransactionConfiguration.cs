@@ -46,6 +46,12 @@ public class FinancialTransactionConfiguration : IEntityTypeConfiguration<Financ
         builder.Property(t => t.BatchId);
         builder.Property(t => t.ShedId);
 
+        builder.Property(t => t.IsAutomated)
+            .HasDefaultValue(false);
+
+        builder.Property(t => t.SourceModule)
+            .HasMaxLength(50);
+
         builder.HasIndex(t => t.FarmId);
         builder.HasIndex(t => t.TenantId);
         builder.HasIndex(t => t.TransactionDate);

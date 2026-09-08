@@ -79,6 +79,8 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
         Guid? batchId,
         string? sortBy,
         bool sortDesc,
+        bool? isAutomated = null,
+        string? sourceModule = null,
         CancellationToken cancellationToken = default)
     {
         var query = _context.FinancialTransactions.Where(t => t.FarmId == farmId);
@@ -119,6 +121,16 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
         if (batchId.HasValue)
         {
             query = query.Where(t => t.BatchId == batchId.Value);
+        }
+
+        if (isAutomated.HasValue)
+        {
+            query = query.Where(t => t.IsAutomated == isAutomated.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(sourceModule))
+        {
+            query = query.Where(t => t.SourceModule == sourceModule);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

@@ -51,6 +51,28 @@ import { FinancialTransaction } from '../../models/finance.model';
           </span>
         </div>
 
+        <!-- Origin / Automation Audit -->
+        <div class="p-3 rounded-xl border flex items-center justify-between"
+             [ngClass]="data.isAutomated ? 'bg-sky-50/50 border-sky-100 dark:bg-sky-950/20 dark:border-sky-800/30' : 'bg-gray-50 border-gray-100 dark:bg-gray-800/50 dark:border-gray-800'">
+          <div class="flex items-center gap-2.5">
+            <mat-icon class="!text-[20px] !w-[20px] !h-[20px]" [ngClass]="data.isAutomated ? 'text-sky-600 dark:text-sky-400' : 'text-gray-400'">
+              {{ data.isAutomated ? 'smart_toy' : 'person' }}
+            </mat-icon>
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Record Origin</span>
+              <p class="text-sm font-bold text-gray-900 dark:text-white m-0">
+                {{ data.isAutomated ? 'Automated Operation' : 'Manual Entry' }}
+              </p>
+            </div>
+          </div>
+          <span *ngIf="data.isAutomated" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
+            Source: {{ data.sourceModule || 'Operational Event' }}
+          </span>
+          <span *ngIf="!data.isAutomated" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+            Manual Form
+          </span>
+        </div>
+
         <!-- Meta Grid -->
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">

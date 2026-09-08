@@ -41,7 +41,9 @@ public sealed class VetVisitCreatedEventHandler : INotificationHandler<VetVisitC
             transactionDate: notification.VisitDate.ToDateTime(TimeOnly.MinValue),
             referenceId: notification.VetVisitId.ToString(),
             notes: $"Veterinary visit by Dr. {notification.VetName} ({notification.VisitType})",
-            description: $"Vet Visit: {notification.VetName}"
+            description: $"Vet Visit: {notification.VetName}",
+            isAutomated: true,
+            sourceModule: "Health"
         );
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);

@@ -42,7 +42,9 @@ public sealed class AnimalSoldEventHandler(
             referenceId: domainEvent.AnimalId.ToString(),
             notes: $"Auto-generated transaction from sale of animal to {domainEvent.BuyerName ?? "Unknown"}",
             description: $"Sale of Animal to {domainEvent.BuyerName ?? "Buyer"}",
-            animalId: domainEvent.AnimalId
+            animalId: domainEvent.AnimalId,
+            isAutomated: true,
+            sourceModule: "Livestock"
         );
 
         await repository.AddAsync(transaction, cancellationToken);
