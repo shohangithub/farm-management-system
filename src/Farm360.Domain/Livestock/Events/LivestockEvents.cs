@@ -133,3 +133,19 @@ public sealed record AnimalAssignedToBatchEvent(
     Guid AnimalId,
     Guid TenantId,
     Guid? BatchId) : IDomainEvent;
+
+/// <summary>
+/// Raised when an animal's acquisition purchase price or acquisition details are updated.
+/// Subscribers: finance module (updates AnimalPurchase transaction and AnimalCostLedger).
+/// </summary>
+public sealed record AnimalAcquisitionPriceUpdatedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid AnimalId,
+    Guid TenantId,
+    Guid FarmId,
+    string TagId,
+    decimal? OldPriceBdt,
+    decimal? NewPriceBdt,
+    DateOnly AcquisitionDate) : IDomainEvent;
+

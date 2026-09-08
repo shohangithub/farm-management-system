@@ -87,10 +87,14 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
 
         if (!string.IsNullOrWhiteSpace(search))
         {
+            var trimmed = search.Trim();
+            var hasMatchingCategory = Enum.TryParse<Domain.Finance.Enums.TransactionCategory>(trimmed, true, out var parsedCategorySearch);
+
             query = query.Where(t => 
-                t.Description.Contains(search) || 
-                t.Notes.Contains(search) || 
-                t.ReferenceId.Contains(search));
+                t.Description.Contains(trimmed) || 
+                t.Notes.Contains(trimmed) || 
+                t.ReferenceId.Contains(trimmed) ||
+                (hasMatchingCategory && t.Category == parsedCategorySearch));
         }
 
         if (type.HasValue)
@@ -105,12 +109,14 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
 
         if (startDate.HasValue)
         {
-            query = query.Where(t => t.TransactionDate >= startDate.Value);
+            var startOfDay = startDate.Value.Date;
+            query = query.Where(t => t.TransactionDate >= startOfDay);
         }
 
         if (endDate.HasValue)
         {
-            query = query.Where(t => t.TransactionDate <= endDate.Value);
+            var exclusiveEnd = endDate.Value.Date.AddDays(1);
+            query = query.Where(t => t.TransactionDate < exclusiveEnd);
         }
 
         if (animalId.HasValue)
@@ -157,5 +163,13 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
             .ToListAsync(cancellationToken);
 
         return (items, totalCount, totalIncome, totalExpense);
+    }
+
+    public async Task<FinancialTransaction?> GetAnimalPurchaseTransactionAsync(Guid animalId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FinancialTransactions
+            .FirstOrDefaultAsync(t => t.AnimalId == animalId 
+                                   && t.Category == Domain.Finance.Enums.TransactionCategory.AnimalPurchase 
+                                   && t.Type == Domain.Finance.Enums.TransactionType.Expense, cancellationToken);
     }
 }

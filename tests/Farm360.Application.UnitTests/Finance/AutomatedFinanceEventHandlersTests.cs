@@ -15,6 +15,7 @@ using Farm360.Domain.Inventory.Events;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
 using Farm360.Domain.Livestock;
 using Farm360.Domain.Livestock.Enums;
+using Farm360.Domain.Livestock.Events;
 using Farm360.Domain.Livestock.Repositories;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -180,6 +181,173 @@ public class AutomatedFinanceEventHandlersTests
         capturedTx.IsAutomated.Should().BeTrue();
         capturedTx.SourceModule.Should().Be("Inventory");
 
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AnimalAcquisitionPriceUpdatedEventHandler_WhenPriceUpdated_ShouldUpdateExistingTransactionAndLedger()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<AnimalAcquisitionPriceUpdatedEventHandler>>();
+        var handler = new AnimalAcquisitionPriceUpdatedEventHandler(
+            _ledgerRepository,
+            _transactionRepository,
+            _unitOfWork,
+            logger);
+
+        var tenantId = Guid.NewGuid();
+        var farmId = Guid.NewGuid();
+        var animalId = Guid.NewGuid();
+
+        var ledger = AnimalCostLedger.Create(tenantId, animalId, farmId, 50000m);
+        _ledgerRepository.GetByAnimalIdAsync(animalId, Arg.Any<CancellationToken>())
+            .Returns(ledger);
+
+        var existingTx = FinancialTransaction.Create(
+            tenantId,
+            farmId,
+            TransactionType.Expense,
+            TransactionCategory.AnimalPurchase,
+            50000m,
+            DateTime.UtcNow,
+            referenceId: "TAG-101",
+            animalId: animalId,
+            isAutomated: true,
+            sourceModule: "Livestock");
+
+        _transactionRepository.GetAnimalPurchaseTransactionAsync(animalId, Arg.Any<CancellationToken>())
+            .Returns(existingTx);
+
+        var evt = new AnimalAcquisitionPriceUpdatedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            animalId,
+            tenantId,
+            farmId,
+            "TAG-101",
+            OldPriceBdt: 50000m,
+            NewPriceBdt: 65000m,
+            AcquisitionDate: new DateOnly(2026, 9, 8));
+
+        // Act
+        await handler.Handle(evt, CancellationToken.None);
+
+        // Assert: Ledger should be 65000
+        ledger.AcquisitionCostBdt.Should().Be(65000m);
+        _ledgerRepository.Received(1).Update(ledger);
+
+        // Assert: Existing transaction amount should be updated to 65000
+        existingTx.AmountBdt.Should().Be(65000m);
+        await _transactionRepository.Received(1).UpdateAsync(existingTx, Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AnimalAcquisitionPriceUpdatedEventHandler_WhenPriceAdded_ShouldCreateNewTransactionAndLedger()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<AnimalAcquisitionPriceUpdatedEventHandler>>();
+        var handler = new AnimalAcquisitionPriceUpdatedEventHandler(
+            _ledgerRepository,
+            _transactionRepository,
+            _unitOfWork,
+            logger);
+
+        var tenantId = Guid.NewGuid();
+        var farmId = Guid.NewGuid();
+        var animalId = Guid.NewGuid();
+
+        _ledgerRepository.GetByAnimalIdAsync(animalId, Arg.Any<CancellationToken>())
+            .Returns((AnimalCostLedger?)null);
+
+        _transactionRepository.GetAnimalPurchaseTransactionAsync(animalId, Arg.Any<CancellationToken>())
+            .Returns((FinancialTransaction?)null);
+
+        FinancialTransaction? capturedTx = null;
+        await _transactionRepository.AddAsync(Arg.Do<FinancialTransaction>(t => capturedTx = t), Arg.Any<CancellationToken>());
+
+        var evt = new AnimalAcquisitionPriceUpdatedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            animalId,
+            tenantId,
+            farmId,
+            "TAG-202",
+            OldPriceBdt: null,
+            NewPriceBdt: 75000m,
+            AcquisitionDate: new DateOnly(2026, 9, 8));
+
+        // Act
+        await handler.Handle(evt, CancellationToken.None);
+
+        // Assert: Ledger created with 75000
+        _ledgerRepository.Received(1).Add(Arg.Is<AnimalCostLedger>(l => l.AcquisitionCostBdt == 75000m && l.AnimalId == animalId));
+
+        // Assert: New transaction created with 75000
+        capturedTx.Should().NotBeNull();
+        capturedTx!.AmountBdt.Should().Be(75000m);
+        capturedTx.Category.Should().Be(TransactionCategory.AnimalPurchase);
+        capturedTx.Type.Should().Be(TransactionType.Expense);
+        capturedTx.IsAutomated.Should().BeTrue();
+        capturedTx.SourceModule.Should().Be("Livestock");
+
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AnimalAcquisitionPriceUpdatedEventHandler_WhenPriceRemoved_ShouldDeleteExistingTransaction()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<AnimalAcquisitionPriceUpdatedEventHandler>>();
+        var handler = new AnimalAcquisitionPriceUpdatedEventHandler(
+            _ledgerRepository,
+            _transactionRepository,
+            _unitOfWork,
+            logger);
+
+        var tenantId = Guid.NewGuid();
+        var farmId = Guid.NewGuid();
+        var animalId = Guid.NewGuid();
+
+        var ledger = AnimalCostLedger.Create(tenantId, animalId, farmId, 50000m);
+        _ledgerRepository.GetByAnimalIdAsync(animalId, Arg.Any<CancellationToken>())
+            .Returns(ledger);
+
+        var existingTx = FinancialTransaction.Create(
+            tenantId,
+            farmId,
+            TransactionType.Expense,
+            TransactionCategory.AnimalPurchase,
+            50000m,
+            DateTime.UtcNow,
+            referenceId: "TAG-303",
+            animalId: animalId,
+            isAutomated: true,
+            sourceModule: "Livestock");
+
+        _transactionRepository.GetAnimalPurchaseTransactionAsync(animalId, Arg.Any<CancellationToken>())
+            .Returns(existingTx);
+
+        var evt = new AnimalAcquisitionPriceUpdatedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            animalId,
+            tenantId,
+            farmId,
+            "TAG-303",
+            OldPriceBdt: 50000m,
+            NewPriceBdt: null,
+            AcquisitionDate: new DateOnly(2026, 9, 8));
+
+        // Act
+        await handler.Handle(evt, CancellationToken.None);
+
+        // Assert: Ledger should reset to 0
+        ledger.AcquisitionCostBdt.Should().Be(0m);
+        _ledgerRepository.Received(1).Update(ledger);
+
+        // Assert: Existing transaction should be deleted
+        await _transactionRepository.Received(1).DeleteAsync(existingTx, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

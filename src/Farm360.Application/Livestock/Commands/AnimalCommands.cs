@@ -183,7 +183,8 @@ public sealed class UpdateAnimalCommandValidator : AbstractValidator<UpdateAnima
 
 public sealed class UpdateAnimalCommandHandler(
     IAnimalRepository repository,
-    IUnitOfWork unitOfWork) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
+    IUnitOfWork unitOfWork,
+    IPublisher publisher) : IRequestHandler<UpdateAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(UpdateAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -205,6 +206,13 @@ public sealed class UpdateAnimalCommandHandler(
 
         // Note: EF Core tracks changes automatically. No need for repository.Update(animal)
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var domainEvents = animal.DomainEvents.ToList();
+        animal.ClearDomainEvents();
+        foreach (var domainEvent in domainEvents)
+        {
+            await publisher.Publish(domainEvent, cancellationToken);
+        }
 
         return animal.ToDto();
     }

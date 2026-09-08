@@ -31,4 +31,5 @@ public interface IFinancialTransactionRepository
         bool? isAutomated = null,
         string? sourceModule = null,
         CancellationToken cancellationToken = default);
+    Task<FinancialTransaction?> GetAnimalPurchaseTransactionAsync(Guid animalId, CancellationToken cancellationToken = default);
 }

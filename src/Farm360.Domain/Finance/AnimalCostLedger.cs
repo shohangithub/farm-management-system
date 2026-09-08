@@ -109,6 +109,17 @@ public sealed class AnimalCostLedger : AuditableEntity, IAggregateRoot
     }
 
     /// <summary>
+    /// Updates the acquisition cost bucket when the animal's purchase price is updated.
+    /// </summary>
+    public void UpdateAcquisitionCost(decimal acquisitionCostBdt)
+    {
+        if (acquisitionCostBdt < 0)
+            throw new ArgumentException("Acquisition cost cannot be negative.", nameof(acquisitionCostBdt));
+
+        AcquisitionCostBdt = Math.Round(acquisitionCostBdt, 2);
+    }
+
+    /// <summary>
     /// Records the sale revenue when the animal is sold.
     /// </summary>
     public void RecordSaleRevenue(decimal salePriceBdt)

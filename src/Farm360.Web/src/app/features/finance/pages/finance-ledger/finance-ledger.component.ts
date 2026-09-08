@@ -8,8 +8,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { switchMap, catchError, of, debounceTime, distinctUntilChanged, Subject, tap } from 'rxjs';
+import { toSignal, toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { switchMap, catchError, of, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
@@ -69,10 +69,14 @@ export class FinanceLedgerComponent implements OnInit {
     sortDesc: true
   });
 
-  readonly searchInput$ = new Subject<string>();
+  readonly searchTerm = signal('');
   readonly refreshTrigger = signal(0);
   readonly isLoading = signal(true);
   readonly isExporting = signal(false);
+
+  readonly currentFarm = toSignal(this.workingContextService.currentFarm$, {
+    initialValue: this.workingContextService.currentFarmValue
+  });
 
   readonly pageIndex = computed(() => (this.params().pageNumber ?? 1) - 1);
   readonly pageSize = computed(() => this.params().pageSize ?? 10);
@@ -80,7 +84,6 @@ export class FinanceLedgerComponent implements OnInit {
   readonly selectedCategory = computed(() => this.params().category ?? '');
   readonly startDate = computed(() => this.params().startDate ?? '');
   readonly endDate = computed(() => this.params().endDate ?? '');
-  readonly searchTerm = computed(() => this.params().search ?? '');
   readonly selectedOrigin = computed(() => {
     const isAuto = this.params().isAutomated;
     if (isAuto === true) return 'automated';
@@ -92,16 +95,16 @@ export class FinanceLedgerComponent implements OnInit {
   );
 
   private readonly combinedParams = computed(() => ({
-    farmId: this.workingContextService.currentFarmValue?.id,
+    farmId: this.currentFarm()?.id,
     params: this.params(),
     refresh: this.refreshTrigger()
   }));
 
   readonly result = toSignal(
-    of(null).pipe(
-      switchMap(() => {
-        const p = this.combinedParams();
-        if (!p.farmId) {
+    toObservable(this.combinedParams).pipe(
+      tap(() => this.isLoading.set(true)),
+      switchMap(({ farmId, params }) => {
+        if (!farmId) {
           this.isLoading.set(false);
           return of<PagedFinancialTransactionsResult>({
             items: [],
@@ -115,8 +118,7 @@ export class FinanceLedgerComponent implements OnInit {
             hasNextPage: false
           });
         }
-        this.isLoading.set(true);
-        return this.financeService.getPagedTransactions(p.farmId, p.params).pipe(
+        return this.financeService.getPagedTransactions(farmId, params).pipe(
           tap(() => this.isLoading.set(false)),
           catchError(() => {
             this.isLoading.set(false);
@@ -144,13 +146,12 @@ export class FinanceLedgerComponent implements OnInit {
   readonly netCashFlow = computed(() => this.result()?.netCashFlowBdt ?? 0);
 
   ngOnInit(): void {
-    this.searchInput$.pipe(
+    toObservable(this.searchTerm).pipe(
       debounceTime(350),
       distinctUntilChanged(),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(term => {
-      this.params.update(p => ({ ...p, search: term || undefined, pageNumber: 1 }));
-      this.refresh();
+      this.params.update(p => ({ ...p, search: term ? term.trim() : undefined, pageNumber: 1 }));
     });
   }
 
@@ -160,17 +161,21 @@ export class FinanceLedgerComponent implements OnInit {
 
   onSearchChange(event: Event): void {
     const val = (event.target as HTMLInputElement).value;
-    this.searchInput$.next(val);
+    this.searchTerm.set(val);
+  }
+
+  onSearchEnter(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.searchTerm.set(val);
+    this.params.update(p => ({ ...p, search: val ? val.trim() : undefined, pageNumber: 1 }));
   }
 
   onTypeChange(type: string): void {
     this.params.update(p => ({ ...p, type: type || undefined, category: undefined, pageNumber: 1 }));
-    this.refresh();
   }
 
   onCategoryChange(category: string): void {
     this.params.update(p => ({ ...p, category: category || undefined, pageNumber: 1 }));
-    this.refresh();
   }
 
   onOriginChange(origin: string): void {
@@ -179,7 +184,6 @@ export class FinanceLedgerComponent implements OnInit {
     else if (origin === 'manual') isAutomated = false;
 
     this.params.update(p => ({ ...p, isAutomated, pageNumber: 1 }));
-    this.refresh();
   }
 
   getSourceModuleBadge(sourceModule?: string): { label: string; icon: string; bgClass: string; textClass: string } {
@@ -199,12 +203,10 @@ export class FinanceLedgerComponent implements OnInit {
 
   onStartDateChange(val: string): void {
     this.params.update(p => ({ ...p, startDate: val || undefined, pageNumber: 1 }));
-    this.refresh();
   }
 
   onEndDateChange(val: string): void {
     this.params.update(p => ({ ...p, endDate: val || undefined, pageNumber: 1 }));
-    this.refresh();
   }
 
   onPaginatorChange(event: PageEvent): void {
@@ -213,17 +215,16 @@ export class FinanceLedgerComponent implements OnInit {
       pageNumber: event.pageIndex + 1,
       pageSize: event.pageSize
     }));
-    this.refresh();
   }
 
   clearFilters(): void {
+    this.searchTerm.set('');
     this.params.set({
       pageNumber: 1,
       pageSize: 10,
       sortBy: 'TransactionDate',
       sortDesc: true
     });
-    this.refresh();
   }
 
   openIncomeDialog(): void {

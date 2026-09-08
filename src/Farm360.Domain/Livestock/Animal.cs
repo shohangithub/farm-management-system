@@ -111,9 +111,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         decimal? acquisitionPriceBdt,
         string? notes)
     {
-        // Not allowing updates if status is not active/quarantined as it messes with financials/inventory? 
-        // We'll trust the caller to enforce rules if needed.
-        
+        var oldPrice = AcquisitionPriceBdt;
+
         Tag = tag;
         Species = species;
         BreedId = breedId;
@@ -123,6 +122,20 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         AcquisitionDate = acquisitionDate;
         AcquisitionPriceBdt = acquisitionPriceBdt;
         Notes = notes;
+
+        if (oldPrice != acquisitionPriceBdt)
+        {
+            RaiseDomainEvent(new AnimalAcquisitionPriceUpdatedEvent(
+                Guid.NewGuid(),
+                DateTime.UtcNow,
+                Id,
+                TenantId,
+                FarmId,
+                Tag.TagId,
+                oldPrice,
+                acquisitionPriceBdt,
+                acquisitionDate));
+        }
     }
 
     // ── Denormalized fields (updated by domain event handlers for query perf) ─
