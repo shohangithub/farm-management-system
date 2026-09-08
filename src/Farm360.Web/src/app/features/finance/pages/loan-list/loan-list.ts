@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, PercentPipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -11,6 +11,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { LoanFormDialogComponent } from '../../components/loan-form-dialog/loan-form-dialog';
+import { LoanRepaymentDialogComponent } from '../../components/loan-repayment-dialog/loan-repayment-dialog';
+import { LoanRecord } from '../../models/finance.model';
 
 @Component({
   selector: 'app-loan-list',
@@ -24,8 +26,7 @@ import { LoanFormDialogComponent } from '../../components/loan-form-dialog/loan-
     LoadingComponent,
     EmptyStateComponent,
     CurrencyPipe,
-    DatePipe,
-    PercentPipe
+    DatePipe
   ],
   template: `
     <app-page-header 
@@ -58,6 +59,9 @@ import { LoanFormDialogComponent } from '../../components/loan-form-dialog/loan-
         
         <div *ngFor="let loan of loans()" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6">
           
+          <!-- Background Watermark -->
+          <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">real_estate_agent</mat-icon>
+          
           <div class="flex justify-between items-start mb-6">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
@@ -86,7 +90,9 @@ import { LoanFormDialogComponent } from '../../components/loan-form-dialog/loan-
 
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
               <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding Balance</span>
-              <span class="text-sm font-bold text-rose-600 dark:text-rose-400">{{ loan.outstandingBalanceBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+              <span class="text-sm font-bold" [ngClass]="loan.outstandingBalanceBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
+                {{ loan.outstandingBalanceBdt | currency:'BDT ':'symbol':'1.0-0' }}
+              </span>
             </div>
           </div>
 
@@ -94,12 +100,29 @@ import { LoanFormDialogComponent } from '../../components/loan-form-dialog/loan-
           <div class="mt-6 pt-2">
             <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-2">
               <span class="text-gray-500">Repayment Progress</span>
-              <span class="text-emerald-600 dark:text-emerald-400">{{ loan.repaymentProgressPercent | percent:'1.0-0' }}</span>
+              <span class="text-emerald-600 dark:text-emerald-400">{{ loan.repaymentProgressPercent }}%</span>
             </div>
             <div class="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full" [style.width.%]="loan.repaymentProgressPercent * 100"></div>
+              <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500" [style.width.%]="loan.repaymentProgressPercent"></div>
             </div>
             <p class="text-xs text-center text-gray-500 mt-2">Total Repaid: {{ loan.totalRepaidBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+          </div>
+
+          <!-- Action Button -->
+          <div *ngIf="loan.isActive" class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+            <button (click)="openRepaymentDialog(loan)" 
+              class="w-full py-2.5 px-4 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-sm shadow-emerald-500/20 flex items-center justify-center gap-2">
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">payments</mat-icon>
+              Make Repayment
+            </button>
+          </div>
+
+          <!-- Settled Badge -->
+          <div *ngIf="!loan.isActive" class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+            <div class="w-full py-2.5 px-4 text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-800/30">
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon>
+              Fully Settled
+            </div>
           </div>
 
         </div>
@@ -145,7 +168,22 @@ export class LoanListComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.refreshTrigger$.next(); // Refresh list on success
+        this.refreshTrigger$.next();
+      }
+    });
+  }
+
+  openRepaymentDialog(loan: LoanRecord): void {
+    const dialogRef = this.dialog.open(LoanRepaymentDialogComponent, {
+      width: '500px',
+      disableClose: true,
+      panelClass: ['premium-dialog-panel'],
+      data: loan
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.refreshTrigger$.next();
       }
     });
   }
