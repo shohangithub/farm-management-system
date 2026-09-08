@@ -293,8 +293,11 @@ export class InventoryDashboardComponent {
   openCreateItemDialog(): void {
     const farmId = this.activeFarmId();
     if (!farmId) return;
-    const dialogRef = this.dialog.open(CreateItemDialogComponent, { disableClose: true,
-      width: '720px',
+    const dialogRef = this.dialog.open(CreateItemDialogComponent, { 
+      disableClose: true,
+      width: '560px',
+      maxWidth: 'calc(100vw - 1.5rem)',
+      panelClass: 'dialog-responsive',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {

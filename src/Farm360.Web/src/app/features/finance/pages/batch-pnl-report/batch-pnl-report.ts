@@ -1,7 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, PercentPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of, combineLatest, map } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -15,7 +16,9 @@ import { WorkingContextService } from '../../../../core/services/working-context
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     MatIconModule,
+    MatButtonModule,
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
@@ -27,6 +30,13 @@ import { WorkingContextService } from '../../../../core/services/working-context
       title="Batch Profit & Loss" 
       [description]="'Financial performance for batch ' + (batchId() || '')"
       breadcrumbActiveNode="Batch P&L">
+      <div actions class="flex items-center gap-3">
+        <a mat-stroked-button routerLink="/finance"
+          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
+          <mat-icon class="text-sm">arrow_back</mat-icon>
+          <span>Overview</span>
+        </a>
+      </div>
     </app-page-header>
 
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>

@@ -15,4 +15,18 @@ public interface IFinancialTransactionRepository
     Task AddAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default);
     Task UpdateAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default);
     Task DeleteAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<FinancialTransaction> Items, int TotalCount, decimal TotalIncome, decimal TotalExpense)> GetPagedAsync(
+        Guid farmId,
+        int pageNumber,
+        int pageSize,
+        string? search,
+        Domain.Finance.Enums.TransactionType? type,
+        Domain.Finance.Enums.TransactionCategory? category,
+        DateTime? startDate,
+        DateTime? endDate,
+        Guid? animalId,
+        Guid? batchId,
+        string? sortBy,
+        bool sortDesc,
+        CancellationToken cancellationToken = default);
 }

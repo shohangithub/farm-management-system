@@ -29,30 +29,41 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
     MatProgressSpinnerModule
   ],
   template: `
-    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl">
-      <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] w-full max-w-xl mx-auto">
+      <!-- Header (Pinned to Top) -->
+      <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
             <mat-icon class="!w-5 !h-5 !text-[20px]">inventory_2</mat-icon>
           </div>
-          <span>{{ isEdit ? 'Edit Inventory Item' : 'Add New Inventory Item' }}</span>
-        </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-          <mat-icon>close</mat-icon>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white m-0 leading-tight">
+              {{ isEdit ? 'Edit Inventory Item' : 'Add New Inventory Item' }}
+            </h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
+              {{ isEdit ? 'Update inventory item catalog details' : 'Register a new consumable, medicine, or asset' }}
+            </p>
+          </div>
+        </div>
+        <button mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
         </button>
       </div>
 
-      <!-- Content -->
-      <div class="p-6">
+      <!-- Form Wrapping Scrollable Body & Sticky Footer -->
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        
+        <!-- Error State -->
         @if (error()) {
-          <div class="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs border border-red-200 dark:border-red-800 font-medium">
-            {{ error() }}
+          <div class="mx-4 mt-3 sm:mx-6 sm:mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs border border-red-200 dark:border-red-800 font-medium shrink-0 flex items-start gap-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-red-500 shrink-0">error</mat-icon>
+            <span>{{ error() }}</span>
           </div>
         }
 
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Scrollable Content Body -->
+        <div class="p-4 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Item Name</mat-label>
               <input matInput formControlName="name" placeholder="e.g. Oxytetracycline Injection" required />
@@ -70,7 +81,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             </mat-form-field>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Unit of Measure</mat-label>
               <input matInput formControlName="unitOfMeasure" placeholder="e.g. kg, vial, bottle, dose" required />
@@ -85,7 +96,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
 
           @if (!isEdit) {
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Initial Stock Qty</mat-label>
                 <input matInput type="number" formControlName="initialStock" step="1" min="0" />
@@ -98,7 +109,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             </div>
           }
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>SKU (Auto-generated if empty)</mat-label>
               <input matInput formControlName="sku" placeholder="e.g. MED-8910" />
@@ -109,21 +120,42 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
               <input matInput formControlName="storageLocation" placeholder="e.g. Cold Storage Shelf B" />
             </mat-form-field>
           </div>
-        </form>
-      </div>
+        </div>
 
-      <!-- Actions -->
-      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
-        <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
-          Cancel
-        </button>
-        <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50" [disabled]="form.invalid || isSubmitting()" (click)="onSubmit()">
-          <mat-spinner *ngIf="isSubmitting()" diameter="16"></mat-spinner>
-          <span>{{ isEdit ? 'Update Item' : 'Save Item' }}</span>
-        </button>
-      </div>
+        <!-- Pinned Sticky Actions Footer -->
+        <div class="px-4 py-3 sm:px-6 sm:py-4 bg-gray-50/80 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-800 flex justify-end items-center gap-3 shrink-0">
+          <button type="button" mat-dialog-close [disabled]="isSubmitting()"
+            class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="form.invalid || isSubmitting()"
+            class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-500/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <mat-spinner *ngIf="isSubmitting()" diameter="16" class="!stroke-white"></mat-spinner>
+            <span>{{ isEdit ? 'Update Item' : 'Save Item' }}</span>
+          </button>
+        </div>
+      </form>
     </div>
   `,
+  styles: [`
+    .custom-scrollbar {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.4);
+      border-radius: 20px;
+    }
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.7);
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreateItemDialogComponent {

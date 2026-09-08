@@ -1,11 +1,12 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Domain.Finance.Interfaces;
 using Farm360.Domain.Livestock.Events;
 using MediatR;
-using Farm360.Application.Common.Interfaces;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
@@ -13,27 +14,48 @@ public sealed record AnimalSoldNotification(AnimalSoldEvent DomainEvent) : INoti
 
 public sealed class AnimalSoldEventHandler(
     IFinancialTransactionRepository repository,
-    IUnitOfWork unitOfWork) : INotificationHandler<AnimalSoldNotification>
+    IAnimalCostLedgerRepository ledgerRepository,
+    IUnitOfWork unitOfWork) : 
+    INotificationHandler<AnimalSoldNotification>,
+    INotificationHandler<AnimalSoldEvent>
 {
-    public async Task Handle(AnimalSoldNotification notification, CancellationToken cancellationToken)
+    public Task Handle(AnimalSoldNotification notification, CancellationToken cancellationToken)
     {
-        var domainEvent = notification.DomainEvent;
+        return ProcessEventAsync(notification.DomainEvent, cancellationToken);
+    }
 
-        // Auto-create a financial transaction for the sale
+    public Task Handle(AnimalSoldEvent notification, CancellationToken cancellationToken)
+    {
+        return ProcessEventAsync(notification, cancellationToken);
+    }
+
+    private async Task ProcessEventAsync(AnimalSoldEvent domainEvent, CancellationToken cancellationToken)
+    {
+        // 1. Auto-create a financial transaction for the sale
         var transaction = FinancialTransaction.Create(
             tenantId: domainEvent.TenantId,
             farmId: domainEvent.FarmId,
             type: TransactionType.Income,
             category: TransactionCategory.AnimalSale,
             amountBdt: domainEvent.SalePriceBdt,
-            transactionDate: domainEvent.SaleDate.ToDateTime(System.TimeOnly.MinValue), // Convert DateOnly to DateTime
+            transactionDate: domainEvent.SaleDate.ToDateTime(System.TimeOnly.MinValue),
             referenceId: domainEvent.AnimalId.ToString(),
-            notes: $"Auto-generated transaction from sale of animal to {domainEvent.BuyerName ?? "Unknown"}"
+            notes: $"Auto-generated transaction from sale of animal to {domainEvent.BuyerName ?? "Unknown"}",
+            description: $"Sale of Animal to {domainEvent.BuyerName ?? "Buyer"}",
+            animalId: domainEvent.AnimalId
         );
 
         await repository.AddAsync(transaction, cancellationToken);
-        
-        // Save changes using IUnitOfWork
+
+        // 2. Update AnimalCostLedger with the realized sale revenue
+        var ledger = await ledgerRepository.GetByAnimalIdAsync(domainEvent.AnimalId, cancellationToken);
+        if (ledger != null)
+        {
+            ledger.RecordSaleRevenue(domainEvent.SalePriceBdt);
+            ledgerRepository.Update(ledger);
+        }
+
+        // 3. Save changes using IUnitOfWork
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

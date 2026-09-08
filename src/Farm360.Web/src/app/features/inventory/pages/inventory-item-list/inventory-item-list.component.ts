@@ -395,8 +395,11 @@ export class InventoryItemListComponent {
   openCreateItemDialog(): void {
     const farmId = this.params().farmId;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(CreateItemDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(CreateItemDialogComponent, { 
+      disableClose: true,
       width: '560px',
+      maxWidth: 'calc(100vw - 1.5rem)',
+      panelClass: 'dialog-responsive',
       data: { farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -405,8 +408,11 @@ export class InventoryItemListComponent {
   }
 
   openEditDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(CreateItemDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(CreateItemDialogComponent, { 
+      disableClose: true,
       width: '560px',
+      maxWidth: 'calc(100vw - 1.5rem)',
+      panelClass: 'dialog-responsive',
       data: { item, farmId: item.farmId }
     });
     dialogRef.afterClosed().subscribe((res) => {

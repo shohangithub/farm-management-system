@@ -76,7 +76,8 @@ public sealed class RegisterAnimalCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,
     ITenantService tenantService,
-    ICurrentUserService currentUser) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
+    ICurrentUserService currentUser,
+    IPublisher publisher) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
 {
     public async Task<AnimalDto> Handle(RegisterAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -108,6 +109,13 @@ public sealed class RegisterAnimalCommandHandler(
 
         repository.Add(animal);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var domainEvents = animal.DomainEvents.ToList();
+        animal.ClearDomainEvents();
+        foreach (var domainEvent in domainEvents)
+        {
+            await publisher.Publish(domainEvent, cancellationToken);
+        }
 
         return animal.ToDto();
     }

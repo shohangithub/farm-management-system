@@ -238,7 +238,7 @@ try
     app.MapGroup("/api/v1/auth").MapAuthEndpoints();
     app.MapGroup("/api/v1/users").MapUsersEndpoints();
     app.MapIntelligenceEndpoints();
-    app.MapGroup("/api/v1").MapFinanceEndpoints();
+    app.MapFinanceEndpoints();
     app.MapAnalyticsEndpoints();
 
     Log.Information("Farm360 API started. Environment: {Environment}", app.Environment.EnvironmentName);

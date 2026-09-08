@@ -1,10 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { 
   FinancialTransaction, 
+  PagedFinancialTransactionsResult,
+  FinancialTransactionParams,
   RecordIncomeRequest,
   RecordExpenseRequest,
+  UpdateFinancialTransactionRequest,
   LoanRecord,
   CreateLoanRecordRequest,
   RecordLoanRepaymentRequest,
@@ -22,15 +25,38 @@ import {
 export class FinanceService {
   private http = inject(HttpClient);
   
-  // Note: Old base url was /api/v1/farms, but new API maps to /api/farms/{farmId}/finance
   private getBaseUrl(farmId: string): string {
     return `/api/farms/${farmId}/finance`;
   }
 
   // --- Transactions ---
 
+  getPagedTransactions(farmId: string, params?: FinancialTransactionParams): Observable<PagedFinancialTransactionsResult> {
+    let httpParams = new HttpParams();
+    if (params) {
+      if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber.toString());
+      if (params.pageSize) httpParams = httpParams.set('pageSize', params.pageSize.toString());
+      if (params.search) httpParams = httpParams.set('search', params.search);
+      if (params.type) httpParams = httpParams.set('type', params.type);
+      if (params.category) httpParams = httpParams.set('category', params.category);
+      if (params.startDate) httpParams = httpParams.set('startDate', params.startDate);
+      if (params.endDate) httpParams = httpParams.set('endDate', params.endDate);
+      if (params.animalId) httpParams = httpParams.set('animalId', params.animalId);
+      if (params.batchId) httpParams = httpParams.set('batchId', params.batchId);
+      if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
+      if (params.sortDesc !== undefined) httpParams = httpParams.set('sortDesc', params.sortDesc.toString());
+    }
+    return this.http.get<PagedFinancialTransactionsResult>(`${this.getBaseUrl(farmId)}/transactions`, { params: httpParams });
+  }
+
   getTransactions(farmId: string): Observable<FinancialTransaction[]> {
-    return this.http.get<FinancialTransaction[]>(`${this.getBaseUrl(farmId)}/transactions`);
+    return this.getPagedTransactions(farmId, { pageNumber: 1, pageSize: 1000 }).pipe(
+      map(res => res.items)
+    );
+  }
+
+  getTransactionById(farmId: string, id: string): Observable<FinancialTransaction> {
+    return this.http.get<FinancialTransaction>(`${this.getBaseUrl(farmId)}/transactions/${id}`);
   }
 
   recordIncome(farmId: string, request: RecordIncomeRequest): Observable<FinancialTransaction> {
@@ -39,6 +65,29 @@ export class FinanceService {
 
   recordExpense(farmId: string, request: RecordExpenseRequest): Observable<FinancialTransaction> {
     return this.http.post<FinancialTransaction>(`${this.getBaseUrl(farmId)}/expense`, this.sanitizePayload(request));
+  }
+
+  updateTransaction(farmId: string, id: string, request: UpdateFinancialTransactionRequest): Observable<FinancialTransaction> {
+    return this.http.put<FinancialTransaction>(`${this.getBaseUrl(farmId)}/transactions/${id}`, this.sanitizePayload(request));
+  }
+
+  deleteTransaction(farmId: string, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.getBaseUrl(farmId)}/transactions/${id}`);
+  }
+
+  exportTransactionsCsv(farmId: string, params?: FinancialTransactionParams): Observable<Blob> {
+    let httpParams = new HttpParams();
+    if (params) {
+      if (params.search) httpParams = httpParams.set('search', params.search);
+      if (params.type) httpParams = httpParams.set('type', params.type);
+      if (params.category) httpParams = httpParams.set('category', params.category);
+      if (params.startDate) httpParams = httpParams.set('startDate', params.startDate);
+      if (params.endDate) httpParams = httpParams.set('endDate', params.endDate);
+    }
+    return this.http.get(`${this.getBaseUrl(farmId)}/transactions/export`, {
+      params: httpParams,
+      responseType: 'blob'
+    });
   }
 
   // --- Loans ---
@@ -76,7 +125,6 @@ export class FinanceService {
   }
 
   getConsolidatedPnL(year: number, month: number): Observable<ConsolidatedPnLReport> {
-    // This is tenant-wide, so it goes to /api/finance
     return this.http.get<ConsolidatedPnLReport>(`/api/finance/reports/consolidated?year=${year}&month=${month}`);
   }
 

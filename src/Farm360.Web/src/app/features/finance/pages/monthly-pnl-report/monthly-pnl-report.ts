@@ -1,6 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of, combineLatest, BehaviorSubject } from 'rxjs';
@@ -15,8 +17,10 @@ import { WorkingContextService } from '../../../../core/services/working-context
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     ReactiveFormsModule,
     MatIconModule,
+    MatButtonModule,
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
@@ -27,7 +31,12 @@ import { WorkingContextService } from '../../../../core/services/working-context
       title="Monthly Profit & Loss" 
       description="Detailed breakdown of income and expenses by category for a specific month."
       breadcrumbActiveNode="Monthly P&L">
-      <div actions class="flex items-center gap-4">
+      <div actions class="flex items-center gap-3">
+        <a mat-stroked-button routerLink="/finance"
+          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
+          <mat-icon class="text-sm">arrow_back</mat-icon>
+          <span>Overview</span>
+        </a>
         <form [formGroup]="filterForm" class="flex items-center gap-2">
           <select formControlName="year" class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 outline-none">
             <option *ngFor="let y of years" [value]="y">{{ y }}</option>

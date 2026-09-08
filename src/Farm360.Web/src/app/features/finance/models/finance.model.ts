@@ -1,7 +1,7 @@
 export interface FinancialTransaction {
   id: string;
   farmId: string;
-  type: string;
+  type: 'Income' | 'Expense' | string;
   category: string;
   amountBdt: number;
   transactionDate: string;
@@ -12,6 +12,32 @@ export interface FinancialTransaction {
   batchId?: string;
   shedId?: string;
   createdAtUtc: string;
+}
+
+export interface PagedFinancialTransactionsResult {
+  items: FinancialTransaction[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalIncomeBdt: number;
+  totalExpenseBdt: number;
+  netCashFlowBdt: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface FinancialTransactionParams {
+  pageNumber?: number;
+  pageSize?: number;
+  search?: string;
+  type?: string;
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  animalId?: string;
+  batchId?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
 }
 
 export interface FinancialTransactionSummary {
@@ -38,6 +64,17 @@ export interface RecordExpenseRequest {
   transactionDate: string;
   description: string;
   referenceId?: string;
+  notes?: string;
+  animalId?: string;
+  batchId?: string;
+  shedId?: string;
+}
+
+export interface UpdateFinancialTransactionRequest {
+  category: string;
+  amountBdt: number;
+  transactionDate: string;
+  description: string;
   notes?: string;
   animalId?: string;
   batchId?: string;
@@ -95,6 +132,10 @@ export interface BreakEvenCalculator {
   currentWeightKg: number;
   totalAccumulatedCostBdt: number;
   breakEvenPricePerKgBdt: number;
+  tagId?: string;
+  targetPrice10PercentMarginPerKg?: number;
+  targetPrice20PercentMarginPerKg?: number;
+  targetPrice30PercentMarginPerKg?: number;
 }
 
 export interface BatchPnLReport {
@@ -134,6 +175,19 @@ export interface ConsolidatedPnLReport {
   farmBreakdown: { [key: string]: FarmPnLSnapshot };
 }
 
+export interface MonthlyCashFlowPoint {
+  monthLabel: string;
+  incomeBdt: number;
+  expenseBdt: number;
+  netProfitBdt: number;
+}
+
+export interface CategoryExpenseBreakdown {
+  category: string;
+  amountBdt: number;
+  percentage: number;
+}
+
 export interface FinancialDashboard {
   farmId: string;
   revenueMtdBdt: number;
@@ -142,4 +196,31 @@ export interface FinancialDashboard {
   revenueMomPercent: number;
   expensesMomPercent: number;
   netProfitMomPercent: number;
+  revenueYtdBdt?: number;
+  expensesYtdBdt?: number;
+  netProfitYtdBdt?: number;
+  profitMarginPercent?: number;
+  cashFlowTrend?: MonthlyCashFlowPoint[];
+  expenseBreakdown?: CategoryExpenseBreakdown[];
+  recentTransactions?: FinancialTransaction[];
 }
+
+export const TRANSACTION_CATEGORIES = {
+  Expense: [
+    'AnimalPurchase',
+    'FeedCost',
+    'VeterinaryCost',
+    'MedicineCost',
+    'LaborCost',
+    'Utilities',
+    'Transport',
+    'InventoryPurchase',
+    'MiscellaneousExpense'
+  ],
+  Income: [
+    'AnimalSale',
+    'MilkSale',
+    'ByproductSale',
+    'OtherIncome'
+  ]
+};

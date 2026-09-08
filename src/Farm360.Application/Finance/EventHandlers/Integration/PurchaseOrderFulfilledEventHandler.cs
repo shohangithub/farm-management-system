@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Application.Inventory.EventHandlers;
 using Farm360.Domain.Finance;
@@ -15,15 +16,18 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
 {
     private readonly IPurchaseOrderRepository _purchaseOrderRepository;
     private readonly IFinancialTransactionRepository _financialTransactionRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<PurchaseOrderFulfilledEventHandler> _logger;
 
     public PurchaseOrderFulfilledEventHandler(
         IPurchaseOrderRepository purchaseOrderRepository,
         IFinancialTransactionRepository financialTransactionRepository,
+        IUnitOfWork unitOfWork,
         ILogger<PurchaseOrderFulfilledEventHandler> logger)
     {
         _purchaseOrderRepository = purchaseOrderRepository;
         _financialTransactionRepository = financialTransactionRepository;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -59,6 +63,7 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
         );
 
         await _financialTransactionRepository.AddAsync(expense, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         
         if (_logger.IsEnabled(LogLevel.Information))
         {

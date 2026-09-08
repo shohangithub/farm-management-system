@@ -1,1 +1,313 @@
-<p>finance-dashboard works!</p>
+<app-page-header 
+  title="Financial Intelligence & Analytics" 
+  description="Executive dashboard for farm revenue, operating expenses, cash flow projections, and profit margins."
+  breadcrumbActiveNode="Finance Overview">
+  <div actions class="flex flex-wrap items-center gap-3">
+    <a mat-stroked-button routerLink="/finance/transactions"
+      class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2">
+      <mat-icon class="text-teal-600">receipt_long</mat-icon>
+      <span>General Ledger</span>
+    </a>
+    <button mat-flat-button color="accent" 
+      class="rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-4 py-2" 
+      (click)="openIncomeDialog()">
+      <mat-icon>arrow_downward</mat-icon>
+      <span>Record Income</span>
+    </button>
+    <button mat-flat-button color="warn" 
+      class="rounded-xl shadow-md bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 px-4 py-2" 
+      (click)="openExpenseDialog()">
+      <mat-icon>arrow_upward</mat-icon>
+      <span>Record Expense</span>
+    </button>
+  </div>
+</app-page-header>
+
+<div class="px-6 py-4 mx-auto max-w-7xl space-y-6">
+
+  <!-- Sub-Navigation Bar -->
+  <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto">
+    <a routerLink="/finance" 
+      class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">dashboard</mat-icon> Overview
+    </a>
+    <a routerLink="/finance/transactions" 
+      class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">receipt_long</mat-icon> General Ledger
+    </a>
+    <a routerLink="/finance/reports/monthly-pnl" 
+      class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">calendar_view_month</mat-icon> Monthly P&L
+    </a>
+    <a routerLink="/finance/loans" 
+      class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
+    </a>
+  </div>
+
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+  <app-empty-state 
+    *ngIf="!isLoading() && !dashboardData()"
+    icon="account_balance_wallet"
+    title="No Financial Activity"
+    description="There is no financial data recorded for this farm yet. Start by recording farm revenue or operating expenses."
+    actionText="Record First Transaction"
+    (action)="openIncomeDialog()">
+  </app-empty-state>
+
+  <div *ngIf="dashboardData() as data" class="space-y-6">
+
+    <!-- KPI Metric Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      
+      <!-- Revenue (MTD) -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Revenue (MTD)</p>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              {{ data.revenueMtdBdt | currency:'BDT ':'symbol':'1.0-0' }}
+            </h3>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+            <mat-icon class="text-xl">trending_up</mat-icon>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-xs">
+          <span class="font-semibold flex items-center"
+            [ngClass]="data.revenueMomPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            <mat-icon class="text-sm mr-0.5">{{ data.revenueMomPercent >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            {{ Math.abs(data.revenueMomPercent) }}%
+          </span>
+          <span class="text-gray-400 ml-1.5">vs last month</span>
+          <span class="ml-auto text-gray-400">YTD: {{ data.revenueYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+        </div>
+        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-emerald-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
+      </div>
+
+      <!-- Expenses (MTD) -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Expenses (MTD)</p>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              {{ data.expensesMtdBdt | currency:'BDT ':'symbol':'1.0-0' }}
+            </h3>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+            <mat-icon class="text-xl">receipt_long</mat-icon>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-xs">
+          <span class="font-semibold flex items-center"
+            [ngClass]="data.expensesMomPercent <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            <mat-icon class="text-sm mr-0.5">{{ data.expensesMomPercent <= 0 ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+            {{ Math.abs(data.expensesMomPercent) }}%
+          </span>
+          <span class="text-gray-400 ml-1.5">vs last month</span>
+          <span class="ml-auto text-gray-400">YTD: {{ data.expensesYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+        </div>
+        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-rose-500/5 rotate-[-10deg] pointer-events-none">receipt_long</mat-icon>
+      </div>
+
+      <!-- Net Profit (MTD) -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Net Profit (MTD)</p>
+            <h3 class="text-2xl font-bold mt-1"
+              [ngClass]="data.netProfitMtdBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              {{ data.netProfitMtdBdt | currency:'BDT ':'symbol':'1.0-0' }}
+            </h3>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+            <mat-icon class="text-xl">savings</mat-icon>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-xs">
+          <span class="font-semibold flex items-center"
+            [ngClass]="data.netProfitMomPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            <mat-icon class="text-sm mr-0.5">{{ data.netProfitMomPercent >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            {{ Math.abs(data.netProfitMomPercent) }}%
+          </span>
+          <span class="text-gray-400 ml-1.5">vs last month</span>
+          <span class="ml-auto text-gray-400">YTD: {{ data.netProfitYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+        </div>
+        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-blue-500/5 rotate-[-10deg] pointer-events-none">savings</mat-icon>
+      </div>
+
+      <!-- Profit Margin % -->
+      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Profit Margin</p>
+            <h3 class="text-2xl font-bold mt-1"
+              [ngClass]="(data.profitMarginPercent ?? 0) >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
+              {{ data.profitMarginPercent | number:'1.1-1' }}%
+            </h3>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+            <mat-icon class="text-xl">pie_chart</mat-icon>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-xs text-gray-400">
+          <span>YTD Total: {{ (data.netProfitYtdBdt ?? 0) >= 0 ? '+' : '' }}{{ data.netProfitYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+        </div>
+        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-amber-500/5 rotate-[-10deg] pointer-events-none">pie_chart</mat-icon>
+      </div>
+
+    </div>
+
+    <!-- Charts & Analytics Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- 6-Month Cash Flow Trend Bar Visualization -->
+      <div class="lg:col-span-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h4 class="text-base font-bold text-gray-900 dark:text-white">6-Month Cash Flow Dynamics</h4>
+            <p class="text-xs text-gray-400">Monthly comparison of revenue vs. operational costs</p>
+          </div>
+          <div class="flex items-center gap-4 text-xs font-medium">
+            <span class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Income
+            </span>
+            <span class="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Expense
+            </span>
+          </div>
+        </div>
+
+        <!-- Trend Bars Container -->
+        <div *ngIf="data.cashFlowTrend && data.cashFlowTrend.length > 0" class="h-64 flex items-end justify-between gap-3 pt-6 pb-2">
+          <div *ngFor="let item of data.cashFlowTrend" class="flex-1 flex flex-col items-center h-full justify-end group">
+            
+            <!-- Bars wrapper -->
+            <div class="w-full flex items-end justify-center gap-1.5 h-48 relative">
+              <!-- Income bar -->
+              <div 
+                class="w-full max-w-[24px] bg-emerald-500/80 hover:bg-emerald-500 rounded-t-md transition-all duration-300 relative"
+                [style.height.%]="getBarHeight(item.incomeBdt, data.cashFlowTrend)">
+                <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-1.5 rounded whitespace-nowrap pointer-events-none transition-opacity z-20 shadow-lg">
+                  +{{ item.incomeBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                </div>
+              </div>
+
+              <!-- Expense bar -->
+              <div 
+                class="w-full max-w-[24px] bg-rose-500/80 hover:bg-rose-500 rounded-t-md transition-all duration-300 relative"
+                [style.height.%]="getBarHeight(item.expenseBdt, data.cashFlowTrend)">
+                <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-1.5 rounded whitespace-nowrap pointer-events-none transition-opacity z-20 shadow-lg">
+                  -{{ item.expenseBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Month Label -->
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-3">{{ item.monthLabel }}</span>
+            <span class="text-[10px] font-medium" [ngClass]="item.netProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              {{ item.netProfitBdt >= 0 ? '+' : '' }}{{ item.netProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="!data.cashFlowTrend || data.cashFlowTrend.length === 0" class="h-48 flex items-center justify-center text-xs text-gray-400">
+          No historical cash flow data available yet.
+        </div>
+      </div>
+
+      <!-- Top Expense Categories Breakdown -->
+      <div class="lg:col-span-5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="text-base font-bold text-gray-900 dark:text-white">Operating Expense Structure</h4>
+              <p class="text-xs text-gray-400">Distribution across operational cost centers</p>
+            </div>
+            <mat-icon class="text-rose-500">donut_large</mat-icon>
+          </div>
+
+          <div *ngIf="data.expenseBreakdown && data.expenseBreakdown.length > 0" class="space-y-4 mt-5">
+            <div *ngFor="let cat of data.expenseBreakdown" class="space-y-1.5">
+              <div class="flex justify-between text-xs font-semibold">
+                <span class="text-gray-700 dark:text-gray-300">{{ cat.category }}</span>
+                <span class="text-gray-900 dark:text-white">{{ cat.amountBdt | currency:'BDT ':'symbol':'1.0-0' }} ({{ cat.percentage | number:'1.0-1' }}%)</span>
+              </div>
+              <div class="w-full bg-gray-100 dark:bg-gray-700/60 rounded-full h-2.5 overflow-hidden">
+                <div class="h-2.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-500" [style.width.%]="cat.percentage"></div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!data.expenseBreakdown || data.expenseBreakdown.length === 0" class="py-12 text-center text-xs text-gray-400">
+            No categorized expenses recorded for this period.
+          </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs">
+          <span class="text-gray-500">Monthly Expense Total:</span>
+          <span class="font-bold text-rose-600 dark:text-rose-400">{{ data.expensesMtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recent Transactions Mini-Table -->
+    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h4 class="text-base font-bold text-gray-900 dark:text-white">Recent Journal Entries</h4>
+          <p class="text-xs text-gray-400">Latest synchronized revenue and expense postings</p>
+        </div>
+        <a routerLink="/finance/transactions" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+          <span>View All in General Ledger</span>
+          <mat-icon class="text-base">arrow_forward</mat-icon>
+        </a>
+      </div>
+
+      <div *ngIf="data.recentTransactions && data.recentTransactions.length > 0" class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="text-gray-400 text-xs uppercase font-medium border-b border-gray-100 dark:border-gray-800">
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4">Type</th>
+              <th class="py-3 px-4">Category</th>
+              <th class="py-3 px-4">Notes</th>
+              <th class="py-3 px-4 text-right">Amount (BDT)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800/40 text-sm">
+            <tr *ngFor="let txn of data.recentTransactions" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
+              <td class="py-3 px-4 text-gray-500 dark:text-gray-400 whitespace-nowrap text-xs">
+                {{ txn.transactionDate | date:'mediumDate' }}
+              </td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                  [ngClass]="txn.type === 'Income' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'">
+                  {{ txn.type }}
+                </span>
+              </td>
+              <td class="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">
+                {{ txn.category }}
+              </td>
+              <td class="py-3 px-4 text-gray-500 dark:text-gray-400 text-xs truncate max-w-xs">
+                {{ txn.notes || txn.description || '-' }}
+              </td>
+              <td class="py-3 px-4 font-bold text-right whitespace-nowrap"
+                [ngClass]="txn.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="!data.recentTransactions || data.recentTransactions.length === 0" class="py-8 text-center text-xs text-gray-400">
+        No recent transactions found.
+      </div>
+    </div>
+
+  </div>
+
+</div>

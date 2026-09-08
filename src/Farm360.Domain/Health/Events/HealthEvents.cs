@@ -69,5 +69,6 @@ public sealed record VetVisitCreatedEvent(
     Guid FarmId,
     string VetName,
     VetVisitType VisitType,
-    DateOnly VisitDate
+    DateOnly VisitDate,
+    decimal? CostBdt = null
 ) : IDomainEvent;

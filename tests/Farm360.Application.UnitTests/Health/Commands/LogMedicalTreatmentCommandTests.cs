@@ -18,6 +18,7 @@ public class LogMedicalTreatmentCommandTests
     private readonly Mock<ITenantService> _tenantServiceMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly Mock<ITransaction> _transactionMock;
+    private readonly Mock<MediatR.IPublisher> _publisherMock;
 
     public LogMedicalTreatmentCommandTests()
     {
@@ -26,6 +27,7 @@ public class LogMedicalTreatmentCommandTests
         _tenantServiceMock = new Mock<ITenantService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _transactionMock = new Mock<ITransaction>();
+        _publisherMock = new Mock<MediatR.IPublisher>();
 
         _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(_transactionMock.Object);
@@ -66,7 +68,8 @@ public class LogMedicalTreatmentCommandTests
             _medicalTreatmentRepositoryMock.Object,
             _animalRepositoryMock.Object,
             _tenantServiceMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _publisherMock.Object);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -110,7 +113,8 @@ public class LogMedicalTreatmentCommandTests
             _medicalTreatmentRepositoryMock.Object,
             _animalRepositoryMock.Object,
             _tenantServiceMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _publisherMock.Object);
 
         // Act & Assert
         await Assert.ThrowsAsync<OverlappingTreatmentException>(() => handler.Handle(command, CancellationToken.None));

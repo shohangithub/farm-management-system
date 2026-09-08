@@ -48,7 +48,8 @@ internal sealed class LogMedicalTreatmentCommandHandler(
     IMedicalTreatmentRepository medicalTreatmentRepository,
     IAnimalRepository animalRepository,
     ITenantService tenantService,
-    IUnitOfWork unitOfWork) : IRequestHandler<LogMedicalTreatmentCommand, Guid>
+    IUnitOfWork unitOfWork,
+    IPublisher publisher) : IRequestHandler<LogMedicalTreatmentCommand, Guid>
 {
     public async Task<Guid> Handle(LogMedicalTreatmentCommand request, CancellationToken cancellationToken)
     {
@@ -85,6 +86,14 @@ internal sealed class LogMedicalTreatmentCommandHandler(
 
         medicalTreatmentRepository.Add(treatment);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var domainEvents = treatment.DomainEvents.ToList();
+        treatment.ClearDomainEvents();
+        foreach (var domainEvent in domainEvents)
+        {
+            await publisher.Publish(domainEvent, cancellationToken);
+        }
+
         return treatment.Id;
     }
 }

@@ -65,4 +65,85 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
         _context.FinancialTransactions.Remove(transaction);
         return Task.CompletedTask;
     }
+
+    public async Task<(IReadOnlyList<FinancialTransaction> Items, int TotalCount, decimal TotalIncome, decimal TotalExpense)> GetPagedAsync(
+        Guid farmId,
+        int pageNumber,
+        int pageSize,
+        string? search,
+        Domain.Finance.Enums.TransactionType? type,
+        Domain.Finance.Enums.TransactionCategory? category,
+        DateTime? startDate,
+        DateTime? endDate,
+        Guid? animalId,
+        Guid? batchId,
+        string? sortBy,
+        bool sortDesc,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.FinancialTransactions.Where(t => t.FarmId == farmId);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t => 
+                t.Description.Contains(search) || 
+                t.Notes.Contains(search) || 
+                t.ReferenceId.Contains(search));
+        }
+
+        if (type.HasValue)
+        {
+            query = query.Where(t => t.Type == type.Value);
+        }
+
+        if (category.HasValue)
+        {
+            query = query.Where(t => t.Category == category.Value);
+        }
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(t => t.TransactionDate >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            query = query.Where(t => t.TransactionDate <= endDate.Value);
+        }
+
+        if (animalId.HasValue)
+        {
+            query = query.Where(t => t.AnimalId == animalId.Value);
+        }
+
+        if (batchId.HasValue)
+        {
+            query = query.Where(t => t.BatchId == batchId.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var totalIncome = await query
+            .Where(t => t.Type == Domain.Finance.Enums.TransactionType.Income)
+            .SumAsync(t => (decimal?)t.AmountBdt, cancellationToken) ?? 0m;
+
+        var totalExpense = await query
+            .Where(t => t.Type == Domain.Finance.Enums.TransactionType.Expense)
+            .SumAsync(t => (decimal?)t.AmountBdt, cancellationToken) ?? 0m;
+
+        query = sortBy?.ToLowerInvariant() switch
+        {
+            "amount" => sortDesc ? query.OrderByDescending(t => t.AmountBdt) : query.OrderBy(t => t.AmountBdt),
+            "category" => sortDesc ? query.OrderByDescending(t => t.Category) : query.OrderBy(t => t.Category),
+            "type" => sortDesc ? query.OrderByDescending(t => t.Type) : query.OrderBy(t => t.Type),
+            _ => sortDesc ? query.OrderByDescending(t => t.TransactionDate) : query.OrderBy(t => t.TransactionDate)
+        };
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount, totalIncome, totalExpense);
+    }
 }

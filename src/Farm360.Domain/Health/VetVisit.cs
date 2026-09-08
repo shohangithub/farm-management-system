@@ -89,7 +89,8 @@ public sealed class VetVisit : BaseEntity, IAggregateRoot
             farmId,
             visit.VetName,
             visitType,
-            visitDate));
+            visitDate,
+            costBdt));
 
         return visit;
     }

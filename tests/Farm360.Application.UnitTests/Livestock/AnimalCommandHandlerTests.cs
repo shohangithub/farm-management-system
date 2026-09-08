@@ -57,7 +57,7 @@ public sealed class AnimalCommandHandlerTests
     [Fact]
     public async Task RegisterAnimal_ValidCommand_AddsToRepositoryAndSaves()
     {
-        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser);
+        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser, _publisher);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
             TagId:               "B-001",
@@ -84,7 +84,7 @@ public sealed class AnimalCommandHandlerTests
     [Fact]
     public async Task RegisterAnimal_ValidCommand_ReturnsDtoWithCorrectTenantId()
     {
-        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser);
+        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser, _publisher);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
             TagId:               "B-999",

@@ -35,15 +35,18 @@ internal sealed class CreateVetVisitCommandHandler : IRequestHandler<CreateVetVi
     private readonly IVetVisitRepository _repository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPublisher _publisher;
 
     public CreateVetVisitCommandHandler(
         IVetVisitRepository repository,
         ITenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IPublisher publisher)
     {
         _repository = repository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _publisher = publisher;
     }
 
     public async Task<Guid> Handle(CreateVetVisitCommand request, CancellationToken cancellationToken)
@@ -62,6 +65,13 @@ internal sealed class CreateVetVisitCommandHandler : IRequestHandler<CreateVetVi
 
         _repository.Add(visit);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var domainEvents = visit.DomainEvents.ToList();
+        visit.ClearDomainEvents();
+        foreach (var domainEvent in domainEvents)
+        {
+            await _publisher.Publish(domainEvent, cancellationToken);
+        }
 
         return visit.Id;
     }

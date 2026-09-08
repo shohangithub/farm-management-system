@@ -45,12 +45,20 @@ public class GetBreakEvenCalculatorQueryHandler : IRequestHandler<GetBreakEvenCa
             ? ledger.GetBreakEvenPricePerKg(currentWeight)
             : (currentWeight > 0 ? Math.Round(totalCost / currentWeight, 2) : 0m);
 
+        decimal price10 = currentWeight > 0 ? Math.Round((totalCost * 1.10m) / currentWeight, 2) : 0m;
+        decimal price20 = currentWeight > 0 ? Math.Round((totalCost * 1.20m) / currentWeight, 2) : 0m;
+        decimal price30 = currentWeight > 0 ? Math.Round((totalCost * 1.30m) / currentWeight, 2) : 0m;
+
         return new BreakEvenCalculatorDto(
             request.AnimalId,
             animal.FarmId,
             currentWeight,
             totalCost,
-            breakEvenPrice
+            breakEvenPrice,
+            animal.Tag?.TagId,
+            price10,
+            price20,
+            price30
         );
     }
 }
