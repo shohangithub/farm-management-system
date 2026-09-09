@@ -77,10 +77,11 @@ public sealed class AnimalAcquisitionPriceUpdatedEventHandler :
                 existingTx.UpdateDetails(
                     TransactionCategory.AnimalPurchase,
                     domainEvent.NewPriceBdt.Value,
-                    existingTx.TransactionDate,
+                    domainEvent.AcquisitionDate.ToDateTime(TimeOnly.MinValue),
                     $"Animal Purchase - Tag: {domainEvent.TagId}",
                     $"Acquisition cost for animal {domainEvent.TagId}",
-                    animalId: domainEvent.AnimalId
+                    animalId: domainEvent.AnimalId,
+                    referenceId: domainEvent.TagId
                 );
                 await _transactionRepository.UpdateAsync(existingTx, cancellationToken);
             }

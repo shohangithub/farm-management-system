@@ -93,7 +93,8 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
         string notes,
         Guid? animalId = null,
         Guid? batchId = null,
-        Guid? shedId = null)
+        Guid? shedId = null,
+        string? referenceId = null)
     {
         if (amountBdt < 0)
             throw new ArgumentException("Transaction amount cannot be negative.", nameof(amountBdt));
@@ -106,5 +107,9 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
         AnimalId = animalId;
         BatchId = batchId;
         ShedId = shedId;
+        if (referenceId != null)
+        {
+            ReferenceId = referenceId.Trim();
+        }
     }
 }

@@ -17,6 +17,16 @@ export const FINANCE_ROUTES: Routes = [
     title: 'Loans - Farm360 AI'
   },
   {
+    path: 'investors',
+    loadComponent: () => import('./pages/investor-list/investor-list').then(m => m.InvestorListComponent),
+    title: 'Investors & Equity - Farm360 AI'
+  },
+  {
+    path: 'investors/pnl',
+    loadComponent: () => import('./pages/investor-pnl/investor-pnl').then(m => m.InvestorPnLComponent),
+    title: 'Profit & Loss Sharing - Farm360 AI'
+  },
+  {
     path: 'animal-ledger/:animalId',
     loadComponent: () => import('./pages/animal-cost-ledger/animal-cost-ledger').then(m => m.AnimalCostLedgerComponent),
     title: 'Animal Cost Ledger - Farm360 AI'

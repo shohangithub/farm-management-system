@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -19,6 +20,7 @@ import { LoanRecord } from '../../models/finance.model';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatIconModule,
     MatButtonModule,
     MatDialogModule,
@@ -30,7 +32,7 @@ import { LoanRecord } from '../../models/finance.model';
   ],
   template: `
     <app-page-header 
-      title="Loans & Investments" 
+      title="Loans & Liabilities" 
       description="Manage farm financing, loans, and track repayments."
       breadcrumbActiveNode="Loans">
       <div actions>
@@ -41,9 +43,35 @@ import { LoanRecord } from '../../models/finance.model';
       </div>
     </app-page-header>
 
-    <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+    <div class="px-6 py-4 mx-auto max-w-7xl space-y-6">
 
-    <div *ngIf="!isLoading()" class="p-6 max-w-7xl mx-auto space-y-6">
+      <!-- Sub-Navigation Bar -->
+      <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto">
+        <a routerLink="/finance" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">dashboard</mat-icon> Overview
+        </a>
+        <a routerLink="/finance/transactions" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">receipt_long</mat-icon> General Ledger
+        </a>
+        <a routerLink="/finance/reports/monthly-pnl" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">calendar_view_month</mat-icon> Monthly P&L
+        </a>
+        <a routerLink="/finance/loans" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
+          <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
+        </a>
+        <a routerLink="/finance/investors" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">groups</mat-icon> Investors & Equity
+        </a>
+      </div>
+
+      <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+      <div *ngIf="!isLoading()" class="space-y-6">
       
       <app-empty-state 
         *ngIf="!loans() || loans()!.length === 0"

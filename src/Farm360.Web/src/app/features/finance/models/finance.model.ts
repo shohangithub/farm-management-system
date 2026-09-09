@@ -228,3 +228,97 @@ export const TRANSACTION_CATEGORIES = {
     'OtherIncome'
   ]
 };
+
+// ── Investor & Profit Sharing Models ─────────────────────────────────────────
+
+export interface InvestorTransaction {
+  id: string;
+  investorId: string;
+  farmId: string;
+  type: 'CapitalContribution' | 'CapitalWithdrawal' | 'ProfitDistribution' | string;
+  amountBdt: number;
+  transactionDate: string;
+  referenceId?: string;
+  notes?: string;
+  financialTransactionId?: string;
+  createdAtUtc: string;
+}
+
+export interface Investor {
+  id: string;
+  farmId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  nationalId?: string;
+  investmentDate: string;
+  totalInvestedBdt: number;
+  totalWithdrawnBdt: number;
+  currentCapitalBdt: number;
+  totalProfitPaidBdt: number;
+  agreedProfitSharePercentage?: number;
+  effectiveSharePercentage: number;
+  notes?: string;
+  isActive: boolean;
+  createdAtUtc: string;
+  transactions?: InvestorTransaction[];
+}
+
+export interface CreateInvestorRequest {
+  name: string;
+  initialInvestmentBdt: number;
+  investmentDate: string;
+  agreedProfitSharePercentage?: number | null;
+  email?: string | null;
+  phone?: string | null;
+  nationalId?: string | null;
+  notes?: string | null;
+  referenceId?: string | null;
+}
+
+export interface UpdateInvestorRequest {
+  name: string;
+  agreedProfitSharePercentage?: number | null;
+  email?: string | null;
+  phone?: string | null;
+  nationalId?: string | null;
+  notes?: string | null;
+}
+
+export interface RecordInvestorTransactionRequest {
+  type: 'CapitalContribution' | 'CapitalWithdrawal' | 'ProfitDistribution';
+  amountBdt: number;
+  transactionDate: string;
+  referenceId?: string | null;
+  notes?: string | null;
+}
+
+export interface InvestorShare {
+  investorId: string;
+  investorName: string;
+  investedCapitalBdt: number;
+  capitalSharePercentage: number;
+  effectiveSharePercentage: number;
+  allocatedProfitBdt: number;
+  distributedProfitBdt: number;
+  undistributedProfitBdt: number;
+  netEquityValueBdt: number;
+  isActive: boolean;
+}
+
+export interface InvestorPnLSummary {
+  farmId: string;
+  fromDate?: string;
+  toDate?: string;
+  totalFarmRevenueBdt: number;
+  totalFarmExpensesBdt: number;
+  netFarmProfitBdt: number;
+  charityPercentage: number;
+  charityAmountBdt: number;
+  distributableProfitBdt: number;
+  totalActiveCapitalBdt: number;
+  totalDistributedProfitBdt: number;
+  totalUndistributedProfitBdt: number;
+  investorShares: InvestorShare[];
+}
+

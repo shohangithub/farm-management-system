@@ -240,6 +240,112 @@ public static class FinanceEndpoints
             return Results.Ok(result);
         }).Produces<LoanRecordDto>();
 
+        // ── Investors & Profit-Sharing ──────────────────────────────────────
+        group.MapGet("investors", async (
+            Guid farmId,
+            [FromQuery] bool includeInactive = false,
+            IMediator mediator = null!) =>
+        {
+            var result = await mediator.Send(new GetInvestorsQuery(farmId, includeInactive));
+            return Results.Ok(result);
+        }).Produces<IReadOnlyList<InvestorDto>>();
+
+        group.MapGet("investors/{id:guid}", async (
+            Guid farmId,
+            Guid id,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetInvestorByIdQuery(id));
+            return Results.Ok(result);
+        }).Produces<InvestorDto>();
+
+        group.MapPost("investors", async (
+            Guid farmId,
+            [FromBody] CreateInvestorRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new CreateInvestorCommand(
+                tenantService.TenantId,
+                farmId,
+                request.Name,
+                request.InitialInvestmentBdt,
+                request.InvestmentDate,
+                request.AgreedProfitSharePercentage,
+                request.Email,
+                request.Phone,
+                request.NationalId,
+                request.Notes,
+                request.ReferenceId
+            );
+            var result = await mediator.Send(command);
+            return Results.Created($"/api/farms/{farmId}/finance/investors/{result.Id}", result);
+        }).Produces<InvestorDto>(StatusCodes.Status201Created);
+
+        group.MapPut("investors/{id:guid}", async (
+            Guid farmId,
+            Guid id,
+            [FromBody] UpdateInvestorRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new UpdateInvestorCommand(
+                tenantService.TenantId,
+                id,
+                request.Name,
+                request.AgreedProfitSharePercentage,
+                request.Email,
+                request.Phone,
+                request.NationalId,
+                request.Notes
+            );
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<InvestorDto>();
+
+        group.MapPatch("investors/{id:guid}/status", async (
+            Guid farmId,
+            Guid id,
+            [FromQuery] bool isActive,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new ToggleInvestorStatusCommand(tenantService.TenantId, id, isActive);
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<InvestorDto>();
+
+        group.MapPost("investors/{id:guid}/transactions", async (
+            Guid farmId,
+            Guid id,
+            [FromBody] RecordInvestorTransactionRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new RecordInvestorTransactionCommand(
+                tenantService.TenantId,
+                farmId,
+                id,
+                request.Type,
+                request.AmountBdt,
+                request.TransactionDate,
+                request.ReferenceId,
+                request.Notes
+            );
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<InvestorTransactionDto>();
+
+        group.MapGet("investors/pnl", async (
+            Guid farmId,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetInvestorPnLQuery(farmId, fromDate, toDate));
+            return Results.Ok(result);
+        }).Produces<InvestorPnLSummaryDto>();
+
         // Animal Cost Ledger
         group.MapGet("animals/{animalId:guid}/ledger", async (Guid animalId, IMediator mediator) =>
         {

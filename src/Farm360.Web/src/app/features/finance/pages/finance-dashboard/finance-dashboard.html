@@ -43,6 +43,10 @@
       class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
       <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
     </a>
+    <a routerLink="/finance/investors" 
+      class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">groups</mat-icon> Investors & Equity
+    </a>
   </div>
 
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>

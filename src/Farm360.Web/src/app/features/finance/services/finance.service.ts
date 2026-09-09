@@ -16,7 +16,13 @@ import {
   BatchPnLReport,
   MonthlyPnLReport,
   ConsolidatedPnLReport,
-  FinancialDashboard
+  FinancialDashboard,
+  Investor,
+  InvestorTransaction,
+  CreateInvestorRequest,
+  UpdateInvestorRequest,
+  RecordInvestorTransactionRequest,
+  InvestorPnLSummary
 } from '../models/finance.model';
 
 @Injectable({
@@ -106,6 +112,40 @@ export class FinanceService {
 
   recordLoanRepayment(farmId: string, loanId: string, request: RecordLoanRepaymentRequest): Observable<LoanRecord> {
     return this.http.post<LoanRecord>(`${this.getBaseUrl(farmId)}/loans/${loanId}/repayments`, this.sanitizePayload(request));
+  }
+
+  // --- Investors & Profit Sharing ---
+
+  getInvestors(farmId: string, includeInactive: boolean = false): Observable<Investor[]> {
+    const params = new HttpParams().set('includeInactive', includeInactive.toString());
+    return this.http.get<Investor[]>(`${this.getBaseUrl(farmId)}/investors`, { params });
+  }
+
+  getInvestorById(farmId: string, id: string): Observable<Investor> {
+    return this.http.get<Investor>(`${this.getBaseUrl(farmId)}/investors/${id}`);
+  }
+
+  createInvestor(farmId: string, request: CreateInvestorRequest): Observable<Investor> {
+    return this.http.post<Investor>(`${this.getBaseUrl(farmId)}/investors`, this.sanitizePayload(request));
+  }
+
+  updateInvestor(farmId: string, id: string, request: UpdateInvestorRequest): Observable<Investor> {
+    return this.http.put<Investor>(`${this.getBaseUrl(farmId)}/investors/${id}`, this.sanitizePayload(request));
+  }
+
+  toggleInvestorStatus(farmId: string, id: string, isActive: boolean): Observable<Investor> {
+    return this.http.patch<Investor>(`${this.getBaseUrl(farmId)}/investors/${id}/status?isActive=${isActive}`, {});
+  }
+
+  recordInvestorTransaction(farmId: string, investorId: string, request: RecordInvestorTransactionRequest): Observable<InvestorTransaction> {
+    return this.http.post<InvestorTransaction>(`${this.getBaseUrl(farmId)}/investors/${investorId}/transactions`, this.sanitizePayload(request));
+  }
+
+  getInvestorPnL(farmId: string, fromDate?: string, toDate?: string): Observable<InvestorPnLSummary> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    return this.http.get<InvestorPnLSummary>(`${this.getBaseUrl(farmId)}/investors/pnl`, { params });
   }
 
   // --- Animal Ledger ---

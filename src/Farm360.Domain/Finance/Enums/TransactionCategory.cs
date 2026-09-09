@@ -21,5 +21,10 @@ public enum TransactionCategory
 
     // ── System / Loan Categories ────────────────────────────────────────────
     LoanDisbursement = 80,
-    LoanRepayment = 81
+    LoanRepayment = 81,
+
+    // ── Investor Categories ──────────────────────────────────────────────────
+    InvestorCapital = 90,
+    InvestorWithdrawal = 91,
+    ProfitDistribution = 92
 }

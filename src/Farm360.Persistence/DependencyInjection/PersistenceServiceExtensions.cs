@@ -106,6 +106,7 @@ public static class PersistenceServiceExtensions
         services.AddScoped<Farm360.Application.Finance.Repositories.IFinancialTransactionRepository, Farm360.Persistence.Repositories.Finance.FinancialTransactionRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository, Farm360.Persistence.Repositories.Finance.AnimalCostLedgerRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.ILoanRecordRepository, Farm360.Persistence.Repositories.Finance.LoanRecordRepository>();
+        services.AddScoped<Farm360.Domain.Finance.Interfaces.IInvestorRepository, Farm360.Persistence.Repositories.Finance.InvestorRepository>();
 
         // ── Farm repositories ───────────────────────────────────────────
         services.AddScoped<IFarmRepository, FarmRepository>();

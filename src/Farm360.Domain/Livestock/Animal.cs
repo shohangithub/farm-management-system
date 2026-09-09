@@ -112,6 +112,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         string? notes)
     {
         var oldPrice = AcquisitionPriceBdt;
+        var oldTag = Tag?.TagId;
+        var oldAcquisitionDate = AcquisitionDate;
 
         Tag = tag;
         Species = species;
@@ -123,7 +125,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         AcquisitionPriceBdt = acquisitionPriceBdt;
         Notes = notes;
 
-        if (oldPrice != acquisitionPriceBdt)
+        if (oldPrice != acquisitionPriceBdt || oldTag != tag.TagId || oldAcquisitionDate != acquisitionDate)
         {
             RaiseDomainEvent(new AnimalAcquisitionPriceUpdatedEvent(
                 Guid.NewGuid(),
