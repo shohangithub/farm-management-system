@@ -129,4 +129,41 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
         Status = TreatmentStatus.Failed;
         Notes = reason;
     }
+
+    public void UpdateDetails(
+        string diagnosis,
+        string medicationName,
+        Dosage dosage,
+        WithdrawalPeriod withdrawalPeriod,
+        DateOnly startDate,
+        DateOnly? endDate,
+        decimal costBdt,
+        string? veterinarianName,
+        string? notes,
+        TreatmentStatus status,
+        Guid? inventoryItemId = null,
+        decimal? consumptionQuantity = null)
+    {
+        if (string.IsNullOrWhiteSpace(diagnosis))
+            throw new ArgumentException("Diagnosis is required.", nameof(diagnosis));
+
+        if (string.IsNullOrWhiteSpace(medicationName))
+            throw new ArgumentException("Medication name is required.", nameof(medicationName));
+
+        if (costBdt < 0)
+            throw new ArgumentException("Treatment cost cannot be negative.", nameof(costBdt));
+
+        Diagnosis = diagnosis.Trim();
+        MedicationName = medicationName.Trim();
+        Dosage = dosage;
+        WithdrawalPeriod = withdrawalPeriod ?? WithdrawalPeriod.None;
+        StartDate = startDate;
+        EndDate = endDate;
+        CostBdt = costBdt;
+        VeterinarianName = veterinarianName?.Trim();
+        Notes = notes;
+        Status = status;
+        InventoryItemId = inventoryItemId;
+        ConsumptionQuantity = consumptionQuantity;
+    }
 }

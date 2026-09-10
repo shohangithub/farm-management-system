@@ -120,6 +120,10 @@ export class HealthService {
     return this.http.post<{ id: string }>(`${this.apiUrl}/treatments`, data);
   }
 
+  updateTreatment(id: string, data: any): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/treatments/${id}`, data);
+  }
+
   updateTreatmentStatus(id: string, status: TreatmentStatus, notes?: string): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/treatments/${id}/status`, { status, notes });
   }

@@ -98,8 +98,20 @@ export class TreatmentListComponent {
   }
 
   openLogTreatmentDialog(): void {
-    const dialogRef = this.dialog.open(LogTreatmentDialog, { disableClose: true,
+    const dialogRef = this.dialog.open(LogTreatmentDialog, { 
+      disableClose: true,
       width: '720px'
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.loadTreatments();
+    });
+  }
+
+  openEditTreatmentDialog(treatment: MedicalTreatmentDto): void {
+    const dialogRef = this.dialog.open(LogTreatmentDialog, {
+      disableClose: true,
+      width: '720px',
+      data: { treatment }
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadTreatments();

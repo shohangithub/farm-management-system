@@ -1,8 +1,8 @@
-import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -17,6 +17,7 @@ import { InventoryItem, InventoryCategory } from '../../../../inventory/models/i
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { MedicalTreatmentDto, TreatmentStatus } from '../../../models/health.models';
 
 @Component({
   selector: 'app-log-treatment-dialog',
@@ -40,10 +41,12 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
       <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between shrink-0">
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
-            <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">medical_services</mat-icon>
-            Log Medical Treatment
+            <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-600">medical_services</mat-icon>
+            {{ isEditMode() ? 'Edit Medical Treatment' : 'Log Medical Treatment' }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Record animal medical treatment and medication</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
+            {{ isEditMode() ? 'Update diagnosis, medication, dosage, and cost details' : 'Record animal medical treatment and medication' }}
+          </p>
         </div>
         <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
@@ -63,8 +66,29 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           
           <!-- Animal Selection -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animal <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
+              Selected Animal <span class="text-red-500">*</span>
+            </label>
             <app-animal-picker formControlName="animalId"></app-animal-picker>
+          </div>
+
+          <!-- Status & End Date (Visible in Edit Mode) -->
+          <div *ngIf="isEditMode()" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200/70 dark:border-amber-800/40">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">Treatment Status</label>
+              <select formControlName="status"
+                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+                <option [value]="treatmentStatus.Ongoing">Ongoing</option>
+                <option [value]="treatmentStatus.Completed">Completed</option>
+                <option [value]="treatmentStatus.Failed">Failed</option>
+                <option [value]="treatmentStatus.Discontinued">Discontinued</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">End Date (Optional)</label>
+              <input type="date" formControlName="endDate"
+                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            </div>
           </div>
 
           <!-- Diagnosis -->
@@ -171,9 +195,9 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             Cancel
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
-                  class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                  class="px-5 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isSubmitting() ? 'Saving...' : 'Save Treatment' }}</span>
+            <span>{{ isSubmitting() ? 'Saving...' : (isEditMode() ? 'Update Treatment' : 'Save Treatment') }}</span>
           </button>
         </div>
       </form>
@@ -195,7 +219,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
     }
   `]
 })
-export class LogTreatmentDialog {
+export class LogTreatmentDialog implements OnInit {
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
   private inventoryService = inject(InventoryService);
@@ -203,6 +227,10 @@ export class LogTreatmentDialog {
   private dialogRef = inject(MatDialogRef<LogTreatmentDialog>);
   private snackBar = inject(MatSnackBar);
   private destroyRef = inject(DestroyRef);
+  public data: { treatment?: MedicalTreatmentDto } = inject(MAT_DIALOG_DATA, { optional: true }) ?? {};
+
+  readonly treatmentStatus = TreatmentStatus;
+  readonly isEditMode = computed(() => !!this.data?.treatment);
 
   form: FormGroup;
   isSubmitting = signal(false);
@@ -221,8 +249,10 @@ export class LogTreatmentDialog {
       milkWithdrawalDays: [0, [Validators.required, Validators.min(0)]],
       meatWithdrawalDays: [0, [Validators.required, Validators.min(0)]],
       startDate: [new Date().toISOString().split('T')[0], Validators.required],
+      endDate: [null],
       costBdt: [0, [Validators.required, Validators.min(0)]],
       veterinarianName: [''],
+      status: [TreatmentStatus.Ongoing],
       notes: [''],
       inventoryItemId: [null],
       consumptionQuantity: [null, [Validators.min(0)]]
@@ -267,16 +297,38 @@ export class LogTreatmentDialog {
     this.form.get('inventoryItemId')?.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(id => {
-      if (id) {
+      if (id && !this.isEditMode()) {
         const item = this.inventoryItems().find(i => i.id === id);
         if (item) {
           this.form.patchValue({ 
             medicationName: item.name,
-            consumptionQuantity: this.form.get('dosageAmount')?.value // Default to dosage
+            consumptionQuantity: this.form.get('dosageAmount')?.value
           });
         }
       }
     });
+
+    // Populate existing values if editing
+    if (this.data?.treatment) {
+      const t = this.data.treatment;
+      this.form.patchValue({
+        animalId: t.animalId,
+        diagnosis: t.diagnosis,
+        medicationName: t.medicationName,
+        dosageAmount: t.dosageAmount,
+        dosageUnit: t.dosageUnit,
+        milkWithdrawalDays: t.milkWithdrawalDays,
+        meatWithdrawalDays: t.meatWithdrawalDays,
+        startDate: t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : '',
+        endDate: t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : null,
+        costBdt: t.costBdt,
+        veterinarianName: t.veterinarianName || '',
+        status: t.status || TreatmentStatus.Ongoing,
+        notes: t.notes || '',
+        inventoryItemId: t.inventoryItemId || null,
+        consumptionQuantity: t.consumptionQuantity || null
+      });
+    }
   }
 
   private _filterVets(value: string): string[] {
@@ -298,8 +350,48 @@ export class LogTreatmentDialog {
     this.error.set('');
 
     const val = this.form.value;
+
+    if (this.isEditMode()) {
+      const updateRequest = {
+        diagnosis: val.diagnosis,
+        medicationName: val.medicationName,
+        dosageAmount: val.dosageAmount,
+        dosageUnit: val.dosageUnit,
+        milkWithdrawalDays: val.milkWithdrawalDays,
+        meatWithdrawalDays: val.meatWithdrawalDays,
+        startDate: val.startDate,
+        endDate: val.endDate ? val.endDate : null,
+        costBdt: val.costBdt,
+        veterinarianName: val.veterinarianName?.trim() || null,
+        notes: val.notes?.trim() || null,
+        status: val.status || TreatmentStatus.Ongoing,
+        inventoryItemId: val.inventoryItemId || null,
+        consumptionQuantity: val.consumptionQuantity || null
+      };
+
+      this.healthService.updateTreatment(this.data.treatment!.id, updateRequest).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.snackBar.open('Treatment updated successfully!', 'Close', {
+            duration: 3000,
+            panelClass: ['snack-success']
+          });
+          this.dialogRef.close(true);
+        },
+        error: (err) => {
+          const parsedMsg = parseApiError(err, 'Failed to update treatment. Please try again.');
+          this.error.set(parsedMsg);
+          this.snackBar.open(parsedMsg, 'Close', {
+            duration: 5000,
+            panelClass: ['snack-error']
+          });
+          this.isSubmitting.set(false);
+        }
+      });
+      return;
+    }
+
     const farmId = this.contextService.currentFarmValue?.id || '';
-    
     if (!farmId) {
       const msg = 'No farm context available.';
       this.error.set(msg);
@@ -308,7 +400,7 @@ export class LogTreatmentDialog {
       return;
     }
 
-    const request = {
+    const createRequest = {
       farmId: farmId,
       animalId: val.animalId,
       diagnosis: val.diagnosis,
@@ -319,13 +411,13 @@ export class LogTreatmentDialog {
       meatWithdrawalDays: val.meatWithdrawalDays,
       startDate: new Date(val.startDate).toISOString().split('T')[0],
       costBdt: val.costBdt,
-      veterinarianName: val.veterinarianName,
-      notes: val.notes,
-      inventoryItemId: val.inventoryItemId,
-      consumptionQuantity: val.consumptionQuantity
+      veterinarianName: val.veterinarianName?.trim() || null,
+      notes: val.notes?.trim() || null,
+      inventoryItemId: val.inventoryItemId || null,
+      consumptionQuantity: val.consumptionQuantity || null
     };
 
-    this.healthService.logTreatment(request).subscribe({
+    this.healthService.logTreatment(createRequest).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.snackBar.open('Treatment logged successfully!', 'Close', {

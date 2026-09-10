@@ -186,6 +186,34 @@ public static class HealthEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
         .WithSummary("Get paginated list of medical treatments");
 
+        group.MapPut("/treatments/{id:guid}", async (
+            [FromRoute] Guid id,
+            [FromBody] UpdateMedicalTreatmentRequest request,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new UpdateMedicalTreatmentCommand(
+                id,
+                request.Diagnosis,
+                request.MedicationName,
+                request.DosageAmount,
+                request.DosageUnit,
+                request.MilkWithdrawalDays,
+                request.MeatWithdrawalDays,
+                request.StartDate,
+                request.EndDate,
+                request.CostBdt,
+                request.VeterinarianName,
+                request.Notes,
+                request.Status,
+                request.InventoryItemId,
+                request.ConsumptionQuantity);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Update details of a medical treatment");
+
         group.MapPut("/treatments/{id:guid}/status", async (
             [FromRoute] Guid id,
             [FromBody] UpdateTreatmentStatusRequest request,
@@ -382,3 +410,18 @@ public static class HealthEndpoints
 public record AdministerVaccinationRequest(DateOnly AdministeredDate, string? Notes);
 public record UpdateTreatmentStatusRequest(TreatmentStatus Status, string? Notes);
 public record UpdateIncidentStatusRequest(IncidentStatus Status, int AffectedAnimalCount, string? Notes);
+public record UpdateMedicalTreatmentRequest(
+    string Diagnosis,
+    string MedicationName,
+    decimal DosageAmount,
+    string DosageUnit,
+    int MilkWithdrawalDays,
+    int MeatWithdrawalDays,
+    DateOnly StartDate,
+    DateOnly? EndDate,
+    decimal CostBdt,
+    string? VeterinarianName,
+    string? Notes,
+    TreatmentStatus Status,
+    Guid? InventoryItemId = null,
+    decimal? ConsumptionQuantity = null);
