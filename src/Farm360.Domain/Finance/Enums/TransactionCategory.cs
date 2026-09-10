@@ -12,6 +12,7 @@ public enum TransactionCategory
     MiscellaneousExpense = 7,
     InventoryPurchase = 8,
     MedicineCost = 9,
+    ConsumableExpense = 10,
 
     // ── Income Categories ───────────────────────────────────────────────────
     AnimalSale = 50,

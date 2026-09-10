@@ -41,5 +41,13 @@ export const INVENTORY_ROUTES: Routes = [
   {
     path: 'reports/movement',
     loadComponent: () => import('./pages/inventory-movement-report/inventory-movement-report').then(m => m.InventoryMovementReport)
+  },
+  {
+    path: 'consumable-plans',
+    loadComponent: () => import('./pages/consumable-plan-list/consumable-plan-list.component').then(m => m.ConsumablePlanListComponent)
+  },
+  {
+    path: 'daily-consumables',
+    loadComponent: () => import('./pages/daily-consumable-dashboard/daily-consumable-dashboard.component').then(m => m.DailyConsumableDashboardComponent)
   }
 ];

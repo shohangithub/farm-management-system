@@ -318,6 +318,163 @@ public static class InventoryEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
         .WithName("FulfillPurchaseOrder");
 
+        // ── Consumable Usage Plans ───────────────────────────────────────────
+        group.MapGet("/consumable-plans", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] ConsumableUsagePlanStatus? status = null,
+            [FromQuery] string? search = null,
+            ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var query = new Farm360.Application.Inventory.Queries.Consumables.GetConsumableUsagePlansQuery(farmId, pageNumber, pageSize, status, search);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetConsumableUsagePlans");
+
+        group.MapGet("/consumable-plans/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new Farm360.Application.Inventory.Queries.Consumables.GetConsumableUsagePlanByIdQuery(id);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetConsumableUsagePlanById");
+
+        group.MapPost("/consumable-plans", async (
+            [FromBody] Farm360.Application.Inventory.Commands.Consumables.CreateConsumableUsagePlanCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Created($"/api/v1/inventory/consumable-plans/{id}", new { id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}")
+        .WithName("CreateConsumableUsagePlan");
+
+        group.MapPut("/consumable-plans/{id:guid}", async (
+            Guid id,
+            [FromBody] Farm360.Application.Inventory.Commands.Consumables.UpdateConsumableUsagePlanCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.Id)
+            {
+                return Results.BadRequest("Route ID does not match command ID.");
+            }
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("UpdateConsumableUsagePlan");
+
+        group.MapDelete("/consumable-plans/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new Farm360.Application.Inventory.Commands.Consumables.DeleteConsumableUsagePlanCommand(id);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Delete}")
+        .WithName("DeleteConsumableUsagePlan");
+
+        // ── Daily Consumable Entries & Workflow ──────────────────────────────
+        group.MapGet("/daily-consumables", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] string? date = null,
+            ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var targetDate = string.IsNullOrWhiteSpace(date)
+                ? DateOnly.FromDateTime(DateTime.UtcNow)
+                : DateOnly.Parse(date);
+
+            var query = new Farm360.Application.Inventory.Queries.Consumables.GetDailyConsumableEntriesQuery(farmId, targetDate);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetDailyConsumableEntries");
+
+        group.MapGet("/daily-consumables/summary", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] string? date = null,
+            ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var targetDate = string.IsNullOrWhiteSpace(date)
+                ? DateOnly.FromDateTime(DateTime.UtcNow)
+                : DateOnly.Parse(date);
+
+            var query = new Farm360.Application.Inventory.Queries.Consumables.GetDailyConsumableSummaryQuery(farmId, targetDate);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetDailyConsumableSummary");
+
+        group.MapPost("/daily-consumables/generate", async (
+            [FromBody] Farm360.Application.Inventory.Commands.Consumables.GenerateDailyConsumableEntriesCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var count = await sender.Send(command, ct);
+            return Results.Ok(new { generatedCount = count });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}")
+        .WithName("GenerateDailyConsumableEntries");
+
+        group.MapPut("/daily-consumables/{id:guid}/confirm", async (
+            Guid id,
+            [FromBody] Farm360.Application.Inventory.Commands.Consumables.ConfirmDailyConsumableEntryCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.EntryId)
+            {
+                return Results.BadRequest("Route ID does not match command EntryId.");
+            }
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("ConfirmDailyConsumableEntry");
+
+        group.MapPost("/daily-consumables/bulk-confirm", async (
+            [FromBody] Farm360.Application.Inventory.Commands.Consumables.BulkConfirmDailyConsumableEntriesCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var count = await sender.Send(command, ct);
+            return Results.Ok(new { confirmedCount = count });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("BulkConfirmDailyConsumableEntries");
+
+        group.MapPut("/daily-consumables/{id:guid}/skip", async (
+            Guid id,
+            [FromBody] Farm360.Application.Inventory.Commands.Consumables.SkipDailyConsumableEntryCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            if (id != command.EntryId)
+            {
+                return Results.BadRequest("Route ID does not match command EntryId.");
+            }
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("SkipDailyConsumableEntry");
+
         return app;
     }
 }

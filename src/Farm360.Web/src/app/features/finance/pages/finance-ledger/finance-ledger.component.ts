@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -48,7 +48,7 @@ import { EditTransactionDialogComponent } from '../../components/edit-transactio
   templateUrl: './finance-ledger.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FinanceLedgerComponent implements OnInit {
+export class FinanceLedgerComponent {
   private readonly financeService = inject(FinanceService);
   private readonly workingContextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
@@ -145,7 +145,7 @@ export class FinanceLedgerComponent implements OnInit {
   readonly totalExpense = computed(() => this.result()?.totalExpenseBdt ?? 0);
   readonly netCashFlow = computed(() => this.result()?.netCashFlowBdt ?? 0);
 
-  ngOnInit(): void {
+  constructor() {
     toObservable(this.searchTerm).pipe(
       debounceTime(350),
       distinctUntilChanged(),

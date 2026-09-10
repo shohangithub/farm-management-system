@@ -105,45 +105,47 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
       </div>
 
       <!-- Quick Module Navigation Tabs -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <a routerLink="../current-stock" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">analytics</mat-icon>
-            </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Current Stock Report</span>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <a routerLink="../daily-consumables" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-teal-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">today</mat-icon>
           </div>
-          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Today's Consumables</span>
         </a>
 
-        <a routerLink="../items" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">list_alt</mat-icon>
-            </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Full Stock Catalog</span>
+        <a routerLink="../consumable-plans" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-teal-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">cleaning_services</mat-icon>
           </div>
-          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Consumable Plans</span>
         </a>
 
-        <a routerLink="../transactions" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">receipt_long</mat-icon>
-            </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Stock Movement Ledger</span>
+        <a routerLink="../current-stock" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">analytics</mat-icon>
           </div>
-          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Current Stock</span>
         </a>
 
-        <a routerLink="../suppliers" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">local_shipping</mat-icon>
-            </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Suppliers & Vendors</span>
+        <a routerLink="../items" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">list_alt</mat-icon>
           </div>
-          <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Stock Catalog</span>
+        </a>
+
+        <a routerLink="../transactions" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-blue-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">receipt_long</mat-icon>
+          </div>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Stock Ledger</span>
+        </a>
+
+        <a routerLink="../suppliers" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-purple-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">local_shipping</mat-icon>
+          </div>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Suppliers</span>
         </a>
       </div>
 

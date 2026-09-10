@@ -175,6 +175,7 @@ export class CreateItemDialogComponent {
     { value: InventoryCategory.Vaccine, label: InventoryCategoryNames[InventoryCategory.Vaccine] },
     { value: InventoryCategory.Chemical, label: InventoryCategoryNames[InventoryCategory.Chemical] },
     { value: InventoryCategory.Equipment, label: InventoryCategoryNames[InventoryCategory.Equipment] },
+    { value: InventoryCategory.Consumable, label: InventoryCategoryNames[InventoryCategory.Consumable] },
     { value: InventoryCategory.Other, label: InventoryCategoryNames[InventoryCategory.Other] },
   ];
 

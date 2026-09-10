@@ -142,6 +142,9 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
+    public DbSet<ConsumableUsagePlan> ConsumableUsagePlans => Set<ConsumableUsagePlan>();
+    public DbSet<ConsumableUsagePlanItem> ConsumableUsagePlanItems => Set<ConsumableUsagePlanItem>();
+    public DbSet<DailyConsumableEntry> DailyConsumableEntries => Set<DailyConsumableEntry>();
 
     // ── Financial Module ──────────────────────────────────────────────────────
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();

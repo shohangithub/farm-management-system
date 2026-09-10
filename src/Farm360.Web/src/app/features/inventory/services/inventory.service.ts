@@ -17,7 +17,16 @@ import {
   SupplierParams,
   PurchaseOrder,
   CreatePurchaseOrderRequest,
-  PurchaseOrderParams
+  PurchaseOrderParams,
+  ConsumableUsagePlan,
+  ConsumableUsagePlanStatus,
+  DailyConsumableEntry,
+  DailyConsumableSummary,
+  CreateConsumableUsagePlanRequest,
+  UpdateConsumableUsagePlanRequest,
+  ConfirmDailyConsumableEntryRequest,
+  BulkConfirmDailyConsumablesRequest,
+  SkipDailyConsumableEntryRequest
 } from '../models/inventory.models';
 
 @Injectable({
@@ -168,5 +177,74 @@ export class InventoryService {
 
   fulfillPurchaseOrder(id: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, {});
+  }
+
+  // ── Consumable Usage Plans ──────────────────────────────────────────────────
+  getConsumablePlans(
+    farmId: string,
+    pageNumber: number = 1,
+    pageSize: number = 20,
+    status?: ConsumableUsagePlanStatus,
+    search?: string
+  ): Observable<PagedResult<ConsumableUsagePlan>> {
+    let params = new HttpParams()
+      .set('farmId', farmId)
+      .set('pageNumber', pageNumber.toString())
+      .set('pageSize', pageSize.toString());
+
+    if (status) params = params.set('status', status);
+    if (search) params = params.set('search', search);
+
+    return this.http.get<PagedResult<ConsumableUsagePlan>>(`${this.baseUrl}/consumable-plans`, { params });
+  }
+
+  getConsumablePlanById(id: string): Observable<ConsumableUsagePlan> {
+    return this.http.get<ConsumableUsagePlan>(`${this.baseUrl}/consumable-plans/${id}`);
+  }
+
+  createConsumablePlan(request: CreateConsumableUsagePlanRequest): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${this.baseUrl}/consumable-plans`, request);
+  }
+
+  updateConsumablePlan(id: string, request: UpdateConsumableUsagePlanRequest): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/consumable-plans/${id}`, request);
+  }
+
+  deleteConsumablePlan(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/consumable-plans/${id}`);
+  }
+
+  // ── Daily Consumables Workflow ──────────────────────────────────────────────
+  getDailyConsumables(farmId: string, date?: string): Observable<DailyConsumableEntry[]> {
+    let params = new HttpParams().set('farmId', farmId);
+    if (date) params = params.set('date', date);
+
+    return this.http.get<DailyConsumableEntry[]>(`${this.baseUrl}/daily-consumables`, { params });
+  }
+
+  getDailyConsumableSummary(farmId: string, date?: string): Observable<DailyConsumableSummary> {
+    let params = new HttpParams().set('farmId', farmId);
+    if (date) params = params.set('date', date);
+
+    return this.http.get<DailyConsumableSummary>(`${this.baseUrl}/daily-consumables/summary`, { params });
+  }
+
+  generateDailyConsumables(farmId: string, targetDate?: string): Observable<{ generatedCount: number }> {
+    return this.http.post<{ generatedCount: number }>(`${this.baseUrl}/daily-consumables/generate`, {
+      farmId,
+      targetDate
+    });
+  }
+
+  confirmDailyConsumable(request: ConfirmDailyConsumableEntryRequest): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/daily-consumables/${request.entryId}/confirm`, request);
+  }
+
+  bulkConfirmDailyConsumables(request: BulkConfirmDailyConsumablesRequest): Observable<{ confirmedCount: number }> {
+    return this.http.post<{ confirmedCount: number }>(`${this.baseUrl}/daily-consumables/bulk-confirm`, request);
+  }
+
+  skipDailyConsumable(request: SkipDailyConsumableEntryRequest): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/daily-consumables/${request.entryId}/skip`, request);
   }
 }

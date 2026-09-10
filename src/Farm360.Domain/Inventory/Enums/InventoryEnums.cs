@@ -7,7 +7,8 @@ public enum InventoryCategory
     Vaccine = 3,
     Chemical = 4,
     Equipment = 5,
-    Other = 6
+    Other = 6,
+    Consumable = 7
 }
 
 public enum StockTransactionType
@@ -19,7 +20,23 @@ public enum StockTransactionType
     Adjustment = 5,
     WriteOff = 6,
     PlannedFeedConsumption = 7,
-    ReconciliationAdjustment = 8
+    ReconciliationAdjustment = 8,
+    AutoConsumableUsage = 9
+}
+
+public enum ConsumableUsagePlanStatus
+{
+    Active = 1,
+    Paused = 2,
+    Completed = 3
+}
+
+public enum DailyConsumableEntryStatus
+{
+    Pending = 1,
+    Confirmed = 2,
+    Adjusted = 3,
+    Skipped = 4
 }
 
 public enum InventoryStatus

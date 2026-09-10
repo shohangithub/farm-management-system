@@ -4,7 +4,8 @@ export enum InventoryCategory {
   Vaccine = 'Vaccine',
   Chemical = 'Chemical',
   Equipment = 'Equipment',
-  Other = 'Other'
+  Other = 'Other',
+  Consumable = 'Consumable'
 }
 
 export const InventoryCategoryNames: Record<InventoryCategory, string> = {
@@ -13,7 +14,8 @@ export const InventoryCategoryNames: Record<InventoryCategory, string> = {
   [InventoryCategory.Vaccine]: 'Vaccine',
   [InventoryCategory.Chemical]: 'Chemical',
   [InventoryCategory.Equipment]: 'Equipment',
-  [InventoryCategory.Other]: 'Other'
+  [InventoryCategory.Other]: 'Other',
+  [InventoryCategory.Consumable]: 'Consumable'
 };
 
 export enum StockTransactionType {
@@ -22,7 +24,8 @@ export enum StockTransactionType {
   AutoFeedConsumption = 'AutoFeedConsumption',
   AutoMedicineConsumption = 'AutoMedicineConsumption',
   Adjustment = 'Adjustment',
-  WriteOff = 'WriteOff'
+  WriteOff = 'WriteOff',
+  AutoConsumableUsage = 'AutoConsumableUsage'
 }
 
 export const StockTransactionTypeNames: Record<StockTransactionType, string> = {
@@ -31,7 +34,8 @@ export const StockTransactionTypeNames: Record<StockTransactionType, string> = {
   [StockTransactionType.AutoFeedConsumption]: 'Auto Feed Deduction',
   [StockTransactionType.AutoMedicineConsumption]: 'Auto Medicine Deduction',
   [StockTransactionType.Adjustment]: 'Adjustment',
-  [StockTransactionType.WriteOff]: 'Write-Off'
+  [StockTransactionType.WriteOff]: 'Write-Off',
+  [StockTransactionType.AutoConsumableUsage]: 'Auto Consumable Deduction'
 };
 
 export enum InventoryStatus {
@@ -247,4 +251,132 @@ export interface PurchaseOrderParams {
   sortBy?: string;
   sortDesc?: boolean;
 }
+
+export enum ConsumableUsagePlanStatus {
+  Active = 'Active',
+  Paused = 'Paused',
+  Completed = 'Completed'
+}
+
+export const ConsumableUsagePlanStatusNames: Record<ConsumableUsagePlanStatus, string> = {
+  [ConsumableUsagePlanStatus.Active]: 'Active',
+  [ConsumableUsagePlanStatus.Paused]: 'Paused',
+  [ConsumableUsagePlanStatus.Completed]: 'Completed'
+};
+
+export enum DailyConsumableEntryStatus {
+  Pending = 'Pending',
+  Confirmed = 'Confirmed',
+  Adjusted = 'Adjusted',
+  Skipped = 'Skipped'
+}
+
+export const DailyConsumableEntryStatusNames: Record<DailyConsumableEntryStatus, string> = {
+  [DailyConsumableEntryStatus.Pending]: 'Pending',
+  [DailyConsumableEntryStatus.Confirmed]: 'Confirmed',
+  [DailyConsumableEntryStatus.Adjusted]: 'Adjusted',
+  [DailyConsumableEntryStatus.Skipped]: 'Skipped'
+};
+
+export interface ConsumableUsagePlanItem {
+  id: string;
+  consumableUsagePlanId: string;
+  inventoryItemId: string;
+  itemName: string;
+  sku: string;
+  unitOfMeasure: string;
+  currentStock: number;
+  weightedAverageCostBdt: number;
+  plannedQuantityPerDay: number;
+  notes?: string;
+}
+
+export interface ConsumableUsagePlan {
+  id: string;
+  farmId: string;
+  name: string;
+  description?: string;
+  status: ConsumableUsagePlanStatus;
+  statusName: string;
+  startDate: string;
+  endDate?: string;
+  itemsCount: number;
+  totalDailyEstimatedCostBdt: number;
+  items: ConsumableUsagePlanItem[];
+}
+
+export interface DailyConsumableEntry {
+  id: string;
+  farmId: string;
+  consumableUsagePlanId: string;
+  planName: string;
+  consumableUsagePlanItemId: string;
+  inventoryItemId: string;
+  itemName: string;
+  sku: string;
+  unitOfMeasure: string;
+  currentStock: number;
+  entryDate: string;
+  expectedQuantity: number;
+  actualQuantity?: number;
+  unitCostAtConsumptionBdt?: number;
+  totalCostBdt?: number;
+  status: DailyConsumableEntryStatus;
+  statusName: string;
+  adjustmentReason?: string;
+  inventoryTransactionId?: string;
+}
+
+export interface DailyConsumableSummary {
+  date: string;
+  totalPlannedEntries: number;
+  confirmedEntries: number;
+  skippedEntries: number;
+  pendingEntries: number;
+  totalExpectedQuantity: number;
+  totalActualQuantity: number;
+  totalCostBdt: number;
+}
+
+export interface ConsumablePlanItemInput {
+  inventoryItemId: string;
+  plannedQuantityPerDay: number;
+  notes?: string;
+}
+
+export interface CreateConsumableUsagePlanRequest {
+  farmId: string;
+  name: string;
+  startDate: string;
+  endDate?: string;
+  description?: string;
+  items?: ConsumablePlanItemInput[];
+}
+
+export interface UpdateConsumableUsagePlanRequest {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate?: string;
+  description?: string;
+  status?: ConsumableUsagePlanStatus;
+  items?: ConsumablePlanItemInput[];
+}
+
+export interface ConfirmDailyConsumableEntryRequest {
+  entryId: string;
+  actualQuantity: number;
+  adjustmentReason?: string;
+}
+
+export interface BulkConfirmDailyConsumablesRequest {
+  farmId: string;
+  entryDate: string;
+}
+
+export interface SkipDailyConsumableEntryRequest {
+  entryId: string;
+  reason: string;
+}
+
 

@@ -94,6 +94,8 @@ public static class PersistenceServiceExtensions
         services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.ISupplierRepository, Farm360.Persistence.Repositories.Inventory.SupplierRepository>();
         services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IStockTransactionRepository, Farm360.Persistence.Repositories.Inventory.StockTransactionRepository>();
         services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IPurchaseOrderRepository, Farm360.Persistence.Repositories.Inventory.PurchaseOrderRepository>();
+        services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IConsumableUsagePlanRepository, Farm360.Persistence.Repositories.Inventory.ConsumableUsagePlanRepository>();
+        services.AddScoped<Farm360.Domain.Inventory.Interfaces.Repositories.IDailyConsumableEntryRepository, Farm360.Persistence.Repositories.Inventory.DailyConsumableEntryRepository>();
 
         // ── Intelligence repositories ───────────────────────────────────────────
         services.AddScoped<Farm360.Domain.Intelligence.Interfaces.Repositories.IInsightRepository, Farm360.Persistence.Repositories.Intelligence.InsightRepository>();
