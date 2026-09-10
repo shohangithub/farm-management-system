@@ -40,5 +40,15 @@ export const FINANCE_ROUTES: Routes = [
     path: 'reports/monthly-pnl',
     loadComponent: () => import('./pages/monthly-pnl-report/monthly-pnl-report').then(m => m.MonthlyPnlReportComponent),
     title: 'Monthly P&L Report - Farm360 AI'
+  },
+  {
+    path: 'reports/trial-balance',
+    loadComponent: () => import('./pages/trial-balance/trial-balance.component').then(m => m.TrialBalanceComponent),
+    title: 'Trial Balance - Farm360 AI'
+  },
+  {
+    path: 'reports/balance-sheet',
+    loadComponent: () => import('./pages/balance-sheet/balance-sheet.component').then(m => m.BalanceSheetComponent),
+    title: 'Balance Sheet - Farm360 AI'
   }
 ];

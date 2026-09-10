@@ -322,3 +322,47 @@ export interface InvestorPnLSummary {
   investorShares: InvestorShare[];
 }
 
+export interface TrialBalanceLine {
+  accountCode: string;
+  accountName: string;
+  categoryGroup: 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense' | string;
+  debitBdt: number;
+  creditBdt: number;
+}
+
+export interface TrialBalance {
+  farmId: string;
+  asOfDate: string;
+  lines: TrialBalanceLine[];
+  totalDebitBdt: number;
+  totalCreditBdt: number;
+  isBalanced: boolean;
+  differenceBdt: number;
+}
+
+export interface BalanceSheetLine {
+  lineCode: string;
+  lineName: string;
+  amountBdt: number;
+  notes?: string | null;
+}
+
+export interface BalanceSheetSection {
+  sectionName: string;
+  totalBdt: number;
+  lines: BalanceSheetLine[];
+}
+
+export interface BalanceSheet {
+  farmId: string;
+  asOfDate: string;
+  assets: BalanceSheetSection;
+  liabilities: BalanceSheetSection;
+  equity: BalanceSheetSection;
+  totalAssetsBdt: number;
+  totalLiabilitiesAndEquityBdt: number;
+  isBalanced: boolean;
+  differenceBdt: number;
+  netWorkingCapitalBdt: number;
+}
+

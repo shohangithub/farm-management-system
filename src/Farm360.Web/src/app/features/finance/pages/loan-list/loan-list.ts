@@ -59,6 +59,14 @@ import { LoanRecord } from '../../models/finance.model';
           class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
           <mat-icon class="text-base">calendar_view_month</mat-icon> Monthly P&L
         </a>
+        <a routerLink="/finance/reports/trial-balance" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">balance</mat-icon> Trial Balance
+        </a>
+        <a routerLink="/finance/reports/balance-sheet" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
+        </a>
         <a routerLink="/finance/loans" 
           class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
           <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities

@@ -22,7 +22,9 @@ import {
   CreateInvestorRequest,
   UpdateInvestorRequest,
   RecordInvestorTransactionRequest,
-  InvestorPnLSummary
+  InvestorPnLSummary,
+  TrialBalance,
+  BalanceSheet
 } from '../models/finance.model';
 
 @Injectable({
@@ -166,6 +168,18 @@ export class FinanceService {
 
   getMonthlyPnL(farmId: string, year: number, month: number): Observable<MonthlyPnLReport> {
     return this.http.get<MonthlyPnLReport>(`${this.getBaseUrl(farmId)}/reports/monthly?year=${year}&month=${month}`);
+  }
+
+  getTrialBalance(farmId: string, asOfDate?: string): Observable<TrialBalance> {
+    let params = new HttpParams();
+    if (asOfDate) params = params.set('asOfDate', asOfDate);
+    return this.http.get<TrialBalance>(`${this.getBaseUrl(farmId)}/reports/trial-balance`, { params });
+  }
+
+  getBalanceSheet(farmId: string, asOfDate?: string): Observable<BalanceSheet> {
+    let params = new HttpParams();
+    if (asOfDate) params = params.set('asOfDate', asOfDate);
+    return this.http.get<BalanceSheet>(`${this.getBaseUrl(farmId)}/reports/balance-sheet`, { params });
   }
 
   getConsolidatedPnL(year: number, month: number): Observable<ConsolidatedPnLReport> {

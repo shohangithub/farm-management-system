@@ -372,6 +372,24 @@ public static class FinanceEndpoints
             return Results.Ok(result);
         }).Produces<MonthlyPnLReportDto>();
 
+        group.MapGet("reports/trial-balance", async (
+            Guid farmId,
+            [FromQuery] DateTime? asOfDate,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetTrialBalanceQuery(farmId, asOfDate));
+            return Results.Ok(result);
+        }).Produces<TrialBalanceDto>();
+
+        group.MapGet("reports/balance-sheet", async (
+            Guid farmId,
+            [FromQuery] DateTime? asOfDate,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetBalanceSheetQuery(farmId, asOfDate));
+            return Results.Ok(result);
+        }).Produces<BalanceSheetDto>();
+
         // Consolidated PnL is tenant-wide, so it should ideally be under api/finance instead of api/farms/{farmId}/finance
         // But for consistency we can leave it here or map it separately.
         var tenantGroup = builder.MapGroup(tenantRoutePrefix)
