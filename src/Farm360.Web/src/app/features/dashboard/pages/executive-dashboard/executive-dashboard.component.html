@@ -29,9 +29,9 @@
   ></app-empty-state>
 
   <!-- Main Content -->
-  <div *ngIf="data() as dashboard" class="space-y-6 max-w-7xl mx-auto">
+  <div *ngIf="data() as dashboard" class="space-y-8 max-w-7xl mx-auto pb-12">
     
-    <!-- KPI Cards Grid -->
+    <!-- 1. KPI Cards Grid (8 Core Metrics) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       
       <!-- Animals KPI -->
@@ -178,149 +178,221 @@
 
     </div>
 
-    <!-- Main Content Layout Grid -->
+    <!-- 2. Action & Operations Hub (AI Alerts + Quick Actions & Recent Activity) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Left Column (AI Insights & Tasks) -->
-      <div class="lg:col-span-2 space-y-6">
-        
-        <!-- Farm Summary Cards -->
-        <div class="mb-6">
-          <app-farm-summary-cards [data]="farmSummaryCards() ?? null"></app-farm-summary-cards>
-        </div>
-
-        <!-- AI Intelligence Center -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden relative">
-          <!-- Header -->
-          <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <mat-icon>psychology</mat-icon>
-              </div>
-              <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0 leading-tight">AI Predictive Alerts</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Smart farm intelligence and actionable insights</p>
-              </div>
+      <!-- AI Intelligence Center (Col-span 2) -->
+      <div class="lg:col-span-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden relative">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <mat-icon>psychology</mat-icon>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0 leading-tight">AI Predictive Alerts</h2>
+              <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Continuous monitoring and automated health & performance signals</p>
             </div>
           </div>
+          <span *ngIf="dashboard.actionableInsights.length > 0" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+            {{ dashboard.actionableInsights.length }} Active
+          </span>
+        </div>
 
-          <!-- Insights List -->
-          <div class="p-6">
-            <div *ngIf="dashboard.actionableInsights.length === 0" class="text-center py-10">
-              <div class="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-gray-700">
-                <mat-icon class="text-gray-400 text-3xl h-auto w-auto">verified</mat-icon>
-              </div>
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">All Clear</h3>
-              <p class="text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">No critical predictive alerts at this time. The AI engine is continuously monitoring your farm.</p>
+        <!-- Insights List -->
+        <div class="p-6">
+          <div *ngIf="dashboard.actionableInsights.length === 0" class="text-center py-10">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3 border border-emerald-100 dark:border-emerald-800/40">
+              <mat-icon class="text-2xl">verified</mat-icon>
             </div>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">All Systems Healthy</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-md mx-auto">No critical predictive alerts or anomalies detected. The AI engine is continuously monitoring livestock health and feed efficiency.</p>
+          </div>
 
-            <div *ngIf="dashboard.actionableInsights.length > 0" class="space-y-4">
-              <div *ngFor="let insight of dashboard.actionableInsights" 
-                   class="flex gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow duration-300">
-                
-                <div class="flex-shrink-0 mt-1">
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center border" [ngClass]="getSeverityColorClass(insight.severity)">
-                    <mat-icon>{{ getSeverityIcon(insight.severity) }}</mat-icon>
-                  </div>
+          <div *ngIf="dashboard.actionableInsights.length > 0" class="space-y-3">
+            <div *ngFor="let insight of dashboard.actionableInsights" 
+                 class="flex gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 bg-white/60 dark:bg-gray-800/60 hover:shadow-sm transition-all duration-200">
+              
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center border" [ngClass]="getSeverityColorClass(insight.severity)">
+                  <mat-icon class="text-[18px] w-[18px] h-[18px]">{{ getSeverityIcon(insight.severity) }}</mat-icon>
                 </div>
+              </div>
+              
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-start mb-1">
+                  <h4 class="text-sm font-semibold text-gray-900 dark:text-white m-0 truncate">{{ insight.title }}</h4>
+                  <span class="text-xs text-gray-400 ml-2 whitespace-nowrap">{{ insight.createdAtUtc | date:'short' }}</span>
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-300 mb-3 line-clamp-2 leading-relaxed">{{ insight.message }}</p>
                 
-                <div class="flex-1">
-                  <div class="flex justify-between items-start mb-1">
-                    <h4 class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ insight.title }}</h4>
-                    <span class="text-xs text-gray-400">{{ insight.createdAtUtc | date:'short' }}</span>
-                  </div>
-                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">{{ insight.message }}</p>
-                  
-                  <div class="flex gap-2">
-                    <button mat-stroked-button class="!rounded-lg !text-sm h-8 px-3" color="primary" (click)="reviewInsight(insight)">Review Details</button>
-                    <button mat-button class="!rounded-lg !text-sm h-8 px-3 text-gray-500" (click)="dismissInsight(insight)">Dismiss</button>
-                  </div>
+                <div class="flex gap-2">
+                  <button mat-stroked-button class="!rounded-lg !text-xs h-7 px-2.5" color="primary" (click)="reviewInsight(insight)">Review Details</button>
+                  <button mat-button class="!rounded-lg !text-xs h-7 px-2.5 text-gray-500" (click)="dismissInsight(insight)">Dismiss</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Analytics Charts -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
-            <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0">Herd Composition</h2>
-            </div>
-            <div class="p-6">
-              <app-herd-composition-chart [data]="herdComposition() ?? null"></app-herd-composition-chart>
-            </div>
-          </div>
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
-            <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0">Vaccination Compliance</h2>
-            </div>
-            <div class="p-6">
-              <app-vaccination-compliance-chart [data]="vaccinationCompliance() ?? null"></app-vaccination-compliance-chart>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden mt-6">
-          <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0">ADG Trends</h2>
-          </div>
-          <div class="p-6">
-            <app-adg-trend-chart [data]="adgTrends() ?? null"></app-adg-trend-chart>
-          </div>
-        </div>
-
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden mt-6">
-          <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0">Feed Cost Trends</h2>
-          </div>
-          <div class="p-6">
-            <app-feed-cost-trend-chart [data]="feedCostTrends() ?? null"></app-feed-cost-trend-chart>
-          </div>
-        </div>
-
       </div>
 
-      <!-- Right Column (Quick Actions & Summary) -->
+      <!-- Quick Actions & Operations (Col-span 1) -->
       <div class="space-y-6">
         
         <!-- Quick Actions -->
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
-          <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0">Quick Actions</h2>
+          <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2">
+            <mat-icon class="text-primary-500 text-lg">bolt</mat-icon>
+            <h2 class="text-sm font-semibold text-gray-900 dark:text-white m-0">Quick Operations</h2>
           </div>
-          <div class="p-6 grid grid-cols-2 gap-4">
-            <button routerLink="/livestock/register" class="flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group cursor-pointer w-full">
-              <mat-icon class="text-gray-400 group-hover:text-primary-500 mb-2">add_circle</mat-icon>
+          <div class="p-5 grid grid-cols-2 gap-3">
+            <button routerLink="/livestock/register" class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all group cursor-pointer w-full">
+              <mat-icon class="text-gray-400 group-hover:text-primary-500 mb-1.5 transition-colors">add_circle</mat-icon>
               <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400">Add Animal</span>
             </button>
-            <button routerLink="/health/treatments" class="flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group cursor-pointer w-full">
-              <mat-icon class="text-gray-400 group-hover:text-blue-500 mb-2">healing</mat-icon>
+            <button routerLink="/health/treatments" class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all group cursor-pointer w-full">
+              <mat-icon class="text-gray-400 group-hover:text-blue-500 mb-1.5 transition-colors">healing</mat-icon>
               <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">Log Treatment</span>
             </button>
-            <button routerLink="/feeding/logs" class="flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all group cursor-pointer w-full">
-              <mat-icon class="text-gray-400 group-hover:text-amber-500 mb-2">restaurant_menu</mat-icon>
+            <button routerLink="/feeding/logs" class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-900/20 transition-all group cursor-pointer w-full">
+              <mat-icon class="text-gray-400 group-hover:text-amber-500 mb-1.5 transition-colors">restaurant_menu</mat-icon>
               <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400">Log Feed</span>
             </button>
-            <button routerLink="/inventory/dashboard" class="flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group cursor-pointer w-full">
-              <mat-icon class="text-gray-400 group-hover:text-emerald-500 mb-2">inventory_2</mat-icon>
+            <button routerLink="/inventory/dashboard" class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-all group cursor-pointer w-full">
+              <mat-icon class="text-gray-400 group-hover:text-emerald-500 mb-1.5 transition-colors">inventory_2</mat-icon>
               <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Stock Update</span>
             </button>
           </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Recent Activity Feed -->
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
-          <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700/50">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white m-0">Recent Activity Feed</h2>
+          <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-indigo-500 text-lg">history</mat-icon>
+              <h2 class="text-sm font-semibold text-gray-900 dark:text-white m-0">Recent Activity</h2>
+            </div>
           </div>
-          <div class="p-6">
+          <div class="p-5">
             <app-recent-activity-feed [data]="recentActivityFeed() ?? null"></app-recent-activity-feed>
           </div>
         </div>
 
       </div>
 
+    </div>
+
+    <!-- 3. Operational & Biometric Analytics (The 4 Charts in a Premium Symmetrical 2x2 Grid) -->
+    <div class="space-y-4">
+      
+      <!-- Section Header -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+            <mat-icon>insights</mat-icon>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white m-0 leading-tight">Operational & Biometric Analytics</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Demographics, health compliance, growth trajectory, and feed economics</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Symmetrical 2x2 Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Chart 1: Herd Demographics & Composition -->
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden flex flex-col justify-between min-h-[440px]">
+          <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">pie_chart</mat-icon>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+                <mat-icon class="text-[18px] w-[18px] h-[18px]">pets</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">Herd Composition</h3>
+                <p class="text-xs text-gray-400 m-0">Demographics breakdown by species, sex, and status</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 mt-2">
+            <app-herd-composition-chart [data]="herdComposition() ?? null"></app-herd-composition-chart>
+          </div>
+        </div>
+
+        <!-- Chart 2: Vaccination Compliance -->
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden flex flex-col justify-between min-h-[440px]">
+          <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-teal-500/5 rotate-[-10deg] pointer-events-none">health_and_safety</mat-icon>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
+                <mat-icon class="text-[18px] w-[18px] h-[18px]">vaccines</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">Vaccination Compliance</h3>
+                <p class="text-xs text-gray-400 m-0">Immunization coverage, scheduled doses, and overdue events</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 mt-2">
+            <app-vaccination-compliance-chart [data]="vaccinationCompliance() ?? null"></app-vaccination-compliance-chart>
+          </div>
+        </div>
+
+        <!-- Chart 3: ADG Trends -->
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden flex flex-col justify-between min-h-[440px]">
+          <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <mat-icon class="text-[18px] w-[18px] h-[18px]">trending_up</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">ADG Growth Trends</h3>
+                <p class="text-xs text-gray-400 m-0">6-month average daily gain growth velocity trajectory</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 mt-2">
+            <app-adg-trend-chart [data]="adgTrends() ?? null"></app-adg-trend-chart>
+          </div>
+        </div>
+
+        <!-- Chart 4: Feed Cost Trends -->
+        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 relative overflow-hidden flex flex-col justify-between min-h-[440px]">
+          <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-violet-500/5 rotate-[-10deg] pointer-events-none">payments</mat-icon>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-violet-500/20">
+                <mat-icon class="text-[18px] w-[18px] h-[18px]">account_balance_wallet</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">Feed Cost Trends</h3>
+                <p class="text-xs text-gray-400 m-0">Monthly cost per head vs. planned budget benchmarks</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 mt-2">
+            <app-feed-cost-trend-chart [data]="feedCostTrends() ?? null"></app-feed-cost-trend-chart>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 4. Multi-Farm Overview (Farm Summary Cards) -->
+    <div *ngIf="farmSummaryCards() && farmSummaryCards()!.length > 1" class="space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-cyan-500/20">
+          <mat-icon class="text-[18px] w-[18px] h-[18px]">domain</mat-icon>
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">Enterprise Farm Network</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Cross-branch summary and revenue performance</p>
+        </div>
+      </div>
+      <app-farm-summary-cards [data]="farmSummaryCards() ?? null"></app-farm-summary-cards>
     </div>
 
   </div>
