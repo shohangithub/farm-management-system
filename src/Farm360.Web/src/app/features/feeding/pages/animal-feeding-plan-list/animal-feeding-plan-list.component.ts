@@ -17,6 +17,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { AssignFeedingPlanDialogComponent } from '../../components/dialogs/assign-feeding-plan-dialog/assign-feeding-plan-dialog.component';
 import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-rule-set-dialog/feeding-rule-set-dialog.component';
+import { AnimalFeedsCostReportDialogComponent } from '../../components/dialogs/animal-feeds-cost-report-dialog/animal-feeds-cost-report-dialog.component';
+import { FeedingReportPdfService } from '../../services/feeding-report-pdf.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
@@ -76,6 +78,13 @@ export interface RuleSetGroup {
             <mat-icon class="!w-4 !h-4 !text-[16px]">table_rows</mat-icon> Flat Table
           </button>
         </div>
+
+        <!-- PDF Feeds & Cost Report Button -->
+        <button (click)="openFeedsCostReportDialog()"
+          matTooltip="Preview and export animal-wise feeds report with costs (PDF, Print, CSV)"
+          class="px-3.5 py-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">picture_as_pdf</mat-icon> Feeds & Cost Report
+        </button>
 
         <button (click)="openCreateRuleSetDialog()"
           class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
@@ -577,6 +586,22 @@ export class AnimalFeedingPlanListComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadData();
+    });
+  }
+
+  openFeedsCostReportDialog(): void {
+    const activeFarm = this.contextService.currentFarmValue;
+    const currentOrg = this.contextService.currentOrgValue;
+
+    this.dialog.open(AnimalFeedsCostReportDialogComponent, {
+      disableClose: false,
+      width: '95vw',
+      maxWidth: '1200px',
+      data: {
+        plans: this.plans(),
+        farmName: activeFarm?.name || 'Current Farm',
+        orgName: currentOrg?.name || 'Farm360 Enterprise'
+      }
     });
   }
 

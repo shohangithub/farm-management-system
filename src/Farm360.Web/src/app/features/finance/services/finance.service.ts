@@ -24,7 +24,16 @@ import {
   RecordInvestorTransactionRequest,
   InvestorPnLSummary,
   TrialBalance,
-  BalanceSheet
+  BalanceSheet,
+  FarmShareConfig,
+  ShareHolding,
+  ShareTransaction,
+  ShareMarketOverview,
+  ConfigureFarmSharesRequest,
+  PurchaseSharesRequest,
+  SellSharesRequest,
+  TransferSharesRequest,
+  UpdateShareValuationRequest
 } from '../models/finance.model';
 
 @Injectable({
@@ -188,6 +197,47 @@ export class FinanceService {
 
   getDashboard(farmId: string): Observable<FinancialDashboard> {
     return this.http.get<FinancialDashboard>(`${this.getBaseUrl(farmId)}/dashboard`);
+  }
+
+  // --- Farm Share Market ---
+
+  getShareOverview(farmId: string): Observable<ShareMarketOverview> {
+    return this.http.get<ShareMarketOverview>(`${this.getBaseUrl(farmId)}/shares/overview`);
+  }
+
+  configureShares(farmId: string, request: ConfigureFarmSharesRequest): Observable<FarmShareConfig> {
+    const payload = this.sanitizePayload<ConfigureFarmSharesRequest>(request);
+    return this.http.post<FarmShareConfig>(`${this.getBaseUrl(farmId)}/shares/configure`, payload);
+  }
+
+  purchaseShares(farmId: string, request: PurchaseSharesRequest): Observable<ShareHolding> {
+    const payload = this.sanitizePayload<PurchaseSharesRequest>(request);
+    return this.http.post<ShareHolding>(`${this.getBaseUrl(farmId)}/shares/purchase`, payload);
+  }
+
+  sellShares(farmId: string, request: SellSharesRequest): Observable<ShareHolding> {
+    const payload = this.sanitizePayload<SellSharesRequest>(request);
+    return this.http.post<ShareHolding>(`${this.getBaseUrl(farmId)}/shares/sell`, payload);
+  }
+
+  transferShares(farmId: string, request: TransferSharesRequest): Observable<{ success: boolean }> {
+    const payload = this.sanitizePayload<TransferSharesRequest>(request);
+    return this.http.post<{ success: boolean }>(`${this.getBaseUrl(farmId)}/shares/transfer`, payload);
+  }
+
+  updateShareValuation(farmId: string, request: UpdateShareValuationRequest): Observable<FarmShareConfig> {
+    const payload = this.sanitizePayload<UpdateShareValuationRequest>(request);
+    return this.http.put<FarmShareConfig>(`${this.getBaseUrl(farmId)}/shares/valuation`, payload);
+  }
+
+  getInvestorShareHoldings(investorId: string): Observable<ShareHolding[]> {
+    return this.http.get<ShareHolding[]>(`/api/v1/finance/shares/holdings/${investorId}`);
+  }
+
+  getShareTransactions(farmId: string, investorId?: string): Observable<ShareTransaction[]> {
+    let params = new HttpParams();
+    if (investorId) params = params.set('investorId', investorId);
+    return this.http.get<ShareTransaction[]>(`${this.getBaseUrl(farmId)}/shares/transactions`, { params });
   }
 
   // --- Helpers ---

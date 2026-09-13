@@ -366,3 +366,124 @@ export interface BalanceSheet {
   netWorkingCapitalBdt: number;
 }
 
+// ── Farm Share Market Models ───────────────────────────────────────────────
+
+export interface FarmShareConfig {
+  id: string;
+  farmId: string;
+  totalShares: number;
+  sharePriceBdt: number;
+  ownerShareCount: number;
+  allocatedShareCount: number;
+  availableShareCount: number;
+  totalValuationBdt: number;
+  availableValuationBdt: number;
+  ownerEquityValueBdt: number;
+  ownerOwnershipPercentage: number;
+  minimumPurchaseShares: number;
+  isShareSaleOpen: boolean;
+  lastValuationDate: string;
+  valuationNotes?: string | null;
+}
+
+export interface ShareHolding {
+  id: string;
+  investorId: string;
+  investorName: string;
+  investorPhone?: string | null;
+  investorEmail?: string | null;
+  farmId: string;
+  shareCount: number;
+  averagePurchasePriceBdt: number;
+  totalInvestedBdt: number;
+  currentValueBdt: number;
+  ownershipPercentage: number;
+  unrealizedGainLossBdt: number;
+  returnOnInvestmentPercent: number;
+  certificateNumber?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+}
+
+export interface ShareTransaction {
+  id: string;
+  farmId: string;
+  investorId: string;
+  investorName: string;
+  type: 'Purchase' | 'Sale' | 'Transfer' | 'Bonus' | 'ValuationAdjustment' | string;
+  shareCount: number;
+  pricePerShareBdt: number;
+  totalAmountBdt: number;
+  transactionDate: string;
+  counterpartyInvestorId?: string | null;
+  counterpartyInvestorName?: string | null;
+  referenceId?: string | null;
+  notes?: string | null;
+  financialTransactionId?: string | null;
+  createdAtUtc: string;
+}
+
+export interface ShareDistributionSlice {
+  label: string;
+  shareCount: number;
+  percentage: number;
+  valueBdt: number;
+  colorHex: string;
+  isOwner: boolean;
+  isAvailable: boolean;
+}
+
+export interface ShareMarketOverview {
+  farmId: string;
+  isConfigured: boolean;
+  config?: FarmShareConfig | null;
+  totalShareholdersCount: number;
+  totalAllocatedShares: number;
+  totalCapitalRaisedBdt: number;
+  distribution: ShareDistributionSlice[];
+  shareholders: ShareHolding[];
+  recentTransactions: ShareTransaction[];
+}
+
+export interface ConfigureFarmSharesRequest {
+  totalShares: number;
+  sharePriceBdt: number;
+  ownerShareCount: number;
+  minimumPurchaseShares?: number;
+  isShareSaleOpen?: boolean;
+  valuationNotes?: string | null;
+}
+
+export interface PurchaseSharesRequest {
+  investorId: string;
+  shareCount: number;
+  pricePerShareBdt?: number | null;
+  transactionDate?: string | null;
+  referenceId?: string | null;
+  notes?: string | null;
+}
+
+export interface SellSharesRequest {
+  investorId: string;
+  shareCount: number;
+  pricePerShareBdt?: number | null;
+  transactionDate?: string | null;
+  referenceId?: string | null;
+  notes?: string | null;
+}
+
+export interface TransferSharesRequest {
+  fromInvestorId: string;
+  toInvestorId: string;
+  shareCount: number;
+  pricePerShareBdt?: number | null;
+  transactionDate?: string | null;
+  referenceId?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateShareValuationRequest {
+  newSharePriceBdt: number;
+  valuationNotes?: string | null;
+}
+

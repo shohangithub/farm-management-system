@@ -308,6 +308,13 @@ export interface AnimalFeedingPlan {
   canceledOn?: string;
   isActive: boolean;
   expectedDailyFeedKg: number;
+  concentrateKgPerDay?: number;
+  roughageKgPerDay?: number;
+  animalWeightKg?: number;
+  animalSpecies?: string;
+  formulaName?: string;
+  estimatedCostPerKgBdt?: number;
+  estimatedDailyCostBdt?: number;
   exclusions: FeedingPlanExclusion[];
 }
 

@@ -27,6 +27,11 @@ export const FINANCE_ROUTES: Routes = [
     title: 'Profit & Loss Sharing - Farm360 AI'
   },
   {
+    path: 'shares',
+    loadComponent: () => import('./pages/share-market/share-market.component').then(m => m.ShareMarketDashboardComponent),
+    title: 'Farm Share Market - Farm360 AI'
+  },
+  {
     path: 'animal-ledger/:animalId',
     loadComponent: () => import('./pages/animal-cost-ledger/animal-cost-ledger').then(m => m.AnimalCostLedgerComponent),
     title: 'Animal Cost Ledger - Farm360 AI'

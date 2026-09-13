@@ -71,8 +71,12 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
           <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
         </a>
         <a routerLink="/finance/investors" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 flex items-center gap-2 whitespace-nowrap">
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
           <mat-icon class="text-base">groups</mat-icon> Investors & Equity
+        </a>
+        <a routerLink="/finance/shares" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">pie_chart</mat-icon> Share Market
         </a>
       </div>
 

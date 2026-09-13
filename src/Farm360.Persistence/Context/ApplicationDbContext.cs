@@ -152,6 +152,9 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<LoanRecord> LoanRecords => Set<LoanRecord>();
     public DbSet<Investor> Investors => Set<Investor>();
     public DbSet<InvestorTransaction> InvestorTransactions => Set<InvestorTransaction>();
+    public DbSet<FarmShareConfig> FarmShareConfigs => Set<FarmShareConfig>();
+    public DbSet<ShareHolding> ShareHoldings => Set<ShareHolding>();
+    public DbSet<ShareTransaction> ShareTransactions => Set<ShareTransaction>();
 
     // ── Intelligence & Analytics Module ───────────────────────────────────────
     public DbSet<Farm360.Domain.Intelligence.ActionableInsight> ActionableInsights => Set<Farm360.Domain.Intelligence.ActionableInsight>();

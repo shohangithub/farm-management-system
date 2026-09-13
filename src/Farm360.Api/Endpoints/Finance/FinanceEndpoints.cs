@@ -403,6 +403,125 @@ public static class FinanceEndpoints
             return Results.Ok(result);
         }).Produces<ConsolidatedPnLReportDto>();
 
+        // ── Farm Share Market Endpoints ──────────────────────────────────────────
+        group.MapGet("shares/overview", async (Guid farmId, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetShareMarketOverviewQuery(farmId));
+            return Results.Ok(result);
+        }).Produces<ShareMarketOverviewDto>();
+
+        group.MapPost("shares/configure", async (
+            Guid farmId,
+            [FromBody] ConfigureFarmSharesRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new ConfigureFarmSharesCommand(
+                tenantService.TenantId,
+                farmId,
+                request.TotalShares,
+                request.SharePriceBdt,
+                request.OwnerShareCount,
+                request.MinimumPurchaseShares,
+                request.IsShareSaleOpen,
+                request.ValuationNotes
+            );
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<FarmShareConfigDto>();
+
+        group.MapPost("shares/purchase", async (
+            Guid farmId,
+            [FromBody] PurchaseSharesRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new PurchaseSharesCommand(
+                tenantService.TenantId,
+                farmId,
+                request.InvestorId,
+                request.ShareCount,
+                request.PricePerShareBdt,
+                request.TransactionDate,
+                request.ReferenceId,
+                request.Notes
+            );
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<ShareHoldingDto>();
+
+        group.MapPost("shares/sell", async (
+            Guid farmId,
+            [FromBody] SellSharesRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new SellSharesCommand(
+                tenantService.TenantId,
+                farmId,
+                request.InvestorId,
+                request.ShareCount,
+                request.PricePerShareBdt,
+                request.TransactionDate,
+                request.ReferenceId,
+                request.Notes
+            );
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<ShareHoldingDto>();
+
+        group.MapPost("shares/transfer", async (
+            Guid farmId,
+            [FromBody] TransferSharesRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new TransferSharesCommand(
+                tenantService.TenantId,
+                farmId,
+                request.FromInvestorId,
+                request.ToInvestorId,
+                request.ShareCount,
+                request.PricePerShareBdt,
+                request.TransactionDate,
+                request.ReferenceId,
+                request.Notes
+            );
+            var result = await mediator.Send(command);
+            return Results.Ok(new { success = result });
+        });
+
+        group.MapPut("shares/valuation", async (
+            Guid farmId,
+            [FromBody] UpdateShareValuationRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new UpdateShareValuationCommand(
+                tenantService.TenantId,
+                farmId,
+                request.NewSharePriceBdt,
+                request.ValuationNotes
+            );
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<FarmShareConfigDto>();
+
+        group.MapGet("shares/holdings/{investorId:guid}", async (Guid investorId, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetShareHoldingsByInvestorQuery(investorId));
+            return Results.Ok(result);
+        }).Produces<IReadOnlyList<ShareHoldingDto>>();
+
+        group.MapGet("shares/transactions", async (
+            Guid farmId,
+            [FromQuery] Guid? investorId,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetShareTransactionsQuery(farmId, investorId));
+            return Results.Ok(result);
+        }).Produces<IReadOnlyList<ShareTransactionDto>>();
+
         // Dashboard
         group.MapGet("dashboard", async (Guid farmId, IMediator mediator) =>
         {
