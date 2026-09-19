@@ -1,5 +1,6 @@
 using Farm360.Application.Finance.Commands;
 using Farm360.Application.Finance.Queries;
+using Farm360.Application.Finance.Services;
 using Farm360.Contracts.Finance;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -528,5 +529,30 @@ public static class FinanceEndpoints
             var result = await mediator.Send(new GetFinancialDashboardQuery(farmId));
             return Results.Ok(result);
         }).Produces<FinancialDashboardDto>();
+
+        // ── Labour & overhead allocation (docs/32 GAP-2) ──────────────────────
+        // Run monthly once the period's expenses are posted. Idempotent: re-running a period
+        // skips transactions already allocated and recomputes ledger buckets rather than
+        // incrementing them, so a repeat run changes nothing.
+        group.MapPost("overhead/allocate", async (
+            Guid farmId,
+            [FromBody] AllocateOverheadRequest request,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var result = await mediator.Send(
+                new AllocateOverheadCommand(farmId, request.From, request.To, request.IsBackfill), ct);
+            return Results.Ok(result);
+        })
+        // No .WithName(): MapFinanceRoutes is registered twice, under the legacy /api and the
+        // current /api/v1 prefixes, so a fixed name here would be declared on two endpoints.
+        // Routing rejects that when it builds the matcher on the FIRST REQUEST, not at startup —
+        // the app boots cleanly and then throws on the first call. No other endpoint in this
+        // file names itself. Covered by EndpointRoutingTests.EndpointNamesAreGloballyUnique.
+        .WithSummary("Allocates farm labour and overhead onto animals for a period.")
+        .Produces<OverheadAllocationResult>();
     }
 }
+
+/// <summary>Body for the overhead allocation run.</summary>
+public sealed record AllocateOverheadRequest(DateOnly From, DateOnly To, bool IsBackfill = false);

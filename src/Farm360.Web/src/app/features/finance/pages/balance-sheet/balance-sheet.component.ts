@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +11,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { BalanceSheet } from '../../models/finance.model';
 
 @Component({
@@ -48,10 +49,15 @@ import { BalanceSheet } from '../../models/finance.model';
               class="bg-transparent text-gray-800 dark:text-gray-200 text-xs font-semibold outline-none cursor-pointer" />
           </div>
         </form>
-        <button mat-flat-button (click)="printReport()"
-          class="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-3 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20">
+        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !bsData()"
+          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
+        <button mat-stroked-button (click)="printReport()"
+          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">print</mat-icon>
-          <span>Print / PDF</span>
+          <span>Print</span>
         </button>
       </div>
     </app-page-header>
@@ -99,7 +105,7 @@ import { BalanceSheet } from '../../models/finance.model';
         description="There is no balance sheet data available for this farm as of the selected date.">
       </app-empty-state>
 
-      <div *ngIf="bsData() as sheet" class="space-y-6">
+      <div *ngIf="bsData() as sheet" #reportSheet id="balanceSheetReport" class="space-y-6">
 
         <!-- Accounting Equation Verification Banner -->
         <div class="p-4 rounded-2xl border backdrop-blur-xl transition-all"
@@ -383,7 +389,11 @@ export class BalanceSheetComponent {
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
   private fb = inject(FormBuilder);
+  private pdfExportService = inject(PdfExportService);
   private destroyRef = inject(DestroyRef);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   private readonly todayStr = new Date().toISOString().split('T')[0];
 
@@ -422,6 +432,41 @@ export class BalanceSheetComponent {
 
   readonly bsData = toSignal(this.bsData$);
   readonly isLoading = computed(() => this.bsData() === undefined);
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const sheet = this.bsData();
+    const farm = this.workingContextService.currentFarmValue;
+    const org = this.workingContextService.currentOrgValue;
+    const asOf = this.filterForm.value.asOfDate || this.todayStr;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Balance_Sheet_${asOf}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Balance Sheet',
+          subtitle: `Statement of Financial Position (Assets = Liabilities + Equity)`,
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          dateRange: `As of ${asOf}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Assets', value: `৳ ${(sheet?.totalAssetsBdt || 0).toLocaleString()}` },
+            { label: 'Status', value: sheet?.isBalanced ? 'Balanced' : 'Unbalanced' }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Balance Sheet PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
+  }
 
   printReport(): void {
     window.print();

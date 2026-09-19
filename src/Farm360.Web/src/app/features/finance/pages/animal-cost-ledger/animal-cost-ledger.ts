@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,6 +10,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-animal-cost-ledger',
@@ -31,15 +32,20 @@ import { WorkingContextService } from '../../../../core/services/working-context
       breadcrumbActiveNode="Cost Ledger">
       <div actions class="flex items-center gap-3">
         <a mat-stroked-button routerLink="/livestock"
-          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2">
-          <mat-icon>pets</mat-icon>
+          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2 text-xs">
+          <mat-icon class="text-sm">pets</mat-icon>
           <span>Back to Livestock</span>
         </a>
-        <a mat-flat-button routerLink="/finance/transactions"
-          class="rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-4 py-2">
-          <mat-icon>receipt_long</mat-icon>
+        <a mat-stroked-button routerLink="/finance/transactions"
+          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2 text-xs">
+          <mat-icon class="text-sm">receipt_long</mat-icon>
           <span>View Ledger</span>
         </a>
+        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !ledgerData()"
+          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
       </div>
     </app-page-header>
 
@@ -55,7 +61,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
       </app-empty-state>
 
       <!-- Main Ledger View -->
-      <div *ngIf="ledgerData() as ledger" class="space-y-6">
+      <div *ngIf="ledgerData() as ledger" #reportSheet id="animalCostLedgerReport" class="space-y-6">
         
         <!-- Total Cost & Break-Even Hero Card -->
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 md:p-8">
@@ -223,7 +229,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class AnimalCostLedgerComponent implements OnInit {
   private readonly financeService = inject(FinanceService);
   private readonly workingContextService = inject(WorkingContextService);
+  private readonly pdfExportService = inject(PdfExportService);
   private readonly route = inject(ActivatedRoute);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   readonly Math = Math;
 
@@ -255,4 +265,40 @@ export class AnimalCostLedgerComponent implements OnInit {
   readonly isLoading = computed(() => this.pageData() === undefined);
 
   ngOnInit(): void {}
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const ledger = this.ledgerData();
+    const be = this.breakEvenData();
+    const farm = this.workingContextService.currentFarmValue;
+    const org = this.workingContextService.currentOrgValue;
+    const tag = be?.tagId || this.animalId() || 'N/A';
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Cost_Ledger_${tag}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Unit Economics & Cost Ledger',
+          subtitle: `Animal Tag: ${tag} | Weight: ${be?.currentWeightKg ?? 'N/A'} kg`,
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Accumulated Cost', value: `৳ ${(ledger?.totalCostBdt || 0).toLocaleString()}` },
+            { label: 'Break-Even Price', value: `৳ ${(be?.breakEvenPricePerKgBdt || 0).toFixed(2)}/kg` },
+            { label: 'Target +20% Margin', value: `৳ ${(be?.targetPrice20PercentMarginPerKg || 0).toFixed(2)}/kg` }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Animal Cost Ledger PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
+  }
 }

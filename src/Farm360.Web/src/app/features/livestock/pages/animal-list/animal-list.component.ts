@@ -26,6 +26,7 @@ import { BatchWeightDialogComponent, BatchWeightDialogData } from '../../compone
 import { BatchVaccinationDialogComponent, BatchVaccinationDialogData } from '../../components/dialogs/batch-vaccination-dialog.component';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-animal-list',
@@ -44,8 +45,10 @@ export class AnimalListComponent {
   private readonly contextService = inject(WorkingContextService);
   private readonly recentSvc = inject(RecentlyViewedService);
   private readonly exportSvc = inject(ExportService);
+  private readonly pdfService = inject(PdfExportService);
 
   // ── Signals ──────────────────────────────────────────────────────────────
+  readonly isExporting = signal(false);
   readonly recentAnimals = this.recentSvc.recentAnimals;
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -137,6 +140,33 @@ export class AnimalListComponent {
     }));
 
     this.exportSvc.exportToCsv(formattedData, 'animals_export');
+  }
+
+  async exportPdf(): Promise<void> {
+    const element = document.getElementById('reportSheet');
+    if (!element) return;
+
+    this.isExporting.set(true);
+    try {
+      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
+      await this.pdfService.exportElement(element, {
+        filename: `Livestock_Registry_${new Date().toISOString().slice(0, 10)}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Livestock Herd Registry Report',
+          subtitle: 'Active livestock inventory, pedigree, weights, and lifecycle statuses',
+          farmName,
+          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Animals', value: `${this.result()?.totalCount ?? 0}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 
   // ── Filters ───────────────────────────────────────────────────────────────

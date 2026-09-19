@@ -122,6 +122,17 @@ public sealed class AnimalFeedingPlanRepository : IAnimalFeedingPlanRepository
             .Where(x => idList.Contains(x.Id))
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<AnimalFeedingPlan>> GetByIdsAcrossTenantsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.Distinct().ToList();
+        if (idList.Count == 0) return Array.Empty<AnimalFeedingPlan>();
+
+        return await _dbContext.AnimalFeedingPlans
+            .IgnoreQueryFilters()
+            .Where(x => idList.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+    }
 }
 
 public sealed class DailyFeedingEntryRepository : IDailyFeedingEntryRepository

@@ -24,6 +24,9 @@ public interface IAnimalFeedingPlanRepository
     Task<IReadOnlyList<AnimalFeedingPlan>> GetActivePlansForAnimalAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AnimalFeedingPlan>> GetAllPlansForAnimalAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken);
     Task<IReadOnlyList<AnimalFeedingPlan>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>Plans by id ignoring the tenant filter, for platform-wide jobs and backfills.</summary>
+    Task<IReadOnlyList<AnimalFeedingPlan>> GetByIdsAcrossTenantsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 }
 
 public interface IDailyFeedingEntryRepository

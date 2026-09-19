@@ -17,6 +17,7 @@ import { StockOutDialogComponent } from '../../components/dialogs/stock-out-dial
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-stock-ledger',
@@ -37,23 +38,28 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       title="Stock Transaction Audit Ledger"
       description="Immutable history of all receipts, issues, auto-feed deductions, adjustments, and write-offs."
       breadcrumbActiveNode="Stock Ledger">
-      <div actions class="flex items-center gap-2">
+      <div actions class="flex items-center gap-2 no-print">
+        <button (click)="exportPdf()" [disabled]="isExporting() || loading() || !result()?.items?.length"
+          class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
+          {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+        </button>
         <button (click)="openStockInDialog()"
-          class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_business</mat-icon> Record Stock In
         </button>
         <button (click)="openStockOutDialog()"
-          class="px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          class="px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">remove_shopping_cart</mat-icon> Deduct Stock
         </button>
       </div>
     </app-page-header>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
       <!-- Filters & Search Toolbar -->
-      <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
+      <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30 no-print">
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
@@ -139,7 +145,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10 no-print">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
           Showing <span class="font-bold text-gray-900 dark:text-white">{{ pageStart() }}</span> to <span class="font-bold text-gray-900 dark:text-white">{{ pageEnd() }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ result()?.totalCount }}</span> transactions
         </div>
@@ -178,8 +184,10 @@ export class StockLedgerComponent {
   private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly pdfService = inject(PdfExportService);
 
   readonly loading = signal(true);
+  readonly isExporting = signal(false);
   readonly error = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly params = signal<StockTransactionParams>({ pageNumber: 1, pageSize: 20 });
@@ -328,6 +336,30 @@ export class StockLedgerComponent {
 
   reload(): void {
     this.refreshTrigger.update(n => n + 1);
+  }
+
+  async exportPdf(): Promise<void> {
+    const element = document.getElementById('reportSheet');
+    if (!element) return;
+
+    this.isExporting.set(true);
+    try {
+      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
+      await this.pdfService.exportElement(element, {
+        filename: `Stock_Transaction_Ledger_${new Date().toISOString().slice(0, 10)}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Stock Transaction Audit Ledger',
+          subtitle: 'Immutable history of receipts, issues, adjustments, and write-offs',
+          farmName,
+          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
+          currency: 'BDT (৳)'
+        },
+        showSignatures: true
+      });
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 
   openStockInDialog(): void {

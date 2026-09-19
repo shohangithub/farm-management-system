@@ -2,13 +2,22 @@
   title="Medical Treatments" 
   description="Log and track medication, dosages, and withdrawal periods."
   icon="healing" 
-  iconColor="text-purple-600"
-  primaryActionLabel="Log Treatment"
-  primaryActionIcon="add"
-  (primaryAction)="openLogTreatmentDialog()">
+  iconColor="text-purple-600">
+  <div actions class="flex items-center gap-2">
+    <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !dataSource().length"
+      class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+      <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+    </button>
+    <button mat-flat-button (click)="openLogTreatmentDialog()"
+      class="rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-purple-600/20">
+      <mat-icon class="text-sm">add</mat-icon>
+      <span>Log Treatment</span>
+    </button>
+  </div>
 </app-page-header>
 
-  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+  <div #reportSheet id="treatmentListContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
   <!-- Empty State -->
   <app-empty-state 
@@ -83,7 +92,7 @@
       </div>
 
       <!-- Card Footer Actions -->
-      <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10">
+      <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10 no-print">
         <ng-container *ngIf="element.status === treatmentStatus.Ongoing">
           <button class="flex-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1" (click)="updateStatus(element, treatmentStatus.Completed)">
             <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">check_circle</mat-icon> Complete
@@ -99,7 +108,7 @@
     </div>
   </div>
 
-    <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+    <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 no-print">
       <mat-paginator [length]="totalItems()"
                      [pageSize]="pageSize()"
                      [pageSizeOptions]="[5, 10, 25, 100]"

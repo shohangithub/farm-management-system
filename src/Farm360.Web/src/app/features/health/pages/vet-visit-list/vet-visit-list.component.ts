@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,6 +16,7 @@ import { VetVisitDetailDialogComponent } from '../../components/dialogs/vet-visi
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-vet-visit-list',
@@ -39,7 +40,11 @@ import { of } from 'rxjs';
 export class VetVisitListComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   displayedColumns: string[] = ['visitDate', 'vetName', 'visitType', 'purpose', 'cost', 'nextVisit', 'actions'];
 
@@ -114,5 +119,39 @@ export class VetVisitListComponent {
         this.loadVetVisits();
       }
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const items = this.dataSource() || [];
+    const total = this.totalItems();
+    const farm = this.contextService.currentFarmValue;
+    const org = this.contextService.currentOrgValue;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Vet_Visits_${new Date().toISOString().split('T')[0]}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Veterinary Visits & Health Log',
+          subtitle: 'Professional Clinical Evaluations & Medical Services',
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Recorded Visits', value: `${total}` },
+            { label: 'Current Page Items', value: `${items.length}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Vet Visits PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

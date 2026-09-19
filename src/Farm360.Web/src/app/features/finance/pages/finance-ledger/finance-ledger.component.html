@@ -11,6 +11,13 @@
       <mat-spinner *ngIf="isExporting()" diameter="18" class="mr-1"></mat-spinner>
       <span>{{ isExporting() ? 'Exporting...' : 'Export CSV' }}</span>
     </button>
+    <button mat-flat-button 
+      class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-4 py-2 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50"
+      [disabled]="isExportingPdf() || isLoading() || transactions().length === 0"
+      (click)="exportPdf()">
+      <mat-icon class="text-sm">{{ isExportingPdf() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>{{ isExportingPdf() ? 'Exporting...' : 'Export PDF' }}</span>
+    </button>
     <button mat-flat-button color="accent" 
       class="rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-4 py-2" 
       (click)="openIncomeDialog()">
@@ -190,7 +197,7 @@
   </div>
 
   <!-- Transactions Table Card -->
-  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+  <div #reportSheet id="financeLedgerCard" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
     
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
@@ -214,7 +221,7 @@
             <th class="py-4 px-6 font-medium">Reference</th>
             <th class="py-4 px-6 font-medium">Notes</th>
             <th class="py-4 px-6 font-medium text-right">Amount (BDT)</th>
-            <th class="py-4 px-6 font-medium text-center">Actions</th>
+            <th class="py-4 px-6 font-medium text-center no-print">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -262,7 +269,7 @@
               [ngClass]="txn.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
               {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}
             </td>
-            <td class="py-4 px-6 text-sm text-center" (click)="$event.stopPropagation()">
+            <td class="py-4 px-6 text-sm text-center no-print" (click)="$event.stopPropagation()">
               <button mat-icon-button [matMenuTriggerFor]="actionMenu" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 <mat-icon>more_vert</mat-icon>
               </button>
@@ -295,7 +302,7 @@
       [pageSizeOptions]="[10, 25, 50, 100]" 
       (page)="onPaginatorChange($event)" 
       showFirstLastButtons 
-      class="!bg-transparent border-t border-gray-100 dark:border-gray-800/50">
+      class="!bg-transparent border-t border-gray-100 dark:border-gray-800/50 no-print">
     </mat-paginator>
 
   </div>

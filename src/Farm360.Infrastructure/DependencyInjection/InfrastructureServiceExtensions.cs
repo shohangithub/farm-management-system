@@ -100,6 +100,22 @@ public static class InfrastructureServiceExtensions
         services.AddSingleton<Farm360.Application.Intelligence.Interfaces.IIntelligenceEventChannel, Farm360.Infrastructure.BackgroundServices.Intelligence.IntelligenceEventChannel>();
         services.AddHostedService<Farm360.Infrastructure.BackgroundServices.Intelligence.IntelligenceBackgroundService>();
 
+        // ── Business rules (docs/33): the farm's configurable assumptions ─────
+        services.Configure<Farm360.Domain.BusinessRules.FarmBusinessRules>(
+            configuration.GetSection(Farm360.Domain.BusinessRules.FarmBusinessRules.SectionName));
+        services.AddSingleton<Farm360.Application.Common.Interfaces.IFarmBusinessRulesProvider,
+            Farm360.Infrastructure.BusinessRules.FarmBusinessRulesProvider>();
+
+        // ── Reporting renderers (docs/32) ─────────────────────────────────────
+        // One per output format; ReportExecutionService picks by IReportRenderer.Format.
+        var reportingRules = configuration
+            .GetSection(Farm360.Domain.BusinessRules.FarmBusinessRules.SectionName)
+            .Get<Farm360.Domain.BusinessRules.FarmBusinessRules>() ?? new Farm360.Domain.BusinessRules.FarmBusinessRules();
+        Farm360.Infrastructure.Reporting.ReportFonts.EnsureRegistered(reportingRules.PdfLicence, reportingRules.PdfLicenceKey);
+        services.AddSingleton<Farm360.Application.Reporting.Abstractions.IReportRenderer, Farm360.Infrastructure.Reporting.Pdf.QuestPdfReportRenderer>();
+        services.AddSingleton<Farm360.Application.Reporting.Abstractions.IReportRenderer, Farm360.Infrastructure.Reporting.Excel.ClosedXmlReportRenderer>();
+        services.AddSingleton<Farm360.Application.Reporting.Abstractions.IReportRenderer, Farm360.Infrastructure.Reporting.Csv.CsvReportRenderer>();
+
         return services;
     }
 }

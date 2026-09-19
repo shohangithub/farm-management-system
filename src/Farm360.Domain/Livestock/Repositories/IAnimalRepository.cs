@@ -64,6 +64,43 @@ public interface IAnimalRepository
     /// </summary>
     Task<int> GetActiveCountAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Looks an animal up regardless of the ambient tenant filter. For the platform-wide daily
+    /// jobs, which iterate every tenant's plans and have no single tenant context.
+    /// </summary>
+    Task<Animal?> GetByIdAcrossTenantsAsync(Guid animalId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Animals that were on a farm for any part of a period — the population that shares its
+    /// indirect costs (docs/32 GAP-2). Includes animals sold or disposed of mid-period, because
+    /// they incurred cost while they were there.
+    /// </summary>
+    Task<IReadOnlyList<Animal>> GetPresentDuringPeriodAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Animals inside a batch, shed or pen <b>on a given date</b>, for one tenant, ignoring the
+    /// ambient tenant filter. Resolves which animals shared a group feeding plan (docs/32 GAP-1).
+    /// The most specific scope supplied wins: pen, then shed, then batch.
+    /// </summary>
+    /// <remarks>
+    /// Shed and pen occupancy is read from <c>AnimalMovement</c>, which is dated, so a historical
+    /// backfill reconstructs the herd as it actually stood that day rather than as it stands now.
+    /// Batch membership has no history — <c>Animal.BatchId</c> holds only the current value — so a
+    /// batch-scoped lookup for a past date is an approximation.
+    /// </remarks>
+    Task<IReadOnlyList<Animal>> GetActiveByScopeAcrossTenantsAsync(
+        Guid tenantId,
+        Guid? batchId,
+        Guid? shedId,
+        Guid? penId,
+        DateOnly asOf,
+        CancellationToken cancellationToken = default);
+
+
     // ── Commands ──────────────────────────────────────────────────────────────
 
     void Add(Animal animal);

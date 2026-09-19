@@ -34,7 +34,7 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
         foreach (var plan in plans)
         {
             var ruleSet = await _ruleSetRepository.GetByIdAsync(plan.FeedingRuleSetId, cancellationToken);
-            if (ruleSet == null) continue;
+            if (ruleSet == null || !ruleSet.IsActive) continue;
 
             var matchingRule = ruleSet.Lines.FirstOrDefault(l =>
                 notification.WeightKg >= l.WeightFromKg && notification.WeightKg < l.WeightToKg);

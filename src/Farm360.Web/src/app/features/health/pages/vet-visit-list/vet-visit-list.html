@@ -3,14 +3,19 @@
   description="Log and manage professional vet visits, costs, and recommendations."
   icon="local_hospital" 
   iconColor="text-teal-600">
-  <div actions class="flex gap-2">
+  <div actions class="flex items-center gap-2">
+    <button mat-stroked-button (click)="exportPdf()" [disabled]="isExporting() || !dataSource().length"
+      class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 !border-none">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+    </button>
     <button (click)="openScheduleVisitDialog()" class="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Log Visit
     </button>
   </div>
 </app-page-header>
 
-<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+<div #reportSheet id="vetVisitListContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" *ngIf="!isLoading() && dataSource().length > 0">
@@ -80,7 +85,7 @@
       </div>
 
       <!-- Card Footer Actions -->
-      <div class="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10">
+      <div class="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10 no-print">
         <button (click)="viewVisitDetails(element)" class="flex-1 px-4 py-2 text-sm font-semibold text-teal-700 bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1.5">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> View Details
         </button>
@@ -97,7 +102,7 @@
       (action)="openScheduleVisitDialog()">
     </app-empty-state>
 
-  <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+  <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 no-print">
     <mat-paginator [length]="totalItems()"
                    [pageSize]="pageSize()"
                    [pageSizeOptions]="[5, 10, 25, 100]"

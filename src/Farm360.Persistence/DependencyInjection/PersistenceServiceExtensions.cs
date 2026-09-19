@@ -107,6 +107,9 @@ public static class PersistenceServiceExtensions
         // ── Finance repositories ──────────────────────────────────────────────
         services.AddScoped<Farm360.Application.Finance.Repositories.IFinancialTransactionRepository, Farm360.Persistence.Repositories.Finance.FinancialTransactionRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository, Farm360.Persistence.Repositories.Finance.AnimalCostLedgerRepository>();
+        services.AddScoped<Farm360.Domain.Reporting.IReportRunRepository, Farm360.Persistence.Repositories.Reporting.ReportRunRepository>();
+        services.AddScoped<Farm360.Domain.Feeding.Interfaces.Repositories.IAnimalFeedAllocationRepository, Farm360.Persistence.Repositories.Feeding.AnimalFeedAllocationRepository>();
+        services.AddScoped<Farm360.Domain.Finance.Interfaces.IAnimalOverheadAllocationRepository, Farm360.Persistence.Repositories.Finance.AnimalOverheadAllocationRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.ILoanRecordRepository, Farm360.Persistence.Repositories.Finance.LoanRecordRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IInvestorRepository, Farm360.Persistence.Repositories.Finance.InvestorRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IFarmShareRepository, Farm360.Persistence.Repositories.Finance.FarmShareRepository>();

@@ -83,6 +83,16 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
   </ItemGroup>
+  <ItemGroup Label="Reporting — PDF / Excel rendering">
+    <!--
+      QuestPDF: chosen over jsPDF/html2canvas because SkiaSharp + HarfBuzz perform real
+      complex-text shaping — Bengali conjuncts, reordered matras, reph and ra-phala render
+      correctly as VECTOR text. Validated by the Phase 0 spike (docs/32 §1.2).
+      LICENCE: Community (free under USD 1M annual revenue). Review before crossing that threshold.
+    -->
+    <PackageVersion Include="QuestPDF" Version="2026.9.0" />
+    <PackageVersion Include="ClosedXML" Version="0.104.2" />
+  </ItemGroup>
   <ItemGroup Label="Testing — Constitution §17 &amp; §18">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />

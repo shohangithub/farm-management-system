@@ -2,6 +2,7 @@ using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Feeding;
 using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
+using Farm360.Application.Feeding.Services;
 using Farm360.Domain.Livestock.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,8 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
     private readonly IFeedFormulaRepository _formulaRepository;
     private readonly IFeedIngredientRepository _feedIngredientRepository;
     private readonly Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository _inventoryRepository;
+    private readonly IFeedAllocationService _allocationService;
+    private readonly Farm360.Domain.Feeding.Interfaces.Repositories.IAnimalFeedAllocationRepository _allocationRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateDailyFeedingEntriesCommandHandler> _logger;
 
@@ -30,6 +33,8 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
         IFeedFormulaRepository formulaRepository,
         IFeedIngredientRepository feedIngredientRepository,
         Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository inventoryRepository,
+        IFeedAllocationService allocationService,
+        Farm360.Domain.Feeding.Interfaces.Repositories.IAnimalFeedAllocationRepository allocationRepository,
         IUnitOfWork unitOfWork,
         ILogger<CreateDailyFeedingEntriesCommandHandler> logger)
     {
@@ -40,6 +45,8 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
         _formulaRepository = formulaRepository;
         _feedIngredientRepository = feedIngredientRepository;
         _inventoryRepository = inventoryRepository;
+        _allocationService = allocationService;
+        _allocationRepository = allocationRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -53,7 +60,8 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
         
         var activePlans = await _planRepository.GetAllActivePlansAcrossTenantsAsync(cancellationToken);
         var existingPlanIds = await _entryRepository.GetEntryPlanIdsAcrossTenantsByDateAsync(today, cancellationToken);
-        var ruleSets = new Dictionary<Guid, FeedingRuleSet>();
+        var ruleSets = new Dictionary<Guid, FeedingRuleSet?>();
+        var allocatedAnimals = 0;
         var formulaCostCache = new Dictionary<Guid, decimal>();
 
         async Task<decimal> ResolveUnitCostAsync(Guid formulaId)
@@ -105,17 +113,23 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
 
         foreach (var plan in activePlans)
         {
+            // Skip plans where today is outside the plan's validity window
+            if (today < plan.StartDate || (plan.EndDate.HasValue && today > plan.EndDate.Value))
+                continue;
+
+            // Skip plans that have an exclusion for today
+            if (plan.Exclusions.Any(e => e.ExclusionDate == today && (!e.ResumesOn.HasValue || today < e.ResumesOn.Value)))
+                continue;
+
             if (!ruleSets.TryGetValue(plan.FeedingRuleSetId, out var ruleSet))
             {
-                var fetchedRuleSet = await _ruleSetRepository.GetByIdAcrossTenantsAsync(plan.FeedingRuleSetId, cancellationToken);
-                if (fetchedRuleSet != null)
-                {
-                    ruleSets[plan.FeedingRuleSetId] = fetchedRuleSet;
-                    ruleSet = fetchedRuleSet;
-                }
+                ruleSet = await _ruleSetRepository.GetByIdAcrossTenantsAsync(plan.FeedingRuleSetId, cancellationToken);
+                ruleSets[plan.FeedingRuleSetId] = ruleSet;
             }
 
-            if (ruleSet == null) continue;
+            // Skip plan if the feeding rule set does not exist or is inactive
+            if (ruleSet == null || !ruleSet.IsActive)
+                continue;
 
             decimal currentWeight = plan.TriggeredByWeightKg ?? 0;
 
@@ -159,9 +173,30 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
                 entry.SetConsumptionCost(unitCost);
 
                 await _entryRepository.AddAsync(entry, cancellationToken);
+
+                // Fan the plan-level entry out to the animals it actually feeds (docs/32 GAP-1).
+                // Written here, at the moment feed is recorded, because herd composition and
+                // weights move: deriving the split later would silently change past reports.
+                var allocations = await _allocationService.BuildAllocationsAsync(entry, plan, isBackfill: false, cancellationToken);
+                if (allocations.Count > 0)
+                {
+                    _allocationRepository.AddRange(allocations);
+                    allocatedAnimals += allocations.Count;
+                }
+                else if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    // Feed was booked against a scope that holds no active animals. Worth saying
+                    // out loud: the cost exists but no animal will ever carry it.
+                    _logger.LogWarning(
+                        "Feeding entry {EntryId} on plan {PlanId} allocated to no animals (batch {BatchId}, shed {ShedId}, pen {PenId}).",
+                        entry.Id, plan.Id, plan.BatchId, plan.ShedId, plan.PenId);
+                }
             }
         }
         
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Daily feeding entries created; {AllocationCount} per-animal feed allocations written.", allocatedAnimals);
     }
 }

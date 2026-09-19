@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { InvestorTransactionDialogComponent } from '../../components/investor-transaction-dialog/investor-transaction-dialog';
 import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
 
@@ -39,6 +40,11 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
           <mat-icon class="!text-[18px]">arrow_back</mat-icon>
           <span>Investors List</span>
         </a>
+        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !summary()"
+          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
       </div>
     </app-page-header>
 
@@ -119,7 +125,7 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
       <!-- Main Content -->
-      <div *ngIf="!isLoading() && summary()" class="space-y-6">
+      <div *ngIf="!isLoading() && summary()" #reportSheet id="investorPnlReport" class="space-y-6">
 
         <!-- 6 KPI Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -249,7 +255,7 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
                   <th class="px-4 py-3.5 text-right">Profit Paid</th>
                   <th class="px-4 py-3.5 text-right">Undistributed Balance</th>
                   <th class="px-4 py-3.5 text-right">Net Equity Value</th>
-                  <th class="px-6 py-3.5 text-center">Action</th>
+                  <th class="px-6 py-3.5 text-center no-print">Action</th>
                 </tr>
               </thead>
 
@@ -310,7 +316,7 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
                   </td>
 
                   <!-- Action -->
-                  <td class="px-6 py-4 text-center">
+                  <td class="px-6 py-4 text-center no-print">
                     <button (click)="openPayoutDialog(share)"
                             title="Distribute Profit"
                             class="px-3 py-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors inline-flex items-center gap-1">
@@ -353,7 +359,11 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
 export class InvestorPnLComponent {
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
   private dateFilter$ = new BehaviorSubject<{ from?: string; to?: string }>({ from: undefined, to: undefined });
@@ -429,5 +439,43 @@ export class InvestorPnLComponent {
         if (res) this.refreshTrigger$.next();
       });
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const summary = this.summary();
+    const farm = this.workingContextService.currentFarmValue;
+    const org = this.workingContextService.currentOrgValue;
+    const dateRangeStr = this.fromDate() || this.toDate()
+      ? `${this.fromDate() || 'Beginning'} to ${this.toDate() || 'Present'}`
+      : 'All Time';
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Investor_PnL_${new Date().toISOString().split('T')[0]}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Profit & Loss Sharing Report',
+          subtitle: 'Investor Equity, Capital Proportions & Distributable Earnings',
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          dateRange: `Period: ${dateRangeStr}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Farm Net Profit', value: `৳ ${(summary?.netFarmProfitBdt || 0).toLocaleString()}` },
+            { label: 'Distributable Profit', value: `৳ ${(summary?.distributableProfitBdt || 0).toLocaleString()}` },
+            { label: 'Total Investors', value: `${summary?.investorShares?.length || 0}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Investor P&L PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

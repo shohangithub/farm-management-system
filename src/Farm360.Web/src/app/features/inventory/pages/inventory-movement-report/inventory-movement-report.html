@@ -5,20 +5,17 @@
     title="Inventory Movement"
     description="Track stock flow, consumption, and closing balances"
     breadcrumbActiveNode="Movement Report">
-    <div actions class="flex items-center gap-3">
-      <button mat-stroked-button class="rounded-xl border-gray-200 dark:border-gray-700">
-        <mat-icon>print</mat-icon>
-        Print
-      </button>
-      <button mat-flat-button color="primary" class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md">
-        <mat-icon>download</mat-icon>
-        Export
+    <div actions class="flex items-center gap-3 no-print">
+      <button mat-flat-button color="primary" (click)="exportPdf()" [disabled]="isExporting() || isLoading() || items().length === 0"
+        class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md text-white disabled:opacity-50">
+        <mat-icon [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
+        {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
       </button>
     </div>
   </app-page-header>
 
   <!-- Filter Card -->
-  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden">
+  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden no-print">
     <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">date_range</mat-icon>
     
     <form [formGroup]="filterForm" (ngSubmit)="onGenerate()" class="flex flex-col sm:flex-row gap-4 items-end relative z-10">
@@ -42,7 +39,7 @@
   </div>
 
   <!-- Data Card -->
-  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 flex-1 relative overflow-hidden flex flex-col min-h-[400px]">
+  <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 flex-1 relative overflow-hidden flex flex-col min-h-[400px]">
     
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
     

@@ -1,9 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { PdfExportService, PdfExportOptions } from './pdf-export.service';
+
+export * from './pdf-export.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExportService {
+  private pdfExportService = inject(PdfExportService);
+
+  exportToPdf(element: HTMLElement, options?: PdfExportOptions): Promise<void> {
+    return this.pdfExportService.exportElement(element, options);
+  }
+
   
   exportToCsv(data: any[], filename: string): void {
     if (!data || !data.length) {

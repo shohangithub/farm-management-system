@@ -53,6 +53,8 @@ import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { CattleProfitProjectionComponent } from '../../../intelligence/components/projections/cattle-profit-projection.component';
 import { FeedingService } from '../../../feeding/services/feeding.service';
 import { AnimalFeedingSummary, DailyFeedingEntryStatus } from '../../../feeding/models/feeding.models';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -81,7 +83,10 @@ export class AnimalDetailComponent {
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
   private readonly recentSvc = inject(RecentlyViewedService);
+  private readonly pdfService = inject(PdfExportService);
+  private readonly contextService = inject(WorkingContextService);
 
+  readonly isExporting = signal(false);
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex = AnimalSex;
   readonly VaccinationStatus = VaccinationStatus;
@@ -615,6 +620,36 @@ export class AnimalDetailComponent {
       panelClass: 'bg-transparent',
       data: { animalId: a.id, tagId: a.tagId }
     });
+  }
+
+  async exportDossierPdf(): Promise<void> {
+    const element = document.getElementById('reportSheet');
+    const a = this.animal();
+    if (!element || !a) return;
+
+    this.isExporting.set(true);
+    try {
+      const tag = a.tagId || 'Animal';
+      const farmName = this.contextService.currentFarmValue?.name || 'Primary Farm';
+      await this.pdfService.exportElement(element, {
+        filename: `Animal_Dossier_${tag}_${new Date().toISOString().slice(0, 10)}`,
+        orientation: 'portrait',
+        header: {
+          title: `Livestock Dossier: ${tag}`,
+          subtitle: `Species: ${this.speciesLabel(a.species)} | Breed: ${a.breedName} | Sex: ${this.sexLabel(a.sex)}`,
+          farmName,
+          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Status', value: this.statusLabel() },
+            { label: 'Tag ID', value: tag }
+          ]
+        },
+        showSignatures: true
+      });
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 
   private handleError(err: any): void {

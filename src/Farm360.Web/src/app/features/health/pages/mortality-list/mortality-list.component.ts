@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +17,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-mortality-list',
@@ -40,7 +41,11 @@ import { of } from 'rxjs';
 export class MortalityListComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   displayedColumns: string[] = ['animalId', 'deathDate', 'causeOfDeath', 'diseaseName', 'loss', 'actions'];
 
@@ -113,6 +118,40 @@ export class MortalityListComponent {
       case CauseOfDeath.Unknown: return 'Unknown';
       case CauseOfDeath.Slaughter: return 'Slaughter';
       default: return 'Unknown';
+    }
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const items = this.dataSource() || [];
+    const total = this.totalItems();
+    const farm = this.contextService.currentFarmValue;
+    const org = this.contextService.currentOrgValue;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Mortality_Report_${new Date().toISOString().split('T')[0]}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Mortality & Loss Audit Report',
+          subtitle: 'Animal Casualty & Economic Impact Registry',
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Recorded Losses', value: `${total}` },
+            { label: 'Audit Window', value: 'Complete Farm Registry' }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Mortality PDF:', err);
+    } finally {
+      this.isExporting.set(false);
     }
   }
 }

@@ -75,6 +75,33 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         var distinctRuleSetIds = request.FeedingRuleSetIds.Distinct().ToList();
         var targetAnimalIds = request.AnimalIds?.Distinct().ToList() ?? new List<Guid>();
 
+        // Validate that all referenced rule sets exist and are currently active
+        var ruleSetMap = new Dictionary<Guid, FeedingRuleSet>();
+        var ruleSetValidationFailures = new List<ValidationFailure>();
+
+        foreach (var ruleSetId in distinctRuleSetIds)
+        {
+            var ruleSet = await _ruleSetRepository.GetByIdAsync(ruleSetId, cancellationToken);
+            if (ruleSet == null)
+            {
+                ruleSetValidationFailures.Add(new ValidationFailure("FeedingRuleSetIds", $"Feeding rule set '{ruleSetId}' was not found."));
+                continue;
+            }
+
+            if (!ruleSet.IsActive)
+            {
+                ruleSetValidationFailures.Add(new ValidationFailure("FeedingRuleSetIds", $"Feeding rule set '{ruleSet.Name}' is inactive and cannot be assigned to new feeding plans."));
+                continue;
+            }
+
+            ruleSetMap[ruleSetId] = ruleSet;
+        }
+
+        if (ruleSetValidationFailures.Count > 0)
+        {
+            throw new Farm360.Application.Common.Exceptions.ValidationException(ruleSetValidationFailures);
+        }
+
         // Duplicate Validation: An animal cannot be enrolled in the same active feeding rule set multiple times
         if (targetAnimalIds.Count > 0)
         {
@@ -83,8 +110,7 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
 
             foreach (var ruleSetId in distinctRuleSetIds)
             {
-                var ruleSet = await _ruleSetRepository.GetByIdAsync(ruleSetId, cancellationToken);
-                var ruleSetName = ruleSet?.Name ?? "Selected Rule Set";
+                var ruleSetName = ruleSetMap.TryGetValue(ruleSetId, out var rs) ? rs.Name : "Selected Rule Set";
 
                 foreach (var animalId in targetAnimalIds)
                 {
@@ -164,8 +190,8 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
 
         foreach (var ruleSetId in distinctRuleSetIds)
         {
-            var ruleSet = await _ruleSetRepository.GetByIdAsync(ruleSetId, cancellationToken);
-            if (ruleSet == null) continue;
+            if (!ruleSetMap.TryGetValue(ruleSetId, out var ruleSet) || !ruleSet.IsActive)
+                continue;
 
             foreach (var animalId in targets)
             {

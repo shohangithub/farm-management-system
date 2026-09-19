@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Domain.Finance;
+using Farm360.Domain.Finance.Enums;
 using Farm360.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -172,4 +173,31 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
                                    && t.Category == Domain.Finance.Enums.TransactionCategory.AnimalPurchase 
                                    && t.Type == Domain.Finance.Enums.TransactionType.Expense, cancellationToken);
     }
+    public async Task<IReadOnlyList<FinancialTransaction>> GetUnattributedIndirectCostsAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+    {
+        var fromUtc = from.ToDateTime(TimeOnly.MinValue);
+        var toUtc = to.ToDateTime(TimeOnly.MaxValue);
+
+        // Only genuinely indirect categories, and only rows not already pinned to an animal.
+        // Feed, veterinary, medicine and animal purchase reach the ledger through their own
+        // modules; re-allocating them here would double-count.
+        return await _context.FinancialTransactions
+            .AsNoTracking()
+            .Where(x => x.FarmId == farmId
+                        && x.AnimalId == null
+                        && x.TransactionDate >= fromUtc
+                        && x.TransactionDate <= toUtc
+                        && (x.Category == TransactionCategory.LaborCost
+                            || x.Category == TransactionCategory.Utilities
+                            || x.Category == TransactionCategory.Transport
+                            || x.Category == TransactionCategory.MiscellaneousExpense
+                            || x.Category == TransactionCategory.ConsumableExpense))
+            .OrderBy(x => x.TransactionDate)
+            .ToListAsync(cancellationToken);
+    }
+
 }

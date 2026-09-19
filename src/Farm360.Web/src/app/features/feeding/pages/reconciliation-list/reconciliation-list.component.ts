@@ -9,6 +9,8 @@ import { FeedingCycleReconciliation, ReconciliationStatus } from '../../models/f
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 
 @Component({
   selector: 'app-reconciliation-list',
@@ -27,15 +29,20 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       title="Feeding Reconciliations"
       description="Review and approve daily feed consumption variances to maintain accurate inventory."
       breadcrumbActiveNode="Reconciliations">
-      <div actions>
+      <div actions class="flex items-center gap-2 no-print">
+        <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || reconciliations().length === 0"
+          class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
+          {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+        </button>
         <button (click)="loadReconciliations()"
-          class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> Refresh
         </button>
       </div>
     </app-page-header>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
       <!-- Empty State -->
@@ -58,7 +65,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
               <th class="px-6 py-4 text-right">Expected Total (kg)</th>
               <th class="px-6 py-4 text-right">Actual Total (kg)</th>
               <th class="px-6 py-4 text-right">Variance (kg)</th>
-              <th class="px-6 py-4 text-right">Actions</th>
+              <th class="px-6 py-4 text-right no-print">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
@@ -88,7 +95,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                   [ngClass]="getVarianceColor(rec.varianceKg)">
                   {{ rec.varianceKg > 0 ? '+' : '' }}{{ rec.varianceKg | number:'1.2-2' }} kg
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-right no-print">
                   <div class="flex items-center justify-end gap-2" *ngIf="rec.status === 'Pending' || rec.status === 'Reviewed'">
                     <button (click)="approve(rec)"
                       class="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-lg border border-emerald-200 transition-all shadow-sm inline-flex items-center gap-1">
@@ -115,8 +122,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 export class ReconciliationListComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly contextService = inject(WorkingContextService);
+  private readonly pdfService = inject(PdfExportService);
 
   readonly isLoading = signal(true);
+  readonly isExporting = signal(false);
   readonly reconciliations = signal<FeedingCycleReconciliation[]>([]);
 
   // Placeholder farm ID
@@ -183,6 +193,33 @@ export class ReconciliationListComponent implements OnInit {
         this.snackBar.open(err.error?.detail || 'Failed to reject', 'Close', { duration: 5000 });
       }
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const element = document.getElementById('reportSheet');
+    if (!element) return;
+
+    this.isExporting.set(true);
+    try {
+      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
+      await this.pdfService.exportElement(element, {
+        filename: `Feeding_Reconciliations_${new Date().toISOString().slice(0, 10)}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Daily Feeding Reconciliations Audit',
+          subtitle: 'Daily feed consumption variances, approvals, and stock balance adjustments',
+          farmName,
+          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Cycles', value: `${this.reconciliations().length}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }
 

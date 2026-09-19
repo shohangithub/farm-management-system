@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, PercentPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,6 +10,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-batch-pnl-report',
@@ -36,6 +37,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
           <mat-icon class="text-sm">arrow_back</mat-icon>
           <span>Overview</span>
         </a>
+        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
+          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
       </div>
     </app-page-header>
 
@@ -51,7 +57,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
       </app-empty-state>
 
       <!-- Main Report View -->
-      <div *ngIf="reportData() as report" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 md:p-8">
+      <div *ngIf="reportData() as report" #reportSheet id="batchPnlReport" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 md:p-8">
         <div class="absolute -right-4 -bottom-4 text-[150px] text-gray-500/5 rotate-[-10deg] pointer-events-none">
           <mat-icon inline="true">leaderboard</mat-icon>
         </div>
@@ -118,7 +124,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class BatchPnlReportComponent implements OnInit {
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private route = inject(ActivatedRoute);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   Math = Math;
 
@@ -144,4 +154,39 @@ export class BatchPnlReportComponent implements OnInit {
   readonly isLoading = computed(() => this.reportData() === undefined);
 
   ngOnInit(): void {}
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const report = this.reportData();
+    const farm = this.workingContextService.currentFarmValue;
+    const org = this.workingContextService.currentOrgValue;
+    const batch = this.batchId() || 'N/A';
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Batch_PnL_${batch}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Batch Profit & Loss Statement',
+          subtitle: `Batch Code: ${batch} Performance Report`,
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Animals', value: `${report?.totalAnimals || 0}` },
+            { label: 'Gross Profit', value: `৳ ${(report?.grossProfitBdt || 0).toLocaleString()}` },
+            { label: 'ROI', value: `${((report?.returnOnInvestmentPercent || 0)).toFixed(2)}%` }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Batch P&L PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
+  }
 }

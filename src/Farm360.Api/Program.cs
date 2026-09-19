@@ -227,6 +227,7 @@ try
     app.MapTenantEndpoints();
     app.MapFarmEndpoints();
     app.MapDashboardEndpoints();
+    app.MapReportEndpoints();
     app.MapShedEndpoints();
     app.MapPenEndpoints();
     app.MapMasterDataEndpoints();

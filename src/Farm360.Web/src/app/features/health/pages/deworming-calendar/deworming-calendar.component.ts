@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../services/health.service';
@@ -12,6 +12,7 @@ import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProtocolDialogComponent } from '../../components/dialogs/create-protocol-dialog/create-protocol-dialog.component';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-deworming-calendar',
@@ -23,7 +24,12 @@ import { CreateProtocolDialogComponent } from '../../components/dialogs/create-p
   description="Manage scheduled deworming and vaccination events."
   icon="event_note" 
   iconColor="text-emerald-600">
-  <div actions class="flex gap-2">
+  <div actions class="flex items-center gap-2">
+    <button (click)="exportPdf()" [disabled]="isExporting() || !events()?.length"
+      class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+    </button>
     <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="openScheduleDialog()">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Schedule Deworming
     </button>
@@ -33,7 +39,7 @@ import { CreateProtocolDialogComponent } from '../../components/dialogs/create-p
   </div>
 </app-page-header>
 
-<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+<div #reportSheet id="dewormingCalendarContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <div class="relative overflow-x-auto">
@@ -87,8 +93,12 @@ import { CreateProtocolDialogComponent } from '../../components/dialogs/create-p
 export class DewormingCalendarComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
   
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
+
   isLoading = signal(true);
   private refreshTrigger = signal(0);
   private currentFarmId = toSignal(this.contextService.currentFarm$, { initialValue: null });
@@ -139,5 +149,38 @@ export class DewormingCalendarComponent {
       // After protocol creation, the user will need to assign it.
       // We could add a prompt here to navigate to protocol list to assign it.
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const list = this.events() || [];
+    const farm = this.contextService.currentFarmValue;
+    const org = this.contextService.currentOrgValue;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Deworming_Calendar_${new Date().toISOString().split('T')[0]}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Deworming & Parasite Control Schedule',
+          subtitle: 'Scheduled Deworming & Preventive Healthcare Calendar',
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Scheduled Events', value: `${list.length}` },
+            { label: 'Calendar Scope', value: 'Active Herd Schedule' }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Deworming Calendar PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

@@ -15,6 +15,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { StockWriteOffDialog } from '../../components/stock-write-off-dialog/stock-write-off-dialog';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-current-stock',
@@ -38,8 +39,10 @@ export class CurrentStockComponent implements OnInit {
   private readonly inventoryService = inject(InventoryService);
   private readonly contextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
+  private readonly pdfService = inject(PdfExportService);
 
   readonly isLoading = signal(false);
+  readonly isExporting = signal(false);
   readonly summary = signal<CurrentStockSummary | null>(null);
   readonly items = signal<InventoryItem[]>([]);
   readonly totalItemsCount = signal(0);
@@ -111,6 +114,30 @@ export class CurrentStockComponent implements OnInit {
 
   printReport(): void {
     window.print();
+  }
+
+  async exportPdf(): Promise<void> {
+    const element = document.getElementById('reportSheet');
+    if (!element) return;
+
+    this.isExporting.set(true);
+    try {
+      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
+      await this.pdfService.exportElement(element, {
+        filename: `Current_Stock_Report_${new Date().toISOString().slice(0, 10)}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Current Stock Balance & Valuation Report',
+          subtitle: 'Real-time snapshot of current inventory balance and valuation',
+          farmName,
+          dateRange: `As of ${new Date().toLocaleDateString('en-GB')}`,
+          currency: 'BDT (৳)'
+        },
+        showSignatures: true
+      });
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 
   openStockWriteOffDialog(item: InventoryItem): void {

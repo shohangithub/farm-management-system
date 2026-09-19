@@ -1,16 +1,17 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of, combineLatest, BehaviorSubject } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-monthly-pnl-report',
@@ -45,6 +46,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
             <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
           </select>
         </form>
+        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
+          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
       </div>
     </app-page-header>
 
@@ -60,7 +66,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
       </app-empty-state>
 
       <!-- Main Report View -->
-      <div *ngIf="reportData() as report" class="space-y-6">
+      <div *ngIf="reportData() as report" #reportSheet id="monthlyPnlReport" class="space-y-6">
         
         <!-- KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -153,7 +159,12 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class MonthlyPnlReportComponent implements OnInit {
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   Math = Math;
 
@@ -204,12 +215,14 @@ export class MonthlyPnlReportComponent implements OnInit {
       month: [this.filterChanges$.value.month]
     });
 
-    this.filterForm.valueChanges.subscribe(val => {
-      this.filterChanges$.next({
-        year: Number(val.year),
-        month: Number(val.month)
+    this.filterForm.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(val => {
+        this.filterChanges$.next({
+          year: Number(val.year),
+          month: Number(val.month)
+        });
       });
-    });
   }
 
   getCategoryKeys(dict: { [key: string]: number }): string[] {
@@ -220,5 +233,44 @@ export class MonthlyPnlReportComponent implements OnInit {
   formatCategory(key: string): string {
     // Convert CamelCase to Space Case
     return key.replace(/([A-Z])/g, ' $1').trim();
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const report = this.reportData();
+    const farm = this.workingContextService.currentFarmValue;
+    const org = this.workingContextService.currentOrgValue;
+    const year = this.filterForm.value.year || this.currentYear;
+    const monthVal = Number(this.filterForm.value.month) || (new Date().getMonth() + 1);
+    const monthObj = this.months.find(m => m.value === monthVal);
+    const monthLabel = monthObj ? monthObj.label : `Month ${monthVal}`;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Monthly_PnL_${year}_${monthLabel}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Monthly Profit & Loss Statement',
+          subtitle: `Income & Expense Breakdown for ${monthLabel} ${year}`,
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          dateRange: `Period: ${monthLabel} ${year}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Income', value: `৳ ${(report?.totalIncomeBdt || 0).toLocaleString()}` },
+            { label: 'Total Expense', value: `৳ ${(report?.totalExpenseBdt || 0).toLocaleString()}` },
+            { label: 'Net Profit', value: `৳ ${(report?.netProfitBdt || 0).toLocaleString()}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Monthly P&L PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

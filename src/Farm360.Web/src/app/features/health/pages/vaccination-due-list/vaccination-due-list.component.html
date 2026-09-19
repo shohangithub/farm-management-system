@@ -3,7 +3,12 @@
   description="Manage upcoming and overdue vaccinations for your herd."
   icon="vaccines" 
   iconColor="text-blue-600">
-  <div actions class="flex gap-2">
+  <div actions class="flex gap-2 items-center">
+    <button (click)="exportPdf()" [disabled]="isExporting() || !upcomingVaccinations().length"
+      class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+    </button>
     <button (click)="openRecordVaccinationDialog()" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Record Vaccination
     </button>
@@ -13,7 +18,7 @@
   </div>
 </app-page-header>
 
-<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+<div #reportSheet id="vaccinationDueListSheet" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 m-6 rounded-md shadow-sm">
@@ -100,7 +105,7 @@
       </div>
 
       <!-- Card Footer Actions -->
-      <div class="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10">
+      <div class="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10 no-print">
         <button class="flex-1 px-4 py-2 text-sm font-semibold text-blue-700 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1.5" (click)="administer(ev.id)">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">vaccines</mat-icon> Administer
         </button>

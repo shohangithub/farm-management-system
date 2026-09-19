@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../services/health.service';
@@ -10,6 +10,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-milk-withdrawal',
@@ -21,7 +22,12 @@ import { WorkingContextService } from '../../../../core/services/working-context
   description="Monitor milk withdrawal periods after medical treatments."
   icon="water_drop" 
   iconColor="text-amber-600">
-  <div actions class="flex gap-2">
+  <div actions class="flex items-center gap-2">
+    <button (click)="exportPdf()" [disabled]="isExporting() || !withdrawals().length"
+      class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+    </button>
     <button class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="loadWithdrawals()">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> Refresh
     </button>
@@ -37,7 +43,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
   </div>
 </div>
 
-<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+<div #reportSheet id="milkWithdrawalContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <div class="relative overflow-x-auto">
@@ -90,6 +96,10 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class MilkWithdrawalComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
   
   isLoading = signal(true);
   private refreshTrigger = signal(0);
@@ -113,5 +123,38 @@ export class MilkWithdrawalComponent {
 
   loadWithdrawals() {
     this.refreshTrigger.update(v => v + 1);
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const items = this.withdrawals() || [];
+    const farm = this.contextService.currentFarmValue;
+    const org = this.contextService.currentOrgValue;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Milk_Withdrawals_${new Date().toISOString().split('T')[0]}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Milk Withdrawal Compliance Report',
+          subtitle: 'Active Clinical Treatment Milk Withholding Registry',
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Active Restricted Animals', value: `${items.length}` },
+            { label: 'Compliance Status', value: 'Strict Isolation from Bulk Tank' }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Milk Withdrawal PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

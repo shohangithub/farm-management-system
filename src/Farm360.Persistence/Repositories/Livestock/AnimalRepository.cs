@@ -45,6 +45,72 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
     }
 
     /// <inheritdoc/>
+    public async Task<Animal?> GetByIdAcrossTenantsAsync(Guid animalId, CancellationToken cancellationToken = default) =>
+        await _animals
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.Id == animalId && !a.IsDeleted, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<Animal>> GetPresentDuringPeriodAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+    {
+        // Present = arrived on or before the period ends, and had not left before it began.
+        // Animals sold or disposed of mid-period are included: they incurred cost while here.
+        return await _animals
+            .Where(a => a.FarmId == farmId
+                        && !a.IsDeleted
+                        && a.AcquisitionDate <= to
+                        && (a.SaleDate == null || a.SaleDate >= from))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<Animal>> GetActiveByScopeAcrossTenantsAsync(
+        Guid tenantId,
+        Guid? batchId,
+        Guid? shedId,
+        Guid? penId,
+        DateOnly asOf,
+        CancellationToken cancellationToken = default)
+    {
+        // No scope at all would match the tenant's entire herd and spread one pen's feed across
+        // every animal on every farm. Refusing is the only safe answer.
+        if (batchId is null && shedId is null && penId is null)
+            return [];
+
+        // Present at any point during the day counts as fed that day.
+        var dayStart = asOf.ToDateTime(TimeOnly.MinValue);
+        var dayEnd = asOf.ToDateTime(TimeOnly.MaxValue);
+
+        var query = _animals
+            .IgnoreQueryFilters()
+            .Where(a => a.TenantId == tenantId && !a.IsDeleted && a.Status == AnimalStatus.Active);
+
+        // Most specific scope wins: a pen plan feeds that pen, not the whole shed around it.
+        if (penId is not null)
+        {
+            query = query.Where(a => a.Movements.Any(m =>
+                m.PenId == penId && m.PlacedAtUtc <= dayEnd && (m.RemovedAtUtc == null || m.RemovedAtUtc >= dayStart)));
+        }
+        else if (shedId is not null)
+        {
+            query = query.Where(a => a.Movements.Any(m =>
+                m.ShedId == shedId && m.PlacedAtUtc <= dayEnd && (m.RemovedAtUtc == null || m.RemovedAtUtc >= dayStart)));
+        }
+        else
+        {
+            // Batch membership is a current-value column with no history; for a past date this is
+            // the best available answer, which is why backfilled rows are flagged as such.
+            query = query.Where(a => a.BatchId == batchId);
+        }
+
+        return await query.ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Animal?> GetByIdWithWeightsAsync(Guid animalId, CancellationToken cancellationToken = default) =>
         await _animals
             .Include(a => a.WeightRecords)

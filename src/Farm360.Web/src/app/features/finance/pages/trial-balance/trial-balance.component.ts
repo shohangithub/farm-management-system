@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +11,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { TrialBalance, TrialBalanceLine } from '../../models/finance.model';
 
 @Component({
@@ -48,10 +49,15 @@ import { TrialBalance, TrialBalanceLine } from '../../models/finance.model';
               class="bg-transparent text-gray-800 dark:text-gray-200 text-xs font-semibold outline-none cursor-pointer" />
           </div>
         </form>
-        <button mat-flat-button (click)="printReport()"
-          class="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-3 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20">
+        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !tbData()"
+          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
+        <button mat-stroked-button (click)="printReport()"
+          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">print</mat-icon>
-          <span>Print / PDF</span>
+          <span>Print</span>
         </button>
       </div>
     </app-page-header>
@@ -99,7 +105,7 @@ import { TrialBalance, TrialBalanceLine } from '../../models/finance.model';
         description="There are no transaction lines recorded as of the selected date. Start by recording revenue or expenses.">
       </app-empty-state>
 
-      <div *ngIf="tbData() as data" class="space-y-6">
+      <div *ngIf="tbData() as data" #reportSheet id="trialBalanceReport" class="space-y-6">
 
         <!-- Top Status & KPI Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -299,8 +305,12 @@ import { TrialBalance, TrialBalanceLine } from '../../models/finance.model';
 export class TrialBalanceComponent {
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   readonly selectedGroup = signal<'ALL' | 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense'>('ALL');
 
@@ -364,6 +374,42 @@ export class TrialBalanceComponent {
         return 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300';
       default:
         return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
+    }
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const data = this.tbData();
+    const farm = this.workingContextService.currentFarmValue;
+    const org = this.workingContextService.currentOrgValue;
+    const asOf = this.filterForm.value.asOfDate || this.todayStr;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Trial_Balance_${asOf}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Trial Balance Report',
+          subtitle: `Debit & Credit Ledger Accounts Verification`,
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          dateRange: `As of ${asOf}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Debits', value: `৳ ${(data?.totalDebitBdt || 0).toLocaleString()}` },
+            { label: 'Total Credits', value: `৳ ${(data?.totalCreditBdt || 0).toLocaleString()}` },
+            { label: 'Integrity', value: data?.isBalanced ? 'Balanced (100% in sync)' : `Variance: ৳ ${(data?.differenceBdt || 0).toLocaleString()}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Trial Balance PDF:', err);
+    } finally {
+      this.isExporting.set(false);
     }
   }
 

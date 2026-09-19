@@ -13,6 +13,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-consumption-log',
@@ -33,15 +34,20 @@ import { WorkingContextService } from '../../../../core/services/working-context
       title="Daily Feeding Records"
       description="Historical feed offered, refusal/wastage, and daily ration expenditure records."
       breadcrumbActiveNode="Feeding Records">
-      <div actions>
+      <div actions class="flex items-center gap-2 no-print">
+        <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || logs().length === 0"
+          class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
+          {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+        </button>
         <button (click)="openLogDialog()"
-          class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit_note</mat-icon> Log Daily Feeding
         </button>
       </div>
     </app-page-header>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+    <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
       <!-- Empty State -->
@@ -87,7 +93,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!isLoading() && logs().length > 0" class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+      <div *ngIf="!isLoading() && logs().length > 0" class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 no-print">
         <mat-paginator
           [length]="totalItems()"
           [pageSize]="pageSize()"
@@ -107,8 +113,10 @@ export class ConsumptionLogComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly pdfService = inject(PdfExportService);
 
   readonly isLoading = signal(true);
+  readonly isExporting = signal(false);
   readonly logs = signal<FeedConsumptionLog[]>([]);
   readonly totalItems = signal(0);
   readonly pageSize = signal(10);
@@ -158,5 +166,32 @@ export class ConsumptionLogComponent implements OnInit {
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadLogs();
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const element = document.getElementById('reportSheet');
+    if (!element) return;
+
+    this.isExporting.set(true);
+    try {
+      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
+      await this.pdfService.exportElement(element, {
+        filename: `Daily_Feed_Consumption_Log_${new Date().toISOString().slice(0, 10)}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Daily Feed Consumption & Cost Audit',
+          subtitle: 'Historical feed offered, refusal/wastage, and daily ration expenditure records',
+          farmName,
+          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Records', value: `${this.logs().length}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

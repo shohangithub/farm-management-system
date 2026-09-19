@@ -32,4 +32,19 @@ public interface IFinancialTransactionRepository
         string? sourceModule = null,
         CancellationToken cancellationToken = default);
     Task<FinancialTransaction?> GetAnimalPurchaseTransactionAsync(Guid animalId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Farm-level expenses in a period that are not already attributed to a single animal —
+    /// the input to overhead allocation (docs/32 GAP-2).
+    /// </summary>
+    /// <remarks>
+    /// Excludes rows that already carry an <c>AnimalId</c>: those are direct costs and the
+    /// module that recorded them has already put them on the animal's ledger. Allocating them
+    /// again would double-count.
+    /// </remarks>
+    Task<IReadOnlyList<FinancialTransaction>> GetUnattributedIndirectCostsAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default);
 }

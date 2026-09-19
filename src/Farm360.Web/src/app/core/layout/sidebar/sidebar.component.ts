@@ -29,7 +29,8 @@ export class SidebarComponent {
     { icon: 'healing', label: 'Health', route: '/health' },
     { icon: 'restaurant_menu', label: 'Feeding', route: '/feeding' },
     { icon: 'inventory', label: 'Inventory', route: '/inventory' },
-    { icon: 'account_balance_wallet', label: 'Finance', route: '/finance' }
+    { icon: 'account_balance_wallet', label: 'Finance', route: '/finance' },
+    { icon: 'summarize', label: 'Reports', route: '/reports' }
   ];
 
   bottomMenuItems: MenuItem[] = [

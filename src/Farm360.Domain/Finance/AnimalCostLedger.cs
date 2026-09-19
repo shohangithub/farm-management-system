@@ -109,6 +109,36 @@ public sealed class AnimalCostLedger : AuditableEntity, IAggregateRoot
     }
 
     /// <summary>
+    /// Sets the labour bucket from the animal's overhead allocation rows (docs/32 GAP-2).
+    /// </summary>
+    /// <remarks>
+    /// Sets rather than accumulates, and that is the whole point. Re-running the allocation is a
+    /// normal operation — a correction, a re-opened month, a resumed job — and an accumulating
+    /// method would double the animal's labour cost every time. Recomputing the bucket from the
+    /// allocation table makes the posting idempotent by construction rather than by remembering
+    /// to guard every call site.
+    /// </remarks>
+    public void UpdateLaborCost(decimal totalLaborCostBdt)
+    {
+        if (totalLaborCostBdt < 0)
+            throw new ArgumentException("Labour cost cannot be negative.", nameof(totalLaborCostBdt));
+
+        TotalLaborCostBdt = Math.Round(totalLaborCostBdt, 2);
+    }
+
+    /// <summary>
+    /// Sets the overhead bucket from the animal's overhead allocation rows (docs/32 GAP-2).
+    /// Sets rather than accumulates, for the reason given on <see cref="UpdateLaborCost"/>.
+    /// </summary>
+    public void UpdateOverheadCost(decimal totalOverheadBdt)
+    {
+        if (totalOverheadBdt < 0)
+            throw new ArgumentException("Overhead cost cannot be negative.", nameof(totalOverheadBdt));
+
+        TotalOverheadBdt = Math.Round(totalOverheadBdt, 2);
+    }
+
+    /// <summary>
     /// Updates the acquisition cost bucket when the animal's purchase price is updated.
     /// </summary>
     public void UpdateAcquisitionCost(decimal acquisitionCostBdt)

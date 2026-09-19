@@ -56,6 +56,22 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 
+  <ItemGroup Label="Reporting — PDF / Excel rendering (docs/32)">
+    <PackageReference Include="QuestPDF" />
+    <PackageReference Include="ClosedXML" />
+  </ItemGroup>
+
+  <ItemGroup Label="Reporting — embedded typefaces">
+    <!--
+      Bundled rather than machine-installed: the API runs in a Linux container with no Bengali
+      font, and a missing font prints boxes where the numbers should be.
+      Noto Sans Bengali, SIL Open Font License 1.1 — see Reporting/Fonts/OFL.txt.
+    -->
+    <EmbeddedResource Include="Reporting\Fonts\NotoSansBengali-Regular.ttf" />
+    <EmbeddedResource Include="Reporting\Fonts\NotoSansBengali-Bold.ttf" />
+    <None Include="Reporting\Fonts\OFL.txt" />
+  </ItemGroup>
+
   <ItemGroup Label="Abstractions">
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />

@@ -14,6 +14,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-inventory-movement-report',
@@ -39,7 +40,9 @@ export class InventoryMovementReport implements OnInit {
   private inventoryService = inject(InventoryService);
   private workingContextService = inject(WorkingContextService);
   private fb = inject(FormBuilder);
+  private pdfService = inject(PdfExportService);
 
+  readonly isExporting = signal(false);
   filterForm!: FormGroup;
 
   private filterSubmit$ = new BehaviorSubject<{ startDate: string, endDate: string } | null>(null);
@@ -86,5 +89,31 @@ export class InventoryMovementReport implements OnInit {
       startDate: start.toISOString().split('T')[0],
       endDate: end.toISOString().split('T')[0]
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const element = document.getElementById('reportSheet');
+    if (!element) return;
+
+    this.isExporting.set(true);
+    try {
+      const farmName = this.workingContextService.currentFarmValue?.name || 'All Units';
+      const start = this.filterForm.value.start ? new Date(this.filterForm.value.start).toLocaleDateString('en-GB') : '';
+      const end = this.filterForm.value.end ? new Date(this.filterForm.value.end).toLocaleDateString('en-GB') : '';
+      await this.pdfService.exportElement(element, {
+        filename: `Inventory_Movement_Report_${new Date().toISOString().slice(0, 10)}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Inventory Movement & Consumption Report',
+          subtitle: 'Track stock flow, consumption, and closing balances',
+          farmName,
+          dateRange: `Period: ${start} - ${end}`,
+          currency: 'BDT (৳)'
+        },
+        showSignatures: true
+      });
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

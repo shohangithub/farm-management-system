@@ -1,8 +1,9 @@
-import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { HealthService } from '../../services/health.service';
 import { VaccinationEventDto, VaccinationStatus } from '../../models/health.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -14,11 +15,12 @@ import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ScheduleVaccinationDialog } from '../../components/dialogs/schedule-vaccination-dialog/schedule-vaccination-dialog.component';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
 @Component({
   selector: 'app-vaccination-due-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, MatButtonModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
   templateUrl: './vaccination-due-list.component.html',
   styleUrls: ['./vaccination-due-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -26,7 +28,11 @@ import { ScheduleVaccinationDialog } from '../../components/dialogs/schedule-vac
 export class VaccinationDueListComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
+  private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExporting = signal(false);
 
   readonly VaccinationStatus = VaccinationStatus;
 
@@ -110,5 +116,38 @@ export class VaccinationDueListComponent {
         this.refreshTrigger.update(v => v + 1);
       }
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const list = this.upcomingVaccinations() || [];
+    const farm = this.contextService.currentFarmValue;
+    const org = this.contextService.currentOrgValue;
+
+    this.isExporting.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_Vaccination_Schedule_${new Date().toISOString().split('T')[0]}`,
+        orientation: 'landscape',
+        header: {
+          title: 'Herd Vaccination Schedule & Due Report',
+          subtitle: 'Upcoming Immunization Records (Next 30 Days)',
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Scheduled Events', value: `${list.length}` },
+            { label: 'Status Window', value: 'Next 30 Days' }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export Vaccination Due PDF:', err);
+    } finally {
+      this.isExporting.set(false);
+    }
   }
 }

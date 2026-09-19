@@ -286,6 +286,114 @@ namespace Farm360.Persistence.Migrations
                     b.ToTable("Sheds", "app");
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Feeding.AnimalFeedAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AllocatedCostBdt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("AllocatedKg")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("AnimalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DailyFeedingEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("EntryDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FeedingPlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormulaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("HeadCountAtAllocation")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsBackfilled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("PenId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("RuleLineId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ShareFactor")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid?>("ShedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("UnitCostBdtPerKg")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("WeightAtAllocationKg")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DailyFeedingEntryId", "AnimalId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AnimalFeedAllocations_Entry_Animal");
+
+                    b.HasIndex("TenantId", "AnimalId", "EntryDate")
+                        .HasDatabaseName("IX_AnimalFeedAllocations_Tenant_Animal_Date");
+
+                    b.HasIndex("TenantId", "FarmId", "EntryDate")
+                        .HasDatabaseName("IX_AnimalFeedAllocations_Tenant_Farm_Date");
+
+                    b.ToTable("AnimalFeedAllocations", "feeding");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Feeding.AnimalFeedingPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1175,6 +1283,99 @@ namespace Farm360.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("AnimalCostLedgers", "finance");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Finance.AnimalOverheadAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AllocatedAmountBdt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("AnimalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Bucket")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("HeadCountAtAllocation")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("HeadDays")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsBackfilled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<decimal>("ShareFactor")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid>("SourceTransactionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("WeightAtAllocationKg")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceTransactionId", "AnimalId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AnimalOverheadAllocations_Transaction_Animal");
+
+                    b.HasIndex("TenantId", "AnimalId")
+                        .HasDatabaseName("IX_AnimalOverheadAllocations_Tenant_Animal");
+
+                    b.HasIndex("FarmId", "PeriodStart", "PeriodEnd")
+                        .HasDatabaseName("IX_AnimalOverheadAllocations_Farm_Period");
+
+                    b.ToTable("AnimalOverheadAllocations", "finance");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Finance.FarmShareConfig", b =>
@@ -4131,6 +4332,110 @@ namespace Farm360.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Organizations", "app");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Reporting.ReportRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ArchivedBlobKey")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("Format")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Outcome")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("OutputBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OutputHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ParametersJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("RatesSnapshotJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("ReportKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ReportTitle")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RequestedByName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("RequestedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RowCount")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "RequestedAtUtc")
+                        .HasDatabaseName("IX_ReportRuns_Tenant_RequestedAt");
+
+                    b.HasIndex("TenantId", "ReportKey", "RequestedAtUtc")
+                        .HasDatabaseName("IX_ReportRuns_Tenant_Key_RequestedAt");
+
+                    b.ToTable("ReportRuns", "reporting");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Tenancy.AuditLog", b =>

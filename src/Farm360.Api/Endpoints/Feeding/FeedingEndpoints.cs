@@ -334,6 +334,20 @@ public static class FeedingEndpoints
             return Results.NoContent();
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
 
+        // ── Per-animal feed allocation backfill (docs/32 GAP-1) ───────────────
+        // One-off admin operation that fills in allocations for feeding entries recorded before
+        // the per-animal grain existed. Idempotent: it only picks up entries that have none, so
+        // it is safe to re-run or to work through history in nightly chunks.
+        group.MapPost("/allocations/backfill", async (
+            [FromBody] Farm360.Application.Feeding.Jobs.BackfillAnimalFeedAllocationsCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Delete}")
+          .WithSummary("Backfills per-animal feed allocations for a historical date range.");
+
         return app;
     }
 }

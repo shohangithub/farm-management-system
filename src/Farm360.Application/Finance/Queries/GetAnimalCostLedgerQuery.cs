@@ -6,7 +6,6 @@ using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Finance.Interfaces;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
-using Farm360.Domain.Feeding.Enums;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
 using MediatR;
@@ -18,18 +17,18 @@ public record GetAnimalCostLedgerQuery(Guid AnimalId) : IRequest<AnimalCostLedge
 public class GetAnimalCostLedgerQueryHandler : IRequestHandler<GetAnimalCostLedgerQuery, AnimalCostLedgerDto>
 {
     private readonly IAnimalCostLedgerRepository _repository;
-    private readonly IDailyFeedingEntryRepository _feedingEntryRepository;
+    private readonly IAnimalFeedAllocationRepository _feedAllocationRepository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
 
     public GetAnimalCostLedgerQueryHandler(
         IAnimalCostLedgerRepository repository,
-        IDailyFeedingEntryRepository feedingEntryRepository,
+        IAnimalFeedAllocationRepository feedAllocationRepository,
         ITenantService tenantService,
         IUnitOfWork unitOfWork)
     {
         _repository = repository;
-        _feedingEntryRepository = feedingEntryRepository;
+        _feedAllocationRepository = feedAllocationRepository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
     }
@@ -39,29 +38,21 @@ public class GetAnimalCostLedgerQueryHandler : IRequestHandler<GetAnimalCostLedg
         var ledger = await _repository.GetByAnimalIdAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(AnimalCostLedger), request.AnimalId);
 
-        // Sync feed cost if ledger feed cost is currently 0
-        if (ledger.TotalFeedCostBdt == 0)
-        {
-            try
-            {
-                var entries = await _feedingEntryRepository.GetEntriesByAnimalIdAsync(_tenantService.TenantId, request.AnimalId, cancellationToken);
-                var totalCost = entries
-                    .Where(e => (e.Status == DailyFeedingEntryStatus.Confirmed || e.Status == DailyFeedingEntryStatus.Adjusted) && e.TotalCostBdt.HasValue)
-                    .Sum(e => e.TotalCostBdt!.Value);
+        // Feed cost now comes from AnimalFeedAllocations (docs/32 GAP-1), which carry a row for
+        // every animal — including those fed under a batch, shed or pen plan. The previous source
+        // walked DailyFeedingEntry via the plan's nullable AnimalId, so a group-fed animal matched
+        // nothing and silently reported zero feed cost for its whole life.
+        var feedTotals = await _feedAllocationRepository.GetTotalsForAnimalAsync(
+            request.AnimalId,
+            DateOnly.MinValue,
+            DateOnly.MaxValue,
+            cancellationToken);
 
-                if (totalCost > 0)
-                {
-                    ledger.UpdateFeedCost(totalCost);
-                    _repository.Update(ledger);
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                }
-            }
-#pragma warning disable CA1031
-            catch
-            {
-                // Non-blocking fallback
-            }
-#pragma warning restore CA1031
+        if (feedTotals.TotalCostBdt != ledger.TotalFeedCostBdt)
+        {
+            ledger.UpdateFeedCost(feedTotals.TotalCostBdt);
+            _repository.Update(ledger);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
         return new AnimalCostLedgerDto(

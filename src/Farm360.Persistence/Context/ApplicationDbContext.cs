@@ -149,6 +149,15 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     // ── Financial Module ──────────────────────────────────────────────────────
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
     public DbSet<AnimalCostLedger> AnimalCostLedgers => Set<AnimalCostLedger>();
+
+    /// <summary>Per-animal share of farm-level labour and overhead (docs/32 GAP-2).</summary>
+    public DbSet<Farm360.Domain.Finance.AnimalOverheadAllocation> AnimalOverheadAllocations => Set<Farm360.Domain.Finance.AnimalOverheadAllocation>();
+
+    /// <summary>Per-animal share of each day's feed (docs/32 GAP-1).</summary>
+    public DbSet<Farm360.Domain.Feeding.AnimalFeedAllocation> AnimalFeedAllocations => Set<Farm360.Domain.Feeding.AnimalFeedAllocation>();
+
+    // ── Reporting (docs/32) ─────────────────────────────────────────────────
+    public DbSet<Farm360.Domain.Reporting.ReportRun> ReportRuns => Set<Farm360.Domain.Reporting.ReportRun>();
     public DbSet<LoanRecord> LoanRecords => Set<LoanRecord>();
     public DbSet<Investor> Investors => Set<Investor>();
     public DbSet<InvestorTransaction> InvestorTransactions => Set<InvestorTransaction>();

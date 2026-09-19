@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,6 +15,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { 
   FinancialTransaction, 
   FinancialTransactionParams, 
@@ -51,8 +52,12 @@ import { EditTransactionDialogComponent } from '../../components/edit-transactio
 export class FinanceLedgerComponent {
   private readonly financeService = inject(FinanceService);
   private readonly workingContextService = inject(WorkingContextService);
+  private readonly pdfExportService = inject(PdfExportService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+
+  @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
+  readonly isExportingPdf = signal(false);
 
   readonly categories = TRANSACTION_CATEGORIES;
   readonly allCategories = computed(() => {
@@ -306,5 +311,41 @@ export class FinanceLedgerComponent {
         this.isExporting.set(false);
       }
     });
+  }
+
+  async exportPdf(): Promise<void> {
+    const el = this.reportSheet?.nativeElement;
+    if (!el) return;
+
+    const farm = this.workingContextService.currentFarmValue;
+    const org = this.workingContextService.currentOrgValue;
+    const count = this.totalCount();
+    const income = this.totalIncome();
+    const expense = this.totalExpense();
+
+    this.isExportingPdf.set(true);
+    try {
+      await this.pdfExportService.exportElement(el, {
+        filename: `Farm360_General_Ledger_${new Date().toISOString().split('T')[0]}`,
+        orientation: 'landscape',
+        header: {
+          title: 'General Ledger Transactions',
+          subtitle: `Financial Transactions & Journal Records`,
+          farmName: farm?.name || 'Primary Farm',
+          orgName: org?.name || 'Farm360 Enterprise',
+          currency: 'BDT (৳)',
+          metaFields: [
+            { label: 'Total Records', value: `${count}` },
+            { label: 'Total Income', value: `৳ ${income.toLocaleString()}` },
+            { label: 'Total Expense', value: `৳ ${expense.toLocaleString()}` }
+          ]
+        },
+        showSignatures: true
+      });
+    } catch (err) {
+      console.error('Failed to export General Ledger PDF:', err);
+    } finally {
+      this.isExportingPdf.set(false);
+    }
   }
 }

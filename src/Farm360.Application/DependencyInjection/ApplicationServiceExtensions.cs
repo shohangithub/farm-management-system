@@ -1,3 +1,4 @@
+using Farm360.Application.Reporting.DependencyInjection;
 using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using FluentValidation;
@@ -40,6 +41,15 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.IRuleEngine, Farm360.Application.Intelligence.Services.RuleEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.ISimulationEngine, Farm360.Application.Intelligence.Services.SimulationEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Services.IProjectionDefaultsResolver, Farm360.Application.Intelligence.Services.ProjectionDefaultsResolver>();
+
+        // ── Finance: labour and overhead allocation (docs/32 GAP-2) ──────────
+        services.AddScoped<Farm360.Application.Finance.Services.IOverheadAllocationService, Farm360.Application.Finance.Services.OverheadAllocationService>();
+
+        // ── Feeding: per-animal feed allocation (docs/32 GAP-1) ──────────────
+        services.AddScoped<Farm360.Application.Feeding.Services.IFeedAllocationService, Farm360.Application.Feeding.Services.FeedAllocationService>();
+
+        // ── Reporting platform (docs/32): registry + execution service ────────
+        services.AddReportingServices();
 
         // ── AutoMapper (auto-discover all mapping profiles in assembly) ────────
         services.AddAutoMapper(assembly);
