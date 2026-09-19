@@ -252,6 +252,20 @@ try
 
         var identitySeeder = scope.ServiceProvider.GetRequiredService<Farm360.Identity.Seed.IdentitySeeder>();
         await identitySeeder.SeedAsync();
+
+        // Ensure historical or unallocated feed entries are populated across tenants (GAP-1)
+        try
+        {
+            var sender = scope.ServiceProvider.GetRequiredService<MediatR.ISender>();
+            await sender.Send(new Farm360.Application.Feeding.Jobs.BackfillAnimalFeedAllocationsCommand(
+                From: new DateOnly(2020, 1, 1),
+                To: new DateOnly(2035, 12, 31)
+            ));
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Startup automatic backfill of animal feed allocations encountered an issue.");
+        }
         
         // Register Hangfire Recurring Jobs
         var jobService = scope.ServiceProvider.GetRequiredService<Farm360.Application.Common.Interfaces.IBackgroundJobService>();

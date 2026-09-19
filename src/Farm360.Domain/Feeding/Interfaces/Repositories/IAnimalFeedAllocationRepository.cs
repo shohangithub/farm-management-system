@@ -51,4 +51,10 @@ public interface IAnimalFeedAllocationRepository
         DateOnly to,
         int take,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AnimalFeedAllocation>> GetByEntryIdAcrossTenantsAsync(
+        Guid entryId,
+        CancellationToken cancellationToken = default);
+
+    void UpdateRange(IEnumerable<AnimalFeedAllocation> allocations);
 }

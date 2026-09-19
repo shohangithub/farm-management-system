@@ -123,4 +123,16 @@ public sealed class AnimalFeedAllocationRepository : IAnimalFeedAllocationReposi
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async Task<IReadOnlyList<AnimalFeedAllocation>> GetByEntryIdAcrossTenantsAsync(
+        Guid entryId,
+        CancellationToken cancellationToken = default) =>
+        await _context.AnimalFeedAllocations
+            .IgnoreQueryFilters()
+            .Where(a => a.DailyFeedingEntryId == entryId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public void UpdateRange(IEnumerable<AnimalFeedAllocation> allocations) =>
+        _context.AnimalFeedAllocations.UpdateRange(allocations);
 }

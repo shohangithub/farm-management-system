@@ -44,11 +44,16 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
 {
     private readonly IAnimalRepository _animals;
     private readonly IAnimalFeedAllocationRepository _allocations;
+    private readonly IDailyFeedingEntryRepository _dailyEntries;
 
-    public AnimalGrowthReportDefinition(IAnimalRepository animals, IAnimalFeedAllocationRepository allocations)
+    public AnimalGrowthReportDefinition(
+        IAnimalRepository animals,
+        IAnimalFeedAllocationRepository allocations,
+        IDailyFeedingEntryRepository dailyEntries)
     {
         _animals = animals;
         _allocations = allocations;
+        _dailyEntries = dailyEntries;
     }
 
     public override string Key => "livestock.animal-growth";
@@ -119,6 +124,32 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
             .GetByAnimalAsync(animalId, period.From, period.To, cancellationToken)
             .ConfigureAwait(false);
 
+        List<(DateOnly EntryDate, decimal AllocatedKg, decimal AllocatedCostBdt)> feedRecords;
+
+        if (allocations.Count > 0)
+        {
+            feedRecords = allocations
+                .Select(a => (a.EntryDate, a.AllocatedKg, a.AllocatedCostBdt))
+                .ToList();
+        }
+        else
+        {
+            // Resilient fallback: If allocations are not yet populated, read individual plan entries directly
+            var fallbackEntries = await _dailyEntries
+                .GetEntriesByAnimalIdAsync(animal.TenantId, animalId, cancellationToken)
+                .ConfigureAwait(false);
+
+            feedRecords = fallbackEntries
+                .Where(e => e.EntryDate >= period.From && e.EntryDate <= period.To)
+                .Select(e =>
+                {
+                    var kg = e.ActualKg ?? e.ExpectedKg;
+                    var cost = e.TotalCostBdt ?? Math.Round(kg * (e.UnitCostAtConsumptionBdt ?? 0m), 2);
+                    return (e.EntryDate, kg, cost);
+                })
+                .ToList();
+        }
+
         var rows = new List<AnimalGrowthReportRow>(weighings.Count);
         DateOnly? previousDate = null;
         decimal? previousWeight = null;
@@ -134,7 +165,7 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
 
             var intervalFeed = previousDate is null
                 ? []
-                : allocations
+                : feedRecords
                     .Where(a => a.EntryDate > previousDate.Value && a.EntryDate <= weighing.RecordedDate)
                     .ToList();
 

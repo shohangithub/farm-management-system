@@ -87,6 +87,17 @@ public sealed class AnimalFeedAllocation : AuditableEntity
     /// </remarks>
     public bool IsBackfilled { get; private set; }
 
+    public void UpdateConsumption(decimal allocatedKg, decimal allocatedCostBdt, decimal unitCostBdtPerKg)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(allocatedKg);
+        ArgumentOutOfRangeException.ThrowIfNegative(allocatedCostBdt);
+        ArgumentOutOfRangeException.ThrowIfNegative(unitCostBdtPerKg);
+
+        AllocatedKg = allocatedKg;
+        AllocatedCostBdt = allocatedCostBdt;
+        UnitCostBdtPerKg = unitCostBdtPerKg;
+    }
+
     public static AnimalFeedAllocation Create(
         Guid tenantId,
         Guid animalId,

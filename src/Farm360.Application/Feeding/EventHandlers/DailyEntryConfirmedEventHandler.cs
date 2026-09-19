@@ -1,4 +1,6 @@
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Feeding.Services;
+using Farm360.Domain.Feeding;
 using Farm360.Domain.Feeding.Events;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
@@ -13,6 +15,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
     private readonly IFeedIngredientRepository _feedIngredientRepository;
     private readonly IDailyFeedingEntryRepository _entryRepository;
     private readonly IAnimalFeedingPlanRepository _planRepository;
+    private readonly IAnimalFeedAllocationRepository _allocationRepository;
+    private readonly IFeedAllocationService _allocationService;
     private readonly IInventoryItemRepository _inventoryRepository;
     private readonly IStockTransactionRepository _transactionRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -24,6 +28,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
         IFeedIngredientRepository feedIngredientRepository,
         IDailyFeedingEntryRepository entryRepository,
         IAnimalFeedingPlanRepository planRepository,
+        IAnimalFeedAllocationRepository allocationRepository,
+        IFeedAllocationService allocationService,
         IInventoryItemRepository inventoryRepository,
         IStockTransactionRepository transactionRepository,
         IUnitOfWork unitOfWork,
@@ -34,6 +40,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
         _feedIngredientRepository = feedIngredientRepository;
         _entryRepository = entryRepository;
         _planRepository = planRepository;
+        _allocationRepository = allocationRepository;
+        _allocationService = allocationService;
         _inventoryRepository = inventoryRepository;
         _transactionRepository = transactionRepository;
         _unitOfWork = unitOfWork;
@@ -139,6 +147,43 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             }
 
             _entryRepository.Update(entry);
+
+            // Synchronize or create per-animal feed allocations
+            var plan = await _planRepository.GetByIdAsync(entry.FeedingPlanId, cancellationToken);
+            var existingAllocations = await _allocationRepository.GetByEntryIdAcrossTenantsAsync(entry.Id, cancellationToken);
+            if (existingAllocations.Count > 0)
+            {
+                var perHeadKg = notification.ActualKg;
+                var unitCost = blendedUnitCost;
+
+                foreach (var alloc in existingAllocations)
+                {
+                    if (alloc.Origin == FeedAllocationOrigin.IndividualPlan)
+                    {
+                        var allocCost = entry.TotalCostBdt ?? Math.Round(perHeadKg * unitCost, 2);
+                        alloc.UpdateConsumption(perHeadKg, allocCost, unitCost);
+                    }
+                    else
+                    {
+                        var totalKg = perHeadKg * alloc.HeadCountAtAllocation;
+                        var totalCost = entry.TotalCostBdt ?? Math.Round(totalKg * unitCost, 2);
+                        var allocatedKg = Math.Round(totalKg * alloc.ShareFactor, 4);
+                        var allocatedCost = Math.Round(totalCost * alloc.ShareFactor, 2);
+                        alloc.UpdateConsumption(allocatedKg, allocatedCost, unitCost);
+                    }
+                }
+
+                _allocationRepository.UpdateRange(existingAllocations);
+            }
+            else if (plan != null)
+            {
+                var newAllocations = await _allocationService.BuildAllocationsAsync(entry, plan, isBackfill: false, cancellationToken);
+                if (newAllocations.Count > 0)
+                {
+                    _allocationRepository.AddRange(newAllocations);
+                }
+            }
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             if (_logger.IsEnabled(LogLevel.Information))
@@ -150,7 +195,6 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             // Publish DailyFeedingCostCalculatedEvent for automated financial tracking
             if (entry.TotalCostBdt.HasValue && entry.TotalCostBdt.Value > 0)
             {
-                var plan = await _planRepository.GetByIdAsync(entry.FeedingPlanId, cancellationToken);
                 await _publisher.Publish(new DailyFeedingCostCalculatedEvent(
                     Guid.NewGuid(),
                     DateTime.UtcNow,
