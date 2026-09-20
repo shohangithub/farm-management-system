@@ -11,6 +11,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { ReportService } from '../../../reports/services/report.service';
 
 @Component({
   selector: 'app-batch-pnl-report',
@@ -37,10 +38,21 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
           <mat-icon class="text-sm">arrow_back</mat-icon>
           <span>Overview</span>
         </a>
+        <a mat-stroked-button [routerLink]="['/reports/finance.batch-pnl']" [queryParams]="{ batchId: batchId() }"
+          matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
+          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
+          <span>SAP Report</span>
+        </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
           <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
+        <button mat-stroked-button (click)="exportExcel()" [disabled]="!reportData()"
+          class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">file_download</mat-icon>
+          <span>Excel</span>
         </button>
       </div>
     </app-page-header>
@@ -122,10 +134,11 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BatchPnlReportComponent implements OnInit {
-  private financeService = inject(FinanceService);
-  private workingContextService = inject(WorkingContextService);
-  private pdfExportService = inject(PdfExportService);
-  private route = inject(ActivatedRoute);
+  private readonly financeService = inject(FinanceService);
+  private readonly workingContextService = inject(WorkingContextService);
+  private readonly pdfExportService = inject(PdfExportService);
+  private readonly reportService = inject(ReportService);
+  private readonly route = inject(ActivatedRoute);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -156,37 +169,75 @@ export class BatchPnlReportComponent implements OnInit {
   ngOnInit(): void {}
 
   async exportPdf(): Promise<void> {
-    const el = this.reportSheet?.nativeElement;
-    if (!el) return;
-
-    const report = this.reportData();
-    const farm = this.workingContextService.currentFarmValue;
-    const org = this.workingContextService.currentOrgValue;
-    const batch = this.batchId() || 'N/A';
+    const farmId = this.workingContextService.currentFarmValue?.id;
+    const batch = this.batchId() || '';
 
     this.isExporting.set(true);
-    try {
-      await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Batch_PnL_${batch}`,
-        orientation: 'landscape',
-        header: {
-          title: 'Batch Profit & Loss Statement',
-          subtitle: `Batch Code: ${batch} Performance Report`,
-          farmName: farm?.name || 'Primary Farm',
-          orgName: org?.name || 'Farm360 Enterprise',
-          currency: 'BDT (৳)',
-          metaFields: [
-            { label: 'Total Animals', value: `${report?.totalAnimals || 0}` },
-            { label: 'Gross Profit', value: `৳ ${(report?.grossProfitBdt || 0).toLocaleString()}` },
-            { label: 'ROI', value: `${((report?.returnOnInvestmentPercent || 0)).toFixed(2)}%` }
-          ]
-        },
-        showSignatures: true
-      });
-    } catch (err) {
-      console.error('Failed to export Batch P&L PDF:', err);
-    } finally {
-      this.isExporting.set(false);
-    }
+
+    this.reportService.export('finance.batch-pnl', 'pdf', {
+      parameters: {
+        farmId: farmId || null,
+        batchId: batch
+      }
+    }).subscribe({
+      next: res => {
+        if (res.body) {
+          const fn = this.reportService.fileNameFrom(res.headers, `Farm360_Batch_PnL_${batch}.pdf`);
+          this.reportService.saveBlob(res.body, fn);
+        }
+        this.isExporting.set(false);
+      },
+      error: async err => {
+        console.warn('Server-side PDF export fallback to client-side renderer:', err);
+        const el = this.reportSheet?.nativeElement;
+        if (el) {
+          const report = this.reportData();
+          const farm = this.workingContextService.currentFarmValue;
+          const org = this.workingContextService.currentOrgValue;
+          try {
+            await this.pdfExportService.exportElement(el, {
+              filename: `Farm360_Batch_PnL_${batch}`,
+              orientation: 'landscape',
+              header: {
+                title: 'Batch Profit & Loss Statement',
+                subtitle: `Batch Code: ${batch} Performance Report`,
+                farmName: farm?.name || 'Primary Farm',
+                orgName: org?.name || 'Farm360 Enterprise',
+                currency: 'BDT (৳)',
+                metaFields: [
+                  { label: 'Total Animals', value: `${report?.totalAnimals || 0}` },
+                  { label: 'Gross Profit', value: `৳ ${(report?.grossProfitBdt || 0).toLocaleString()}` },
+                  { label: 'ROI', value: `${((report?.returnOnInvestmentPercent || 0)).toFixed(2)}%` }
+                ]
+              },
+              showSignatures: true
+            });
+          } catch (clientErr) {
+            console.error('Client PDF export failed:', clientErr);
+          }
+        }
+        this.isExporting.set(false);
+      }
+    });
+  }
+
+  exportExcel(): void {
+    const farmId = this.workingContextService.currentFarmValue?.id;
+    const batch = this.batchId() || '';
+
+    this.reportService.export('finance.batch-pnl', 'xlsx', {
+      parameters: {
+        farmId: farmId || null,
+        batchId: batch
+      }
+    }).subscribe({
+      next: res => {
+        if (res.body) {
+          const fn = this.reportService.fileNameFrom(res.headers, `Farm360_Batch_PnL_${batch}.xlsx`);
+          this.reportService.saveBlob(res.body, fn);
+        }
+      },
+      error: err => console.error('Failed to export Excel:', err)
+    });
   }
 }

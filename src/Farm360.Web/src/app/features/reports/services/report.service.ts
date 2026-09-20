@@ -20,10 +20,15 @@ export class ReportService {
     return this.http.get<ReportCatalogItem[]>(`${this.baseUrl}/catalog`);
   }
 
-  run(key: string, request: RunReportRequest): Observable<ReportDataSet> {
+  run(key: string, request?: Partial<RunReportRequest>): Observable<ReportDataSet> {
+    const fullRequest: RunReportRequest = {
+      parameters: request?.parameters ?? {},
+      language: request?.language ?? 'en',
+      bengaliNumerals: request?.bengaliNumerals ?? false,
+    };
     return this.http
-      .post<ReportDataSet>(`${this.baseUrl}/${encodeURIComponent(key)}/run`, request)
-      .pipe(tap(() => this.rememberParameters(key, request)));
+      .post<ReportDataSet>(`${this.baseUrl}/${encodeURIComponent(key)}/run`, fullRequest)
+      .pipe(tap(() => this.rememberParameters(key, fullRequest)));
   }
 
   /**
@@ -31,8 +36,17 @@ export class ReportService {
    * The filename comes from Content-Disposition — the server already names the file with the
    * report key and run timestamp, and duplicating that naming here would let the two drift.
    */
-  export(key: string, format: ReportExportFormat, request: RunReportRequest): Observable<HttpResponse<Blob>> {
-    return this.http.post(`${this.baseUrl}/${encodeURIComponent(key)}/export/${format}`, request, {
+  export(
+    key: string,
+    format: ReportExportFormat,
+    request?: Partial<RunReportRequest>
+  ): Observable<HttpResponse<Blob>> {
+    const fullRequest: RunReportRequest = {
+      parameters: request?.parameters ?? {},
+      language: request?.language ?? 'en',
+      bengaliNumerals: request?.bengaliNumerals ?? false,
+    };
+    return this.http.post(`${this.baseUrl}/${encodeURIComponent(key)}/export/${format}`, fullRequest, {
       observe: 'response',
       responseType: 'blob',
     });

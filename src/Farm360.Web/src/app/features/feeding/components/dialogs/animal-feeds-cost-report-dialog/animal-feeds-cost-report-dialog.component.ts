@@ -5,9 +5,11 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
 import { AnimalFeedingPlan } from '../../../models/feeding.models';
 import { FeedingReportPdfService } from '../../../services/feeding-report-pdf.service';
 import { ExportService } from '../../../../../shared/services/export.service';
+import { ReportService } from '../../../../reports/services/report.service';
 
 export interface FeedsCostReportDialogData {
   plans: AnimalFeedingPlan[];
@@ -101,6 +103,12 @@ export interface FeedsCostReportDialogData {
               <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">description</mat-icon> Document Sheet
             </button>
           </div>
+
+          <button type="button" (click)="openSapReport()"
+            matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
+            class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-all flex items-center gap-1 shadow-xs hover:bg-emerald-100">
+            <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">open_in_new</mat-icon> SAP Report
+          </button>
 
           <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors">
             <mat-icon>close</mat-icon>
@@ -455,6 +463,13 @@ export interface FeedsCostReportDialogData {
             <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-teal-600">table_chart</mat-icon> Export CSV
           </button>
 
+          <!-- Excel Export Button -->
+          <button type="button" (click)="exportExcel()"
+            matTooltip="Download Excel spreadsheet"
+            class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5">
+            <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-emerald-600">description</mat-icon> Export Excel
+          </button>
+
           <!-- Print Button -->
           <button type="button" (click)="printReport()"
             matTooltip="Print formatted report via browser"
@@ -483,6 +498,8 @@ export class AnimalFeedsCostReportDialogComponent {
   readonly data = inject<FeedsCostReportDialogData>(MAT_DIALOG_DATA);
   private readonly pdfService = inject(FeedingReportPdfService);
   private readonly exportService = inject(ExportService);
+  private readonly reportService = inject(ReportService);
+  private readonly router = inject(Router);
 
   readonly searchTerm = signal<string>('');
   readonly selectedRuleSetFilter = signal<string>('ALL');
@@ -539,22 +556,49 @@ export class AnimalFeedsCostReportDialogComponent {
     return this.pdfService.calculateReportTotals(this.filteredPlans());
   });
 
-  async downloadPdf(): Promise<void> {
-    if (!this.reportSheetRef) return;
+  openSapReport(): void {
+    this.dialogRef.close();
+    this.router.navigate(['/reports', 'feeding.plans-cost-projection']);
+  }
+
+  downloadPdf(): void {
     this.isExportingPdf.set(true);
 
-    try {
-      const dateStr = new Date().toISOString().split('T')[0];
-      const safeFarmName = (this.data.farmName || 'Farm').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filename = `Farm360_Feeds_Cost_Report_${safeFarmName}_${dateStr}.pdf`;
+    this.reportService.export('feeding.plans-cost-projection', 'pdf', {}).subscribe({
+      next: res => {
+        if (res.body) {
+          const fn = this.reportService.fileNameFrom(res.headers, 'Farm360_Feeding_Plans_Cost_Report.pdf');
+          this.reportService.saveBlob(res.body, fn);
+        }
+        this.isExportingPdf.set(false);
+      },
+      error: async err => {
+        console.warn('Server-side PDF export fallback to HTML renderer:', err);
+        if (this.reportSheetRef) {
+          const dateStr = new Date().toISOString().split('T')[0];
+          const safeFarmName = (this.data.farmName || 'Farm').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const filename = `Farm360_Feeds_Cost_Report_${safeFarmName}_${dateStr}.pdf`;
+          try {
+            await this.pdfService.downloadPdfFromHtml(this.reportSheetRef.nativeElement, filename);
+          } catch (pdfErr) {
+            console.error('HTML PDF export error:', pdfErr);
+          }
+        }
+        this.isExportingPdf.set(false);
+      }
+    });
+  }
 
-      // Render through html2canvas for 100% native Unicode Bengali & English rendering
-      await this.pdfService.downloadPdfFromHtml(this.reportSheetRef.nativeElement, filename);
-    } catch (err) {
-      console.error('Error generating PDF:', err);
-    } finally {
-      this.isExportingPdf.set(false);
-    }
+  exportExcel(): void {
+    this.reportService.export('feeding.plans-cost-projection', 'xlsx', {}).subscribe({
+      next: res => {
+        if (res.body) {
+          const fn = this.reportService.fileNameFrom(res.headers, 'Farm360_Feeding_Plans_Cost_Report.xlsx');
+          this.reportService.saveBlob(res.body, fn);
+        }
+      },
+      error: err => console.error('Excel export error:', err)
+    });
   }
 
   printReport(): void {

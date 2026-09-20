@@ -79,11 +79,18 @@ export interface RuleSetGroup {
           </button>
         </div>
 
-        <!-- PDF Feeds & Cost Report Button -->
-        <button (click)="openFeedsCostReportDialog()"
-          matTooltip="Preview and export animal-wise feeds report with costs (PDF, Print, CSV)"
+        <!-- SAP Feeds & Cost Report Button -->
+        <a routerLink="/reports/feeding.plans-cost-projection"
+          matTooltip="Open enterprise SAP Report with server-side vector PDF, Excel, and CSV export"
           class="px-3.5 py-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">picture_as_pdf</mat-icon> Feeds & Cost Report
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">assessment</mat-icon> SAP Cost Report
+        </a>
+
+        <!-- Quick Feeds & Cost Report Modal Button -->
+        <button (click)="openFeedsCostReportDialog()"
+          matTooltip="Quick view animal-wise feeds modal (Print & CSV)"
+          class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">picture_as_pdf</mat-icon> Quick Modal
         </button>
 
         <button (click)="openCreateRuleSetDialog()"

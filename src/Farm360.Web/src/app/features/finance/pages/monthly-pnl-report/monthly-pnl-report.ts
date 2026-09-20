@@ -12,6 +12,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { ReportService } from '../../../reports/services/report.service';
 
 @Component({
   selector: 'app-monthly-pnl-report',
@@ -46,10 +47,21 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
             <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
           </select>
         </form>
+        <a mat-stroked-button routerLink="/reports/finance.monthly-pnl"
+          matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
+          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
+          <span>SAP Report</span>
+        </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
           <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+        </button>
+        <button mat-stroked-button (click)="exportExcel()" [disabled]="!reportData()"
+          class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">file_download</mat-icon>
+          <span>Excel</span>
         </button>
       </div>
     </app-page-header>
@@ -157,11 +169,12 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MonthlyPnlReportComponent implements OnInit {
-  private financeService = inject(FinanceService);
-  private workingContextService = inject(WorkingContextService);
-  private pdfExportService = inject(PdfExportService);
-  private fb = inject(FormBuilder);
-  private destroyRef = inject(DestroyRef);
+  private readonly financeService = inject(FinanceService);
+  private readonly workingContextService = inject(WorkingContextService);
+  private readonly pdfExportService = inject(PdfExportService);
+  private readonly reportService = inject(ReportService);
+  private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -236,41 +249,84 @@ export class MonthlyPnlReportComponent implements OnInit {
   }
 
   async exportPdf(): Promise<void> {
-    const el = this.reportSheet?.nativeElement;
-    if (!el) return;
-
-    const report = this.reportData();
-    const farm = this.workingContextService.currentFarmValue;
-    const org = this.workingContextService.currentOrgValue;
+    const farmId = this.workingContextService.currentFarmValue?.id;
     const year = this.filterForm.value.year || this.currentYear;
     const monthVal = Number(this.filterForm.value.month) || (new Date().getMonth() + 1);
     const monthObj = this.months.find(m => m.value === monthVal);
-    const monthLabel = monthObj ? monthObj.label : `Month ${monthVal}`;
+    const monthLabel = monthObj ? monthObj.label : `Month_${monthVal}`;
 
     this.isExporting.set(true);
-    try {
-      await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Monthly_PnL_${year}_${monthLabel}`,
-        orientation: 'landscape',
-        header: {
-          title: 'Monthly Profit & Loss Statement',
-          subtitle: `Income & Expense Breakdown for ${monthLabel} ${year}`,
-          farmName: farm?.name || 'Primary Farm',
-          orgName: org?.name || 'Farm360 Enterprise',
-          dateRange: `Period: ${monthLabel} ${year}`,
-          currency: 'BDT (৳)',
-          metaFields: [
-            { label: 'Total Income', value: `৳ ${(report?.totalIncomeBdt || 0).toLocaleString()}` },
-            { label: 'Total Expense', value: `৳ ${(report?.totalExpenseBdt || 0).toLocaleString()}` },
-            { label: 'Net Profit', value: `৳ ${(report?.netProfitBdt || 0).toLocaleString()}` }
-          ]
-        },
-        showSignatures: true
-      });
-    } catch (err) {
-      console.error('Failed to export Monthly P&L PDF:', err);
-    } finally {
-      this.isExporting.set(false);
-    }
+
+    this.reportService.export('finance.monthly-pnl', 'pdf', {
+      parameters: {
+        farmId: farmId || null,
+        year: year.toString(),
+        month: monthVal.toString()
+      }
+    }).subscribe({
+      next: res => {
+        if (res.body) {
+          const fn = this.reportService.fileNameFrom(res.headers, `Farm360_Monthly_PnL_${year}_${monthLabel}.pdf`);
+          this.reportService.saveBlob(res.body, fn);
+        }
+        this.isExporting.set(false);
+      },
+      error: async err => {
+        console.warn('Server-side PDF export fallback to client-side renderer:', err);
+        const el = this.reportSheet?.nativeElement;
+        if (el) {
+          const report = this.reportData();
+          const farm = this.workingContextService.currentFarmValue;
+          const org = this.workingContextService.currentOrgValue;
+          try {
+            await this.pdfExportService.exportElement(el, {
+              filename: `Farm360_Monthly_PnL_${year}_${monthLabel}`,
+              orientation: 'landscape',
+              header: {
+                title: 'Monthly Profit & Loss Statement',
+                subtitle: `Income & Expense Breakdown for ${monthLabel} ${year}`,
+                farmName: farm?.name || 'Primary Farm',
+                orgName: org?.name || 'Farm360 Enterprise',
+                dateRange: `Period: ${monthLabel} ${year}`,
+                currency: 'BDT (৳)',
+                metaFields: [
+                  { label: 'Total Income', value: `৳ ${(report?.totalIncomeBdt || 0).toLocaleString()}` },
+                  { label: 'Total Expense', value: `৳ ${(report?.totalExpenseBdt || 0).toLocaleString()}` },
+                  { label: 'Net Profit', value: `৳ ${(report?.netProfitBdt || 0).toLocaleString()}` }
+                ]
+              },
+              showSignatures: true
+            });
+          } catch (clientErr) {
+            console.error('Client PDF export failed:', clientErr);
+          }
+        }
+        this.isExporting.set(false);
+      }
+    });
+  }
+
+  exportExcel(): void {
+    const farmId = this.workingContextService.currentFarmValue?.id;
+    const year = this.filterForm.value.year || this.currentYear;
+    const monthVal = Number(this.filterForm.value.month) || (new Date().getMonth() + 1);
+    const monthObj = this.months.find(m => m.value === monthVal);
+    const monthLabel = monthObj ? monthObj.label : `Month_${monthVal}`;
+
+    this.reportService.export('finance.monthly-pnl', 'xlsx', {
+      parameters: {
+        farmId: farmId || null,
+        year: year.toString(),
+        month: monthVal.toString()
+      }
+    }).subscribe({
+      next: res => {
+        if (res.body) {
+          const fn = this.reportService.fileNameFrom(res.headers, `Farm360_Monthly_PnL_${year}_${monthLabel}.xlsx`);
+          this.reportService.saveBlob(res.body, fn);
+        }
+      },
+      error: err => console.error('Failed to export Excel:', err)
+    });
   }
 }
