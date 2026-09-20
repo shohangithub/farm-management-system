@@ -344,7 +344,7 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
                 CrudeProteinGrams: cpGrams,
                 UnitCostBdt: a.UnitCostBdtPerKg,
                 TotalCostBdt: a.AllocatedCostBdt,
-                Notes: entry?.AdjustmentReason ?? string.Empty));
+                Notes: entry.AdjustmentReason ?? string.Empty));
         }
 
         return rows
