@@ -1,4 +1,5 @@
 using Farm360.Domain.Feeding;
+using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
 using Farm360.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -179,6 +180,24 @@ public sealed class DailyFeedingEntryRepository : IDailyFeedingEntryRepository
         return await _dbContext.DailyFeedingEntries
             .Where(e => e.TenantId == tenantId && planIds.Contains(e.FeedingPlanId))
             .OrderByDescending(e => e.EntryDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<DailyFeedingEntry>> GetPendingEntriesByPlanIdAndDateAsync(Guid tenantId, Guid planId, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.DailyFeedingEntries
+            .Where(e => e.TenantId == tenantId && e.FeedingPlanId == planId && e.EntryDate == date && e.Status == DailyFeedingEntryStatus.Pending)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<DailyFeedingEntry>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.Distinct().ToList();
+        if (idList.Count == 0) return Array.Empty<DailyFeedingEntry>();
+
+        return await _dbContext.DailyFeedingEntries
+            .AsNoTracking()
+            .Where(e => idList.Contains(e.Id))
             .ToListAsync(cancellationToken);
     }
 

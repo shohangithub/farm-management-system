@@ -21,6 +21,16 @@ public interface IAnimalFeedAllocationRepository
         DateOnly to,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Allocations for a farm within a date range with optional filters for animal, batch, and shed.</summary>
+    Task<IReadOnlyList<AnimalFeedAllocation>> GetByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        Guid? animalId = null,
+        Guid? batchId = null,
+        Guid? shedId = null,
+        CancellationToken cancellationToken = default);
+
     Task<AnimalFeedTotals> GetTotalsForAnimalAsync(
         Guid animalId,
         DateOnly from,

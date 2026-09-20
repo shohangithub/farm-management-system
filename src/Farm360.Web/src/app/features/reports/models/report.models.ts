@@ -127,8 +127,14 @@ export interface RunReportRequest {
 
 export type ReportExportFormat = 'pdf' | 'xlsx' | 'csv';
 
+function getTodayRange(): string {
+  const today = new Date().toISOString().split('T')[0];
+  return `${today}..${today}`;
+}
+
 /** Presets the server's ReportContext.Range understands. */
 export const DATE_RANGE_PRESETS: ReadonlyArray<{ value: string; label: string }> = [
+  { value: getTodayRange(), label: 'Today' },
   { value: 'current-month', label: 'This month' },
   { value: 'last-month', label: 'Last month' },
   { value: 'last-7-days', label: 'Last 7 days' },

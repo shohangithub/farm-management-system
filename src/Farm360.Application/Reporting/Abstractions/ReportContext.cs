@@ -138,6 +138,7 @@ public sealed class ReportContext
 
     private DateRange? ResolvePreset(string raw) => raw.ToLowerInvariant() switch
     {
+        "today" => new DateRange(Today, Today),
         "current-month" => DateRange.CurrentMonth(Today),
         "last-month" => DateRange.CurrentMonth(Today.AddMonths(-1)),
         "last-7-days" => DateRange.LastDays(Today, 7),

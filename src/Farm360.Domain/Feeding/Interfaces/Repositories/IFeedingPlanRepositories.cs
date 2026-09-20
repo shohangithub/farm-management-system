@@ -36,6 +36,8 @@ public interface IDailyFeedingEntryRepository
     void Update(DailyFeedingEntry entity);
     Task<IReadOnlyList<DailyFeedingEntry>> GetEntriesByDateAsync(Guid tenantId, Guid farmId, DateOnly date, CancellationToken cancellationToken);
     Task<IReadOnlyList<DailyFeedingEntry>> GetEntriesByAnimalIdAsync(Guid tenantId, Guid animalId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<DailyFeedingEntry>> GetPendingEntriesByPlanIdAndDateAsync(Guid tenantId, Guid planId, DateOnly date, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DailyFeedingEntry>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<HashSet<(Guid PlanId, Guid? RuleLineId)>> GetEntryPlanIdsAcrossTenantsByDateAsync(DateOnly date, CancellationToken cancellationToken);
 }
 

@@ -36,6 +36,34 @@ public sealed class AnimalFeedAllocationRepository : IAnimalFeedAllocationReposi
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<AnimalFeedAllocation>> GetByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        Guid? animalId = null,
+        Guid? batchId = null,
+        Guid? shedId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.AnimalFeedAllocations
+            .AsNoTracking()
+            .Where(a => a.FarmId == farmId && a.EntryDate >= from && a.EntryDate <= to);
+
+        if (animalId.HasValue && animalId.Value != Guid.Empty)
+            query = query.Where(a => a.AnimalId == animalId.Value);
+
+        if (batchId.HasValue && batchId.Value != Guid.Empty)
+            query = query.Where(a => a.BatchId == batchId.Value);
+
+        if (shedId.HasValue && shedId.Value != Guid.Empty)
+            query = query.Where(a => a.ShedId == shedId.Value);
+
+        return await query
+            .OrderBy(a => a.EntryDate)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<AnimalFeedTotals> GetTotalsForAnimalAsync(
         Guid animalId,
         DateOnly from,

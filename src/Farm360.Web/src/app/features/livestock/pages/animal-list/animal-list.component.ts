@@ -27,6 +27,7 @@ import { BatchVaccinationDialogComponent, BatchVaccinationDialogData } from '../
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { ReportService } from '../../../reports/services/report.service';
 
 @Component({
   selector: 'app-animal-list',
@@ -46,6 +47,7 @@ export class AnimalListComponent {
   private readonly recentSvc = inject(RecentlyViewedService);
   private readonly exportSvc = inject(ExportService);
   private readonly pdfService = inject(PdfExportService);
+  private readonly reportService = inject(ReportService);
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly isExporting = signal(false);
@@ -122,51 +124,50 @@ export class AnimalListComponent {
 
   refresh(): void { this.refreshTrigger.update(v => v + 1); }
 
-  exportToCsv(): void {
-    const data = this.result()?.items;
-    if (!data || data.length === 0) return;
+  exportReport(reportKey: string, format: 'pdf' | 'xlsx' | 'csv'): void {
+    const farmId = this.contextService.currentFarmValue?.id || this.params().farmId;
+    this.isExporting.set(true);
 
-    const formattedData = data.map(a => ({
-      'Tag ID': a.tagId,
-      'Species': this.speciesLabel(a.species),
-      'Breed': a.breedName,
-      'Sex': this.sexLabel(a.sex),
-      'Status': this.statusLabel(a.status),
-      'Date of Birth': a.dateOfBirth,
-      'Age': this.ageLabel(a.dateOfBirth),
-      'Latest Weight (kg)': a.latestWeightKg || '',
-      'ADG': a.adgKgPerDay || '',
-      'Location': a.shedId ? 'Assigned' : 'Not Assigned'
-    }));
+    const params: Record<string, string | null> = {};
+    if (farmId) {
+      params['farmId'] = farmId;
+    }
+    if (this.params().batchId) {
+      params['batchId'] = this.params().batchId!;
+    }
 
-    this.exportSvc.exportToCsv(formattedData, 'animals_export');
+    this.reportService.export(reportKey, format, { parameters: params }).subscribe({
+      next: (res) => {
+        this.isExporting.set(false);
+        if (res.body) {
+          const farmName = (this.contextService.currentFarmValue?.name || 'All_Units').replace(/[\s\W]+/g, '_');
+          const dateStr = new Date().toISOString().slice(0, 10);
+          const keyShort = reportKey.split('.').pop() || 'report';
+          const defaultName = `Farm360_${keyShort}_${farmName}_${dateStr}.${format}`;
+          const fn = this.reportService.fileNameFrom(res.headers, defaultName);
+          this.reportService.saveBlob(res.body, fn);
+        }
+      },
+      error: (err) => {
+        this.isExporting.set(false);
+        console.error('Failed to export report', err);
+      }
+    });
   }
 
-  async exportPdf(): Promise<void> {
-    const element = document.getElementById('reportSheet');
-    if (!element) return;
+  openInReportCenter(reportKey: string = 'livestock.herd-summary'): void {
+    const farmId = this.contextService.currentFarmValue?.id || this.params().farmId;
+    this.router.navigate([`/reports/${reportKey}`], {
+      queryParams: farmId ? { farmId } : {}
+    });
+  }
 
-    this.isExporting.set(true);
-    try {
-      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
-      await this.pdfService.exportElement(element, {
-        filename: `Livestock_Registry_${new Date().toISOString().slice(0, 10)}`,
-        orientation: 'landscape',
-        header: {
-          title: 'Livestock Herd Registry Report',
-          subtitle: 'Active livestock inventory, pedigree, weights, and lifecycle statuses',
-          farmName,
-          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
-          currency: 'BDT (৳)',
-          metaFields: [
-            { label: 'Total Animals', value: `${this.result()?.totalCount ?? 0}` }
-          ]
-        },
-        showSignatures: true
-      });
-    } finally {
-      this.isExporting.set(false);
-    }
+  exportToCsv(): void {
+    this.exportReport('livestock.herd-summary', 'csv');
+  }
+
+  exportPdf(): void {
+    this.exportReport('livestock.herd-summary', 'pdf');
   }
 
   // ── Filters ───────────────────────────────────────────────────────────────

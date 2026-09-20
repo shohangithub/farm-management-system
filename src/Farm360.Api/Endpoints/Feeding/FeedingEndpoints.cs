@@ -231,6 +231,15 @@ public static class FeedingEndpoints
             return Results.NoContent();
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
 
+        group.MapPost("/plans/sync-weights", async (
+            [FromBody] SyncFeedingPlanWeightsCommand? command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command ?? new SyncFeedingPlanWeightsCommand(), ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
         // ── Daily Feeding Entries ─────────────────────────────────────────────
         group.MapGet("/entries/today", async (
             [FromQuery] Guid? farmId,

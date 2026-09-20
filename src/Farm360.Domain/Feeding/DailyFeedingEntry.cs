@@ -97,4 +97,21 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
         AdjustmentReason = reason;
         ActualKg = 0;
     }
+
+    public void UpdateExpectedQuantity(decimal expectedKg, Guid? ruleLineId = null)
+    {
+        if (Status != DailyFeedingEntryStatus.Pending)
+            return;
+
+        ExpectedKg = expectedKg;
+        if (ruleLineId.HasValue)
+        {
+            RuleLineId = ruleLineId.Value;
+        }
+
+        if (UnitCostAtConsumptionBdt.HasValue)
+        {
+            TotalCostBdt = Math.Round(expectedKg * UnitCostAtConsumptionBdt.Value, 2);
+        }
+    }
 }

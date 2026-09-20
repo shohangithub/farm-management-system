@@ -11,17 +11,20 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
 {
     private readonly IAnimalFeedingPlanRepository _planRepository;
     private readonly IFeedingRuleSetRepository _ruleSetRepository;
+    private readonly IDailyFeedingEntryRepository _entryRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<WeightRecordedEventHandler> _logger;
 
     public WeightRecordedEventHandler(
         IAnimalFeedingPlanRepository planRepository, 
         IFeedingRuleSetRepository ruleSetRepository,
+        IDailyFeedingEntryRepository entryRepository,
         IUnitOfWork unitOfWork,
         ILogger<WeightRecordedEventHandler> logger)
     {
         _planRepository = planRepository;
         _ruleSetRepository = ruleSetRepository;
+        _entryRepository = entryRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -31,15 +34,28 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
         var plans = await _planRepository.GetActivePlansForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
         if (plans.Count == 0) return;
 
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
         foreach (var plan in plans)
         {
             var ruleSet = await _ruleSetRepository.GetByIdAsync(plan.FeedingRuleSetId, cancellationToken);
-            if (ruleSet == null || !ruleSet.IsActive) continue;
+            if (ruleSet == null || !ruleSet.IsActive || ruleSet.Lines.Count == 0) continue;
 
             var matchingRule = ruleSet.Lines.FirstOrDefault(l =>
-                notification.WeightKg >= l.WeightFromKg && notification.WeightKg < l.WeightToKg);
+                notification.WeightKg >= l.WeightFromKg && (l.WeightToKg == 0 || notification.WeightKg < l.WeightToKg));
 
-            matchingRule ??= ruleSet.Lines.OrderBy(l => l.WeightFromKg).FirstOrDefault();
+            if (matchingRule == null)
+            {
+                var maxWeightFrom = ruleSet.Lines.Max(l => l.WeightFromKg);
+                if (notification.WeightKg >= maxWeightFrom)
+                {
+                    matchingRule = ruleSet.Lines.OrderByDescending(l => l.WeightFromKg).First();
+                }
+                else
+                {
+                    matchingRule = ruleSet.Lines.OrderBy(l => l.WeightFromKg).First();
+                }
+            }
 
             if (matchingRule != null)
             {
@@ -58,6 +74,14 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
                 );
 
                 _planRepository.Update(plan);
+
+                // Update any pending daily feeding entries for today so rations reflect the new weight immediately
+                var pendingEntries = await _entryRepository.GetPendingEntriesByPlanIdAndDateAsync(notification.TenantId, plan.Id, today, cancellationToken);
+                foreach (var entry in pendingEntries)
+                {
+                    entry.UpdateExpectedQuantity(expectedKg, matchingRule.Id);
+                    _entryRepository.Update(entry);
+                }
             }
         }
 

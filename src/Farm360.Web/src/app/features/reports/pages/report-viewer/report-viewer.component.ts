@@ -185,6 +185,18 @@ export class ReportViewerComponent implements OnInit {
         if (remembered) {
           this.language.set(remembered.language);
         }
+
+        if (queryParams.get('autoRun') === 'true' || queryParams.get('autoRun') === '1') {
+          const runParams: Record<string, string | null> = {};
+          for (const p of found.parameters) {
+            runParams[p.name] = params[p.name] || p.defaultValue || null;
+          }
+          this.run({
+            parameters: runParams,
+            language: this.language(),
+            bengaliNumerals: false
+          });
+        }
       },
       error: () => this.error.set('Could not load the report definition.'),
     });

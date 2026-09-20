@@ -668,5 +668,17 @@ select.form-control {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  #reportSheet {
+    display: none !important;
+  }
+
+  #dossierPrintSheet {
+    display: block !important;
+    position: static !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+  }
 }
 

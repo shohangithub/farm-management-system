@@ -116,7 +116,7 @@ public sealed class AnimalCommandHandlerTests
         var animal = CreateAnimal();
         _repo.GetByIdWithWeightsAsync(animal.Id, Arg.Any<CancellationToken>()).Returns(animal);
 
-        var handler = new RecordWeightCommandHandler(_repo, _uow, _currentUser);
+        var handler = new RecordWeightCommandHandler(_repo, _uow, _currentUser, _publisher);
         var command = new RecordWeightCommand(animal.Id, 280m, new DateOnly(2025, 6, 1), null);
 
         var result = await handler.Handle(command, CancellationToken.None);
@@ -132,7 +132,7 @@ public sealed class AnimalCommandHandlerTests
         _repo.GetByIdWithWeightsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
              .ReturnsNull();
 
-        var handler = new RecordWeightCommandHandler(_repo, _uow, _currentUser);
+        var handler = new RecordWeightCommandHandler(_repo, _uow, _currentUser, _publisher);
         var command = new RecordWeightCommand(Guid.NewGuid(), 280m, new DateOnly(2025, 6, 1), null);
 
         var act = async () => await handler.Handle(command, CancellationToken.None);

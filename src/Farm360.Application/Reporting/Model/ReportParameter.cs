@@ -44,6 +44,9 @@ public sealed record ReportParameter(
     public static ReportParameter Farm(string name = "farmId", bool required = false) =>
         new(name, new LocalizedText("Farm", "খামার"), ReportParameterType.Farm, required);
 
+    public static ReportParameter Shed(string name = "shedId", bool required = false) =>
+        new(name, new LocalizedText("Shed", "শেড"), ReportParameterType.Shed, required);
+
     /// <summary>
     /// A from/to pair. The client sends "yyyy-MM-dd..yyyy-MM-dd"; <see cref="ReportContext.Range"/>
     /// parses it. Default may be a preset keyword ("current-month", "last-30-days", "current-year").

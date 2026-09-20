@@ -5,11 +5,79 @@
   primaryActionIcon="add"
   (primaryAction)="onRegister()">
   <div actions class="flex items-center gap-2 no-print">
-    <button (click)="exportPdf()" [disabled]="isExporting() || loading() || !result()?.items?.length"
-      class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
-      {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+    <!-- SAP Master Report Export Dropdown -->
+    <button 
+      [matMenuTriggerFor]="exportMenu" 
+      [disabled]="isExporting() || loading() || !result()?.items?.length"
+      class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-750 rounded-xl transition-all shadow-xs inline-flex items-center gap-2 disabled:opacity-50">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400" [class.animate-spin]="isExporting()">
+        {{ isExporting() ? 'sync' : 'ios_share' }}
+      </mat-icon>
+      <span>{{ isExporting() ? 'Exporting...' : 'Export' }}</span>
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400">arrow_drop_down</mat-icon>
     </button>
+
+    <mat-menu #exportMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
+      <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        Herd Master Reports
+      </div>
+      <button mat-menu-item [matMenuTriggerFor]="herdSummarySubmenu" class="!rounded-xl">
+        <mat-icon class="!text-emerald-600">assessment</mat-icon>
+        <div class="flex flex-col text-left">
+          <span class="font-medium text-xs">Herd Master Summary (P&L, Costs)</span>
+          <span class="text-[10px] text-gray-400 dark:text-gray-500">Full register: Weights, ADG, feed & valuation</span>
+        </div>
+      </button>
+
+      <button mat-menu-item [matMenuTriggerFor]="herdRegisterSubmenu" class="!rounded-xl">
+        <mat-icon class="!text-blue-600">format_list_bulleted</mat-icon>
+        <div class="flex flex-col text-left">
+          <span class="font-medium text-xs">Standard Herd Register</span>
+          <span class="text-[10px] text-gray-400 dark:text-gray-500">Inventory list: Tag, breed, age & status</span>
+        </div>
+      </button>
+
+      <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
+      <button mat-menu-item (click)="openInReportCenter('livestock.herd-summary')" class="!rounded-xl">
+        <mat-icon class="!text-purple-500">visibility</mat-icon>
+        <span class="text-xs">Open in Report Center</span>
+      </button>
+    </mat-menu>
+
+    <!-- Herd Summary Submenu -->
+    <mat-menu #herdSummarySubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
+      <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Summary Format</div>
+      <button mat-menu-item (click)="exportReport('livestock.herd-summary', 'pdf')" [disabled]="isExporting()" class="!rounded-xl">
+        <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
+        <span class="text-xs">PDF Document</span>
+      </button>
+      <button mat-menu-item (click)="exportReport('livestock.herd-summary', 'xlsx')" [disabled]="isExporting()" class="!rounded-xl">
+        <mat-icon class="!text-emerald-600">table_chart</mat-icon>
+        <span class="text-xs">Excel Spreadsheet (.xlsx)</span>
+      </button>
+      <button mat-menu-item (click)="exportReport('livestock.herd-summary', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
+        <mat-icon class="!text-blue-500">article</mat-icon>
+        <span class="text-xs">CSV Data File</span>
+      </button>
+    </mat-menu>
+
+    <!-- Standard Register Submenu -->
+    <mat-menu #herdRegisterSubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
+      <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Register Format</div>
+      <button mat-menu-item (click)="exportReport('livestock.herd-register', 'pdf')" [disabled]="isExporting()" class="!rounded-xl">
+        <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
+        <span class="text-xs">PDF Document</span>
+      </button>
+      <button mat-menu-item (click)="exportReport('livestock.herd-register', 'xlsx')" [disabled]="isExporting()" class="!rounded-xl">
+        <mat-icon class="!text-emerald-600">table_chart</mat-icon>
+        <span class="text-xs">Excel Spreadsheet (.xlsx)</span>
+      </button>
+      <button mat-menu-item (click)="exportReport('livestock.herd-register', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
+        <mat-icon class="!text-blue-500">article</mat-icon>
+        <span class="text-xs">CSV Data File</span>
+      </button>
+    </mat-menu>
+
   </div>
 </app-page-header>
 
@@ -91,16 +159,6 @@
 
         <button *ngIf="hasActiveFilters()" (click)="clearFilters()" class="text-sm font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 transition-colors">
           Clear
-        </button>
-
-        <!-- Export Buttons -->
-        <button (click)="exportPdf()" [disabled]="isExporting() || loading() || !result()?.items?.length" class="text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1 disabled:opacity-50">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
-          {{ isExporting() ? 'Exporting...' : 'PDF' }}
-        </button>
-        <button (click)="exportToCsv()" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">download</mat-icon>
-          CSV
         </button>
       </div>
     </div>

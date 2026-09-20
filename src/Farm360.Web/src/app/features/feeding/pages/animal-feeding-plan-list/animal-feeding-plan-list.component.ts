@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin, of, switchMap } from 'rxjs';
@@ -40,6 +41,7 @@ export interface RuleSetGroup {
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
+    MatMenuModule,
     MatTooltipModule,
     PageHeaderComponent,
     EmptyStateComponent,
@@ -56,51 +58,84 @@ export interface RuleSetGroup {
       title="Animal Feeding Plans"
       description="View and manage animal feeding allocations grouped by rule sets, edit formulas, and enroll cattle."
       breadcrumbActiveNode="Feeding Plans">
-      <div actions class="flex items-center gap-2.5">
+      <div actions class="flex items-center gap-2 flex-wrap xl:flex-nowrap shrink-0">
         <!-- View Mode Switcher -->
-        <div class="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+        <div class="inline-flex items-center h-9 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200/80 dark:border-gray-700/80 shrink-0">
           <button type="button" (click)="viewMode.set('grouped')"
             [class.bg-white]="viewMode() === 'grouped'"
             [class.dark:bg-gray-700]="viewMode() === 'grouped'"
             [class.text-emerald-700]="viewMode() === 'grouped'"
             [class.dark:text-emerald-400]="viewMode() === 'grouped'"
-            [class.shadow-sm]="viewMode() === 'grouped'"
-            class="px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all flex items-center gap-1.5">
-            <mat-icon class="!w-4 !h-4 !text-[16px]">view_agenda</mat-icon> Grouped by Rule
+            [class.shadow-xs]="viewMode() === 'grouped'"
+            class="h-7 px-2.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+            <mat-icon class="!w-3.5 !h-3.5 !text-[15px]">view_agenda</mat-icon>
+            <span>Grouped</span>
           </button>
           <button type="button" (click)="viewMode.set('table')"
             [class.bg-white]="viewMode() === 'table'"
             [class.dark:bg-gray-700]="viewMode() === 'table'"
             [class.text-emerald-700]="viewMode() === 'table'"
             [class.dark:text-emerald-400]="viewMode() === 'table'"
-            [class.shadow-sm]="viewMode() === 'table'"
-            class="px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all flex items-center gap-1.5">
-            <mat-icon class="!w-4 !h-4 !text-[16px]">table_rows</mat-icon> Flat Table
+            [class.shadow-xs]="viewMode() === 'table'"
+            class="h-7 px-2.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+            <mat-icon class="!w-3.5 !h-3.5 !text-[15px]">table_rows</mat-icon>
+            <span>Table</span>
           </button>
         </div>
 
-        <!-- SAP Feeds & Cost Report Button -->
-        <a routerLink="/reports/feeding.plans-cost-projection"
-          matTooltip="Open enterprise SAP Report with server-side vector PDF, Excel, and CSV export"
-          class="px-3.5 py-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">assessment</mat-icon> SAP Cost Report
-        </a>
-
-        <!-- Quick Feeds & Cost Report Modal Button -->
-        <button (click)="openFeedsCostReportDialog()"
-          matTooltip="Quick view animal-wise feeds modal (Print & CSV)"
-          class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">picture_as_pdf</mat-icon> Quick Modal
+        <!-- Reports Dropdown Menu (SAP & Modal) -->
+        <button [matMenuTriggerFor]="reportsMenu"
+          class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">assessment</mat-icon>
+          <span>Reports</span>
+          <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-emerald-600/70 -mr-0.5">expand_more</mat-icon>
         </button>
 
+        <mat-menu #reportsMenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
+          <a mat-menu-item routerLink="/reports/feeding.daily-workflow" class="!rounded-xl">
+            <mat-icon class="text-teal-600">fact_check</mat-icon>
+            <div class="flex flex-col text-left py-0.5">
+              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">Daily Feeding & Workflow (SAP)</span>
+              <span class="text-[11px] text-gray-400">Animal-wise daily history, DM, Protein, Cost & Status</span>
+            </div>
+          </a>
+          <a mat-menu-item routerLink="/reports/feeding.plans-cost-projection" class="!rounded-xl">
+            <mat-icon class="text-emerald-600">assessment</mat-icon>
+            <div class="flex flex-col text-left py-0.5">
+              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">Plans & Cost Projections (SAP)</span>
+              <span class="text-[11px] text-gray-400">Ration allocations and 30-day cost forecasts</span>
+            </div>
+          </a>
+          <button mat-menu-item (click)="openFeedsCostReportDialog()" class="!rounded-xl">
+            <mat-icon class="text-blue-600">picture_as_pdf</mat-icon>
+            <div class="flex flex-col text-left py-0.5">
+              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">Quick Feeds Modal</span>
+              <span class="text-[11px] text-gray-400">Printable modal overview dialog</span>
+            </div>
+          </button>
+        </mat-menu>
+
+        <!-- New Rule Set Button -->
         <button (click)="openCreateRuleSetDialog()"
-          class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">tune</mat-icon> New Rule Set
+          class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-500">tune</mat-icon>
+          <span>New Rule Set</span>
         </button>
 
+        <!-- Sync Weights Button -->
+        <button (click)="syncPlanWeights()"
+          [disabled]="isSyncing()"
+          matTooltip="Synchronize all active plans with animals' latest recorded weights"
+          class="h-9 px-3 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50">
+          <mat-icon [class.animate-spin]="isSyncing()" class="!text-[16px] !w-[16px] !h-[16px] text-teal-600 dark:text-teal-400">sync</mat-icon>
+          <span>{{ isSyncing() ? 'Syncing...' : 'Sync Weights' }}</span>
+        </button>
+
+        <!-- Assign Plan Primary Button -->
         <button (click)="openAssignDialog()"
-          class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5 shadow-emerald-500/20">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Assign Plan
+          class="h-9 px-3.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm shadow-emerald-500/20 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon>
+          <span>Assign Plan</span>
         </button>
       </div>
     </app-page-header>
@@ -374,6 +409,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isLoading = signal(true);
+  readonly isSyncing = signal(false);
   readonly plans = signal<AnimalFeedingPlan[]>([]);
   readonly ruleSets = signal<FeedingRuleSet[]>([]);
   readonly searchTerm = signal<string>('');
@@ -498,6 +534,32 @@ export class AnimalFeedingPlanListComponent implements OnInit {
           this.isLoading.set(false);
         },
         error: () => this.isLoading.set(false)
+      });
+  }
+
+  syncPlanWeights(): void {
+    const farmId = this.contextService.currentFarmValue?.id;
+    this.isSyncing.set(true);
+    this.feedingService.syncPlanWeights(farmId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.isSyncing.set(false);
+          this.snackBar.open(
+            `Synchronized ${res.updatedPlans} of ${res.totalActivePlans} feeding plans (${res.updatedEntriesCount} pending daily entries updated)`,
+            'Close',
+            { duration: 4000 }
+          );
+          this.loadData();
+        },
+        error: (err) => {
+          this.isSyncing.set(false);
+          this.snackBar.open(
+            err.error?.message || 'Failed to sync feeding plan weights',
+            'Close',
+            { duration: 4000 }
+          );
+        }
       });
   }
 

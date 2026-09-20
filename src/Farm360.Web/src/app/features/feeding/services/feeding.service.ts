@@ -157,6 +157,13 @@ export class FeedingService {
     });
   }
 
+  syncPlanWeights(farmId?: string, animalId?: string): Observable<{ totalActivePlans: number; updatedPlans: number; updatedEntriesCount: number }> {
+    return this.http.post<{ totalActivePlans: number; updatedPlans: number; updatedEntriesCount: number }>(
+      `${this.baseUrl}/plans/sync-weights`,
+      { farmId, animalId }
+    );
+  }
+
   // ── Daily Feeding Entries ──
   getTodayEntries(farmId?: string, targetDate?: string): Observable<DailyFeedingEntry[]> {
     let params = new HttpParams();

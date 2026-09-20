@@ -256,7 +256,8 @@ public sealed class RecordWeightCommandValidator : AbstractValidator<RecordWeigh
 public sealed class RecordWeightCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser) : IRequestHandler<RecordWeightCommand, WeightRecordDto>
+    ICurrentUserService currentUser,
+    IPublisher publisher) : IRequestHandler<RecordWeightCommand, WeightRecordDto>
 {
     public async Task<WeightRecordDto> Handle(RecordWeightCommand request, CancellationToken cancellationToken)
     {
@@ -267,6 +268,13 @@ public sealed class RecordWeightCommandHandler(
         var record = animal.RecordWeight(weight, request.RecordedDate, currentUser.UserId ?? Guid.Empty, request.Notes);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var domainEvents = animal.DomainEvents.ToList();
+        animal.ClearDomainEvents();
+        foreach (var domainEvent in domainEvents)
+        {
+            await publisher.Publish(domainEvent, cancellationToken);
+        }
 
         return record.ToDto();
     }

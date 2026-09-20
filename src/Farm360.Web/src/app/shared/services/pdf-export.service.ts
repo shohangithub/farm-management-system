@@ -70,6 +70,14 @@ export class PdfExportService {
         clonedEl.style.color = '#0f172a';
         clonedEl.style.padding = clonedEl.style.padding || '24px';
         clonedEl.style.borderRadius = '0px';
+        clonedEl.style.position = 'static';
+        clonedEl.style.left = '0';
+        clonedEl.style.top = '0';
+        clonedEl.style.display = 'block';
+        clonedEl.style.visibility = 'visible';
+
+        // Clean up any residual interactive elements, tab headers or controls in clone
+        clonedEl.querySelectorAll('.mat-mdc-tab-header, .no-print, [data-no-print]').forEach(el => el.remove());
 
         // 3. Optional: Inject Farm360 branded letterhead at top
         if (options?.header) {

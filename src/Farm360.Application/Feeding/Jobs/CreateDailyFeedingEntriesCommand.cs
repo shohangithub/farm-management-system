@@ -133,14 +133,45 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
 
             decimal currentWeight = plan.TriggeredByWeightKg ?? 0;
 
+            if (plan.AnimalId.HasValue)
+            {
+                var animal = await _animalRepository.GetByIdAsync(plan.AnimalId.Value, cancellationToken);
+                if (animal?.LatestWeightKg != null && animal.LatestWeightKg.Value > 0)
+                {
+                    currentWeight = animal.LatestWeightKg.Value;
+                }
+            }
+
             var matchingRules = ruleSet.Lines
-                .Where(l => currentWeight >= l.WeightFromKg && currentWeight < l.WeightToKg)
+                .Where(l => currentWeight >= l.WeightFromKg && (l.WeightToKg == 0 || currentWeight < l.WeightToKg))
                 .ToList();
 
             if (matchingRules.Count == 0 && ruleSet.Lines.Count > 0)
             {
-                var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
-                matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
+                var maxWeight = ruleSet.Lines.Max(l => l.WeightFromKg);
+                if (currentWeight >= maxWeight)
+                {
+                    matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == maxWeight).ToList();
+                }
+                else
+                {
+                    var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
+                    matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
+                }
+            }
+
+            // Keep the plan's cached rule and triggered weight updated if changed
+            var primaryRule = matchingRules.FirstOrDefault();
+            if (primaryRule != null && plan.AnimalId.HasValue && currentWeight > 0 && plan.TriggeredByWeightKg != currentWeight)
+            {
+                decimal expKg = primaryRule.ConcentrateKgPerDay;
+                if (ruleSet.PlanType == FeedingPlanType.WeightPercentage)
+                {
+                    expKg = (currentWeight * primaryRule.ConcentrateKgPerDay) / 100m;
+                }
+
+                plan.UpdateCurrentRule(primaryRule.Id, currentWeight, expKg, primaryRule.RoughageKgPerDay);
+                _planRepository.Update(plan);
             }
 
             foreach (var ruleLine in matchingRules)

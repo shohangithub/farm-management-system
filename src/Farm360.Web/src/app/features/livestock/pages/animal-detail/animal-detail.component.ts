@@ -8,6 +8,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { AnimalService } from '../../services/animal.service';
 import { ShedService } from '../../../farms/services/shed.service';
 import { PenService } from '../../../farms/services/pen.service';
+import { BreedService } from '../../services/breed.service';
 import { HealthService } from '../../../health/services/health.service';
 import { FinanceService } from '../../../finance/services/finance.service';
 import { ShedList } from '../../../farms/models/shed.model';
@@ -55,6 +56,7 @@ import { FeedingService } from '../../../feeding/services/feeding.service';
 import { AnimalFeedingSummary, DailyFeedingEntryStatus } from '../../../feeding/models/feeding.models';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { ReportService } from '../../../reports/services/report.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -85,6 +87,8 @@ export class AnimalDetailComponent {
   private readonly recentSvc = inject(RecentlyViewedService);
   private readonly pdfService = inject(PdfExportService);
   private readonly contextService = inject(WorkingContextService);
+  private readonly reportService = inject(ReportService);
+  private readonly breedSvc = inject(BreedService);
 
   readonly isExporting = signal(false);
   readonly AnimalStatus = AnimalStatus;
@@ -117,6 +121,7 @@ export class AnimalDetailComponent {
             // Parallel fetch related data
             return forkJoin({
               animal: of(animal),
+              breedName: animal.breedId ? this.breedSvc.getBreedById(animal.breedId).pipe(map(b => b.name), catchError(() => of(null))) : of(null),
               ledger: animal.farmId ? this.financeSvc.getAnimalCostLedger(animal.farmId, animal.id).pipe(catchError(() => of(null))) : of(null),
               healthHistory: this.healthSvc.getAnimalHealthHistory(animal.id).pipe(catchError(() => of(null))),
               feedingSummary: this.feedingSvc.getAnimalFeedingSummary(animal.id).pipe(catchError(() => of(null))),
@@ -129,13 +134,16 @@ export class AnimalDetailComponent {
               tap(result => {
                 // Add to recently viewed
                 if (result.animal) {
+                  if (result.breedName) {
+                    result.animal.breedName = result.breedName;
+                  }
                   this.recentSvc.add({
                     id: result.animal.id,
                     tagId: result.animal.tagId,
                     tagType: result.animal.tagType,
                     species: result.animal.species,
                     breedId: result.animal.breedId,
-                    breedName: result.animal.breedName,
+                    breedName: result.breedName || result.animal.breedName || '',
                     sex: result.animal.sex,
                     dateOfBirth: result.animal.dateOfBirth,
                     status: result.animal.status,
@@ -191,6 +199,44 @@ export class AnimalDetailComponent {
   readonly farmName = computed(() => this.animalDataResult()?.farmName ?? null);
   readonly shedName = computed(() => this.animalDataResult()?.shedName ?? null);
   readonly penName = computed(() => this.animalDataResult()?.penName ?? null);
+  readonly breedName = computed(() => this.animalDataResult()?.breedName || this.animal()?.breedName || '');
+
+  readonly sortedWeightsDesc = computed(() => {
+    const records = this.animal()?.weightRecords ?? [];
+    return [...records].sort((a, b) => b.recordedDate.localeCompare(a.recordedDate));
+  });
+
+  readonly recentWeightsTable = computed(() => {
+    return this.sortedWeightsDesc().slice(0, 5);
+  });
+
+  readonly weightChartSvg = computed(() => {
+    const records = this.animal()?.weightRecords ?? [];
+    if (records.length < 2) return null;
+    const sorted = [...records].sort((a, b) => a.recordedDate.localeCompare(b.recordedDate));
+    const width = 450;
+    const height = 110;
+    const padX = 35;
+    const padY = 22;
+
+    const weights = sorted.map(r => r.weightKg);
+    const minW = Math.min(...weights);
+    const maxW = Math.max(...weights);
+    const range = maxW - minW || 1;
+
+    const points = sorted.map((r, i) => {
+      const x = padX + (i / (sorted.length - 1)) * (width - padX * 2);
+      const y = height - padY - ((r.weightKg - minW) / range) * (height - padY * 2);
+      return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, weight: r.weightKg, date: r.recordedDate };
+    });
+
+    const polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+    const areaPath = `M ${points[0].x},${height - 10} ` + 
+                     points.map(p => `L ${p.x},${p.y}`).join(' ') + 
+                     ` L ${points[points.length - 1].x},${height - 10} Z`;
+
+    return { points, polylinePoints, areaPath, minW, maxW, width, height };
+  });
 
   readonly feedingStatusFilter = signal<string>('ALL');
   readonly filteredFeedingEntries = computed(() => {
@@ -623,33 +669,87 @@ export class AnimalDetailComponent {
   }
 
   async exportDossierPdf(): Promise<void> {
-    const element = document.getElementById('reportSheet');
+    const element = document.getElementById('dossierPrintSheet');
     const a = this.animal();
     if (!element || !a) return;
 
     this.isExporting.set(true);
+    element.style.display = 'block';
+    element.style.position = 'fixed';
+    element.style.left = '-99999px';
+    element.style.top = '0';
+    element.style.width = '1000px';
+
     try {
       const tag = a.tagId || 'Animal';
-      const farmName = this.contextService.currentFarmValue?.name || 'Primary Farm';
+      const farmName = this.farmName() || this.contextService.currentFarmValue?.name || 'Primary Farm';
       await this.pdfService.exportElement(element, {
         filename: `Animal_Dossier_${tag}_${new Date().toISOString().slice(0, 10)}`,
         orientation: 'portrait',
+        format: 'a4',
+        scale: 2,
+        quality: 0.95,
         header: {
           title: `Livestock Dossier: ${tag}`,
-          subtitle: `Species: ${this.speciesLabel(a.species)} | Breed: ${a.breedName} | Sex: ${this.sexLabel(a.sex)}`,
+          subtitle: `Species: ${this.speciesLabel(a.species)} | Breed: ${this.breedName() || 'Standard'} | Sex: ${this.sexLabel(a.sex)}`,
           farmName,
           dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
           currency: 'BDT (৳)',
           metaFields: [
             { label: 'Status', value: this.statusLabel() },
-            { label: 'Tag ID', value: tag }
+            { label: 'Category', value: this.speciesLabel(a.species) }
           ]
         },
         showSignatures: true
       });
+      this.snackBar.open('Animal Dossier exported successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
+    } catch (err) {
+      console.error('Failed to export dossier', err);
+      this.snackBar.open('Failed to generate Dossier PDF.', 'Close', { duration: 4000, panelClass: ['snack-error'] });
     } finally {
+      element.style.display = 'none';
       this.isExporting.set(false);
     }
+  }
+
+  exportAnimalReport(reportKey: string, format: 'pdf' | 'xlsx' | 'csv'): void {
+    const a = this.animal();
+    if (!a) return;
+
+    this.isExporting.set(true);
+    const params: Record<string, string | null> = {
+      animalId: a.id,
+      pricePerKg: this.liveWeightPrice() ? this.liveWeightPrice().toString() : '400'
+    };
+
+    this.reportService.export(reportKey, format, { parameters: params }).subscribe({
+      next: (res) => {
+        this.isExporting.set(false);
+        if (res.body) {
+          const tag = (a.tagId || 'Animal').replace(/[\s\W]+/g, '_');
+          const dateStr = new Date().toISOString().slice(0, 10);
+          const keyShort = reportKey.split('.').pop() || 'report';
+          const defaultName = `Farm360_${tag}_${keyShort}_${dateStr}.${format}`;
+          const fn = this.reportService.fileNameFrom(res.headers, defaultName);
+          this.reportService.saveBlob(res.body, fn);
+          this.snackBar.open('Report exported successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
+        }
+      },
+      error: (err) => {
+        this.isExporting.set(false);
+        console.error('Failed to export report', err);
+        this.snackBar.open('Failed to export report. Please try again.', 'Close', { duration: 4000, panelClass: ['snack-error'] });
+      }
+    });
+  }
+
+  openInReportCenter(reportKey: string = 'livestock.animal-growth'): void {
+    const a = this.animal();
+    if (!a) return;
+
+    this.router.navigate([`/reports/${reportKey}`], {
+      queryParams: { animalId: a.id }
+    });
   }
 
   private handleError(err: any): void {

@@ -217,9 +217,20 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                 }
 
                 var matchingRule = ruleSet.Lines.FirstOrDefault(l =>
-                    currentWeight >= l.WeightFromKg && currentWeight < l.WeightToKg);
+                    currentWeight >= l.WeightFromKg && (l.WeightToKg == 0 || currentWeight < l.WeightToKg));
 
-                matchingRule ??= ruleSet.Lines.OrderBy(l => l.WeightFromKg).FirstOrDefault();
+                if (matchingRule == null && ruleSet.Lines.Count > 0)
+                {
+                    var maxWeightFrom = ruleSet.Lines.Max(l => l.WeightFromKg);
+                    if (currentWeight >= maxWeightFrom)
+                    {
+                        matchingRule = ruleSet.Lines.OrderByDescending(l => l.WeightFromKg).First();
+                    }
+                    else
+                    {
+                        matchingRule = ruleSet.Lines.OrderBy(l => l.WeightFromKg).First();
+                    }
+                }
 
                 if (matchingRule != null)
                 {
@@ -246,13 +257,21 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                 if (request.StartDate <= today && (!request.EndDate.HasValue || request.EndDate.Value >= today))
                 {
                     var matchingRules = ruleSet.Lines
-                        .Where(l => currentWeight >= l.WeightFromKg && currentWeight < l.WeightToKg)
+                        .Where(l => currentWeight >= l.WeightFromKg && (l.WeightToKg == 0 || currentWeight < l.WeightToKg))
                         .ToList();
 
                     if (matchingRules.Count == 0 && ruleSet.Lines.Count > 0)
                     {
-                        var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
-                        matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
+                        var maxWeight = ruleSet.Lines.Max(l => l.WeightFromKg);
+                        if (currentWeight >= maxWeight)
+                        {
+                            matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == maxWeight).ToList();
+                        }
+                        else
+                        {
+                            var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
+                            matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
+                        }
                     }
 
                     foreach (var ruleLine in matchingRules)

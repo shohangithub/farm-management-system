@@ -1,5 +1,5 @@
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-  <div>
+  <div class="min-w-0 pr-4">
     <app-breadcrumb [customLastNode]="breadcrumbActiveNode"></app-breadcrumb>
     <h1 class="text-[22px] font-bold text-gray-900 dark:text-white mt-1 tracking-tight leading-tight">
       {{ title }}
@@ -9,7 +9,7 @@
     </p>
   </div>
   
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2 shrink-0">
     <ng-content select="[actions]"></ng-content>
     <button *ngIf="secondaryActionLabel" mat-stroked-button (click)="onSecondaryAction()" class="!rounded-md shadow-sm !font-semibold !border-gray-300 dark:!border-gray-600">
       <mat-icon *ngIf="secondaryActionIcon" class="mr-2">{{ secondaryActionIcon }}</mat-icon>
