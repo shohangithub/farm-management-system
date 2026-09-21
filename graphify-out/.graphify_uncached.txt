@@ -43,6 +43,9 @@ D:\Personel\Farm Management System\docs\29_Farm360_AI_Smart_Farm_Intelligence_Pl
 D:\Personel\Farm Management System\docs\2_Farm360_AI_Product_Requirements_Document.md
 D:\Personel\Farm Management System\docs\30_Farm_Management_Guidelines_SOP.md
 D:\Personel\Farm Management System\docs\31_Farm360_Cattle_Profit_Loss_Projection_Module_Implementation_Plan.md
+D:\Personel\Farm Management System\docs\32_Farm360_AI_Investment_And_Profit_Sharing_Plan.md
+D:\Personel\Farm Management System\docs\32_Farm360_Reporting_Module_Implementation_Plan.md
+D:\Personel\Farm Management System\docs\33_Farm360_Configurable_Business_Rules.md
 D:\Personel\Farm Management System\docs\3_Farm360_AI_Software_Architecture_Document.md
 D:\Personel\Farm Management System\docs\4_Farm360_AI_Database_Design_Document.md
 D:\Personel\Farm Management System\docs\5_Farm360_AI_UX_Design_System.md
@@ -60,6 +63,7 @@ D:\Personel\Farm Management System\docs\finanace_module_implementation_plan.md
 D:\Personel\Farm Management System\docs\implementation_plan.md
 D:\Personel\Farm Management System\docs\production_stabilization_sprint_implementation_plan.md
 D:\Personel\Farm Management System\graphify-out\memory\query_20260819_100146_what_connects_logoutrequest__refreshtokenapireques.md
+D:\Personel\Farm Management System\src\Farm360.Infrastructure\Reporting\Fonts\OFL.txt
 D:\Personel\Farm Management System\src\Farm360.Web\src\app\core\layout\header\header.component.html
 D:\Personel\Farm Management System\src\Farm360.Web\src\app\core\layout\header\header.html
 D:\Personel\Farm Management System\src\Farm360.Web\src\app\core\layout\main-layout\main-layout.component.html

@@ -1,0 +1,180 @@
+{
+  "nodes": [
+    {
+      "id": "src_farm360_web_src_app_shared_components_empty_state_empty_state",
+      "label": "Empty State (Stub Template)",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\empty-state\\empty-state.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_farm_guidelines_dialog_farm_guidelines_dialog",
+      "label": "Farm Guidelines Dialog",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\farm-guidelines-dialog\\farm-guidelines-dialog.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_loading_loading_component",
+      "label": "Loading Spinner",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\loading\\loading.component.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_loading_loading",
+      "label": "Loading (Stub Template)",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\loading\\loading.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_location_selector_location_selector_component",
+      "label": "Location Selector",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\location-selector\\location-selector.component.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_location_selector_location_selector",
+      "label": "Location Selector (Stub Template)",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\location-selector\\location-selector.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_master_data_dropdown_master_data_dropdown_component",
+      "label": "Master Data Dropdown",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\master-data-dropdown\\master-data-dropdown.component.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_master_data_dropdown_master_data_dropdown",
+      "label": "Master Data Dropdown (Stub Template)",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\master-data-dropdown\\master-data-dropdown.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_page_header_page_header_component",
+      "label": "Page Header",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\page-header\\page-header.component.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_farm360_web_src_app_shared_components_page_header_page_header",
+      "label": "Page Header (Stub Template)",
+      "file_type": "document",
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\page-header\\page-header.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "src_farm360_web_src_app_shared_components_page_header_page_header_component",
+      "target": "src_farm360_web_src_app_shared_components_breadcrumb_breadcrumb_component",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\page-header\\page-header.component.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_farm360_web_src_app_shared_components_loading_loading_component",
+      "target": "src_farm360_web_src_app_shared_components_empty_state_empty_state",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.65,
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\loading\\loading.component.html",
+      "source_location": null,
+      "weight": 0.65
+    },
+    {
+      "source": "src_farm360_web_src_app_shared_components_location_selector_location_selector_component",
+      "target": "src_farm360_web_src_app_shared_components_master_data_dropdown_master_data_dropdown_component",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\location-selector\\location-selector.component.html",
+      "source_location": null,
+      "weight": 0.85
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "stub_placeholder_templates_group",
+      "label": "Unused Generated Stub Templates",
+      "nodes": [
+        "src_farm360_web_src_app_shared_components_empty_state_empty_state",
+        "src_farm360_web_src_app_shared_components_loading_loading",
+        "src_farm360_web_src_app_shared_components_location_selector_location_selector",
+        "src_farm360_web_src_app_shared_components_master_data_dropdown_master_data_dropdown",
+        "src_farm360_web_src_app_shared_components_page_header_page_header"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\page-header\\page-header.html"
+    },
+    {
+      "id": "shared_reusable_ui_components_group",
+      "label": "Shared Reusable UI Components",
+      "nodes": [
+        "src_farm360_web_src_app_shared_components_loading_loading_component",
+        "src_farm360_web_src_app_shared_components_location_selector_location_selector_component",
+        "src_farm360_web_src_app_shared_components_master_data_dropdown_master_data_dropdown_component",
+        "src_farm360_web_src_app_shared_components_page_header_page_header_component",
+        "src_farm360_web_src_app_shared_components_farm_guidelines_dialog_farm_guidelines_dialog"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "D:\\Personel\\Farm Management System\\src\\Farm360.Web\\src\\app\\shared\\components\\page-header\\page-header.component.html"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
