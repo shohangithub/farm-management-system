@@ -84,6 +84,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 
     // ── Tenancy DbSets ────────────────────────────────────────────────────────
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<TenantSubscriptionRecord> TenantSubscriptions => Set<TenantSubscriptionRecord>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

@@ -13,6 +13,50 @@
     <!-- Top Header -->
     <app-header (toggleSidebar)="toggleSidebar()"></app-header>
 
+    <!-- Global Subscription / Trial Banner -->
+    <ng-container *ngIf="subscriptionService.currentSubscription() as sub">
+      <!-- Trial Banner: Show if tenant is in trial and has not dismissed the banner -->
+      <div *ngIf="sub.isTrial && !isBannerDismissed()"
+        class="bg-gradient-to-r from-blue-600 via-indigo-600 to-teal-600 text-white px-4 py-2.5 text-xs flex items-center justify-between shadow-sm shrink-0">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-blue-200 shrink-0">hourglass_top</mat-icon>
+          <span class="truncate">
+            <strong>{{ sub.trialDays }}-Day Free Trial:</strong>
+            <ng-container *ngIf="sub.trialDaysRemaining > 0">
+              You have <strong>{{ sub.trialDaysRemaining }} day{{ sub.trialDaysRemaining === 1 ? '' : 's' }}</strong> remaining to evaluate Farm360.
+            </ng-container>
+            <ng-container *ngIf="sub.trialDaysRemaining <= 0">
+              Your free trial has ended today. Subscribe to prevent service interruption.
+            </ng-container>
+          </span>
+        </div>
+        <div class="flex items-center gap-3 shrink-0 ml-4">
+          <a routerLink="/settings/billing"
+            class="px-3 py-1 bg-white text-blue-800 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-xs">
+            Upgrade Now
+          </a>
+          <button (click)="isBannerDismissed.set(true)" class="text-blue-200 hover:text-white transition-colors" title="Dismiss">
+            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Expired / Suspended Warning Banner -->
+      <div *ngIf="(sub.status === 'Suspended' || sub.status === 'Expired') && !isBannerDismissed()"
+        class="bg-red-600 text-white px-4 py-2.5 text-xs flex items-center justify-between shadow-sm shrink-0">
+        <div class="flex items-center gap-2.5">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-red-200 shrink-0">warning</mat-icon>
+          <span>
+            <strong>Account Notice:</strong> Your subscription has expired. Renew now to restore full access.
+          </span>
+        </div>
+        <a routerLink="/settings/billing"
+          class="px-3 py-1 bg-white text-red-700 font-bold rounded-lg hover:bg-red-50 transition-colors shadow-xs ml-4 shrink-0">
+          Renew Subscription
+        </a>
+      </div>
+    </ng-container>
+
     <!-- Page Content -->
     <main class="flex-1 overflow-auto p-4 md:p-8">
       <router-outlet></router-outlet>

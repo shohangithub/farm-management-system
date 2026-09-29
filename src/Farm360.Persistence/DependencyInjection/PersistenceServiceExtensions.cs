@@ -127,6 +127,7 @@ public static class PersistenceServiceExtensions
 
         // ── Tenancy & Identity repositories ──────────────────────────────
         services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
         services.AddScoped<ITenantUserRepository, TenantUserRepository>();
 
         // ── Cross-cutting services ────────────────────────────────────────────

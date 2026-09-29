@@ -77,6 +77,31 @@
           </div>
         </div>
 
+        <!-- Free Trial Choice -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+            Select Free Trial Duration
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              *ngFor="let opt of trialOptions"
+              (click)="registerForm.patchValue({ trialDays: opt.days })"
+              [class.border-primary-500]="registerForm.get('trialDays')?.value === opt.days"
+              [class.bg-primary-50]="registerForm.get('trialDays')?.value === opt.days"
+              [class.dark:bg-primary-950/40]="registerForm.get('trialDays')?.value === opt.days"
+              [class.text-primary-700]="registerForm.get('trialDays')?.value === opt.days"
+              [class.dark:text-primary-300]="registerForm.get('trialDays')?.value === opt.days"
+              class="p-2.5 border rounded-xl text-center transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 relative overflow-hidden">
+              <span *ngIf="opt.isRecommended" class="absolute top-1 right-1 text-[8px] font-bold px-1 py-0.2 bg-primary-600 text-white rounded">
+                Rec
+              </span>
+              <div class="text-xs font-bold">{{ opt.label }}</div>
+              <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{{ opt.desc }}</div>
+            </button>
+          </div>
+        </div>
+
         <div>
           <button type="submit" [disabled]="isLoading()" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
             <mat-icon *ngIf="isLoading()" class="animate-spin mr-2 !text-[20px] !w-[20px] !h-[20px]">autorenew</mat-icon>

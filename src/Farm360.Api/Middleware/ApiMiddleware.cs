@@ -162,13 +162,19 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next, ILogger<Ten
 
         if (tenantEntry.Status == "Suspended")
         {
-            context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
-            await context.Response.WriteAsJsonAsync(new
+            var path = context.Request.Path.Value ?? string.Empty;
+            if (!path.StartsWith("/api/v1/subscriptions", StringComparison.OrdinalIgnoreCase) &&
+                !path.StartsWith("/api/v1/billing", StringComparison.OrdinalIgnoreCase) &&
+                !path.StartsWith("/api/v1/auth", StringComparison.OrdinalIgnoreCase))
             {
-                error = "Your subscription has been suspended. Please renew to continue.",
-                supportUrl = "https://farm360.ai/billing",
-            });
-            return;
+                context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Your subscription has been suspended. Please renew to continue.",
+                    supportUrl = "/settings/billing",
+                });
+                return;
+            }
         }
 
         // Set tenant context for this request scope

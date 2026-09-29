@@ -73,6 +73,20 @@ import { MatIconModule } from '@angular/material/icon';
           <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Configure geographic locations, user permissions and global attributes.</p>
         </a>
 
+        <!-- Subscription & Billing -->
+        <a routerLink="/settings/billing" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
+            <mat-icon class="!w-24 !h-24 !text-[96px]">workspace_premium</mat-icon>
+          </div>
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+              <mat-icon>workspace_premium</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Subscription & Plans</h3>
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Manage monthly, yearly, or lifetime plans, free trials, quotas, and invoices.</p>
+        </a>
+
       </div>
     </div>
   `

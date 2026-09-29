@@ -16,12 +16,19 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  trialOptions = [
+    { days: 3, label: '3 Days', desc: 'Quick test' },
+    { days: 7, label: '7 Days', desc: 'Recommended', isRecommended: true },
+    { days: 10, label: '10 Days', desc: 'Full trial' }
+  ];
+
   registerForm = this.fb.group({
     name: ['', Validators.required],
     phone: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s]+$/)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
-    farmName: ['', Validators.required]
+    farmName: ['', Validators.required],
+    trialDays: [7, Validators.required]
   });
 
   isLoading = signal(false);

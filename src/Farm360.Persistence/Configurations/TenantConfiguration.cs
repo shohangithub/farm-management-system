@@ -37,11 +37,30 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(t => t.BillingCycle)
+            .HasConversion<int>()
+            .HasDefaultValue(SubscriptionBillingCycle.Monthly)
+            .IsRequired();
+
+        builder.Property(t => t.IsTrial)
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(t => t.HasUsedTrial)
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(t => t.TrialDays);
+        builder.Property(t => t.TrialEndsAtUtc);
+
         builder.HasIndex(t => t.Status)
             .HasDatabaseName("IX_Tenants_Status");
 
         builder.HasIndex(t => new { t.Status, t.SubscriptionExpiresAt })
             .HasDatabaseName("IX_Tenants_Status_ExpiresAt");
+
+        builder.HasIndex(t => new { t.IsTrial, t.TrialEndsAtUtc })
+            .HasDatabaseName("IX_Tenants_IsTrial_EndsAt");
 
         builder.Property(t => t.CreatedAtUtc).IsRequired();
         builder.Property(t => t.UpdatedAtUtc).IsRequired();

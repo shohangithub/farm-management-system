@@ -15,5 +15,10 @@ export const SETTINGS_ROUTES: Routes = [
     path: 'profile',
     loadComponent: () =>
       import('./profile/profile.component').then(m => m.ProfileComponent),
+  },
+  {
+    path: 'billing',
+    loadComponent: () =>
+      import('./billing/billing.component').then(m => m.BillingComponent),
   }
 ];

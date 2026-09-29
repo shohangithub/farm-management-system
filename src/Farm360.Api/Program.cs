@@ -11,6 +11,7 @@ using Farm360.Api.Endpoints.Tenants;
 using Farm360.Api.Endpoints.Analytics;
 using Farm360.Api.Endpoints;
 using Farm360.Api.Endpoints.Auth;
+using Farm360.Api.Endpoints.Subscriptions;
 using Farm360.Api.Endpoints.Dashboard;
 using Farm360.Api.Middleware;
 using Farm360.Api.Authorization;
@@ -21,6 +22,7 @@ using Farm360.Infrastructure.Messaging;
 using Farm360.Persistence.DependencyInjection;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -238,15 +240,26 @@ try
     app.MapInventoryEndpoints();
     app.MapGroup("/api/v1/auth").MapAuthEndpoints();
     app.MapGroup("/api/v1/users").MapUsersEndpoints();
+    app.MapGroup("/api/v1/subscriptions").MapSubscriptionEndpoints();
     app.MapIntelligenceEndpoints();
     app.MapFinanceEndpoints();
     app.MapAnalyticsEndpoints();
 
     Log.Information("Farm360 API started. Environment: {Environment}", app.Environment.EnvironmentName);
 
-    // ── Run Data Seeders ──────────────────────────────────────────────────────
+    // ── Run Migrations & Data Seeders ────────────────────────────────────────
     using (var scope = app.Services.CreateScope())
     {
+        try
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<Farm360.Persistence.Context.ApplicationDbContext>();
+            await dbContext.Database.MigrateAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Automatic database migration failed or was bypassed.");
+        }
+
         var dataSeeder = scope.ServiceProvider.GetRequiredService<Farm360.Persistence.Seed.DataSeeder>();
         await dataSeeder.SeedAsync();
 

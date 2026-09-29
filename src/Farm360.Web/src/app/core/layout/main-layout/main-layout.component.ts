@@ -1,12 +1,14 @@
-import { Component, ViewChild, OnDestroy, OnInit } from '@angular/core';
+import { Component, ViewChild, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterModule } from '@angular/router';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
+import { MatIconModule } from '@angular/material/icon';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { SubscriptionService } from '../../services/subscription.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -14,7 +16,9 @@ import { takeUntil } from 'rxjs/operators';
   imports: [
     CommonModule, 
     RouterOutlet, 
+    RouterModule,
     MatSidenavModule, 
+    MatIconModule,
     SidebarComponent, 
     HeaderComponent
   ],
@@ -22,11 +26,13 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   @ViewChild('sidenav') sidenav!: MatSidenav;
+  private breakpointObserver = inject(BreakpointObserver);
+  public subscriptionService = inject(SubscriptionService);
+
   isSidebarCollapsed = false;
   isMobile = false;
+  isBannerDismissed = signal(false);
   private destroy$ = new Subject<void>();
-
-  constructor(private breakpointObserver: BreakpointObserver) {}
 
   ngOnInit() {
     this.breakpointObserver
@@ -39,6 +45,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
           this.isSidebarCollapsed = false;
         }
       });
+
+    // Fetch subscription status for banner
+    this.subscriptionService.getCurrentSubscription()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({ error: () => {} });
   }
 
   ngOnDestroy() {

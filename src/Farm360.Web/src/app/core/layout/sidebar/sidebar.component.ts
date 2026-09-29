@@ -34,6 +34,7 @@ export class SidebarComponent {
   ];
 
   bottomMenuItems: MenuItem[] = [
+    { icon: 'workspace_premium', label: 'Subscription & Plans', route: '/settings/billing' },
     { icon: 'settings', label: 'Settings', route: '/settings' }
   ];
 }

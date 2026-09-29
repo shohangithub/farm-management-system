@@ -38,6 +38,24 @@ public enum SubscriptionTier
     Enterprise = 4
 }
 
+/// <summary>
+/// Billing frequency / cycle for subscriptions.
+/// </summary>
+public enum SubscriptionBillingCycle
+{
+    /// <summary>Free trial period (e.g. 3, 7, 10 days).</summary>
+    Trial = 1,
+
+    /// <summary>Monthly billing cycle.</summary>
+    Monthly = 2,
+
+    /// <summary>Annual / yearly billing cycle with discount.</summary>
+    Yearly = 3,
+
+    /// <summary>One-time payment for lifetime / perpetual access.</summary>
+    OneTime = 4
+}
+
 /// <summary>Legal/operational type of an Organization.</summary>
 public enum OrganizationType
 {

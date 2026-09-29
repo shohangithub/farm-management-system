@@ -31,7 +31,8 @@ public record OnboardTenantCommand(
     string? State,
     string? Country,
     string? ZipCode,
-    BusinessType BusinessType) : IRequest<Guid>, ITransactionalCommand;
+    BusinessType BusinessType,
+    int? TrialDays = null) : IRequest<Guid>, ITransactionalCommand;
 
 public class OnboardTenantCommandValidator : AbstractValidator<OnboardTenantCommand>
 {
@@ -61,6 +62,10 @@ public class OnboardTenantCommandValidator : AbstractValidator<OnboardTenantComm
             
         RuleFor(x => x.BusinessType)
             .IsInEnum();
+
+        RuleFor(x => x.TrialDays)
+            .Must(d => !d.HasValue || d.Value == 3 || d.Value == 7 || d.Value == 10)
+            .WithMessage("Trial duration must be 3, 7, or 10 days.");
     }
 }
 
@@ -97,8 +102,11 @@ internal sealed class OnboardTenantCommandHandler : IRequestHandler<OnboardTenan
         // 1. Generate slug from Name
         var slug = GenerateSlug(request.Name);
 
-        // 2. Create Tenant
+        // 2. Create Tenant & Start Free Trial (default 7 days if not explicitly set)
         var tenant = Tenant.Create(request.Name, slug, SubscriptionTier.Starter);
+        var initialTrialDays = request.TrialDays is 3 or 7 or 10 ? request.TrialDays.Value : 7;
+        tenant.StartTrial(initialTrialDays);
+
         await _tenantRepository.AddAsync(tenant, cancellationToken);
 
         // 3. Create TenantUser (Owner)
