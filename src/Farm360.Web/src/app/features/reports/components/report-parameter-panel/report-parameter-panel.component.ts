@@ -218,6 +218,25 @@ export class ReportParameterPanelComponent {
     return isNaN(parsed.getTime()) ? null : parsed;
   }
 
+  /**
+   * [ngModel] on the Material datepickers calls these getters on every change-detection pass.
+   * Allocating a fresh Date each call makes NgModel see a "changed" reference every cycle, which
+   * writes it back into the picker and schedules another cycle -- an infinite CD loop that freezes
+   * the tab. Caching by the underlying date string keeps the same object across calls that resolve
+   * to the same logical date, breaking the loop.
+   */
+  private readonly dateObjCache = new Map<string, { forKey: string; date: Date | null }>();
+
+  private memoizedDate(cacheKey: string, forKey: string, compute: () => Date | null): Date | null {
+    const cached = this.dateObjCache.get(cacheKey);
+    if (cached && cached.forKey === forKey) {
+      return cached.date;
+    }
+    const date = compute();
+    this.dateObjCache.set(cacheKey, { forKey, date });
+    return date;
+  }
+
   private formatDateToString(date: Date | null | undefined): string {
     if (!date || isNaN(date.getTime())) return '';
     const year = date.getFullYear();
@@ -247,11 +266,13 @@ export class ReportParameterPanelComponent {
   }
 
   protected getFromDateObj(name: string): Date | null {
-    return this.parseDateString(this.getFromDate(name));
+    const str = this.getFromDate(name);
+    return this.memoizedDate(`from:${name}`, str, () => this.parseDateString(str));
   }
 
   protected getToDateObj(name: string): Date | null {
-    return this.parseDateString(this.getToDate(name));
+    const str = this.getToDate(name);
+    return this.memoizedDate(`to:${name}`, str, () => this.parseDateString(str));
   }
 
   protected onFromDateChange(name: string, date: Date | null): void {
@@ -270,10 +291,9 @@ export class ReportParameterPanelComponent {
 
   protected getSingleDateObj(name: string): Date | null {
     const val = this.value(name);
-    if (!val || val === 'today') {
-      return new Date();
-    }
-    return this.parseDateString(val);
+    const forKey = !val || val === 'today' ? 'today' : val;
+    return this.memoizedDate(`single:${name}`, forKey, () =>
+      forKey === 'today' ? new Date() : this.parseDateString(val));
   }
 
   protected onSingleDateChange(name: string, date: Date | null): void {

@@ -88,6 +88,35 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
         RaiseDomainEvent(new StockReceivedEvent(transactionId, Id, TenantId, FarmId, receivedQuantity, unitCostBdt, CurrentStock));
     }
 
+    public void ReturnToSupplier(decimal returnedQuantity, decimal unitCostBdt, Guid transactionId)
+    {
+        if (returnedQuantity <= 0)
+            throw new InventoryDomainException("Returned stock quantity must be greater than zero.");
+        if (returnedQuantity > CurrentStock)
+            throw new InventoryDomainException($"Insufficient stock for '{Name}'. Requested return: {returnedQuantity} {UnitOfMeasure}, Available: {CurrentStock} {UnitOfMeasure}.");
+        if (unitCostBdt < 0)
+            throw new InventoryDomainException("Unit cost cannot be negative.");
+
+        decimal currentTotalValue = CurrentStock * WeightedAverageCostBdt;
+        decimal returnTotalValue = returnedQuantity * unitCostBdt;
+        decimal newStock = CurrentStock - returnedQuantity;
+
+        if (newStock > 0)
+        {
+            decimal remainingValue = Math.Max(0, currentTotalValue - returnTotalValue);
+            WeightedAverageCostBdt = Math.Round(remainingValue / newStock, 2);
+        }
+
+        CurrentStock = newStock;
+
+        RaiseDomainEvent(new StockDeductedEvent(transactionId, Id, TenantId, FarmId, returnedQuantity, CurrentStock));
+
+        if (CurrentStock <= ReorderThreshold)
+        {
+            RaiseDomainEvent(new LowStockAlertEvent(Id, TenantId, FarmId, Name, CurrentStock, ReorderThreshold));
+        }
+    }
+
     public void DeductStock(decimal quantity, Guid transactionId)
     {
         if (quantity <= 0)

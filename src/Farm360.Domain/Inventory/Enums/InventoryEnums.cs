@@ -21,7 +21,8 @@ public enum StockTransactionType
     WriteOff = 6,
     PlannedFeedConsumption = 7,
     ReconciliationAdjustment = 8,
-    AutoConsumableUsage = 9
+    AutoConsumableUsage = 9,
+    PurchaseReturn = 10
 }
 
 public enum ConsumableUsagePlanStatus
@@ -54,4 +55,21 @@ public enum PurchaseOrderStatus
     Approved = 3,
     Fulfilled = 4,
     Cancelled = 5
+}
+
+public enum PurchaseReturnStatus
+{
+    Draft = 1,
+    Completed = 2,
+    Cancelled = 3
+}
+
+public enum PurchaseReturnReason
+{
+    Damaged = 1,
+    Expired = 2,
+    WrongItem = 3,
+    QualityIssue = 4,
+    Excess = 5,
+    Other = 6
 }

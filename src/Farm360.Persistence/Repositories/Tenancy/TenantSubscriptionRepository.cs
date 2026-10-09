@@ -41,4 +41,29 @@ public sealed class TenantSubscriptionRepository : ITenantSubscriptionRepository
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<TenantSubscriptionRecord?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.TenantSubscriptions
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
+    public async Task<TenantSubscriptionRecord?> GetByPaymentReferenceAsync(string paymentReference, CancellationToken cancellationToken = default)
+    {
+        return await _context.TenantSubscriptions
+            .FirstOrDefaultAsync(s => s.PaymentReference == paymentReference, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TenantSubscriptionRecord>> GetPendingAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.TenantSubscriptions
+            .Where(s => s.Status == "Pending")
+            .OrderBy(s => s.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public void Update(TenantSubscriptionRecord record)
+    {
+        _context.TenantSubscriptions.Update(record);
+    }
 }

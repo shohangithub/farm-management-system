@@ -6,7 +6,9 @@ import {
   TenantSubscriptionRecord,
   TenantSubscriptionStatus,
   SubscribeRequest,
-  StartTrialRequest
+  StartTrialRequest,
+  InitiateCheckoutRequest,
+  CheckoutSession
 } from '../models/subscription.model';
 
 @Injectable({
@@ -44,13 +46,25 @@ export class SubscriptionService {
     );
   }
 
-  subscribe(payload: SubscribeRequest): Observable<TenantSubscriptionStatus> {
-    return this.http.post<TenantSubscriptionStatus>(`${this.baseUrl}/subscribe`, payload).pipe(
-      tap((status) => this.currentSubscription.set(status))
-    );
+  /**
+   * Submits a self-reported payment reference. Returns the created record in `Pending` status --
+   * it does not activate the subscription, so `currentSubscription` is deliberately left alone
+   * until an admin verifies the payment (or a real gateway's callback does, for a paid-online flow).
+   */
+  subscribe(payload: SubscribeRequest): Observable<TenantSubscriptionRecord> {
+    return this.http.post<TenantSubscriptionRecord>(`${this.baseUrl}/subscribe`, payload);
   }
 
   getHistory(): Observable<TenantSubscriptionRecord[]> {
     return this.http.get<TenantSubscriptionRecord[]>(`${this.baseUrl}/history`);
+  }
+
+  /**
+   * Starts a verified SSLCommerz checkout. On success, redirect the browser to
+   * `gatewayPageUrl` -- the subscription activates automatically once the gateway confirms
+   * payment (no manual admin review needed, unlike `subscribe()`).
+   */
+  initiateCheckout(payload: InitiateCheckoutRequest): Observable<CheckoutSession> {
+    return this.http.post<CheckoutSession>(`${this.baseUrl}/checkout/initiate`, payload);
   }
 }

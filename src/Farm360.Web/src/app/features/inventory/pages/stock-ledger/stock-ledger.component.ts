@@ -74,6 +74,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
           <option [ngValue]="StockTransactionType.ManualStockOut">Stock Out (Issue)</option>
           <option [ngValue]="StockTransactionType.Adjustment">Adjustment</option>
           <option [ngValue]="StockTransactionType.WriteOff">Write-Off</option>
+          <option [ngValue]="StockTransactionType.PurchaseReturn">Purchase Return</option>
         </select>
 
         <select [ngModel]="currentSortKey()" (ngModelChange)="onSortChange($event)"

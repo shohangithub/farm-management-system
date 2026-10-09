@@ -13,6 +13,7 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { IncomeFormDialogComponent } from '../../components/income-form-dialog/income-form-dialog';
 import { ExpenseFormDialogComponent } from '../../components/expense-form-dialog/expense-form-dialog';
+import { AllocateOverheadDialogComponent } from '../../components/allocate-overhead-dialog/allocate-overhead-dialog';
 import { MonthlyCashFlowPoint } from '../../models/finance.model';
 
 @Component({
@@ -90,6 +91,19 @@ export class FinanceDashboardComponent implements OnInit {
   openExpenseDialog(): void {
     const dialogRef = this.dialog.open(ExpenseFormDialogComponent, {
       width: '550px',
+      panelClass: 'dialog-responsive'
+    });
+
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      if (result) {
+        this.refresh();
+      }
+    });
+  }
+
+  openAllocateOverheadDialog(): void {
+    const dialogRef = this.dialog.open(AllocateOverheadDialogComponent, {
+      width: '560px',
       panelClass: 'dialog-responsive'
     });
 

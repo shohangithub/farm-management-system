@@ -65,4 +65,96 @@ public class InventoryDomainTests
         Assert.Equal(90, item.CurrentStock);
         Assert.Contains(item.DomainEvents, e => e is LowStockAlertEvent);
     }
+
+    [Fact]
+    public void ReturnToSupplier_ShouldRecalculateWeightedAverageCostAndDeductStock()
+    {
+        // Initial stock: 100 kg @ 50 BDT/kg = 5000 BDT
+        var item = new InventoryItem(
+            Guid.NewGuid(), _tenantId, _farmId, "Feed Concentrate", "FC-1",
+            InventoryCategory.Feed, "kg", 20, 100, 50.0m);
+
+        // Return: 20 kg @ 60 BDT/kg (original purchase price was higher than average)
+        // Remaining stock = 80 kg, Remaining Value = 5000 - 1200 = 3800 BDT => New WAC = 3800 / 80 = 47.50 BDT
+        item.ReturnToSupplier(20, 60.0m, Guid.NewGuid());
+
+        Assert.Equal(80, item.CurrentStock);
+        Assert.Equal(47.50m, item.WeightedAverageCostBdt);
+        Assert.Single(item.DomainEvents.OfType<StockDeductedEvent>());
+    }
+
+    [Fact]
+    public void ReturnToSupplier_ExceedingStock_ShouldThrowInventoryDomainException()
+    {
+        var item = new InventoryItem(
+            Guid.NewGuid(), _tenantId, _farmId, "Feed Concentrate", "FC-1",
+            InventoryCategory.Feed, "kg", 20, 50, 50.0m);
+
+        Assert.Throws<InventoryDomainException>(() => item.ReturnToSupplier(60, 50.0m, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void PurchaseReturn_Workflow_DraftToCompleted_RaisesDomainEvent()
+    {
+        var poId = Guid.NewGuid();
+        var supplierId = Guid.NewGuid();
+        var poItemId = Guid.NewGuid();
+        var inventoryItemId = Guid.NewGuid();
+
+        var purchaseReturn = new PurchaseReturn(
+            Guid.NewGuid(),
+            _tenantId,
+            _farmId,
+            poId,
+            supplierId,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            PurchaseReturnReason.Damaged,
+            "CN-100",
+            "Damaged on delivery");
+
+        purchaseReturn.AddItem(poItemId, inventoryItemId, 10, 50.0m);
+
+        Assert.Equal(PurchaseReturnStatus.Draft, purchaseReturn.Status);
+        Assert.Equal(500.0m, purchaseReturn.TotalAmountBdt);
+
+        purchaseReturn.Complete();
+
+        Assert.Equal(PurchaseReturnStatus.Completed, purchaseReturn.Status);
+        var completedEvent = Assert.Single(purchaseReturn.DomainEvents.OfType<PurchaseReturnCompletedEvent>());
+        Assert.Equal(500.0m, completedEvent.TotalAmountBdt);
+        Assert.Equal(poId, completedEvent.PurchaseOrderId);
+    }
+
+    [Fact]
+    public void PurchaseReturn_CannotComplete_WhenEmpty()
+    {
+        var purchaseReturn = new PurchaseReturn(
+            Guid.NewGuid(),
+            _tenantId,
+            _farmId,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            PurchaseReturnReason.WrongItem);
+
+        Assert.Throws<InventoryDomainException>(() => purchaseReturn.Complete());
+    }
+
+    [Fact]
+    public void PurchaseReturn_Cancel_ShouldTransitionToCancelled()
+    {
+        var purchaseReturn = new PurchaseReturn(
+            Guid.NewGuid(),
+            _tenantId,
+            _farmId,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            PurchaseReturnReason.Other);
+
+        purchaseReturn.Cancel("Supplier refused return");
+
+        Assert.Equal(PurchaseReturnStatus.Cancelled, purchaseReturn.Status);
+        Assert.Contains("Supplier refused return", purchaseReturn.Notes);
+    }
 }

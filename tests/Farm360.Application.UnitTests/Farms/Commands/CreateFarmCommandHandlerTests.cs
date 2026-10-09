@@ -6,6 +6,8 @@ using Farm360.Domain.Farms.Enums;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Organizations;
 using Farm360.Domain.Organizations.Repositories;
+using Farm360.Domain.Tenancy;
+using Farm360.Domain.Tenancy.Repositories;
 using Moq;
 using Xunit;
 
@@ -15,6 +17,7 @@ public class CreateFarmCommandHandlerTests
 {
     private readonly Mock<IFarmRepository> _repositoryMock;
     private readonly Mock<IBranchRepository> _branchRepositoryMock;
+    private readonly Mock<ITenantRepository> _tenantRepositoryMock;
     private readonly Mock<ITenantService> _tenantServiceMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly CreateFarmCommandHandler _handler;
@@ -25,10 +28,19 @@ public class CreateFarmCommandHandlerTests
     {
         _repositoryMock = new Mock<IFarmRepository>();
         _branchRepositoryMock = new Mock<IBranchRepository>();
+        _tenantRepositoryMock = new Mock<ITenantRepository>();
         _tenantServiceMock = new Mock<ITenantService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
 
         _tenantServiceMock.Setup(x => x.TenantId).Returns(_tenantId);
+
+        // Standard tier (MaxFarms: 5) with room to spare, so the quota check never interferes
+        // with what these tests are actually exercising.
+        var tenant = Tenant.Create("Test Farm", "test-farm", SubscriptionTier.Standard);
+        _tenantRepositoryMock.Setup(x => x.GetByIdAsync(_tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tenant);
+        _tenantRepositoryMock.Setup(x => x.GetTenantUsageCountsAsync(_tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((1, 0, 0));
 
         // Dummy branch
         var branch = Branch.Create(_tenantId, Guid.NewGuid(), "BR-001", "Main", "test@test.com", true);
@@ -38,6 +50,7 @@ public class CreateFarmCommandHandlerTests
         _handler = new CreateFarmCommandHandler(
             _repositoryMock.Object,
             _branchRepositoryMock.Object,
+            _tenantRepositoryMock.Object,
             _tenantServiceMock.Object,
             _unitOfWorkMock.Object);
     }

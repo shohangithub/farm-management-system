@@ -130,6 +130,22 @@ export interface AnimalCostLedger {
   profitLossBdt?: number;
 }
 
+export interface AllocateOverheadRequest {
+  from: string;
+  to: string;
+  isBackfill?: boolean;
+}
+
+export interface OverheadAllocationResult {
+  transactionsConsidered: number;
+  transactionsAllocated: number;
+  transactionsSkippedAlreadyAllocated: number;
+  transactionsSkippedNoAnimals: number;
+  allocationsWritten: number;
+  amountAllocatedBdt: number;
+  ledgersUpdated: number;
+}
+
 export interface BreakEvenCalculator {
   animalId: string;
   farmId: string;

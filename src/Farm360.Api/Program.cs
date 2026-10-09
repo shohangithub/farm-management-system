@@ -299,6 +299,16 @@ try
             "close-feeding-cycles",
             sender => sender.Send(new Farm360.Application.Feeding.Jobs.CloseFeedingCycleCommand(), CancellationToken.None),
             Hangfire.Cron.Daily(23, 59)); // Runs at 11:59 PM
+
+        jobService.AddOrUpdateRecurring<MediatR.ISender>(
+            "allocate-overhead-monthly",
+            sender => sender.Send(new Farm360.Application.Finance.Jobs.AllocateOverheadAcrossTenantsCommand(), CancellationToken.None),
+            Hangfire.Cron.Monthly(3, 2, 0)); // 3rd of each month at 2:00 AM, covers the previous calendar month
+
+        jobService.AddOrUpdateRecurring<MediatR.ISender>(
+            "refresh-tenant-subscription-statuses",
+            sender => sender.Send(new Farm360.Application.Tenants.Jobs.RefreshTenantSubscriptionStatusesCommand(), CancellationToken.None),
+            Hangfire.Cron.Daily(1, 0)); // 1:00 AM daily -- proactively suspends tenants whose trial/subscription lapsed
     }
 
     await app.RunAsync();

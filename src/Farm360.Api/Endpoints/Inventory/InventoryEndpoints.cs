@@ -1,6 +1,8 @@
 using Farm360.Application.Inventory.Commands.InventoryItems;
 using Farm360.Application.Inventory.Commands.PurchaseOrders;
+using Farm360.Application.Inventory.Commands.PurchaseReturns;
 using Farm360.Application.Inventory.Queries.PurchaseOrders;
+using Farm360.Application.Inventory.Queries.PurchaseReturns;
 using Farm360.Application.Inventory.Commands.StockTransactions;
 using Farm360.Application.Inventory.Commands.Suppliers;
 using Farm360.Application.Inventory.Queries.InventoryItems;
@@ -318,6 +320,87 @@ public static class InventoryEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
         .WithName("FulfillPurchaseOrder");
 
+        group.MapGet("/purchase-orders/{id:guid}/returnable-items", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetReturnablePoItemsQuery(id);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetReturnablePoItems");
+
+        // ── Purchase Returns ──────────────────────────────────────────────────
+        group.MapGet("/purchase-returns", async (
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] Guid? farmId = null,
+            [FromQuery] Guid? purchaseOrderId = null,
+            [FromQuery] Guid? supplierId = null,
+            [FromQuery] PurchaseReturnStatus? status = null,
+            [FromQuery] string? search = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool sortDesc = true,
+            ISender sender = null!,
+            CancellationToken ct = default) =>
+        {
+            var query = new GetPurchaseReturnsQuery(pageNumber, pageSize, farmId, purchaseOrderId, supplierId, status, search, sortBy, sortDesc);
+            var result = await sender.Send(query, ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetPurchaseReturns");
+
+        group.MapGet("/purchase-returns/{id:guid}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var query = new GetPurchaseReturnByIdQuery(id);
+            var result = await sender.Send(query, ct);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.View}")
+        .WithName("GetPurchaseReturnById");
+
+        group.MapPost("/purchase-returns", async (
+            [FromBody] CreatePurchaseReturnCommand command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(command, ct);
+            return Results.Created($"/api/v1/inventory/purchase-returns/{id}", new { id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}")
+        .WithName("CreatePurchaseReturn");
+
+        group.MapPost("/purchase-returns/{id:guid}/complete", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new CompletePurchaseReturnCommand(id);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("CompletePurchaseReturn");
+
+        group.MapPost("/purchase-returns/{id:guid}/cancel", async (
+            Guid id,
+            [FromBody] CancelPurchaseReturnRequest request,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var command = new CancelPurchaseReturnCommand(id, request.Reason);
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("CancelPurchaseReturn");
+
         // ── Consumable Usage Plans ───────────────────────────────────────────
         group.MapGet("/consumable-plans", async (
             [FromQuery] Guid farmId,
@@ -478,3 +561,5 @@ public static class InventoryEndpoints
         return app;
     }
 }
+
+public sealed record CancelPurchaseReturnRequest(string Reason);

@@ -25,7 +25,8 @@ export enum StockTransactionType {
   AutoMedicineConsumption = 'AutoMedicineConsumption',
   Adjustment = 'Adjustment',
   WriteOff = 'WriteOff',
-  AutoConsumableUsage = 'AutoConsumableUsage'
+  AutoConsumableUsage = 'AutoConsumableUsage',
+  PurchaseReturn = 'PurchaseReturn'
 }
 
 export const StockTransactionTypeNames: Record<StockTransactionType, string> = {
@@ -35,7 +36,8 @@ export const StockTransactionTypeNames: Record<StockTransactionType, string> = {
   [StockTransactionType.AutoMedicineConsumption]: 'Auto Medicine Deduction',
   [StockTransactionType.Adjustment]: 'Adjustment',
   [StockTransactionType.WriteOff]: 'Write-Off',
-  [StockTransactionType.AutoConsumableUsage]: 'Auto Consumable Deduction'
+  [StockTransactionType.AutoConsumableUsage]: 'Auto Consumable Deduction',
+  [StockTransactionType.PurchaseReturn]: 'Purchase Return'
 };
 
 export enum InventoryStatus {
@@ -247,6 +249,103 @@ export interface PurchaseOrderParams {
   farmId?: string;
   supplierId?: string;
   status?: PurchaseOrderStatus;
+  search?: string;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+
+export enum PurchaseReturnStatus {
+  Draft = 'Draft',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled'
+}
+
+export const PurchaseReturnStatusNames: Record<PurchaseReturnStatus, string> = {
+  [PurchaseReturnStatus.Draft]: 'Draft',
+  [PurchaseReturnStatus.Completed]: 'Completed',
+  [PurchaseReturnStatus.Cancelled]: 'Cancelled'
+};
+
+export enum PurchaseReturnReason {
+  Damaged = 'Damaged',
+  Expired = 'Expired',
+  WrongItem = 'WrongItem',
+  QualityIssue = 'QualityIssue',
+  Excess = 'Excess',
+  Other = 'Other'
+}
+
+export const PurchaseReturnReasonNames: Record<PurchaseReturnReason, string> = {
+  [PurchaseReturnReason.Damaged]: 'Damaged on Delivery',
+  [PurchaseReturnReason.Expired]: 'Expired / Near Expiry',
+  [PurchaseReturnReason.WrongItem]: 'Wrong Item Received',
+  [PurchaseReturnReason.QualityIssue]: 'Quality Issue',
+  [PurchaseReturnReason.Excess]: 'Excess / Over-delivered',
+  [PurchaseReturnReason.Other]: 'Other Reason'
+};
+
+export interface PurchaseReturnItem {
+  id: string;
+  purchaseOrderItemId: string;
+  inventoryItemId: string;
+  itemName?: string;
+  unitOfMeasure?: string;
+  quantity: number;
+  unitCostBdt: number;
+  totalCostBdt: number;
+}
+
+export interface PurchaseReturn {
+  id: string;
+  farmId: string;
+  returnNumber: string;
+  purchaseOrderId: string;
+  poNumber?: string;
+  supplierId: string;
+  supplierName?: string;
+  returnDate: string;
+  status: PurchaseReturnStatus;
+  reason: PurchaseReturnReason;
+  notes?: string;
+  creditNoteNumber?: string;
+  totalAmountBdt: number;
+  items: PurchaseReturnItem[];
+}
+
+export interface ReturnablePoItem {
+  purchaseOrderItemId: string;
+  inventoryItemId: string;
+  itemName: string;
+  unitOfMeasure: string;
+  orderedQuantity: number;
+  alreadyReturnedQuantity: number;
+  currentStock: number;
+  maxReturnableQuantity: number;
+  unitCostBdt: number;
+}
+
+export interface CreatePurchaseReturnItemRequest {
+  purchaseOrderItemId: string;
+  quantity: number;
+}
+
+export interface CreatePurchaseReturnRequest {
+  farmId: string;
+  purchaseOrderId: string;
+  returnDate: string;
+  reason: PurchaseReturnReason;
+  creditNoteNumber?: string | null;
+  notes?: string | null;
+  items: CreatePurchaseReturnItemRequest[];
+}
+
+export interface PurchaseReturnParams {
+  pageNumber?: number;
+  pageSize?: number;
+  farmId?: string;
+  purchaseOrderId?: string;
+  supplierId?: string;
+  status?: PurchaseReturnStatus;
   search?: string;
   sortBy?: string;
   sortDesc?: boolean;

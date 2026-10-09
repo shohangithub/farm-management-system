@@ -107,7 +107,7 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                                     quantity: deductionQty,
                                     unitCostBdt: cost,
                                     balanceAfter: inventoryItem.CurrentStock,
-                                    transactionDate: DateOnly.FromDateTime(DateTime.UtcNow),
+                                    transactionDate: entry.EntryDate,
                                     reason: $"Auto deduction for daily feeding plan entry {entry.Id}",
                                     referenceId: Guid.TryParse(entry.Id.ToString(), out var refId) ? refId : null
                                 );

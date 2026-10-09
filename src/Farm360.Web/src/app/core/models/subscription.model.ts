@@ -71,3 +71,14 @@ export interface SubscribeRequest {
 export interface StartTrialRequest {
   trialDays: number;
 }
+
+export interface InitiateCheckoutRequest {
+  tier: number;
+  billingCycle: number;
+}
+
+export interface CheckoutSession {
+  success: boolean;
+  gatewayPageUrl: string | null;
+  failedReason: string | null;
+}

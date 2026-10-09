@@ -3,6 +3,7 @@ using Farm360.Domain.Farms;
 using Farm360.Domain.Farms.Enums;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Organizations.Repositories;
+using Farm360.Domain.Tenancy.Repositories;
 using FluentValidation;
 using MediatR;
 using Farm360.Application.Common.Behaviors;
@@ -43,17 +44,20 @@ public sealed class CreateFarmCommandHandler : IRequestHandler<CreateFarmCommand
 {
     private readonly IFarmRepository _repository;
     private readonly IBranchRepository _branchRepository;
+    private readonly ITenantRepository _tenantRepository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateFarmCommandHandler(
         IFarmRepository repository,
         IBranchRepository branchRepository,
+        ITenantRepository tenantRepository,
         ITenantService tenantService,
         IUnitOfWork unitOfWork)
     {
         _repository = repository;
         _branchRepository = branchRepository;
+        _tenantRepository = tenantRepository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
     }
@@ -61,6 +65,17 @@ public sealed class CreateFarmCommandHandler : IRequestHandler<CreateFarmCommand
     public async Task<Guid> Handle(CreateFarmCommand request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantService.TenantId;
+
+        var tenant = await _tenantRepository.GetByIdAsync(tenantId, cancellationToken)
+            ?? throw new Farm360.Application.Common.Exceptions.ValidationException(new[] { new FluentValidation.Results.ValidationFailure("TenantId", "Tenant not found.") });
+
+        var (_, farmsCount, _) = await _tenantRepository.GetTenantUsageCountsAsync(tenantId, cancellationToken);
+        if (farmsCount >= tenant.MaxFarms)
+        {
+            throw new Farm360.Application.Common.Exceptions.ValidationException(new[] { new FluentValidation.Results.ValidationFailure(
+                "FarmCode",
+                $"Your {tenant.SubscriptionTier} plan allows up to {tenant.MaxFarms} farm(s). Upgrade your subscription to add more.") });
+        }
 
         // Check if branch exists
         var branchExists = await _branchRepository.GetByIdAsync(tenantId, request.BranchId, cancellationToken)

@@ -5,6 +5,8 @@ using Farm360.Domain.Livestock;
 using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 using Farm360.Domain.Livestock.ValueObjects;
+using Farm360.Domain.Tenancy;
+using Farm360.Domain.Tenancy.Repositories;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
@@ -23,6 +25,7 @@ public sealed class AnimalCommandHandlerTests
 {
     // ── Shared stubs ──────────────────────────────────────────────────────────
     private readonly IAnimalRepository _repo        = Substitute.For<IAnimalRepository>();
+    private readonly ITenantRepository _tenantRepo   = Substitute.For<ITenantRepository>();
     private readonly IUnitOfWork       _uow         = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly ITenantService    _tenantSvc   = Substitute.For<ITenantService>();
@@ -48,6 +51,12 @@ public sealed class AnimalCommandHandlerTests
     {
         _currentUser.UserId.Returns(UserId);
         _tenantSvc.TenantId.Returns(TenantId);
+
+        // Standard tier (MaxAnimals: 500) with room to spare, so the quota check never interferes
+        // with what these tests are actually exercising.
+        var tenant = Tenant.Create("Test Farm", "test-farm", SubscriptionTier.Standard);
+        _tenantRepo.GetByIdAsync(TenantId, Arg.Any<CancellationToken>()).Returns(tenant);
+        _tenantRepo.GetTenantUsageCountsAsync(TenantId, Arg.Any<CancellationToken>()).Returns((1, 1, 0));
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -57,7 +66,7 @@ public sealed class AnimalCommandHandlerTests
     [Fact]
     public async Task RegisterAnimal_ValidCommand_AddsToRepositoryAndSaves()
     {
-        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser, _publisher);
+        var handler = new RegisterAnimalCommandHandler(_repo, _tenantRepo, _uow, _tenantSvc, _currentUser, _publisher);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
             TagId:               "B-001",
@@ -84,7 +93,7 @@ public sealed class AnimalCommandHandlerTests
     [Fact]
     public async Task RegisterAnimal_ValidCommand_ReturnsDtoWithCorrectTenantId()
     {
-        var handler = new RegisterAnimalCommandHandler(_repo, _uow, _tenantSvc, _currentUser, _publisher);
+        var handler = new RegisterAnimalCommandHandler(_repo, _tenantRepo, _uow, _tenantSvc, _currentUser, _publisher);
         var command = new RegisterAnimalCommand(
             FarmId:              Guid.NewGuid(),
             TagId:               "B-999",

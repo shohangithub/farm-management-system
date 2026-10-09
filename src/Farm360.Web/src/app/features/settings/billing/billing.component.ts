@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -439,8 +439,11 @@ import { parseApiError } from '../../../core/utils/error-parser';
                   {{ item.createdAtUtc | date:'mediumDate' }}
                 </td>
                 <td class="py-4 px-6 text-right">
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check</mat-icon> {{ item.status }}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border"
+                    [class.bg-emerald-50]="item.status === 'Completed'" [class.text-emerald-700]="item.status === 'Completed'" [class.dark:bg-emerald-950/40]="item.status === 'Completed'" [class.dark:text-emerald-300]="item.status === 'Completed'" [class.border-emerald-200]="item.status === 'Completed'" [class.dark:border-emerald-800]="item.status === 'Completed'"
+                    [class.bg-amber-50]="item.status === 'Pending'" [class.text-amber-700]="item.status === 'Pending'" [class.dark:bg-amber-950/40]="item.status === 'Pending'" [class.dark:text-amber-300]="item.status === 'Pending'" [class.border-amber-200]="item.status === 'Pending'" [class.dark:border-amber-800]="item.status === 'Pending'"
+                    [class.bg-red-50]="item.status === 'Rejected'" [class.text-red-700]="item.status === 'Rejected'" [class.dark:bg-red-950/40]="item.status === 'Rejected'" [class.dark:text-red-300]="item.status === 'Rejected'" [class.border-red-200]="item.status === 'Rejected'" [class.dark:border-red-800]="item.status === 'Rejected'">
+                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">{{ item.status === 'Completed' ? 'check' : item.status === 'Pending' ? 'hourglass_top' : 'close' }}</mat-icon> {{ item.status }}
                   </span>
                 </td>
               </tr>
@@ -466,6 +469,8 @@ export class BillingComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private destroyRef = inject(DestroyRef);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   public status = signal<TenantSubscriptionStatus | null>(null);
   public catalog = signal<SubscriptionCatalog | null>(null);
@@ -499,6 +504,35 @@ export class BillingComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+    this.handleCheckoutRedirect();
+  }
+
+  /** Shows the result of an SSLCommerz checkout the user just returned from, then clears the query param. */
+  private handleCheckoutRedirect(): void {
+    const checkout = this.route.snapshot.queryParamMap.get('checkout');
+    if (!checkout) {
+      return;
+    }
+
+    const messages: Record<string, string> = {
+      success: '✅ Payment confirmed! Your subscription is now active.',
+      fail: '❌ The payment did not complete. No charge was made -- please try again.',
+      cancel: 'Checkout was cancelled. No charge was made.'
+    };
+
+    this.snackBar.open(messages[checkout] ?? 'Checkout finished.', 'Dismiss', {
+      duration: 7000,
+      horizontalPosition: 'right',
+      verticalPosition: 'top'
+    });
+
+    // A successful online checkout activates via the gateway's IPN, which can land slightly after
+    // this redirect -- reload shortly after so the status card reflects it.
+    if (checkout === 'success') {
+      setTimeout(() => this.loadData(), 2000);
+    }
+
+    this.router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
   loadData(): void {
@@ -572,7 +606,7 @@ export class BillingComponent implements OnInit {
   }
 
   openSubscribeDialog(plan: SubscriptionPlan): void {
-    const dialogRef = this.dialog.open<SubscribeDialogComponent, SubscribeDialogData, TenantSubscriptionStatus>(
+    const dialogRef = this.dialog.open<SubscribeDialogComponent, SubscribeDialogData, TenantSubscriptionRecord>(
       SubscribeDialogComponent,
       {
         data: {
@@ -587,13 +621,14 @@ export class BillingComponent implements OnInit {
 
     dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
-        this.status.set(result);
-        this.snackBar.open(`🎉 Subscribed to ${result.tier} plan successfully!`, 'Dismiss', {
-          duration: 5000,
-          horizontalPosition: 'right',
-          verticalPosition: 'top'
-        });
-        // Reload history to show the new invoice
+        // The subscription is NOT active yet -- it's recorded as Pending until an admin verifies
+        // the payment reference, so `status` (the tenant's actual tier/access) is left untouched.
+        this.snackBar.open(
+          `Payment reference submitted (${result.invoiceNumber}). We'll verify it and activate your ${result.tier} plan shortly.`,
+          'Dismiss',
+          { duration: 7000, horizontalPosition: 'right', verticalPosition: 'top' }
+        );
+        // Reload history to show the new pending invoice
         this.subscriptionService.getHistory().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (hist) => this.history.set(hist)
         });

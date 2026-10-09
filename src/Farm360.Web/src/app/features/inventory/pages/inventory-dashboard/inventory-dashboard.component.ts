@@ -154,6 +154,20 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
           </div>
           <span class="font-semibold text-gray-900 dark:text-white text-xs">Suppliers</span>
         </a>
+
+        <a routerLink="../purchase-orders" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-indigo-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">request_quote</mat-icon>
+          </div>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Purchase Orders</span>
+        </a>
+
+        <a routerLink="../returns" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-amber-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">assignment_return</mat-icon>
+          </div>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Purchase Returns</span>
+        </a>
       </div>
 
       <!-- Dashboard Content Grid -->

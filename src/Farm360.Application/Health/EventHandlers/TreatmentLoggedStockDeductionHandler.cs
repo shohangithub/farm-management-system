@@ -61,7 +61,7 @@ public sealed class TreatmentLoggedStockDeductionHandler : INotificationHandler<
             quantity: notification.ConsumptionQuantity.Value,
             unitCostBdt: costBdt,
             balanceAfter: medicineItem.CurrentStock,
-            transactionDate: DateOnly.FromDateTime(DateTime.UtcNow),
+            transactionDate: notification.StartDate,
             reason: $"Auto-deduction for medical treatment on animal {notification.AnimalId}",
             referenceId: notification.MedicalTreatmentId
         );

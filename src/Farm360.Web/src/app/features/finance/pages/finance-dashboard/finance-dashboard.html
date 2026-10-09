@@ -14,11 +14,17 @@
       <mat-icon>arrow_downward</mat-icon>
       <span>Record Income</span>
     </button>
-    <button mat-flat-button color="warn" 
-      class="rounded-xl shadow-md bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 px-4 py-2" 
+    <button mat-flat-button color="warn"
+      class="rounded-xl shadow-md bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 px-4 py-2"
       (click)="openExpenseDialog()">
       <mat-icon>arrow_upward</mat-icon>
       <span>Record Expense</span>
+    </button>
+    <button mat-stroked-button
+      class="rounded-xl border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-400 flex items-center gap-2 px-4 py-2"
+      (click)="openAllocateOverheadDialog()">
+      <mat-icon>engineering</mat-icon>
+      <span>Allocate Labor &amp; Overhead</span>
     </button>
   </div>
 </app-page-header>

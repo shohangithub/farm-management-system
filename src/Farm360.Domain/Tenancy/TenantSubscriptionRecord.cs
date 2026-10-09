@@ -64,7 +64,8 @@ public sealed class TenantSubscriptionRecord : BaseEntity
         DateTime? expiresAtUtc,
         string paymentMethod,
         string? paymentReference,
-        string? notes = null)
+        string? notes = null,
+        string status = "Completed")
     {
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}";
 
@@ -79,8 +80,38 @@ public sealed class TenantSubscriptionRecord : BaseEntity
             expiresAtUtc,
             paymentMethod,
             paymentReference,
-            "Completed",
+            status,
             invoiceNumber,
             notes);
+    }
+
+    /// <summary>
+    /// Confirms a <c>Pending</c> record once the payment has actually been verified -- by an
+    /// admin reviewing a manually-reported reference, or by a payment gateway's callback.
+    /// </summary>
+    public void MarkCompleted(string? verifiedReference = null)
+    {
+        if (Status != "Pending")
+        {
+            throw new InvalidOperationException($"Cannot complete a subscription record in '{Status}' status.");
+        }
+
+        Status = "Completed";
+        if (!string.IsNullOrWhiteSpace(verifiedReference))
+        {
+            PaymentReference = verifiedReference;
+        }
+    }
+
+    /// <summary>Rejects a <c>Pending</c> record -- the reported payment did not check out.</summary>
+    public void MarkRejected(string? reason = null)
+    {
+        if (Status != "Pending")
+        {
+            throw new InvalidOperationException($"Cannot reject a subscription record in '{Status}' status.");
+        }
+
+        Status = "Rejected";
+        Notes = string.IsNullOrWhiteSpace(reason) ? Notes : $"{Notes} | Rejected: {reason}";
     }
 }

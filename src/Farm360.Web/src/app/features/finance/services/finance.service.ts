@@ -12,6 +12,8 @@ import {
   CreateLoanRecordRequest,
   RecordLoanRepaymentRequest,
   AnimalCostLedger,
+  AllocateOverheadRequest,
+  OverheadAllocationResult,
   BreakEvenCalculator,
   BatchPnLReport,
   MonthlyPnLReport,
@@ -167,6 +169,15 @@ export class FinanceService {
 
   getBreakEven(farmId: string, animalId: string): Observable<BreakEvenCalculator> {
     return this.http.get<BreakEvenCalculator>(`${this.getBaseUrl(farmId)}/animals/${animalId}/breakeven`);
+  }
+
+  /**
+   * Distributes a farm's unattributed labour/overhead expenses (categories other than feed, vet,
+   * and acquisition) across the animals present during [from, to], and refreshes their cost
+   * ledgers. Idempotent: re-running a period skips transactions already allocated.
+   */
+  allocateOverhead(farmId: string, request: AllocateOverheadRequest): Observable<OverheadAllocationResult> {
+    return this.http.post<OverheadAllocationResult>(`${this.getBaseUrl(farmId)}/overhead/allocate`, request);
   }
 
   // --- Reports & Dashboard ---

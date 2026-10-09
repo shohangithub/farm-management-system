@@ -3082,6 +3082,125 @@ namespace Farm360.Persistence.Migrations
                     b.ToTable("PurchaseOrderItems", "inventory");
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseReturn", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreditNoteNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateOnly>("ReturnDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ReturnNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FarmId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.HasIndex("ReturnDate");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("TenantId", "ReturnNumber")
+                        .IsUnique();
+
+                    b.ToTable("PurchaseReturns", "inventory");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseReturnItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("InventoryItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PurchaseOrderItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PurchaseReturnId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitCostBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryItemId");
+
+                    b.HasIndex("PurchaseOrderItemId");
+
+                    b.HasIndex("PurchaseReturnId");
+
+                    b.ToTable("PurchaseReturnItems", "inventory");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Inventory.StockTransaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5168,6 +5287,42 @@ namespace Farm360.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseReturn", b =>
+                {
+                    b.HasOne("Farm360.Domain.Inventory.PurchaseOrder", null)
+                        .WithMany()
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Farm360.Domain.Inventory.Supplier", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseReturnItem", b =>
+                {
+                    b.HasOne("Farm360.Domain.Inventory.InventoryItem", null)
+                        .WithMany()
+                        .HasForeignKey("InventoryItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Farm360.Domain.Inventory.PurchaseOrderItem", null)
+                        .WithMany()
+                        .HasForeignKey("PurchaseOrderItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Farm360.Domain.Inventory.PurchaseReturn", null)
+                        .WithMany("Items")
+                        .HasForeignKey("PurchaseReturnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Farm360.Domain.Livestock.Animal", b =>
                 {
                     b.HasOne("Farm360.Domain.Livestock.AnimalBatch", null)
@@ -5469,6 +5624,11 @@ namespace Farm360.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseReturn", b =>
                 {
                     b.Navigation("Items");
                 });

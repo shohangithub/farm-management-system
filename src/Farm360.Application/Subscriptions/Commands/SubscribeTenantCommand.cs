@@ -16,7 +16,7 @@ public sealed record SubscribeTenantCommand(
     SubscriptionBillingCycle BillingCycle,
     string PaymentMethod,
     string? PaymentReference = null,
-    string? Notes = null) : IRequest<TenantSubscriptionStatusDto>;
+    string? Notes = null) : IRequest<TenantSubscriptionRecordDto>;
 
 public sealed class SubscribeTenantCommandValidator : AbstractValidator<SubscribeTenantCommand>
 {
@@ -36,13 +36,12 @@ public sealed class SubscribeTenantCommandValidator : AbstractValidator<Subscrib
     }
 }
 
-internal sealed class SubscribeTenantCommandHandler : IRequestHandler<SubscribeTenantCommand, TenantSubscriptionStatusDto>
+internal sealed class SubscribeTenantCommandHandler : IRequestHandler<SubscribeTenantCommand, TenantSubscriptionRecordDto>
 {
     private readonly ITenantRepository _tenantRepository;
     private readonly ITenantSubscriptionRepository _subscriptionRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly ITenantService _tenantService;
-    private readonly ICacheService _cacheService;
     private readonly IUnitOfWork _unitOfWork;
 
     public SubscribeTenantCommandHandler(
@@ -50,18 +49,23 @@ internal sealed class SubscribeTenantCommandHandler : IRequestHandler<SubscribeT
         ITenantSubscriptionRepository subscriptionRepository,
         ICurrentUserService currentUserService,
         ITenantService tenantService,
-        ICacheService cacheService,
         IUnitOfWork unitOfWork)
     {
         _tenantRepository = tenantRepository;
         _subscriptionRepository = subscriptionRepository;
         _currentUserService = currentUserService;
         _tenantService = tenantService;
-        _cacheService = cacheService;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<TenantSubscriptionStatusDto> Handle(SubscribeTenantCommand request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Records a tenant's self-reported payment (bKash/Nagad/card/bank reference typed by the
+    /// user) as <c>Pending</c>. It does NOT activate the subscription -- there is no gateway here
+    /// to verify the claim against, so an admin must confirm it actually arrived before the tenant
+    /// gets the access they're reporting having paid for. A verified gateway (e.g. SSLCommerz
+    /// checkout) activates immediately via its own callback, bypassing this manual review.
+    /// </summary>
+    public async Task<TenantSubscriptionRecordDto> Handle(SubscribeTenantCommand request, CancellationToken cancellationToken)
     {
         var tenantId = _currentUserService.TenantId ?? _tenantService.TenantId;
         if (tenantId == Guid.Empty)
@@ -72,15 +76,16 @@ internal sealed class SubscribeTenantCommandHandler : IRequestHandler<SubscribeT
         var tenant = await _tenantRepository.GetByIdAsync(tenantId, cancellationToken)
             ?? throw new NotFoundException("Tenant", tenantId);
 
-        // Calculate amount based on Tier & Billing Cycle
-        var amount = CalculatePrice(request.Tier, request.BillingCycle);
+        var amount = SubscriptionPlanCatalog.PriceFor(request.Tier, request.BillingCycle);
         var currency = tenant.DefaultCurrency ?? "BDT";
 
-        // Activate or renew subscription
-        tenant.Subscribe(request.Tier, request.BillingCycle);
-        _tenantRepository.Update(tenant);
+        var projectedExpiry = request.BillingCycle switch
+        {
+            SubscriptionBillingCycle.OneTime => (DateTime?)null,
+            SubscriptionBillingCycle.Yearly => DateTime.UtcNow.AddYears(1),
+            _ => DateTime.UtcNow.AddMonths(1),
+        };
 
-        // Record financial audit & invoice entry
         var record = TenantSubscriptionRecord.Create(
             tenantId: tenant.Id,
             tier: request.Tier,
@@ -88,70 +93,29 @@ internal sealed class SubscribeTenantCommandHandler : IRequestHandler<SubscribeT
             amount: amount,
             currency: currency,
             startedAtUtc: DateTime.UtcNow,
-            expiresAtUtc: tenant.SubscriptionExpiresAt,
+            expiresAtUtc: projectedExpiry,
             paymentMethod: request.PaymentMethod,
             paymentReference: request.PaymentReference,
-            notes: request.Notes ?? $"Subscribed to {request.Tier} ({request.BillingCycle})"
+            notes: request.Notes ?? $"Subscription request: {request.Tier} ({request.BillingCycle}) -- pending verification",
+            status: "Pending"
         );
 
         await _subscriptionRepository.AddAsync(record, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Invalidate tenant middleware cache so changes take effect immediately
-        await _cacheService.RemoveAsync($"tenant:{tenant.Id}:context", cancellationToken);
-        if (!string.IsNullOrEmpty(tenant.Slug))
-        {
-            await _cacheService.RemoveAsync($"tenant:slug:{tenant.Slug}:context", cancellationToken);
-        }
-
-        int? daysRemaining = null;
-        if (tenant.SubscriptionExpiresAt.HasValue)
-        {
-            daysRemaining = Math.Max(0, (int)Math.Ceiling((tenant.SubscriptionExpiresAt.Value - DateTime.UtcNow).TotalDays));
-        }
-
-        var (usersCount, farmsCount, animalsCount) = await _tenantRepository.GetTenantUsageCountsAsync(tenantId, cancellationToken);
-
-        return new TenantSubscriptionStatusDto(
-            TenantId: tenant.Id,
-            TenantName: tenant.Name,
-            Tier: tenant.SubscriptionTier.ToString(),
-            BillingCycle: tenant.BillingCycle.ToString(),
-            Status: tenant.Status.ToString(),
-            IsTrial: tenant.IsTrial,
-            TrialDays: tenant.TrialDays,
-            TrialEndsAtUtc: tenant.TrialEndsAtUtc,
-            TrialDaysRemaining: 0,
-            SubscriptionExpiresAtUtc: tenant.SubscriptionExpiresAt,
-            DaysRemaining: daysRemaining,
-            HasUsedTrial: tenant.HasUsedTrial,
-            MaxUsers: tenant.MaxUsers,
-            CurrentUsers: usersCount,
-            MaxFarms: tenant.MaxFarms,
-            CurrentFarms: farmsCount,
-            MaxAnimals: tenant.MaxAnimals,
-            CurrentAnimals: animalsCount
-        );
+        return new TenantSubscriptionRecordDto(
+            Id: record.Id,
+            Tier: record.Tier.ToString(),
+            BillingCycle: record.BillingCycle.ToString(),
+            Amount: record.Amount,
+            Currency: record.Currency,
+            StartedAtUtc: record.StartedAtUtc,
+            ExpiresAtUtc: record.ExpiresAtUtc,
+            PaymentMethod: record.PaymentMethod,
+            PaymentReference: record.PaymentReference,
+            Status: record.Status,
+            InvoiceNumber: record.InvoiceNumber,
+            Notes: record.Notes,
+            CreatedAtUtc: record.CreatedAtUtc);
     }
-
-    private static decimal CalculatePrice(SubscriptionTier tier, SubscriptionBillingCycle cycle) => (tier, cycle) switch
-    {
-        (SubscriptionTier.Starter, SubscriptionBillingCycle.Monthly) => 1500m,
-        (SubscriptionTier.Starter, SubscriptionBillingCycle.Yearly) => 15000m,
-        (SubscriptionTier.Starter, SubscriptionBillingCycle.OneTime) => 35000m,
-
-        (SubscriptionTier.Standard, SubscriptionBillingCycle.Monthly) => 3500m,
-        (SubscriptionTier.Standard, SubscriptionBillingCycle.Yearly) => 35000m,
-        (SubscriptionTier.Standard, SubscriptionBillingCycle.OneTime) => 75000m,
-
-        (SubscriptionTier.Professional, SubscriptionBillingCycle.Monthly) => 7500m,
-        (SubscriptionTier.Professional, SubscriptionBillingCycle.Yearly) => 75000m,
-        (SubscriptionTier.Professional, SubscriptionBillingCycle.OneTime) => 160000m,
-
-        (SubscriptionTier.Enterprise, SubscriptionBillingCycle.Monthly) => 15000m,
-        (SubscriptionTier.Enterprise, SubscriptionBillingCycle.Yearly) => 150000m,
-        (SubscriptionTier.Enterprise, SubscriptionBillingCycle.OneTime) => 350000m,
-
-        _ => 1500m
-    };
 }

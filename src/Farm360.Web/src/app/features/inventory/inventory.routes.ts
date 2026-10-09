@@ -39,6 +39,10 @@ export const INVENTORY_ROUTES: Routes = [
     loadComponent: () => import('./components/purchase-order-detail/purchase-order-detail').then(m => m.PurchaseOrderDetail)
   },
   {
+    path: 'returns',
+    loadComponent: () => import('./pages/purchase-return-list/purchase-return-list.component').then(m => m.PurchaseReturnListComponent)
+  },
+  {
     path: 'reports/movement',
     loadComponent: () => import('./pages/inventory-movement-report/inventory-movement-report').then(m => m.InventoryMovementReport)
   },

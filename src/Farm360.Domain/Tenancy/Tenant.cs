@@ -295,14 +295,10 @@ public sealed class Tenant : BaseEntity
 
     private void SetQuotasForTier(SubscriptionTier tier)
     {
-        (MaxUsers, MaxFarms, MaxAnimals) = tier switch
-        {
-            SubscriptionTier.Starter => (3, 1, 100),
-            SubscriptionTier.Standard => (10, 5, 500),
-            SubscriptionTier.Professional => (50, 20, 5000),
-            SubscriptionTier.Enterprise => (int.MaxValue, int.MaxValue, int.MaxValue),
-            _ => (3, 1, 100)
-        };
+        var pricing = SubscriptionPlanCatalog.For(tier);
+        MaxUsers = pricing.MaxUsers;
+        MaxFarms = pricing.MaxFarms;
+        MaxAnimals = pricing.MaxAnimals;
     }
 }
 

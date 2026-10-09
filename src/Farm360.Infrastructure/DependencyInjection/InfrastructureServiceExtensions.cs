@@ -84,6 +84,12 @@ public static class InfrastructureServiceExtensions
         // ── HTTP Client factory (for external services) ────────────────────
         services.AddHttpClient();
 
+        // ── Payment gateway (subscription checkout) ────────────────────────────
+        services.Configure<Farm360.Infrastructure.Payments.SslCommerzOptions>(
+            configuration.GetSection(Farm360.Infrastructure.Payments.SslCommerzOptions.SectionName));
+        services.AddScoped<Farm360.Application.Common.Interfaces.IPaymentGatewayService,
+            Farm360.Infrastructure.Payments.SslCommerzGatewayService>();
+
         // ── Messaging services ────────────────────────────────────────────────
         // DEV/STAGING: Log-only stubs — no real messages are sent.
         // PRODUCTION:  Replace with real gateway implementations:

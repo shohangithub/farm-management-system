@@ -1,4 +1,5 @@
 using Farm360.Application.Subscriptions.DTOs;
+using Farm360.Domain.Tenancy;
 using MediatR;
 using System.Collections.Generic;
 using System.Threading;
@@ -16,18 +17,23 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
 {
     public Task<SubscriptionCatalogDto> Handle(GetSubscriptionPlansQuery request, CancellationToken cancellationToken)
     {
+        var starter = SubscriptionPlanCatalog.For(SubscriptionTier.Starter);
+        var standard = SubscriptionPlanCatalog.For(SubscriptionTier.Standard);
+        var professional = SubscriptionPlanCatalog.For(SubscriptionTier.Professional);
+        var enterprise = SubscriptionPlanCatalog.For(SubscriptionTier.Enterprise);
+
         var plans = new List<SubscriptionPlanDto>
         {
             new(
                 Tier: "Starter",
                 Name: "Starter Farm",
                 Description: "Essential operational management for smallholder farms and single-site setups.",
-                MonthlyPrice: 1500m,
-                YearlyPrice: 15000m,
-                OneTimePrice: 35000m,
-                MaxUsers: 3,
-                MaxFarms: 1,
-                MaxAnimals: 100,
+                MonthlyPrice: starter.MonthlyPrice,
+                YearlyPrice: starter.YearlyPrice,
+                OneTimePrice: starter.OneTimePrice,
+                MaxUsers: starter.MaxUsers,
+                MaxFarms: starter.MaxFarms,
+                MaxAnimals: starter.MaxAnimals,
                 Features:
                 [
                     "Up to 1 Farm & 100 Animals",
@@ -43,12 +49,12 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
                 Tier: "Standard",
                 Name: "Standard Commercial",
                 Description: "Comprehensive farm optimization for growing livestock businesses and multi-shed setups.",
-                MonthlyPrice: 3500m,
-                YearlyPrice: 35000m,
-                OneTimePrice: 75000m,
-                MaxUsers: 10,
-                MaxFarms: 5,
-                MaxAnimals: 500,
+                MonthlyPrice: standard.MonthlyPrice,
+                YearlyPrice: standard.YearlyPrice,
+                OneTimePrice: standard.OneTimePrice,
+                MaxUsers: standard.MaxUsers,
+                MaxFarms: standard.MaxFarms,
+                MaxAnimals: standard.MaxAnimals,
                 Features:
                 [
                     "Up to 5 Farms & 500 Animals",
@@ -65,12 +71,12 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
                 Tier: "Professional",
                 Name: "Professional Enterprise",
                 Description: "Advanced analytics, multiple branches, investor P&L, and full multi-farm governance.",
-                MonthlyPrice: 7500m,
-                YearlyPrice: 75000m,
-                OneTimePrice: 160000m,
-                MaxUsers: 50,
-                MaxFarms: 20,
-                MaxAnimals: 5000,
+                MonthlyPrice: professional.MonthlyPrice,
+                YearlyPrice: professional.YearlyPrice,
+                OneTimePrice: professional.OneTimePrice,
+                MaxUsers: professional.MaxUsers,
+                MaxFarms: professional.MaxFarms,
+                MaxAnimals: professional.MaxAnimals,
                 Features:
                 [
                     "Up to 20 Farms & 5,000 Animals",
@@ -87,9 +93,11 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
                 Tier: "Enterprise",
                 Name: "Corporate / Custom",
                 Description: "Unlimited scale for agribusiness groups, cooperatives, and government research stations.",
-                MonthlyPrice: 15000m,
-                YearlyPrice: 150000m,
-                OneTimePrice: 350000m,
+                MonthlyPrice: enterprise.MonthlyPrice,
+                YearlyPrice: enterprise.YearlyPrice,
+                OneTimePrice: enterprise.OneTimePrice,
+                // Displayed as a large round number rather than int.MaxValue (the real enforcement
+                // value for "unlimited") -- a progress bar showing "5 / 2147483647" would look broken.
                 MaxUsers: 9999,
                 MaxFarms: 9999,
                 MaxAnimals: 999999,

@@ -11,15 +11,18 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
 {
     private readonly IPurchaseOrderRepository _purchaseOrderRepository;
     private readonly IInventoryItemRepository _inventoryItemRepository;
+    private readonly IStockTransactionRepository _stockTransactionRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public PurchaseOrderFulfilledEventHandler(
         IPurchaseOrderRepository purchaseOrderRepository,
         IInventoryItemRepository inventoryItemRepository,
+        IStockTransactionRepository stockTransactionRepository,
         IUnitOfWork unitOfWork)
     {
         _purchaseOrderRepository = purchaseOrderRepository;
         _inventoryItemRepository = inventoryItemRepository;
+        _stockTransactionRepository = stockTransactionRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -30,17 +33,33 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
         if (purchaseOrder == null)
             return;
 
-        var transactionId = Guid.NewGuid(); // One transaction ID for all items received in this PO
-
         foreach (var item in purchaseOrder.Items)
         {
             var inventoryItem = await _inventoryItemRepository.GetByIdAsync(item.InventoryItemId, cancellationToken);
 
             if (inventoryItem != null)
             {
+                var itemTxId = Guid.NewGuid();
                 // Receiving stock updates the InventoryItem aggregate and creates a StockTransaction entity
-                inventoryItem.ReceiveStock(item.Quantity, item.UnitCostBdt, transactionId);
+                inventoryItem.ReceiveStock(item.Quantity, item.UnitCostBdt, itemTxId);
                 _inventoryItemRepository.Update(inventoryItem);
+
+                var stockTransaction = new Farm360.Domain.Inventory.StockTransaction(
+                    id: itemTxId,
+                    tenantId: purchaseOrder.TenantId,
+                    farmId: purchaseOrder.FarmId,
+                    inventoryItemId: item.InventoryItemId,
+                    transactionType: Farm360.Domain.Inventory.Enums.StockTransactionType.StockIn,
+                    quantity: item.Quantity,
+                    unitCostBdt: item.UnitCostBdt,
+                    balanceAfter: inventoryItem.CurrentStock,
+                    transactionDate: DateOnly.FromDateTime(DateTime.UtcNow),
+                    supplierId: purchaseOrder.SupplierId,
+                    invoiceNumber: purchaseOrder.PoNumber,
+                    reason: $"Received from Purchase Order {purchaseOrder.PoNumber}",
+                    referenceId: purchaseOrder.Id);
+
+                await _stockTransactionRepository.AddAsync(stockTransaction, cancellationToken);
             }
         }
         

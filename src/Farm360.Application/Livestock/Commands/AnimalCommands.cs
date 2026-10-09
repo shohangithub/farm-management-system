@@ -5,6 +5,7 @@ using Farm360.Domain.Livestock;
 using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 using Farm360.Domain.Livestock.ValueObjects;
+using Farm360.Domain.Tenancy.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -74,6 +75,7 @@ public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterA
 
 public sealed class RegisterAnimalCommandHandler(
     IAnimalRepository repository,
+    ITenantRepository tenantRepository,
     IUnitOfWork unitOfWork,
     ITenantService tenantService,
     ICurrentUserService currentUser,
@@ -81,6 +83,17 @@ public sealed class RegisterAnimalCommandHandler(
 {
     public async Task<AnimalDto> Handle(RegisterAnimalCommand request, CancellationToken cancellationToken)
     {
+        var tenant = await tenantRepository.GetByIdAsync(tenantService.TenantId, cancellationToken)
+            ?? throw new Farm360.Application.Common.Exceptions.ValidationException(new[] { new FluentValidation.Results.ValidationFailure("TenantId", "Tenant not found.") });
+
+        var (_, _, animalsCount) = await tenantRepository.GetTenantUsageCountsAsync(tenantService.TenantId, cancellationToken);
+        if (animalsCount >= tenant.MaxAnimals)
+        {
+            throw new Farm360.Application.Common.Exceptions.ValidationException(new[] { new FluentValidation.Results.ValidationFailure(
+                "TagId",
+                $"Your {tenant.SubscriptionTier} plan allows up to {tenant.MaxAnimals} animal(s). Upgrade your subscription to register more.") });
+        }
+
         var tag = AnimalTag.Create(request.TagId, request.TagType);
 
         var animal = Animal.Create(

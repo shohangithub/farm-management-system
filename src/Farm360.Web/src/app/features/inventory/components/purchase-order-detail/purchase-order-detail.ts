@@ -9,7 +9,8 @@ import { switchMap, catchError, filter, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import { InventoryService } from '../../services/inventory.service';
-import { PurchaseOrder, PurchaseOrderStatus } from '../../models/inventory.models';
+import { PurchaseOrder, PurchaseOrderStatus, PurchaseReturn } from '../../models/inventory.models';
+import { CreatePurchaseReturnDialogComponent } from '../dialogs/create-purchase-return-dialog/create-purchase-return-dialog.component';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
@@ -45,6 +46,10 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
         <button *ngIf="po()?.status === PurchaseOrderStatus.Approved" (click)="onFulfill()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">inventory</mat-icon> Receive Stock (Fulfill)
+        </button>
+        <button *ngIf="po()?.status === PurchaseOrderStatus.Fulfilled" (click)="onReturnItems()"
+          class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">assignment_return</mat-icon> Return Items
         </button>
       </div>
     </app-page-header>
@@ -124,6 +129,48 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                   <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white text-right">
                     ৳ {{ item.totalCostBdt | number:'1.2-2' }}
                   </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Returns Section -->
+        <div *ngIf="returns() && returns()!.length > 0" class="p-6 border-t border-gray-100 dark:border-gray-800 bg-amber-50/20 dark:bg-amber-950/10">
+          <h3 class="text-base font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <mat-icon class="text-amber-500 !text-[20px] !w-[20px] !h-[20px]">assignment_return</mat-icon>
+            Supplier Returns ({{ returns()!.length }})
+          </h3>
+          <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs font-bold text-gray-500 uppercase">
+                <tr>
+                  <th class="px-4 py-3 text-left">Return #</th>
+                  <th class="px-4 py-3 text-left">Date</th>
+                  <th class="px-4 py-3 text-left">Reason</th>
+                  <th class="px-4 py-3 text-center">Status</th>
+                  <th class="px-4 py-3 text-right">Refund Amount</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                <tr *ngFor="let ret of returns()" class="hover:bg-gray-50/50">
+                  <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                    {{ ret.returnNumber }}
+                    <span *ngIf="ret.creditNoteNumber" class="text-xs text-gray-400 block font-normal">Ref: {{ ret.creditNoteNumber }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ ret.returnDate | date:'mediumDate' }}</td>
+                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ ret.reason }}</td>
+                  <td class="px-4 py-3 text-center">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold"
+                          [ngClass]="{
+                            'bg-gray-100 text-gray-700': ret.status === 'Draft',
+                            'bg-emerald-100 text-emerald-800': ret.status === 'Completed',
+                            'bg-red-100 text-red-800': ret.status === 'Cancelled'
+                          }">
+                      {{ ret.status }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right font-black text-amber-600 dark:text-amber-400">৳ {{ ret.totalAmountBdt | number:'1.2-2' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -241,6 +288,37 @@ export class PurchaseOrderDetail {
             this.error.set(err?.error?.detail || 'Failed to fulfill PO');
           }
         });
+      }
+    });
+  }
+
+  readonly returns = toSignal(
+    toObservable(this.fetchParams).pipe(
+      filter(p => !!p.id),
+      switchMap(p => this.inventoryService.getPurchaseReturns({ purchaseOrderId: p.id! }).pipe(
+        catchError(() => of({ items: [] } as any))
+      )),
+      switchMap(res => of(res?.items || []))
+    )
+  );
+
+  onReturnItems(): void {
+    const data = this.po();
+    if (!data) return;
+
+    const dialogRef = this.dialog.open(CreatePurchaseReturnDialogComponent, {
+      width: '900px',
+      disableClose: true,
+      data: {
+        purchaseOrderId: data.id,
+        poNumber: data.poNumber,
+        farmId: data.farmId
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(res => {
+      if (res?.success) {
+        this.reload();
       }
     });
   }

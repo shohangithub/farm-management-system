@@ -26,7 +26,11 @@ import {
   UpdateConsumableUsagePlanRequest,
   ConfirmDailyConsumableEntryRequest,
   BulkConfirmDailyConsumablesRequest,
-  SkipDailyConsumableEntryRequest
+  SkipDailyConsumableEntryRequest,
+  PurchaseReturn,
+  ReturnablePoItem,
+  CreatePurchaseReturnRequest,
+  PurchaseReturnParams
 } from '../models/inventory.models';
 
 @Injectable({
@@ -177,6 +181,42 @@ export class InventoryService {
 
   fulfillPurchaseOrder(id: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, {});
+  }
+
+  // ── Purchase Returns ────────────────────────────────────────────────────────
+  getReturnablePoItems(purchaseOrderId: string): Observable<ReturnablePoItem[]> {
+    return this.http.get<ReturnablePoItem[]>(`${this.baseUrl}/purchase-orders/${purchaseOrderId}/returnable-items`);
+  }
+
+  getPurchaseReturns(params: PurchaseReturnParams = {}): Observable<PagedResult<PurchaseReturn>> {
+    let httpParams = new HttpParams();
+    if (params.pageNumber) httpParams = httpParams.set('pageNumber', params.pageNumber);
+    if (params.pageSize)   httpParams = httpParams.set('pageSize', params.pageSize);
+    if (params.farmId)     httpParams = httpParams.set('farmId', params.farmId);
+    if (params.purchaseOrderId) httpParams = httpParams.set('purchaseOrderId', params.purchaseOrderId);
+    if (params.supplierId) httpParams = httpParams.set('supplierId', params.supplierId);
+    if (params.status)     httpParams = httpParams.set('status', params.status);
+    if (params.search)     httpParams = httpParams.set('search', params.search);
+    if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDesc !== undefined) httpParams = httpParams.set('sortDesc', params.sortDesc);
+
+    return this.http.get<PagedResult<PurchaseReturn>>(`${this.baseUrl}/purchase-returns`, { params: httpParams });
+  }
+
+  getPurchaseReturnById(id: string): Observable<PurchaseReturn> {
+    return this.http.get<PurchaseReturn>(`${this.baseUrl}/purchase-returns/${id}`);
+  }
+
+  createPurchaseReturn(request: CreatePurchaseReturnRequest): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${this.baseUrl}/purchase-returns`, request);
+  }
+
+  completePurchaseReturn(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-returns/${id}/complete`, {});
+  }
+
+  cancelPurchaseReturn(id: string, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-returns/${id}/cancel`, { reason });
   }
 
   // ── Consumable Usage Plans ──────────────────────────────────────────────────
