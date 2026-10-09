@@ -43,15 +43,29 @@ export class RegisterComponent {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.authService.register(this.registerForm.value).subscribe({
+    const val = this.registerForm.value;
+    const payload = {
+      fullName: val.name?.trim() || '',
+      phone: val.phone?.trim() || '',
+      email: val.email?.trim() || '',
+      password: val.password || '',
+      farmName: val.farmName?.trim() || '',
+      trialDays: Number(val.trialDays) || 7
+    };
+
+    this.authService.register(payload).subscribe({
       next: () => {
         this.isLoading.set(false);
-        // Automatically route to login after successful mock registration
-        this.router.navigate(['/auth/login'], { queryParams: { registered: 'true' } });
+        this.router.navigate(['/auth/login'], { 
+          queryParams: { 
+            registered: 'true',
+            phone: payload.phone 
+          } 
+        });
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.error.set(err.message || 'Registration failed. Please try again.');
+        this.error.set(err.error?.detail || err.error?.message || err.message || 'Registration failed. Please try again.');
       }
     });
   }

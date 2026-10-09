@@ -6,7 +6,7 @@ namespace Farm360.Application.Common.Interfaces;
 
 public record LoginResponse(string AccessToken, string RefreshToken, int ExpiresIn, string SessionId);
 public record LoginRequest(string Phone, string Password);
-public record RegisterRequest(string Phone, string Email, string Password, string FullName);
+public record RegisterRequest(string Phone, string Email, string Password, string FullName, string? FarmName = null, int? TrialDays = null);
 
 /// <summary>
 /// Authentication service abstraction.

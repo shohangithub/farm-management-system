@@ -28,6 +28,7 @@ import { BreedDto } from '../../../livestock/models/breed.models';
 import { FarmService } from '../../../farms/services/farm.service';
 import { ShedService } from '../../../farms/services/shed.service';
 import { ShedList } from '../../../farms/models/shed.model';
+import { InventoryService } from '../../../inventory/services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { ReportParameterType } from '../../models/report.models';
 
@@ -152,6 +153,7 @@ export class ReportEntityPickerComponent {
   private readonly breeds = inject(BreedService);
   private readonly farms = inject(FarmService);
   private readonly sheds = inject(ShedService);
+  private readonly inventoryService = inject(InventoryService);
   private readonly workingContext = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -196,7 +198,7 @@ export class ReportEntityPickerComponent {
 
   protected readonly isSearchable = computed(() => this.entityType() === 'Animal');
   protected readonly needsFarmScope = computed(() =>
-    this.entityType() === 'Animal' || this.entityType() === 'Batch' || this.entityType() === 'Shed');
+    this.entityType() === 'Animal' || this.entityType() === 'Batch' || this.entityType() === 'Shed' || this.entityType() === 'InventoryItem');
   protected readonly scoped = computed(() => !this.needsFarmScope() || !!this.effectiveFarmId());
 
   constructor() {
@@ -408,6 +410,19 @@ export class ReportEntityPickerComponent {
         }
         return this.sheds.getShedsByFarm(farmId).pipe(
           map(res => res.map((s: ShedList) => ({ id: s.id, label: s.shedName, sublabel: s.shedNumber }))),
+          catchError(() => of<PickerOption[]>([])),
+        );
+
+      case 'InventoryItem':
+        if (!farmId) {
+          return of<PickerOption[]>([]);
+        }
+        return this.inventoryService.getItems({ farmId, pageSize: 500 }).pipe(
+          map(res => res.items.map(item => ({
+            id: item.id,
+            label: item.name,
+            sublabel: `${item.categoryName || item.category} · ${item.unitOfMeasure}`,
+          }))),
           catchError(() => of<PickerOption[]>([])),
         );
 

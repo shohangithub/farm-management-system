@@ -10,6 +10,12 @@
       <p class="login-subtitle">Enterprise Livestock Management Platform</p>
     </div>
 
+    <!-- Success Alert -->
+    <div *ngIf="successMessage()" class="login-success" role="alert" style="display: flex; align-items: flex-start; gap: 8px; padding: 12px 16px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); color: #10b981; font-size: var(--font-size-sm); margin-bottom: var(--space-4);">
+      <span class="material-icons" style="font-size: 18px; margin-top: 1px;">check_circle</span>
+      <span>{{ successMessage() }}</span>
+    </div>
+
     <!-- Error Alert -->
     <div *ngIf="errorMessage()" class="login-error" role="alert">
       <span class="material-icons">error_outline</span>
@@ -70,10 +76,20 @@
 
     </form>
 
-    <!-- Footer -->
-    <div class="login-footer">
-      <p style="margin-bottom: 8px;">Don't have an account? <a routerLink="/auth/register" style="color: var(--primary-600); font-weight: bold; text-decoration: none;">Sign Up</a></p>
-      <p>Farm360 AI &copy; {{ currentYear }} &middot; Enterprise Edition</p>
+    <!-- Footer & Sign Up Prompt -->
+    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle); text-align: center;">
+      <p style="margin: 0 0 12px 0; font-size: 13px; color: var(--text-muted);">
+        Don't have an account for your farm?
+      </p>
+      <a routerLink="/auth/register"
+         style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px 16px; border: 1.5px solid var(--color-primary); color: var(--color-primary); border-radius: var(--radius-md); font-weight: 600; font-size: 13px; text-decoration: none; transition: all 0.2s;"
+         class="btn-signup-cta">
+        <span class="material-icons" style="font-size: 16px;">bolt</span>
+        Start Free Trial / Sign Up
+      </a>
+      <p style="margin-top: 16px; margin-bottom: 0; font-size: 11px; color: var(--text-muted);">
+        Farm360 AI &copy; {{ currentYear }} &middot; Enterprise Edition
+      </p>
     </div>
 
   </div>

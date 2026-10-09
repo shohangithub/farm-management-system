@@ -319,5 +319,17 @@ public interface ITenantMembershipService
         Guid userId,
         Guid? preferredTenantId = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Automatically provisions a new Tenant, TenantUser (Owner), and Organization for a newly registered user,
+    /// starting their requested free trial duration (3, 7, or 10 days).
+    /// </summary>
+    Task<Guid> CreateTenantForUserAsync(
+        Guid userId,
+        string farmName,
+        string userEmail,
+        string? userPhone,
+        int trialDays = 7,
+        CancellationToken cancellationToken = default);
 }
 

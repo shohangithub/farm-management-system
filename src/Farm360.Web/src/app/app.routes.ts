@@ -81,6 +81,16 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'register',
+    redirectTo: 'auth/register',
+    pathMatch: 'full',
+  },
+  {
+    path: 'signup',
+    redirectTo: 'auth/register',
+    pathMatch: 'full',
+  },
+  {
     path: '**',
     redirectTo: 'dashboard',
   },

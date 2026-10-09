@@ -18,8 +18,8 @@
   <div class="flex items-center gap-1.5">
     
     <!-- Theme Switcher -->
-    <button mat-icon-button (click)="toggleTheme()" [matTooltip]="isDarkMode ? 'Light Mode' : 'Dark Mode'" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
-      <mat-icon class="!w-5 !h-5 !text-[20px]">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    <button mat-icon-button (click)="toggleTheme()" [matTooltip]="isDarkMode() ? 'Light Mode' : 'Dark Mode'" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+      <mat-icon class="!w-5 !h-5 !text-[20px]">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
     </button>
 
     <!-- Context Selector Component -->

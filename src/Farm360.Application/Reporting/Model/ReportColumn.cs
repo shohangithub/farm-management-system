@@ -14,7 +14,8 @@ public sealed record ReportColumn(
     int Decimals,
     float Width,
     bool IsRelativeWidth,
-    ReportAggregate Aggregate);
+    ReportAggregate Aggregate,
+    bool MergeRepeating = false);
 
 /// <summary>
 /// Column declaration inside a report definition. Carries a typed accessor so definitions stay
@@ -35,7 +36,8 @@ public sealed class ReportColumn<TRow>
         int decimals,
         float width,
         bool isRelativeWidth,
-        ReportAggregate aggregate)
+        ReportAggregate aggregate,
+        bool mergeRepeating = false)
     {
         Field = field;
         Header = header;
@@ -46,6 +48,7 @@ public sealed class ReportColumn<TRow>
         Width = width;
         IsRelativeWidth = isRelativeWidth;
         Aggregate = aggregate;
+        MergeRepeating = mergeRepeating;
     }
 
     public string Field { get; }
@@ -57,21 +60,22 @@ public sealed class ReportColumn<TRow>
     public float Width { get; }
     public bool IsRelativeWidth { get; }
     public ReportAggregate Aggregate { get; }
+    public bool MergeRepeating { get; }
 
     public ReportColumn ToDescriptor() =>
-        new(Field, Header, Type, Align, Decimals, Width, IsRelativeWidth, Aggregate);
+        new(Field, Header, Type, Align, Decimals, Width, IsRelativeWidth, Aggregate, MergeRepeating);
 
     // ── Factories ───────────────────────────────────────────────────────────
     // Defaults encode the house style: text left, numbers right with fixed decimals.
 
     public static ReportColumn<TRow> Text(
         string field, LocalizedText header, Func<TRow, object?> value,
-        float width = 2f, bool relative = true, ReportAlign align = ReportAlign.Left) =>
-        new(field, header, ReportColumnType.Text, value, align, 0, width, relative, ReportAggregate.None);
+        float width = 2f, bool relative = true, ReportAlign align = ReportAlign.Left, bool mergeRepeating = false) =>
+        new(field, header, ReportColumnType.Text, value, align, 0, width, relative, ReportAggregate.None, mergeRepeating);
 
     public static ReportColumn<TRow> Date(
-        string field, LocalizedText header, Func<TRow, object?> value, float widthMm = 22f) =>
-        new(field, header, ReportColumnType.Date, value, ReportAlign.Left, 0, widthMm, false, ReportAggregate.None);
+        string field, LocalizedText header, Func<TRow, object?> value, float widthMm = 22f, bool mergeRepeating = false) =>
+        new(field, header, ReportColumnType.Date, value, ReportAlign.Left, 0, widthMm, false, ReportAggregate.None, mergeRepeating);
 
     public static ReportColumn<TRow> DateTime(
         string field, LocalizedText header, Func<TRow, object?> value, float widthMm = 32f) =>

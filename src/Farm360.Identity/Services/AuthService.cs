@@ -135,7 +135,20 @@ public sealed class AuthService(
             throw new InvalidOperationException($"Failed to create user: {errors}");
         }
 
-        // Role and tenant assignment happen at the Organization/Tenant level in business logic, not here.
+        // Create Tenant, TenantUser (Owner), and Organization for the user with requested trial days
+        var farmName = !string.IsNullOrWhiteSpace(request.FarmName)
+            ? request.FarmName.Trim()
+            : $"{request.FullName}'s Farm";
+
+        var trialDays = request.TrialDays is 3 or 7 or 10 ? request.TrialDays.Value : 7;
+
+        await tenantMembershipService.CreateTenantForUserAsync(
+            user.Id,
+            farmName,
+            request.Email,
+            request.Phone,
+            trialDays,
+            cancellationToken);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

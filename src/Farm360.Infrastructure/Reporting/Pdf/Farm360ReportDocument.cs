@@ -202,6 +202,42 @@ internal sealed class Farm360ReportDocument : IDocument
         string? currentGroup = null;
         var serial = 0;
 
+        var rowCount = _data.Rows.Count;
+        var colCount = _data.Columns.Count;
+        var spans = new int[rowCount][];
+        for (var r = 0; r < rowCount; r++)
+        {
+            spans[r] = new int[colCount];
+        }
+
+        for (var c = 0; c < colCount; c++)
+        {
+            if (!_data.Columns[c].MergeRepeating)
+            {
+                for (var r = 0; r < rowCount; r++) spans[r][c] = 1;
+                continue;
+            }
+
+            var start = 0;
+            while (start < rowCount)
+            {
+                var currentVal = _data.Rows[start].Cells[c].F;
+                var groupKey = _data.Rows[start].GroupKey;
+                var end = start + 1;
+                while (end < rowCount
+                       && string.Equals(_data.Rows[end].GroupKey, groupKey, StringComparison.Ordinal)
+                       && string.Equals(_data.Rows[end].Cells[c].F, currentVal, StringComparison.Ordinal))
+                {
+                    end++;
+                }
+
+                var span = end - start;
+                spans[start][c] = span;
+                for (var k = start + 1; k < end; k++) spans[k][c] = 0;
+                start = end;
+            }
+        }
+
         for (var i = 0; i < _data.Rows.Count; i++)
         {
             var row = _data.Rows[i];
@@ -222,7 +258,13 @@ internal sealed class Farm360ReportDocument : IDocument
 
             for (var c = 0; c < row.Cells.Count && c < _data.Columns.Count; c++)
             {
-                BodyCell(table.Cell(), row.Cells[c].F, _data.Columns[c].Align);
+                if (spans[i][c] == 0)
+                {
+                    continue;
+                }
+
+                var cell = spans[i][c] > 1 ? table.Cell().RowSpan((uint)spans[i][c]) : table.Cell();
+                BodyCell(cell, row.Cells[c].F, _data.Columns[c].Align);
             }
         }
 

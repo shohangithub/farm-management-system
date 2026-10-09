@@ -11,7 +11,8 @@ export type ReportAlign = 'Left' | 'Center' | 'Right';
 
 export type ReportParameterType =
   | 'Text' | 'WholeNumber' | 'Number' | 'Boolean' | 'Date' | 'DateRange'
-  | 'Select' | 'MultiSelect' | 'Animal' | 'Batch' | 'Farm' | 'Shed' | 'Breed';
+  | 'Select' | 'MultiSelect' | 'Animal' | 'Batch' | 'Farm' | 'Shed' | 'Breed'
+  | 'InventoryItem';
 
 export type ReportCategory =
   | 'Livestock' | 'Feeding' | 'Health' | 'Finance' | 'Inventory' | 'Intelligence' | 'Operations';
@@ -45,6 +46,7 @@ export interface ReportColumn {
   width: number;
   isRelativeWidth: boolean;
   aggregate: string;
+  mergeRepeating?: boolean;
 }
 
 /**

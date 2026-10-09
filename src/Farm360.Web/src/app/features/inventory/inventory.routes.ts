@@ -43,6 +43,11 @@ export const INVENTORY_ROUTES: Routes = [
     loadComponent: () => import('./pages/inventory-movement-report/inventory-movement-report').then(m => m.InventoryMovementReport)
   },
   {
+    path: 'reports/daily-consumption',
+    redirectTo: '/reports/inventory.daily-consumption',
+    pathMatch: 'full'
+  },
+  {
     path: 'consumable-plans',
     loadComponent: () => import('./pages/consumable-plan-list/consumable-plan-list.component').then(m => m.ConsumablePlanListComponent)
   },

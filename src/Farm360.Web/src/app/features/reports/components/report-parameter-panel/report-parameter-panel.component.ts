@@ -7,6 +7,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { DATE_RANGE_PRESETS, ReportParameter } from '../../models/report.models';
 import { ReportEntityPickerComponent } from '../report-entity-picker/report-entity-picker.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
@@ -23,6 +25,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
   imports: [
     CommonModule, FormsModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatCheckboxModule, MatButtonModule, MatIconModule,
+    MatDatepickerModule, MatNativeDateModule,
     ReportEntityPickerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,15 +37,37 @@ import { WorkingContextService } from '../../../../core/services/working-context
         <div class="field">
           @switch (controlKind(p)) {
             @case ('dateRange') {
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ p.label.en }}</mat-label>
-                <mat-select [ngModel]="value(p.name)" [name]="p.name"
-                            (ngModelChange)="set(p.name, $event)">
-                  @for (preset of presets; track preset.value) {
-                    <mat-option [value]="preset.value">{{ preset.label }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <div class="space-y-2">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ p.label.en }} Range</mat-label>
+                  <mat-select [ngModel]="dateRangeSelection(p.name)" [name]="p.name"
+                              (ngModelChange)="onDateRangePresetChange(p.name, $event)">
+                    @for (preset of presets; track preset.value) {
+                      <mat-option [value]="preset.value">{{ preset.label }}</mat-option>
+                    }
+                    <mat-option value="custom">Custom Date Range...</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <div class="grid grid-cols-2 gap-2" *ngIf="isCustomDateRange(p.name)">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>From Date</mat-label>
+                    <input matInput [matDatepicker]="fromPicker" [ngModel]="getFromDateObj(p.name)"
+                           [name]="p.name + '_from'" [ngModelOptions]="{standalone: true}"
+                           (dateChange)="onFromDateChange(p.name, $event.value)" placeholder="YYYY-MM-DD" />
+                    <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #fromPicker></mat-datepicker>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>To Date</mat-label>
+                    <input matInput [matDatepicker]="toPicker" [ngModel]="getToDateObj(p.name)"
+                           [name]="p.name + '_to'" [ngModelOptions]="{standalone: true}"
+                           (dateChange)="onToDateChange(p.name, $event.value)" placeholder="YYYY-MM-DD" />
+                    <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #toPicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              </div>
             }
             @case ('select') {
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -64,8 +89,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
             @case ('date') {
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ p.label.en }}</mat-label>
-                <input matInput type="date" [ngModel]="value(p.name)" [name]="p.name"
-                       (ngModelChange)="set(p.name, $event)" />
+                <input matInput [matDatepicker]="singleDatePicker" [ngModel]="getSingleDateObj(p.name)"
+                       [name]="p.name" [ngModelOptions]="{standalone: true}"
+                       (dateChange)="onSingleDateChange(p.name, $event.value)" placeholder="YYYY-MM-DD" />
+                <mat-datepicker-toggle matIconSuffix [for]="singleDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #singleDatePicker></mat-datepicker>
               </mat-form-field>
             }
             @case ('entity') {
@@ -146,6 +174,112 @@ export class ReportParameterPanelComponent {
   protected readonly bengaliNumerals = signal(false);
 
   private readonly values = signal<Record<string, string | null>>({});
+  private readonly customMode = signal<Record<string, boolean>>({});
+
+  protected isCustomDateRange(name: string): boolean {
+    if (this.customMode()[name] === true) return true;
+    const v = this.value(name);
+    return !!v && v.includes('..') && !this.presets.some(p => p.value === v);
+  }
+
+  protected dateRangeSelection(name: string): string {
+    if (this.isCustomDateRange(name)) {
+      return 'custom';
+    }
+    const val = this.value(name);
+    if (this.presets.some(p => p.value === val)) {
+      return val;
+    }
+    return 'current-month';
+  }
+
+  protected onDateRangePresetChange(name: string, selectedValue: string): void {
+    if (selectedValue === 'custom') {
+      this.customMode.update(m => ({ ...m, [name]: true }));
+      this.set(name, `${this.getFromDate(name)}..${this.getToDate(name)}`);
+    } else {
+      this.customMode.update(m => ({ ...m, [name]: false }));
+      this.set(name, selectedValue);
+    }
+  }
+
+  private parseDateString(str: string | null | undefined): Date | null {
+    if (!str) return null;
+    const parts = str.trim().split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+        return new Date(year, month, day);
+      }
+    }
+    const parsed = new Date(str);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private formatDateToString(date: Date | null | undefined): string {
+    if (!date || isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  protected getFromDate(name: string): string {
+    const v = this.value(name);
+    if (v && v.includes('..')) {
+      const parts = v.split('..');
+      if (parts[0]) return parts[0];
+    }
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    return this.formatDateToString(firstDay);
+  }
+
+  protected getToDate(name: string): string {
+    const v = this.value(name);
+    if (v && v.includes('..')) {
+      const parts = v.split('..');
+      if (parts[1]) return parts[1];
+    }
+    return this.formatDateToString(new Date());
+  }
+
+  protected getFromDateObj(name: string): Date | null {
+    return this.parseDateString(this.getFromDate(name));
+  }
+
+  protected getToDateObj(name: string): Date | null {
+    return this.parseDateString(this.getToDate(name));
+  }
+
+  protected onFromDateChange(name: string, date: Date | null): void {
+    if (!date) return;
+    const fromStr = this.formatDateToString(date);
+    const toStr = this.getToDate(name);
+    this.set(name, `${fromStr}..${toStr}`);
+  }
+
+  protected onToDateChange(name: string, date: Date | null): void {
+    if (!date) return;
+    const fromStr = this.getFromDate(name);
+    const toStr = this.formatDateToString(date);
+    this.set(name, `${fromStr}..${toStr}`);
+  }
+
+  protected getSingleDateObj(name: string): Date | null {
+    const val = this.value(name);
+    if (!val || val === 'today') {
+      return new Date();
+    }
+    return this.parseDateString(val);
+  }
+
+  protected onSingleDateChange(name: string, date: Date | null): void {
+    if (!date) return;
+    this.set(name, this.formatDateToString(date));
+  }
 
   protected readonly isValid = computed(() =>
     this.parameters()
@@ -197,7 +331,8 @@ export class ReportParameterPanelComponent {
       case 'Batch':
       case 'Farm':
       case 'Shed':
-      case 'Breed': return 'entity';
+      case 'Breed':
+      case 'InventoryItem': return 'entity';
       default: return 'text';
     }
   }

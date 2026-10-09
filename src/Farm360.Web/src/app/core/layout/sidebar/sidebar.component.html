@@ -16,18 +16,18 @@
     <ng-container *ngFor="let item of menuItems">
       <a mat-list-item
          [routerLink]="item.disabled ? null : item.route"
-         routerLinkActive="bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 font-semibold"
+         routerLinkActive="active-menu-item"
          [class.opacity-50]="item.disabled"
          [class.cursor-not-allowed]="item.disabled"
          [matTooltip]="isCollapsed ? item.label : ''"
          matTooltipPosition="right"
-         class="rounded-md mb-1 text-sm font-medium transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200">
+         class="sidebar-nav-item rounded-xl mb-1 text-sm font-medium transition-all duration-200 group">
         
         <div class="flex items-center w-full h-full" [class.justify-center]="isCollapsed">
-          <mat-icon matListItemIcon [class.text-primary-600]="!item.disabled" [class.mr-0]="isCollapsed" class="!w-5 !h-5 !text-[20px]">{{ item.icon }}</mat-icon>
+          <mat-icon matListItemIcon [class.mr-0]="isCollapsed" class="sidebar-nav-icon !w-5 !h-5 !text-[20px] transition-colors">{{ item.icon }}</mat-icon>
           
           <div *ngIf="!isCollapsed" class="flex items-center justify-between flex-1 ml-3 truncate">
-            <span class="truncate">{{ item.label }}</span>
+            <span class="truncate sidebar-nav-label font-medium">{{ item.label }}</span>
             <span *ngIf="item.badge" class="ml-2 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent-700 bg-accent-50 rounded-sm dark:bg-accent-900/30 dark:text-accent-400">
               {{ item.badge }}
             </span>
@@ -44,14 +44,14 @@
       <ng-container *ngFor="let item of bottomMenuItems">
         <a mat-list-item
            [routerLink]="item.route"
-           routerLinkActive="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-semibold"
+           routerLinkActive="active-menu-item"
            [matTooltip]="isCollapsed ? item.label : ''"
            matTooltipPosition="right"
-           class="rounded-md mb-1 text-sm font-medium transition-all duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200">
+           class="sidebar-nav-item rounded-xl mb-1 text-sm font-medium transition-all duration-200 group">
           
           <div class="flex items-center w-full h-full" [class.justify-center]="isCollapsed">
-            <mat-icon matListItemIcon [class.mr-0]="isCollapsed" class="!w-5 !h-5 !text-[20px] text-gray-400 dark:text-gray-500">{{ item.icon }}</mat-icon>
-            <span *ngIf="!isCollapsed" class="ml-3 truncate">{{ item.label }}</span>
+            <mat-icon matListItemIcon [class.mr-0]="isCollapsed" class="sidebar-nav-icon !w-5 !h-5 !text-[20px] transition-colors">{{ item.icon }}</mat-icon>
+            <span *ngIf="!isCollapsed" class="ml-3 truncate sidebar-nav-label font-medium">{{ item.label }}</span>
           </div>
         </a>
       </ng-container>

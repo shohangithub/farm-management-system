@@ -105,7 +105,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
       </div>
 
       <!-- Quick Module Navigation Tabs -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         <a routerLink="../daily-consumables" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-teal-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">today</mat-icon>
@@ -125,6 +125,13 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">analytics</mat-icon>
           </div>
           <span class="font-semibold text-gray-900 dark:text-white text-xs">Current Stock</span>
+        </a>
+
+        <a routerLink="/reports/inventory.daily-consumption" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-amber-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">query_stats</mat-icon>
+          </div>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Daily Consumption</span>
         </a>
 
         <a routerLink="../items" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex flex-col justify-between group shadow-sm">

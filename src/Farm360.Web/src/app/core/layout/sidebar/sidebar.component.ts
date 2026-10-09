@@ -18,6 +18,7 @@ interface MenuItem {
   standalone: true,
   imports: [CommonModule, RouterModule, MatListModule, MatIconModule, MatTooltipModule],
   templateUrl: './sidebar.component.html',
+  styleUrls: ['./sidebar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent {

@@ -18,6 +18,7 @@ public enum ReportParameterType
     Farm = 10,
     Shed = 11,
     Breed = 12,
+    InventoryItem = 13,
 }
 
 public sealed record ReportSelectOption(string Value, LocalizedText Label);
@@ -46,6 +47,9 @@ public sealed record ReportParameter(
 
     public static ReportParameter Shed(string name = "shedId", bool required = false) =>
         new(name, new LocalizedText("Shed", "শেড"), ReportParameterType.Shed, required);
+
+    public static ReportParameter InventoryItem(string name = "inventoryItemId", bool required = false) =>
+        new(name, new LocalizedText("Inventory Item", "মজুদ উপাদান"), ReportParameterType.InventoryItem, required);
 
     /// <summary>
     /// A from/to pair. The client sends "yyyy-MM-dd..yyyy-MM-dd"; <see cref="ReportContext.Range"/>

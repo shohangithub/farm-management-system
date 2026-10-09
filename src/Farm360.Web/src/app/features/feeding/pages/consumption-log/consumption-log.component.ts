@@ -35,6 +35,11 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
       description="Historical feed offered, refusal/wastage, and daily ration expenditure records."
       breadcrumbActiveNode="Feeding Records">
       <div actions class="flex items-center gap-2 no-print">
+        <a mat-stroked-button routerLink="/reports/feeding.animal-consumption"
+          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">summarize</mat-icon>
+          <span>Animal Consumption Report</span>
+        </a>
         <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || logs().length === 0"
           class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>

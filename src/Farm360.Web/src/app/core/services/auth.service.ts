@@ -146,12 +146,8 @@ export class AuthService {
     );
   }
 
-  // --- Mock Features for MVP ---
   register(request: any): Observable<any> {
-    // Simulate API delay and return success
-    return of({ success: true }).pipe(tap(() => {
-      console.log('Mock registration successful', request);
-    }));
+    return this.http.post('/api/v1/auth/register', request);
   }
 
   updateProfile(data: UserProfile): Observable<UserProfile> {

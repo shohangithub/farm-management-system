@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, inject, ChangeDetectionStrategy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextSelectorComponent } from '../context-selector/context-selector.component';
 import { GlobalSearchComponent } from '../../../shared/components/global-search/global-search.component';
@@ -34,13 +34,20 @@ import { RouterModule } from '@angular/router';
 })
 export class HeaderComponent implements OnInit {
   @Output() toggleSidebar = new EventEmitter<void>();
-  isDarkMode = false;
+  isDarkMode = signal(false);
 
   ngOnInit(): void {
     const savedTheme = localStorage.getItem('theme-preference');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      this.isDarkMode = true;
+    const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    this.isDarkMode.set(isDark);
+    if (isDark) {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+      document.body.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+      document.body.style.colorScheme = 'light';
     }
   }
 
@@ -49,12 +56,17 @@ export class HeaderComponent implements OnInit {
   }
 
   toggleTheme(): void {
-    this.isDarkMode = !this.isDarkMode;
-    if (this.isDarkMode) {
+    const nextMode = !this.isDarkMode();
+    this.isDarkMode.set(nextMode);
+    if (nextMode) {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+      document.body.style.colorScheme = 'dark';
       localStorage.setItem('theme-preference', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+      document.body.style.colorScheme = 'light';
       localStorage.setItem('theme-preference', 'light');
     }
   }

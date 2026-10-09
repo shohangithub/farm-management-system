@@ -1,7 +1,11 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Identity;
+using Farm360.Domain.Organizations;
+using Farm360.Domain.Organizations.Enums;
+using Farm360.Domain.Tenancy;
 using Farm360.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace Farm360.Persistence.Services;
 
@@ -50,5 +54,57 @@ public sealed class TenantMembershipService(ApplicationDbContext dbContext) : IT
 
         var roleName = membership.Role?.Name ?? "Viewer";
         return new TenantMembership(membership.TenantId, roleName);
+    }
+
+    public async Task<Guid> CreateTenantForUserAsync(
+        Guid userId,
+        string farmName,
+        string userEmail,
+        string? userPhone,
+        int trialDays = 7,
+        CancellationToken cancellationToken = default)
+    {
+        var slug = GenerateSlug(farmName);
+        var tenant = Tenant.Create(farmName, slug, SubscriptionTier.Starter);
+        var initialTrialDays = trialDays is 3 or 7 or 10 ? trialDays : 7;
+        tenant.StartTrial(initialTrialDays);
+
+        dbContext.Tenants.Add(tenant);
+
+        var tenantUser = TenantUser.CreateOwner(tenant.Id, userId, SystemRoleIds.Owner);
+        dbContext.TenantUsers.Add(tenantUser);
+
+        var organization = Organization.Create(
+            tenant.Id,
+            farmName,
+            null,
+            userEmail,
+            userPhone,
+            null, null, null,
+            "BDT",
+            "Asia/Dhaka",
+            "en",
+            null,
+            BusinessType.Farm);
+
+        dbContext.Organizations.Add(organization);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return tenant.Id;
+    }
+
+    private static string GenerateSlug(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Guid.NewGuid().ToString("N")[..8];
+
+        var slug = name.ToLowerInvariant();
+        slug = Regex.Replace(slug, @"[^a-z0-9\s-]", "");
+        slug = Regex.Replace(slug, @"\s+", "-").Trim('-');
+
+        if (string.IsNullOrWhiteSpace(slug))
+            return Guid.NewGuid().ToString("N")[..8];
+
+        return slug;
     }
 }

@@ -2,11 +2,17 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ReportCell, ReportDataSet, ReportLanguage } from '../../models/report.models';
 
+interface RenderDetailCell {
+  f: string;
+  rowSpan: number;
+}
+
 interface RenderBand {
   kind: 'group' | 'detail' | 'subtotal' | 'grandtotal';
   label?: string;
   serial?: number;
   cells?: ReportCell[];
+  detailCells?: RenderDetailCell[];
 }
 
 /**
@@ -75,8 +81,14 @@ interface RenderBand {
                 @case ('detail') {
                   <tr>
                     <td class="serial">{{ band.serial }}</td>
-                    @for (col of data().columns; track col.field; let i = $index) {
-                      <td [class]="'a-' + col.align.toLowerCase()">{{ band.cells?.[i]?.f }}</td>
+                    @for (cell of band.detailCells; track $index; let i = $index) {
+                      @if (cell.rowSpan > 0) {
+                        <td [class]="'a-' + data().columns[i].align.toLowerCase()"
+                            [class.merged-cell]="cell.rowSpan > 1"
+                            [attr.rowspan]="cell.rowSpan > 1 ? cell.rowSpan : null">
+                          {{ cell.f }}
+                        </td>
+                      }
                     }
                   </tr>
                 }
@@ -146,6 +158,7 @@ interface RenderBand {
     .detail th, .detail td { border: .5px solid #000; padding: 2.5px 4px; vertical-align: top; }
     .detail th { background: #e8e8e8; font-weight: 700; text-align: left; }
     .detail .serial { width: 10mm; text-align: center; }
+    .detail td.merged-cell { vertical-align: middle; text-align: center; font-weight: 600; background: #fafafa; }
     .a-left { text-align: left; }
     .a-center { text-align: center; }
     .a-right { text-align: right; }
@@ -214,7 +227,43 @@ export class ReportPaperComponent {
     let currentGroup: string | null = null;
     let serial = 0;
 
+    const currentDetailBlock: RenderBand[] = [];
+
+    const flushDetailBlock = () => {
+      if (currentDetailBlock.length === 0) return;
+      const numCols = data.columns.length;
+      for (const b of currentDetailBlock) {
+        b.detailCells = new Array(numCols);
+      }
+
+      for (let c = 0; c < numCols; c++) {
+        const isMerge = !!data.columns[c].mergeRepeating;
+        if (!isMerge) {
+          for (const b of currentDetailBlock) {
+            b.detailCells![c] = { f: b.cells?.[c]?.f ?? '', rowSpan: 1 };
+          }
+        } else {
+          let start = 0;
+          while (start < currentDetailBlock.length) {
+            const val = currentDetailBlock[start].cells?.[c]?.f ?? '';
+            let end = start + 1;
+            while (end < currentDetailBlock.length && (currentDetailBlock[end].cells?.[c]?.f ?? '') === val) {
+              end++;
+            }
+            const span = end - start;
+            currentDetailBlock[start].detailCells![c] = { f: val, rowSpan: span };
+            for (let k = start + 1; k < end; k++) {
+              currentDetailBlock[k].detailCells![c] = { f: val, rowSpan: 0 };
+            }
+            start = end;
+          }
+        }
+      }
+      currentDetailBlock.length = 0;
+    };
+
     const pushSubtotal = (key: string) => {
+      flushDetailBlock();
       if (printed.has(key)) {
         return;
       }
@@ -233,14 +282,20 @@ export class ReportPaperComponent {
       if (row.groupKey && row.groupKey !== currentGroup) {
         if (currentGroup) {
           pushSubtotal(currentGroup);
+        } else {
+          flushDetailBlock();
         }
         currentGroup = row.groupKey;
         const group = data.groups.find(g => g.groupKey === row.groupKey);
         out.push({ kind: 'group', label: group?.groupLabel ?? row.groupKey });
       }
 
-      out.push({ kind: 'detail', serial: ++serial, cells: row.cells });
+      const band: RenderBand = { kind: 'detail', serial: ++serial, cells: row.cells };
+      out.push(band);
+      currentDetailBlock.push(band);
     }
+
+    flushDetailBlock();
 
     if (currentGroup) {
       pushSubtotal(currentGroup);

@@ -303,7 +303,8 @@ public sealed class ReportExecutionService : IReportExecutionService
 
             // Identifiers say nothing to a reader; the Subject line carries the real identity.
             if (parameter.Type is ReportParameterType.Animal or ReportParameterType.Batch
-                or ReportParameterType.Farm or ReportParameterType.Shed or ReportParameterType.Breed)
+                or ReportParameterType.Farm or ReportParameterType.Shed or ReportParameterType.Breed
+                or ReportParameterType.InventoryItem)
             {
                 continue;
             }
