@@ -306,7 +306,8 @@ public sealed record SellAnimalCommand(
     decimal SalePriceBdt,
     DateOnly SaleDate,
     string? BuyerName,
-    decimal? SaleWeightKg) : IRequest;
+    decimal? SaleWeightKg,
+    Farm360.Contracts.Finance.CreditTermsRequest? Credit = null) : IRequest, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCommand>
 {
@@ -328,6 +329,17 @@ public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCom
         RuleFor(x => x.BuyerName)
             .MaximumLength(200).WithMessage("Buyer name cannot exceed 200 characters.")
             .When(x => !string.IsNullOrWhiteSpace(x.BuyerName));
+
+        RuleFor(x => x)
+            .Must(x => !string.IsNullOrWhiteSpace(x.Credit!.PartyName) || !string.IsNullOrWhiteSpace(x.BuyerName))
+            .When(x => x.Credit is not null)
+            .WithMessage("Enter the buyer's name for a sale on credit.");
+
+        RuleFor(x => x.Credit!.PaidNowBdt)
+            .GreaterThanOrEqualTo(0)
+            .LessThan(x => x.SalePriceBdt)
+            .When(x => x.Credit is not null)
+            .WithMessage("The amount received now must be less than the sale price (otherwise it is a cash sale).");
     }
 }
 
@@ -335,7 +347,8 @@ public sealed class SellAnimalCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
-    MediatR.IPublisher publisher) : IRequestHandler<SellAnimalCommand>
+    MediatR.IPublisher publisher,
+    Farm360.Application.Finance.Services.ITradeCreditService? credit = null) : IRequestHandler<SellAnimalCommand>
 {
     public async Task Handle(SellAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -350,6 +363,16 @@ public sealed class SellAnimalCommandHandler(
         if (domainEvent != null)
         {
             await publisher.Publish(new Farm360.Application.Finance.EventHandlers.Integration.AnimalSoldNotification(domainEvent), cancellationToken);
+        }
+
+        // Sold on credit: the buyer owes the balance (Accounts Receivable) until it is collected.
+        if (request.Credit is { } terms && credit is not null)
+        {
+            var buyer = string.IsNullOrWhiteSpace(terms.PartyName) ? request.BuyerName! : terms.PartyName;
+            await credit.OpenForSourceAsync(animal.FarmId, animal.Id, Farm360.Domain.Finance.Enums.TransactionCategory.AnimalSale,
+                new Farm360.Application.Finance.Services.CreditTerms(buyer, terms.PartyPhone, terms.DueDate, terms.PaidNowBdt, terms.PaymentMethod, terms.Notes),
+                cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }
@@ -433,7 +456,8 @@ public sealed class RecordAnimalDeathCommandValidator : AbstractValidator<Record
 
 public sealed class RecordAnimalDeathCommandHandler(
     IAnimalRepository repository,
-    IUnitOfWork unitOfWork) : IRequestHandler<RecordAnimalDeathCommand>
+    IUnitOfWork unitOfWork,
+    MediatR.IPublisher publisher) : IRequestHandler<RecordAnimalDeathCommand>
 {
     public async Task Handle(RecordAnimalDeathCommand request, CancellationToken cancellationToken)
     {
@@ -442,6 +466,13 @@ public sealed class RecordAnimalDeathCommandHandler(
 
         animal.RecordDeath(request.Cause, request.DeathDate, request.Notes);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Finance writes the animal off the livestock asset; Feeding stops its plans.
+        var died = animal.DomainEvents.OfType<Farm360.Domain.Livestock.Events.AnimalDiedEvent>().FirstOrDefault();
+        if (died != null)
+        {
+            await publisher.Publish(died, cancellationToken);
+        }
     }
 }
 
@@ -500,7 +531,8 @@ public sealed record DeleteAnimalCommand(Guid AnimalId) : IRequest;
 public sealed class DeleteAnimalCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser) : IRequestHandler<DeleteAnimalCommand>
+    ICurrentUserService currentUser,
+    Farm360.Application.Finance.Services.ILedgerPostingService ledgerPosting) : IRequestHandler<DeleteAnimalCommand>
 {
     public async Task Handle(DeleteAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -508,6 +540,21 @@ public sealed class DeleteAnimalCommandHandler(
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
         repository.SoftDelete(animal, currentUser.UserId ?? Guid.Empty);
+
+        // A deleted animal was a registration mistake: its purchase, sale and disposal postings go
+        // with it so the livestock asset does not keep an animal that never existed. Feed and
+        // medicine already consumed stay — that stock really was used.
+        foreach (var category in new[]
+                 {
+                     Farm360.Domain.Finance.Enums.TransactionCategory.AnimalPurchase,
+                     Farm360.Domain.Finance.Enums.TransactionCategory.AnimalSale,
+                     Farm360.Domain.Finance.Enums.TransactionCategory.CostOfAnimalsSold,
+                     Farm360.Domain.Finance.Enums.TransactionCategory.LivestockLoss,
+                 })
+        {
+            await ledgerPosting.ReverseAsync(animal.FarmId, animal.Id, category, cancellationToken);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

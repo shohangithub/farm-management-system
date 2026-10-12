@@ -27,7 +27,8 @@ public sealed class RecordVaccinationAdministrationCommandValidator : AbstractVa
 internal sealed class RecordVaccinationAdministrationCommandHandler(
     IVaccinationRepository vaccinationRepository,
     ICurrentUserService currentUserService,
-    IUnitOfWork unitOfWork) : IRequestHandler<RecordVaccinationAdministrationCommand>
+    IUnitOfWork unitOfWork,
+    IPublisher publisher) : IRequestHandler<RecordVaccinationAdministrationCommand>
 {
     public async Task Handle(RecordVaccinationAdministrationCommand request, CancellationToken cancellationToken)
     {
@@ -40,5 +41,12 @@ internal sealed class RecordVaccinationAdministrationCommandHandler(
 
         vaccinationRepository.UpdateEvent(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Stock deduction and its cost posting run off this event; it was never published before,
+        // so vaccine stock was never reduced and its cost never reached the books.
+        foreach (var administered in @event.DomainEvents.OfType<Farm360.Domain.Health.Events.VaccinationAdministeredEvent>().ToList())
+        {
+            await publisher.Publish(administered, cancellationToken);
+        }
     }
 }

@@ -100,6 +100,20 @@ import { TrialBalance, TrialBalanceLine } from '../../models/finance.model';
           class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
           <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
         </a>
+        <a routerLink="/finance/reports/income-expense" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">swap_vert</mat-icon> Income & Expense
+        </a>
+        <a routerLink="/finance/reports/full-accounts" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">menu_book</mat-icon> Full Accounts
+        </a>
+        <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">request_quote</mat-icon> Payables &amp; Receivables
+        </a>
+        <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">fact_check</mat-icon> Accounting Health
+        </a>
         <a routerLink="/finance/loans" 
           class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
           <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities

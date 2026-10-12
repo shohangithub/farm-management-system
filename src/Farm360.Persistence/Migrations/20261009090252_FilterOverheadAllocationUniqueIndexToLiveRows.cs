@@ -10,10 +10,10 @@ namespace Farm360.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "UX_AnimalOverheadAllocations_Transaction_Animal",
-                schema: "finance",
-                table: "AnimalOverheadAllocations");
+            // Conditional drop: some databases were built without this index (not from the full
+            // migration chain). An unconditional DropIndex failed there and, because migrations run
+            // in order, blocked every later migration -- including the one adding Animals.DeathDate.
+            migrationBuilder.Sql(DropIndexIfExists);
 
             migrationBuilder.CreateIndex(
                 name: "UX_AnimalOverheadAllocations_Transaction_Animal",
@@ -27,10 +27,7 @@ namespace Farm360.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "UX_AnimalOverheadAllocations_Transaction_Animal",
-                schema: "finance",
-                table: "AnimalOverheadAllocations");
+            migrationBuilder.Sql(DropIndexIfExists);
 
             migrationBuilder.CreateIndex(
                 name: "UX_AnimalOverheadAllocations_Transaction_Animal",
@@ -39,5 +36,11 @@ namespace Farm360.Persistence.Migrations
                 columns: new[] { "SourceTransactionId", "AnimalId" },
                 unique: true);
         }
+
+        private const string DropIndexIfExists = @"
+IF EXISTS (SELECT 1 FROM sys.indexes
+           WHERE name = N'UX_AnimalOverheadAllocations_Transaction_Animal'
+             AND object_id = OBJECT_ID(N'finance.AnimalOverheadAllocations'))
+    DROP INDEX [UX_AnimalOverheadAllocations_Transaction_Animal] ON [finance].[AnimalOverheadAllocations];";
     }
 }

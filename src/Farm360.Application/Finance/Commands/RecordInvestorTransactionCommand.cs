@@ -91,7 +91,9 @@ public class RecordInvestorTransactionCommandHandler : IRequestHandler<RecordInv
             request.TransactionDate,
             request.ReferenceId ?? string.Empty,
             request.Notes ?? string.Empty,
-            glDescription
+            glDescription,
+            isAutomated: true,
+            sourceModule: "Investors"
         );
 
         await _transactionRepository.AddAsync(glTx, cancellationToken);

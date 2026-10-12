@@ -1520,7 +1520,17 @@ namespace Farm360.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
 
+                    b.Property<string>("Settlement")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Cash");
+
                     b.Property<Guid?>("ShedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SourceDocumentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("SourceModule")
@@ -1542,11 +1552,15 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasIndex("AnimalId");
 
+                    b.HasIndex("BatchId");
+
                     b.HasIndex("FarmId");
 
                     b.HasIndex("TenantId");
 
                     b.HasIndex("TransactionDate");
+
+                    b.HasIndex("FarmId", "SourceDocumentId", "Category");
 
                     b.ToTable("FinancialTransactions", "finance");
                 });
@@ -1739,6 +1753,9 @@ namespace Farm360.Persistence.Migrations
                     b.Property<Guid>("FarmId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("InterestPaidBdt")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("InterestRatePercent")
                         .HasColumnType("decimal(5,2)");
 
@@ -1764,6 +1781,9 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("nvarchar(1000)");
 
                     b.Property<decimal>("PrincipalAmountBdt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PrincipalRepaidBdt")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<byte[]>("RowVersion")
@@ -1952,6 +1972,189 @@ namespace Farm360.Persistence.Migrations
                     b.HasIndex("TransactionDate");
 
                     b.ToTable("ShareTransactions", "finance");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Finance.TradeBill", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AdjustedBdt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("AmountBdt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateOnly>("BillDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("PaidBdt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PartyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PartyPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReferenceNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SourceDocumentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SourceModule")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("FarmId", "Kind");
+
+                    b.HasIndex("FarmId", "SourceDocumentId", "Category");
+
+                    b.ToTable("TradeBills", "finance");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Finance.TradeBillPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AmountBdt")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("BillId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateOnly>("PaymentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BillId");
+
+                    b.HasIndex("FarmId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TradeBillPayments", "finance");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Health.DiseaseIncident", b =>
@@ -3394,6 +3597,9 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("DeathDate")
                         .HasColumnType("date");
 
                     b.Property<DateTime?>("DeletedAtUtc")
@@ -5060,6 +5266,15 @@ namespace Farm360.Persistence.Migrations
                         .WithMany("Transactions")
                         .HasForeignKey("InvestorId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Finance.TradeBillPayment", b =>
+                {
+                    b.HasOne("Farm360.Domain.Finance.TradeBill", null)
+                        .WithMany()
+                        .HasForeignKey("BillId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

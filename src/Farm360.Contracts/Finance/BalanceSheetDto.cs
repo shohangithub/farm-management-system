@@ -27,4 +27,11 @@ public record BalanceSheetDto(
     bool IsBalanced,
     decimal DifferenceBdt,
     decimal NetWorkingCapitalBdt
-);
+)
+{
+    /// <summary>Net profit for the current financial year to date (part of retained earnings).</summary>
+    public decimal CurrentYearProfitBdt { get; init; }
+
+    /// <summary>Each asset/liability/equity account checked against its register (stock, herd, loans, investors).</summary>
+    public IReadOnlyList<ReconciliationLineDto> Reconciliations { get; init; } = [];
+}

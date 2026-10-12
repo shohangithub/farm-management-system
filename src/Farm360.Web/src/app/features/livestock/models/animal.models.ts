@@ -1,3 +1,4 @@
+import type { CreditTerms } from '../../finance/models/finance.model';
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
 export enum AnimalSpecies {
@@ -215,6 +216,8 @@ export interface SellAnimalRequest {
   saleDate: string;
   buyerName?: string;
   saleWeightKg?: number;
+  /** Set when the buyer pays later — the balance becomes a customer receivable. */
+  credit?: CreditTerms | null;
 }
 
 export interface QuarantineAnimalRequest {

@@ -16,13 +16,16 @@ public sealed class FeedConsumptionLoggedEventHandler : INotificationHandler<Fee
     private readonly IStockTransactionRepository _transactionRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<FeedConsumptionLoggedEventHandler> _logger;
+    private readonly Farm360.Application.Finance.Services.ILedgerPostingService _ledgerPosting;
 
     public FeedConsumptionLoggedEventHandler(
         IInventoryItemRepository inventoryItemRepository,
         IStockTransactionRepository transactionRepository,
         IUnitOfWork unitOfWork,
-        ILogger<FeedConsumptionLoggedEventHandler> logger)
+        ILogger<FeedConsumptionLoggedEventHandler> logger,
+        Farm360.Application.Finance.Services.ILedgerPostingService ledgerPosting)
     {
+        _ledgerPosting = ledgerPosting;
         _inventoryItemRepository = inventoryItemRepository;
         _transactionRepository = transactionRepository;
         _unitOfWork = unitOfWork;
@@ -62,6 +65,18 @@ public sealed class FeedConsumptionLoggedEventHandler : INotificationHandler<Fee
 
             _inventoryItemRepository.Update(feedItem);
             await _transactionRepository.AddAsync(tx, cancellationToken);
+
+            // Feed issued from stock becomes feed cost (Cr Inventory) — keyed on the log entry.
+            await Farm360.Application.Finance.Services.InventoryAccounting.PostConsumptionAsync(
+                _ledgerPosting,
+                feedItem,
+                notification.NetConsumptionKg,
+                feedItem.WeightedAverageCostBdt,
+                notification.LogDate,
+                notification.LogId,
+                $"Feed consumption log - {feedItem.Name}",
+                cancellationToken: cancellationToken);
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             if (_logger.IsEnabled(LogLevel.Information))

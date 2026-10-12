@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Domain.Finance.Interfaces;
 using Farm360.Contracts.Finance;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -24,20 +25,6 @@ public class GetLoansQueryHandler : IRequestHandler<GetLoansQuery, IReadOnlyList
     {
         var loans = await _repository.GetByFarmIdAsync(request.FarmId, cancellationToken);
         
-        return loans.Select(loan => new LoanRecordDto(
-            loan.Id,
-            loan.FarmId,
-            loan.LenderName,
-            loan.PrincipalAmountBdt,
-            loan.InterestRatePercent,
-            loan.DisbursementDate,
-            loan.Schedule.ToString(),
-            loan.TotalRepaidBdt,
-            loan.OutstandingBalanceBdt,
-            loan.RepaymentProgressPercent,
-            loan.Notes,
-            loan.IsActive,
-            loan.CreatedAtUtc
-        )).ToList();
+        return loans.Select(loan => loan.ToDto()).ToList();
     }
 }

@@ -1,55 +1,41 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Common.Interfaces;
-using Farm360.Application.Finance.Repositories;
-using Farm360.Domain.Finance;
-using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using Farm360.Domain.Finance.Interfaces;
 using Farm360.Domain.Livestock.Events;
+using Farm360.Domain.Livestock.Repositories;
 using MediatR;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
 public sealed record AnimalSoldNotification(AnimalSoldEvent DomainEvent) : INotification;
 
+/// <summary>
+/// Books a sale: revenue received in cash, and the animal's purchase cost released from the
+/// livestock asset as Cost of Animals Sold — so the period's profit is sale price minus cost, not
+/// the full sale price. Idempotent per animal.
+/// </summary>
 public sealed class AnimalSoldEventHandler(
-    IFinancialTransactionRepository repository,
+    IAnimalRepository animalRepository,
+    ILivestockAccountingService livestockAccounting,
     IAnimalCostLedgerRepository ledgerRepository,
-    IUnitOfWork unitOfWork) : 
+    IUnitOfWork unitOfWork) :
     INotificationHandler<AnimalSoldNotification>,
     INotificationHandler<AnimalSoldEvent>
 {
-    public Task Handle(AnimalSoldNotification notification, CancellationToken cancellationToken)
-    {
-        return ProcessEventAsync(notification.DomainEvent, cancellationToken);
-    }
+    public Task Handle(AnimalSoldNotification notification, CancellationToken cancellationToken) =>
+        ProcessEventAsync(notification.DomainEvent, cancellationToken);
 
-    public Task Handle(AnimalSoldEvent notification, CancellationToken cancellationToken)
-    {
-        return ProcessEventAsync(notification, cancellationToken);
-    }
+    public Task Handle(AnimalSoldEvent notification, CancellationToken cancellationToken) =>
+        ProcessEventAsync(notification, cancellationToken);
 
     private async Task ProcessEventAsync(AnimalSoldEvent domainEvent, CancellationToken cancellationToken)
     {
-        // 1. Auto-create a financial transaction for the sale
-        var transaction = FinancialTransaction.Create(
-            tenantId: domainEvent.TenantId,
-            farmId: domainEvent.FarmId,
-            type: TransactionType.Income,
-            category: TransactionCategory.AnimalSale,
-            amountBdt: domainEvent.SalePriceBdt,
-            transactionDate: domainEvent.SaleDate.ToDateTime(System.TimeOnly.MinValue),
-            referenceId: domainEvent.AnimalId.ToString(),
-            notes: $"Auto-generated transaction from sale of animal to {domainEvent.BuyerName ?? "Unknown"}",
-            description: $"Sale of Animal to {domainEvent.BuyerName ?? "Buyer"}",
-            animalId: domainEvent.AnimalId,
-            isAutomated: true,
-            sourceModule: "Livestock"
-        );
+        var animal = await animalRepository.GetByIdAsync(domainEvent.AnimalId, cancellationToken);
+        if (animal is not null)
+            await livestockAccounting.SyncDisposalAsync(animal, cancellationToken);
 
-        await repository.AddAsync(transaction, cancellationToken);
-
-        // 2. Update AnimalCostLedger with the realized sale revenue
         var ledger = await ledgerRepository.GetByAnimalIdAsync(domainEvent.AnimalId, cancellationToken);
         if (ledger != null)
         {
@@ -57,7 +43,6 @@ public sealed class AnimalSoldEventHandler(
             ledgerRepository.Update(ledger);
         }
 
-        // 3. Save changes using IUnitOfWork
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

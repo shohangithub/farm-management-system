@@ -40,7 +40,7 @@ public class PurchaseReturnCompletedFinanceHandlerTests
             ReturnDate: DateOnly.FromDateTime(DateTime.UtcNow));
 
         var notification = new PurchaseReturnCompletedNotification(domainEvent);
-        var handler = new PurchaseReturnCompletedFinanceHandler(_financeRepoMock.Object, _unitOfWorkMock.Object, _loggerMock.Object);
+        var handler = new PurchaseReturnCompletedFinanceHandler(new Farm360.Application.Finance.Services.LedgerPostingService(_financeRepoMock.Object), _unitOfWorkMock.Object, _loggerMock.Object);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -72,7 +72,7 @@ public class PurchaseReturnCompletedFinanceHandlerTests
             ReturnDate: DateOnly.FromDateTime(DateTime.UtcNow));
 
         var notification = new PurchaseReturnCompletedNotification(domainEvent);
-        var handler = new PurchaseReturnCompletedFinanceHandler(_financeRepoMock.Object, _unitOfWorkMock.Object, _loggerMock.Object);
+        var handler = new PurchaseReturnCompletedFinanceHandler(new Farm360.Application.Finance.Services.LedgerPostingService(_financeRepoMock.Object), _unitOfWorkMock.Object, _loggerMock.Object);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);

@@ -7,6 +7,7 @@ using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance.Enums;
 using Farm360.Domain.Finance.Interfaces;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -40,20 +41,10 @@ public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, I
         if (request.ToDate.HasValue)
             allTx = allTx.Where(t => t.TransactionDate <= request.ToDate.Value).ToList();
 
-        // Calculate Operating Revenue (exclude capital injections and loan disbursements)
-        var operatingRevenue = allTx
-            .Where(t => t.Type == TransactionType.Income 
-                        && t.Category != TransactionCategory.InvestorCapital 
-                        && t.Category != TransactionCategory.LoanDisbursement)
-            .Sum(t => t.AmountBdt);
-
-        // Calculate Operating Expenses (exclude capital withdrawals, profit payouts, loan principal repayments)
-        var operatingExpenses = allTx
-            .Where(t => t.Type == TransactionType.Expense 
-                        && t.Category != TransactionCategory.InvestorWithdrawal 
-                        && t.Category != TransactionCategory.ProfitDistribution 
-                        && t.Category != TransactionCategory.LoanRepayment)
-            .Sum(t => t.AmountBdt);
+        // Profit & loss from the chart of accounts: the same figures as the P&L statement. Stock and
+        // animal purchases are not expenses until used/sold; capital and loan money is never profit.
+        var operatingRevenue = AccountChart.Revenue(allTx);
+        var operatingExpenses = AccountChart.Expenses(allTx);
 
         var netFarmProfit = operatingRevenue - operatingExpenses;
 
@@ -108,7 +99,15 @@ public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, I
 
             // Profit sharing is based on distributable profit (after charity deduction)
             decimal allocatedProfit = Math.Round(distributableProfit * (effectiveSharePct / 100m), 2);
-            decimal distributedProfit = inv.TotalProfitPaidBdt;
+            // Paid against THIS period's profit: distributions dated inside the period (all-time when
+            // no period is given). Using the lifetime total made every period look over-distributed.
+            decimal distributedProfit = inv.Transactions
+                .Where(t => t.Type == InvestorTransactionType.ProfitDistribution
+                            && (!request.FromDate.HasValue || t.TransactionDate >= request.FromDate.Value)
+                            && (!request.ToDate.HasValue || t.TransactionDate <= request.ToDate.Value))
+                .Sum(t => t.AmountBdt);
+            if (inv.Transactions.Count == 0 && !request.FromDate.HasValue && !request.ToDate.HasValue)
+                distributedProfit = inv.TotalProfitPaidBdt;
             decimal undistributedProfit = allocatedProfit - distributedProfit;
             decimal netEquityValue = inv.CurrentCapitalBdt + undistributedProfit;
 

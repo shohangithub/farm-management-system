@@ -74,6 +74,7 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             bool anyDeducted = false;
             decimal totalDeductedCost = 0m;
             decimal totalDeductedQty = 0m;
+            decimal stockDeductedCost = 0m;
 
             foreach (var formulaIngredient in formula.Ingredients)
             {
@@ -125,6 +126,7 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                                 await _transactionRepository.AddAsync(transaction, cancellationToken);
                                 anyDeducted = true;
                                 countCost = true;
+                                stockDeductedCost += deductionQty * cost;
                             }
                             else
                             {
@@ -251,7 +253,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                     entry.EntryDate,
                     plan?.AnimalId,
                     entry.BatchId,
-                    entry.ShedId
+                    entry.ShedId,
+                    Math.Min(entry.TotalCostBdt.Value, Math.Round(stockDeductedCost, 2))
                 ), cancellationToken);
             }
         }

@@ -4,9 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
+using Farm360.Application.Finance.Services;
 using Farm360.Contracts.Finance;
-using Farm360.Domain.Finance.Enums;
-using Farm360.Domain.Finance.Interfaces;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -16,172 +15,131 @@ public record GetBalanceSheetQuery(
     DateTime? AsOfDate = null
 ) : IRequest<BalanceSheetDto>;
 
+/// <summary>
+/// Statement of financial position built from the double-entry journal of every posting up to the
+/// date: Cash, Inventory (stock at cost) and Livestock (herd at cost) as assets; Loans Payable as
+/// a liability; investor and owner capital plus retained earnings as equity.
+/// </summary>
+/// <remarks>
+/// Because every posting is a complete double entry, Assets = Liabilities + Equity always holds.
+/// Whether the books are <i>right</i> is shown by the reconciliations: each account is checked
+/// against its own register (stock on hand, the herd, the loan register, the investor register).
+/// </remarks>
 public class GetBalanceSheetQueryHandler : IRequestHandler<GetBalanceSheetQuery, BalanceSheetDto>
 {
     private readonly IFinancialTransactionRepository _transactionRepository;
-    private readonly ILoanRecordRepository _loanRepository;
-    private readonly IInvestorRepository _investorRepository;
+    private readonly IAccountingReconciliationService _reconciliation;
 
     public GetBalanceSheetQueryHandler(
         IFinancialTransactionRepository transactionRepository,
-        ILoanRecordRepository loanRepository,
-        IInvestorRepository investorRepository)
+        IAccountingReconciliationService reconciliation)
     {
         _transactionRepository = transactionRepository;
-        _loanRepository = loanRepository;
-        _investorRepository = investorRepository;
+        _reconciliation = reconciliation;
     }
 
     public async Task<BalanceSheetDto> Handle(GetBalanceSheetQuery request, CancellationToken cancellationToken)
     {
         var asOf = request.AsOfDate ?? DateTime.UtcNow;
+        var cutoff = asOf.Date.AddDays(1);
 
-        var allTx = await _transactionRepository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
-        var filteredTx = allTx.Where(t => t.TransactionDate <= asOf).ToList();
+        var all = await _transactionRepository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
+        var postings = all.Where(t => t.TransactionDate < cutoff).ToList();
+        var balances = AccountChart.Balances(postings);
+        decimal Bal(string code) => balances.GetValueOrDefault(code);
 
-        var allLoans = await _loanRepository.GetByFarmIdAsync(request.FarmId, cancellationToken);
-        var filteredLoans = allLoans.Where(l => l.DisbursementDate <= asOf).ToList();
+        // Profit: revenue and expense accounts are credit/debit balances, net profit = −Σ.
+        var cumulativeProfit = AccountChart.NetProfit(postings);
+        var yearStart = new DateTime(asOf.Year, 1, 1, 0, 0, 0, asOf.Kind);
+        var currentYearProfit = AccountChart.NetProfit(postings.Where(t => t.TransactionDate >= yearStart));
 
-        var allInvestors = await _investorRepository.GetByFarmIdAsync(request.FarmId, includeTransactions: true, cancellationToken: cancellationToken);
+        // ── Assets ──
+        var cash = Bal(AccountChart.CashAccount);
+        var inventory = Bal(AccountChart.InventoryAccount);
+        var livestock = Bal(AccountChart.LivestockAccount);
+        var receivable = Bal(AccountChart.ReceivableAccount);
+        var payable = -Bal(AccountChart.PayableAccount);
 
-        // 1. Operational Totals
-        decimal totalRevenue = filteredTx
-            .Where(t => t.Type == TransactionType.Income 
-                        && t.Category != TransactionCategory.InvestorCapital 
-                        && t.Category != TransactionCategory.LoanDisbursement)
-            .Sum(t => t.AmountBdt);
-
-        decimal totalExpenses = filteredTx
-            .Where(t => t.Type == TransactionType.Expense 
-                        && t.Category != TransactionCategory.InvestorWithdrawal 
-                        && t.Category != TransactionCategory.ProfitDistribution 
-                        && t.Category != TransactionCategory.LoanRepayment)
-            .Sum(t => t.AmountBdt);
-
-        // 2. Loans
-        decimal totalLoanDisbursements = filteredLoans.Sum(l => l.PrincipalAmountBdt);
-        decimal totalLoanRepaid = filteredLoans.Sum(l => l.TotalRepaidBdt);
-        decimal outstandingLoanPrincipal = Math.Max(0m, totalLoanDisbursements - totalLoanRepaid);
-
-        // 3. Investors & Equity
-        decimal totalInvestorCapital = 0m;
-        decimal totalProfitDistributed = 0m;
-
-        foreach (var inv in allInvestors)
+        var assetLines = new List<BalanceSheetLineDto>
         {
-            var txs = inv.Transactions?.Where(t => t.TransactionDate <= asOf).ToList() ?? new List<Domain.Finance.InvestorTransaction>();
-            decimal invested = txs.Where(t => t.Type == InvestorTransactionType.CapitalContribution).Sum(t => t.AmountBdt);
-            decimal withdrawn = txs.Where(t => t.Type == InvestorTransactionType.CapitalWithdrawal).Sum(t => t.AmountBdt);
-            decimal profits = txs.Where(t => t.Type == InvestorTransactionType.ProfitDistribution).Sum(t => t.AmountBdt);
-
-            if (txs.Count == 0 && inv.InvestmentDate <= asOf)
-            {
-                invested = inv.TotalInvestedBdt;
-                withdrawn = inv.TotalWithdrawnBdt;
-                profits = inv.TotalProfitPaidBdt;
-            }
-
-            totalInvestorCapital += (invested - withdrawn);
-            totalProfitDistributed += profits;
+            new(AccountChart.CashAccount, "Cash & Bank", R(Math.Max(0, cash)),
+                cash >= 0 ? "Money received less money paid, from the cash book" : "Overdrawn — shown under liabilities"),
+            new(AccountChart.ReceivableAccount, "Accounts Receivable (customers)", R(Math.Max(0, receivable)),
+                "Credit sales not yet collected"),
+            new(AccountChart.InventoryAccount, "Inventory (Feed, Medicine & Supplies)", R(inventory),
+                "Stock bought or brought in, less stock used, returned or written off — at cost"),
+            new(AccountChart.LivestockAccount, "Livestock (at purchase cost)", R(livestock),
+                "Animals bought, less the cost of animals sold, slaughtered or dead"),
+        };
+        if (payable < 0)
+        {
+            assetLines.Add(new BalanceSheetLineDto("1150", "Advances to Suppliers", R(-payable),
+                "Paid to suppliers beyond what their bills now come to — to be recovered"));
         }
 
-        // 4. Retained Earnings (Cumulative Operating Profit minus Distributed Profits)
-        decimal cumulativeOperatingProfit = totalRevenue - totalExpenses;
-        decimal retainedEarnings = cumulativeOperatingProfit - totalProfitDistributed;
+        var totalAssets = assetLines.Sum(l => l.AmountBdt);
 
-        // 5. Cash & Cash Equivalents -- summed directly from EVERY recorded transaction's cash
-        // effect (no category exclusions), deliberately independent of the Liabilities/Equity
-        // figures below (which come from LoanRecord/InvestorTransaction, not FinancialTransaction).
-        // The old version derived "cash" algebraically from those same Liabilities/Equity inputs
-        // (retainedEarnings + outstandingLoanPrincipal + totalInvestorCapital), which made
-        // Assets == Liabilities+Equity true by construction for ANY data -- isBalanced could never
-        // be false, even with a real bookkeeping error, because it was comparing a number to
-        // itself. Pulling cash straight from the transaction ledger means a mismatch (e.g. a loan
-        // disbursement posted here with no matching LoanRecord, or vice versa) now actually shows up.
-        decimal actualCash = filteredTx.Sum(t => t.Type == TransactionType.Income ? t.AmountBdt : -t.AmountBdt);
-
-        // Assets
-        var assetLines = new List<BalanceSheetLineDto>();
-        if (actualCash >= 0)
+        // ── Liabilities ──
+        var loans = -Bal(AccountChart.LoanPayableAccount);
+        var liabilityLines = new List<BalanceSheetLineDto>
         {
-            assetLines.Add(new BalanceSheetLineDto(
-                "1010",
-                "Cash & Cash Equivalents",
-                Math.Round(actualCash, 2),
-                "Net of all recorded income and expense transactions to date"
-            ));
+            new(AccountChart.PayableAccount, "Accounts Payable (suppliers)", R(Math.Max(0, payable)),
+                "Bought on credit and not yet paid"),
+            new(AccountChart.LoanPayableAccount, "Loans Payable (principal)", R(loans),
+                "Loans received less principal repaid (interest is an expense, not debt reduction)"),
+        };
+        if (receivable < 0)
+        {
+            liabilityLines.Add(new BalanceSheetLineDto("2150", "Customer Advances", R(-receivable),
+                "Collected from customers beyond what their invoices now come to — owed back or to be delivered"));
         }
-        else
+        if (cash < 0)
         {
-            assetLines.Add(new BalanceSheetLineDto(
-                "1010",
-                "Cash & Cash Equivalents",
-                0m,
-                "Cash deficit funded via short-term overdraft liability"
-            ));
+            liabilityLines.Add(new BalanceSheetLineDto("2020", "Bank Overdraft / Cash Deficit", R(-cash),
+                "More recorded as paid than received — check for a missing opening balance or capital receipt"));
         }
 
-        decimal totalAssets = assetLines.Sum(l => l.AmountBdt);
-        var assetsSection = new BalanceSheetSectionDto("Assets", Math.Round(totalAssets, 2), assetLines);
+        var totalLiabilities = liabilityLines.Sum(l => l.AmountBdt);
 
-        // Liabilities
-        var liabilityLines = new List<BalanceSheetLineDto>();
-        liabilityLines.Add(new BalanceSheetLineDto(
-            "2010",
-            "Loans & Borrowings Payable",
-            Math.Round(outstandingLoanPrincipal, 2),
-            $"Outstanding balance across {filteredLoans.Count(l => l.IsActive)} active loan facility(ies)"
-        ));
+        // ── Equity ──
+        var investorCapital = -Bal(AccountChart.InvestorCapitalAccount);
+        var distributed = Bal(AccountChart.ProfitDistributionAccount);
+        var ownerCapital = -Bal(AccountChart.OwnerCapitalAccount);
+        var drawings = Bal(AccountChart.OwnerDrawingAccount);
 
-        if (actualCash < 0)
-        {
-            liabilityLines.Add(new BalanceSheetLineDto(
-                "2020",
-                "Bank Overdraft / Short-Term Facility",
-                Math.Round(Math.Abs(actualCash), 2),
-                "Operating deficit cash advance"
-            ));
-        }
-
-        decimal totalLiabilities = liabilityLines.Sum(l => l.AmountBdt);
-        var liabilitiesSection = new BalanceSheetSectionDto("Liabilities", Math.Round(totalLiabilities, 2), liabilityLines);
-
-        // Equity
         var equityLines = new List<BalanceSheetLineDto>
         {
-            new BalanceSheetLineDto(
-                "3010",
-                "Contributed Capital (Investors)",
-                Math.Round(totalInvestorCapital, 2),
-                $"Net capital contributed by {allInvestors.Count(i => i.IsActive)} active investor(s)"
-            ),
-            new BalanceSheetLineDto(
-                "3020",
-                "Retained Earnings",
-                Math.Round(retainedEarnings, 2),
-                $"Cumulative operational profit ({cumulativeOperatingProfit:N2} BDT) less profit distributions ({totalProfitDistributed:N2} BDT)"
-            )
+            new(AccountChart.InvestorCapitalAccount, "Investor Capital", R(investorCapital), "Capital invested less capital withdrawn"),
+            new(AccountChart.OwnerCapitalAccount, "Owner's Capital", R(ownerCapital), "Owner's cash, opening stock and animals brought in"),
+            new(AccountChart.OwnerDrawingAccount, "Less: Owner's Drawings", R(-drawings), "Cash taken out by the owner"),
+            new(AccountChart.RetainedEarningsAccount, "Retained Earnings (cumulative profit)", R(cumulativeProfit),
+                $"All profit and loss to date, of which {currentYearProfit:N2} BDT this year"),
+            new(AccountChart.ProfitDistributionAccount, "Less: Profit Distributed to Investors", R(-distributed), "Profit already paid out"),
         };
+        var totalEquity = equityLines.Sum(l => l.AmountBdt);
 
-        decimal totalEquity = equityLines.Sum(l => l.AmountBdt);
-        var equitySection = new BalanceSheetSectionDto("Equity", Math.Round(totalEquity, 2), equityLines);
+        var totalLiabilitiesAndEquity = R(totalLiabilities + totalEquity);
+        var difference = R(Math.Abs(totalAssets - totalLiabilitiesAndEquity));
 
-        decimal totalLiabilitiesAndEquity = Math.Round(totalLiabilities + totalEquity, 2);
-        decimal difference = Math.Round(Math.Abs(totalAssets - totalLiabilitiesAndEquity), 2);
-        bool isBalanced = difference == 0m;
-        decimal netWorkingCapital = Math.Round(totalAssets - totalLiabilities, 2);
+        var reconciliations = await _reconciliation.ReconcileAsync(request.FarmId, all, cancellationToken);
 
         return new BalanceSheetDto(
             request.FarmId,
             asOf,
-            assetsSection,
-            liabilitiesSection,
-            equitySection,
-            Math.Round(totalAssets, 2),
+            new BalanceSheetSectionDto("Assets", R(totalAssets), assetLines),
+            new BalanceSheetSectionDto("Liabilities", R(totalLiabilities), liabilityLines),
+            new BalanceSheetSectionDto("Equity", R(totalEquity), equityLines),
+            R(totalAssets),
             totalLiabilitiesAndEquity,
-            isBalanced,
+            difference == 0m,
             difference,
-            netWorkingCapital
-        );
+            R(Math.Max(0, cash) + Math.Max(0, receivable) + inventory - totalLiabilities))
+        {
+            CurrentYearProfitBdt = R(currentYearProfit),
+            // Registers are current snapshots, so the comparison is only meaningful for today.
+            Reconciliations = asOf.Date >= DateTime.UtcNow.Date ? reconciliations : [],
+        };
     }
+
+    private static decimal R(decimal value) => Math.Round(value, 2);
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -24,8 +25,10 @@ public class GetFinancialTransactionSummaryQueryHandler : IRequestHandler<GetFin
     {
         var transactions = await _repository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
 
-        var totalIncome = transactions.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
-        var totalExpense = transactions.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
+        // Cash view: money actually received and paid. Non-cash postings (stock consumed, cost of
+        // animals sold) are real costs but moved no cash, so they do not belong in a cash balance.
+        var totalIncome = AccountChart.CashIn(transactions);
+        var totalExpense = AccountChart.CashOut(transactions);
         var netBalance = totalIncome - totalExpense;
 
         return new FinancialTransactionSummaryDto(totalIncome, totalExpense, netBalance);

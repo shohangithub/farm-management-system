@@ -48,14 +48,18 @@ internal sealed class RecordMortalityCommandHandler : IRequestHandler<RecordMort
         IAnimalRepository animalRepository,
         ITenantService tenantService,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        MediatR.IPublisher publisher)
     {
         _repository = repository;
         _animalRepository = animalRepository;
         _tenantService = tenantService;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _publisher = publisher;
     }
+
+    private readonly MediatR.IPublisher _publisher;
 
     public async Task<Guid> Handle(RecordMortalityCommand request, CancellationToken cancellationToken)
     {
@@ -94,6 +98,13 @@ internal sealed class RecordMortalityCommandHandler : IRequestHandler<RecordMort
 
         _repository.Add(record);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Finance writes the animal off the livestock asset; Feeding stops its plans.
+        var died = animal.DomainEvents.OfType<Farm360.Domain.Livestock.Events.AnimalDiedEvent>().FirstOrDefault();
+        if (died != null)
+        {
+            await _publisher.Publish(died, cancellationToken);
+        }
 
         return record.Id;
     }

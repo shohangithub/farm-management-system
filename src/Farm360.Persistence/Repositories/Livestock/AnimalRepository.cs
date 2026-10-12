@@ -22,6 +22,12 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
     // ══════════════════════════════════════════════════════════════════════════
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<Animal>> GetAllByFarmAsync(Guid farmId, CancellationToken cancellationToken = default) =>
+        await _animals
+            .Where(a => a.FarmId == farmId)
+            .ToListAsync(cancellationToken);
+
+    /// <inheritdoc/>
     public async Task<Animal?> GetByIdAsync(Guid animalId, CancellationToken cancellationToken = default) =>
         await _animals
             .Include(a => a.WeightRecords)
@@ -58,12 +64,14 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         CancellationToken cancellationToken = default)
     {
         // Present = arrived on or before the period ends, and had not left before it began.
-        // Animals sold or disposed of mid-period are included: they incurred cost while here.
+        // Animals sold, slaughtered or dead mid-period are included: they incurred cost while here.
         return await _animals
             .Where(a => a.FarmId == farmId
                         && !a.IsDeleted
                         && a.AcquisitionDate <= to
-                        && (a.SaleDate == null || a.SaleDate >= from))
+                        && (a.SaleDate == null || a.SaleDate >= from)
+                        // A dead animal stops sharing the farm's overhead from its death date.
+                        && (a.DeathDate == null || a.DeathDate >= from))
             .ToListAsync(cancellationToken);
     }
 

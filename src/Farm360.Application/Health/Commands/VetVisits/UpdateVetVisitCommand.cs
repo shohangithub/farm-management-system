@@ -4,6 +4,7 @@ using Farm360.Domain.Health;
 using Farm360.Domain.Health.Enums;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using FluentValidation;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Health.Commands.VetVisits;
@@ -39,13 +40,16 @@ internal sealed class UpdateVetVisitCommandHandler : IRequestHandler<UpdateVetVi
 {
     private readonly IVetVisitRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILedgerPostingService _ledgerPosting;
 
     public UpdateVetVisitCommandHandler(
         IVetVisitRepository repository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILedgerPostingService ledgerPosting)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
+        _ledgerPosting = ledgerPosting;
     }
 
     public async Task Handle(UpdateVetVisitCommand request, CancellationToken cancellationToken)
@@ -65,6 +69,19 @@ internal sealed class UpdateVetVisitCommandHandler : IRequestHandler<UpdateVetVi
         );
 
         _repository.Update(visit);
+
+        // Keep the fee in the books in step with the corrected visit (removed if the fee is cleared).
+        await _ledgerPosting.PostAsync(new LedgerPosting(
+            visit.TenantId,
+            visit.FarmId,
+            Farm360.Domain.Finance.Enums.TransactionCategory.VeterinaryCost,
+            visit.CostBdt ?? 0m,
+            visit.VisitDate.ToDateTime(TimeOnly.MinValue),
+            visit.Id,
+            "Health",
+            $"Vet Visit: {visit.VetName}",
+            Notes: $"Veterinary visit by Dr. {visit.VetName} ({visit.VisitType})"), cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

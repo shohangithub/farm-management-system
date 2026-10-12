@@ -7,6 +7,7 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { AnimalPickerComponent } from '../../../../shared/components/animal-picker/animal-picker.component';
+import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../credit-terms-fields/credit-terms-fields.component';
 
 @Component({
   selector: 'app-income-form-dialog',
@@ -16,7 +17,8 @@ import { AnimalPickerComponent } from '../../../../shared/components/animal-pick
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
-    AnimalPickerComponent
+    AnimalPickerComponent,
+    CreditTermsFieldsComponent
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -51,11 +53,15 @@ import { AnimalPickerComponent } from '../../../../shared/components/animal-pick
               Category <span class="text-red-500">*</span>
             </label>
             <select formControlName="category" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <option value="AnimalSale">Animal Sale</option>
-              <option value="MilkSale">Milk Sale</option>
-              <option value="ByproductSale">Byproduct Sale</option>
-              <option value="OtherIncome">Other Income</option>
+              <option value="MilkSale">Milk &amp; Dairy Sale (দুধ বিক্রয়)</option>
+              <option value="ByproductSale">By-product / Manure Sale (উপজাত বিক্রয়)</option>
+              <option value="OtherIncome">Other Farm Income (অন্যান্য আয়)</option>
+              <option value="OwnerCapital">Owner's Capital - money put in (মালিকের মূলধন)</option>
             </select>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug pt-1">
+              Animal sales are recorded by selling the animal in <b>Livestock</b> (that also books its cost).
+              Loans and investor money are recorded on the <b>Loans</b> and <b>Investors</b> pages.
+            </p>
           </div>
 
           <div class="space-y-1.5">
@@ -73,6 +79,11 @@ import { AnimalPickerComponent } from '../../../../shared/components/animal-pick
             <input type="date" formControlName="transactionDate"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           </div>
+
+          @if (creditAllowed()) {
+            <app-credit-terms-fields [group]="creditGroup" kind="Receivable" [total]="form.value.amountBdt"
+              [partyPlaceholder]="'Customer / dairy / buyer'"></app-credit-terms-fields>
+          }
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -137,13 +148,29 @@ export class IncomeFormDialogComponent implements OnInit {
     const today = new Date().toISOString().split('T')[0];
     
     this.form = this.fb.group({
-      category: ['AnimalSale', Validators.required],
+      category: ['MilkSale', Validators.required],
       amountBdt: [null, [Validators.required, Validators.min(0.01)]],
       transactionDate: [today, Validators.required],
       description: ['', Validators.required],
       animalId: [null],
-      notes: ['']
+      notes: [''],
+      credit: buildCreditTermsGroup(this.fb)
     });
+
+    this.form.get('category')!.valueChanges.subscribe(category => {
+      if (IncomeFormDialogComponent.CASH_ONLY.includes(category)) this.creditGroup.patchValue({ onCredit: false });
+    });
+  }
+
+  /** Cash-only heads (owner money, interest) can never be on credit. */
+  private static readonly CASH_ONLY = ['OwnerCapital'];
+
+  get creditGroup(): FormGroup {
+    return this.form.get('credit') as FormGroup;
+  }
+
+  creditAllowed(): boolean {
+    return !IncomeFormDialogComponent.CASH_ONLY.includes(this.form?.value?.category);
   }
 
   onSubmit(): void {
@@ -158,9 +185,9 @@ export class IncomeFormDialogComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
 
-    const payload = this.form.value;
-    // Sanitization of empty strings is handled by financeService
-    
+    const { credit, ...rest } = this.form.value;
+    const payload = { ...rest, credit: this.creditAllowed() ? toCreditTerms(credit) : null };
+
     this.financeService.recordIncome(farmId, payload).subscribe({
       next: (result) => {
         this.isLoading.set(false);

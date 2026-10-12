@@ -35,7 +35,17 @@ import {
   PurchaseSharesRequest,
   SellSharesRequest,
   TransferSharesRequest,
-  UpdateShareValuationRequest
+  UpdateShareValuationRequest,
+  IncomeExpenseReport,
+  FullAccountsReport,
+  AccountingHealth,
+  LedgerRepairResult,
+  TradeCreditOverview,
+  TradeBill,
+  OpenTradeBillRequest,
+  UpdateBillTermsRequest,
+  RecordBillPaymentRequest,
+  WriteOffBillRequest
 } from '../models/finance.model';
 
 @Injectable({
@@ -200,6 +210,63 @@ export class FinanceService {
     let params = new HttpParams();
     if (asOfDate) params = params.set('asOfDate', asOfDate);
     return this.http.get<BalanceSheet>(`${this.getBaseUrl(farmId)}/reports/balance-sheet`, { params });
+  }
+
+  /** Daily (fromDate === toDate) or date-range income & expense cash book. Dates are yyyy-MM-dd. */
+  getIncomeExpenseReport(farmId: string, fromDate: string, toDate: string): Observable<IncomeExpenseReport> {
+    const params = new HttpParams().set('fromDate', fromDate).set('toDate', toDate);
+    return this.http.get<IncomeExpenseReport>(`${this.getBaseUrl(farmId)}/reports/income-expense`, { params });
+  }
+
+  /** Full accounts statement: cash, P&L, costs, investors, profit share, shares, loans and ledger. */
+  getFullAccountsReport(farmId: string, fromDate: string, toDate: string): Observable<FullAccountsReport> {
+    const params = new HttpParams().set('fromDate', fromDate).set('toDate', toDate);
+    return this.http.get<FullAccountsReport>(`${this.getBaseUrl(farmId)}/reports/full-accounts`, { params });
+  }
+
+  /** Books vs registers (stock, herd, loans, investors) plus a list of accounting issues. */
+  getAccountingHealth(farmId: string): Observable<AccountingHealth> {
+    return this.http.get<AccountingHealth>(`${this.getBaseUrl(farmId)}/accounting/health`);
+  }
+
+  // --- Payables & receivables (credit book) ---
+
+  getTradeCredit(farmId: string, includeSettled = false): Observable<TradeCreditOverview> {
+    return this.http.get<TradeCreditOverview>(`${this.getBaseUrl(farmId)}/credit`, { params: { includeSettled } });
+  }
+
+  getTradeBill(farmId: string, billId: string): Observable<TradeBill> {
+    return this.http.get<TradeBill>(`${this.getBaseUrl(farmId)}/credit/bills/${billId}`);
+  }
+
+  /** Puts an existing cash-booked purchase or sale on credit. */
+  openTradeBill(farmId: string, request: OpenTradeBillRequest): Observable<TradeBill> {
+    return this.http.post<TradeBill>(`${this.getBaseUrl(farmId)}/credit/bills`, this.sanitizePayload(request));
+  }
+
+  updateTradeBillTerms(farmId: string, billId: string, request: UpdateBillTermsRequest): Observable<TradeBill> {
+    return this.http.put<TradeBill>(`${this.getBaseUrl(farmId)}/credit/bills/${billId}`, this.sanitizePayload(request));
+  }
+
+  cancelTradeBill(farmId: string, billId: string): Observable<void> {
+    return this.http.delete<void>(`${this.getBaseUrl(farmId)}/credit/bills/${billId}`);
+  }
+
+  recordBillPayment(farmId: string, billId: string, request: RecordBillPaymentRequest): Observable<TradeBill> {
+    return this.http.post<TradeBill>(`${this.getBaseUrl(farmId)}/credit/bills/${billId}/payments`, this.sanitizePayload(request));
+  }
+
+  voidBillPayment(farmId: string, billId: string, paymentId: string): Observable<TradeBill> {
+    return this.http.delete<TradeBill>(`${this.getBaseUrl(farmId)}/credit/bills/${billId}/payments/${paymentId}`);
+  }
+
+  writeOffTradeBill(farmId: string, billId: string, request: WriteOffBillRequest): Observable<TradeBill> {
+    return this.http.post<TradeBill>(`${this.getBaseUrl(farmId)}/credit/bills/${billId}/write-off`, this.sanitizePayload(request));
+  }
+
+  /** Idempotent repair of records made before the accounting rules were enforced. */
+  repairLedger(farmId: string, adjustInventoryToStockCount = false): Observable<LedgerRepairResult> {
+    return this.http.post<LedgerRepairResult>(`${this.getBaseUrl(farmId)}/accounting/repair`, { adjustInventoryToStockCount });
   }
 
   getConsolidatedPnL(year: number, month: number): Observable<ConsolidatedPnLReport> {

@@ -1,0 +1,446 @@
+<app-page-header
+  title="Income & Expense Statement"
+  description="আয়-ব্যয় বিবরণী — daily cash book or any date range, with opening and closing balance."
+  breadcrumbActiveNode="Income & Expense">
+  <div actions class="flex items-center gap-2 flex-wrap">
+    <a mat-stroked-button routerLink="/finance"
+      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
+      <mat-icon class="text-sm">arrow_back</mat-icon><span>Overview</span>
+    </a>
+    <button mat-stroked-button (click)="export('xlsx')" [disabled]="!data() || !!exporting()"
+      class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+      <mat-icon class="!w-4 !h-4 !text-[16px]">{{ exporting() === 'xlsx' ? 'hourglass_empty' : 'grid_on' }}</mat-icon>
+      <span>Excel</span>
+    </button>
+    <button mat-stroked-button (click)="export('pdf')" [disabled]="!data() || !!exporting()"
+      class="rounded-xl border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+      <mat-icon class="!w-4 !h-4 !text-[16px]">{{ exporting() === 'pdf' ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>PDF</span>
+    </button>
+    <button mat-flat-button (click)="print()" [disabled]="!data()"
+      class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm">
+      <mat-icon class="text-sm">print</mat-icon><span>Print</span>
+    </button>
+  </div>
+</app-page-header>
+
+<div class="px-4 sm:px-6 py-4 mx-auto max-w-7xl space-y-5">
+
+  <!-- Sub-navigation -->
+  <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto">
+    <a routerLink="/finance" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">dashboard</mat-icon> Overview
+    </a>
+    <a routerLink="/finance/transactions" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">receipt_long</mat-icon> General Ledger
+    </a>
+    <a routerLink="/finance/reports/income-expense" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">swap_vert</mat-icon> Income & Expense
+    </a>
+    <a routerLink="/finance/reports/full-accounts" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">menu_book</mat-icon> Full Accounts
+    </a>
+    <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">request_quote</mat-icon> Payables &amp; Receivables
+    </a>
+    <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">fact_check</mat-icon> Accounting Health
+    </a>
+    <a routerLink="/finance/reports/monthly-pnl" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">calendar_view_month</mat-icon> Monthly P&L
+    </a>
+    <a routerLink="/finance/reports/balance-sheet" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
+    </a>
+  </div>
+
+  <!-- Filter card -->
+  <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm p-4 space-y-3">
+    <div class="flex flex-wrap items-end gap-3">
+      <!-- Mode toggle -->
+      <div class="inline-flex rounded-xl border border-gray-200 dark:border-gray-700 p-0.5 bg-gray-50 dark:bg-gray-900/40">
+        <button type="button" (click)="setMode('daily')"
+          class="px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+          [ngClass]="mode() === 'daily' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">today</mat-icon> Daily
+        </button>
+        <button type="button" (click)="setMode('range')"
+          class="px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+          [ngClass]="mode() === 'range' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">date_range</mat-icon> Date Range
+        </button>
+      </div>
+
+      @if (mode() === 'daily') {
+        <div class="flex items-end gap-2">
+          <button mat-icon-button type="button" (click)="shiftDay(-1)" matTooltip="Previous day" class="!w-9 !h-9">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <label class="flex flex-col text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+            Report Date
+            <input type="date" [max]="todayIso" [ngModel]="reportDate()" (ngModelChange)="reportDate.set($event)"
+              class="mt-1 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
+          </label>
+          <button mat-icon-button type="button" (click)="shiftDay(1)" [disabled]="reportDate() >= todayIso" matTooltip="Next day" class="!w-9 !h-9">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+          <button type="button" (click)="goToday()" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            Today
+          </button>
+        </div>
+      } @else {
+        <label class="flex flex-col text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+          From
+          <input type="date" [max]="todayIso" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event); onRangeEdited()"
+            class="mt-1 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
+        </label>
+        <label class="flex flex-col text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+          To
+          <input type="date" [max]="todayIso" [ngModel]="toDate()" (ngModelChange)="toDate.set($event); onRangeEdited()"
+            class="mt-1 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
+        </label>
+      }
+
+      <button mat-flat-button type="button" (click)="run()" [disabled]="isLoading()"
+        class="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4">
+        <mat-icon class="text-sm">{{ isLoading() ? 'hourglass_empty' : 'search' }}</mat-icon>
+        Show Report
+      </button>
+
+      <div class="flex items-center gap-4 ml-auto text-xs text-gray-600 dark:text-gray-300">
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" [ngModel]="showDetails()" (ngModelChange)="showDetails.set($event)" class="accent-emerald-600" />
+          Itemised details
+        </label>
+        @if (mode() === 'range') {
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" [ngModel]="showDayWise()" (ngModelChange)="showDayWise.set($event)" class="accent-emerald-600" />
+            Day-wise summary
+          </label>
+        }
+      </div>
+    </div>
+
+    @if (mode() === 'range') {
+      <div class="flex flex-wrap gap-2">
+        @for (p of presets; track p.key) {
+          <button type="button" (click)="applyPreset(p.key)"
+            class="px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors"
+            [ngClass]="activePreset() === p.key
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+              : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+            {{ p.label }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
+      <mat-icon class="text-base">error_outline</mat-icon> {{ error() }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="py-16 flex flex-col items-center gap-3 text-gray-500 dark:text-gray-400 text-sm">
+      <mat-icon class="animate-spin">autorenew</mat-icon> Preparing statement…
+    </div>
+  }
+
+  @if (!isLoading() && data(); as d) {
+    <!-- ════════════════ PAPER ════════════════ -->
+    <div #paper class="acct-paper">
+
+      <!-- Letterhead -->
+      <div class="ph">
+        <div>
+          <div class="ph-org">{{ orgName() || 'Farm360' }}</div>
+          <div class="ph-farm">{{ farmName() }}</div>
+          <div class="muted" style="font-size: 10.5px;">Generated {{ generatedAt() | date: 'dd MMM yyyy, hh:mm a' }}</div>
+        </div>
+        <div class="ph-title">
+          <h1>আয়-ব্যয় বিবরণী</h1>
+          <h2>{{ d.isSingleDay ? 'Daily' : 'Periodic' }} Income &amp; Expense Statement</h2>
+          <div class="ph-period">{{ periodLabel() }}</div>
+        </div>
+      </div>
+
+      <!-- Key figures -->
+      <table class="info">
+        <tr>
+          <td class="k">ওপেনিং ব্যালেন্স / Opening</td>
+          <td class="v num">৳ {{ d.openingBalanceBdt | number: '1.2-2' }}</td>
+          <td class="k">ক্লোজিং ব্যালেন্স / Closing</td>
+          <td class="v num">৳ {{ d.closingBalanceBdt | number: '1.2-2' }}</td>
+        </tr>
+        <tr>
+          <td class="k">মোট আয় / Total Income</td>
+          <td class="v num inc">৳ {{ d.totalIncomeBdt | number: '1.2-2' }}</td>
+          <td class="k">মোট ব্যয় / Total Expense</td>
+          <td class="v num exp">৳ {{ d.totalExpenseBdt | number: '1.2-2' }}</td>
+        </tr>
+        <tr>
+          <td class="k">{{ d.netBalanceBdt >= 0 ? 'নিট উদ্বৃত্ত / Net Surplus' : 'নিট ঘাটতি / Net Deficit' }}</td>
+          <td class="v num" [class.inc]="d.netBalanceBdt >= 0" [class.exp]="d.netBalanceBdt < 0">
+            ৳ {{ (d.netBalanceBdt < 0 ? -d.netBalanceBdt : d.netBalanceBdt) | number: '1.2-2' }}
+          </td>
+          <td class="k">পরিচালন ফলাফল / Operating {{ d.netOperatingProfitBdt >= 0 ? 'Profit' : 'Loss' }}</td>
+          <td class="v num" [class.inc]="d.netOperatingProfitBdt >= 0" [class.exp]="d.netOperatingProfitBdt < 0">
+            ৳ {{ d.netOperatingProfitBdt | number: '1.2-2' }}
+          </td>
+        </tr>
+      </table>
+
+      <!-- ── Head-wise summary (two-sided cash book) ── -->
+      <div class="sec brand">আয়-ব্যয় সারসংক্ষেপ / Head-wise Summary <small>Both sides balance</small></div>
+      <div class="tw">
+        <table class="t">
+          <thead>
+            <tr>
+              <th colspan="3" class="inc-h">আয় / RECEIPTS</th>
+              <th colspan="3" class="exp-h">ব্যয় / PAYMENTS</th>
+            </tr>
+            <tr>
+              <th class="sl">ক্র.</th>
+              <th>আয়ের উৎস / Head</th>
+              <th class="num" style="width: 110px;">পরিমাণ (৳)</th>
+              <th class="sl">ক্র.</th>
+              <th>ব্যয়ের খাত / Head</th>
+              <th class="num" style="width: 110px;">পরিমাণ (৳)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of summaryRows(); track i) {
+              <tr>
+                @if (incomeSide()[i]; as c) {
+                  <td class="sl">{{ i + 1 }}</td>
+                  <td [class.bold]="c.isBalance">
+                    {{ c.labelBn }} <span class="muted">/ {{ c.label }}</span>
+                    @if (c.count > 0) { <span class="cnt">({{ c.count }})</span> }
+                    @if (c.group && c.group !== 'Operating') { <span class="badge" [ngClass]="c.group">{{ c.group }}</span> }
+                  </td>
+                  <td class="num" [class.bold]="c.isBalance" [class.inc]="!c.isBalance">{{ c.amount | number: '1.2-2' }}</td>
+                } @else {
+                  <td></td><td></td><td></td>
+                }
+                @if (expenseSide()[i]; as c) {
+                  <td class="sl">{{ i + 1 }}</td>
+                  <td [class.bold]="c.isBalance">
+                    {{ c.labelBn }} <span class="muted">/ {{ c.label }}</span>
+                    @if (c.count > 0) { <span class="cnt">({{ c.count }})</span> }
+                    @if (c.group && c.group !== 'Operating') { <span class="badge" [ngClass]="c.group">{{ c.group }}</span> }
+                  </td>
+                  <td class="num" [class.bold]="c.isBalance" [class.exp]="!c.isBalance">{{ c.amount | number: '1.2-2' }}</td>
+                } @else {
+                  <td></td><td></td><td></td>
+                }
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="grand">
+              <td colspan="2" class="num">মোট / Total:</td>
+              <td class="num">{{ sideTotal() | number: '1.2-2' }}</td>
+              <td colspan="2" class="num">মোট / Total:</td>
+              <td class="num">{{ (d.totalExpenseBdt + d.closingBalanceBdt) | number: '1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      @if (hasCapitalMoney()) {
+        <div class="callout">
+          Heads marked <b>Asset</b> (stock and animals bought), <b>Capital</b> or <b>Financing</b> (investor and owner money, loans) or <b>Trade</b> (paying supplier bills, collecting customer dues) move cash
+          but are not income or expense — they are excluded from the operating result
+          (Operating cash received ৳ {{ d.operatingIncomeBdt | number: '1.2-2' }} − operating cash paid ৳ {{ d.operatingExpenseBdt | number: '1.2-2' }}).
+          Stock bought becomes a cost when it is used; see the Full Accounts statement for profit &amp; loss.
+        </div>
+      }
+      <div class="note" style="margin-top: 4px;">
+        This is a cash book: it lists money actually received and paid. Feed or medicine taken from stock and the cost of animals sold
+        move no cash, so they appear in profit &amp; loss (Full Accounts) rather than here.
+      </div>
+
+      <!-- ── Day-wise summary (range only) ── -->
+      @if (!d.isSingleDay && showDayWise() && d.dailyBreakdown.length > 0) {
+        <div class="sec">দৈনিক সারসংক্ষেপ / Day-wise Summary <small>{{ d.dailyBreakdown.length }} day(s)</small></div>
+        <div class="tw">
+          <table class="t">
+            <thead>
+              <tr>
+                <th class="sl">ক্র.</th>
+                <th>তারিখ / Date</th>
+                <th class="num">ওপেনিং</th>
+                <th class="num">আয় / Income</th>
+                <th class="num">ব্যয় / Expense</th>
+                <th class="num">নিট / Net</th>
+                <th class="num">ক্লোজিং</th>
+                <th class="center no-print" style="width: 40px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (day of d.dailyBreakdown; track day.date; let i = $index) {
+                <tr>
+                  <td class="sl">{{ i + 1 }}</td>
+                  <td>{{ day.date | date: 'EEE, dd MMM yyyy' }} @if (day.transactionCount > 0) { <span class="cnt">({{ day.transactionCount }})</span> }</td>
+                  <td class="num muted">{{ day.openingBalanceBdt | number: '1.2-2' }}</td>
+                  <td class="num inc">{{ day.incomeBdt | number: '1.2-2' }}</td>
+                  <td class="num exp">{{ day.expenseBdt | number: '1.2-2' }}</td>
+                  <td class="num bold" [class.inc]="day.netBdt > 0" [class.exp]="day.netBdt < 0">{{ day.netBdt | number: '1.2-2' }}</td>
+                  <td class="num bold">{{ day.closingBalanceBdt | number: '1.2-2' }}</td>
+                  <td class="center no-print">
+                    <button type="button" (click)="drillToDay(day.date)" title="Open this day" style="border: none; background: none; cursor: pointer; color: #0f766e;">
+                      <mat-icon style="font-size: 16px; width: 16px; height: 16px;">open_in_new</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" class="num">মোট / Total</td>
+                <td class="num">{{ d.openingBalanceBdt | number: '1.2-2' }}</td>
+                <td class="num inc">{{ d.totalIncomeBdt | number: '1.2-2' }}</td>
+                <td class="num exp">{{ d.totalExpenseBdt | number: '1.2-2' }}</td>
+                <td class="num">{{ d.netBalanceBdt | number: '1.2-2' }}</td>
+                <td class="num">{{ d.closingBalanceBdt | number: '1.2-2' }}</td>
+                <td class="no-print"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+
+      @if (showDetails()) {
+        <!-- ── Income details ── -->
+        <div class="sec inc">আয়ের বিস্তারিত / Income Details <small>{{ d.incomeTransactions.length }} entr{{ d.incomeTransactions.length === 1 ? 'y' : 'ies' }}</small></div>
+        <div class="tw">
+          <table class="t">
+            <thead>
+              <tr>
+                <th class="sl">ক্র.</th>
+                @if (!d.isSingleDay) { <th style="width: 82px;">তারিখ</th> }
+                <th style="width: 120px;">রশিদ নং / Voucher</th>
+                <th style="width: 170px;">খাত / Head</th>
+                <th>বিবরণ / Description</th>
+                <th class="num" style="width: 110px;">আয় (৳)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="opening">
+                <td class="sl">–</td>
+                @if (!d.isSingleDay) { <td>{{ d.fromDate | date: 'dd-MM-yy' }}</td> }
+                <td>OPENING</td>
+                <td>ওপেনিং ব্যালেন্স</td>
+                <td>Cash brought forward / পূর্বের জের</td>
+                <td class="num">{{ d.openingBalanceBdt | number: '1.2-2' }}</td>
+              </tr>
+              @for (t of d.incomeTransactions; track t.id; let i = $index) {
+                <tr>
+                  <td class="sl">{{ i + 1 }}</td>
+                  @if (!d.isSingleDay) { <td>{{ t.transactionDate | date: 'dd-MM-yy' }}</td> }
+                  <td class="bold">{{ t.voucherNo }}</td>
+                  <td>
+                    {{ t.headNameBn }}
+                    <div class="note">{{ t.code }} · {{ t.headName }}</div>
+                  </td>
+                  <td>
+                    {{ t.description }}
+                    @if (t.group !== 'Operating') { <span class="badge" [ngClass]="t.group">{{ t.group }}</span> }
+                    @if (t.isAutomated) { <span class="badge auto">Auto · {{ t.sourceModule || 'System' }}</span> }
+                    @if (t.notes && t.notes !== t.description) { <div class="note"><b>Note:</b> {{ t.notes }}</div> }
+                  </td>
+                  <td class="num inc">{{ t.amountBdt | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr><td [attr.colspan]="d.isSingleDay ? 5 : 6" class="center muted">No income recorded in this period.</td></tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td [attr.colspan]="d.isSingleDay ? 4 : 5" class="num">মোট আয় / Total Income</td>
+                <td class="num inc">{{ d.totalIncomeBdt | number: '1.2-2' }}</td>
+              </tr>
+              <tr class="grand">
+                <td [attr.colspan]="d.isSingleDay ? 4 : 5" class="num">ওপেনিং ব্যালেন্সসহ মোট / Total with Opening</td>
+                <td class="num">৳ {{ sideTotal() | number: '1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- ── Expense details ── -->
+        <div class="sec exp">ব্যয়ের বিস্তারিত / Expense Details <small>{{ d.expenseTransactions.length }} entr{{ d.expenseTransactions.length === 1 ? 'y' : 'ies' }}</small></div>
+        <div class="tw">
+          <table class="t">
+            <thead>
+              <tr>
+                <th class="sl">ক্র.</th>
+                @if (!d.isSingleDay) { <th style="width: 82px;">তারিখ</th> }
+                <th style="width: 120px;">রশিদ নং / Voucher</th>
+                <th style="width: 170px;">খাত / Head</th>
+                <th>বিবরণ / Description</th>
+                <th class="num" style="width: 110px;">ব্যয় (৳)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of d.expenseTransactions; track t.id; let i = $index) {
+                <tr>
+                  <td class="sl">{{ i + 1 }}</td>
+                  @if (!d.isSingleDay) { <td>{{ t.transactionDate | date: 'dd-MM-yy' }}</td> }
+                  <td class="bold">{{ t.voucherNo }}</td>
+                  <td>
+                    {{ t.headNameBn }}
+                    <div class="note">{{ t.code }} · {{ t.headName }}</div>
+                  </td>
+                  <td>
+                    {{ t.description }}
+                    @if (t.group !== 'Operating') { <span class="badge" [ngClass]="t.group">{{ t.group }}</span> }
+                    @if (t.isAutomated) { <span class="badge auto">Auto · {{ t.sourceModule || 'System' }}</span> }
+                    @if (t.notes && t.notes !== t.description) { <div class="note"><b>Note:</b> {{ t.notes }}</div> }
+                  </td>
+                  <td class="num exp">{{ t.amountBdt | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr><td [attr.colspan]="d.isSingleDay ? 5 : 6" class="center muted">No expense recorded in this period.</td></tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td [attr.colspan]="d.isSingleDay ? 4 : 5" class="num">মোট ব্যয় / Total Expense</td>
+                <td class="num exp">{{ d.totalExpenseBdt | number: '1.2-2' }}</td>
+              </tr>
+              <tr class="grand">
+                <td [attr.colspan]="d.isSingleDay ? 4 : 5" class="num">ক্লোজিং ব্যালেন্স / Closing Balance</td>
+                <td class="num">৳ {{ d.closingBalanceBdt | number: '1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+
+      <div class="result" [ngClass]="d.netBalanceBdt >= 0 ? 'profit' : 'loss'">
+        <span>{{ d.netBalanceBdt >= 0 ? 'নিট উদ্বৃত্ত / Net Surplus' : 'নিট ঘাটতি / Net Deficit' }} for the period</span>
+        <span class="num">৳ {{ (d.netBalanceBdt < 0 ? -d.netBalanceBdt : d.netBalanceBdt) | number: '1.2-2' }}</span>
+      </div>
+
+      <!-- Signatures -->
+      <div class="sig">
+        <div>Prepared By<small>(Accounts)</small></div>
+        <div>Checked By<small>(Manager)</small></div>
+        <div>Authorized By<small>(Owner / Management)</small></div>
+      </div>
+
+      <div class="foot">
+        <span>Farm360 · {{ farmName() }} · Income &amp; Expense Statement</span>
+        <span>All amounts in BDT (৳)</span>
+      </div>
+    </div>
+  }
+
+  @if (!isLoading() && !data() && !error()) {
+    <div class="py-16 text-center text-sm text-gray-500 dark:text-gray-400">
+      Select a farm from the context switcher to view its income &amp; expense statement.
+    </div>
+  }
+</div>

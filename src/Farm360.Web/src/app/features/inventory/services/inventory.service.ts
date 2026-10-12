@@ -1,3 +1,4 @@
+import type { CreditTerms } from '../../finance/models/finance.model';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -179,8 +180,9 @@ export class InventoryService {
     return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/approve`, {});
   }
 
-  fulfillPurchaseOrder(id: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, {});
+  /** Receives the order into stock. Pass credit terms when the supplier is paid later. */
+  fulfillPurchaseOrder(id: string, credit: CreditTerms | null = null): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, { credit });
   }
 
   // ── Purchase Returns ────────────────────────────────────────────────────────

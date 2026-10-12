@@ -4,6 +4,7 @@ using Farm360.Domain.Inventory;
 using Farm360.Domain.Inventory.Enums;
 using Farm360.Domain.Inventory.Exceptions;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Inventory.Commands.RecordStockWriteOff;
@@ -15,14 +16,17 @@ public class RecordStockWriteOffCommandHandler : IRequestHandler<RecordStockWrit
     private readonly ITenantService _tenantService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILedgerPostingService _ledgerPosting;
 
     public RecordStockWriteOffCommandHandler(
         IInventoryItemRepository itemRepository,
         IStockTransactionRepository transactionRepository,
         ITenantService tenantService,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILedgerPostingService ledgerPosting)
     {
+        _ledgerPosting = ledgerPosting;
         _itemRepository = itemRepository;
         _transactionRepository = transactionRepository;
         _tenantService = tenantService;
@@ -64,6 +68,17 @@ public class RecordStockWriteOffCommandHandler : IRequestHandler<RecordStockWrit
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
         _itemRepository.Update(item);
+
+        // Damaged/expired stock leaves the Inventory asset as a write-off loss (no cash moves).
+        await _ledgerPosting.PostConsumptionAsync(
+            item,
+            request.Quantity,
+            item.WeightedAverageCostBdt,
+            request.TransactionDate,
+            transactionId,
+            $"Stock write-off - {item.Name}: {request.Reason}",
+            category: Farm360.Domain.Finance.Enums.TransactionCategory.InventoryWriteOff,
+            cancellationToken: cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

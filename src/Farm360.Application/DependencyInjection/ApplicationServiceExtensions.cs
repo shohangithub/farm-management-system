@@ -44,6 +44,10 @@ public static class ApplicationServiceExtensions
 
         // ── Finance: labour and overhead allocation (docs/32 GAP-2) ──────────
         services.AddScoped<Farm360.Application.Finance.Services.IOverheadAllocationService, Farm360.Application.Finance.Services.OverheadAllocationService>();
+        services.AddScoped<Farm360.Application.Finance.Services.ILedgerPostingService, Farm360.Application.Finance.Services.LedgerPostingService>();
+        services.AddScoped<Farm360.Application.Finance.Services.ILivestockAccountingService, Farm360.Application.Finance.Services.LivestockAccountingService>();
+        services.AddScoped<Farm360.Application.Finance.Services.IAccountingReconciliationService, Farm360.Application.Finance.Services.AccountingReconciliationService>();
+        services.AddScoped<Farm360.Application.Finance.Services.ITradeCreditService, Farm360.Application.Finance.Services.TradeCreditService>();
 
         // ── Feeding: per-animal feed allocation (docs/32 GAP-1) ──────────────
         services.AddScoped<Farm360.Application.Feeding.Services.IFeedAllocationService, Farm360.Application.Feeding.Services.FeedAllocationService>();

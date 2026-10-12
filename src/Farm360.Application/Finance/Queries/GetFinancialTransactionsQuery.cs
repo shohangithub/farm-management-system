@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -24,20 +25,6 @@ public class GetFinancialTransactionsQueryHandler : IRequestHandler<GetFinancial
     {
         var transactions = await _repository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
 
-        return transactions.Select(t => new FinancialTransactionDto(
-            t.Id,
-            t.FarmId,
-            t.Type.ToString(),
-            t.Category.ToString(),
-            t.AmountBdt,
-            t.TransactionDate,
-            t.Description,
-            t.ReferenceId,
-            t.Notes,
-            t.AnimalId,
-            t.BatchId,
-            t.ShedId,
-            t.CreatedAtUtc
-        )).ToList();
+        return transactions.Select(t => t.ToDto()).ToList();
     }
 }

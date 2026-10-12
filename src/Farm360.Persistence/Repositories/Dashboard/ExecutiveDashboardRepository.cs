@@ -52,15 +52,26 @@ public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
         return await query.CountAsync(cancellationToken);
     }
 
+    // Profit & loss heads only: investor capital, loans and stock/animal purchases are not income
+    // or expense (single source of truth: AccountChart).
+    private static readonly Domain.Finance.Enums.TransactionCategory[] RevenueCategories =
+        Farm360.Application.Finance.Services.AccountChart.RevenueCategories;
+
+    private static readonly Domain.Finance.Enums.TransactionCategory[] ExpenseCategories =
+        Farm360.Application.Finance.Services.AccountChart.ExpenseCategories;
+
     public async Task<decimal> GetCurrentMonthIncomeAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var startOfNextMonth = startOfMonth.AddMonths(1);
         
         var query = _context.FinancialTransactions.AsNoTracking()
             .Where(t => t.TenantId == tenantId 
                         && t.Type == Domain.Finance.Enums.TransactionType.Income
-                        && t.TransactionDate >= startOfMonth);
+                        && RevenueCategories.Contains(t.Category)
+                        && t.TransactionDate >= startOfMonth
+                        && t.TransactionDate < startOfNextMonth);
                         
         if (farmId.HasValue)
         {
@@ -74,11 +85,14 @@ public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
     {
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var startOfNextMonth = startOfMonth.AddMonths(1);
         
         var query = _context.FinancialTransactions.AsNoTracking()
             .Where(t => t.TenantId == tenantId 
                         && t.Type == Domain.Finance.Enums.TransactionType.Expense
-                        && t.TransactionDate >= startOfMonth);
+                        && ExpenseCategories.Contains(t.Category)
+                        && t.TransactionDate >= startOfMonth
+                        && t.TransactionDate < startOfNextMonth);
                         
         if (farmId.HasValue)
         {
@@ -92,6 +106,7 @@ public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
     {
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var startOfNextMonth = startOfMonth.AddMonths(1);
         
         var query = _context.Animals.AsNoTracking().Where(a => a.TenantId == tenantId && a.AcquisitionType == Domain.Livestock.Enums.AcquisitionType.BornOnFarm && a.DateOfBirth >= DateOnly.FromDateTime(startOfMonth));
         if (farmId.HasValue)
@@ -105,6 +120,7 @@ public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
     {
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var startOfNextMonth = startOfMonth.AddMonths(1);
         
         var query = _context.Animals.AsNoTracking().Where(a => a.TenantId == tenantId && a.Status == Domain.Livestock.Enums.AnimalStatus.Dead && a.ModifiedAtUtc != null && a.ModifiedAtUtc >= startOfMonth);
         if (farmId.HasValue)

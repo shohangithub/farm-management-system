@@ -11,5 +11,6 @@ public record RecordExpenseRequest(
     string Notes = "",
     Guid? AnimalId = null,
     Guid? BatchId = null,
-    Guid? ShedId = null
+    Guid? ShedId = null,
+    CreditTermsRequest? Credit = null
 );

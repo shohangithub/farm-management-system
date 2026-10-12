@@ -67,6 +67,20 @@ import { LoanRecord } from '../../models/finance.model';
           class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
           <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
         </a>
+        <a routerLink="/finance/reports/income-expense" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">swap_vert</mat-icon> Income & Expense
+        </a>
+        <a routerLink="/finance/reports/full-accounts" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">menu_book</mat-icon> Full Accounts
+        </a>
+        <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">request_quote</mat-icon> Payables &amp; Receivables
+        </a>
+        <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">fact_check</mat-icon> Accounting Health
+        </a>
         <a routerLink="/finance/loans" 
           class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
           <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
@@ -142,6 +156,20 @@ import { LoanRecord } from '../../models/finance.model';
               <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500" [style.width.%]="loan.repaymentProgressPercent"></div>
             </div>
             <p class="text-xs text-center text-gray-500 mt-2">Total Repaid: {{ loan.totalRepaidBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+            <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+              <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 px-2 py-1.5">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400 m-0">Principal paid</p>
+                <p class="text-xs font-bold text-gray-800 dark:text-gray-100 m-0">{{ (loan.principalRepaidBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}</p>
+              </div>
+              <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5" title="Interest is an expense in profit & loss">
+                <p class="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 m-0">Interest paid</p>
+                <p class="text-xs font-bold text-amber-700 dark:text-amber-300 m-0">{{ (loan.interestPaidBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}</p>
+              </div>
+              <div class="rounded-lg bg-rose-50 dark:bg-rose-900/20 px-2 py-1.5" title="Principal still owed — the liability on the balance sheet">
+                <p class="text-[10px] uppercase tracking-wider text-rose-500 m-0">Principal due</p>
+                <p class="text-xs font-bold text-rose-600 dark:text-rose-300 m-0">{{ (loan.outstandingPrincipalBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}</p>
+              </div>
+            </div>
           </div>
 
           <!-- Action Button -->

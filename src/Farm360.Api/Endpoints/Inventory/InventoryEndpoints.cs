@@ -310,10 +310,12 @@ public static class InventoryEndpoints
 
         group.MapPost("/purchase-orders/{id:guid}/fulfill", async (
             Guid id,
+            [FromBody] FulfillPurchaseOrderRequest? request,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new FulfillPurchaseOrderCommand(id);
+            // No credit terms = paid in cash on receipt; with terms = received on credit.
+            var command = new FulfillPurchaseOrderCommand(id, request?.Credit);
             await sender.Send(command, ct);
             return Results.NoContent();
         })
@@ -563,3 +565,6 @@ public static class InventoryEndpoints
 }
 
 public sealed record CancelPurchaseReturnRequest(string Reason);
+
+/// <summary>Receipt of a purchase order. Leave <paramref name="Credit"/> out when paid in cash.</summary>
+public sealed record FulfillPurchaseOrderRequest(Farm360.Contracts.Finance.CreditTermsRequest? Credit = null);

@@ -192,7 +192,7 @@ public static class FinanceEndpoints
             IMediator mediator) =>
         {
             var tenantId = tenantService.TenantId;
-            var command = new RecordIncomeCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId);
+            var command = new RecordIncomeCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId, request.Credit);
             var result = await mediator.Send(command);
             return Results.Created($"/api/farms/{farmId}/finance/transactions/{result.Id}", result);
         }).Produces<FinancialTransactionDto>(StatusCodes.Status201Created);
@@ -204,7 +204,7 @@ public static class FinanceEndpoints
             IMediator mediator) =>
         {
             var tenantId = tenantService.TenantId;
-            var command = new RecordExpenseCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId);
+            var command = new RecordExpenseCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId, request.Credit);
             var result = await mediator.Send(command);
             return Results.Created($"/api/farms/{farmId}/finance/transactions/{result.Id}", result);
         }).Produces<FinancialTransactionDto>(StatusCodes.Status201Created);
@@ -390,6 +390,101 @@ public static class FinanceEndpoints
             var result = await mediator.Send(new GetBalanceSheetQuery(farmId, asOfDate));
             return Results.Ok(result);
         }).Produces<BalanceSheetDto>();
+
+        // Daily / date-range income & expense cash book. Omit toDate (or pass the same date) for a
+        // single-day report; omit both for today.
+        group.MapGet("reports/income-expense", async (
+            Guid farmId,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
+            IMediator mediator) =>
+        {
+            var from = fromDate ?? DateTime.Today;
+            var result = await mediator.Send(new GetIncomeExpenseReportQuery(farmId, from, toDate ?? from));
+            return Results.Ok(result);
+        }).Produces<IncomeExpenseReportDto>();
+
+        // Books vs registers (stock, herd, loans, investors) and a list of accounting issues.
+        group.MapGet("accounting/health", async (Guid farmId, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetAccountingHealthQuery(farmId));
+            return Results.Ok(result);
+        }).Produces<AccountingHealthDto>();
+
+        // Idempotent repair of records made before the accounting rules were enforced.
+        group.MapPost("accounting/repair", async (
+            Guid farmId,
+            [FromBody] RepairLedgerRequest? request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var command = new RepairLedgerCommand(tenantService.TenantId, farmId, request?.AdjustInventoryToStockCount ?? false);
+            var result = await mediator.Send(command);
+            return Results.Ok(result);
+        }).Produces<LedgerRepairResultDto>();
+
+        // ── Payables & receivables (credit book) ────────────────────────────
+        group.MapGet("credit", async (Guid farmId, [FromQuery] bool includeSettled, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetTradeCreditOverviewQuery(farmId, includeSettled));
+            return Results.Ok(result);
+        }).Produces<TradeCreditOverviewDto>();
+
+        group.MapGet("credit/bills/{billId:guid}", async (Guid farmId, Guid billId, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetTradeBillQuery(farmId, billId));
+            return Results.Ok(result);
+        }).Produces<TradeBillDto>();
+
+        // Put an existing cash-booked purchase or sale on credit.
+        group.MapPost("credit/bills", async (Guid farmId, [FromBody] OpenTradeBillRequest request, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new OpenTradeBillCommand(farmId, request));
+            return Results.Created($"/api/farms/{farmId}/finance/credit/bills/{result.Id}", result);
+        }).Produces<TradeBillDto>(StatusCodes.Status201Created);
+
+        group.MapPut("credit/bills/{billId:guid}", async (Guid farmId, Guid billId, [FromBody] UpdateBillTermsRequest request, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new UpdateTradeBillTermsCommand(farmId, billId, request));
+            return Results.Ok(result);
+        }).Produces<TradeBillDto>();
+
+        group.MapDelete("credit/bills/{billId:guid}", async (Guid farmId, Guid billId, IMediator mediator) =>
+        {
+            await mediator.Send(new CancelTradeBillCommand(farmId, billId));
+            return Results.NoContent();
+        }).Produces(StatusCodes.Status204NoContent);
+
+        group.MapPost("credit/bills/{billId:guid}/payments", async (Guid farmId, Guid billId, [FromBody] RecordBillPaymentRequest request, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new RecordBillPaymentCommand(farmId, billId, request));
+            return Results.Ok(result);
+        }).Produces<TradeBillDto>();
+
+        group.MapDelete("credit/bills/{billId:guid}/payments/{paymentId:guid}", async (Guid farmId, Guid billId, Guid paymentId, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new VoidBillPaymentCommand(farmId, billId, paymentId));
+            return Results.Ok(result);
+        }).Produces<TradeBillDto>();
+
+        group.MapPost("credit/bills/{billId:guid}/write-off", async (Guid farmId, Guid billId, [FromBody] WriteOffBillRequest request, IMediator mediator) =>
+        {
+            var result = await mediator.Send(new WriteOffTradeBillCommand(farmId, billId, request));
+            return Results.Ok(result);
+        }).Produces<TradeBillDto>();
+
+        // Full accounts statement: cash, P&L, costs, investors, profit share, shares, loans, ledger.
+        group.MapGet("reports/full-accounts", async (
+            Guid farmId,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
+            IMediator mediator) =>
+        {
+            var today = DateTime.Today;
+            var from = fromDate ?? new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            var result = await mediator.Send(new GetFullAccountsReportQuery(farmId, from, toDate ?? today));
+            return Results.Ok(result);
+        }).Produces<FullAccountsReportDto>();
 
         // Consolidated PnL is tenant-wide, so it should ideally be under api/finance instead of api/farms/{farmId}/finance
         // But for consistency we can leave it here or map it separately.

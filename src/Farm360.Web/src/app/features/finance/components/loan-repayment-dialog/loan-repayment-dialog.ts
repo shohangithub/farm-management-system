@@ -76,6 +76,17 @@ import { LoanRecord } from '../../models/finance.model';
             </label>
             <input type="number" formControlName="amountBdt" step="100" min="1" placeholder="e.g. 10000"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
+            <!-- How the payment is booked: principal reduces the debt, interest is an expense -->
+            <div *ngIf="split() as s" class="mt-1.5 grid grid-cols-2 gap-2 text-[11px]">
+              <div class="rounded-lg px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
+                <span class="text-gray-500 dark:text-gray-400">Principal (reduces loan)</span>
+                <div class="font-bold text-emerald-700 dark:text-emerald-300">{{ s.principal | currency:'BDT ':'symbol':'1.0-2' }}</div>
+              </div>
+              <div class="rounded-lg px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50">
+                <span class="text-gray-500 dark:text-gray-400">Interest (expense)</span>
+                <div class="font-bold text-amber-700 dark:text-amber-300">{{ s.interest | currency:'BDT ':'symbol':'1.0-2' }}</div>
+              </div>
+            </div>
             <div *ngIf="data.outstandingBalanceBdt > 0" class="flex gap-2 mt-1.5">
               <button type="button" (click)="setFullAmount()"
                 class="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors font-medium">
@@ -151,11 +162,25 @@ export class LoanRepaymentDialogComponent implements OnInit {
     const today = new Date().toISOString().split('T')[0];
 
     this.form = this.fb.group({
-      amountBdt: [null, [Validators.required, Validators.min(1)]],
+      amountBdt: [null, [Validators.required, Validators.min(1), Validators.max(Math.ceil(this.data.outstandingBalanceBdt))]],
       repaymentDate: [today, Validators.required],
       referenceId: [''],
       notes: ['']
     });
+  }
+
+  /**
+   * Preview of how the server will split the payment: flat-rate instalments carry principal and
+   * interest in the loan's own proportion (principal : total interest).
+   */
+  split(): { principal: number; interest: number } | null {
+    const amount = Number(this.form?.value?.amountBdt);
+    if (!amount || amount <= 0) return null;
+    const principal = this.data.principalAmountBdt;
+    const payable = this.data.totalPayableBdt ?? principal * (1 + this.data.interestRatePercent / 100);
+    if (payable <= 0) return { principal: amount, interest: 0 };
+    const p = Math.round((amount * principal / payable) * 100) / 100;
+    return { principal: p, interest: Math.round((amount - p) * 100) / 100 };
   }
 
   setFullAmount(): void {

@@ -100,6 +100,20 @@ import { BalanceSheet } from '../../models/finance.model';
           class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
           <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
         </a>
+        <a routerLink="/finance/reports/income-expense" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">swap_vert</mat-icon> Income & Expense
+        </a>
+        <a routerLink="/finance/reports/full-accounts" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">menu_book</mat-icon> Full Accounts
+        </a>
+        <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">request_quote</mat-icon> Payables &amp; Receivables
+        </a>
+        <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+          <mat-icon class="text-base">fact_check</mat-icon> Accounting Health
+        </a>
         <a routerLink="/finance/loans" 
           class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
           <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
@@ -165,7 +179,7 @@ import { BalanceSheet } from '../../models/finance.model';
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
                   {{ sheet.totalAssetsBdt | currency:'BDT ':'symbol':'1.0-0' }}
                 </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">Cash & Equivalents</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">Cash, Stock & Livestock</p>
               </div>
               <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
                 <mat-icon class="text-lg">account_balance_wallet</mat-icon>
@@ -269,9 +283,10 @@ import { BalanceSheet } from '../../models/finance.model';
                 <div class="p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2.5">
                   <mat-icon class="text-sm !w-4 !h-4 !text-[16px] shrink-0 mt-0.5">info</mat-icon>
                   <div>
-                    <span class="font-bold">Biological Assets (Livestock & Feed Inventory):</span>
+                    <span class="font-bold">Livestock & Inventory are carried at cost:</span>
                     <p class="text-[11px] text-blue-600/80 dark:text-blue-300/80 mt-0.5">
-                      Biological livestock valuation and feed inventories are tracked in their dedicated modules and will be integrated into fair-value accounting in a future update.
+                      Animals at purchase price until sold or lost; feed, medicine and supplies at average cost until used.
+                      Their cost reaches profit &amp; loss only when they are sold, used or written off.
                     </p>
                   </div>
                 </div>
@@ -389,6 +404,37 @@ import { BalanceSheet } from '../../models/finance.model';
 
           </div>
 
+        </div>
+
+        <!-- Books vs registers -->
+        <div *ngIf="sheet.reconciliations?.length" class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+          <div class="p-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h3 class="text-sm font-black text-gray-900 dark:text-white">Proof: books vs. registers</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Each balance must match what really exists — stock on hand, the herd, the loan register and the investor register.</p>
+            </div>
+            <a routerLink="/finance/accounting-health" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+              <mat-icon class="!w-4 !h-4 !text-[16px]">fact_check</mat-icon> Accounting Health
+            </a>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
+              <tr><th class="text-left px-4 py-2">Account</th><th class="text-right px-4 py-2">Books</th><th class="text-right px-4 py-2">Register</th><th class="text-right px-4 py-2">Difference</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of sheet.reconciliations" class="border-t border-gray-100 dark:border-gray-700/60">
+                <td class="px-4 py-2">
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">{{ r.account }}</span>
+                  <span class="block text-[11px] text-gray-500">{{ r.registerSource }}</span>
+                </td>
+                <td class="px-4 py-2 text-right font-mono">{{ r.booksBdt | currency:'BDT ':'symbol':'1.2-2' }}</td>
+                <td class="px-4 py-2 text-right font-mono">{{ r.registerBdt | currency:'BDT ':'symbol':'1.2-2' }}</td>
+                <td class="px-4 py-2 text-right font-mono font-bold" [ngClass]="r.isReconciled ? 'text-emerald-600' : 'text-amber-600'">
+                  {{ r.isReconciled ? '✓' : (r.differenceBdt | currency:'BDT ':'symbol':'1.2-2') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
       </div>

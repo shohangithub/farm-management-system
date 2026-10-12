@@ -6,6 +6,7 @@ using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Commands;
@@ -40,6 +41,8 @@ public class CreateFinancialTransactionCommandHandler : IRequestHandler<CreateFi
         if (!Enum.TryParse<TransactionCategory>(request.Category, true, out var category))
             throw new ArgumentException($"Invalid transaction category: {request.Category}");
 
+        AccountChart.EnsureManualAllowed(type, category);
+
         var transaction = FinancialTransaction.Create(
             request.TenantId,
             request.FarmId,
@@ -54,20 +57,6 @@ public class CreateFinancialTransactionCommandHandler : IRequestHandler<CreateFi
         await _repository.AddAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new FinancialTransactionDto(
-            transaction.Id,
-            transaction.FarmId,
-            transaction.Type.ToString(),
-            transaction.Category.ToString(),
-            transaction.AmountBdt,
-            transaction.TransactionDate,
-            transaction.Description,
-            transaction.ReferenceId,
-            transaction.Notes,
-            transaction.AnimalId,
-            transaction.BatchId,
-            transaction.ShedId,
-            transaction.CreatedAtUtc
-        );
+        return transaction.ToDto();
     }
 }

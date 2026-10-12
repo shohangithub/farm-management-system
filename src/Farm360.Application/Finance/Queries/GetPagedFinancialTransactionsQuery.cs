@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -55,23 +56,7 @@ public sealed class GetPagedFinancialTransactionsQueryHandler : IRequestHandler<
             cancellationToken
         );
 
-        var dtos = items.Select(t => new FinancialTransactionDto(
-            t.Id,
-            t.FarmId,
-            t.Type.ToString(),
-            t.Category.ToString(),
-            t.AmountBdt,
-            t.TransactionDate,
-            t.Description,
-            t.ReferenceId,
-            t.Notes,
-            t.AnimalId,
-            t.BatchId,
-            t.ShedId,
-            t.CreatedAtUtc,
-            t.IsAutomated,
-            t.SourceModule
-        )).ToList();
+        var dtos = items.Select(t => t.ToDto()).ToList();
 
         var netCashFlow = totalIncome - totalExpense;
 

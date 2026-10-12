@@ -73,3 +73,15 @@ public enum PurchaseReturnReason
     Excess = 5,
     Other = 6
 }
+
+/// <summary>
+/// How stock coming in was paid for — decides the accounting entry for a manual stock-in.
+/// </summary>
+public enum StockFundingSource
+{
+    /// <summary>Bought and paid in cash/bank: Dr Inventory, Cr Cash.</summary>
+    CashPurchase = 0,
+
+    /// <summary>Opening stock or stock the owner brought in without a farm payment: Dr Inventory, Cr Owner's Capital.</summary>
+    OwnerContribution = 1
+}

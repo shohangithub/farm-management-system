@@ -57,7 +57,10 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
 
     public Task UpdateAsync(FinancialTransaction transaction, CancellationToken cancellationToken = default)
     {
-        _context.FinancialTransactions.Update(transaction);
+        // Tracked rows are saved by change detection. Forcing Update on one added earlier in the same
+        // unit of work would turn its INSERT into an UPDATE of a row that does not exist yet.
+        if (_context.Entry(transaction).State == EntityState.Detached)
+            _context.FinancialTransactions.Update(transaction);
         return Task.CompletedTask;
     }
 
@@ -142,12 +145,14 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
 
         var totalCount = await query.CountAsync(cancellationToken);
 
+        // Totals are cash totals: non-cash postings (stock consumed, cost of animals sold) are listed
+        // in the ledger but moved no money, so they must not distort cash in / out / net cash flow.
         var totalIncome = await query
-            .Where(t => t.Type == Domain.Finance.Enums.TransactionType.Income)
+            .Where(t => t.Type == Domain.Finance.Enums.TransactionType.Income && t.Settlement == SettlementAccount.Cash)
             .SumAsync(t => (decimal?)t.AmountBdt, cancellationToken) ?? 0m;
 
         var totalExpense = await query
-            .Where(t => t.Type == Domain.Finance.Enums.TransactionType.Expense)
+            .Where(t => t.Type == Domain.Finance.Enums.TransactionType.Expense && t.Settlement == SettlementAccount.Cash)
             .SumAsync(t => (decimal?)t.AmountBdt, cancellationToken) ?? 0m;
 
         query = sortBy?.ToLowerInvariant() switch
@@ -173,6 +178,33 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
                                    && t.Category == Domain.Finance.Enums.TransactionCategory.AnimalPurchase 
                                    && t.Type == Domain.Finance.Enums.TransactionType.Expense, cancellationToken);
     }
+    public async Task<FinancialTransaction?> FindBySourceAsync(Guid farmId, Guid sourceDocumentId, TransactionCategory category, CancellationToken cancellationToken = default)
+    {
+        // Check the change tracker first so two postings in the same unit of work stay idempotent.
+        var pending = _context.FinancialTransactions.Local
+            .FirstOrDefault(t => t.FarmId == farmId && t.SourceDocumentId == sourceDocumentId && t.Category == category && !t.IsDeleted);
+        if (pending is not null)
+            return pending;
+
+        return await _context.FinancialTransactions
+            .FirstOrDefaultAsync(t => t.FarmId == farmId && t.SourceDocumentId == sourceDocumentId && t.Category == category, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<FinancialTransaction>> GetBySourceAsync(Guid farmId, Guid sourceDocumentId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FinancialTransactions
+            .Where(t => t.FarmId == farmId && t.SourceDocumentId == sourceDocumentId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<FinancialTransaction>> GetByAnimalIdAsync(Guid animalId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FinancialTransactions
+            .Where(t => t.AnimalId == animalId)
+            .OrderBy(t => t.TransactionDate)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<FinancialTransaction>> GetUnattributedIndirectCostsAsync(
         Guid farmId,
         DateOnly from,

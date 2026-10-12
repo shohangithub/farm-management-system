@@ -162,6 +162,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     // ── Reporting (docs/32) ─────────────────────────────────────────────────
     public DbSet<Farm360.Domain.Reporting.ReportRun> ReportRuns => Set<Farm360.Domain.Reporting.ReportRun>();
     public DbSet<LoanRecord> LoanRecords => Set<LoanRecord>();
+    public DbSet<Farm360.Domain.Finance.TradeBill> TradeBills => Set<Farm360.Domain.Finance.TradeBill>();
+    public DbSet<Farm360.Domain.Finance.TradeBillPayment> TradeBillPayments => Set<Farm360.Domain.Finance.TradeBillPayment>();
     public DbSet<Investor> Investors => Set<Investor>();
     public DbSet<InvestorTransaction> InvestorTransactions => Set<InvestorTransaction>();
     public DbSet<FarmShareConfig> FarmShareConfigs => Set<FarmShareConfig>();

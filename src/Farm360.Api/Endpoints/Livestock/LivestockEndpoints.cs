@@ -282,7 +282,7 @@ public static class LivestockEndpoints
         ISender sender,
         CancellationToken cancellationToken)
     {
-        await sender.Send(new SellAnimalCommand(id, request.SalePriceBdt, request.SaleDate, request.BuyerName, request.SaleWeightKg), cancellationToken);
+        await sender.Send(new SellAnimalCommand(id, request.SalePriceBdt, request.SaleDate, request.BuyerName, request.SaleWeightKg, request.Credit), cancellationToken);
         return Results.NoContent();
     }
 
@@ -425,7 +425,7 @@ public static class LivestockEndpoints
 public sealed record RecordWeightRequest(decimal WeightKg, DateOnly RecordedDate, string? Notes);
 
 /// <summary>Sale request body.</summary>
-public sealed record SellAnimalRequest(decimal SalePriceBdt, DateOnly SaleDate, string? BuyerName, decimal? SaleWeightKg);
+public sealed record SellAnimalRequest(decimal SalePriceBdt, DateOnly SaleDate, string? BuyerName, decimal? SaleWeightKg, Farm360.Contracts.Finance.CreditTermsRequest? Credit = null);
 
 /// <summary>Quarantine request body.</summary>
 public sealed record QuarantineAnimalRequest(string Reason);

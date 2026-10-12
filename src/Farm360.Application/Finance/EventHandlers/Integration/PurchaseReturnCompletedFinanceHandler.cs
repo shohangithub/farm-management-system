@@ -2,62 +2,70 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Common.Interfaces;
-using Farm360.Application.Finance.Repositories;
+using Farm360.Application.Finance.Services;
 using Farm360.Application.Inventory.EventHandlers;
-using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
+/// <summary>
+/// Books stock returned to a supplier: Dr Cash (refund), Cr Inventory. It reduces the stock asset;
+/// it is not revenue (it used to be counted as income, inflating profit). When the order was bought
+/// on credit and still owed, the return reduces the supplier's bill instead (Dr Accounts Payable).
+/// </summary>
 public class PurchaseReturnCompletedFinanceHandler : INotificationHandler<PurchaseReturnCompletedNotification>
 {
-    private readonly IFinancialTransactionRepository _financialTransactionRepository;
+    private readonly ILedgerPostingService _ledgerPosting;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<PurchaseReturnCompletedFinanceHandler> _logger;
+    private readonly ITradeCreditService? _credit;
 
     public PurchaseReturnCompletedFinanceHandler(
-        IFinancialTransactionRepository financialTransactionRepository,
+        ILedgerPostingService ledgerPosting,
         IUnitOfWork unitOfWork,
-        ILogger<PurchaseReturnCompletedFinanceHandler> logger)
+        ILogger<PurchaseReturnCompletedFinanceHandler> logger,
+        ITradeCreditService? credit = null)
     {
-        _financialTransactionRepository = financialTransactionRepository;
+        _ledgerPosting = ledgerPosting;
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _credit = credit;
     }
 
     public async Task Handle(PurchaseReturnCompletedNotification notification, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(notification);
         var evt = notification.DomainEvent;
         if (evt.TotalAmountBdt <= 0)
             return;
 
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("Processing finance posting for Purchase Return {ReturnNumber} with amount {Amount} BDT", evt.ReturnNumber, evt.TotalAmountBdt);
-        }
+        var settlement = _credit is null
+            ? SettlementAccount.Cash
+            : await _credit.SettleReturnAsync(evt.FarmId, evt.PurchaseOrderId, evt.PurchaseReturnId, evt.TotalAmountBdt, cancellationToken);
+        var onBill = settlement == SettlementAccount.Payable;
 
-        var creditTransaction = FinancialTransaction.Create(
-            tenantId: evt.TenantId,
-            farmId: evt.FarmId,
-            type: TransactionType.Income,
-            category: TransactionCategory.InventoryPurchaseReturn,
-            amountBdt: evt.TotalAmountBdt,
-            transactionDate: evt.ReturnDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
-            referenceId: evt.ReturnNumber,
-            notes: $"Supplier refund / credit for Purchase Return {evt.ReturnNumber}",
-            description: $"Purchase Return - {evt.ReturnNumber}",
-            isAutomated: true,
-            sourceModule: "Inventory"
-        );
+        await _ledgerPosting.PostAsync(new LedgerPosting(
+            evt.TenantId,
+            evt.FarmId,
+            TransactionCategory.InventoryPurchaseReturn,
+            evt.TotalAmountBdt,
+            evt.ReturnDate.ToDateTime(TimeOnly.MinValue),
+            evt.PurchaseReturnId,
+            InventoryAccounting.Module,
+            $"Purchase Return - {evt.ReturnNumber}",
+            Settlement: settlement,
+            Notes: onBill
+                ? $"Deducted from the supplier's unpaid bill for stock returned under {evt.ReturnNumber}"
+                : $"Supplier refund for stock returned under {evt.ReturnNumber}",
+            ReferenceId: evt.ReturnNumber), cancellationToken);
 
-        await _financialTransactionRepository.AddAsync(creditTransaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         if (_logger.IsEnabled(LogLevel.Information))
         {
-            _logger.LogInformation("Posted financial credit of {Amount} BDT for Purchase Return {ReturnNumber}.", evt.TotalAmountBdt, evt.ReturnNumber);
+            _logger.LogInformation("Posted supplier refund of {Amount} BDT for Purchase Return {ReturnNumber}.", evt.TotalAmountBdt, evt.ReturnNumber);
         }
     }
 }

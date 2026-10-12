@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -29,8 +30,9 @@ public class GetConsolidatedPnLReportQueryHandler : IRequestHandler<GetConsolida
             .Where(t => t.TransactionDate.Year == request.Year && t.TransactionDate.Month == request.Month)
             .ToList();
 
-        var totalIncome = monthTransactions.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
-        var totalExpense = monthTransactions.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
+        // Profit & loss only: capital, loans and asset purchases are not income or expense.
+        var totalIncome = AccountChart.Revenue(monthTransactions);
+        var totalExpense = AccountChart.Expenses(monthTransactions);
 
         var farmBreakdown = monthTransactions
             .GroupBy(t => t.FarmId)
@@ -38,9 +40,9 @@ public class GetConsolidatedPnLReportQueryHandler : IRequestHandler<GetConsolida
                 g => g.Key,
                 g => new FarmPnLSnapshotDto(
                     g.Key,
-                    g.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt),
-                    g.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt),
-                    g.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt) - g.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt)
+                    Math.Round(AccountChart.Revenue(g), 2),
+                    Math.Round(AccountChart.Expenses(g), 2),
+                    Math.Round(AccountChart.NetProfit(g), 2)
                 )
             );
 

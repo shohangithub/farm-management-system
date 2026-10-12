@@ -33,6 +33,15 @@ public interface IFinancialTransactionRepository
         CancellationToken cancellationToken = default);
     Task<FinancialTransaction?> GetAnimalPurchaseTransactionAsync(Guid animalId, CancellationToken cancellationToken = default);
 
+    /// <summary>The automated posting a source document produced for a category, if any (idempotency key).</summary>
+    Task<FinancialTransaction?> FindBySourceAsync(Guid farmId, Guid sourceDocumentId, Domain.Finance.Enums.TransactionCategory category, CancellationToken cancellationToken = default);
+
+    /// <summary>Every posting a source document produced (all categories).</summary>
+    Task<IReadOnlyList<FinancialTransaction>> GetBySourceAsync(Guid farmId, Guid sourceDocumentId, CancellationToken cancellationToken = default);
+
+    /// <summary>All postings for an animal (purchase, costs, sale, cost of sale, loss).</summary>
+    Task<IReadOnlyList<FinancialTransaction>> GetByAnimalIdAsync(Guid animalId, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Farm-level expenses in a period that are not already attributed to a single animal —
     /// the input to overhead allocation (docs/32 GAP-2).

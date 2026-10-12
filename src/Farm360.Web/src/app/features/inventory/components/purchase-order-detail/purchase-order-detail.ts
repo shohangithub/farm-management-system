@@ -11,6 +11,7 @@ import { of } from 'rxjs';
 import { InventoryService } from '../../services/inventory.service';
 import { PurchaseOrder, PurchaseOrderStatus, PurchaseReturn } from '../../models/inventory.models';
 import { CreatePurchaseReturnDialogComponent } from '../dialogs/create-purchase-return-dialog/create-purchase-return-dialog.component';
+import { FulfillPoDialogComponent } from '../dialogs/fulfill-po-dialog/fulfill-po-dialog.component';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
@@ -264,31 +265,16 @@ export class PurchaseOrderDetail {
     const data = this.po();
     if (!data) return;
 
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
-      width: '450px',
-      panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
-      data: {
-        title: 'Fulfill Purchase Order',
-        message: `Are you sure you want to fulfill PO #${data.poNumber}? This will automatically receive all items into stock and update the current inventory balance.`,
-        confirmButtonText: 'Fulfill & Receive Stock',
-        cancelButtonText: 'Cancel'
-      }
+    // Receives the stock and records how it was paid (in full now, or on credit to the supplier).
+    const dialogRef = this.dialog.open(FulfillPoDialogComponent, {
+      disableClose: true,
+      width: '560px',
+      maxWidth: '95vw',
+      data: { id: data.id, poNumber: data.poNumber, supplierId: data.supplierId, totalAmountBdt: data.totalAmountBdt }
     });
 
-    dialogRef.afterClosed().subscribe(confirmed => {
-      if (confirmed) {
-        this.loading.set(true);
-        this.inventoryService.fulfillPurchaseOrder(data.id).subscribe({
-          next: () => {
-            // Re-fetch to show new status
-            this.reload();
-          },
-          error: (err) => {
-            this.loading.set(false);
-            this.error.set(err?.error?.detail || 'Failed to fulfill PO');
-          }
-        });
-      }
+    dialogRef.afterClosed().subscribe(fulfilled => {
+      if (fulfilled) this.reload();
     });
   }
 

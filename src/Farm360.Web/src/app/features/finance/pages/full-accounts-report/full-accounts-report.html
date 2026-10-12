@@ -1,0 +1,641 @@
+<app-page-header
+  title="Full Accounts Statement"
+  description="সম্পূর্ণ হিসাব বিবরণী — cash, income, every cost incl. labour, investment, share capital, profit share and loans."
+  breadcrumbActiveNode="Full Accounts">
+  <div actions class="flex items-center gap-2 flex-wrap">
+    <a mat-stroked-button routerLink="/finance"
+      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
+      <mat-icon class="text-sm">arrow_back</mat-icon><span>Overview</span>
+    </a>
+    <button mat-stroked-button (click)="export('xlsx')" [disabled]="!data() || !!exporting()"
+      class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+      <mat-icon class="!w-4 !h-4 !text-[16px]">{{ exporting() === 'xlsx' ? 'hourglass_empty' : 'grid_on' }}</mat-icon>
+      <span>Excel</span>
+    </button>
+    <button mat-stroked-button (click)="export('pdf')" [disabled]="!data() || !!exporting()"
+      class="rounded-xl border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+      <mat-icon class="!w-4 !h-4 !text-[16px]">{{ exporting() === 'pdf' ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
+      <span>PDF</span>
+    </button>
+    <button mat-flat-button (click)="print()" [disabled]="!data()"
+      class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm">
+      <mat-icon class="text-sm">print</mat-icon><span>Print</span>
+    </button>
+  </div>
+</app-page-header>
+
+<div class="px-4 sm:px-6 py-4 mx-auto max-w-7xl space-y-5">
+
+  <!-- Sub-navigation -->
+  <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto">
+    <a routerLink="/finance" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">dashboard</mat-icon> Overview
+    </a>
+    <a routerLink="/finance/transactions" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">receipt_long</mat-icon> General Ledger
+    </a>
+    <a routerLink="/finance/reports/income-expense" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">swap_vert</mat-icon> Income & Expense
+    </a>
+    <a routerLink="/finance/reports/full-accounts" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">menu_book</mat-icon> Full Accounts
+    </a>
+    <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">request_quote</mat-icon> Payables &amp; Receivables
+    </a>
+    <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
+      <mat-icon class="text-base">fact_check</mat-icon> Accounting Health
+    </a>
+    <a routerLink="/finance/reports/balance-sheet" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
+    </a>
+    <a routerLink="/finance/investors/pnl" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
+      <mat-icon class="text-base">handshake</mat-icon> Profit Sharing
+    </a>
+  </div>
+
+  <!-- Filter card -->
+  <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm p-4 space-y-3">
+    <div class="flex flex-wrap items-end gap-3">
+      <label class="flex flex-col text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+        From
+        <input type="date" [max]="todayIso" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event); onRangeEdited()"
+          class="mt-1 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
+      </label>
+      <label class="flex flex-col text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+        To
+        <input type="date" [max]="todayIso" [ngModel]="toDate()" (ngModelChange)="toDate.set($event); onRangeEdited()"
+          class="mt-1 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
+      </label>
+      <button mat-flat-button type="button" (click)="run()" [disabled]="isLoading()"
+        class="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4">
+        <mat-icon class="text-sm">{{ isLoading() ? 'hourglass_empty' : 'search' }}</mat-icon>
+        Show Report
+      </button>
+      <div class="flex flex-wrap gap-2">
+        @for (p of presets; track p.key) {
+          <button type="button" (click)="applyPreset(p.key)"
+            class="px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors"
+            [ngClass]="activePreset() === p.key
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+              : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'">
+            {{ p.label }}
+          </button>
+        }
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-gray-100 dark:border-gray-700/60 text-xs text-gray-600 dark:text-gray-300">
+      <span class="font-semibold text-gray-500 dark:text-gray-400">Include:</span>
+      @for (s of sectionOptions; track s.key) {
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" [checked]="has(s.key)" (change)="toggleSection(s.key)" class="accent-emerald-600" />
+          {{ s.label }}
+        </label>
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
+      <mat-icon class="text-base">error_outline</mat-icon> {{ error() }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="py-16 flex flex-col items-center gap-3 text-gray-500 dark:text-gray-400 text-sm">
+      <mat-icon class="animate-spin">autorenew</mat-icon> Compiling accounts…
+    </div>
+  }
+
+  @if (!isLoading() && data(); as d) {
+    <div #paper class="acct-paper">
+
+      <!-- Letterhead -->
+      <div class="ph">
+        <div>
+          <div class="ph-org">{{ orgName() || 'Farm360' }}</div>
+          <div class="ph-farm">{{ farmName() }}</div>
+          <div class="muted" style="font-size: 10.5px;">Generated {{ generatedAt() | date: 'dd MMM yyyy, hh:mm a' }} · {{ d.days }} day(s) · {{ d.cash.transactionCount }} transaction(s)</div>
+        </div>
+        <div class="ph-title">
+          <h1>সম্পূর্ণ হিসাব বিবরণী</h1>
+          <h2>Full Accounts Statement</h2>
+          <div class="ph-period">{{ periodLabel() }}</div>
+        </div>
+      </div>
+
+      <!-- Executive summary -->
+      <div class="kpis">
+        <div class="kpi bal">
+          <div class="l">Opening Cash</div>
+          <div class="v">৳ {{ d.cash.openingBalanceBdt | number: '1.0-0' }}</div>
+          <div class="s">ওপেনিং ব্যালেন্স</div>
+        </div>
+        <div class="kpi inc">
+          <div class="l">Total Inflow</div>
+          <div class="v inc">৳ {{ d.cash.totalInflowBdt | number: '1.0-0' }}</div>
+          <div class="s">সকল আয় + মূলধন</div>
+        </div>
+        <div class="kpi exp">
+          <div class="l">Total Outflow</div>
+          <div class="v exp">৳ {{ d.cash.totalOutflowBdt | number: '1.0-0' }}</div>
+          <div class="s">সকল ব্যয় + উত্তোলন</div>
+        </div>
+        <div class="kpi bal">
+          <div class="l">Closing Cash</div>
+          <div class="v">৳ {{ d.cash.closingBalanceBdt | number: '1.0-0' }}</div>
+          <div class="s">ক্লোজিং ব্যালেন্স</div>
+        </div>
+        <div class="kpi inc">
+          <div class="l">Operating Revenue</div>
+          <div class="v">৳ {{ d.operating.totalRevenueBdt | number: '1.0-0' }}</div>
+          <div class="s">বিক্রয় ও অন্যান্য আয়</div>
+        </div>
+        <div class="kpi exp">
+          <div class="l">Total Operating Cost</div>
+          <div class="v">৳ {{ d.operating.totalExpenseBdt | number: '1.0-0' }}</div>
+          <div class="s">৳ {{ d.costs.averageDailyCostBdt | number: '1.0-0' }} / day</div>
+        </div>
+        <div class="kpi" [ngClass]="d.operating.netOperatingProfitBdt >= 0 ? 'inc' : 'exp'">
+          <div class="l">Net {{ d.operating.netOperatingProfitBdt >= 0 ? 'Profit' : 'Loss' }}</div>
+          <div class="v" [class.inc]="d.operating.netOperatingProfitBdt >= 0" [class.exp]="d.operating.netOperatingProfitBdt < 0">
+            ৳ {{ abs(d.operating.netOperatingProfitBdt) | number: '1.0-0' }}
+          </div>
+          <div class="s">Margin {{ d.operating.profitMarginPercent | number: '1.0-1' }}%</div>
+        </div>
+        <div class="kpi cap">
+          <div class="l">Labour Cost</div>
+          <div class="v cap">৳ {{ d.costs.labourCostBdt | number: '1.0-0' }}</div>
+          <div class="s">শ্রমিক মজুরি</div>
+        </div>
+      </div>
+
+      <!-- 1. Cash position -->
+      @if (has('cash')) {
+        <div class="sec brand">১. নগদ অবস্থান / Cash Position</div>
+        <table class="t">
+          <tbody>
+            <tr><td>ওপেনিং ব্যালেন্স / Opening cash balance <span class="note">as of {{ d.fromDate | date: 'dd MMM yyyy' }}</span></td><td class="num bold" style="width: 160px;">{{ d.cash.openingBalanceBdt | number: '1.2-2' }}</td></tr>
+            <tr><td>(+) মোট প্রাপ্তি / Total receipts (operating + capital + loans)</td><td class="num inc">{{ d.cash.totalInflowBdt | number: '1.2-2' }}</td></tr>
+            <tr><td>(−) মোট প্রদান / Total payments (operating + withdrawals + repayments)</td><td class="num exp">{{ d.cash.totalOutflowBdt | number: '1.2-2' }}</td></tr>
+            <tr class="sub"><td>নিট নগদ প্রবাহ / Net cash flow</td><td class="num" [class.inc]="d.cash.netCashFlowBdt >= 0" [class.exp]="d.cash.netCashFlowBdt < 0">{{ d.cash.netCashFlowBdt | number: '1.2-2' }}</td></tr>
+            <tr class="grand"><td>ক্লোজিং ব্যালেন্স / Closing cash balance <span class="note">as of {{ d.toDate | date: 'dd MMM yyyy' }}</span></td><td class="num">৳ {{ d.cash.closingBalanceBdt | number: '1.2-2' }}</td></tr>
+          </tbody>
+        </table>
+      }
+
+      <!-- 2. P&L -->
+      @if (has('pnl')) {
+        <div class="sec inc">২. লাভ-ক্ষতি বিবরণী / Profit &amp; Loss (Operating)</div>
+        <div class="two">
+          <table class="t">
+            <thead><tr><th style="width: 46px;">Code</th><th>আয় / Revenue</th><th class="num">%</th><th class="num">Amount (৳)</th></tr></thead>
+            <tbody>
+              @for (l of d.operating.revenueLines; track l.code) {
+                <tr>
+                  <td class="muted">{{ l.code }}</td>
+                  <td>{{ l.nameBn }} <span class="note" style="display: inline;">/ {{ l.name }}</span><span class="cnt">({{ l.count }})</span></td>
+                  <td class="num muted">{{ l.percentOfTotal | number: '1.0-1' }}</td>
+                  <td class="num inc">{{ l.totalBdt | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="center muted">No operating revenue.</td></tr>
+              }
+            </tbody>
+            <tfoot><tr><td colspan="3">মোট আয় / Total Revenue</td><td class="num inc">{{ d.operating.totalRevenueBdt | number: '1.2-2' }}</td></tr></tfoot>
+          </table>
+          <table class="t">
+            <thead><tr><th style="width: 46px;">Code</th><th>ব্যয় / Expense</th><th class="num">%</th><th class="num">Amount (৳)</th></tr></thead>
+            <tbody>
+              @for (l of d.operating.expenseLines; track l.code) {
+                <tr>
+                  <td class="muted">{{ l.code }}</td>
+                  <td>{{ l.nameBn }} <span class="note" style="display: inline;">/ {{ l.name }}</span><span class="cnt">({{ l.count }})</span></td>
+                  <td class="num muted">{{ l.percentOfTotal | number: '1.0-1' }}</td>
+                  <td class="num exp">{{ l.totalBdt | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="center muted">No operating expenses.</td></tr>
+              }
+            </tbody>
+            <tfoot><tr><td colspan="3">মোট ব্যয় / Total Expense</td><td class="num exp">{{ d.operating.totalExpenseBdt | number: '1.2-2' }}</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="result" [ngClass]="d.operating.netOperatingProfitBdt >= 0 ? 'profit' : 'loss'">
+          <span>{{ d.operating.netOperatingProfitBdt >= 0 ? 'নিট মুনাফা / NET OPERATING PROFIT' : 'নিট লোকসান / NET OPERATING LOSS' }}
+            <span style="font-weight: 600; font-size: 11px;">· margin {{ d.operating.profitMarginPercent | number: '1.0-2' }}%</span></span>
+          <span class="num">৳ {{ abs(d.operating.netOperatingProfitBdt) | number: '1.2-2' }}</span>
+        </div>
+      }
+
+      <!-- 3. Cost analysis -->
+      @if (has('costs')) {
+        <div class="sec exp">৩. খরচ বিশ্লেষণ / Cost Analysis <small>All operating costs incl. labour</small></div>
+        <table class="t">
+          <thead><tr><th>খরচের ধরন / Cost group</th><th class="num" style="width: 60px;">Entries</th><th style="width: 34%;">Share of total cost</th><th class="num" style="width: 130px;">Amount (৳)</th></tr></thead>
+          <tbody>
+            @for (g of d.costs.groups; track g.key) {
+              <tr>
+                <td [class.bold]="g.key === 'labour'">{{ g.nameBn }} <span class="muted">/ {{ g.name }}</span></td>
+                <td class="num muted">{{ g.count }}</td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="bar" [class.labour]="g.key === 'labour'" style="flex: 1;"><span [style.width.%]="g.amountBdt / maxCostGroup() * 100"></span></div>
+                    <span class="muted" style="width: 42px; text-align: right;">{{ g.percentOfTotal | number: '1.0-1' }}%</span>
+                  </div>
+                </td>
+                <td class="num exp" [class.bold]="g.key === 'labour'">{{ g.amountBdt | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td colspan="3">মোট পরিচালন খরচ / Total operating cost</td><td class="num exp">{{ d.costs.totalOperatingCostBdt | number: '1.2-2' }}</td></tr></tfoot>
+        </table>
+        <table class="info" style="margin-top: 8px;">
+          <tr>
+            <td class="k">Average daily cost</td><td class="v num">৳ {{ d.costs.averageDailyCostBdt | number: '1.2-2' }}</td>
+            <td class="k">Labour share of cost</td>
+            <td class="v num cap">{{ (d.costs.totalOperatingCostBdt > 0 ? d.costs.labourCostBdt / d.costs.totalOperatingCostBdt * 100 : 0) | number: '1.0-1' }}%</td>
+          </tr>
+          <tr>
+            <td class="k">Automated postings</td><td class="v num">৳ {{ d.costs.automatedPostingsBdt | number: '1.2-2' }} <span class="note" style="display: inline;">(feeding, inventory, livestock)</span></td>
+            <td class="k">Manual postings</td><td class="v num">৳ {{ d.costs.manualPostingsBdt | number: '1.2-2' }}</td>
+          </tr>
+        </table>
+      }
+
+      <!-- Stock & livestock (assets at cost) -->
+      @if (has('assets')) {
+        <div class="sec brand">মজুদ ও গবাদিপশু / Stock &amp; Livestock (assets at cost) <small>Bought = asset · used / sold / lost = cost</small></div>
+        <div class="two">
+          <table class="t">
+            <thead><tr><th>মজুদ মালামাল / Inventory</th><th class="num" style="width: 130px;">Amount (৳)</th></tr></thead>
+            <tbody>
+              <tr class="opening"><td>Opening stock value</td><td class="num">{{ d.assets.inventoryOpeningBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(+) Bought (cash or credit)</td><td class="num inc">{{ d.assets.stockPurchasedBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(+) Opening / owner-supplied stock</td><td class="num inc">{{ d.assets.stockBroughtInBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Returned to suppliers</td><td class="num exp">{{ d.assets.stockReturnedBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Used: feed, medicine, consumables <span class="note" style="display: inline;">→ expenses</span></td><td class="num exp">{{ d.assets.stockConsumedBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Written off <span class="note" style="display: inline;">→ expenses</span></td><td class="num exp">{{ d.assets.stockWrittenOffBdt | number: '1.2-2' }}</td></tr>
+            </tbody>
+            <tfoot><tr><td>Closing stock value</td><td class="num">{{ d.assets.inventoryClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+          </table>
+          <table class="t">
+            <thead><tr><th>গবাদিপশু / Livestock (at cost)</th><th class="num" style="width: 130px;">Amount (৳)</th></tr></thead>
+            <tbody>
+              <tr class="opening"><td>Opening herd value</td><td class="num">{{ d.assets.livestockOpeningBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(+) Animals bought</td><td class="num inc">{{ d.assets.animalsPurchasedBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(+) Animals brought in by owner</td><td class="num inc">{{ d.assets.animalsBroughtInBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Cost of animals sold / slaughtered <span class="note" style="display: inline;">→ expenses</span></td><td class="num exp">{{ d.assets.costOfAnimalsSoldBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Mortality loss <span class="note" style="display: inline;">→ expenses</span></td><td class="num exp">{{ d.assets.mortalityLossBdt | number: '1.2-2' }}</td></tr>
+            </tbody>
+            <tfoot><tr><td>Closing herd value</td><td class="num">{{ d.assets.livestockClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+          </table>
+        </div>
+      }
+
+      <!-- Credit book: receivables & payables -->
+      @if (has('credit') && d.credit; as c) {
+        <div class="sec brand">দেনা-পাওনা / Receivables &amp; Payables (credit) <small>Sold or bought on credit = booked on the deal date · cash moves when settled</small></div>
+        <div class="two">
+          <table class="t">
+            <thead><tr><th>পাওনা / Owed by customers (1100)</th><th class="num" style="width: 130px;">Amount (৳)</th></tr></thead>
+            <tbody>
+              <tr class="opening"><td>Opening receivables</td><td class="num">{{ c.receivablesOpeningBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(+) Sold on credit</td><td class="num inc">{{ c.creditSalesBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Collected <span class="note" style="display: inline;">→ cash in</span></td><td class="num exp">{{ c.collectedBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Bad debts written off <span class="note" style="display: inline;">→ expenses</span></td><td class="num exp">{{ c.badDebtsBdt | number: '1.2-2' }}</td></tr>
+            </tbody>
+            <tfoot><tr><td>Closing receivables</td><td class="num">{{ c.receivablesClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+          </table>
+          <table class="t">
+            <thead><tr><th>দেনা / Owed to suppliers (2100)</th><th class="num" style="width: 130px;">Amount (৳)</th></tr></thead>
+            <tbody>
+              <tr class="opening"><td>Opening payables</td><td class="num">{{ c.payablesOpeningBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(+) Bought on credit</td><td class="num inc">{{ c.creditPurchasesBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Paid to suppliers <span class="note" style="display: inline;">→ cash out</span></td><td class="num exp">{{ c.paidToSuppliersBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) Returns &amp; waivers</td><td class="num exp">{{ c.returnsAndWaiversBdt | number: '1.2-2' }}</td></tr>
+            </tbody>
+            <tfoot><tr><td>Closing payables</td><td class="num">{{ c.payablesClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+          </table>
+        </div>
+      }
+
+      <!-- 4. Investment & financing -->
+      @if (has('capital')) {
+        <div class="sec cap">৪. বিনিয়োগ ও অর্থায়ন / Investment &amp; Financing (cash)</div>
+        <table class="t">
+          <thead><tr><th style="width: 52px;">Code</th><th>খাত / Item</th><th class="num" style="width: 140px;">In (৳)</th><th class="num" style="width: 140px;">Out (৳)</th></tr></thead>
+          <tbody>
+            <tr><td class="muted">3010</td><td>বিনিয়োগ মূলধন গ্রহণ / Investor capital received</td><td class="num inc">{{ d.capital.investorCapitalInBdt | number: '1.2-2' }}</td><td></td></tr>
+            <tr><td class="muted">3010</td><td>মূলধন উত্তোলন / Capital withdrawn by investors</td><td></td><td class="num exp">{{ d.capital.investorWithdrawalBdt | number: '1.2-2' }}</td></tr>
+            <tr><td class="muted">3110</td><td>লভ্যাংশ বণ্টন / Profit distributed to investors</td><td></td><td class="num exp">{{ d.capital.profitDistributedBdt | number: '1.2-2' }}</td></tr>
+            <tr><td class="muted">3200</td><td>মালিকের মূলধন / Owner's capital introduced</td><td class="num inc">{{ d.capital.ownerCapitalInBdt | number: '1.2-2' }}</td><td></td></tr>
+            <tr><td class="muted">3210</td><td>মালিকের উত্তোলন / Owner's drawings</td><td></td><td class="num exp">{{ d.capital.ownerDrawingBdt | number: '1.2-2' }}</td></tr>
+            <tr><td class="muted">2010</td><td>ঋণ গ্রহণ / Loan received</td><td class="num inc">{{ d.capital.loanReceivedBdt | number: '1.2-2' }}</td><td></td></tr>
+            <tr><td class="muted">2010</td><td>ঋণের আসল পরিশোধ / Loan principal repaid</td><td></td><td class="num exp">{{ d.capital.loanRepaidBdt | number: '1.2-2' }}</td></tr>
+            <tr><td class="muted">5300</td><td>ঋণের সুদ / Loan interest paid <span class="note" style="display: inline;">(expense — in P&amp;L, shown for reference)</span></td><td></td><td class="num muted">{{ d.capital.loanInterestPaidBdt | number: '1.2-2' }}</td></tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">নিট মূলধন প্রবাহ / Net capital flow</td>
+              <td colspan="2" class="num" [class.inc]="d.capital.netCapitalFlowBdt >= 0" [class.exp]="d.capital.netCapitalFlowBdt < 0">
+                {{ d.capital.netCapitalFlowBdt | number: '1.2-2' }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+        @if (unpostedLoanAmount() > 0) {
+          <div class="callout">
+            ৳ {{ unpostedLoanAmount() | number: '1.2-2' }} of loans disbursed in this period are recorded in the loan register
+            but were not posted to the cash book. Run <b>Accounting Health → Repair ledger</b> to post them.
+          </div>
+        }
+      }
+
+      <!-- 5. Investor accounts -->
+      @if (has('investors')) {
+        <div class="sec cap">৫. বিনিয়োগকারী হিসাব / Investor Capital Accounts <small>{{ d.investors.length }} investor(s)</small></div>
+        @if (d.investors.length > 0) {
+          <div class="tw">
+            <table class="t">
+              <thead>
+                <tr>
+                  <th class="sl">#</th><th>বিনিয়োগকারী / Investor</th>
+                  <th class="num">Opening</th><th class="num">+ Invested</th><th class="num">− Withdrawn</th><th class="num">Closing Capital</th>
+                  <th class="num">Shares</th><th class="num">Ownership</th><th class="num">Share Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (i of d.investors; track i.investorId; let n = $index) {
+                  <tr>
+                    <td class="sl">{{ n + 1 }}</td>
+                    <td class="bold">{{ i.name }} @if (!i.isActive) { <span class="badge" style="color: #6b7280;">Inactive</span> }
+                      @if (i.phone) { <div class="note">{{ i.phone }}</div> }</td>
+                    <td class="num">{{ i.openingCapitalBdt | number: '1.2-2' }}</td>
+                    <td class="num inc">{{ i.contributedInPeriodBdt | number: '1.2-2' }}</td>
+                    <td class="num exp">{{ i.withdrawnInPeriodBdt | number: '1.2-2' }}</td>
+                    <td class="num bold">{{ i.closingCapitalBdt | number: '1.2-2' }}</td>
+                    <td class="num">{{ i.shareCount | number }}</td>
+                    <td class="num">{{ i.ownershipPercentage | number: '1.0-2' }}%</td>
+                    <td class="num">{{ i.shareMarketValueBdt | number: '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2">মোট / Total</td>
+                  <td class="num">{{ investorTotals().opening | number: '1.2-2' }}</td>
+                  <td class="num inc">{{ investorTotals().contributed | number: '1.2-2' }}</td>
+                  <td class="num exp">{{ investorTotals().withdrawn | number: '1.2-2' }}</td>
+                  <td class="num">{{ investorTotals().closing | number: '1.2-2' }}</td>
+                  <td class="num">{{ investorTotals().shares | number }}</td>
+                  <td></td>
+                  <td class="num">{{ investorTotals().shareValue | number: '1.2-2' }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        } @else {
+          <div class="empty">No investors recorded for this farm.</div>
+        }
+      }
+
+      <!-- 6. Profit sharing -->
+      @if (has('profit')) {
+        <div class="sec cap">৬. লভ্যাংশ বণ্টন / Profit Sharing</div>
+        <div class="two">
+          <table class="t">
+            <tbody>
+              <tr><td>নিট পরিচালন মুনাফা / Net operating profit</td><td class="num bold">{{ d.profitShare.netOperatingProfitBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>(−) দাতব্য সংরক্ষণ / Charity reserve ({{ d.profitShare.charityPercentage | number: '1.0-2' }}%)</td><td class="num exp">{{ d.profitShare.charityAmountBdt | number: '1.2-2' }}</td></tr>
+              <tr class="sub"><td>বণ্টনযোগ্য মুনাফা / Distributable profit</td><td class="num">{{ d.profitShare.distributableProfitBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>বিনিয়োগকারীদের প্রাপ্য / Investors' entitlement</td><td class="num cap">{{ d.profitShare.totalEntitledBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>এই সময়ে প্রদত্ত / Paid out in period</td><td class="num exp">{{ d.profitShare.distributedInPeriodBdt | number: '1.2-2' }}</td></tr>
+              <tr class="grand"><td>খামারে সংরক্ষিত / Retained by farm</td><td class="num">{{ d.profitShare.retainedProfitBdt | number: '1.2-2' }}</td></tr>
+            </tbody>
+          </table>
+          <div class="tw">
+            <table class="t">
+              <thead><tr><th>Investor</th><th class="num">Share %</th><th class="num">Entitled</th><th class="num">Paid</th><th class="num">Payable</th></tr></thead>
+              <tbody>
+                @for (i of d.investors; track i.investorId) {
+                  <tr>
+                    <td>{{ i.name }} @if (i.agreedProfitSharePercentage != null) { <span class="badge Capital">Agreed</span> }</td>
+                    <td class="num">{{ i.profitSharePercentage | number: '1.0-2' }}%</td>
+                    <td class="num cap">{{ i.profitEntitledInPeriodBdt | number: '1.2-2' }}</td>
+                    <td class="num exp">{{ i.profitPaidInPeriodBdt | number: '1.2-2' }}</td>
+                    <td class="num bold" [class.exp]="i.profitPayableBdt < 0">{{ i.profitPayableBdt | number: '1.2-2' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="center muted">No investors to share profit with.</td></tr>
+                }
+              </tbody>
+              @if (d.investors.length > 0) {
+                <tfoot>
+                  <tr>
+                    <td colspan="2">মোট / Total</td>
+                    <td class="num">{{ investorTotals().entitled | number: '1.2-2' }}</td>
+                    <td class="num">{{ investorTotals().paid | number: '1.2-2' }}</td>
+                    <td class="num">{{ investorTotals().payable | number: '1.2-2' }}</td>
+                  </tr>
+                </tfoot>
+              }
+            </table>
+          </div>
+        </div>
+        @if (d.profitShare.netOperatingProfitBdt <= 0 && d.investors.length > 0) {
+          <div class="callout">No profit was made in this period, so no investor is entitled to a share. A negative entitlement reflects the investor's share of the loss.</div>
+        }
+      }
+
+      <!-- 7. Share capital -->
+      @if (has('shares')) {
+        <div class="sec cap">৭. শেয়ার মূলধন / Share Capital</div>
+        @if (d.shares.isConfigured) {
+          <table class="info">
+            <tr>
+              <td class="k">Total shares × price</td>
+              <td class="v num">{{ d.shares.totalShares | number }} × ৳ {{ d.shares.sharePriceBdt | number: '1.2-2' }}</td>
+              <td class="k">Farm valuation</td>
+              <td class="v num">৳ {{ d.shares.totalValuationBdt | number: '1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td class="k">Owner retained</td>
+              <td class="v num">{{ d.shares.ownerShareCount | number }} ({{ d.shares.ownerOwnershipPercentage | number: '1.0-2' }}%)</td>
+              <td class="k">Investor held / Unissued</td>
+              <td class="v num">{{ d.shares.allocatedShareCount | number }} / {{ d.shares.availableShareCount | number }}</td>
+            </tr>
+            <tr>
+              <td class="k">Sold in period</td>
+              <td class="v num inc">{{ d.shares.sharesIssuedInPeriod | number }} sh · ৳ {{ d.shares.shareSalesAmountBdt | number: '1.2-2' }}</td>
+              <td class="k">Bought back / Transferred</td>
+              <td class="v num">{{ d.shares.sharesBoughtBackInPeriod | number }} sh · ৳ {{ d.shares.buybackAmountBdt | number: '1.2-2' }} / {{ d.shares.sharesTransferredInPeriod | number }} sh</td>
+            </tr>
+          </table>
+          @if (d.shares.transactions.length > 0) {
+            <div class="tw">
+              <table class="t">
+                <thead><tr><th style="width: 82px;">Date</th><th>Investor</th><th>Type</th><th class="num">Shares</th><th class="num">Price</th><th class="num">Amount (৳)</th></tr></thead>
+                <tbody>
+                  @for (s of d.shares.transactions; track s.id) {
+                    <tr>
+                      <td>{{ s.transactionDate | date: 'dd-MM-yy' }}</td>
+                      <td>{{ s.investorName }} @if (s.counterpartyInvestorName) { <span class="note" style="display: inline;">↔ {{ s.counterpartyInvestorName }}</span> }</td>
+                      <td>{{ s.type }}</td>
+                      <td class="num">{{ s.shareCount | number }}</td>
+                      <td class="num">{{ s.pricePerShareBdt | number: '1.2-2' }}</td>
+                      <td class="num">{{ s.totalAmountBdt | number: '1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty">No share transactions in this period.</div>
+          }
+        } @else {
+          <div class="empty">Share capital has not been configured for this farm.</div>
+        }
+      }
+
+      <!-- 8. Loans -->
+      @if (has('loans')) {
+        <div class="sec fin">৮. ঋণ / Loans &amp; Borrowings <small>{{ d.loans.activeLoanCount }} active</small></div>
+        @if (d.loans.loans.length > 0) {
+          <div class="tw">
+            <table class="t">
+              <thead>
+                <tr><th>Lender</th><th style="width: 82px;">Disbursed</th><th class="num">Principal</th><th class="num">Rate</th><th class="num">Payable</th>
+                  <th class="num">Paid (period)</th><th class="num">Principal paid</th><th class="num">Interest paid</th><th class="num">Principal due</th></tr>
+              </thead>
+              <tbody>
+                @for (l of d.loans.loans; track l.loanId) {
+                  <tr>
+                    <td class="bold">{{ l.lenderName }}
+                      @if (l.disbursedInPeriod) { <span class="badge Financing">New</span> }
+                      @if (!l.isActive) { <span class="badge" style="color: #047857;">Closed</span> }</td>
+                    <td>{{ l.disbursementDate | date: 'dd-MM-yy' }}</td>
+                    <td class="num">{{ l.principalAmountBdt | number: '1.2-2' }}</td>
+                    <td class="num">{{ l.interestRatePercent | number: '1.0-2' }}%</td>
+                    <td class="num">{{ l.totalPayableBdt | number: '1.2-2' }}</td>
+                    <td class="num exp">{{ l.repaidInPeriodBdt | number: '1.2-2' }}</td>
+                    <td class="num">{{ l.principalRepaidBdt | number: '1.2-2' }}</td>
+                    <td class="num exp">{{ l.interestPaidBdt | number: '1.2-2' }}</td>
+                    <td class="num bold">{{ l.outstandingPrincipalBdt | number: '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2">মোট / Total</td>
+                  <td class="num">{{ d.loans.totalPrincipalBdt | number: '1.2-2' }}</td>
+                  <td colspan="2"></td>
+                  <td class="num">{{ (d.loans.repaidInPeriodBdt + d.loans.interestPaidInPeriodBdt) | number: '1.2-2' }}</td>
+                  <td colspan="2" class="num muted">incl. interest still payable: {{ d.loans.totalOutstandingBdt | number: '1.2-2' }}</td>
+                  <td class="num">{{ principalDue() | number: '1.2-2' }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        } @else {
+          <div class="empty">No loans recorded.</div>
+        }
+      }
+
+      <!-- 9. Trend -->
+      @if (has('trend') && d.trend.length > 0) {
+        <div class="sec">৯. {{ d.trendGranularity === 'Daily' ? 'দৈনিক' : 'মাসিক' }} প্রবণতা / {{ d.trendGranularity }} Trend</div>
+        <div class="tw">
+          <table class="t">
+            <thead>
+              <tr><th>{{ d.trendGranularity === 'Daily' ? 'Date' : 'Month' }}</th><th class="num">Op. Income</th><th class="num">Op. Expense</th><th class="num">Net Operating</th>
+                <th class="num">Capital In</th><th class="num">Capital Out</th><th class="num">Closing Cash</th></tr>
+            </thead>
+            <tbody>
+              @for (t of d.trend; track t.startDate) {
+                <tr>
+                  <td>{{ t.label }}</td>
+                  <td class="num inc">{{ t.operatingIncomeBdt | number: '1.2-2' }}</td>
+                  <td class="num exp">{{ t.operatingExpenseBdt | number: '1.2-2' }}</td>
+                  <td class="num bold" [class.inc]="t.netOperatingBdt > 0" [class.exp]="t.netOperatingBdt < 0">{{ t.netOperatingBdt | number: '1.2-2' }}</td>
+                  <td class="num cap">{{ t.capitalInBdt | number: '1.2-2' }}</td>
+                  <td class="num cap">{{ t.capitalOutBdt | number: '1.2-2' }}</td>
+                  <td class="num bold">{{ t.closingBalanceBdt | number: '1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>মোট / Total</td>
+                <td class="num inc">{{ trendTotals().income | number: '1.2-2' }}</td>
+                <td class="num exp">{{ trendTotals().expense | number: '1.2-2' }}</td>
+                <td class="num">{{ trendTotals().net | number: '1.2-2' }}</td>
+                <td class="num">{{ trendTotals().capIn | number: '1.2-2' }}</td>
+                <td class="num">{{ trendTotals().capOut | number: '1.2-2' }}</td>
+                <td class="num">{{ d.cash.closingBalanceBdt | number: '1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+
+      <!-- 10. Ledger -->
+      @if (has('ledger')) {
+        <div class="sec">১০. ক্যাশ বই / Complete Cash Book <small>{{ d.ledger.length }} entr{{ d.ledger.length === 1 ? 'y' : 'ies' }}</small></div>
+        <div class="tw">
+          <table class="t">
+            <thead>
+              <tr><th class="sl">#</th><th style="width: 72px;">Date</th><th style="width: 100px;">Voucher</th><th style="width: 150px;">Head</th><th>Description</th>
+                <th class="num">In (৳)</th><th class="num">Out (৳)</th><th class="num">Balance (৳)</th></tr>
+            </thead>
+            <tbody>
+              <tr class="opening">
+                <td class="sl">–</td><td>{{ d.fromDate | date: 'dd-MM-yy' }}</td><td>OPENING</td><td colspan="2">ওপেনিং ব্যালেন্স / Balance brought forward</td>
+                <td></td><td></td><td class="num">{{ d.cash.openingBalanceBdt | number: '1.2-2' }}</td>
+              </tr>
+              @for (e of d.ledger; track e.id; let n = $index) {
+                <tr>
+                  <td class="sl">{{ n + 1 }}</td>
+                  <td>{{ e.transactionDate | date: 'dd-MM-yy' }}</td>
+                  <td class="bold">{{ e.voucherNo }}</td>
+                  <td>{{ e.headName }} <div class="note">{{ e.code }}@if (e.group !== 'Operating') { · {{ e.group }} }</div></td>
+                  <td>{{ e.description }} @if (e.isAutomated) { <span class="badge auto">Auto</span> }</td>
+                  <td class="num inc">{{ e.inflowBdt ? (e.inflowBdt | number: '1.2-2') : '' }}</td>
+                  <td class="num exp">{{ e.outflowBdt ? (e.outflowBdt | number: '1.2-2') : '' }}</td>
+                  <td class="num" [class.exp]="e.runningBalanceBdt < 0">{{ e.runningBalanceBdt | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="8" class="center muted">No transactions in this period.</td></tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="grand">
+                <td colspan="5">ক্লোজিং ব্যালেন্স / Closing balance</td>
+                <td class="num inc">{{ d.cash.totalInflowBdt | number: '1.2-2' }}</td>
+                <td class="num exp">{{ d.cash.totalOutflowBdt | number: '1.2-2' }}</td>
+                <td class="num">{{ d.cash.closingBalanceBdt | number: '1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+
+      <div class="sig">
+        <div>Prepared By<small>(Accounts)</small></div>
+        <div>Checked By<small>(Manager)</small></div>
+        <div>Approved By<small>(Owner / Board)</small></div>
+      </div>
+
+      <div class="foot">
+        <span>Farm360 · {{ farmName() }} · Full Accounts Statement · {{ periodLabel() }}</span>
+        <span>All amounts in BDT (৳)</span>
+      </div>
+    </div>
+  }
+
+  @if (!isLoading() && !data() && !error()) {
+    <div class="py-16 text-center text-sm text-gray-500 dark:text-gray-400">
+      Select a farm from the context switcher to view its accounts.
+    </div>
+  }
+</div>

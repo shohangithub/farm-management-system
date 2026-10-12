@@ -13,6 +13,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { InventoryService } from '../../../services/inventory.service';
 import { InventoryItem, Supplier } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import {
+  CreditTermsFieldsComponent,
+  buildCreditTermsGroup,
+  toCreditTerms,
+} from '../../../../finance/components/credit-terms-fields/credit-terms-fields.component';
 
 @Component({
   selector: 'app-stock-in-dialog',
@@ -26,7 +31,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
     MatInputModule,
     MatSelectModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    CreditTermsFieldsComponent
   ],
   template: `
     <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl">
@@ -110,6 +116,22 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             </mat-form-field>
           </div>
 
+          <!-- Decides the accounting entry: a paid purchase moves cash into stock; opening or
+               owner-supplied stock is the owner's capital. Neither is an expense until used. -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>How was this stock paid for?</mat-label>
+            <mat-select formControlName="fundingSource">
+              <mat-option value="CashPurchase">Bought by the farm (paid now or on credit)</mat-option>
+              <mat-option value="OwnerContribution">Opening stock / brought in by owner (no farm payment)</mat-option>
+            </mat-select>
+            <mat-hint>Stock is an asset in the books; it becomes a cost when it is fed, used or written off.</mat-hint>
+          </mat-form-field>
+
+          @if (form.value.fundingSource === 'CashPurchase') {
+            <app-credit-terms-fields [group]="credit" kind="Payable" [total]="purchaseTotal()"
+              [requireParty]="false" partyPlaceholder="Selected supplier"></app-credit-terms-fields>
+          }
+
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Notes / Comments</mat-label>
             <textarea matInput formControlName="notes" rows="2"></textarea>
@@ -153,8 +175,18 @@ export class StockInDialogComponent implements OnInit {
     invoiceNumber: [''],
     batchNumber: [''],
     expiryDate: [''],
-    notes: ['']
+    notes: [''],
+    fundingSource: ['CashPurchase']
   });
+
+  /** Paid in full now, or on credit to the supplier (Accounts Payable). */
+  readonly credit = buildCreditTermsGroup(this.fb, false);
+
+  purchaseTotal(): number | null {
+    const v = this.form.value;
+    const total = (Number(v.quantity) || 0) * (Number(v.unitCostBdt) || 0);
+    return total > 0 ? Math.round(total * 100) / 100 : null;
+  }
 
   ngOnInit(): void {
     this.inventoryService.getItems({ farmId: this.data.farmId, pageSize: 100 }).subscribe({
@@ -189,7 +221,20 @@ export class StockInDialogComponent implements OnInit {
     this.error.set('');
 
     const formVal = this.form.getRawValue();
+    const credit = formVal.fundingSource === 'CashPurchase' ? toCreditTerms(this.credit.getRawValue()) : null;
+    if (credit && !credit.partyName && !formVal.supplierId) {
+      this.isSubmitting.set(false);
+      this.error.set('Choose the supplier (or enter their name) for a purchase on credit.');
+      return;
+    }
+    if (credit && (credit.paidNowBdt ?? 0) >= (this.purchaseTotal() ?? 0)) {
+      this.isSubmitting.set(false);
+      this.error.set('The amount paid now covers the whole purchase — choose “Paid in full now” instead.');
+      return;
+    }
+
     const request = {
+      credit,
       ...formVal,
       farmId: this.data.farmId,
       supplierId: formVal.supplierId ? formVal.supplierId : null,

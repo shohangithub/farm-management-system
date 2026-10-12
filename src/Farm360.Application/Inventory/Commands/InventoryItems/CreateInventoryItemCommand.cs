@@ -4,6 +4,7 @@ using Farm360.Domain.Inventory;
 using Farm360.Domain.Inventory.Enums;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
 using FluentValidation;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Inventory.Commands.InventoryItems;
@@ -38,15 +39,21 @@ public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateIn
     private readonly IInventoryItemRepository _repository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IStockTransactionRepository _stockTransactions;
+    private readonly ILedgerPostingService _ledgerPosting;
 
     public CreateInventoryItemCommandHandler(
         IInventoryItemRepository repository,
         ITenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IStockTransactionRepository stockTransactions,
+        ILedgerPostingService ledgerPosting)
     {
         _repository = repository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _stockTransactions = stockTransactions;
+        _ledgerPosting = ledgerPosting;
     }
 
     public async Task<Guid> Handle(CreateInventoryItemCommand request, CancellationToken cancellationToken)
@@ -65,6 +72,36 @@ public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateIn
             request.StorageLocation);
 
         await _repository.AddAsync(item, cancellationToken);
+
+        // Opening stock: record the movement and bring its value into the books as opening
+        // owner capital, otherwise stock exists physically but not in the accounts.
+        if (request.InitialStock > 0)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var openingId = Guid.NewGuid();
+            await _stockTransactions.AddAsync(new StockTransaction(
+                id: openingId,
+                tenantId: _tenantService.TenantId,
+                farmId: request.FarmId,
+                inventoryItemId: item.Id,
+                transactionType: StockTransactionType.StockIn,
+                quantity: request.InitialStock,
+                unitCostBdt: request.InitialCostBdt,
+                balanceAfter: item.CurrentStock,
+                transactionDate: today,
+                reason: "Opening stock"), cancellationToken);
+
+            await _ledgerPosting.PostStockInAsync(
+                item,
+                request.InitialStock * request.InitialCostBdt,
+                today,
+                openingId,
+                StockFundingSource.OwnerContribution,
+                "OPENING",
+                $"Opening stock - {item.Name}",
+                cancellationToken);
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return item.Id;

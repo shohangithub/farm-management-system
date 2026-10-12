@@ -1,3 +1,4 @@
+import type { CreditTerms } from '../../finance/models/finance.model';
 export enum InventoryCategory {
   Feed = 'Feed',
   Medicine = 'Medicine',
@@ -178,6 +179,10 @@ export interface RecordStockInRequest {
   batchNumber?: string;
   expiryDate?: string;
   notes?: string;
+  /** CashPurchase (default) or OwnerContribution — decides the accounting entry. */
+  fundingSource?: 'CashPurchase' | 'OwnerContribution';
+  /** A CashPurchase not paid in full on the day — the supplier is owed the balance. */
+  credit?: CreditTerms | null;
 }
 
 export interface RecordStockOutRequest {

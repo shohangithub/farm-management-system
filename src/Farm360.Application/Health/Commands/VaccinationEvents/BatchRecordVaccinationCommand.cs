@@ -39,7 +39,8 @@ internal sealed class BatchRecordVaccinationCommandHandler(
     IAnimalRepository animalRepository,
     ITenantService tenantService,
     ICurrentUserService currentUserService,
-    IUnitOfWork unitOfWork) : IRequestHandler<BatchRecordVaccinationCommand>
+    IUnitOfWork unitOfWork,
+    IPublisher publisher) : IRequestHandler<BatchRecordVaccinationCommand>
 {
     public async Task Handle(BatchRecordVaccinationCommand request, CancellationToken cancellationToken)
     {
@@ -49,6 +50,8 @@ internal sealed class BatchRecordVaccinationCommandHandler(
         // Fetch all requested animals
         var animals = await animalRepository.GetByIdsAsync(request.AnimalIds, cancellationToken);
         var validAnimalIds = animals.Select(a => a.Id).ToHashSet();
+
+        var recorded = new List<VaccinationEvent>();
 
         foreach (var animalId in request.AnimalIds)
         {
@@ -72,8 +75,14 @@ internal sealed class BatchRecordVaccinationCommandHandler(
             @event.RecordAdministration(request.AdministeredDate, userId, request.Notes);
 
             vaccinationRepository.AddEvent(@event);
+            recorded.Add(@event);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        foreach (var administered in recorded.SelectMany(e => e.DomainEvents).OfType<Farm360.Domain.Health.Events.VaccinationAdministeredEvent>().ToList())
+        {
+            await publisher.Publish(administered, cancellationToken);
+        }
     }
 }

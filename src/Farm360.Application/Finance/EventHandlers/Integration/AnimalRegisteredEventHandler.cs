@@ -1,83 +1,64 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Common.Interfaces;
-using Farm360.Application.Finance.Repositories;
+using Farm360.Application.Finance.Services;
 using Farm360.Domain.Finance;
-using Farm360.Domain.Finance.Enums;
 using Farm360.Domain.Finance.Interfaces;
+using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Events;
+using Farm360.Domain.Livestock.Repositories;
 using MediatR;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
 public sealed record AnimalRegisteredNotification(AnimalRegisteredEvent DomainEvent) : INotification;
 
-public sealed class AnimalRegisteredEventHandler : 
+/// <summary>
+/// Opens the animal's cost ledger and books its purchase as a Livestock asset (Dr Livestock,
+/// Cr Cash) dated on the acquisition date. Born-on-farm animals carry no purchase cost.
+/// </summary>
+public sealed class AnimalRegisteredEventHandler :
     INotificationHandler<AnimalRegisteredNotification>,
     INotificationHandler<AnimalRegisteredEvent>
 {
     private readonly IAnimalCostLedgerRepository _ledgerRepository;
-    private readonly IFinancialTransactionRepository _transactionRepository;
+    private readonly IAnimalRepository _animalRepository;
+    private readonly ILivestockAccountingService _livestockAccounting;
     private readonly IUnitOfWork _unitOfWork;
 
     public AnimalRegisteredEventHandler(
         IAnimalCostLedgerRepository ledgerRepository,
-        IFinancialTransactionRepository transactionRepository,
+        IAnimalRepository animalRepository,
+        ILivestockAccountingService livestockAccounting,
         IUnitOfWork unitOfWork)
     {
         _ledgerRepository = ledgerRepository;
-        _transactionRepository = transactionRepository;
+        _animalRepository = animalRepository;
+        _livestockAccounting = livestockAccounting;
         _unitOfWork = unitOfWork;
     }
 
-    public Task Handle(AnimalRegisteredNotification notification, CancellationToken cancellationToken)
-    {
-        return ProcessEventAsync(notification.DomainEvent, cancellationToken);
-    }
+    public Task Handle(AnimalRegisteredNotification notification, CancellationToken cancellationToken) =>
+        ProcessEventAsync(notification.DomainEvent, cancellationToken);
 
-    public Task Handle(AnimalRegisteredEvent notification, CancellationToken cancellationToken)
-    {
-        return ProcessEventAsync(notification, cancellationToken);
-    }
+    public Task Handle(AnimalRegisteredEvent notification, CancellationToken cancellationToken) =>
+        ProcessEventAsync(notification, cancellationToken);
 
     private async Task ProcessEventAsync(AnimalRegisteredEvent domainEvent, CancellationToken cancellationToken)
     {
-        // 1. Check if ledger already exists (idempotency check)
+        var animal = await _animalRepository.GetByIdAsync(domainEvent.AnimalId, cancellationToken);
+
         var existingLedger = await _ledgerRepository.GetByAnimalIdAsync(domainEvent.AnimalId, cancellationToken);
         if (existingLedger == null)
         {
-            // 2. Create a new cost ledger for this animal
-            var ledger = AnimalCostLedger.Create(
-                domainEvent.TenantId,
-                domainEvent.AnimalId,
-                domainEvent.FarmId,
-                domainEvent.AcquisitionPriceBdt ?? 0m
-            );
-
-            _ledgerRepository.Add(ledger);
+            var acquisition = animal?.AcquisitionType == AcquisitionType.BornOnFarm
+                ? 0m
+                : domainEvent.AcquisitionPriceBdt ?? 0m;
+            _ledgerRepository.Add(AnimalCostLedger.Create(domainEvent.TenantId, domainEvent.AnimalId, domainEvent.FarmId, acquisition));
         }
 
-        // 3. If animal has acquisition price > 0, post AnimalPurchase expense to the General Ledger
-        if (domainEvent.AcquisitionPriceBdt.HasValue && domainEvent.AcquisitionPriceBdt.Value > 0)
-        {
-            var transaction = FinancialTransaction.Create(
-                tenantId: domainEvent.TenantId,
-                farmId: domainEvent.FarmId,
-                type: TransactionType.Expense,
-                category: TransactionCategory.AnimalPurchase,
-                amountBdt: domainEvent.AcquisitionPriceBdt.Value,
-                transactionDate: DateTime.UtcNow,
-                referenceId: domainEvent.TagId ?? domainEvent.AnimalId.ToString(),
-                notes: $"Acquisition cost for animal {domainEvent.TagId}",
-                description: $"Animal Purchase - Tag: {domainEvent.TagId}",
-                animalId: domainEvent.AnimalId,
-                isAutomated: true,
-                sourceModule: "Livestock"
-            );
-
-            await _transactionRepository.AddAsync(transaction, cancellationToken);
-        }
+        if (animal is not null)
+            await _livestockAccounting.SyncPurchaseAsync(animal, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }

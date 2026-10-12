@@ -40,11 +40,11 @@
     <!-- Total Income -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
-        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Filtered Income</p>
+        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Cash In (filtered)</p>
         <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
           {{ totalIncome() | currency:'BDT ':'symbol':'1.0-0' }}
         </h3>
-        <p class="text-xs text-gray-400 mt-1">From matched transactions</p>
+        <p class="text-xs text-gray-400 mt-1">Money received — non-cash entries excluded</p>
       </div>
       <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
         <mat-icon class="text-2xl">trending_up</mat-icon>
@@ -55,11 +55,11 @@
     <!-- Total Expense -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
-        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Filtered Expenses</p>
+        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Cash Out (filtered)</p>
         <h3 class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
           {{ totalExpense() | currency:'BDT ':'symbol':'1.0-0' }}
         </h3>
-        <p class="text-xs text-gray-400 mt-1">Feed, Vet, Purchase & Ops</p>
+        <p class="text-xs text-gray-400 mt-1">Money paid — stock used from inventory excluded</p>
       </div>
       <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
         <mat-icon class="text-2xl">trending_down</mat-icon>
@@ -70,7 +70,7 @@
     <!-- Net Cash Flow -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
-        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Net Balance</p>
+        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Net Cash Flow</p>
         <h3 class="text-2xl font-bold mt-1"
           [ngClass]="netCashFlow() >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
           {{ netCashFlow() | currency:'BDT ':'symbol':'1.0-0' }}
@@ -160,7 +160,7 @@
           (change)="onCategoryChange($any($event.target).value)"
           class="w-full py-2.5 px-3 bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
           <option value="">All Categories</option>
-          <option *ngFor="let cat of allCategories()" [value]="cat">{{ cat }}</option>
+          <option *ngFor="let cat of allCategories()" [value]="cat">{{ label(cat) }}</option>
         </select>
       </div>
 
@@ -251,7 +251,25 @@
               </ng-template>
             </td>
             <td class="py-4 px-6 text-sm text-gray-700 dark:text-gray-300 font-medium">
-              {{ txn.category }}
+              <div>{{ label(txn.category) }}</div>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                <span *ngIf="txn.accountCode" class="text-[10px] font-mono text-gray-400">{{ txn.accountCode }}</span>
+                <span *ngIf="txn.affectsCash === false && !isOnCredit(txn)"
+                      title="No cash moved: stock or an animal was used, sold or lost. It is a real cost but not a cash payment."
+                      class="inline-flex px-1.5 rounded text-[10px] font-semibold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50">
+                  Non-cash · {{ txn.settlement }}
+                </span>
+                <a *ngIf="isOnCredit(txn)" routerLink="/finance/credit" (click)="$event.stopPropagation()"
+                      [title]="txn.settlement === 'Payable' ? 'Bought on credit: owed to the supplier until paid in Payables & Receivables' : 'Sold on credit: owed by the customer until collected in Payables & Receivables'"
+                      class="inline-flex px-1.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                  On credit · {{ txn.settlement === 'Payable' ? 'owed to supplier' : 'owed by customer' }}
+                </a>
+                <span *ngIf="txn.accountGroup && txn.accountGroup !== 'Operating'"
+                      title="Not profit or loss: an asset bought, capital, or loan money"
+                      class="inline-flex px-1.5 rounded text-[10px] font-semibold bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/50">
+                  {{ txn.accountGroup }}
+                </span>
+              </div>
             </td>
             <td class="py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
               <span *ngIf="txn.animalId" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
@@ -278,15 +296,31 @@
                   <mat-icon class="text-blue-600">visibility</mat-icon>
                   <span>View Details</span>
                 </button>
-                <button mat-menu-item (click)="openEditDialog(txn)">
-                  <mat-icon class="text-amber-600">edit</mat-icon>
-                  <span>Edit Transaction</span>
+                <button mat-menu-item *ngIf="creditable(txn)" (click)="putOnCredit(txn)">
+                  <mat-icon class="text-amber-600">schedule</mat-icon>
+                  <span>Put on credit (বাকি)</span>
                 </button>
-                <mat-divider></mat-divider>
-                <button mat-menu-item (click)="voidTransaction(txn)" class="text-rose-600">
-                  <mat-icon class="text-rose-600">delete_outline</mat-icon>
-                  <span>Void / Delete</span>
-                </button>
+                <a mat-menu-item *ngIf="isOnCredit(txn)" routerLink="/finance/credit">
+                  <mat-icon class="text-amber-600">request_quote</mat-icon>
+                  <span>Open in Payables &amp; Receivables</span>
+                </a>
+                <ng-container *ngIf="!txn.isAutomated; else lockedEntry">
+                  <button mat-menu-item (click)="openEditDialog(txn)">
+                    <mat-icon class="text-amber-600">edit</mat-icon>
+                    <span>Edit Transaction</span>
+                  </button>
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item (click)="voidTransaction(txn)" class="text-rose-600">
+                    <mat-icon class="text-rose-600">delete_outline</mat-icon>
+                    <span>Void / Delete</span>
+                  </button>
+                </ng-container>
+                <ng-template #lockedEntry>
+                  <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 max-w-[240px] leading-snug">
+                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px] align-middle mr-1">lock</mat-icon>
+                    Posted by {{ getSourceModuleBadge(txn.sourceModule).label }}. Correct the original record there and this entry updates itself.
+                  </div>
+                </ng-template>
               </mat-menu>
             </td>
           </tr>

@@ -356,7 +356,7 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
         foreach (var animal in herd)
         {
             var headDays = OverheadAllocationCalculator.HeadDays(
-                periodStart, periodEnd, animal.AcquisitionDate, animal.SaleDate);
+                periodStart, periodEnd, animal.AcquisitionDate, animal.SaleDate ?? animal.DeathDate);
 
             if (headDays <= 0m)
             {

@@ -22,6 +22,12 @@ public interface IAnimalRepository
     Task<Animal?> GetByIdAsync(Guid animalId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Every animal ever registered on a farm — active, sold and dead — without child collections.
+    /// Used by accounting to reconcile the livestock asset against the herd.
+    /// </summary>
+    Task<IReadOnlyList<Animal>> GetAllByFarmAsync(Guid farmId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns the animals by IDs.
     /// </summary>
     Task<IReadOnlyList<Animal>> GetByIdsAsync(IEnumerable<Guid> animalIds, CancellationToken cancellationToken = default);

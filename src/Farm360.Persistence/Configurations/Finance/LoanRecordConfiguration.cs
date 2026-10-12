@@ -22,6 +22,8 @@ public class LoanRecordConfiguration : IEntityTypeConfiguration<LoanRecord>
         builder.Property(l => l.PrincipalAmountBdt).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(l => l.InterestRatePercent).HasColumnType("decimal(5,2)").IsRequired();
         builder.Property(l => l.TotalRepaidBdt).HasColumnType("decimal(18,2)");
+        builder.Property(l => l.PrincipalRepaidBdt).HasColumnType("decimal(18,2)");
+        builder.Property(l => l.InterestPaidBdt).HasColumnType("decimal(18,2)");
         
         builder.Property(l => l.Schedule)
             .HasConversion<string>()

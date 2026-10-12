@@ -1,6 +1,8 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Farm360.Application.Common.Interfaces;
-using Farm360.Application.Finance.Repositories;
-using Farm360.Domain.Finance;
+using Farm360.Application.Finance.Services;
 using Farm360.Domain.Finance.Enums;
 using Farm360.Domain.Inventory.Events;
 using MediatR;
@@ -8,18 +10,22 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
+/// <summary>
+/// Books consumables used from stock: Dr Consumables expense, Cr Inventory. Consumable entries
+/// always deduct stock, so no cash moves here — it moved when the stock was bought.
+/// </summary>
 public sealed class DailyConsumableCostCalculatedFinanceEventHandler : INotificationHandler<DailyConsumableCostCalculatedEvent>
 {
-    private readonly IFinancialTransactionRepository _transactionRepository;
+    private readonly ILedgerPostingService _ledgerPosting;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DailyConsumableCostCalculatedFinanceEventHandler> _logger;
 
     public DailyConsumableCostCalculatedFinanceEventHandler(
-        IFinancialTransactionRepository transactionRepository,
+        ILedgerPostingService ledgerPosting,
         IUnitOfWork unitOfWork,
         ILogger<DailyConsumableCostCalculatedFinanceEventHandler> logger)
     {
-        _transactionRepository = transactionRepository;
+        _ledgerPosting = ledgerPosting;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -31,28 +37,19 @@ public sealed class DailyConsumableCostCalculatedFinanceEventHandler : INotifica
 
         try
         {
-            // Post ConsumableExpense transaction to General Ledger
-            var transaction = FinancialTransaction.Create(
-                tenantId: notification.TenantId,
-                farmId: notification.FarmId,
-                type: TransactionType.Expense,
-                category: TransactionCategory.ConsumableExpense,
-                amountBdt: notification.TotalCostBdt,
-                transactionDate: notification.EntryDate.ToDateTime(TimeOnly.MinValue),
-                referenceId: notification.EntryId.ToString(),
-                notes: $"Daily consumable usage: {notification.ActualQuantity:0.##} ({notification.ItemName})",
-                description: $"Daily Consumable Usage - {notification.ItemName}",
-                isAutomated: true,
-                sourceModule: "Inventory");
+            await _ledgerPosting.PostAsync(new LedgerPosting(
+                notification.TenantId,
+                notification.FarmId,
+                TransactionCategory.ConsumableExpense,
+                notification.TotalCostBdt,
+                notification.EntryDate.ToDateTime(TimeOnly.MinValue),
+                notification.EntryId,
+                InventoryAccounting.Module,
+                $"Daily Consumable Usage - {notification.ItemName}",
+                Settlement: SettlementAccount.Inventory,
+                Notes: $"Daily consumable usage: {notification.ActualQuantity:0.##} ({notification.ItemName}) from stock"), cancellationToken);
 
-            await _transactionRepository.AddAsync(transaction, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("Posted automated consumable expense of {Cost} BDT for DailyConsumableEntry {EntryId}", 
-                    notification.TotalCostBdt, notification.EntryId);
-            }
         }
 #pragma warning disable CA1031
         catch (Exception ex)

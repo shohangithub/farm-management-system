@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FinanceService } from '../../services/finance.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
-import { FinancialTransaction, TRANSACTION_CATEGORIES } from '../../models/finance.model';
+import { FinancialTransaction, MANUAL_TRANSACTION_CATEGORIES as TRANSACTION_CATEGORIES } from '../../models/finance.model';
 
 @Component({
   selector: 'app-edit-transaction-dialog',

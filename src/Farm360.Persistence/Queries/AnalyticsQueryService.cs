@@ -49,6 +49,14 @@ public class AnalyticsQueryService : IAnalyticsQueryService
             Math.Round(conceptionRate, 2));
     }
 
+    // Revenue/expense = profit & loss heads only (AccountChart is the single source of truth).
+    // Investor capital, loans and stock/animal purchases are not revenue or expense.
+    private static readonly TransactionCategory[] RevenueCategories =
+        Farm360.Application.Finance.Services.AccountChart.RevenueCategories;
+
+    private static readonly TransactionCategory[] ExpenseCategories =
+        Farm360.Application.Finance.Services.AccountChart.ExpenseCategories;
+
     public async Task<FinanceAnalyticsDto> GetFinanceAnalyticsAsync(Guid? farmId, int year, CancellationToken cancellationToken = default)
     {
         var financeQuery = _context.FinancialTransactions.AsNoTracking()
@@ -64,8 +72,8 @@ public class AnalyticsQueryService : IAnalyticsQueryService
             .Select(g => new
             {
                 Month = g.Key,
-                Revenue = g.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt),
-                Expense = g.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt)
+                Revenue = g.Where(t => t.Type == TransactionType.Income && RevenueCategories.Contains(t.Category)).Sum(t => t.AmountBdt),
+                Expense = g.Where(t => t.Type == TransactionType.Expense && ExpenseCategories.Contains(t.Category)).Sum(t => t.AmountBdt)
             })
             .ToListAsync(cancellationToken);
 
@@ -409,7 +417,8 @@ public class AnalyticsQueryService : IAnalyticsQueryService
         var animalCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id, cancellationToken);
         var sickCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id && a.Status == AnimalStatus.Quarantined, cancellationToken);
         var monthlyRevenue = await _context.FinancialTransactions.AsNoTracking()
-            .Where(t => t.FarmId == farm.Id && t.Type == TransactionType.Income && t.TransactionDate.Month == DateTime.UtcNow.Month && t.TransactionDate.Year == DateTime.UtcNow.Year)
+            .Where(t => t.FarmId == farm.Id && t.Type == TransactionType.Income && RevenueCategories.Contains(t.Category)
+                        && t.TransactionDate.Month == DateTime.UtcNow.Month && t.TransactionDate.Year == DateTime.UtcNow.Year)
             .SumAsync(t => t.AmountBdt, cancellationToken);
 
         return [new FarmSummaryCardDto(farm.Id, farm.FarmName, animalCount, sickCount, monthlyRevenue)];

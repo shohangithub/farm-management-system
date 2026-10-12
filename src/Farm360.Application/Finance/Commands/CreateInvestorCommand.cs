@@ -89,7 +89,9 @@ public class CreateInvestorCommandHandler : IRequestHandler<CreateInvestorComman
                 request.InvestmentDate,
                 request.ReferenceId ?? string.Empty,
                 request.Notes ?? string.Empty,
-                $"Initial capital contribution from investor {investor.Name}"
+                $"Initial capital contribution from investor {investor.Name}",
+                isAutomated: true,
+                sourceModule: "Investors"
             );
 
             await _transactionRepository.AddAsync(glTx, cancellationToken);

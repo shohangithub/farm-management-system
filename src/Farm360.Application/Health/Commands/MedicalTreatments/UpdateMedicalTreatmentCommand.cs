@@ -4,6 +4,7 @@ using Farm360.Domain.Health.Enums;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using Farm360.Domain.Health.ValueObjects;
 using FluentValidation;
+using Farm360.Application.Finance.Services;
 using MediatR;
 using System;
 using System.Threading;
@@ -50,7 +51,10 @@ public sealed class UpdateMedicalTreatmentCommandValidator : AbstractValidator<U
 internal sealed class UpdateMedicalTreatmentCommandHandler(
     IMedicalTreatmentRepository medicalTreatmentRepository,
     ITenantService tenantService,
-    IUnitOfWork unitOfWork) : IRequestHandler<UpdateMedicalTreatmentCommand>
+    IUnitOfWork unitOfWork,
+    ILedgerPostingService ledgerPosting,
+    Farm360.Application.Finance.Repositories.IFinancialTransactionRepository transactions,
+    Farm360.Domain.Livestock.Repositories.IAnimalRepository animals) : IRequestHandler<UpdateMedicalTreatmentCommand>
 {
     public async Task Handle(UpdateMedicalTreatmentCommand request, CancellationToken cancellationToken)
     {
@@ -78,6 +82,37 @@ internal sealed class UpdateMedicalTreatmentCommandHandler(
             request.ConsumptionQuantity);
 
         medicalTreatmentRepository.Update(treatment);
+
+        // Restate the treatment's cash cost. Medicine already issued from stock keeps its stock
+        // posting (stock is not re-issued on edit); only the cash charges move with the new cost.
+        var animal = await animals.GetByIdAsync(treatment.AnimalId, cancellationToken);
+        if (animal is not null)
+        {
+            var date = treatment.StartDate.ToDateTime(TimeOnly.MinValue);
+            var medicine = await transactions.FindBySourceAsync(
+                animal.FarmId, treatment.Id, Farm360.Domain.Finance.Enums.TransactionCategory.MedicineCost, cancellationToken);
+            var stockLinked = treatment.InventoryItemId.HasValue || medicine?.Settlement == Farm360.Domain.Finance.Enums.SettlementAccount.Inventory;
+
+            if (stockLinked)
+            {
+                await ledgerPosting.PostAsync(new LedgerPosting(
+                    treatment.TenantId, animal.FarmId, Farm360.Domain.Finance.Enums.TransactionCategory.VeterinaryCost,
+                    treatment.CostBdt - (medicine?.AmountBdt ?? 0m), date, treatment.Id, "Health",
+                    $"Treatment charges - {treatment.Diagnosis}",
+                    Notes: $"Charges beyond {treatment.MedicationName} taken from stock",
+                    AnimalId: treatment.AnimalId), cancellationToken);
+            }
+            else
+            {
+                await ledgerPosting.PostAsync(new LedgerPosting(
+                    treatment.TenantId, animal.FarmId, Farm360.Domain.Finance.Enums.TransactionCategory.MedicineCost,
+                    treatment.CostBdt, date, treatment.Id, "Health",
+                    $"Medical Treatment - Drug: {treatment.MedicationName}",
+                    Notes: $"Treatment: {treatment.MedicationName} for {treatment.Diagnosis}",
+                    AnimalId: treatment.AnimalId), cancellationToken);
+            }
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

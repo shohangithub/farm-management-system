@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -20,12 +21,16 @@ import {
   FinancialTransaction, 
   FinancialTransactionParams, 
   PagedFinancialTransactionsResult, 
-  TRANSACTION_CATEGORIES 
+  TRANSACTION_CATEGORIES,
+  categoryLabel 
 } from '../../models/finance.model';
 import { IncomeFormDialogComponent } from '../../components/income-form-dialog/income-form-dialog';
 import { ExpenseFormDialogComponent } from '../../components/expense-form-dialog/expense-form-dialog';
 import { TransactionDetailDialogComponent } from '../../components/transaction-detail-dialog/transaction-detail-dialog.component';
 import { EditTransactionDialogComponent } from '../../components/edit-transaction-dialog/edit-transaction-dialog.component';
+import { TradeBillDialogComponent } from '../../components/trade-bill-dialog/trade-bill-dialog.component';
+import { canBeOnCredit } from '../../models/finance.model';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-finance-ledger',
@@ -33,6 +38,7 @@ import { EditTransactionDialogComponent } from '../../components/edit-transactio
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     MatIconModule,
     MatButtonModule,
     MatDialogModule,
@@ -191,8 +197,19 @@ export class FinanceLedgerComponent {
     this.params.update(p => ({ ...p, isAutomated, pageNumber: 1 }));
   }
 
+  label(category: string): string {
+    return categoryLabel(category);
+  }
+
   getSourceModuleBadge(sourceModule?: string): { label: string; icon: string; bgClass: string; textClass: string } {
     switch (sourceModule?.toLowerCase()) {
+      case 'credit':
+        return { label: 'Credit', icon: 'request_quote', bgClass: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800/40', textClass: 'text-amber-700 dark:text-amber-300' };
+      case 'finance':
+        return { label: 'Loans', icon: 'account_balance', bgClass: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800/40', textClass: 'text-orange-700 dark:text-orange-300' };
+      case 'investors':
+      case 'sharemarket':
+        return { label: 'Investors', icon: 'groups', bgClass: 'bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200 dark:border-violet-800/40', textClass: 'text-violet-700 dark:text-violet-300' };
       case 'feeding':
         return { label: 'Feeding', icon: 'restaurant', bgClass: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800/40', textClass: 'text-amber-700 dark:text-amber-300' };
       case 'health':
@@ -264,6 +281,25 @@ export class FinanceLedgerComponent {
     });
   }
 
+  isOnCredit(txn: FinancialTransaction): boolean {
+    return txn.settlement === 'Payable' || txn.settlement === 'Receivable';
+  }
+
+  creditable(txn: FinancialTransaction): boolean {
+    return canBeOnCredit(txn);
+  }
+
+  /** Records a cash-booked purchase or sale as not (fully) paid on the day. */
+  putOnCredit(txn: FinancialTransaction): void {
+    this.dialog.open(TradeBillDialogComponent, {
+      width: '560px',
+      maxWidth: '95vw',
+      data: { mode: 'open', transaction: txn },
+    }).afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      if (result) this.refresh();
+    });
+  }
+
   openEditDialog(txn: FinancialTransaction): void {
     const dialogRef = this.dialog.open(EditTransactionDialogComponent, {
       width: '540px',
@@ -287,7 +323,7 @@ export class FinanceLedgerComponent {
 
     this.financeService.deleteTransaction(farmId, txn.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.refresh(),
-      error: () => alert('Failed to void transaction. Please try again.')
+      error: err => alert(parseApiError(err, 'Failed to void transaction. Please try again.'))
     });
   }
 

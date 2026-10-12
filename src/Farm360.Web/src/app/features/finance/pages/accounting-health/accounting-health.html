@@ -1,0 +1,176 @@
+<app-page-header
+  title="Accounting Health"
+  description="হিসাব যাচাই — checks the books against stock, herd, loans and investors, and repairs older records."
+  breadcrumbActiveNode="Accounting Health">
+  <div actions class="flex items-center gap-2 flex-wrap">
+    <a mat-stroked-button routerLink="/finance"
+      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
+      <mat-icon class="text-sm">arrow_back</mat-icon><span>Overview</span>
+    </a>
+    <button mat-stroked-button (click)="recheck()" [disabled]="isLoading()"
+      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
+      <mat-icon class="text-sm">refresh</mat-icon><span>Re-check</span>
+    </button>
+  </div>
+</app-page-header>
+
+<div class="px-4 sm:px-6 py-4 mx-auto max-w-6xl space-y-5">
+
+  @if (error()) {
+    <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
+      <mat-icon class="text-base">error_outline</mat-icon> {{ error() }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="py-16 flex flex-col items-center gap-3 text-gray-500 dark:text-gray-400 text-sm">
+      <mat-icon class="animate-spin">autorenew</mat-icon> Checking the books…
+    </div>
+  }
+
+  @if (!isLoading() && health(); as h) {
+    <!-- Verdict -->
+    <div class="p-5 rounded-2xl border flex items-start gap-4"
+      [ngClass]="h.isHealthy
+        ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60'
+        : 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60'">
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white shrink-0"
+        [ngClass]="h.isHealthy ? 'bg-emerald-600' : 'bg-amber-500'">
+        <mat-icon>{{ h.isHealthy ? 'verified' : 'rule' }}</mat-icon>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-base font-black text-gray-900 dark:text-white m-0">
+          {{ h.isHealthy ? 'The books agree with your farm records' : 'The books need attention' }}
+        </h2>
+        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 mb-0">
+          Checked {{ h.checkedAtUtc | date: 'dd MMM yyyy, hh:mm a' }} · Cash balance
+          <b [class.text-rose-600]="h.cashBalanceBdt < 0">৳ {{ h.cashBalanceBdt | number: '1.2-2' }}</b>
+          · {{ h.issues.length }} issue(s){{ errors() > 0 ? ', ' + errors() + ' serious' : '' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Reconciliations -->
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
+        <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">Books vs. registers</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">Each account in the books must equal what really exists. A difference means something was recorded on one side only.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <tr>
+              <th class="text-left px-5 py-2.5">Account</th>
+              <th class="text-right px-4 py-2.5">In the books</th>
+              <th class="text-right px-4 py-2.5">Register</th>
+              <th class="text-right px-4 py-2.5">Difference</th>
+              <th class="text-center px-4 py-2.5">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of h.reconciliations; track r.key) {
+              <tr class="border-t border-gray-100 dark:border-gray-700/60 align-top">
+                <td class="px-5 py-3">
+                  <div class="font-bold text-gray-900 dark:text-white">{{ r.account }} <span class="text-gray-400 font-normal">· {{ r.accountBn }}</span></div>
+                  <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ r.registerSource }}</div>
+                  @if (!r.isReconciled) {
+                    <div class="text-[11px] text-amber-700 dark:text-amber-300 mt-1 max-w-xl">{{ r.explanation }}</div>
+                  }
+                </td>
+                <td class="px-4 py-3 text-right font-mono">{{ r.booksBdt | number: '1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-mono">{{ r.registerBdt | number: '1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-mono font-bold"
+                  [ngClass]="r.isReconciled ? 'text-gray-400' : 'text-amber-600 dark:text-amber-400'">
+                  {{ r.differenceBdt | number: '1.2-2' }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  @if (r.isReconciled) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+                      <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">check</mat-icon> Agrees
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                      <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">warning</mat-icon> Differs
+                    </span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Issues -->
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm">
+      <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
+        <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">Issues found</h3>
+      </div>
+      <div class="divide-y divide-gray-100 dark:divide-gray-700/60">
+        @for (i of h.issues; track i.key) {
+          <div class="px-5 py-3 flex items-start gap-3">
+            <mat-icon class="mt-0.5 shrink-0" [ngClass]="i.severity === 'Error' ? 'text-rose-500' : 'text-amber-500'">
+              {{ i.severity === 'Error' ? 'error' : 'warning' }}
+            </mat-icon>
+            <div class="flex-1">
+              <div class="text-sm font-bold text-gray-900 dark:text-white">{{ i.title }}
+                @if (i.canAutoFix) {
+                  <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">Auto-fixable</span>
+                }
+              </div>
+              <div class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{{ i.detail }}</div>
+            </div>
+            <div class="text-right text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              <div>{{ i.count }} item(s)</div>
+              @if (i.amountBdt) { <div class="font-mono font-bold text-gray-800 dark:text-gray-200">৳ {{ i.amountBdt | number: '1.2-2' }}</div> }
+            </div>
+          </div>
+        } @empty {
+          <div class="px-5 py-6 text-center text-sm text-emerald-700 dark:text-emerald-300">
+            <mat-icon class="align-middle mr-1">task_alt</mat-icon> No issues — nothing to repair.
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Repair -->
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm p-5 space-y-3">
+      <div>
+        <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">Repair the ledger</h3>
+        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 mb-0 max-w-3xl">
+          Brings records made before the accounting rules into line: posts loans that never reached the cash book, splits old loan
+          repayments into principal and interest, re-dates animal purchases to their acquisition date, and releases the cost of sold
+          or dead animals from the livestock asset. It only adds or corrects what is missing, so it is safe to run more than once.
+        </p>
+      </div>
+      @if (inventoryDifference(); as inv) {
+        <label class="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50">
+          <input type="checkbox" class="mt-0.5 accent-amber-600" [ngModel]="adjustInventory()" (ngModelChange)="adjustInventory.set($event)" />
+          <span>
+            Also adjust the books to the stock on hand (difference <b>৳ {{ abs(inv.differenceBdt) | number: '1.2-2' }}</b>).
+            Tick this only after you have counted the stock — more stock than the books is posted as opening stock, less is posted as shrinkage.
+          </span>
+        </label>
+      }
+      <div class="flex items-center gap-3">
+        <button mat-flat-button (click)="runRepair()" [disabled]="isRepairing()"
+          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold px-4">
+          <mat-icon class="text-sm">{{ isRepairing() ? 'hourglass_empty' : 'build' }}</mat-icon>
+          {{ isRepairing() ? 'Repairing…' : 'Repair ledger' }}
+        </button>
+        @if (fixable().length > 0) {
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ fixable().length }} issue(s) can be fixed automatically.</span>
+        }
+      </div>
+
+      @if (repair(); as r) {
+        <div class="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-200">
+          <div class="font-bold mb-1"><mat-icon class="!w-4 !h-4 !text-[16px] align-middle mr-1">done_all</mat-icon> Repair complete</div>
+          <ul class="list-disc pl-5 m-0 space-y-0.5">
+            @for (m of r.messages; track m) { <li>{{ m }}</li> }
+          </ul>
+        </div>
+      }
+    </div>
+  }
+</div>

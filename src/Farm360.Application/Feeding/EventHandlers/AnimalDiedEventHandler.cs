@@ -9,11 +9,16 @@ public sealed class AnimalDiedEventHandler : INotificationHandler<AnimalDiedEven
 {
     private readonly IAnimalFeedingPlanRepository _planRepository;
     private readonly ILogger<AnimalDiedEventHandler> _logger;
+    private readonly Farm360.Application.Common.Interfaces.IUnitOfWork _unitOfWork;
 
-    public AnimalDiedEventHandler(IAnimalFeedingPlanRepository planRepository, ILogger<AnimalDiedEventHandler> logger)
+    public AnimalDiedEventHandler(
+        IAnimalFeedingPlanRepository planRepository,
+        ILogger<AnimalDiedEventHandler> logger,
+        Farm360.Application.Common.Interfaces.IUnitOfWork unitOfWork)
     {
         _planRepository = planRepository;
         _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(AnimalDiedEvent notification, CancellationToken cancellationToken)
@@ -32,6 +37,8 @@ public sealed class AnimalDiedEventHandler : INotificationHandler<AnimalDiedEven
                 if (_logger.IsEnabled(LogLevel.Information))
                     _logger.LogInformation("Cancelled active feeding plan {PlanId} for dead animal {AnimalId}", activePlan.Id, notification.AnimalId);
             }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }

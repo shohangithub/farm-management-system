@@ -6,6 +6,7 @@ using Farm360.Domain.Finance.Interfaces;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Commands;
@@ -25,11 +26,13 @@ public class CreateLoanRecordCommandHandler : IRequestHandler<CreateLoanRecordCo
 {
     private readonly ILoanRecordRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILedgerPostingService _ledgerPosting;
 
-    public CreateLoanRecordCommandHandler(ILoanRecordRepository repository, IUnitOfWork unitOfWork)
+    public CreateLoanRecordCommandHandler(ILoanRecordRepository repository, IUnitOfWork unitOfWork, ILedgerPostingService ledgerPosting)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
+        _ledgerPosting = ledgerPosting;
     }
 
     public async Task<LoanRecordDto> Handle(CreateLoanRecordCommand request, CancellationToken cancellationToken)
@@ -49,22 +52,22 @@ public class CreateLoanRecordCommandHandler : IRequestHandler<CreateLoanRecordCo
         );
 
         _repository.Add(loan);
+
+        // The borrowed money arrives in the farm: Dr Cash, Cr Loans Payable. Without this the cash
+        // book never saw the loan while every repayment still reduced cash.
+        await _ledgerPosting.PostAsync(new LedgerPosting(
+            request.TenantId,
+            request.FarmId,
+            TransactionCategory.LoanDisbursement,
+            loan.PrincipalAmountBdt,
+            loan.DisbursementDate,
+            loan.Id,
+            "Finance",
+            $"Loan received from {loan.LenderName}",
+            Notes: $"{loan.InterestRatePercent:0.##}% flat, {loan.Schedule} repayment"), cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new LoanRecordDto(
-            loan.Id,
-            loan.FarmId,
-            loan.LenderName,
-            loan.PrincipalAmountBdt,
-            loan.InterestRatePercent,
-            loan.DisbursementDate,
-            loan.Schedule.ToString(),
-            loan.TotalRepaidBdt,
-            loan.OutstandingBalanceBdt,
-            loan.RepaymentProgressPercent,
-            loan.Notes,
-            loan.IsActive,
-            loan.CreatedAtUtc
-        );
+        return loan.ToDto();
     }
 }

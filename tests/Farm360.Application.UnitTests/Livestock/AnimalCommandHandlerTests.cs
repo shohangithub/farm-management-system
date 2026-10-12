@@ -210,7 +210,7 @@ public sealed class AnimalCommandHandlerTests
         var animal = CreateAnimal();
         _repo.GetByIdAsync(animal.Id, Arg.Any<CancellationToken>()).Returns(animal);
 
-        var handler = new DeleteAnimalCommandHandler(_repo, _uow, _currentUser);
+        var handler = new DeleteAnimalCommandHandler(_repo, _uow, _currentUser, Substitute.For<Farm360.Application.Finance.Services.ILedgerPostingService>());
         await handler.Handle(new DeleteAnimalCommand(animal.Id), CancellationToken.None);
 
         _repo.Received(1).SoftDelete(animal, UserId);
@@ -222,7 +222,7 @@ public sealed class AnimalCommandHandlerTests
     {
         _repo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).ReturnsNull();
 
-        var handler = new DeleteAnimalCommandHandler(_repo, _uow, _currentUser);
+        var handler = new DeleteAnimalCommandHandler(_repo, _uow, _currentUser, Substitute.For<Farm360.Application.Finance.Services.ILedgerPostingService>());
         var act = async () => await handler.Handle(
             new DeleteAnimalCommand(Guid.NewGuid()), CancellationToken.None);
 

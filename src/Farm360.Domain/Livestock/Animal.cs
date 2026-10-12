@@ -89,6 +89,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
 
     /// <summary>Sale price in BDT. Set when animal is disposed.</summary>
     public decimal? SalePriceBdt { get; private set; }
+    /// <summary>Date of death or slaughter. Null while the animal is alive or was sold.</summary>
+    public DateOnly? DeathDate { get; private set; }
     public DateOnly? SaleDate { get; private set; }
     public string? BuyerName { get; private set; }
     public decimal? SaleWeightKg { get; private set; }
@@ -322,6 +324,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
 
         Status = AnimalStatus.Dead;
         DisposalReason = cause;
+        DeathDate = deathDate;
         Notes = notes;
 
         RaiseDomainEvent(new AnimalDiedEvent(

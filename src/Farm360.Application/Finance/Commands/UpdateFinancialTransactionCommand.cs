@@ -44,21 +44,42 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
     private readonly IFinancialTransactionRepository _repository;
     private readonly IOverheadAllocationService _overheadAllocation;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Domain.Finance.Interfaces.ITradeBillRepository _bills;
 
     public UpdateFinancialTransactionCommandHandler(
         IFinancialTransactionRepository repository,
         IOverheadAllocationService overheadAllocation,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills)
     {
         _repository = repository;
         _overheadAllocation = overheadAllocation;
         _unitOfWork = unitOfWork;
+        _bills = bills;
     }
 
     public async Task<FinancialTransactionDto> Handle(UpdateFinancialTransactionCommand request, CancellationToken cancellationToken)
     {
         var transaction = await _repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(FinancialTransaction), request.Id);
+
+        AccountChart.EnsureEditable(transaction);
+        AccountChart.EnsureManualAllowed(transaction.Type, request.Category);
+
+        // On credit: the bill must keep matching the entry it was raised for.
+        var bill = transaction.SourceDocumentId is { } sourceId
+            ? await _bills.FindBySourceAsync(transaction.FarmId, sourceId, transaction.Category, cancellationToken)
+            : null;
+        if (bill is not null)
+        {
+            if (request.Category != transaction.Category)
+                throw new InvalidOperationException("This entry is on credit. Cancel its bill in Payables & Receivables before changing the category.");
+            if (request.AmountBdt < bill.PaidBdt + bill.AdjustedBdt - TradeBill.Tolerance)
+                throw new InvalidOperationException(
+                    $"{bill.PaidBdt + bill.AdjustedBdt:N2} BDT has already been settled on this bill, so the amount cannot be lower than that. Void a payment first.");
+            if (DateOnly.FromDateTime(request.TransactionDate) > (bill.DueDate ?? DateOnly.MaxValue))
+                throw new InvalidOperationException("The date cannot be after the bill's due date. Change the due date first.");
+        }
 
         transaction.UpdateDetails(
             request.Category,
@@ -72,26 +93,18 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
         );
 
         await _repository.UpdateAsync(transaction, cancellationToken);
+        if (bill is not null)
+        {
+            bill.Revise(transaction.AmountBdt, DateOnly.FromDateTime(transaction.TransactionDate));
+            _bills.Update(bill);
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // If this was a shared expense already split onto animals, re-split it from the new
         // amount/date/category (or remove the split if it's no longer shared).
         await _overheadAllocation.ReallocateTransactionAsync(transaction.Id, cancellationToken);
 
-        return new FinancialTransactionDto(
-            transaction.Id,
-            transaction.FarmId,
-            transaction.Type.ToString(),
-            transaction.Category.ToString(),
-            transaction.AmountBdt,
-            transaction.TransactionDate,
-            transaction.Description,
-            transaction.ReferenceId,
-            transaction.Notes,
-            transaction.AnimalId,
-            transaction.BatchId,
-            transaction.ShedId,
-            transaction.CreatedAtUtc
-        );
+        return transaction.ToDto();
     }
 }

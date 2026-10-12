@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -43,14 +44,15 @@ public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDas
             .Where(t => t.TransactionDate >= currentYearStart && t.TransactionDate <= now)
             .ToList();
 
-        // MTD Metrics
-        var revenueMtd = currentMonthTx.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
-        var expensesMtd = currentMonthTx.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
+        // MTD Metrics — profit & loss only. Investor capital, loans and stock/animal purchases move
+        // cash but are not revenue or expense; counting them made a capital injection look like profit.
+        var revenueMtd = AccountChart.Revenue(currentMonthTx);
+        var expensesMtd = AccountChart.Expenses(currentMonthTx);
         var netProfitMtd = revenueMtd - expensesMtd;
 
         // MOM Comparison
-        var prevRevenue = previousMonthTx.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
-        var prevExpenses = previousMonthTx.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
+        var prevRevenue = AccountChart.Revenue(previousMonthTx);
+        var prevExpenses = AccountChart.Expenses(previousMonthTx);
         var prevNetProfit = prevRevenue - prevExpenses;
 
         var revenueMom = CalculatePercentageChange(prevRevenue, revenueMtd);
@@ -58,21 +60,21 @@ public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDas
         var netProfitMom = CalculatePercentageChange(prevNetProfit, netProfitMtd);
 
         // YTD Metrics
-        var revenueYtd = ytdTx.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
-        var expensesYtd = ytdTx.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
+        var revenueYtd = AccountChart.Revenue(ytdTx);
+        var expensesYtd = AccountChart.Expenses(ytdTx);
         var netProfitYtd = revenueYtd - expensesYtd;
 
         var profitMarginPercent = revenueMtd > 0 ? Math.Round((netProfitMtd / revenueMtd) * 100m, 1) : 0m;
 
-        // 6-Month Cash Flow Trend
+        // 6-Month Cash Flow Trend — real cash only (non-cash postings such as stock consumed are excluded)
         var cashFlowTrend = new List<MonthlyCashFlowPointDto>();
         for (var i = 5; i >= 0; i--)
         {
             var mStart = currentMonthStart.AddMonths(-i);
             var mEnd = mStart.AddMonths(1).AddDays(-1);
             var mTx = allTransactions.Where(t => t.TransactionDate >= mStart && t.TransactionDate <= mEnd).ToList();
-            var mIncome = mTx.Where(t => t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
-            var mExpense = mTx.Where(t => t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
+            var mIncome = AccountChart.CashIn(mTx);
+            var mExpense = AccountChart.CashOut(mTx);
             var mNet = mIncome - mExpense;
             cashFlowTrend.Add(new MonthlyCashFlowPointDto(
                 mStart.ToString("MMM yyyy", System.Globalization.CultureInfo.InvariantCulture),
@@ -83,13 +85,13 @@ public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDas
         }
 
         // Expense Breakdown by Category (MTD or YTD if MTD is empty)
-        var sourceExpenses = expensesMtd > 0 ? currentMonthTx.Where(t => t.Type == TransactionType.Expense).ToList() : ytdTx.Where(t => t.Type == TransactionType.Expense).ToList();
-        var totalExpAmount = sourceExpenses.Sum(t => t.AmountBdt);
+        var sourceExpenses = expensesMtd > 0 ? currentMonthTx.Where(AccountChart.IsExpense).ToList() : ytdTx.Where(AccountChart.IsExpense).ToList();
+        var totalExpAmount = -sourceExpenses.Sum(AccountChart.ProfitEffect);
         var expenseBreakdown = sourceExpenses
             .GroupBy(t => t.Category.ToString())
             .Select(g =>
             {
-                var sum = g.Sum(x => x.AmountBdt);
+                var sum = -g.Sum(AccountChart.ProfitEffect);
                 var pct = totalExpAmount > 0 ? Math.Round((sum / totalExpAmount) * 100m, 1) : 0m;
                 return new CategoryExpenseBreakdownDto(g.Key, Math.Round(sum, 2), pct);
             })
@@ -100,21 +102,7 @@ public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDas
         var recentTransactions = allTransactions
             .OrderByDescending(t => t.TransactionDate)
             .Take(5)
-            .Select(t => new FinancialTransactionDto(
-                t.Id,
-                t.FarmId,
-                t.Type.ToString(),
-                t.Category.ToString(),
-                t.AmountBdt,
-                t.TransactionDate,
-                t.Description,
-                t.ReferenceId,
-                t.Notes,
-                t.AnimalId,
-                t.BatchId,
-                t.ShedId,
-                t.CreatedAtUtc
-            ))
+            .Select(t => t.ToDto())
             .ToList();
 
         return new FinancialDashboardDto(

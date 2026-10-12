@@ -2,9 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Common.Interfaces;
-using Farm360.Application.Finance.Repositories;
+using Farm360.Application.Finance.Services;
 using Farm360.Application.Inventory.EventHandlers;
-using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
 using MediatR;
@@ -12,64 +11,64 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
+/// <summary>
+/// Books a received purchase order: Dr Inventory, Cr Cash. The goods are an asset now and become
+/// an expense only when they are fed, used or written off — expensing them here as well as on use
+/// was the old double count. Keyed on the purchase order, so it can never post twice.
+/// </summary>
 public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseOrderFulfilledNotification>
 {
     private readonly IPurchaseOrderRepository _purchaseOrderRepository;
-    private readonly IFinancialTransactionRepository _financialTransactionRepository;
+    private readonly ILedgerPostingService _ledgerPosting;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<PurchaseOrderFulfilledEventHandler> _logger;
 
     public PurchaseOrderFulfilledEventHandler(
         IPurchaseOrderRepository purchaseOrderRepository,
-        IFinancialTransactionRepository financialTransactionRepository,
+        ILedgerPostingService ledgerPosting,
         IUnitOfWork unitOfWork,
         ILogger<PurchaseOrderFulfilledEventHandler> logger)
     {
         _purchaseOrderRepository = purchaseOrderRepository;
-        _financialTransactionRepository = financialTransactionRepository;
+        _ledgerPosting = ledgerPosting;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
     public async Task Handle(PurchaseOrderFulfilledNotification notification, CancellationToken cancellationToken)
     {
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            var eventName = notification.DomainEvent.GetType().Name;
-            _logger.LogInformation("Domain Event: {DomainEvent} triggered in Finance module.", eventName);
-        }
-
+        ArgumentNullException.ThrowIfNull(notification);
         var poId = notification.DomainEvent.PurchaseOrderId;
-        var po = await _purchaseOrderRepository.GetByIdAsync(poId, cancellationToken);
+
+        // Items must be loaded: the order total is the sum of its lines.
+        var po = await _purchaseOrderRepository.GetByIdWithItemsAsync(poId, cancellationToken);
         if (po == null)
         {
             if (_logger.IsEnabled(LogLevel.Warning))
-            {
-                _logger.LogWarning("Purchase Order {PurchaseOrderId} not found. Cannot post financial expense.", poId);
-            }
+                _logger.LogWarning("Purchase Order {PurchaseOrderId} not found. Cannot post the stock purchase.", poId);
             return;
         }
 
-        // Create an expense transaction for the inventory purchase
-        var expense = FinancialTransaction.Create(
+        // Dated on receipt — the day the goods (and the payment) changed hands.
+        var receivedOn = notification.DomainEvent.OccurredOnUtc.Date;
+
+        await _ledgerPosting.PostAsync(new LedgerPosting(
             po.TenantId,
             po.FarmId,
-            TransactionType.Expense,
             TransactionCategory.InventoryPurchase,
             po.TotalAmountBdt,
-            DateTime.UtcNow,
-            referenceId: po.PoNumber,
-            notes: $"Auto-generated expense from Purchase Order {po.PoNumber}",
-            isAutomated: true,
-            sourceModule: "Inventory"
-        );
+            receivedOn,
+            po.Id,
+            InventoryAccounting.Module,
+            $"Stock purchase - PO {po.PoNumber}",
+            Notes: $"Goods received against Purchase Order {po.PoNumber} ({po.Items.Count} line(s))",
+            ReferenceId: po.PoNumber), cancellationToken);
 
-        await _financialTransactionRepository.AddAsync(expense, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        
+
         if (_logger.IsEnabled(LogLevel.Information))
         {
-            _logger.LogInformation("Posted financial expense of {Amount} BDT for Purchase Order {PoNumber}.", po.TotalAmountBdt, po.PoNumber);
+            _logger.LogInformation("Posted stock purchase of {Amount} BDT for PO {PoNumber}.", po.TotalAmountBdt, po.PoNumber);
         }
     }
 }

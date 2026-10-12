@@ -52,9 +52,24 @@ public class FinancialTransactionConfiguration : IEntityTypeConfiguration<Financ
         builder.Property(t => t.SourceModule)
             .HasMaxLength(50);
 
+        // Stored as text like Type/Category. Existing rows are cash postings, hence the default.
+        builder.Property(t => t.Settlement)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(Farm360.Domain.Finance.Enums.SettlementAccount.Cash)
+            .HasSentinel(Farm360.Domain.Finance.Enums.SettlementAccount.Cash)
+            .IsRequired();
+
+        builder.Property(t => t.SourceDocumentId);
+
+        builder.Ignore(t => t.AffectsCash);
+
         builder.HasIndex(t => t.FarmId);
         builder.HasIndex(t => t.TenantId);
         builder.HasIndex(t => t.TransactionDate);
         builder.HasIndex(t => t.AnimalId);
+        builder.HasIndex(t => t.BatchId);
+        // Idempotency lookups for automated postings: (farm, source document, category).
+        builder.HasIndex(t => new { t.FarmId, t.SourceDocumentId, t.Category });
     }
 }

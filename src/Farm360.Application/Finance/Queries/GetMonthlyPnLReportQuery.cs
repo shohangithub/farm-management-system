@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance.Enums;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -29,19 +30,22 @@ public class GetMonthlyPnLReportQueryHandler : IRequestHandler<GetMonthlyPnLRepo
             .Where(t => t.TransactionDate.Year == request.Year && t.TransactionDate.Month == request.Month)
             .ToList();
 
-        var incomeTransactions = monthTransactions.Where(t => t.Type == TransactionType.Income).ToList();
-        var expenseTransactions = monthTransactions.Where(t => t.Type == TransactionType.Expense).ToList();
+        // Profit & loss: revenue and expense accounts only. Capital, loans and stock/animal purchases
+        // are balance-sheet movements; the cost of stock and animals reaches P&L when they are used,
+        // sold or lost.
+        var incomeTransactions = monthTransactions.Where(AccountChart.IsRevenue).ToList();
+        var expenseTransactions = monthTransactions.Where(AccountChart.IsExpense).ToList();
 
-        var totalIncome = incomeTransactions.Sum(t => t.AmountBdt);
-        var totalExpense = expenseTransactions.Sum(t => t.AmountBdt);
+        var totalIncome = AccountChart.Revenue(incomeTransactions);
+        var totalExpense = AccountChart.Expenses(expenseTransactions);
 
         var incomeByCategory = incomeTransactions
             .GroupBy(t => t.Category.ToString())
-            .ToDictionary(g => g.Key, g => g.Sum(t => t.AmountBdt));
+            .ToDictionary(g => g.Key, g => Math.Round(g.Sum(AccountChart.ProfitEffect), 2));
 
         var expenseByCategory = expenseTransactions
             .GroupBy(t => t.Category.ToString())
-            .ToDictionary(g => g.Key, g => g.Sum(t => t.AmountBdt));
+            .ToDictionary(g => g.Key, g => Math.Round(-g.Sum(AccountChart.ProfitEffect), 2));
 
         return new MonthlyPnLReportDto(
             request.FarmId,

@@ -52,6 +52,26 @@ export const FINANCE_ROUTES: Routes = [
     title: 'Trial Balance - Farm360 AI'
   },
   {
+    path: 'reports/income-expense',
+    loadComponent: () => import('./pages/income-expense-report/income-expense-report').then(m => m.IncomeExpenseReportComponent),
+    title: 'Income & Expense Statement - Farm360 AI'
+  },
+  {
+    path: 'reports/full-accounts',
+    loadComponent: () => import('./pages/full-accounts-report/full-accounts-report').then(m => m.FullAccountsReportComponent),
+    title: 'Full Accounts Statement - Farm360 AI'
+  },
+  {
+    path: 'credit',
+    loadComponent: () => import('./pages/trade-credit/trade-credit').then(m => m.TradeCreditComponent),
+    title: 'Payables & Receivables - Farm360 AI'
+  },
+  {
+    path: 'accounting-health',
+    loadComponent: () => import('./pages/accounting-health/accounting-health').then(m => m.AccountingHealthComponent),
+    title: 'Accounting Health - Farm360 AI'
+  },
+  {
     path: 'reports/balance-sheet',
     loadComponent: () => import('./pages/balance-sheet/balance-sheet.component').then(m => m.BalanceSheetComponent),
     title: 'Balance Sheet - Farm360 AI'

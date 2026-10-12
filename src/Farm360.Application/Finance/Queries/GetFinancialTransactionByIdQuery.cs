@@ -5,6 +5,7 @@ using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
+using Farm360.Application.Finance.Services;
 using MediatR;
 
 namespace Farm360.Application.Finance.Queries;
@@ -25,22 +26,6 @@ public sealed class GetFinancialTransactionByIdQueryHandler : IRequestHandler<Ge
         var transaction = await _repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(FinancialTransaction), request.Id);
 
-        return new FinancialTransactionDto(
-            transaction.Id,
-            transaction.FarmId,
-            transaction.Type.ToString(),
-            transaction.Category.ToString(),
-            transaction.AmountBdt,
-            transaction.TransactionDate,
-            transaction.Description,
-            transaction.ReferenceId,
-            transaction.Notes,
-            transaction.AnimalId,
-            transaction.BatchId,
-            transaction.ShedId,
-            transaction.CreatedAtUtc,
-            transaction.IsAutomated,
-            transaction.SourceModule
-        );
+        return transaction.ToDto();
     }
 }

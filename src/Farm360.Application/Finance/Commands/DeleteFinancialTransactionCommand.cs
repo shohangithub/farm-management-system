@@ -19,21 +19,36 @@ public sealed class DeleteFinancialTransactionCommandHandler : IRequestHandler<D
     private readonly IFinancialTransactionRepository _repository;
     private readonly IOverheadAllocationService _overheadAllocation;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Domain.Finance.Interfaces.ITradeBillRepository _bills;
 
     public DeleteFinancialTransactionCommandHandler(
         IFinancialTransactionRepository repository,
         IOverheadAllocationService overheadAllocation,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills)
     {
         _repository = repository;
         _overheadAllocation = overheadAllocation;
         _unitOfWork = unitOfWork;
+        _bills = bills;
     }
 
     public async Task Handle(DeleteFinancialTransactionCommand request, CancellationToken cancellationToken)
     {
         var transaction = await _repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(FinancialTransaction), request.Id);
+
+        AccountChart.EnsureEditable(transaction);
+
+        // An unpaid bill goes with its entry; a bill with payments keeps the entry alive.
+        if (transaction.SourceDocumentId is { } sourceId
+            && await _bills.FindBySourceAsync(transaction.FarmId, sourceId, transaction.Category, cancellationToken) is { } bill)
+        {
+            if (bill.HasSettlements)
+                throw new InvalidOperationException("Payments have been recorded against this entry's bill. Void them in Payables & Receivables before deleting it.");
+            bill.Cancel();
+            _bills.Update(bill);
+        }
 
         await _repository.DeleteAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
