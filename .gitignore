@@ -121,3 +121,6 @@ __MACOSX/
 # Hangfire Dashboard (not for prod)
 hangfire.*.db
 src/Farm360.Api/wwwroot/uploads
+
+# Stray build output (contains copies of appsettings)
+**/tempbin/

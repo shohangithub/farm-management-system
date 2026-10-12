@@ -78,7 +78,11 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
         ReportColumn<AnimalGrowthReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.WeightKg, 1, 22f),
         ReportColumn<AnimalGrowthReportRow>.WholeNumber("days", new LocalizedText("Days", "দিন"), r => r.IntervalDays, 14f, ReportAggregate.Sum),
         ReportColumn<AnimalGrowthReportRow>.Number("gain", new LocalizedText("Gain (kg)", "বৃদ্ধি (কেজি)"), r => r.GainKg, 2, 20f, ReportAggregate.Sum),
-        ReportColumn<AnimalGrowthReportRow>.Number("adg", new LocalizedText("ADG (kg/d)", "দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 20f),
+        // Period ADG (between consecutive weigh-ins inside the selected date range) -- labeled
+        // distinctly from HerdSummaryReportDefinition/AnimalSummaryReportDefinition's lifetime ADG
+        // column, which uses a different window (oldest-to-newest weight record, ever) and will
+        // legitimately disagree with this one for any animal weighed more than twice.
+        ReportColumn<AnimalGrowthReportRow>.Number("adg", new LocalizedText("Period ADG (kg/d)", "নির্দিষ্ট সময়ের দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 20f),
         ReportColumn<AnimalGrowthReportRow>.Number("feed", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, 2, 20f, ReportAggregate.Sum),
         ReportColumn<AnimalGrowthReportRow>.Money("feedCost", new LocalizedText("Feed cost", "খাদ্য খরচ"), r => r.FeedCostBdt, 2, 22f),
         ReportColumn<AnimalGrowthReportRow>.Number("fcr", new LocalizedText("FCR", "এফসিআর"), r => r.Fcr, 2, 16f),

@@ -39,8 +39,11 @@ public class AnimalOverheadAllocationConfiguration : IEntityTypeConfiguration<An
         // One row per expense per animal. The service skips transactions it has already
         // allocated; this is the database-level guarantee behind that check, so two concurrent
         // runs cannot both decide a transaction is unallocated and post it twice.
+        // Filtered to live rows: deletes are soft, so without the filter an edited or deleted
+        // expense's old (soft-deleted) rows would block its corrected re-allocation forever.
         builder.HasIndex(a => new { a.SourceTransactionId, a.AnimalId })
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UX_AnimalOverheadAllocations_Transaction_Animal");
 
         builder.Property(a => a.RowVersion).IsRowVersion();

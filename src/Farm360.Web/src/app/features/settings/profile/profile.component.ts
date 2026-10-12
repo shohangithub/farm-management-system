@@ -1,9 +1,11 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
-import { AuthService, UserProfile } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { parseApiError } from '../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-profile',
@@ -14,13 +16,14 @@ import { AuthService, UserProfile } from '../../../core/services/auth.service';
 export class ProfileComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
 
   profileForm = this.fb.group({
-    id: [''],
     role: [{ value: '', disabled: true }],
-    name: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    phone: ['', Validators.required]
+    name: ['', [Validators.required, Validators.maxLength(150)]],
+    email: ['', [Validators.email, Validators.maxLength(256)]],
+    // The phone number is the login ID; changing it needs OTP re-verification, so it's read-only here.
+    phone: [{ value: '', disabled: true }]
   });
 
   isLoading = signal(false);
@@ -30,14 +33,13 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit() {
     this.isLoading.set(true);
-    this.authService.currentUser$.subscribe(user => {
+    this.authService.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       if (user) {
         this.profileForm.patchValue({
-          id: user.id,
-          role: user.role || 'Admin',
-          name: (user as any).name || 'Farm Admin',
-          email: (user as any).email || 'admin@farm360.ai',
-          phone: (user as any).phone || '+1234567890'
+          role: user.role ?? '',
+          name: user.fullName ?? '',
+          email: user.email ?? '',
+          phone: user.phone ?? ''
         });
       }
       this.isLoading.set(false);
@@ -54,12 +56,12 @@ export class ProfileComponent implements OnInit {
     this.successMessage.set(null);
     this.error.set(null);
 
-    const updatedData = {
-      ...this.authService.currentUserSignal()!,
-      ...this.profileForm.value
-    } as UserProfile;
+    const { name, email } = this.profileForm.getRawValue();
 
-    this.authService.updateProfile(updatedData).subscribe({
+    this.authService.updateProfile({
+      fullName: (name ?? '').trim(),
+      email: email?.trim() || null
+    }).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.successMessage.set('Profile updated successfully!');
@@ -67,7 +69,7 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isSaving.set(false);
-        this.error.set(err.message || 'Failed to update profile.');
+        this.error.set(parseApiError(err, 'Failed to update profile.'));
       }
     });
   }

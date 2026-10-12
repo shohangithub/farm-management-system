@@ -89,19 +89,26 @@ public class GetBalanceSheetQueryHandler : IRequestHandler<GetBalanceSheetQuery,
         decimal cumulativeOperatingProfit = totalRevenue - totalExpenses;
         decimal retainedEarnings = cumulativeOperatingProfit - totalProfitDistributed;
 
-        // 5. Cash & Cash Equivalents (Derived via Option A)
-        // Cash = Cumulative Operating Profit - Distributed Profits + Outstanding Loans + Net Investor Capital
-        decimal netCash = retainedEarnings + outstandingLoanPrincipal + totalInvestorCapital;
+        // 5. Cash & Cash Equivalents -- summed directly from EVERY recorded transaction's cash
+        // effect (no category exclusions), deliberately independent of the Liabilities/Equity
+        // figures below (which come from LoanRecord/InvestorTransaction, not FinancialTransaction).
+        // The old version derived "cash" algebraically from those same Liabilities/Equity inputs
+        // (retainedEarnings + outstandingLoanPrincipal + totalInvestorCapital), which made
+        // Assets == Liabilities+Equity true by construction for ANY data -- isBalanced could never
+        // be false, even with a real bookkeeping error, because it was comparing a number to
+        // itself. Pulling cash straight from the transaction ledger means a mismatch (e.g. a loan
+        // disbursement posted here with no matching LoanRecord, or vice versa) now actually shows up.
+        decimal actualCash = filteredTx.Sum(t => t.Type == TransactionType.Income ? t.AmountBdt : -t.AmountBdt);
 
         // Assets
         var assetLines = new List<BalanceSheetLineDto>();
-        if (netCash >= 0)
+        if (actualCash >= 0)
         {
             assetLines.Add(new BalanceSheetLineDto(
                 "1010",
                 "Cash & Cash Equivalents",
-                Math.Round(netCash, 2),
-                "Derived from operational cash flows, loan disbursements, and investor capital"
+                Math.Round(actualCash, 2),
+                "Net of all recorded income and expense transactions to date"
             ));
         }
         else
@@ -126,12 +133,12 @@ public class GetBalanceSheetQueryHandler : IRequestHandler<GetBalanceSheetQuery,
             $"Outstanding balance across {filteredLoans.Count(l => l.IsActive)} active loan facility(ies)"
         ));
 
-        if (netCash < 0)
+        if (actualCash < 0)
         {
             liabilityLines.Add(new BalanceSheetLineDto(
                 "2020",
                 "Bank Overdraft / Short-Term Facility",
-                Math.Round(Math.Abs(netCash), 2),
+                Math.Round(Math.Abs(actualCash), 2),
                 "Operating deficit cash advance"
             ));
         }

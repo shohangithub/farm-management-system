@@ -51,6 +51,25 @@ public sealed class CreateFeedingRuleSetCommandValidator : AbstractValidator<Cre
         {
             line.RuleFor(l => l.QuantityValue).GreaterThanOrEqualTo(0);
         });
+
+        // ConcentrateKgPerDay/QuantityValue means two different things depending on PlanType -- an
+        // absolute kg/day amount in FixedQuantity mode, a PERCENT of body weight in WeightPercentage
+        // mode -- with nothing distinguishing which was intended. A rule authored under the wrong
+        // mode (or a PlanType changed after the fact, which doesn't rescale existing values) used to
+        // silently produce a ration roughly 100x off. This at least catches the case a percentage
+        // field holds something that obviously isn't a percentage.
+        RuleForEach(x => x.RuleLines)
+            .Must((command, line) =>
+            {
+                if (command.PlanType != FeedingPlanType.WeightPercentage)
+                {
+                    return true;
+                }
+
+                var effectiveValue = line.QuantityValue > 0 ? line.QuantityValue : line.ConcentrateKgPerDay;
+                return effectiveValue > 0 && effectiveValue <= 100;
+            })
+            .WithMessage("With Plan Type 'Weight Percentage', each line's quantity is a PERCENT of body weight (e.g. 3 for 3%), not an absolute kg/day amount -- it must be between 0 and 100.");
     }
 }
 

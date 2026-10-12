@@ -22,8 +22,12 @@ export class IntelligenceService {
     return this.http.post<ProfitProjectionResponse>(`${this.baseUrl}/calculate`, { inputs, includeDailyRows: true });
   }
 
-  solveBreakEven(inputs: FatteningProjectionInputs, targetRoiPercentage: number): Observable<number> {
-    return this.http.post<number>(`${this.baseUrl}/solve-break-even`, { inputs, targetRoiPercentage });
+  /**
+   * Matches the backend SolveBreakEvenQuery contract ({ inputs, target }). Only RequiredMeatPrice
+   * is implemented server-side; the other targets return a 400.
+   */
+  solveBreakEven(inputs: FatteningProjectionInputs, target: 'RequiredMeatPrice' = 'RequiredMeatPrice'): Observable<number> {
+    return this.http.post<number>(`${this.baseUrl}/solve-break-even`, { inputs, target });
   }
 
   saveProjectionScenario(animalId: string | null, name: string, description: string, inputs: FatteningProjectionInputs): Observable<string> {

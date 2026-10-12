@@ -135,6 +135,11 @@ public sealed class AuthService(
             throw new InvalidOperationException($"Failed to create user: {errors}");
         }
 
+        if (!string.IsNullOrWhiteSpace(request.FullName))
+        {
+            await UserProfileService.SetFullNameAsync(userManager, user, request.FullName.Trim());
+        }
+
         // Create Tenant, TenantUser (Owner), and Organization for the user with requested trial days
         var farmName = !string.IsNullOrWhiteSpace(request.FarmName)
             ? request.FarmName.Trim()

@@ -52,6 +52,15 @@ public interface IAnalyticsQueryService
     Task<IReadOnlyList<AdgTrendDto>> GetAdgTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<FeedCostTrendDto>> GetFeedCostTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default);
     Task<VaccinationComplianceDto> GetVaccinationComplianceAsync(Guid? farmId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<FarmSummaryCardDto>> GetFarmSummaryCardsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<FarmSummaryCardDto>> GetFarmSummaryCardsAsync(Guid farmId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ActivityFeedItemDto>> GetRecentActivityFeedAsync(Guid? farmId, int count = 20, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Real total weight gain (kg) across every animal on the farm with at least two weight
+    /// records inside [from, to]: the newest minus the oldest record in range, per animal, summed
+    /// (an animal that only lost weight in the window contributes 0, not a negative figure).
+    /// This is the actual denominator FCR needs -- it exists specifically so nothing has to guess
+    /// weight gain from feed volume.
+    /// </summary>
+    Task<decimal> GetTotalWeightGainKgAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
 }

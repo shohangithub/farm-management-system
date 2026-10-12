@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, firstValueFrom, map, of, switchMap, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, firstValueFrom, map, switchMap, tap, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
@@ -22,6 +22,14 @@ export interface UserProfile {
   tier: string;
   isSystemUser: boolean;
   permissions?: string[];
+  fullName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+  email: string | null;
 }
 
 // ── Token storage keys ────────────────────────────────────────────────────────
@@ -150,16 +158,11 @@ export class AuthService {
     return this.http.post('/api/v1/auth/register', request);
   }
 
-  updateProfile(data: UserProfile): Observable<UserProfile> {
-    // Simulate API delay and return updated profile
-    return of(data).pipe(
-      tap(user => {
-        this.setUserData(user);
-        console.log('Mock profile update successful', user);
-      })
+  updateProfile(request: UpdateProfileRequest): Observable<UserProfile> {
+    return this.http.put<UserProfile>('/api/v1/users/profile', request).pipe(
+      tap(user => this.setUserData(user))
     );
   }
-  // -----------------------------
 
   /**
    * H2 Fix: Logout properly awaits the server-side session revocation before clearing local state.

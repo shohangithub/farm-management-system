@@ -50,7 +50,10 @@ public class GetTrialBalanceQueryHandler : IRequestHandler<GetTrialBalanceQuery,
             (TransactionCategory.AnimalSale, "4010", "Livestock Sales Revenue"),
             (TransactionCategory.MilkSale, "4020", "Dairy & Milk Sales Revenue"),
             (TransactionCategory.ByproductSale, "4030", "Byproduct & Manure Sales Revenue"),
-            (TransactionCategory.OtherIncome, "4040", "Other Farm Operating Income")
+            (TransactionCategory.OtherIncome, "4040", "Other Farm Operating Income"),
+            // Without this, a purchase-return credit counted as revenue on the Balance Sheet and
+            // both P&L reports simply vanished here -- same transaction, missing from this report.
+            (TransactionCategory.InventoryPurchaseReturn, "4050", "Inventory Purchase Returns")
         };
 
         var revenueLines = new List<TrialBalanceLineDto>();
@@ -161,18 +164,22 @@ public class GetTrialBalanceQueryHandler : IRequestHandler<GetTrialBalanceQuery,
             ));
         }
 
-        // 5. Cash & Cash Equivalents (Assets)
-        // Option A derivation: Net Operating Profit + Outstanding Loans + Net Investor Capital - Profit Distributed
-        decimal netCash = (totalRevenue - totalExpenses) + (totalLoanDisbursements - totalLoanRepaid) + (totalInvestorCapital - totalProfitDistributed);
+        // 5. Cash & Cash Equivalents (Assets) -- summed directly from every recorded transaction's
+        // cash effect, independent of the Liabilities/Equity lines above (which come from
+        // LoanRecord/InvestorTransaction). The old derivation built "cash" algebraically from the
+        // very same revenue/expense/loan/investor numbers that produce the other lines, which made
+        // debits == credits true by construction -- isBalanced could never catch a real posting
+        // error. This is the same fix applied to GetBalanceSheetQuery.cs.
+        decimal actualCash = filteredTx.Sum(t => t.Type == TransactionType.Income ? t.AmountBdt : -t.AmountBdt);
 
         var assetLines = new List<TrialBalanceLineDto>();
-        if (netCash >= 0)
+        if (actualCash >= 0)
         {
             assetLines.Add(new TrialBalanceLineDto(
                 "1010",
                 "Cash & Cash Equivalents",
                 "Asset",
-                Math.Round(netCash, 2),
+                Math.Round(actualCash, 2),
                 0m
             ));
         }
@@ -183,7 +190,7 @@ public class GetTrialBalanceQueryHandler : IRequestHandler<GetTrialBalanceQuery,
                 "Cash & Bank Overdraft",
                 "Asset",
                 0m,
-                Math.Round(Math.Abs(netCash), 2)
+                Math.Round(Math.Abs(actualCash), 2)
             ));
         }
 

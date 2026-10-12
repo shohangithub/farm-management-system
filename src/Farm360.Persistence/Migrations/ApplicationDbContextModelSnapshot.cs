@@ -1367,7 +1367,8 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasIndex("SourceTransactionId", "AnimalId")
                         .IsUnique()
-                        .HasDatabaseName("UX_AnimalOverheadAllocations_Transaction_Animal");
+                        .HasDatabaseName("UX_AnimalOverheadAllocations_Transaction_Animal")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("TenantId", "AnimalId")
                         .HasDatabaseName("IX_AnimalOverheadAllocations_Tenant_Animal");

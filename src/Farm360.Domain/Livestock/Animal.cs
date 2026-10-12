@@ -145,7 +145,13 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     public decimal? LatestWeightKg { get; private set; }
     public DateOnly? LatestWeightDate { get; private set; }
 
-    /// <summary>Average Daily Gain in kg/day. Recomputed when a weight is recorded.</summary>
+    /// <summary>
+    /// Lifetime Average Daily Gain in kg/day: (newest weight record - oldest weight record) /
+    /// days between them, recomputed whenever a weight is recorded. This is NOT bounded to any
+    /// reporting period -- a report that needs ADG over a specific date range (e.g. "this month's
+    /// growth") must compute it from <see cref="WeightRecords"/> directly rather than read this
+    /// field, or its number won't match this animal's growth over that window.
+    /// </summary>
     public decimal? AdgKgPerDay { get; private set; }
 
     public decimal? LatestBcs { get; private set; }
@@ -553,8 +559,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     }
 
     /// <summary>
-    /// Updates denormalized ADG from the weight record history.
-    /// ADG = (LatestWeight - AcquisitionWeight) / DaysSinceAcquisition.
+    /// Updates denormalized lifetime ADG from the full weight record history.
+    /// ADG = (newest weight record - OLDEST weight record) / days between them -- not the
+    /// acquisition weight/date specifically, just whichever weight record is earliest.
     /// Falls back to null if insufficient data.
     /// </summary>
     private void RecalculateAdg()

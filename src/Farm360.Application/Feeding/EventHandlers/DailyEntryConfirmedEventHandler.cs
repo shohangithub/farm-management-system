@@ -1,5 +1,6 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Feeding.Services;
+using Farm360.Domain.Common;
 using Farm360.Domain.Feeding;
 using Farm360.Domain.Feeding.Events;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
@@ -80,17 +81,26 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                 decimal cost = formulaIngredient.IngredientCostPerKg;
                 var deductionQty = notification.ActualKg * (formulaIngredient.Percentage / 100m);
 
+                // Tracks whether THIS ingredient's cost should actually be counted below. An
+                // ingredient with no linked inventory item has no stock to deduct, so its
+                // formula-defined cost is counted as-is. One WITH a linked item must only be
+                // counted if stock was actually deducted -- previously the cost was added
+                // unconditionally even when deduction was skipped for insufficient stock, so feed
+                // cost reports and animal cost ledgers showed expense for feed that was never
+                // actually taken out of inventory.
+                bool countCost = feedIngredient?.InventoryItemId is null;
+
                 if (feedIngredient?.InventoryItemId != null)
                 {
                     var inventoryItem = await _inventoryRepository.GetByIdAsync(feedIngredient.InventoryItemId.Value, cancellationToken);
-                    
+
                     if (inventoryItem != null)
                     {
                         if (inventoryItem.WeightedAverageCostBdt > 0)
                         {
                             cost = inventoryItem.WeightedAverageCostBdt;
                         }
-                        
+
                         if (deductionQty > 0)
                         {
                             if (inventoryItem.IsActive && inventoryItem.CurrentStock >= deductionQty)
@@ -111,32 +121,49 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                                     reason: $"Auto deduction for daily feeding plan entry {entry.Id}",
                                     referenceId: Guid.TryParse(entry.Id.ToString(), out var refId) ? refId : null
                                 );
-                                
+
                                 await _transactionRepository.AddAsync(transaction, cancellationToken);
                                 anyDeducted = true;
+                                countCost = true;
                             }
                             else
                             {
                                 if (_logger.IsEnabled(LogLevel.Warning))
                                 {
                                     _logger.LogWarning(
-                                        "Skipped auto-deduction for ingredient '{ItemName}' on feeding entry {EntryId}: Insufficient stock (Requested: {Requested} kg, Available: {Available} kg) or inactive.",
+                                        "Skipped auto-deduction for ingredient '{ItemName}' on feeding entry {EntryId}: Insufficient stock (Requested: {Requested} kg, Available: {Available} kg) or inactive. Its cost is excluded from this entry's total since nothing was actually consumed from inventory.",
                                         inventoryItem.Name, entry.Id, deductionQty, inventoryItem.CurrentStock);
                                 }
                             }
                         }
+                        else
+                        {
+                            // Nothing to deduct (zero quantity), so there's nothing to exclude either.
+                            countCost = true;
+                        }
+                    }
+                    else
+                    {
+                        // Linked inventory item no longer exists; fall back to the formula's cost
+                        // rather than silently dropping the ingredient from the total.
+                        countCost = true;
                     }
                 }
 
-                if (deductionQty > 0)
+                if (deductionQty > 0 && countCost)
                 {
                     totalDeductedCost += deductionQty * cost;
                     totalDeductedQty += deductionQty;
                 }
             }
 
-            decimal blendedUnitCost = totalDeductedQty > 0 
-                ? Math.Round(totalDeductedCost / totalDeductedQty, 2) 
+            // SetConsumptionCost derives TotalCostBdt as unitCost * ActualKg (the FULL quantity
+            // given, not just the portion whose ingredients were actually counted above). Dividing
+            // by ActualKg here, rather than totalDeductedQty, keeps that multiplication exact: a
+            // shortfall ingredient excluded above correctly lowers the resulting total cost instead
+            // of having the deducted ingredients' rate silently re-applied to the missing portion.
+            decimal blendedUnitCost = notification.ActualKg > 0
+                ? Math.Round(totalDeductedCost / notification.ActualKg, 2)
                 : formula.TotalCostPerKgBdt;
 
             entry.SetConsumptionCost(blendedUnitCost);
@@ -163,13 +190,31 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                         var allocCost = entry.TotalCostBdt ?? Math.Round(perHeadKg * unitCost, 2);
                         alloc.UpdateConsumption(perHeadKg, allocCost, unitCost);
                     }
-                    else
+                }
+
+                // Group-origin allocations share the entry's one totalKg/totalCost across several
+                // animals via ShareFactor. Rounding each row's share independently (the previous
+                // approach) does not guarantee the rows sum back to the entry's actual total --
+                // exactly the paisa-drift ProportionalSplit exists to prevent on first allocation
+                // (see FeedAllocationCalculator). Re-running it here on re-confirmation keeps that
+                // same "sums to the penny" guarantee instead of quietly losing it on this update path.
+                var groupAllocations = existingAllocations
+                    .Where(a => a.Origin != FeedAllocationOrigin.IndividualPlan)
+                    .ToList();
+
+                if (groupAllocations.Count > 0)
+                {
+                    var headCount = groupAllocations[0].HeadCountAtAllocation;
+                    var totalKg = perHeadKg * headCount;
+                    var totalCost = entry.TotalCostBdt ?? Math.Round(totalKg * unitCost, 2);
+                    var shareFactors = groupAllocations.Select(a => a.ShareFactor).ToArray();
+
+                    var kgShares = ProportionalSplit.Distribute(totalKg, shareFactors, decimals: 4);
+                    var costShares = ProportionalSplit.Distribute(totalCost, shareFactors, decimals: 2);
+
+                    for (var i = 0; i < groupAllocations.Count; i++)
                     {
-                        var totalKg = perHeadKg * alloc.HeadCountAtAllocation;
-                        var totalCost = entry.TotalCostBdt ?? Math.Round(totalKg * unitCost, 2);
-                        var allocatedKg = Math.Round(totalKg * alloc.ShareFactor, 4);
-                        var allocatedCost = Math.Round(totalCost * alloc.ShareFactor, 2);
-                        alloc.UpdateConsumption(allocatedKg, allocatedCost, unitCost);
+                        groupAllocations[i].UpdateConsumption(kgShares[i], costShares[i], unitCost);
                     }
                 }
 

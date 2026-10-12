@@ -1,4 +1,5 @@
 using System.Globalization;
+using Farm360.Application.Analytics.Queries;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Feeding.DTOs;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
@@ -8,16 +9,29 @@ namespace Farm360.Application.Feeding.Queries.Analytics;
 
 public sealed record GetFcrAnalyticsQuery(Guid FarmId, Guid? ShedId = null) : IRequest<FcrAnalyticsDto>;
 
+/// <summary>
+/// FCR = Total Feed Consumed (kg) / Total Weight Gained (kg) -- weight gain comes from actual
+/// WeightRecord entries (<see cref="IAnalyticsQueryService.GetTotalWeightGainKgAsync"/>), not a
+/// guess. A prior version estimated weight gain as feed/6.5, which made every FCR value exactly
+/// 6.5 regardless of the herd's real performance -- a fabricated number that happened to look
+/// plausible. This still doesn't account for a ShedId filter (weight gain is computed farm-wide,
+/// since an animal's shed membership at a point in time isn't tracked on WeightRecord itself) --
+/// shed-filtered FCR will overstate weight gain slightly if the farm has multiple sheds; flagged
+/// rather than silently approximated further.
+/// </summary>
 public sealed class GetFcrAnalyticsQueryHandler : IRequestHandler<GetFcrAnalyticsQuery, FcrAnalyticsDto>
 {
     private readonly IFeedConsumptionLogRepository _logRepository;
+    private readonly IAnalyticsQueryService _analyticsQueryService;
     private readonly ITenantService _tenantService;
 
     public GetFcrAnalyticsQueryHandler(
         IFeedConsumptionLogRepository logRepository,
+        IAnalyticsQueryService analyticsQueryService,
         ITenantService tenantService)
     {
         _logRepository = logRepository;
+        _analyticsQueryService = analyticsQueryService;
         _tenantService = tenantService;
     }
 
@@ -32,12 +46,21 @@ public sealed class GetFcrAnalyticsQueryHandler : IRequestHandler<GetFcrAnalytic
         decimal totalFeedConsumedKg = logs.Sum(l => l.NetConsumptionKg);
         decimal totalFeedCostBdt = logs.Sum(l => l.TotalCostBdt);
 
-        // Standard average weight gain calculation baseline for farm analytics
-        // FCR = Total Feed Consumed (kg) / Total Weight Gained (kg)
-        // If no weight log exists, baseline estimate ratio applies dynamically
-        decimal estimatedWeightGainKg = Math.Max(1.0m, totalFeedConsumedKg / 6.5m);
-        decimal fcrValue = Math.Round(totalFeedConsumedKg / Math.Max(1.0m, estimatedWeightGainKg), 2);
-        decimal costPerKgGain = Math.Round(totalFeedCostBdt / Math.Max(1.0m, estimatedWeightGainKg), 2);
+        decimal totalWeightGainKg = 0m;
+        if (logs.Count > 0)
+        {
+            var periodStart = logs.Min(l => l.LogDate);
+            var periodEnd = logs.Max(l => l.LogDate);
+            totalWeightGainKg = await _analyticsQueryService
+                .GetTotalWeightGainKgAsync(request.FarmId, periodStart, periodEnd, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        // No real gain to divide by (no weight records in the period, or the herd lost weight
+        // overall) -- FCR is undefined here, not "assume a textbook ratio". Report 0 rather than
+        // fabricate a number.
+        decimal fcrValue = totalWeightGainKg > 0m ? Math.Round(totalFeedConsumedKg / totalWeightGainKg, 2) : 0m;
+        decimal costPerKgGain = totalWeightGainKg > 0m ? Math.Round(totalFeedCostBdt / totalWeightGainKg, 2) : 0m;
 
         var monthlyGroups = logs
             .GroupBy(l => new { l.LogDate.Year, l.LogDate.Month })
@@ -49,8 +72,12 @@ public sealed class GetFcrAnalyticsQueryHandler : IRequestHandler<GetFcrAnalytic
         {
             string monthLabel = new DateTime(group.Key.Year, group.Key.Month, 1).ToString("MMM yyyy", CultureInfo.InvariantCulture);
             decimal mFeed = group.Sum(x => x.NetConsumptionKg);
-            decimal mGain = Math.Max(1.0m, mFeed / 6.5m);
-            decimal mFcr = Math.Round(mFeed / Math.Max(1.0m, mGain), 2);
+            var mStart = group.Min(x => x.LogDate);
+            var mEnd = group.Max(x => x.LogDate);
+            decimal mGain = await _analyticsQueryService
+                .GetTotalWeightGainKgAsync(request.FarmId, mStart, mEnd, cancellationToken)
+                .ConfigureAwait(false);
+            decimal mFcr = mGain > 0m ? Math.Round(mFeed / mGain, 2) : 0m;
             monthlyTrends.Add(new MonthlyFcrDataPointDto(monthLabel, mFeed, mGain, mFcr));
         }
 
@@ -59,7 +86,7 @@ public sealed class GetFcrAnalyticsQueryHandler : IRequestHandler<GetFcrAnalytic
             request.ShedId,
             null,
             totalFeedConsumedKg,
-            Math.Round(estimatedWeightGainKg, 2),
+            Math.Round(totalWeightGainKg, 2),
             fcrValue,
             totalFeedCostBdt,
             costPerKgGain,

@@ -37,6 +37,13 @@ public interface IOverheadAllocationService
         DateOnly to,
         bool isBackfill = false,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Call after a transaction is edited or deleted. If it was already split onto animals, its
+    /// old rows are removed, it is split again from its current values when it still qualifies,
+    /// and every affected ledger is recomputed. Returns false when it had never been split.
+    /// </summary>
+    Task<bool> ReallocateTransactionAsync(Guid transactionId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -102,7 +109,7 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
             .ConfigureAwait(false);
 
         var alreadyAllocated = await _allocations
-            .GetAllocatedTransactionIdsAsync(farmId, from, to, cancellationToken)
+            .GetAllocatedTransactionIdsAsync(candidates.Select(c => c.Id).ToList(), cancellationToken)
             .ConfigureAwait(false);
 
         var herd = await _animals
@@ -127,18 +134,15 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
                 continue;
             }
 
-            var bucket = AnimalOverheadAllocation.BucketFor(transaction.Category);
-            if (bucket is null)
+            // A direct cost the repository query let through: allocating it would double-count
+            // against the module that already attributed it.
+            if (!IsSharedCost(transaction))
             {
-                // A direct cost that the repository query let through. Allocating it would
-                // double-count against the module that already attributed it.
                 continue;
             }
 
-            var (periodStart, periodEnd) = CostPeriodFor(transaction, rules.OverheadCostPeriod);
-
-            var subjects = BuildSubjects(herd, periodStart, periodEnd);
-            if (subjects.Count == 0)
+            var rows = BuildRows(transaction, herd, rules, isBackfill);
+            if (rows.Count == 0)
             {
                 // The expense exists but no animal was on the farm to incur it. Leaving it
                 // unallocated is correct; spreading it over animals that were not there is not.
@@ -146,50 +150,8 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
                 continue;
             }
 
-            var shares = OverheadAllocationCalculator.Allocate(
-                subjects,
-                transaction.AmountBdt,
-                rules.OverheadAllocation,
-                rules.FallbackAnimalWeightKg);
-
-            var rows = new List<AnimalOverheadAllocation>(shares.Count);
-
-            foreach (var share in shares)
-            {
-                // A zero share means the animal was not present for any of the period; writing a
-                // zero row would only add noise to the audit trail.
-                if (share.AllocatedAmountBdt == 0m && share.HeadDays == 0m)
-                {
-                    continue;
-                }
-
-                rows.Add(AnimalOverheadAllocation.Create(
-                    tenantId: transaction.TenantId,
-                    animalId: share.AnimalId,
-                    farmId: farmId,
-                    sourceTransactionId: transaction.Id,
-                    category: transaction.Category,
-                    bucket: bucket.Value,
-                    periodStart: periodStart,
-                    periodEnd: periodEnd,
-                    allocatedAmountBdt: share.AllocatedAmountBdt,
-                    method: rules.OverheadAllocation,
-                    headDays: share.HeadDays,
-                    weightAtAllocationKg: share.WeightKg,
-                    shareFactor: share.ShareFactor,
-                    headCountAtAllocation: subjects.Count,
-                    isBackfilled: isBackfill));
-
-                touchedAnimals.Add(share.AnimalId);
-            }
-
-            if (rows.Count == 0)
-            {
-                skippedNoAnimals++;
-                continue;
-            }
-
             _allocations.AddRange(rows);
+            touchedAnimals.UnionWith(rows.Select(r => r.AnimalId));
             allocatedCount++;
             rowsWritten += rows.Count;
             amountAllocated += transaction.AmountBdt;
@@ -214,6 +176,113 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
             rowsWritten, amountAllocated, ledgersUpdated);
     }
 
+    public async Task<bool> ReallocateTransactionAsync(Guid transactionId, CancellationToken cancellationToken = default)
+    {
+        var existing = await _allocations
+            .GetBySourceTransactionAsync(transactionId, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (existing.Count == 0)
+        {
+            // Never split yet: the next run will simply pick up the expense's current values.
+            return false;
+        }
+
+        var touchedAnimals = existing.Select(r => r.AnimalId).ToHashSet();
+        var wasBackfill = existing[0].IsBackfilled;
+
+        _allocations.RemoveRange(existing);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        var transaction = await _transactions.GetByIdAsync(transactionId, cancellationToken).ConfigureAwait(false);
+        var rewritten = 0;
+
+        if (transaction is not null && !transaction.IsDeleted && IsSharedCost(transaction))
+        {
+            var rules = _rules.Current;
+            var (periodStart, periodEnd) = CostPeriodFor(transaction, rules.OverheadCostPeriod);
+            var herd = await _animals
+                .GetPresentDuringPeriodAsync(transaction.FarmId, periodStart, periodEnd, cancellationToken)
+                .ConfigureAwait(false);
+
+            var rows = BuildRows(transaction, herd, rules, wasBackfill);
+            if (rows.Count > 0)
+            {
+                _allocations.AddRange(rows);
+                touchedAnimals.UnionWith(rows.Select(r => r.AnimalId));
+                rewritten = rows.Count;
+                await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        await RefreshLedgersAsync(touchedAnimals, cancellationToken).ConfigureAwait(false);
+
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Transaction {TransactionId} changed after allocation: removed {Removed} allocation rows, wrote {Written}, refreshed {Animals} ledgers.",
+                transactionId, existing.Count, rewritten, touchedAnimals.Count);
+        }
+
+        return true;
+    }
+
+    /// <summary>Only unlinked, indirect costs are shared; anything else reaches a ledger directly.</summary>
+    private static bool IsSharedCost(FinancialTransaction transaction) =>
+        transaction.AnimalId is null && AnimalOverheadAllocation.BucketFor(transaction.Category) is not null;
+
+    private static List<AnimalOverheadAllocation> BuildRows(
+        FinancialTransaction transaction,
+        IReadOnlyList<Animal> herd,
+        FarmBusinessRules rules,
+        bool isBackfill)
+    {
+        var bucket = AnimalOverheadAllocation.BucketFor(transaction.Category)!.Value;
+        var (periodStart, periodEnd) = CostPeriodFor(transaction, rules.OverheadCostPeriod);
+
+        var subjects = BuildSubjects(herd, periodStart, periodEnd);
+        if (subjects.Count == 0)
+        {
+            return [];
+        }
+
+        var shares = OverheadAllocationCalculator.Allocate(
+            subjects,
+            transaction.AmountBdt,
+            rules.OverheadAllocation,
+            rules.FallbackAnimalWeightKg);
+
+        var rows = new List<AnimalOverheadAllocation>(shares.Count);
+        foreach (var share in shares)
+        {
+            // A zero share means the animal was not present for any of the period; writing a
+            // zero row would only add noise to the audit trail.
+            if (share.AllocatedAmountBdt == 0m && share.HeadDays == 0m)
+            {
+                continue;
+            }
+
+            rows.Add(AnimalOverheadAllocation.Create(
+                tenantId: transaction.TenantId,
+                animalId: share.AnimalId,
+                farmId: transaction.FarmId,
+                sourceTransactionId: transaction.Id,
+                category: transaction.Category,
+                bucket: bucket,
+                periodStart: periodStart,
+                periodEnd: periodEnd,
+                allocatedAmountBdt: share.AllocatedAmountBdt,
+                method: rules.OverheadAllocation,
+                headDays: share.HeadDays,
+                weightAtAllocationKg: share.WeightKg,
+                shareFactor: share.ShareFactor,
+                headCountAtAllocation: subjects.Count,
+                isBackfilled: isBackfill));
+        }
+
+        return rows;
+    }
+
     /// <summary>
     /// Recomputes the labour and overhead buckets of every affected ledger from the allocation
     /// table. Setting rather than adding is what makes a re-run harmless.
@@ -225,14 +294,22 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
             return 0;
         }
 
-        var totals = await _allocations
+        var totals = (await _allocations
             .GetTotalsForAnimalsAsync(animalIds, cancellationToken)
-            .ConfigureAwait(false);
+            .ConfigureAwait(false))
+            .ToDictionary(t => t.AnimalId);
 
         var updated = 0;
 
-        foreach (var total in totals)
+        // Iterate the requested animals, not the totals: the totals query returns nothing for an
+        // animal whose last allocation was just removed, and that ledger must drop back to zero
+        // rather than keep the stale amount.
+        foreach (var animalId in animalIds)
         {
+            var total = totals.TryGetValue(animalId, out var found)
+                ? found
+                : new AnimalOverheadTotals(animalId, 0m, 0m);
+
             var ledger = await _ledgers
                 .GetByAnimalIdAsync(total.AnimalId, cancellationToken)
                 .ConfigureAwait(false);

@@ -1,9 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Finance.Repositories;
+using Farm360.Application.Finance.Services;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
@@ -23,7 +25,7 @@ public sealed record UpdateFinancialTransactionCommand(
     Guid? AnimalId = null,
     Guid? BatchId = null,
     Guid? ShedId = null
-) : IRequest<FinancialTransactionDto>;
+) : IRequest<FinancialTransactionDto>, ITransactionalCommand;
 
 public sealed class UpdateFinancialTransactionCommandValidator : AbstractValidator<UpdateFinancialTransactionCommand>
 {
@@ -40,11 +42,16 @@ public sealed class UpdateFinancialTransactionCommandValidator : AbstractValidat
 public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<UpdateFinancialTransactionCommand, FinancialTransactionDto>
 {
     private readonly IFinancialTransactionRepository _repository;
+    private readonly IOverheadAllocationService _overheadAllocation;
     private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateFinancialTransactionCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork)
+    public UpdateFinancialTransactionCommandHandler(
+        IFinancialTransactionRepository repository,
+        IOverheadAllocationService overheadAllocation,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _overheadAllocation = overheadAllocation;
         _unitOfWork = unitOfWork;
     }
 
@@ -66,6 +73,10 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
 
         await _repository.UpdateAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // If this was a shared expense already split onto animals, re-split it from the new
+        // amount/date/category (or remove the split if it's no longer shared).
+        await _overheadAllocation.ReallocateTransactionAsync(transaction.Id, cancellationToken);
 
         return new FinancialTransactionDto(
             transaction.Id,

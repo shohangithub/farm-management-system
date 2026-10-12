@@ -149,14 +149,21 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
             if (matchingRules.Count == 0 && ruleSet.Lines.Count > 0)
             {
                 var maxWeight = ruleSet.Lines.Max(l => l.WeightFromKg);
-                if (currentWeight >= maxWeight)
+                var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
+                bool aboveRange = currentWeight >= maxWeight;
+
+                matchingRules = aboveRange
+                    ? ruleSet.Lines.Where(l => l.WeightFromKg == maxWeight).ToList()
+                    : ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
+
+                // This animal's weight falls outside every bracket this rule set defines -- it's
+                // getting the nearest bracket's ration, silently, rather than being flagged. A
+                // severely underweight animal risks over-feeding, an oversized one under-feeding.
+                if (_logger.IsEnabled(LogLevel.Warning))
                 {
-                    matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == maxWeight).ToList();
-                }
-                else
-                {
-                    var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
-                    matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
+                    _logger.LogWarning(
+                        "Plan {PlanId} (animal {AnimalId}): weight {CurrentWeight}kg is {Direction} every bracket in rule set {RuleSetId} (defined range {MinWeight}-{MaxWeight}kg). Falling back to the {FallbackBracket} bracket's ration -- verify this animal's weight and this rule set's coverage.",
+                        plan.Id, plan.AnimalId, currentWeight, aboveRange ? "above" : "below", ruleSet.Id, minWeight, maxWeight, aboveRange ? "highest" : "lowest");
                 }
             }
 

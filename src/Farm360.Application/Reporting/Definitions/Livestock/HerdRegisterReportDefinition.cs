@@ -80,9 +80,26 @@ public sealed class HerdRegisterReportDefinition : ReportDefinition<HerdRegister
 
         var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
 
-        var (items, _) = await _animals
-            .GetPagedAsync(1, 5000, farmId: farmId == Guid.Empty ? null : farmId, cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
+        // Fetches every page rather than just the first 5000 -- see HerdSummaryReportDefinition
+        // for why: a farm past that size would otherwise get a silently incomplete register with
+        // no indication rows were missing.
+        const int pageSize = 5000;
+        var items = new List<Farm360.Domain.Livestock.Animal>();
+        var pageNumber = 1;
+        while (true)
+        {
+            var (page, totalCount) = await _animals
+                .GetPagedAsync(pageNumber, pageSize, farmId: farmId == Guid.Empty ? null : farmId, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+
+            items.AddRange(page);
+            if (items.Count >= totalCount || page.Count == 0)
+            {
+                break;
+            }
+
+            pageNumber++;
+        }
 
         if (items.Count == 0)
         {

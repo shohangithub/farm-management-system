@@ -38,11 +38,10 @@ public sealed class SolveBreakEvenQueryHandler : IRequestHandler<SolveBreakEvenQ
                 result = FatteningProjectionCalculator.SolveForRequiredMeatPrice(domainInputs);
                 break;
             case BreakEvenTarget.MaximumPurchasePrice:
-                // TODO: Implement Maximum Purchase Price solving in the Domain calculator (Phase 1 or 2.1)
-                break;
             case BreakEvenTarget.RequiredAdg:
-                // TODO: Implement Required ADG solving in the Domain calculator (Phase 1 or 2.1)
-                break;
+                // Not implemented in the domain calculator yet. Returning 0 here used to read as a
+                // real answer ("maximum purchase price: 0 BDT"), so fail explicitly instead.
+                throw new InvalidOperationException($"Solving for '{request.Target}' is not supported yet.");
             default:
                 throw new ArgumentOutOfRangeException(nameof(request), "Unsupported target");
         }

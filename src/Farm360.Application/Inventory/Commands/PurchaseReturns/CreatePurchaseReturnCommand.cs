@@ -85,7 +85,17 @@ public sealed class CreatePurchaseReturnCommandHandler : IRequestHandler<CreateP
             if (reqItem.Quantity > inventoryItem.CurrentStock)
                 throw new InventoryDomainException($"Requested return quantity ({reqItem.Quantity} {inventoryItem.UnitOfMeasure}) exceeds current available stock ({inventoryItem.CurrentStock} {inventoryItem.UnitOfMeasure}) for '{inventoryItem.Name}'.");
 
-            purchaseReturn.AddItem(poItem.Id, poItem.InventoryItemId, reqItem.Quantity, poItem.UnitCostBdt);
+            // Reverses against the item's CURRENT weighted-average cost, not the original PO line
+            // price. Under weighted-average costing the specific units being returned are no
+            // longer distinguishable from the rest of the pooled stock -- crediting back at an old
+            // purchase price (rather than what the stock is valued at now) distorts the average
+            // for everything that remains, especially once other purchases/consumption have moved
+            // WAC since this PO was fulfilled.
+            var unitCostForReturn = inventoryItem.WeightedAverageCostBdt > 0
+                ? inventoryItem.WeightedAverageCostBdt
+                : poItem.UnitCostBdt;
+
+            purchaseReturn.AddItem(poItem.Id, poItem.InventoryItemId, reqItem.Quantity, unitCostForReturn);
         }
 
         await _returnRepository.AddAsync(purchaseReturn, cancellationToken);

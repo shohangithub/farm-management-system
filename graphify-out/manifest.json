@@ -1,8 +1,8 @@
 {
   ".claude/settings.json": {
     "mtime": 1786518296.0183864,
-    "ast_hash": "941e51a3665914f8f3028dec295b9f44",
-    "semantic_hash": "941e51a3665914f8f3028dec295b9f44"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "Farm360.slnx": {
     "mtime": 1783484615.1774485,
@@ -11,8 +11,8 @@
   },
   "global.json": {
     "mtime": 1784689090.8404906,
-    "ast_hash": "0d457fae923bba14f03f53d24da2056f",
-    "semantic_hash": "0d457fae923bba14f03f53d24da2056f"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "src/Farm360.Api/Authorization/PermissionHandler.cs": {
     "mtime": 1784098838.2473903,
@@ -45,14 +45,14 @@
     "semantic_hash": "be5d32aaa4805ad6b34448ec45d919c5"
   },
   "src/Farm360.Api/Endpoints/Auth/UsersEndpoints.cs": {
-    "mtime": 1784278235.671476,
-    "ast_hash": "036af9f535860717029d92dae1589d90",
-    "semantic_hash": "036af9f535860717029d92dae1589d90"
+    "mtime": 1791534479.232728,
+    "ast_hash": "7bccc5fa237626bc848814ff2524ed2a",
+    "semantic_hash": ""
   },
   "src/Farm360.Api/Endpoints/Dashboard/DashboardEndpoints.cs": {
-    "mtime": 1787202746.3961768,
-    "ast_hash": "dd4d5afd9b8a593d2f8932aaa3deef61",
-    "semantic_hash": "dd4d5afd9b8a593d2f8932aaa3deef61"
+    "mtime": 1791518903.7141385,
+    "ast_hash": "b3f49910941c275be91a05a99f264bd9",
+    "semantic_hash": ""
   },
   "src/Farm360.Api/Endpoints/Farms/FarmEndpoints.cs": {
     "mtime": 1785168826.1624396,
@@ -150,24 +150,24 @@
     "semantic_hash": "d8ebf3b7dbd6520fe5251e7796d41774"
   },
   "src/Farm360.Api/Program.cs": {
-    "mtime": 1790655540.332909,
-    "ast_hash": "ebff8e36b0b2d63b01d250bdffe17013",
-    "semantic_hash": "ebff8e36b0b2d63b01d250bdffe17013"
+    "mtime": 1791526471.636565,
+    "ast_hash": "7164b6e8f2fa33f494e1f6c984fd4362",
+    "semantic_hash": ""
   },
   "src/Farm360.Api/appsettings.Development.json": {
     "mtime": 1789927916.4232752,
-    "ast_hash": "193cb264ce3e598fd1eeedd5049eb7ee",
-    "semantic_hash": "193cb264ce3e598fd1eeedd5049eb7ee"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "src/Farm360.Api/appsettings.json": {
     "mtime": 1789806421.4676955,
-    "ast_hash": "27880b340c8b2449c3faec36522f3e83",
-    "semantic_hash": "27880b340c8b2449c3faec36522f3e83"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "src/Farm360.Api/dotnet-tools.json": {
     "mtime": 1787136386.2700384,
-    "ast_hash": "3ce4b9e9422f767652539c965af6196d",
-    "semantic_hash": "3ce4b9e9422f767652539c965af6196d"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Analytics/Queries/GetBreedingAnalyticsQuery.cs": {
     "mtime": 1786170065.0153005,
@@ -185,9 +185,9 @@
     "semantic_hash": "d43412fab7890425ab0d891ce92447a2"
   },
   "src/Farm360.Application/Analytics/Queries/IAnalyticsQueryService.cs": {
-    "mtime": 1787202496.810454,
-    "ast_hash": "5545a1f6a3b0f116431fbdca9f3f60e1",
-    "semantic_hash": "5545a1f6a3b0f116431fbdca9f3f60e1"
+    "mtime": 1791519048.6692343,
+    "ast_hash": "7ffd1b505c7b3a795c3d727d8ff9f2c4",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/AssemblyInfo.cs": {
     "mtime": 1784148704.1320198,
@@ -195,9 +195,9 @@
     "semantic_hash": "a49d9f3a8d57dfc7bde7e5678530394b"
   },
   "src/Farm360.Application/Auth/Queries/GetCurrentUserQuery.cs": {
-    "mtime": 1784713298.7123017,
-    "ast_hash": "a2d94874f3ca06624336306ed9a91a73",
-    "semantic_hash": "a2d94874f3ca06624336306ed9a91a73"
+    "mtime": 1791534467.8495228,
+    "ast_hash": "1f1ad81d789241c1cf90b525a14be270",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Common/Behaviors/CachingBehavior.cs": {
     "mtime": 1783485016.8028984,
@@ -295,9 +295,9 @@
     "semantic_hash": "64d4538a50c69326692b8fe702db1313"
   },
   "src/Farm360.Application/Farms/Commands/CreateFarmCommand.cs": {
-    "mtime": 1784987954.1665306,
-    "ast_hash": "2839e2f7903910d1b8cf52fde0fea7b1",
-    "semantic_hash": "2839e2f7903910d1b8cf52fde0fea7b1"
+    "mtime": 1791448343.3002322,
+    "ast_hash": "9fa25685cc50ae565e683d5e77af7879",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Farms/Commands/DeleteFarmCommand.cs": {
     "mtime": 1784282695.6018841,
@@ -480,14 +480,14 @@
     "semantic_hash": "2d54602dc3b5d6d988a1a2b3492bef04"
   },
   "src/Farm360.Application/Feeding/Commands/FeedingRuleSets/CreateFeedingRuleSetCommand.cs": {
-    "mtime": 1786539559.5184343,
-    "ast_hash": "604e3b9c983ad7a5fa78b2c2ec17fd01",
-    "semantic_hash": "604e3b9c983ad7a5fa78b2c2ec17fd01"
+    "mtime": 1791519690.2586105,
+    "ast_hash": "d2d175141d861f83fd0380c4b003fba3",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Feeding/Commands/FeedingRuleSets/UpdateFeedingRuleSetCommand.cs": {
-    "mtime": 1786543126.304322,
-    "ast_hash": "b48f85b0f0251d57d452269f870ce9e2",
-    "semantic_hash": "b48f85b0f0251d57d452269f870ce9e2"
+    "mtime": 1791519705.3486304,
+    "ast_hash": "d73f55a16b8568c07c2716851e071a08",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Feeding/Commands/FeedingSchedules/CreateFeedingScheduleCommand.cs": {
     "mtime": 1785238119.1512184,
@@ -520,9 +520,9 @@
     "semantic_hash": "eb5aa6cde148459905d0dce7e314e62a"
   },
   "src/Farm360.Application/Feeding/EventHandlers/DailyEntryConfirmedEventHandler.cs": {
-    "mtime": 1791263594.5367472,
-    "ast_hash": "38d9e6d9d4b29431f4dd8ccae66efe61",
-    "semantic_hash": "38d9e6d9d4b29431f4dd8ccae66efe61"
+    "mtime": 1791519641.3586,
+    "ast_hash": "6781f18051c169c54835c50a8d1603ca",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Feeding/EventHandlers/WeightRecordedEventHandler.cs": {
     "mtime": 1789902503.1096742,
@@ -535,9 +535,9 @@
     "semantic_hash": "6e8b1a42b57550e2449a5c4c7597d309"
   },
   "src/Farm360.Application/Feeding/Jobs/CreateDailyFeedingEntriesCommand.cs": {
-    "mtime": 1789902545.6011777,
-    "ast_hash": "db7bde4cbc3d0685cd603d86bf71a550",
-    "semantic_hash": "db7bde4cbc3d0685cd603d86bf71a550"
+    "mtime": 1791519444.3995445,
+    "ast_hash": "93f29de554cff7b16affb45519b9336f",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Feeding/Mappings/FeedingMappingExtensions.cs": {
     "mtime": 1787124636.456555,
@@ -545,9 +545,9 @@
     "semantic_hash": "79eefda58568e9fa49f0c959d2cfaba8"
   },
   "src/Farm360.Application/Feeding/Queries/Analytics/GetFcrAnalyticsQuery.cs": {
-    "mtime": 1785238176.8205287,
-    "ast_hash": "ce81e5fda02169610ccd19503d0fab69",
-    "semantic_hash": "ce81e5fda02169610ccd19503d0fab69"
+    "mtime": 1791519087.3911803,
+    "ast_hash": "8122a4ad9e04c40aec5315e3b94189f6",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Feeding/Queries/AnimalFeedingPlans/GetFeedingPlansQuery.cs": {
     "mtime": 1789274289.394906,
@@ -905,9 +905,9 @@
     "semantic_hash": "d5e8920cb2367fb509941cd20296d45b"
   },
   "src/Farm360.Application/Intelligence/Queries/SolveBreakEven/SolveBreakEvenQuery.cs": {
-    "mtime": 1787548639.352715,
-    "ast_hash": "b64c6ed7471fa0112a87007d491088a5",
-    "semantic_hash": "b64c6ed7471fa0112a87007d491088a5"
+    "mtime": 1791526464.203653,
+    "ast_hash": "b06453933895360581567be302f7cf3a",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Intelligence/Services/CostAndProfitEngine.cs": {
     "mtime": 1787548614.3984654,
@@ -1115,9 +1115,9 @@
     "semantic_hash": "7b8690e6df1536787b243d9036cd3258"
   },
   "src/Farm360.Application/Livestock/Commands/AnimalCommands.cs": {
-    "mtime": 1789902364.8715353,
-    "ast_hash": "9a5948d7b0c98750e822ca4cba666a06",
-    "semantic_hash": "9a5948d7b0c98750e822ca4cba666a06"
+    "mtime": 1791448381.0403557,
+    "ast_hash": "c24f7fb8b355bf7ed4d8423e677e1d2b",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/Commands/AssignAnimalsToBatchCommand.cs": {
     "mtime": 1785086680.1149693,
@@ -1910,9 +1910,9 @@
     "semantic_hash": "93bac0e9566d2fa0072ab3baf62cedf1"
   },
   "src/Farm360.Domain/Livestock/Animal.cs": {
-    "mtime": 1788942095.9781158,
-    "ast_hash": "6048c4551cc894080e1065b19bc8beeb",
-    "semantic_hash": "6048c4551cc894080e1065b19bc8beeb"
+    "mtime": 1791519467.0655358,
+    "ast_hash": "9037bd0fcdf327fd0fe58f8947cd17e1",
+    "semantic_hash": ""
   },
   "src/Farm360.Domain/Livestock/AnimalBatch.cs": {
     "mtime": 1785086089.8589404,
@@ -2155,9 +2155,9 @@
     "semantic_hash": "140fab741c715055f4388fbde903f818"
   },
   "src/Farm360.Domain/Tenancy/Tenant.cs": {
-    "mtime": 1789972299.6565163,
-    "ast_hash": "086d74464bdd61996945b657c8646565",
-    "semantic_hash": "086d74464bdd61996945b657c8646565"
+    "mtime": 1791448150.1964889,
+    "ast_hash": "9ff5939a427dadadc06034d64c30d2d6",
+    "semantic_hash": ""
   },
   "src/Farm360.Identity/Configuration/JwtConfiguration.cs": {
     "mtime": 1784192733.9088814,
@@ -2170,9 +2170,9 @@
     "semantic_hash": "5fa450b05b96d6ed7f0403763395745e"
   },
   "src/Farm360.Identity/DependencyInjection/IdentityServiceExtensions.cs": {
-    "mtime": 1784286381.449735,
-    "ast_hash": "7ccb8cf6c6e0e10f6c26a7285d4b40fd",
-    "semantic_hash": "7ccb8cf6c6e0e10f6c26a7285d4b40fd"
+    "mtime": 1791534451.8218567,
+    "ast_hash": "5044b7f30f4c1be7356f9e10aaafd1f1",
+    "semantic_hash": ""
   },
   "src/Farm360.Identity/Entities/ApplicationUser.cs": {
     "mtime": 1783484266.865665,
@@ -2205,9 +2205,9 @@
     "semantic_hash": "f1e4ba3a7f04a443018e160305f604e8"
   },
   "src/Farm360.Identity/Services/AuthService.cs": {
-    "mtime": 1790657004.859617,
-    "ast_hash": "cf3a44d7bf349a5dbd770b7b63c09ea9",
-    "semantic_hash": "cf3a44d7bf349a5dbd770b7b63c09ea9"
+    "mtime": 1791534452.9305177,
+    "ast_hash": "69049037fe2e57650e63cfbe048b56dd",
+    "semantic_hash": ""
   },
   "src/Farm360.Identity/Services/IdentityServices.cs": {
     "mtime": 1783484295.7259285,
@@ -2250,9 +2250,9 @@
     "semantic_hash": "632717c2fb7ff63280b4085f1248469a"
   },
   "src/Farm360.Infrastructure/DependencyInjection/InfrastructureServiceExtensions.cs": {
-    "mtime": 1789803604.057708,
-    "ast_hash": "f067a14202fabc2224347e17a4477c11",
-    "semantic_hash": "f067a14202fabc2224347e17a4477c11"
+    "mtime": 1791448976.402187,
+    "ast_hash": "2cd4964de928d54f562050de8146ab58",
+    "semantic_hash": ""
   },
   "src/Farm360.Infrastructure/Farm360.Infrastructure.csproj": {
     "mtime": 1789801115.9659173,
@@ -2635,9 +2635,9 @@
     "semantic_hash": "c498405e853c06a050269123669aa152"
   },
   "src/Farm360.Persistence/Migrations/ApplicationDbContextModelSnapshot.cs": {
-    "mtime": 1791343414.463152,
-    "ast_hash": "a271ad9bdef55bba0ff41f2e90d2a4b8",
-    "semantic_hash": "a271ad9bdef55bba0ff41f2e90d2a4b8"
+    "mtime": 1791536572.3838656,
+    "ast_hash": "3f46adfe7e31a9e95357e8cb9e2fe386",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Migrations/ApplicationDb/20260715203750_AddHealthModule.Designer.cs": {
     "mtime": 1784147871.0481324,
@@ -2805,9 +2805,9 @@
     "semantic_hash": "7d5ce379e2085ac7c3f98a8bef9b4219"
   },
   "src/Farm360.Persistence/Queries/AnalyticsQueryService.cs": {
-    "mtime": 1789101583.9256968,
-    "ast_hash": "a6edbff06688cf8b93bc188b050e2fea",
-    "semantic_hash": "a6edbff06688cf8b93bc188b050e2fea"
+    "mtime": 1791519060.6531506,
+    "ast_hash": "3fb5845b81af4ea081e799749e1baef3",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Repositories/Dashboard/ExecutiveDashboardRepository.cs": {
     "mtime": 1786087955.8099675,
@@ -3021,8 +3021,8 @@
   },
   "src/Farm360.Web/proxy.conf.json": {
     "mtime": 1785091538.8059595,
-    "ast_hash": "4aa4383f5ffb71e9412b7c21f87b5f92",
-    "semantic_hash": "4aa4383f5ffb71e9412b7c21f87b5f92"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/app.component.ts": {
     "mtime": 1785317716.3665428,
@@ -3075,9 +3075,9 @@
     "semantic_hash": "60c097afd705b4db16a800970486c972"
   },
   "src/Farm360.Web/src/app/core/services/auth.service.ts": {
-    "mtime": 1790657146.8832822,
-    "ast_hash": "33a5d14c8d71dd73f6afc21be78d0c85",
-    "semantic_hash": "33a5d14c8d71dd73f6afc21be78d0c85"
+    "mtime": 1791534567.1239328,
+    "ast_hash": "65f98fdea90f2108b37e5e8e591726bd",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/services/intelligence-signalr.service.ts": {
     "mtime": 1786096576.5528018,
@@ -3415,9 +3415,9 @@
     "semantic_hash": "7348ce6be0df302568a3f7656ce1f8bc"
   },
   "src/Farm360.Web/src/app/features/finance/models/finance.model.ts": {
-    "mtime": 1789137784.9974706,
-    "ast_hash": "a756b535d97e0ded009758011f6d62c0",
-    "semantic_hash": "a756b535d97e0ded009758011f6d62c0"
+    "mtime": 1791444464.366141,
+    "ast_hash": "f4727a9c6c4d384aae5ee52f43057c92",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/finance/pages/animal-cost-ledger/animal-cost-ledger.ts": {
     "mtime": 1789848435.7128603,
@@ -3430,9 +3430,9 @@
     "semantic_hash": "577a1c8bf4f8af151197b955a16a7700"
   },
   "src/Farm360.Web/src/app/features/finance/pages/finance-dashboard/finance-dashboard.ts": {
-    "mtime": 1788841005.216337,
-    "ast_hash": "356c3cc9f3e3d08edf1704811f68cf22",
-    "semantic_hash": "356c3cc9f3e3d08edf1704811f68cf22"
+    "mtime": 1791444532.3892329,
+    "ast_hash": "eed23d72fb561d172d52d7d566410bc5",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/finance/pages/finance-ledger/finance-ledger.component.ts": {
     "mtime": 1789280799.8625994,
@@ -3450,9 +3450,9 @@
     "semantic_hash": "677def6ad0aa6b81b7b1d39e9ead59a5"
   },
   "src/Farm360.Web/src/app/features/finance/services/finance.service.ts": {
-    "mtime": 1789137803.212476,
-    "ast_hash": "d9833edd702051bf05a67e2a00a7e045",
-    "semantic_hash": "d9833edd702051bf05a67e2a00a7e045"
+    "mtime": 1791444475.310421,
+    "ast_hash": "f6bb60cf8921edad162499498ce12bf2",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/components/dialogs/assign-protocol-dialog/assign-protocol-dialog.component.ts": {
     "mtime": 1785234005.103366,
@@ -3665,9 +3665,9 @@
     "semantic_hash": "e7d10fc65dd3595b4bfd2da5fa8dd153"
   },
   "src/Farm360.Web/src/app/features/intelligence/services/intelligence.service.ts": {
-    "mtime": 1787551279.5277927,
-    "ast_hash": "16c7dcf43d6c65c03cf92e5b192ec98a",
-    "semantic_hash": "16c7dcf43d6c65c03cf92e5b192ec98a"
+    "mtime": 1791534590.1405,
+    "ast_hash": "acd2c736d714b9ea386de7e71027b5e0",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/inventory/components/dialogs/create-item-dialog/create-item-dialog.component.ts": {
     "mtime": 1788847705.6352732,
@@ -3823,16 +3823,6 @@
     "mtime": 1785316839.9159248,
     "ast_hash": "7920532537c8d7c979693ea28609d0ae",
     "semantic_hash": "7920532537c8d7c979693ea28609d0ae"
-  },
-  "src/Farm360.Web/src/app/features/livestock/components/what-if-simulator/what-if-simulator.spec.ts": {
-    "mtime": 1787204342.825236,
-    "ast_hash": "e0a1ea27da0a8e5248ea219c21411491",
-    "semantic_hash": "e0a1ea27da0a8e5248ea219c21411491"
-  },
-  "src/Farm360.Web/src/app/features/livestock/components/what-if-simulator/what-if-simulator.ts": {
-    "mtime": 1787204381.9742675,
-    "ast_hash": "32547920d04db52f57caabd25c025eca",
-    "semantic_hash": "32547920d04db52f57caabd25c025eca"
   },
   "src/Farm360.Web/src/app/features/livestock/dialogs/animal-intelligence-dialog/animal-intelligence-dialog.component.ts": {
     "mtime": 1785347654.8631546,
@@ -4030,9 +4020,9 @@
     "semantic_hash": "5c71d568f22201cbf835c638c796515f"
   },
   "src/Farm360.Web/src/app/features/settings/profile/profile.component.ts": {
-    "mtime": 1787571281.4859242,
-    "ast_hash": "85cfaad22f03868bf5a168c506ed2bff",
-    "semantic_hash": "85cfaad22f03868bf5a168c506ed2bff"
+    "mtime": 1791534553.3716168,
+    "ast_hash": "075338c9ef630b804123edc0c16f6fd0",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/settings/settings-hub.component.ts": {
     "mtime": 1789972962.057931,
@@ -4189,20 +4179,15 @@
     "ast_hash": "16c96ca13beec778ed1faa44ce01698e",
     "semantic_hash": "16c96ca13beec778ed1faa44ce01698e"
   },
-  "tests/Farm360.Application.IntegrationTests/UnitTest1.cs": {
-    "mtime": 1783485268.1548476,
-    "ast_hash": "b5002a1e7f372d1d66515502ec1d9bff",
-    "semantic_hash": "b5002a1e7f372d1d66515502ec1d9bff"
-  },
   "tests/Farm360.Application.UnitTests/Farm360.Application.UnitTests.csproj": {
     "mtime": 1784148661.5702035,
     "ast_hash": "caa1dcee539fb6930b16f1062c1b964a",
     "semantic_hash": "caa1dcee539fb6930b16f1062c1b964a"
   },
   "tests/Farm360.Application.UnitTests/Farms/Commands/CreateFarmCommandHandlerTests.cs": {
-    "mtime": 1784174425.311946,
-    "ast_hash": "301f85666f1dcc80b0aa23b546279a07",
-    "semantic_hash": "301f85666f1dcc80b0aa23b546279a07"
+    "mtime": 1791449343.2485359,
+    "ast_hash": "78f68d7f4f3fc852b77fe53e1d5bff86",
+    "semantic_hash": ""
   },
   "tests/Farm360.Application.UnitTests/Farms/Pens/Commands/CreatePenCommandHandlerTests.cs": {
     "mtime": 1784178844.2879536,
@@ -4235,9 +4220,9 @@
     "semantic_hash": "b4241002ece25ffdbabf5827930ee46a"
   },
   "tests/Farm360.Application.UnitTests/Livestock/AnimalCommandHandlerTests.cs": {
-    "mtime": 1789902670.7855432,
-    "ast_hash": "f6dcc1e139b7574c74b225932e268110",
-    "semantic_hash": "f6dcc1e139b7574c74b225932e268110"
+    "mtime": 1791449377.0519693,
+    "ast_hash": "31581a9715fef0a554a840bbb5ea6f46",
+    "semantic_hash": ""
   },
   "tests/Farm360.Application.UnitTests/Livestock/AnimalCommandValidatorTests.cs": {
     "mtime": 1786342940.5301507,
@@ -4324,96 +4309,6 @@
     "ast_hash": "93659fee13540ec07cc59d9e85655781",
     "semantic_hash": "93659fee13540ec07cc59d9e85655781"
   },
-  "src/Farm360.Api/tempbin/BuildHost-netcore/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json": {
-    "mtime": 1747113854.0,
-    "ast_hash": "4aeb6f95af5ed129ed92229eb0c1b67f",
-    "semantic_hash": "4aeb6f95af5ed129ed92229eb0c1b67f"
-  },
-  "src/Farm360.Api/tempbin/BuildHost-netcore/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json": {
-    "mtime": 1747113854.0,
-    "ast_hash": "9876d8303d5b10b4c5f51cba117391ef",
-    "semantic_hash": "9876d8303d5b10b4c5f51cba117391ef"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Api.deps.json": {
-    "mtime": 1788360528.927521,
-    "ast_hash": "406ceb58340bf286181b22dc4d00031e",
-    "semantic_hash": "406ceb58340bf286181b22dc4d00031e"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Api.runtimeconfig.json": {
-    "mtime": 1788360528.98585,
-    "ast_hash": "37595336dae30b037bd95e5047b95825",
-    "semantic_hash": "37595336dae30b037bd95e5047b95825"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Api.staticwebassets.endpoints.json": {
-    "mtime": 1788345017.1396363,
-    "ast_hash": "333d0e0968933e60a9d39d4de091c0e6",
-    "semantic_hash": "333d0e0968933e60a9d39d4de091c0e6"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Api.staticwebassets.runtime.json": {
-    "mtime": 1788345017.1396363,
-    "ast_hash": "b64111cb2d58725545fa2b1fcf13871a",
-    "semantic_hash": "b64111cb2d58725545fa2b1fcf13871a"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Application.deps.json": {
-    "mtime": 1788360522.2397127,
-    "ast_hash": "2ec21ad07743f1459b49e74ad109a5ae",
-    "semantic_hash": "2ec21ad07743f1459b49e74ad109a5ae"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Contracts.deps.json": {
-    "mtime": 1788360520.715966,
-    "ast_hash": "52b68674cf67e2dc6db8422cb6af34c3",
-    "semantic_hash": "52b68674cf67e2dc6db8422cb6af34c3"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Domain.deps.json": {
-    "mtime": 1788360519.9338949,
-    "ast_hash": "089c1470fdfb1dd00822555d2b639403",
-    "semantic_hash": "089c1470fdfb1dd00822555d2b639403"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Identity.deps.json": {
-    "mtime": 1788360525.0693843,
-    "ast_hash": "4a44e32226baf9b4b5a88abe12deddb1",
-    "semantic_hash": "4a44e32226baf9b4b5a88abe12deddb1"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Identity.runtimeconfig.json": {
-    "mtime": 1788360525.1573198,
-    "ast_hash": "7b716426e1deaae021de466b00b9f803",
-    "semantic_hash": "7b716426e1deaae021de466b00b9f803"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Infrastructure.deps.json": {
-    "mtime": 1788360525.1573198,
-    "ast_hash": "5e589fa44553987ddffe52c59ee2bf5c",
-    "semantic_hash": "5e589fa44553987ddffe52c59ee2bf5c"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Persistence.deps.json": {
-    "mtime": 1788360525.9434788,
-    "ast_hash": "9cb5d40f42f5506f08acc4af3b05c02c",
-    "semantic_hash": "9cb5d40f42f5506f08acc4af3b05c02c"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Persistence.runtimeconfig.json": {
-    "mtime": 1788360526.0164278,
-    "ast_hash": "5e2fec3a44baa37dd9b51c63a09513c6",
-    "semantic_hash": "5e2fec3a44baa37dd9b51c63a09513c6"
-  },
-  "src/Farm360.Api/tempbin/Farm360.Shared.deps.json": {
-    "mtime": 1788360519.1872807,
-    "ast_hash": "0ac2e0be1e02182d2b8d3054b7f292f7",
-    "semantic_hash": "0ac2e0be1e02182d2b8d3054b7f292f7"
-  },
-  "src/Farm360.Api/tempbin/appsettings.Development.json": {
-    "mtime": 1784192732.966223,
-    "ast_hash": "bb24cc30621140b19cd4a0d7c916e2a6",
-    "semantic_hash": "bb24cc30621140b19cd4a0d7c916e2a6"
-  },
-  "src/Farm360.Api/tempbin/appsettings.json": {
-    "mtime": 1787815931.12508,
-    "ast_hash": "88e3d97cce90a6f3fb529a26a116f5a9",
-    "semantic_hash": "88e3d97cce90a6f3fb529a26a116f5a9"
-  },
-  "src/Farm360.Api/tempbin/dotnet-tools.json": {
-    "mtime": 1787136386.2700384,
-    "ast_hash": "3ce4b9e9422f767652539c965af6196d",
-    "semantic_hash": "3ce4b9e9422f767652539c965af6196d"
-  },
   "src/Farm360.Application/Feeding/Queries/DailyFeedingEntries/GetAnimalFeedingSummaryQuery.cs": {
     "mtime": 1788763558.807564,
     "ast_hash": "3dd59fc86e14a3b964b9a2060bc8315f",
@@ -4425,14 +4320,14 @@
     "semantic_hash": "eb60674cddb757de682b32338c4803fc"
   },
   "src/Farm360.Application/Finance/Commands/DeleteFinancialTransactionCommand.cs": {
-    "mtime": 1788840386.0016117,
-    "ast_hash": "2406cf0b3397d2d75625ee927a2292e2",
-    "semantic_hash": "2406cf0b3397d2d75625ee927a2292e2"
+    "mtime": 1791536447.6160517,
+    "ast_hash": "821ce10d514ee182def432bc19d53eeb",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Finance/Commands/UpdateFinancialTransactionCommand.cs": {
-    "mtime": 1788840380.7638247,
-    "ast_hash": "e7f84adff0b9a2b6755835b7d3cbead9",
-    "semantic_hash": "e7f84adff0b9a2b6755835b7d3cbead9"
+    "mtime": 1791536451.8699942,
+    "ast_hash": "fe4212dc33e8797c3694bfc4af9d2388",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Finance/EventHandlers/Integration/AnimalAcquisitionPriceUpdatedEventHandler.cs": {
     "mtime": 1788942102.0927114,
@@ -4565,9 +4460,9 @@
     "semantic_hash": "31ee1a6c091df34ed14d318ef2e539d3"
   },
   "src/Farm360.Application/Finance/Commands/CreateInvestorCommand.cs": {
-    "mtime": 1788936107.5558057,
-    "ast_hash": "52601cbb23d15b0ce9dc1c1937ce6fde",
-    "semantic_hash": "52601cbb23d15b0ce9dc1c1937ce6fde"
+    "mtime": 1791519279.4857585,
+    "ast_hash": "55e30a37bd82a485ec5c31703def07ea",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Finance/Commands/PurchaseSharesCommand.cs": {
     "mtime": 1789137702.050269,
@@ -4595,9 +4490,9 @@
     "semantic_hash": "0da39889104b18cfa5c8ba7528453ee4"
   },
   "src/Farm360.Application/Finance/Commands/UpdateInvestorCommand.cs": {
-    "mtime": 1788936114.649069,
-    "ast_hash": "556ff551a56bbd3a6313bf8709c11b7e",
-    "semantic_hash": "556ff551a56bbd3a6313bf8709c11b7e"
+    "mtime": 1791519295.9747567,
+    "ast_hash": "0f1a647be186db2e4a7baf60b561295a",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Finance/Commands/UpdateShareValuationCommand.cs": {
     "mtime": 1789137654.6862981,
@@ -4610,9 +4505,9 @@
     "semantic_hash": "92ceae92640d4db9c828d90bfcfef960"
   },
   "src/Farm360.Application/Finance/Queries/GetBalanceSheetQuery.cs": {
-    "mtime": 1789056848.3634872,
-    "ast_hash": "afcec259ff4797e7963e2fe9c6c80a8d",
-    "semantic_hash": "afcec259ff4797e7963e2fe9c6c80a8d"
+    "mtime": 1791519171.4947162,
+    "ast_hash": "215fecc59a1f62dc1f184b3bc40c8d71",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Finance/Queries/GetInvestorByIdQuery.cs": {
     "mtime": 1788936147.085293,
@@ -4620,9 +4515,9 @@
     "semantic_hash": "b2eb94bfb1db5a9323100ff8a32384b9"
   },
   "src/Farm360.Application/Finance/Queries/GetInvestorPnLQuery.cs": {
-    "mtime": 1788938416.0727603,
-    "ast_hash": "163e037239be6c1f22777d678886dbb5",
-    "semantic_hash": "163e037239be6c1f22777d678886dbb5"
+    "mtime": 1791519252.031507,
+    "ast_hash": "71a5146e8d9e47ec65c1e7396fdd0dac",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Finance/Queries/GetInvestorsQuery.cs": {
     "mtime": 1788936140.6933124,
@@ -4645,9 +4540,9 @@
     "semantic_hash": "a40859460a49746ef73a51c50de8fdd5"
   },
   "src/Farm360.Application/Finance/Queries/GetTrialBalanceQuery.cs": {
-    "mtime": 1789056836.460753,
-    "ast_hash": "f80a3641f0b68d01daf0c123718fe63d",
-    "semantic_hash": "f80a3641f0b68d01daf0c123718fe63d"
+    "mtime": 1791519197.31085,
+    "ast_hash": "a3a51b3bcc052239a6e6adaa8b171cc7",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/MedicalTreatments/UpdateMedicalTreatmentCommand.cs": {
     "mtime": 1789061072.8197298,
@@ -5340,8 +5235,8 @@
     "semantic_hash": ""
   },
   "docs/32_Farm360_Reporting_Module_Implementation_Plan.md": {
-    "mtime": 1789806454.9555902,
-    "ast_hash": "1291a294c87b4e1f20cc26a75b8713be",
+    "mtime": 1789841992.3827686,
+    "ast_hash": "024a1d563a49ef0845f6fe86447b8d68",
     "semantic_hash": ""
   },
   "docs/3_Farm360_AI_Software_Architecture_Document.md": {
@@ -5665,9 +5560,9 @@
     "semantic_hash": "f8da2b195ab915023abd013d5673bb07"
   },
   "src/Farm360.Web/src/app/features/finance/pages/finance-dashboard/finance-dashboard.html": {
-    "mtime": 1789138040.0161045,
-    "ast_hash": "1d72a00c21d899b1f5423c657ef0140e",
-    "semantic_hash": "1d72a00c21d899b1f5423c657ef0140e"
+    "mtime": 1791444521.3577828,
+    "ast_hash": "c3d807c400a1323daaac7ff3d26710b0",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/finance/pages/finance-ledger/finance-ledger.component.html": {
     "mtime": 1789280769.0085833,
@@ -5809,11 +5704,6 @@
     "ast_hash": "0a108382a11c9a6a92efd38b7d44ea84",
     "semantic_hash": "0a108382a11c9a6a92efd38b7d44ea84"
   },
-  "src/Farm360.Web/src/app/features/livestock/components/what-if-simulator/what-if-simulator.html": {
-    "mtime": 1787204342.8297484,
-    "ast_hash": "76637d5b7a38d6605042551c2f2e3a7c",
-    "semantic_hash": "76637d5b7a38d6605042551c2f2e3a7c"
-  },
   "src/Farm360.Web/src/app/features/livestock/dialogs/assign-batch-dialog/assign-batch-dialog.component.html": {
     "mtime": 1785123072.091448,
     "ast_hash": "9f0e445a59dac6b2886a27c963cf75cd",
@@ -5940,9 +5830,9 @@
     "semantic_hash": "7cf41e29a318df6ae258533ed7ee70b0"
   },
   "src/Farm360.Web/src/app/features/settings/profile/profile.component.html": {
-    "mtime": 1787568382.7325075,
-    "ast_hash": "94f242555a37de59e22cff337b53169b",
-    "semantic_hash": "94f242555a37de59e22cff337b53169b"
+    "mtime": 1791534565.429175,
+    "ast_hash": "f741e93c98b6ac861230558fc4d03a73",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/shared/components/breadcrumb/breadcrumb.component.html": {
     "mtime": 1784182848.901464,
@@ -6120,9 +6010,9 @@
     "semantic_hash": "ae502624945d2ec89e7932f1efefeb61"
   },
   "src/Farm360.Web/src/app/features/reports/components/report-parameter-panel/report-parameter-panel.component.ts": {
-    "mtime": 1791259162.0366695,
-    "ast_hash": "79da8f39280ca2939c15d4e1f2157106",
-    "semantic_hash": "79da8f39280ca2939c15d4e1f2157106"
+    "mtime": 1791433578.336229,
+    "ast_hash": "84108fd6fb6bc17db201993753d6cf66",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/reports/models/report.models.ts": {
     "mtime": 1791259068.1793697,
@@ -6155,14 +6045,14 @@
     "semantic_hash": "17780910ce8f8520236f16e587a75d24"
   },
   "src/Farm360.Application/Finance/Services/OverheadAllocationService.cs": {
-    "mtime": 1789805802.5317528,
-    "ast_hash": "defaadb14c213947439138115c34eb8b",
-    "semantic_hash": "defaadb14c213947439138115c34eb8b"
+    "mtime": 1791536540.3504128,
+    "ast_hash": "752621ab5237a54f1a4d9afed7307e30",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Reporting/Definitions/Livestock/AnimalGrowthReportDefinition.cs": {
-    "mtime": 1789845900.439757,
-    "ast_hash": "3f1546ff202416ab03e97afd18811e37",
-    "semantic_hash": "3f1546ff202416ab03e97afd18811e37"
+    "mtime": 1791519503.550714,
+    "ast_hash": "5eb99ebff1cbc3c803050b9ba55b291b",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Reporting/Definitions/Livestock/HerdPerformanceReportDefinition.cs": {
     "mtime": 1789806311.528205,
@@ -6185,14 +6075,14 @@
     "semantic_hash": "b9567e96bf2e7e5ccb72aba22dc0e3a8"
   },
   "src/Farm360.Domain/Finance/Interfaces/IAnimalOverheadAllocationRepository.cs": {
-    "mtime": 1789805641.9678173,
-    "ast_hash": "0d352b6a4450f4bf3432909fc7840742",
-    "semantic_hash": "0d352b6a4450f4bf3432909fc7840742"
+    "mtime": 1791536340.8689725,
+    "ast_hash": "b6329f7430f682ec2312adb396f52793",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Configurations/Finance/AnimalOverheadAllocationConfiguration.cs": {
-    "mtime": 1789805773.9137058,
-    "ast_hash": "a0d16c07afe0dbb612c341fb8982fa4e",
-    "semantic_hash": "a0d16c07afe0dbb612c341fb8982fa4e"
+    "mtime": 1791536353.8412778,
+    "ast_hash": "21a26e802537f435ebd9eedbde37fa26",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Migrations/20260919081754_AddAnimalOverheadAllocations.Designer.cs": {
     "mtime": 1789805874.927054,
@@ -6205,14 +6095,14 @@
     "semantic_hash": "2106aa597ab10d711ba8f5c576c77164"
   },
   "src/Farm360.Persistence/Repositories/Finance/AnimalOverheadAllocationRepository.cs": {
-    "mtime": 1789805761.9837148,
-    "ast_hash": "61e94f0b90da1f749518461e9c31330d",
-    "semantic_hash": "61e94f0b90da1f749518461e9c31330d"
+    "mtime": 1791536352.695182,
+    "ast_hash": "ec6917f6bdf589cda9ae08190ed3f864",
+    "semantic_hash": ""
   },
   "tests/Farm360.Application.UnitTests/Finance/OverheadAllocationServiceTests.cs": {
-    "mtime": 1789806006.6090693,
-    "ast_hash": "b389c62ff53007edc2415f733db042b4",
-    "semantic_hash": "b389c62ff53007edc2415f733db042b4"
+    "mtime": 1791536494.4863117,
+    "ast_hash": "e5fbe3f46f8a09f3b281062d14b483d0",
+    "semantic_hash": ""
   },
   "tests/Farm360.Domain.UnitTests/Finance/OverheadAllocationCalculatorTests.cs": {
     "mtime": 1789805905.0335321,
@@ -6270,19 +6160,19 @@
     "semantic_hash": "3fcc7495a332673ab8e83efd386548b0"
   },
   "src/Farm360.Application/Reporting/Definitions/Livestock/AnimalSummaryReportDefinition.cs": {
-    "mtime": 1789897009.8381512,
-    "ast_hash": "974a2abbe4472c08c523dabe6fe81199",
-    "semantic_hash": "974a2abbe4472c08c523dabe6fe81199"
+    "mtime": 1791519514.355206,
+    "ast_hash": "210639516bde8e2556136b4dbd1e4a03",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Reporting/Definitions/Livestock/HerdRegisterReportDefinition.cs": {
-    "mtime": 1789847942.648907,
-    "ast_hash": "fe1fe6f3d48654d1417ed402bbf68199",
-    "semantic_hash": "fe1fe6f3d48654d1417ed402bbf68199"
+    "mtime": 1791519553.474359,
+    "ast_hash": "f6c03fe123b9362ee620203678680937",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Reporting/Definitions/Livestock/HerdSummaryReportDefinition.cs": {
-    "mtime": 1789896759.2686505,
-    "ast_hash": "74e941ccab8753417da08206311ed427",
-    "semantic_hash": "74e941ccab8753417da08206311ed427"
+    "mtime": 1791519540.0632937,
+    "ast_hash": "9a9d76c71ff6e2e230f7dc115ee42d5b",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/reports/components/report-entity-picker/report-entity-picker.component.ts": {
     "mtime": 1791259190.3950179,
@@ -6293,5 +6183,315 @@
     "mtime": 1789840809.9926865,
     "ast_hash": "2b2a271ef6c6f29479df9bca5424d761",
     "semantic_hash": "2b2a271ef6c6f29479df9bca5424d761"
+  },
+  "src/Farm360.Api/Endpoints/Subscriptions/SubscriptionEndpoints.cs": {
+    "mtime": 1791449080.6228182,
+    "ast_hash": "f49ad67a13c4d5d324c784b36f710d4e",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Common/Interfaces/IPaymentGatewayService.cs": {
+    "mtime": 1791448927.3259215,
+    "ast_hash": "7ffacbebce87721458c9318fef707166",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Finance/EventHandlers/Integration/PurchaseReturnCompletedFinanceHandler.cs": {
+    "mtime": 1791343670.9034913,
+    "ast_hash": "bba5e38e32cb099079f318edbf7e7f89",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Finance/Jobs/AllocateOverheadAcrossTenantsCommand.cs": {
+    "mtime": 1791447729.739233,
+    "ast_hash": "89fa579fe080dd644352206a5349084f",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/Commands/PurchaseReturns/CancelPurchaseReturnCommand.cs": {
+    "mtime": 1791343518.1502416,
+    "ast_hash": "4854e5badeec0ce8a886e5ba1e4e4001",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/Commands/PurchaseReturns/CompletePurchaseReturnCommand.cs": {
+    "mtime": 1791343658.1599085,
+    "ast_hash": "d5bc6e25e9136f67a0202de6a9b9bbe5",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/Commands/PurchaseReturns/CreatePurchaseReturnCommand.cs": {
+    "mtime": 1791519755.6949418,
+    "ast_hash": "b629f5fe655569e1e348b4e964313f7a",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/Commands/PurchaseReturns/CreatePurchaseReturnCommandValidator.cs": {
+    "mtime": 1791343498.6852117,
+    "ast_hash": "fab2ec6f689591c6d78972d0867a68d7",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/DTOs/PurchaseReturnDtos.cs": {
+    "mtime": 1791343476.0476246,
+    "ast_hash": "9c8cc65f7a5a7c072616e84e8bb9265d",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/EventHandlers/PurchaseReturnCompletedNotification.cs": {
+    "mtime": 1791343640.357754,
+    "ast_hash": "100d7faa910820309756cfc3543372cb",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/Queries/PurchaseReturns/GetPurchaseReturnByIdQuery.cs": {
+    "mtime": 1791343546.8334372,
+    "ast_hash": "9ffd54a7520b268141460bbf4ccbf502",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/Queries/PurchaseReturns/GetPurchaseReturnsQuery.cs": {
+    "mtime": 1791343538.5404656,
+    "ast_hash": "c25ad4f95aba9e0ed63ed32513a07531",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Inventory/Queries/PurchaseReturns/GetReturnablePoItemsQuery.cs": {
+    "mtime": 1791343557.2027094,
+    "ast_hash": "1dfa9371b500bb72b10ab2b845055d87",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Reporting/Definitions/Feeding/AnimalWiseConsumptionReportDefinition.cs": {
+    "mtime": 1790746264.6706848,
+    "ast_hash": "6be2369c9b6d8db4f7a3682b3431bdbc",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Reporting/Definitions/Inventory/DailyInventoryConsumptionReportDefinition.cs": {
+    "mtime": 1791258362.5289905,
+    "ast_hash": "ab06407fbd397275980cc0f4a321746a",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Reporting/Definitions/Inventory/ItemWiseConsumptionReportDefinition.cs": {
+    "mtime": 1791260056.6818514,
+    "ast_hash": "338dea55c5064170b1949bedfb10c1f1",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Commands/AdminExtendTrialCommand.cs": {
+    "mtime": 1789972585.8159878,
+    "ast_hash": "559d7b25e6ddbbb18d172d9589897ee4",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Commands/FinalizeSubscriptionCheckoutCommand.cs": {
+    "mtime": 1791534804.6210563,
+    "ast_hash": "f0e996de815e0068534899e4f3f4917f",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Commands/InitiateSubscriptionCheckoutCommand.cs": {
+    "mtime": 1791449031.6883545,
+    "ast_hash": "e30c885387f54e9305add6f95c56467c",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Commands/ReviewPendingSubscriptionCommands.cs": {
+    "mtime": 1791448653.139653,
+    "ast_hash": "5e72c46c6742b7a325884d7900b703f5",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Commands/StartTenantTrialCommand.cs": {
+    "mtime": 1789972566.3403568,
+    "ast_hash": "c0c449a70cf2edd093f213997cd7b9d9",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Commands/SubscribeTenantCommand.cs": {
+    "mtime": 1791448631.2421484,
+    "ast_hash": "276ab90dc75589a33e387d2acee6b3ae",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/DTOs/SubscriptionDtos.cs": {
+    "mtime": 1789972485.7077072,
+    "ast_hash": "5a9f519ad55a958c64c7962d38db0b0b",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Queries/GetCurrentTenantSubscriptionQuery.cs": {
+    "mtime": 1789972547.1242416,
+    "ast_hash": "b26b10ed50bebd8ed2c8f52b443ab592",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Queries/GetPendingSubscriptionsQuery.cs": {
+    "mtime": 1791448670.465663,
+    "ast_hash": "7ed5657b7cf8a05f2aa65371dbef121f",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Queries/GetSubscriptionHistoryQuery.cs": {
+    "mtime": 1789972555.9891672,
+    "ast_hash": "e346fc0715ab1ea79172e24adb1aa319",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Subscriptions/Queries/GetSubscriptionPlansQuery.cs": {
+    "mtime": 1791448204.6138422,
+    "ast_hash": "b51139f33327caabf2b9aa356afcf419",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Tenants/Jobs/RefreshTenantSubscriptionStatusesCommand.cs": {
+    "mtime": 1791448425.969833,
+    "ast_hash": "3daaf593f1319e752e12d40389f42b28",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Inventory/Events/PurchaseReturnCompletedEvent.cs": {
+    "mtime": 1791343352.1512291,
+    "ast_hash": "43c54aeef1319527eea51eff113e3451",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Inventory/Interfaces/Repositories/IPurchaseReturnRepository.cs": {
+    "mtime": 1791343233.2814238,
+    "ast_hash": "42b1d7fcc49e6ba2eeed30ba04d3c614",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Inventory/PurchaseReturn.cs": {
+    "mtime": 1791343219.8413167,
+    "ast_hash": "64509144e0c1b7c5f6296f3b78596e60",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Inventory/PurchaseReturnItem.cs": {
+    "mtime": 1791343206.5340655,
+    "ast_hash": "a0726616a860011ace9c2fbbfd36a325",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Tenancy/Repositories/ITenantSubscriptionRepository.cs": {
+    "mtime": 1791448999.3643303,
+    "ast_hash": "b0928fcf9f0ea3169bba4d992a21c9e7",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Tenancy/SubscriptionPlanCatalog.cs": {
+    "mtime": 1791448220.596347,
+    "ast_hash": "b08a497afbefd07617146f50dbe763ab",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Tenancy/TenantSubscriptionRecord.cs": {
+    "mtime": 1791448547.356957,
+    "ast_hash": "a48ce3ecc906a0041832a9a19fe82b2f",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Infrastructure/Payments/SslCommerzGatewayService.cs": {
+    "mtime": 1791526446.671149,
+    "ast_hash": "d074248c34ae750e1745d0cd001a0747",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Infrastructure/Payments/SslCommerzOptions.cs": {
+    "mtime": 1791448937.423123,
+    "ast_hash": "93cd474d9a570ae8bb75c1b133ef2058",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Configurations/Inventory/PurchaseReturnConfiguration.cs": {
+    "mtime": 1791343260.833177,
+    "ast_hash": "7e49d8f1d1c3109d9278a4788307c269",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Configurations/TenantSubscriptionRecordConfiguration.cs": {
+    "mtime": 1789972344.0287702,
+    "ast_hash": "35f5761d574f1e8d3ea6b8a386b54140",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20260921063422_AddSubscriptionAndTrialFeatures.Designer.cs": {
+    "mtime": 1789972462.294325,
+    "ast_hash": "884f60ac6c6e3c6b12c765ea11b3fe9a",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20260921063422_AddSubscriptionAndTrialFeatures.cs": {
+    "mtime": 1789972462.2821648,
+    "ast_hash": "dcc1983d3535708262600c8df096a394",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261007032334_AddPurchaseReturns.Designer.cs": {
+    "mtime": 1791343414.4616454,
+    "ast_hash": "3f46ff8e7e397c125c4c1bad05e7cc28",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261007032334_AddPurchaseReturns.cs": {
+    "mtime": 1791343414.459643,
+    "ast_hash": "b9a02612da25fdc547a767f8343872d8",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Repositories/Inventory/PurchaseReturnRepository.cs": {
+    "mtime": 1791343286.7406836,
+    "ast_hash": "51c7e8453dc6b1c77fa735d734b7a6f5",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Repositories/Tenancy/TenantSubscriptionRepository.cs": {
+    "mtime": 1791449005.8322508,
+    "ast_hash": "5075f1809ced579e9e08f8e91c8c750e",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/core/models/subscription.model.ts": {
+    "mtime": 1791449140.888136,
+    "ast_hash": "9de9f6ba2b23a8f7170da39a03d6dbcf",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/core/services/subscription.service.ts": {
+    "mtime": 1791449152.69735,
+    "ast_hash": "bf9e5c5f7ad0f1e7e0f95c9b6edb64ba",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/finance/components/allocate-overhead-dialog/allocate-overhead-dialog.ts": {
+    "mtime": 1791444511.5460217,
+    "ast_hash": "70e9eae2b0e4b58b48711d4b9d56bc44",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/inventory/components/dialogs/create-purchase-return-dialog/create-purchase-return-dialog.component.ts": {
+    "mtime": 1791343947.6946993,
+    "ast_hash": "d919561debf837daa7a96f734a4a6498",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/inventory/pages/purchase-return-list/purchase-return-list.component.ts": {
+    "mtime": 1791344248.7025137,
+    "ast_hash": "c2943b1ce6068b60a3aa2451ba3bf722",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/settings/billing/billing.component.ts": {
+    "mtime": 1791449234.974857,
+    "ast_hash": "74e9967f919a2bdfb25c3afc9832a504",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/settings/billing/subscribe-dialog.component.ts": {
+    "mtime": 1791449201.3455875,
+    "ast_hash": "a4946636885e90e94d2aef037a5712df",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.UnitTests/Finance/PurchaseReturnCompletedFinanceHandlerTests.cs": {
+    "mtime": 1791344365.5812843,
+    "ast_hash": "837b97af735b3baee4bece53663b5691",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.UnitTests/Inventory/PurchaseReturns/PurchaseReturnCommandHandlerTests.cs": {
+    "mtime": 1791344352.6439426,
+    "ast_hash": "26140700c27f2a1382b2b0cf940392b6",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.UnitTests/Subscriptions/SubscriptionCommandHandlerTests.cs": {
+    "mtime": 1791449303.9888062,
+    "ast_hash": "e7d3f0ed839f6f8e50f36b83a9cff6e6",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Auth/Commands/UpdateMyProfileCommand.cs": {
+    "mtime": 1791534468.972706,
+    "ast_hash": "197dde4cf161562fada8fd3a69169c2d",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Common/Interfaces/IUserProfileService.cs": {
+    "mtime": 1791534442.4105525,
+    "ast_hash": "d050f9e8c67cc48876353435aa087882",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Identity/Services/UserProfileService.cs": {
+    "mtime": 1791534444.3876257,
+    "ast_hash": "a3054f04f6edd0fba28914e147728e09",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.IntegrationTests/Infrastructure/SqlServerFixture.cs": {
+    "mtime": 1791534842.4318264,
+    "ast_hash": "e93e007bba72ac20f65b88206c23263c",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.IntegrationTests/Persistence/PersistenceIntegrationTests.cs": {
+    "mtime": 1791536586.2435904,
+    "ast_hash": "a1f671a0e5606be309ebac21994c142c",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261009090252_FilterOverheadAllocationUniqueIndexToLiveRows.Designer.cs": {
+    "mtime": 1791536572.3828633,
+    "ast_hash": "2a86a1c10b21df29738e7d49669dcfb2",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261009090252_FilterOverheadAllocationUniqueIndexToLiveRows.cs": {
+    "mtime": 1791536572.3818686,
+    "ast_hash": "1d3e4484c908f43596fb7eaaca75b546",
+    "semantic_hash": ""
   }
 }

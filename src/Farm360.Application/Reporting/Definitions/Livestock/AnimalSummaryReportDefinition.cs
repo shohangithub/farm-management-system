@@ -199,7 +199,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             new("3. Growth & Weight KPIs", "Current / Latest Weight", $"{latestWeight:N1} kg", animal.LatestWeightDate.HasValue ? $"Recorded on {animal.LatestWeightDate.Value:dd-MMM-yyyy}" : "No weighing record"),
             new("3. Growth & Weight KPIs", "Initial Weight", $"{initialWeight:N1} kg", weightRecords.Count > 0 ? $"First recorded {weightRecords[0].RecordedDate:dd-MMM-yyyy}" : "Baseline"),
             new("3. Growth & Weight KPIs", "Lifetime Net Gain", $"{totalGainKg:N1} kg", $"Across {weightRecords.Count} weigh-in sessions"),
-            new("3. Growth & Weight KPIs", "Average Daily Gain (ADG)", $"{adg:N3} kg/day", "Growth rate efficiency"),
+            new("3. Growth & Weight KPIs", "Lifetime Average Daily Gain (ADG)", $"{adg:N3} kg/day", "Oldest-to-newest weigh-in, not bounded to this report's period -- see the Animal Growth report for period-specific ADG"),
             new("3. Growth & Weight KPIs", "Body Condition Score (BCS)", animal.LatestBcs.HasValue ? $"{animal.LatestBcs.Value:N1} / 5.0" : "Not evaluated", "Muscling & fat coverage assessment"),
 
             // ── Section 4: Cost & Financial Ledger ────────────────────────────

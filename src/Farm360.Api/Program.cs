@@ -313,6 +313,12 @@ try
 
     await app.RunAsync();
 }
+catch (HostAbortedException)
+{
+    // EF Core design-time tools (dotnet ef migrations ...) stop the host this way on purpose
+    // once they have the DbContext -- not a crash, so don't log it as one.
+    throw;
+}
 catch (Exception ex)
 {
     Log.Fatal(ex, "Farm360 API terminated unexpectedly.");

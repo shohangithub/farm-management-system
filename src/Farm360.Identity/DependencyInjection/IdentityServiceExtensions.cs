@@ -114,6 +114,7 @@ public static class IdentityServiceExtensions
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
         
         services.AddTransient<Farm360.Identity.Seed.IdentitySeeder>();
 

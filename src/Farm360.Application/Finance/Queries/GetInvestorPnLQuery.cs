@@ -67,6 +67,21 @@ public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, I
 
         var totalActiveCapital = activeInvestors.Sum(i => i.CurrentCapitalBdt);
 
+        // Agreed percentages and capital-based shares must never co-exist on the SAME 100% pool --
+        // an investor with no explicit agreement should only draw from whatever percentage the
+        // agreed investors haven't already claimed, split by capital among the other non-agreed
+        // investors. Previously every non-agreed investor's share was computed against TOTAL
+        // active capital regardless of what agreed investors already took, so e.g. one investor
+        // agreed at 80% plus another defaulting to 50% of total capital allocated 130% of the
+        // farm's distributable profit -- more than existed.
+        decimal totalAgreedPct = activeInvestors
+            .Where(i => i.AgreedProfitSharePercentage.HasValue)
+            .Sum(i => i.AgreedProfitSharePercentage!.Value);
+        decimal remainingPctForNonAgreed = Math.Max(0m, 100m - totalAgreedPct);
+        decimal totalNonAgreedCapital = activeInvestors
+            .Where(i => !i.AgreedProfitSharePercentage.HasValue)
+            .Sum(i => i.CurrentCapitalBdt);
+
         var investorShares = new List<InvestorShareDto>();
         decimal totalDistributedProfit = 0m;
         decimal totalUndistributedProfit = 0m;
@@ -77,7 +92,19 @@ public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, I
                 ? Math.Round((inv.CurrentCapitalBdt / totalActiveCapital) * 100m, 2)
                 : 0m;
 
-            decimal effectiveSharePct = inv.AgreedProfitSharePercentage ?? capitalSharePct;
+            decimal effectiveSharePct;
+            if (inv.AgreedProfitSharePercentage.HasValue)
+            {
+                effectiveSharePct = inv.AgreedProfitSharePercentage.Value;
+            }
+            else if (inv.IsActive && totalNonAgreedCapital > 0)
+            {
+                effectiveSharePct = Math.Round((inv.CurrentCapitalBdt / totalNonAgreedCapital) * remainingPctForNonAgreed, 2);
+            }
+            else
+            {
+                effectiveSharePct = 0m;
+            }
 
             // Profit sharing is based on distributable profit (after charity deduction)
             decimal allocatedProfit = Math.Round(distributableProfit * (effectiveSharePct / 100m), 2);

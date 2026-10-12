@@ -99,7 +99,10 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
         ReportColumn<HerdSummaryReportRow>.Text("age", new LocalizedText("Age", "বয়স"), r => r.Age, 16f, false),
         ReportColumn<HerdSummaryReportRow>.Text("location", new LocalizedText("Location", "অবস্থান"), r => r.Location, 2.0f),
         ReportColumn<HerdSummaryReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.LatestWeightKg, 1, 20f),
-        ReportColumn<HerdSummaryReportRow>.Number("adg", new LocalizedText("ADG (kg/d)", "দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 20f),
+        // Lifetime ADG (oldest-to-newest weight record, not bounded to any reporting period) --
+        // labeled distinctly from AnimalGrowthReportDefinition's period-bounded ADG column so the
+        // two are never mistaken for the same figure when they legitimately differ.
+        ReportColumn<HerdSummaryReportRow>.Number("adg", new LocalizedText("Lifetime ADG (kg/d)", "আজীবন দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 20f),
         ReportColumn<HerdSummaryReportRow>.Money("purchaseCost", new LocalizedText("Purchase (৳)", "ক্রয় মূল্য"), r => r.PurchaseCostBdt, 0, 22f, ReportAggregate.Sum),
         ReportColumn<HerdSummaryReportRow>.Money("feedCost", new LocalizedText("Feed (৳)", "খাদ্য খরচ"), r => r.FeedCostBdt, 0, 22f, ReportAggregate.Sum),
         ReportColumn<HerdSummaryReportRow>.Money("vetCost", new LocalizedText("Vet / Care (৳)", "চিকিৎসা"), r => r.VetCostBdt, 0, 20f, ReportAggregate.Sum),
@@ -134,14 +137,33 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
             marketPricePerKg = 400m;
         }
 
-        var (animals, _) = await _animals
-            .GetPagedAsync(
-                pageNumber: 1,
-                pageSize: 5000,
-                farmId: farmId == Guid.Empty ? null : farmId,
-                batchId: batchId,
-                cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
+        // Fetches every page, not just the first 5000: a farm with more animals than that used to
+        // have its grand totals (purchase/feed/vet/total cost, projected value) silently computed
+        // over only the first 5000 while LOOKING complete -- the real guard against an oversized
+        // report is ReportExecutionService's 200k-row cap, which throws instead of truncating
+        // quietly, so this just needs to hand it the true, complete dataset.
+        const int pageSize = 5000;
+        var animals = new List<Farm360.Domain.Livestock.Animal>();
+        var pageNumber = 1;
+        while (true)
+        {
+            var (page, totalCount) = await _animals
+                .GetPagedAsync(
+                    pageNumber: pageNumber,
+                    pageSize: pageSize,
+                    farmId: farmId == Guid.Empty ? null : farmId,
+                    batchId: batchId,
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+
+            animals.AddRange(page);
+            if (animals.Count >= totalCount || page.Count == 0)
+            {
+                break;
+            }
+
+            pageNumber++;
+        }
 
         if (animals.Count == 0)
         {

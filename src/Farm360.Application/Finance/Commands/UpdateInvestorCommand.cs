@@ -7,6 +7,7 @@ using Farm360.Application.Common.Interfaces;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Interfaces;
+using FluentValidation.Results;
 using MediatR;
 
 namespace Farm360.Application.Finance.Commands;
@@ -40,6 +41,21 @@ public class UpdateInvestorCommandHandler : IRequestHandler<UpdateInvestorComman
 
         if (investor.TenantId != request.TenantId)
             throw new NotFoundException(nameof(Investor), request.Id);
+
+        if (request.AgreedProfitSharePercentage is { } newPct)
+        {
+            var otherInvestors = await _repository.GetByFarmIdAsync(investor.FarmId, cancellationToken: cancellationToken);
+            var otherAgreedPct = otherInvestors
+                .Where(i => i.Id != investor.Id && i.IsActive && i.AgreedProfitSharePercentage.HasValue)
+                .Sum(i => i.AgreedProfitSharePercentage!.Value);
+
+            if (otherAgreedPct + newPct > 100m)
+            {
+                throw new ValidationException(new[] { new ValidationFailure(
+                    nameof(request.AgreedProfitSharePercentage),
+                    $"This farm's other investors already have {otherAgreedPct:N2}% agreed. Setting {newPct:N2}% would exceed 100%.") });
+            }
+        }
 
         investor.UpdateDetails(
             request.Name,

@@ -89,7 +89,10 @@ internal sealed class FinalizeSubscriptionCheckoutCommandHandler : IRequestHandl
         tenant.Subscribe(record.Tier, record.BillingCycle, record.ExpiresAtUtc);
         _tenantRepository.Update(tenant);
 
-        record.MarkCompleted(request.ValId);
+        // Keep tran_id as the payment reference. Overwriting it with val_id (as this used to)
+        // broke the second callback's lookup by tran_id and lost the link back to the
+        // SSLCommerz transaction in the invoice history.
+        record.MarkCompleted();
         _subscriptionRepository.Update(record);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

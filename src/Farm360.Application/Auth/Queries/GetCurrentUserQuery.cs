@@ -9,13 +9,17 @@ public record UserProfileDto(
     string Role,
     string Tier,
     bool IsSystemUser,
-    IReadOnlyList<string> Permissions);
+    IReadOnlyList<string> Permissions,
+    string? FullName,
+    string? Email,
+    string? Phone);
 
 public record GetCurrentUserQuery() : IRequest<UserProfileDto>;
 
 internal sealed class GetCurrentUserQueryHandler(
     ICurrentUserService currentUserService,
-    IPermissionService permissionService) : IRequestHandler<GetCurrentUserQuery, UserProfileDto>
+    IPermissionService permissionService,
+    IUserProfileService userProfileService) : IRequestHandler<GetCurrentUserQuery, UserProfileDto>
 {
     public async Task<UserProfileDto> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)
     {
@@ -28,6 +32,7 @@ internal sealed class GetCurrentUserQueryHandler(
         var tenantId = currentUserService.TenantId ?? Guid.Empty;
 
         var permissions = await permissionService.GetPermissionsAsync(userId, tenantId, cancellationToken);
+        var details = await userProfileService.GetAsync(userId, cancellationToken);
 
         return new UserProfileDto(
             Id: userId,
@@ -35,7 +40,10 @@ internal sealed class GetCurrentUserQueryHandler(
             Role: currentUserService.Role ?? "Viewer",
             Tier: currentUserService.SubscriptionTier ?? "Starter",
             IsSystemUser: currentUserService.IsSystemUser,
-            Permissions: permissions
+            Permissions: permissions,
+            FullName: details.FullName,
+            Email: details.Email,
+            Phone: details.PhoneNumber
         );
     }
 }

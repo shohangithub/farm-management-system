@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Farm360.Application.Common.Interfaces;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -16,20 +17,44 @@ public sealed class SslCommerzGatewayService : IPaymentGatewayService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly SslCommerzOptions _options;
+    private readonly IHostEnvironment _environment;
     private readonly ILogger<SslCommerzGatewayService> _logger;
 
     public SslCommerzGatewayService(
         IHttpClientFactory httpClientFactory,
         IOptions<SslCommerzOptions> options,
+        IHostEnvironment environment,
         ILogger<SslCommerzGatewayService> logger)
     {
         _httpClientFactory = httpClientFactory;
         _options = options.Value;
+        _environment = environment;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Sandbox credentials ship as the default and are publicly documented, along with test
+    /// cards that always "succeed". If production ever ran with them, anyone could pay with a
+    /// test card, pass sandbox validation, and get a real subscription activated for free.
+    /// </summary>
+    private bool SandboxBlockedInProduction()
+    {
+        if (_options.IsSandbox && _environment.IsProduction())
+        {
+            _logger.LogError("SSLCommerz is in sandbox mode in Production -- online checkout is disabled until live credentials are configured (SslCommerz:IsSandbox=false).");
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<PaymentSessionResult> InitiateSessionAsync(PaymentSessionRequest request, CancellationToken cancellationToken = default)
     {
+        if (SandboxBlockedInProduction())
+        {
+            return new PaymentSessionResult(false, null, "Online payment is not available right now. Please use a manual payment method.");
+        }
+
         using var client = _httpClientFactory.CreateClient();
 
         var form = new Dictionary<string, string>
@@ -91,6 +116,11 @@ public sealed class SslCommerzGatewayService : IPaymentGatewayService
 
     public async Task<PaymentValidationResult> ValidateTransactionAsync(string validationId, CancellationToken cancellationToken = default)
     {
+        if (SandboxBlockedInProduction())
+        {
+            return new PaymentValidationResult(false, null, null, null, "SandboxBlockedInProduction");
+        }
+
         using var client = _httpClientFactory.CreateClient();
 
         var url = $"{_options.GatewayBaseUrl}/validator/api/validationserverAPI.php" +

@@ -2,12 +2,14 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Finance.Repositories;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
 using Farm360.Domain.Finance.Interfaces;
+using FluentValidation.Results;
 using MediatR;
 
 namespace Farm360.Application.Finance.Commands;
@@ -44,6 +46,21 @@ public class CreateInvestorCommandHandler : IRequestHandler<CreateInvestorComman
 
     public async Task<InvestorDto> Handle(CreateInvestorCommand request, CancellationToken cancellationToken)
     {
+        if (request.AgreedProfitSharePercentage is { } newPct)
+        {
+            var existingInvestors = await _investorRepository.GetByFarmIdAsync(request.FarmId, cancellationToken: cancellationToken);
+            var otherAgreedPct = existingInvestors
+                .Where(i => i.IsActive && i.AgreedProfitSharePercentage.HasValue)
+                .Sum(i => i.AgreedProfitSharePercentage!.Value);
+
+            if (otherAgreedPct + newPct > 100m)
+            {
+                throw new ValidationException(new[] { new ValidationFailure(
+                    nameof(request.AgreedProfitSharePercentage),
+                    $"This farm's investors already have {otherAgreedPct:N2}% agreed. Adding {newPct:N2}% would exceed 100%.") });
+            }
+        }
+
         var investor = Investor.Create(
             request.TenantId,
             request.FarmId,

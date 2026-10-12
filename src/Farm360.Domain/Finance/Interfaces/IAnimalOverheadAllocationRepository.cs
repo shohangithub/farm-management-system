@@ -12,14 +12,22 @@ public interface IAnimalOverheadAllocationRepository
 {
     void AddRange(IEnumerable<AnimalOverheadAllocation> allocations);
 
+    /// <summary>Removes allocation rows (soft-deleted by the audit interceptor, so history is kept).</summary>
+    void RemoveRange(IEnumerable<AnimalOverheadAllocation> allocations);
+
     /// <summary>
-    /// Source transaction ids already allocated, so a re-run skips them.
+    /// Which of these source transactions already have live allocation rows, so a re-run skips
+    /// them. Matched on the transaction itself, never on a date range: a transaction whose date
+    /// moved to another month must still be recognised as allocated.
     /// The first of two defences against double-posting; the unique index is the second.
     /// </summary>
     Task<HashSet<Guid>> GetAllocatedTransactionIdsAsync(
-        Guid farmId,
-        DateOnly from,
-        DateOnly to,
+        IReadOnlyCollection<Guid> transactionIds,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Every live allocation row produced by one source transaction, tracked for removal.</summary>
+    Task<IReadOnlyList<AnimalOverheadAllocation>> GetBySourceTransactionAsync(
+        Guid transactionId,
         CancellationToken cancellationToken = default);
 
     /// <summary>

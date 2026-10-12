@@ -55,6 +55,23 @@ public sealed class UpdateFeedingRuleSetCommandValidator : AbstractValidator<Upd
         {
             line.RuleFor(l => l.QuantityValue).GreaterThanOrEqualTo(0);
         });
+
+        // See CreateFeedingRuleSetCommandValidator: the same quantity field means a kg/day amount
+        // or a body-weight percentage depending on PlanType, with nothing to distinguish which.
+        // Every line is resubmitted on update (ClearLines + re-add below), so this also catches a
+        // PlanType changed here without the line values being rescaled to match.
+        RuleForEach(x => x.RuleLines)
+            .Must((command, line) =>
+            {
+                if (command.PlanType != FeedingPlanType.WeightPercentage)
+                {
+                    return true;
+                }
+
+                var effectiveValue = line.QuantityValue > 0 ? line.QuantityValue : line.ConcentrateKgPerDay;
+                return effectiveValue > 0 && effectiveValue <= 100;
+            })
+            .WithMessage("With Plan Type 'Weight Percentage', each line's quantity is a PERCENT of body weight (e.g. 3 for 3%), not an absolute kg/day amount -- it must be between 0 and 100.");
     }
 }
 

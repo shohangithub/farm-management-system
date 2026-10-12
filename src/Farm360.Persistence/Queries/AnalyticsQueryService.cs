@@ -395,22 +395,56 @@ public class AnalyticsQueryService : IAnalyticsQueryService
         return new VaccinationComplianceDto(completed, due, overdue);
     }
 
-    public async Task<IReadOnlyList<FarmSummaryCardDto>> GetFarmSummaryCardsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<FarmSummaryCardDto>> GetFarmSummaryCardsAsync(Guid farmId, CancellationToken cancellationToken = default)
     {
-        var farms = await _context.Farms.AsNoTracking().ToListAsync(cancellationToken);
-        var cards = new List<FarmSummaryCardDto>();
-
-        foreach (var farm in farms)
+        // Scoped to the single farm named in the route -- this endpoint previously built a card
+        // for EVERY farm in the tenant regardless of which farm's dashboard asked, leaking other
+        // farms' animal counts and revenue onto a page that looks farm-specific.
+        var farm = await _context.Farms.AsNoTracking().FirstOrDefaultAsync(f => f.Id == farmId, cancellationToken);
+        if (farm is null)
         {
-            var animalCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id, cancellationToken);
-            var sickCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id && a.Status == AnimalStatus.Quarantined, cancellationToken);
-            var monthlyRevenue = await _context.FinancialTransactions.AsNoTracking()
-                .Where(t => t.FarmId == farm.Id && t.Type == TransactionType.Income && t.TransactionDate.Month == DateTime.UtcNow.Month && t.TransactionDate.Year == DateTime.UtcNow.Year)
-                .SumAsync(t => t.AmountBdt, cancellationToken);
-
-            cards.Add(new FarmSummaryCardDto(farm.Id, farm.FarmName, animalCount, sickCount, monthlyRevenue));
+            return [];
         }
-        return cards;
+
+        var animalCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id, cancellationToken);
+        var sickCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id && a.Status == AnimalStatus.Quarantined, cancellationToken);
+        var monthlyRevenue = await _context.FinancialTransactions.AsNoTracking()
+            .Where(t => t.FarmId == farm.Id && t.Type == TransactionType.Income && t.TransactionDate.Month == DateTime.UtcNow.Month && t.TransactionDate.Year == DateTime.UtcNow.Year)
+            .SumAsync(t => t.AmountBdt, cancellationToken);
+
+        return [new FarmSummaryCardDto(farm.Id, farm.FarmName, animalCount, sickCount, monthlyRevenue)];
+    }
+
+    public async Task<decimal> GetTotalWeightGainKgAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        var animalIds = await _context.Animals.AsNoTracking()
+            .Where(a => a.FarmId == farmId)
+            .Select(a => a.Id)
+            .ToListAsync(cancellationToken);
+
+        if (animalIds.Count == 0)
+        {
+            return 0m;
+        }
+
+        var records = await _context.WeightRecords.AsNoTracking()
+            .Where(w => animalIds.Contains(w.AnimalId) && w.RecordedDate >= from && w.RecordedDate <= to)
+            .OrderBy(w => w.RecordedDate)
+            .Select(w => new { w.AnimalId, w.RecordedDate, WeightKg = w.Weight.WeightKg })
+            .ToListAsync(cancellationToken);
+
+        decimal totalGain = 0m;
+        foreach (var group in records.GroupBy(r => r.AnimalId))
+        {
+            var first = group.First();
+            var last = group.Last();
+            if (last.RecordedDate > first.RecordedDate)
+            {
+                totalGain += Math.Max(0m, last.WeightKg - first.WeightKg);
+            }
+        }
+
+        return totalGain;
     }
 
     public async Task<IReadOnlyList<ActivityFeedItemDto>> GetRecentActivityFeedAsync(Guid? farmId, int count = 20, CancellationToken cancellationToken = default)

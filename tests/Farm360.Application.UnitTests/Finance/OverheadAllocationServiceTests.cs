@@ -78,17 +78,35 @@ public class OverheadAllocationServiceTests
             }
         }
 
-        public Task<HashSet<Guid>> GetAllocatedTransactionIdsAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default) =>
+        // Removed rows are soft-deleted in the database and hidden by the query filter; for the
+        // fake, dropping them is the same thing.
+        public void RemoveRange(IEnumerable<AnimalOverheadAllocation> allocations)
+        {
+            foreach (var row in allocations.ToList())
+            {
+                Rows.Remove(row);
+            }
+        }
+
+        public Task<HashSet<Guid>> GetAllocatedTransactionIdsAsync(IReadOnlyCollection<Guid> transactionIds, CancellationToken ct = default) =>
             Task.FromResult(Rows
-                .Where(r => r.FarmId == farmId && r.PeriodEnd >= from && r.PeriodStart <= to)
+                .Where(r => transactionIds.Contains(r.SourceTransactionId))
                 .Select(r => r.SourceTransactionId)
                 .ToHashSet());
+
+        public Task<IReadOnlyList<AnimalOverheadAllocation>> GetBySourceTransactionAsync(Guid transactionId, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<AnimalOverheadAllocation>>(
+                Rows.Where(r => r.SourceTransactionId == transactionId).ToList());
 
         public Task<AnimalOverheadTotals> GetTotalsForAnimalAsync(Guid animalId, CancellationToken ct = default) =>
             Task.FromResult(Totals(animalId));
 
+        // Like the real GROUP BY query: an animal with no rows is simply absent, not a zero row.
         public Task<IReadOnlyList<AnimalOverheadTotals>> GetTotalsForAnimalsAsync(IEnumerable<Guid> animalIds, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<AnimalOverheadTotals>>(animalIds.Distinct().Select(Totals).ToList());
+            Task.FromResult<IReadOnlyList<AnimalOverheadTotals>>(animalIds.Distinct()
+                .Where(id => Rows.Any(r => r.AnimalId == id))
+                .Select(Totals)
+                .ToList());
 
         public Task<IReadOnlyList<AnimalOverheadAllocation>> GetByAnimalAsync(Guid animalId, DateOnly from, DateOnly to, CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<AnimalOverheadAllocation>>(
@@ -396,5 +414,133 @@ public class OverheadAllocationServiceTests
     {
         var act = async () => await _sut.AllocateAsync(FarmId, To, From);
         await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    // ── Editing or deleting an expense after it was split ─────────────────────
+
+    private FinancialTransaction AllocatedLabour(decimal amount, params Animal[] herd)
+    {
+        var expense = Expense(TransactionCategory.LaborCost, amount, new DateOnly(2026, 4, 5));
+        _transactions.GetByIdAsync(expense.Id, Arg.Any<CancellationToken>()).Returns(expense);
+        Herd(herd);
+        Expenses(expense);
+        return expense;
+    }
+
+    private static void Edit(FinancialTransaction expense, decimal? amount = null, DateOnly? date = null,
+        TransactionCategory? category = null, Guid? animalId = null) =>
+        expense.UpdateDetails(
+            category ?? expense.Category,
+            amount ?? expense.AmountBdt,
+            date?.ToDateTime(TimeOnly.MinValue) ?? expense.TransactionDate,
+            expense.Description, expense.Notes, animalId, null, null);
+
+    [Fact]
+    public async Task EditingTheAmountAfterAllocation_ResplitsTheNewAmount()
+    {
+        var a = AnimalPresent("B-001", new DateOnly(2025, 1, 1));
+        var b = AnimalPresent("B-002", new DateOnly(2025, 1, 1));
+        var ledgerA = LedgerFor(a);
+        var ledgerB = LedgerFor(b);
+        var expense = AllocatedLabour(12_000m, a, b);
+        await _sut.AllocateAsync(FarmId, From, To);
+
+        Edit(expense, amount: 10_000m);
+        var resplit = await _sut.ReallocateTransactionAsync(expense.Id);
+
+        resplit.Should().BeTrue();
+        ledgerA.TotalLaborCostBdt.Should().Be(5_000m);
+        ledgerB.TotalLaborCostBdt.Should().Be(5_000m);
+        _allocations.Rows.Sum(r => r.AllocatedAmountBdt).Should().Be(10_000m, "the old 12,000 split must be gone");
+    }
+
+    [Fact]
+    public async Task DeletingAfterAllocation_RemovesTheCostFromEveryLedger()
+    {
+        var a = AnimalPresent("B-001", new DateOnly(2025, 1, 1));
+        var ledgerA = LedgerFor(a);
+        var expense = AllocatedLabour(12_000m, a);
+        await _sut.AllocateAsync(FarmId, From, To);
+        ledgerA.TotalLaborCostBdt.Should().Be(12_000m);
+
+        expense.SoftDelete(Guid.NewGuid());
+        await _sut.ReallocateTransactionAsync(expense.Id);
+
+        _allocations.Rows.Should().BeEmpty();
+        ledgerA.TotalLaborCostBdt.Should().Be(0m, "a deleted expense must not stay on the animal's ledger");
+    }
+
+    [Fact]
+    public async Task LinkingTheExpenseToOneAnimalAfterAllocation_RemovesTheSharedSplit()
+    {
+        // Once linked, the whole amount is that animal's direct cost; keeping the shared split
+        // as well would count the same money twice.
+        var a = AnimalPresent("B-001", new DateOnly(2025, 1, 1));
+        var b = AnimalPresent("B-002", new DateOnly(2025, 1, 1));
+        var ledgerB = LedgerFor(b);
+        LedgerFor(a);
+        var expense = AllocatedLabour(12_000m, a, b);
+        await _sut.AllocateAsync(FarmId, From, To);
+
+        Edit(expense, animalId: a.Id);
+        await _sut.ReallocateTransactionAsync(expense.Id);
+
+        _allocations.Rows.Should().BeEmpty();
+        ledgerB.TotalLaborCostBdt.Should().Be(0m);
+    }
+
+    [Fact]
+    public async Task ChangingToADirectCategoryAfterAllocation_RemovesTheSharedSplit()
+    {
+        var a = AnimalPresent("B-001", new DateOnly(2025, 1, 1));
+        var ledgerA = LedgerFor(a);
+        var expense = AllocatedLabour(12_000m, a);
+        await _sut.AllocateAsync(FarmId, From, To);
+
+        Edit(expense, category: TransactionCategory.FeedCost);
+        await _sut.ReallocateTransactionAsync(expense.Id);
+
+        _allocations.Rows.Should().BeEmpty();
+        ledgerA.TotalLaborCostBdt.Should().Be(0m);
+    }
+
+    [Fact]
+    public async Task MovingTheDateToAnotherMonth_ResplitsOverThatMonthsHerd_AndALaterRunDoesNotCrash()
+    {
+        var aprilOnly = AnimalPresent("B-001", new DateOnly(2025, 1, 1), sold: new DateOnly(2026, 4, 30));
+        var mayArrival = AnimalPresent("B-002", new DateOnly(2026, 5, 1));
+        var aprilLedger = LedgerFor(aprilOnly);
+        var mayLedger = LedgerFor(mayArrival);
+        var expense = AllocatedLabour(9_000m, aprilOnly);
+        await _sut.AllocateAsync(FarmId, From, To);
+
+        var mayFrom = new DateOnly(2026, 5, 1);
+        var mayTo = new DateOnly(2026, 5, 31);
+        _animals.GetPresentDuringPeriodAsync(FarmId, mayFrom, mayTo, Arg.Any<CancellationToken>())
+            .Returns([mayArrival]);
+        _transactions.GetUnattributedIndirectCostsAsync(FarmId, mayFrom, mayTo, Arg.Any<CancellationToken>())
+            .Returns([expense]);
+
+        Edit(expense, date: new DateOnly(2026, 5, 10));
+        await _sut.ReallocateTransactionAsync(expense.Id);
+
+        aprilLedger.TotalLaborCostBdt.Should().Be(0m, "April no longer carries this expense");
+        mayLedger.TotalLaborCostBdt.Should().Be(9_000m);
+
+        // The May run must recognise the expense as already allocated, not try to post it again.
+        var mayRun = await _sut.AllocateAsync(FarmId, mayFrom, mayTo);
+        mayRun.TransactionsSkippedAlreadyAllocated.Should().Be(1);
+        _allocations.Rows.Sum(r => r.AllocatedAmountBdt).Should().Be(9_000m);
+    }
+
+    [Fact]
+    public async Task EditingAnExpenseThatWasNeverSplit_DoesNothing()
+    {
+        var expense = Expense(TransactionCategory.LaborCost, 5_000m, new DateOnly(2026, 4, 5));
+
+        var resplit = await _sut.ReallocateTransactionAsync(expense.Id);
+
+        resplit.Should().BeFalse("the next monthly run will use its current values");
+        _allocations.Rows.Should().BeEmpty();
     }
 }

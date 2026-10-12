@@ -22,17 +22,24 @@ public sealed class AnimalOverheadAllocationRepository : IAnimalOverheadAllocati
     public void AddRange(IEnumerable<AnimalOverheadAllocation> allocations) =>
         _context.AnimalOverheadAllocations.AddRange(allocations);
 
+    public void RemoveRange(IEnumerable<AnimalOverheadAllocation> allocations) =>
+        _context.AnimalOverheadAllocations.RemoveRange(allocations);
+
     public async Task<HashSet<Guid>> GetAllocatedTransactionIdsAsync(
-        Guid farmId,
-        DateOnly from,
-        DateOnly to,
+        IReadOnlyCollection<Guid> transactionIds,
         CancellationToken cancellationToken = default)
     {
-        // Matched on the source transaction, not the period: a monthly wage bill posted in
-        // January but covering December must not be re-allocated when December is re-run.
+        if (transactionIds.Count == 0)
+        {
+            return [];
+        }
+
+        // Matched on the source transaction, not a date range. The old period-overlap match
+        // missed a transaction whose date had moved to another month, so the next run tried to
+        // allocate it again and hit the unique index -- failing the whole farm's run.
         var ids = await _context.AnimalOverheadAllocations
             .AsNoTracking()
-            .Where(a => a.FarmId == farmId && a.PeriodEnd >= from && a.PeriodStart <= to)
+            .Where(a => transactionIds.Contains(a.SourceTransactionId))
             .Select(a => a.SourceTransactionId)
             .Distinct()
             .ToListAsync(cancellationToken)
@@ -40,6 +47,14 @@ public sealed class AnimalOverheadAllocationRepository : IAnimalOverheadAllocati
 
         return [.. ids];
     }
+
+    public async Task<IReadOnlyList<AnimalOverheadAllocation>> GetBySourceTransactionAsync(
+        Guid transactionId,
+        CancellationToken cancellationToken = default) =>
+        await _context.AnimalOverheadAllocations
+            .Where(a => a.SourceTransactionId == transactionId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 
     public async Task<AnimalOverheadTotals> GetTotalsForAnimalAsync(
         Guid animalId,
