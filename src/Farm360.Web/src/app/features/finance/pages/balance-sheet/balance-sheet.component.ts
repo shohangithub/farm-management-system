@@ -13,7 +13,11 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
-import { BalanceSheet } from '../../models/finance.model';
+import { BalanceSheet, BalanceSheetLine } from '../../models/finance.model';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
+
+interface StatementGroup { title: string | null; lines: BalanceSheetLine[]; total: number; priorTotal: number; }
+interface StatementBlock { title: string; totalLabel: string; total: number; priorTotal: number; color: string; groups: StatementGroup[]; }
 
 @Component({
   selector: 'app-balance-sheet',
@@ -27,13 +31,14 @@ import { BalanceSheet } from '../../models/finance.model';
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
+    FinanceSubnavComponent,
     CurrencyPipe,
     DatePipe
   ],
   template: `
     <app-page-header 
       title="Balance Sheet" 
-      description="Statement of financial position showing assets, liabilities, and owner/investor equity."
+      description="Statement of financial position: assets, liabilities and equity, compared with the previous financial year end."
       breadcrumbActiveNode="Balance Sheet">
       <div actions class="flex items-center gap-3">
         <a mat-stroked-button routerLink="/finance"
@@ -49,6 +54,10 @@ import { BalanceSheet } from '../../models/finance.model';
               formControlName="asOfDate" 
               class="bg-transparent text-gray-800 dark:text-gray-200 text-xs font-semibold outline-none cursor-pointer" />
           </div>
+          <label class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium cursor-pointer">
+            <input type="checkbox" formControlName="comparative" class="accent-emerald-600" />
+            <span class="text-gray-600 dark:text-gray-300">Compare previous year end</span>
+          </label>
         </form>
         <a mat-stroked-button routerLink="/reports/finance.balance-sheet"
           matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
@@ -78,53 +87,9 @@ import { BalanceSheet } from '../../models/finance.model';
 
     <div *ngIf="!isLoading()" class="px-6 py-4 mx-auto max-w-7xl space-y-6">
 
-      <!-- Sub-Navigation Bar -->
-      <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto">
-        <a routerLink="/finance" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">dashboard</mat-icon> Overview
-        </a>
-        <a routerLink="/finance/transactions" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">receipt_long</mat-icon> General Ledger
-        </a>
-        <a routerLink="/finance/reports/monthly-pnl" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">calendar_view_month</mat-icon> Monthly P&L
-        </a>
-        <a routerLink="/finance/reports/trial-balance" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">balance</mat-icon> Trial Balance
-        </a>
-        <a routerLink="/finance/reports/balance-sheet" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
-          <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
-        </a>
-        <a routerLink="/finance/reports/income-expense" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">swap_vert</mat-icon> Income & Expense
-        </a>
-        <a routerLink="/finance/reports/full-accounts" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">menu_book</mat-icon> Full Accounts
-        </a>
-        <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">request_quote</mat-icon> Payables &amp; Receivables
-        </a>
-        <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">fact_check</mat-icon> Accounting Health
-        </a>
-        <a routerLink="/finance/loans" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
-        </a>
-        <a routerLink="/finance/investors" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">groups</mat-icon> Investors & Equity
-        </a>
-      </div>
+      <app-finance-subnav></app-finance-subnav>
 
-      <app-empty-state 
+      <app-empty-state
         *ngIf="!bsData()"
         icon="account_balance"
         title="No Financial Records Found"
@@ -133,277 +98,125 @@ import { BalanceSheet } from '../../models/finance.model';
 
       <div *ngIf="bsData() as sheet" #reportSheet id="balanceSheetReport" class="space-y-6">
 
-        <!-- Accounting Equation Verification Banner -->
-        <div class="p-4 rounded-2xl border backdrop-blur-xl transition-all"
-             [ngClass]="sheet.isBalanced ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60' : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60'">
-          <div class="flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white"
-                   [ngClass]="sheet.isBalanced ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20' : 'bg-gradient-to-br from-rose-500 to-amber-600 shadow-md shadow-rose-500/20'">
-                <mat-icon class="text-base">{{ sheet.isBalanced ? 'verified' : 'error_outline' }}</mat-icon>
-              </div>
-              <div>
-                <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <span>Fundamental Accounting Equation:</span>
-                  <span class="font-mono text-emerald-700 dark:text-emerald-300">Assets = Liabilities + Equity</span>
-                </h4>
-                <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
-                  <span class="font-medium text-gray-500 dark:text-gray-400">As of {{ sheet.asOfDate | date:'mediumDate' }}:</span>
-                  <span class="font-mono font-semibold ml-1">{{ sheet.totalAssetsBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
-                  (Assets) =
-                  <span class="font-mono font-semibold">{{ sheet.liabilities.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
-                  (Liab) +
-                  <span class="font-mono font-semibold">{{ sheet.equity.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
-                  (Equity)
-                </p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <span *ngIf="sheet.isBalanced" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5 shadow-sm">
-                <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">check_circle</mat-icon> In Exact Balance
-              </span>
-              <span *ngIf="!sheet.isBalanced" class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 flex items-center gap-1.5 shadow-sm">
-                <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">warning</mat-icon> Variance: {{ sheet.differenceBdt | currency:'BDT ':'symbol':'1.2-2' }}
-              </span>
-            </div>
+        <!-- Setup / difference banner -->
+        <div *ngIf="sheet.message"
+             class="p-4 rounded-2xl border flex items-start gap-3 print:hidden"
+             [ngClass]="sheet.isBalanced ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-200' : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200'">
+          <mat-icon class="shrink-0">{{ sheet.isBalanced ? 'info' : 'error_outline' }}</mat-icon>
+          <div class="text-xs leading-relaxed flex-1">{{ sheet.message }}</div>
+          <a routerLink="/finance/accounts-setup" class="text-xs font-bold underline whitespace-nowrap">Accounts setup</a>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Assets</p>
+            <h3 class="text-xl font-black text-gray-900 dark:text-white mt-1">{{ sheet.totalAssetsBdt | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+          </div>
+          <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Liabilities</p>
+            <h3 class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">{{ sheet.liabilities.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+          </div>
+          <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Equity</p>
+            <h3 class="text-xl font-black text-purple-600 dark:text-purple-400 mt-1">{{ sheet.equity.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+          </div>
+          <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Profit for the year</p>
+            <h3 class="text-xl font-black mt-1" [ngClass]="(sheet.currentYearProfitBdt || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              {{ (sheet.currentYearProfitBdt || 0) | currency:'BDT ':'symbol':'1.0-0' }}
+            </h3>
+            <p class="text-[10px] text-gray-400 mt-0.5">since {{ sheet.fiscalYearStart | date:'d MMM yyyy' }}</p>
+          </div>
+          <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Net Working Capital</p>
+            <h3 class="text-xl font-black mt-1" [ngClass]="sheet.netWorkingCapitalBdt >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
+              {{ sheet.netWorkingCapitalBdt | currency:'BDT ':'symbol':'1.0-0' }}
+            </h3>
+            <p class="text-[10px] text-gray-400 mt-0.5">Current assets − current liabilities</p>
           </div>
         </div>
 
-        <!-- 4 KPI Summary Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Total Assets -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Assets</p>
-                <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
-                  {{ sheet.totalAssetsBdt | currency:'BDT ':'symbol':'1.0-0' }}
-                </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">Cash, Stock & Livestock</p>
-              </div>
-              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
-                <mat-icon class="text-lg">account_balance_wallet</mat-icon>
-              </div>
-            </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">account_balance_wallet</mat-icon>
+        <!-- Statement of financial position (auditor layout) -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+          <div class="p-5 text-center border-b border-gray-100 dark:border-gray-700/60">
+            <h2 class="text-base font-black uppercase tracking-wider text-gray-900 dark:text-white">Statement of Financial Position</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              As at {{ sheet.asOfDate | date:'d MMMM yyyy' }}
+              <span *ngIf="sheet.booksStartDate"> · Books start {{ sheet.booksStartDate | date:'d MMM yyyy' }}</span>
+              · Financial year from {{ monthName(sheet.fiscalYearStartMonth) }}
+            </p>
           </div>
 
-          <!-- Total Liabilities -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Liabilities</p>
-                <h3 class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
-                  {{ sheet.liabilities.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}
-                </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">Loans & Borrowings</p>
-              </div>
-              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
-                <mat-icon class="text-lg">credit_card</mat-icon>
-              </div>
-            </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-amber-500/5 rotate-[-10deg] pointer-events-none">credit_card</mat-icon>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th class="text-left px-5 py-2 w-16">Code</th>
+                  <th class="text-left px-3 py-2">Particulars</th>
+                  <th class="text-right px-5 py-2 w-44">{{ sheet.asOfDate | date:'d MMM yyyy' }}</th>
+                  <th *ngIf="sheet.priorDate" class="text-right px-5 py-2 w-44">{{ sheet.priorDate | date:'d MMM yyyy' }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let block of blocks(sheet)">
+                  <tr class="bg-gray-50/60 dark:bg-gray-900/20">
+                    <td colspan="4" class="px-5 pt-4 pb-1 text-xs font-black uppercase tracking-widest text-gray-800 dark:text-gray-100">{{ block.title }}</td>
+                  </tr>
+                  <ng-container *ngFor="let g of block.groups">
+                    <tr *ngIf="g.title">
+                      <td></td>
+                      <td colspan="3" class="px-3 pt-2 pb-1 text-xs font-bold text-gray-600 dark:text-gray-300 italic">{{ g.title }}</td>
+                    </tr>
+                    <tr *ngFor="let line of g.lines" class="border-t border-gray-50 dark:border-gray-700/40 hover:bg-gray-50/60 dark:hover:bg-gray-700/20">
+                      <td class="px-5 py-1.5 font-mono text-[11px] text-gray-400">{{ line.lineCode }}</td>
+                      <td class="px-3 py-1.5">
+                        <span class="text-gray-800 dark:text-gray-200" [class.pl-4]="line.isDeduction">{{ line.lineName }}</span>
+                        <span *ngIf="line.notes" class="block text-[11px] text-gray-400 print:hidden">{{ line.notes }}</span>
+                      </td>
+                      <td class="px-5 py-1.5 text-right font-mono" [ngClass]="line.amountBdt < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'">{{ fmt(line.amountBdt) }}</td>
+                      <td *ngIf="sheet.priorDate" class="px-5 py-1.5 text-right font-mono text-gray-500">{{ fmt(line.priorAmountBdt) }}</td>
+                    </tr>
+                    <tr *ngIf="g.title && g.lines.length > 1" class="font-semibold">
+                      <td></td>
+                      <td class="px-3 py-1 text-xs text-gray-600 dark:text-gray-300">Total {{ g.title.toLowerCase() }}</td>
+                      <td class="px-5 py-1 text-right font-mono border-t border-gray-300 dark:border-gray-600">{{ fmt(g.total) }}</td>
+                      <td *ngIf="sheet.priorDate" class="px-5 py-1 text-right font-mono border-t border-gray-300 dark:border-gray-600 text-gray-500">{{ fmt(g.priorTotal) }}</td>
+                    </tr>
+                  </ng-container>
+                  <tr class="font-black">
+                    <td></td>
+                    <td class="px-3 py-2 text-xs uppercase tracking-wider text-gray-900 dark:text-white">{{ block.totalLabel }}</td>
+                    <td class="px-5 py-2 text-right font-mono border-t-2 border-gray-800 dark:border-gray-200" [ngClass]="block.color">{{ fmt(block.total) }}</td>
+                    <td *ngIf="sheet.priorDate" class="px-5 py-2 text-right font-mono border-t-2 border-gray-800 dark:border-gray-200 text-gray-600">{{ fmt(block.priorTotal) }}</td>
+                  </tr>
+                </ng-container>
+
+                <tr class="font-black bg-gray-50 dark:bg-gray-900/50">
+                  <td></td>
+                  <td class="px-3 py-3 text-xs uppercase tracking-wider text-gray-900 dark:text-white">Total Liabilities &amp; Equity</td>
+                  <td class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200 text-indigo-700 dark:text-indigo-400">{{ fmt(sheet.totalLiabilitiesAndEquityBdt) }}</td>
+                  <td *ngIf="sheet.priorDate" class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200 text-gray-600">{{ fmt(sheet.priorTotalLiabilitiesAndEquityBdt) }}</td>
+                </tr>
+                <tr *ngIf="sheet.differenceBdt !== 0 || (sheet.priorDifferenceBdt || 0) !== 0" class="font-black bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300">
+                  <td></td>
+                  <td class="px-3 py-2 text-xs uppercase tracking-wider">Difference (assets − liabilities &amp; equity)</td>
+                  <td class="px-5 py-2 text-right font-mono">{{ fmt(sheet.differenceBdt) }}</td>
+                  <td *ngIf="sheet.priorDate" class="px-5 py-2 text-right font-mono">{{ fmt(sheet.priorDifferenceBdt) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <!-- Total Equity -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Equity</p>
-                <h3 class="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
-                  {{ sheet.equity.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}
-                </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">Capital & Retained Earnings</p>
-              </div>
-              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
-                <mat-icon class="text-lg">pie_chart</mat-icon>
-              </div>
-            </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-purple-500/5 rotate-[-10deg] pointer-events-none">pie_chart</mat-icon>
+          <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700/60 text-[11px] text-gray-500 dark:text-gray-400 flex items-start gap-2">
+            <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">info</mat-icon>
+            <span>
+              Livestock and inventory are carried at cost until sold, used or written off. Fixed assets are shown at cost less
+              depreciation from the fixed-asset register. Retained earnings brought forward are the profits of earlier financial
+              years; the profit for the year runs from {{ sheet.fiscalYearStart | date:'d MMM yyyy' }}.
+              <span *ngIf="sheet.isBalanced" class="font-semibold text-emerald-600 dark:text-emerald-400">Assets = Liabilities + Equity ✓</span>
+            </span>
           </div>
-
-          <!-- Net Working Capital -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Net Working Capital</p>
-                <h3 class="text-2xl font-black mt-1"
-                    [ngClass]="sheet.netWorkingCapitalBdt >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
-                  {{ sheet.netWorkingCapitalBdt | currency:'BDT ':'symbol':'1.0-0' }}
-                </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">Current Assets − Liabilities</p>
-              </div>
-              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
-                <mat-icon class="text-lg">trending_up</mat-icon>
-              </div>
-            </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-teal-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
-          </div>
-        </div>
-
-        <!-- 2-Column Balance Sheet Presentation -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-
-          <!-- Left Column: ASSETS -->
-          <div class="space-y-6">
-            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-              <div class="p-5 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between bg-emerald-50/30 dark:bg-emerald-950/20">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-sm">
-                    <mat-icon class="text-base">account_balance_wallet</mat-icon>
-                  </div>
-                  <div>
-                    <h3 class="text-base font-black text-gray-900 dark:text-white">Assets</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Current liquid farm resources</p>
-                  </div>
-                </div>
-                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-900/50 px-2.5 py-1 rounded-full">
-                  Current Assets
-                </span>
-              </div>
-
-              <div class="p-5 space-y-4">
-                <div *ngFor="let line of sheet.assets.lines" 
-                     class="flex items-start justify-between p-3 rounded-xl hover:bg-gray-50/70 dark:hover:bg-gray-700/30 transition-colors">
-                  <div class="space-y-0.5">
-                    <div class="flex items-center gap-2">
-                      <span class="font-mono text-xs font-bold text-gray-400 dark:text-gray-500">{{ line.lineCode }}</span>
-                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ line.lineName }}</span>
-                    </div>
-                    <p *ngIf="line.notes" class="text-xs text-gray-500 dark:text-gray-400 max-w-sm">{{ line.notes }}</p>
-                  </div>
-                  <div class="text-right">
-                    <span class="font-mono text-base font-black text-gray-900 dark:text-white">
-                      {{ line.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Info Notice on Biological Assets -->
-                <div class="p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2.5">
-                  <mat-icon class="text-sm !w-4 !h-4 !text-[16px] shrink-0 mt-0.5">info</mat-icon>
-                  <div>
-                    <span class="font-bold">Livestock & Inventory are carried at cost:</span>
-                    <p class="text-[11px] text-blue-600/80 dark:text-blue-300/80 mt-0.5">
-                      Animals at purchase price until sold or lost; feed, medicine and supplies at average cost until used.
-                      Their cost reaches profit &amp; loss only when they are sold, used or written off.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Total Assets Footer -->
-              <div class="p-4 border-t-2 border-b-4 border-gray-900 dark:border-gray-200 bg-gray-50 dark:bg-gray-900/60 flex items-center justify-between font-black">
-                <span class="text-sm uppercase tracking-wider text-gray-900 dark:text-white">Total Assets</span>
-                <span class="font-mono text-lg text-emerald-700 dark:text-emerald-400">
-                  {{ sheet.totalAssetsBdt | currency:'BDT ':'symbol':'1.2-2' }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Column: LIABILITIES & EQUITY -->
-          <div class="space-y-6">
-
-            <!-- Section: LIABILITIES -->
-            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-              <div class="p-5 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between bg-amber-50/30 dark:bg-amber-950/20">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-sm">
-                    <mat-icon class="text-base">credit_card</mat-icon>
-                  </div>
-                  <div>
-                    <h3 class="text-base font-black text-gray-900 dark:text-white">Liabilities</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Outstanding debt and obligations</p>
-                  </div>
-                </div>
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-900/50 px-2.5 py-1 rounded-full">
-                  Debt & Borrowing
-                </span>
-              </div>
-
-              <div class="p-5 space-y-4">
-                <div *ngFor="let line of sheet.liabilities.lines" 
-                     class="flex items-start justify-between p-3 rounded-xl hover:bg-gray-50/70 dark:hover:bg-gray-700/30 transition-colors">
-                  <div class="space-y-0.5">
-                    <div class="flex items-center gap-2">
-                      <span class="font-mono text-xs font-bold text-gray-400 dark:text-gray-500">{{ line.lineCode }}</span>
-                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ line.lineName }}</span>
-                    </div>
-                    <p *ngIf="line.notes" class="text-xs text-gray-500 dark:text-gray-400 max-w-sm">{{ line.notes }}</p>
-                  </div>
-                  <div class="text-right">
-                    <span class="font-mono text-base font-black text-amber-700 dark:text-amber-400">
-                      {{ line.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="p-3.5 border-t border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between font-bold">
-                <span class="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Total Liabilities</span>
-                <span class="font-mono text-base text-amber-700 dark:text-amber-400">
-                  {{ sheet.liabilities.totalBdt | currency:'BDT ':'symbol':'1.2-2' }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Section: EQUITY -->
-            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-              <div class="p-5 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between bg-purple-50/30 dark:bg-purple-950/20">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 text-white flex items-center justify-center shadow-sm">
-                    <mat-icon class="text-base">pie_chart</mat-icon>
-                  </div>
-                  <div>
-                    <h3 class="text-base font-black text-gray-900 dark:text-white">Equity & Capital</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Investor capital and retained profits</p>
-                  </div>
-                </div>
-                <span class="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 bg-purple-100/70 dark:bg-purple-900/50 px-2.5 py-1 rounded-full">
-                  Owners' Equity
-                </span>
-              </div>
-
-              <div class="p-5 space-y-4">
-                <div *ngFor="let line of sheet.equity.lines" 
-                     class="flex items-start justify-between p-3 rounded-xl hover:bg-gray-50/70 dark:hover:bg-gray-700/30 transition-colors">
-                  <div class="space-y-0.5">
-                    <div class="flex items-center gap-2">
-                      <span class="font-mono text-xs font-bold text-gray-400 dark:text-gray-500">{{ line.lineCode }}</span>
-                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ line.lineName }}</span>
-                    </div>
-                    <p *ngIf="line.notes" class="text-xs text-gray-500 dark:text-gray-400 max-w-sm">{{ line.notes }}</p>
-                  </div>
-                  <div class="text-right">
-                    <span class="font-mono text-base font-black"
-                          [ngClass]="line.amountBdt >= 0 ? 'text-purple-700 dark:text-purple-300' : 'text-rose-600 dark:text-rose-400'">
-                      {{ line.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="p-3.5 border-t border-gray-200 dark:border-gray-700/80 bg-gray-50/60 dark:bg-gray-900/40 flex items-center justify-between font-bold">
-                <span class="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Total Equity</span>
-                <span class="font-mono text-base text-purple-700 dark:text-purple-300">
-                  {{ sheet.equity.totalBdt | currency:'BDT ':'symbol':'1.2-2' }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Grand Total: Total Liabilities & Equity -->
-            <div class="p-4 rounded-2xl border-t-2 border-b-4 border-gray-900 dark:border-gray-200 bg-white/90 dark:bg-gray-800/90 shadow-sm flex items-center justify-between font-black">
-              <span class="text-sm uppercase tracking-wider text-gray-900 dark:text-white">
-                Total Liabilities & Equity
-              </span>
-              <span class="font-mono text-lg text-indigo-700 dark:text-indigo-400">
-                {{ sheet.totalLiabilitiesAndEquityBdt | currency:'BDT ':'symbol':'1.2-2' }}
-              </span>
-            </div>
-
-          </div>
-
         </div>
 
         <!-- Books vs registers -->
@@ -457,11 +270,13 @@ export class BalanceSheetComponent {
   private readonly todayStr = new Date().toISOString().split('T')[0];
 
   readonly filterForm = this.fb.group({
-    asOfDate: [this.todayStr]
+    asOfDate: [this.todayStr],
+    comparative: [true]
   });
 
-  private readonly filterChanges$ = new BehaviorSubject<{ asOfDate: string }>({
-    asOfDate: this.todayStr
+  private readonly filterChanges$ = new BehaviorSubject<{ asOfDate: string; comparative: boolean }>({
+    asOfDate: this.todayStr,
+    comparative: true
   });
 
   constructor() {
@@ -469,7 +284,7 @@ export class BalanceSheetComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(val => {
         if (val.asOfDate) {
-          this.filterChanges$.next({ asOfDate: val.asOfDate });
+          this.filterChanges$.next({ asOfDate: val.asOfDate, comparative: val.comparative !== false });
         }
       });
   }
@@ -480,7 +295,7 @@ export class BalanceSheetComponent {
   ]).pipe(
     switchMap(([filter, farm]) => {
       if (!farm) return of(null);
-      return this.financeService.getBalanceSheet(farm.id, filter.asOfDate).pipe(
+      return this.financeService.getBalanceSheet(farm.id, filter.asOfDate, null, filter.comparative).pipe(
         catchError(err => {
           console.error('Error loading balance sheet:', err);
           return of(null);
@@ -500,7 +315,8 @@ export class BalanceSheetComponent {
     this.reportService.export('finance.balance-sheet', 'pdf', {
       parameters: {
         farmId: farmId || null,
-        asOfDate: asOf
+        asOfDate: asOf,
+        comparative: String(this.filterForm.value.comparative !== false)
       }
     }).subscribe({
       next: res => {
@@ -551,7 +367,8 @@ export class BalanceSheetComponent {
     this.reportService.export('finance.balance-sheet', 'xlsx', {
       parameters: {
         farmId: farmId || null,
-        asOfDate: asOf
+        asOfDate: asOf,
+        comparative: String(this.filterForm.value.comparative !== false)
       }
     }).subscribe({
       next: res => {
@@ -562,6 +379,57 @@ export class BalanceSheetComponent {
       },
       error: err => console.error('Failed to export Excel:', err)
     });
+  }
+
+  private readonly months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  monthName(month?: number): string {
+    return this.months[((month || 7) - 1) % 12];
+  }
+
+  /** Accounting format: thousands separators, negatives in brackets, zero as a dash. */
+  fmt(value: number | null | undefined): string {
+    if (value === null || value === undefined) return '';
+    if (Math.abs(value) < 0.005) return '–';
+    const text = Math.abs(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return value < 0 ? `(${text})` : text;
+  }
+
+  /** Sections, then sub-groups (non-current / current, capital / reserves) with their totals. */
+  blocks(sheet: BalanceSheet): StatementBlock[] {
+    const group = (lines: BalanceSheetLine[]): StatementGroup[] => {
+      const order: string[] = [];
+      const map = new Map<string, BalanceSheetLine[]>();
+      for (const l of lines) {
+        const key = l.group || '';
+        if (!map.has(key)) { map.set(key, []); order.push(key); }
+        map.get(key)!.push(l);
+      }
+      return order.map(key => {
+        const ls = map.get(key)!;
+        return {
+          title: key ? this.groupTitle(key) : null,
+          lines: ls,
+          total: ls.reduce((sum, l) => sum + l.amountBdt, 0),
+          priorTotal: ls.reduce((sum, l) => sum + (l.priorAmountBdt || 0), 0)
+        };
+      });
+    };
+    return [
+      { title: 'Assets', totalLabel: 'Total Assets', total: sheet.totalAssetsBdt, priorTotal: sheet.priorTotalAssetsBdt || 0, color: 'text-emerald-700 dark:text-emerald-400', groups: group(sheet.assets.lines) },
+      { title: 'Liabilities', totalLabel: 'Total Liabilities', total: sheet.liabilities.totalBdt, priorTotal: sheet.liabilities.priorTotalBdt || 0, color: 'text-amber-700 dark:text-amber-400', groups: group(sheet.liabilities.lines) },
+      { title: 'Equity', totalLabel: 'Total Equity', total: sheet.equity.totalBdt, priorTotal: sheet.equity.priorTotalBdt || 0, color: 'text-purple-700 dark:text-purple-300', groups: group(sheet.equity.lines) }
+    ];
+  }
+
+  private groupTitle(key: string): string {
+    switch (key) {
+      case 'Non-current': return 'Non-current assets';
+      case 'Current': return 'Current';
+      case 'Capital': return 'Capital';
+      case 'Reserves': return 'Reserves & retained earnings';
+      default: return key;
+    }
   }
 
   printReport(): void {

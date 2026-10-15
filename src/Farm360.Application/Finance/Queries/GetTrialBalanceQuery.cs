@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Farm360.Application.Finance.Repositories;
 using Farm360.Application.Finance.Services;
 using Farm360.Contracts.Finance;
 using MediatR;
@@ -20,22 +19,27 @@ public record GetTrialBalanceQuery(
 /// debit or credit side. Assets and expenses are debit balances; liabilities, equity and revenue
 /// are credit balances.
 /// </summary>
+/// <remarks>
+/// Read from <see cref="IFinancialStatementEngine"/>, so opening balances, adjustments and
+/// depreciation are included. Opening balances are one-sided: if they are incomplete, debits and
+/// credits differ by exactly the balance sheet's Difference.
+/// </remarks>
 public class GetTrialBalanceQueryHandler : IRequestHandler<GetTrialBalanceQuery, TrialBalanceDto>
 {
-    private readonly IFinancialTransactionRepository _transactionRepository;
+    private readonly IFinancialStatementEngine _engine;
 
-    public GetTrialBalanceQueryHandler(IFinancialTransactionRepository transactionRepository)
+    public GetTrialBalanceQueryHandler(IFinancialStatementEngine engine)
     {
-        _transactionRepository = transactionRepository;
+        _engine = engine;
     }
 
     public async Task<TrialBalanceDto> Handle(GetTrialBalanceQuery request, CancellationToken cancellationToken)
     {
         var asOf = request.AsOfDate ?? DateTime.UtcNow;
-        var cutoff = asOf.Date.AddDays(1);
+        var day = DateOnly.FromDateTime(asOf);
 
-        var all = await _transactionRepository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
-        var balances = AccountChart.Balances(all.Where(t => t.TransactionDate < cutoff));
+        var ledger = await _engine.LoadAsync(request.FarmId, day, cancellationToken);
+        var balances = ledger.BalancesAt(day);
 
         var lines = new List<TrialBalanceLineDto>();
         foreach (var (code, balance) in balances.OrderBy(b => b.Key, StringComparer.Ordinal))

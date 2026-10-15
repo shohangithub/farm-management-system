@@ -471,12 +471,18 @@ export interface BalanceSheetLine {
   lineName: string;
   amountBdt: number;
   notes?: string | null;
+  /** 'Non-current' | 'Current' | 'Capital' | 'Reserves' */
+  group?: string | null;
+  nameBn?: string | null;
+  priorAmountBdt?: number | null;
+  isDeduction?: boolean;
 }
 
 export interface BalanceSheetSection {
   sectionName: string;
   totalBdt: number;
   lines: BalanceSheetLine[];
+  priorTotalBdt?: number | null;
 }
 
 export interface BalanceSheet {
@@ -491,7 +497,181 @@ export interface BalanceSheet {
   differenceBdt: number;
   netWorkingCapitalBdt: number;
   currentYearProfitBdt?: number;
+  retainedEarningsBroughtForwardBdt?: number;
   reconciliations?: ReconciliationLine[];
+  priorDate?: string | null;
+  priorTotalAssetsBdt?: number | null;
+  priorTotalLiabilitiesAndEquityBdt?: number | null;
+  priorDifferenceBdt?: number | null;
+  booksStartDate?: string | null;
+  fiscalYearStart?: string;
+  fiscalYearStartMonth?: number;
+  isConfigured?: boolean;
+  message?: string | null;
+}
+
+// ── Income statement ──────────────────────────────────────────────────────
+
+export interface IncomeStatementLine {
+  accountCode: string;
+  accountName: string;
+  accountNameBn: string;
+  amountBdt: number;
+  priorAmountBdt?: number | null;
+}
+
+export interface IncomeStatementSection {
+  key: 'revenue' | 'cost-of-sales' | 'operating-expenses' | 'finance-costs' | string;
+  name: string;
+  nameBn: string;
+  lines: IncomeStatementLine[];
+  totalBdt: number;
+  priorTotalBdt?: number | null;
+}
+
+export interface IncomeStatementTotals {
+  revenueBdt: number;
+  costOfSalesBdt: number;
+  grossProfitBdt: number;
+  operatingExpensesBdt: number;
+  operatingProfitBdt: number;
+  financeCostsBdt: number;
+  netProfitBdt: number;
+  grossMarginPercent: number;
+  netMarginPercent: number;
+}
+
+export interface IncomeStatement {
+  farmId: string;
+  fromDate: string;
+  toDate: string;
+  priorFromDate?: string | null;
+  priorToDate?: string | null;
+  sections: IncomeStatementSection[];
+  totals: IncomeStatementTotals;
+  priorTotals?: IncomeStatementTotals | null;
+  fiscalYearStartMonth: number;
+  booksStartDate?: string | null;
+}
+
+// ── Accounts setup & fixed assets ─────────────────────────────────────────
+
+export interface AccountingSettings {
+  farmId: string;
+  fiscalYearStartMonth: number;
+  booksStartDate?: string | null;
+  isConfigured: boolean;
+}
+
+export interface AccountOption {
+  code: string;
+  name: string;
+  nameBn: string;
+  accountClass: string;
+}
+
+export interface AccountingSetupOptions {
+  openingAccounts: AccountOption[];
+  adjustmentAccounts: AccountOption[];
+  profitAndLossAccounts: AccountOption[];
+}
+
+export interface BalanceSheetEntry {
+  id: string;
+  code: string;
+  entryType: 'Opening' | 'Adjustment' | string;
+  entryDate: string;
+  accountCode: string;
+  accountName: string;
+  amountBdt: number;
+  profitAccountCode?: string | null;
+  profitAccountName?: string | null;
+  reversalDate?: string | null;
+  description: string;
+  notes?: string | null;
+}
+
+export interface SaveBalanceSheetEntryRequest {
+  entryType: 'Opening' | 'Adjustment';
+  entryDate: string;
+  accountCode: string;
+  amountBdt: number;
+  description: string;
+  profitAccountCode?: string | null;
+  reversalDate?: string | null;
+  notes?: string | null;
+}
+
+export interface GenerateOpeningEntriesResult {
+  created: number;
+  warnings: string[];
+}
+
+export type FixedAssetCategory = 'Land' | 'BuildingAndShed' | 'MachineryAndEquipment' | 'Vehicle' | 'FurnitureAndOffice' | 'Other';
+export type FixedAssetAcquisition = 'Cash' | 'Credit' | 'OwnerContributed' | 'Opening';
+export type DepreciationMethod = 'ReducingBalance' | 'StraightLine';
+
+export interface FixedAsset {
+  id: string;
+  code: string;
+  name: string;
+  category: FixedAssetCategory | string;
+  acquisition: FixedAssetAcquisition | string;
+  acquisitionDate: string;
+  costBdt: number;
+  method: DepreciationMethod | string;
+  ratePercent: number;
+  usefulLifeYears: number;
+  residualValueBdt: number;
+  disposalDate?: string | null;
+  disposalProceedsBdt: number;
+  location?: string | null;
+  notes?: string | null;
+  accumulatedDepreciationBdt: number;
+  writtenDownValueBdt: number;
+}
+
+export interface SaveFixedAssetRequest {
+  name: string;
+  category: FixedAssetCategory | string;
+  acquisition: FixedAssetAcquisition | string;
+  acquisitionDate: string;
+  costBdt: number;
+  method: DepreciationMethod | string;
+  ratePercent: number;
+  usefulLifeYears: number;
+  residualValueBdt: number;
+  location?: string | null;
+  notes?: string | null;
+  credit?: { partyName: string; partyPhone?: string | null; dueDate?: string | null; paidNowBdt?: number } | null;
+}
+
+export interface FixedAssetScheduleLine {
+  assetId: string;
+  code: string;
+  name: string;
+  category: string;
+  method: string;
+  ratePercent: number;
+  acquisitionDate: string;
+  disposalDate?: string | null;
+  costOpeningBdt: number;
+  additionsBdt: number;
+  disposalsBdt: number;
+  costClosingBdt: number;
+  depreciationOpeningBdt: number;
+  depreciationChargeBdt: number;
+  depreciationOnDisposalBdt: number;
+  depreciationClosingBdt: number;
+  writtenDownValueBdt: number;
+}
+
+export interface FixedAssetSchedule {
+  farmId: string;
+  fromDate: string;
+  toDate: string;
+  lines: FixedAssetScheduleLine[];
+  totals: FixedAssetScheduleLine;
 }
 
 // ── Accounting health (books vs registers) ────────────────────────────────

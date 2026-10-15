@@ -178,7 +178,7 @@ public class AccountingRulesTests
         var reconciliation = Substitute.For<IAccountingReconciliationService>();
         reconciliation.ReconcileAsync(FarmId, Arg.Any<IReadOnlyCollection<FinancialTransaction>>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ReconciliationLineDto>());
-        var handler = new GetBalanceSheetQueryHandler(ledger, reconciliation);
+        var handler = new GetBalanceSheetQueryHandler(new FinancialStatementEngine(ledger), reconciliation);
 
         var sheet = await handler.Handle(new GetBalanceSheetQuery(FarmId, Day), CancellationToken.None);
 
@@ -186,7 +186,8 @@ public class AccountingRulesTests
         Line(sheet.Assets, AccountChart.InventoryAccount).Should().Be(18_000m);
         Line(sheet.Assets, AccountChart.LivestockAccount).Should().Be(90_000m);
         Line(sheet.Liabilities, AccountChart.LoanPayableAccount).Should().Be(80_000m);
-        Line(sheet.Equity, AccountChart.RetainedEarningsAccount).Should().Be(8_000m, "90,000 − 60,000 − 12,000 − 8,000 − 2,000");
+        Line(sheet.Equity, AccountChart.CurrentYearProfitLine).Should().Be(8_000m, "90,000 − 60,000 − 12,000 − 8,000 − 2,000");
+        Line(sheet.Equity, AccountChart.RetainedEarningsAccount).Should().Be(0m, "everything happened in the current financial year");
         sheet.TotalAssetsBdt.Should().Be(288_000m);
         sheet.IsBalanced.Should().BeTrue();
         sheet.TotalLiabilitiesAndEquityBdt.Should().Be(sheet.TotalAssetsBdt);

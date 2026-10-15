@@ -73,6 +73,18 @@ public static class AccountChart
     public const string OwnerDrawingAccount = "3210";
     public const string RetainedEarningsAccount = "3900";
 
+    // Financial-statement accounts (fixed assets, accruals, opening position).
+    public const string AdvancesDepositsAccount = "1150";
+    public const string FixedAssetAccount = "1500";
+    public const string AccumulatedDepreciationAccount = "1590";
+    public const string ProvisionsAccount = "2200";
+    public const string OtherLiabilitiesAccount = "2300";
+    public const string DepreciationAccount = "5400";
+    public const string AssetDisposalAccount = "5410";
+
+    /// <summary>Statement-only line for the year's profit (not a ledger account).</summary>
+    public const string CurrentYearProfitLine = "3950";
+
     public sealed record LedgerAccount(string Code, string Name, string NameBn, AccountClass Class);
 
     /// <param name="Code">The ledger account the head posts to.</param>
@@ -109,11 +121,15 @@ public static class AccountChart
         [TransactionCategory.InventoryWriteOff] = new("5110", "Stock Write-off & Shrinkage", "মজুদ ক্ষতি / বাতিল", AccountClass.Expense, Operating, TransactionType.Expense, CostInventory),
         [TransactionCategory.InterestExpense] = new("5300", "Loan Interest", "ঋণের সুদ", AccountClass.Expense, Operating, TransactionType.Expense, CostFinance),
         [TransactionCategory.BadDebt] = new("5310", "Bad Debts Written Off", "অনাদায়ী পাওনা", AccountClass.Expense, Operating, TransactionType.Expense, CostFinance),
+        // Sale proceeds post as Income on this account and the net book value is derecognised
+        // against it, so its balance is the loss (or, if negative, the gain) on disposal.
+        [TransactionCategory.AssetDisposal] = new(AssetDisposalAccount, "Loss / (Gain) on Disposal of Fixed Assets", "স্থায়ী সম্পদ বিক্রয়ে ক্ষতি / (লাভ)", AccountClass.Expense, Operating, TransactionType.Income, CostOverhead),
 
         // ── Assets acquired / disposed ──
         [TransactionCategory.InventoryPurchase] = new(InventoryAccount, "Stock Purchase", "মালামাল ক্রয় (মজুদ)", AccountClass.Asset, Asset, TransactionType.Expense),
         [TransactionCategory.InventoryPurchaseReturn] = new(InventoryAccount, "Stock Returned to Supplier", "সরবরাহকারীকে ফেরত", AccountClass.Asset, Asset, TransactionType.Income),
         [TransactionCategory.AnimalPurchase] = new(LivestockAccount, "Livestock Purchase", "পশু ক্রয়", AccountClass.Asset, Asset, TransactionType.Expense),
+        [TransactionCategory.FixedAssetPurchase] = new(FixedAssetAccount, "Fixed Asset Purchase", "স্থায়ী সম্পদ ক্রয়", AccountClass.Asset, Asset, TransactionType.Expense),
 
         // ── Credit settlement (payables & receivables) ──
         [TransactionCategory.SupplierPayment] = new(PayableAccount, "Supplier Payments (credit bills)", "সরবরাহকারীকে বকেয়া পরিশোধ", AccountClass.Liability, Trade, TransactionType.Expense),
@@ -144,7 +160,41 @@ public static class AccountChart
         [OwnerCapitalAccount] = new(OwnerCapitalAccount, "Owner's Capital", "মালিকের মূলধন", AccountClass.Equity),
         [OwnerDrawingAccount] = new(OwnerDrawingAccount, "Owner's Drawings", "মালিকের উত্তোলন", AccountClass.Equity),
         [RetainedEarningsAccount] = new(RetainedEarningsAccount, "Retained Earnings", "সঞ্চিত মুনাফা", AccountClass.Equity),
+        [AdvancesDepositsAccount] = new(AdvancesDepositsAccount, "Advances, Deposits & Prepayments", "অগ্রিম, জামানত ও অগ্রিম পরিশোধ", AccountClass.Asset),
+        [FixedAssetAccount] = new(FixedAssetAccount, "Property, Plant & Equipment (cost)", "স্থায়ী সম্পদ (ক্রয়মূল্য)", AccountClass.Asset),
+        [AccumulatedDepreciationAccount] = new(AccumulatedDepreciationAccount, "Accumulated Depreciation", "পুঞ্জীভূত অবচয়", AccountClass.Asset),
+        [ProvisionsAccount] = new(ProvisionsAccount, "Provisions & Accrued Expenses", "সঞ্চিতি ও বকেয়া খরচ", AccountClass.Liability),
+        [OtherLiabilitiesAccount] = new(OtherLiabilitiesAccount, "Other Liabilities", "অন্যান্য দায়", AccountClass.Liability),
+        [DepreciationAccount] = new(DepreciationAccount, "Depreciation", "অবচয়", AccountClass.Expense),
     };
+
+    /// <summary>Balance-sheet lines an opening entry may set (fixed assets come from the asset register).</summary>
+    public static readonly string[] OpeningEntryAccounts =
+    [
+        CashAccount, ReceivableAccount, AdvancesDepositsAccount, InventoryAccount, LivestockAccount,
+        LoanPayableAccount, PayableAccount, ProvisionsAccount, OtherLiabilitiesAccount,
+        InvestorCapitalAccount, OwnerCapitalAccount, RetainedEarningsAccount,
+    ];
+
+    /// <summary>Balance-sheet lines a year-end adjustment may move: prepayments/accrued income and provisions/accruals.</summary>
+    public static readonly string[] AdjustmentAccounts =
+    [
+        AdvancesDepositsAccount, ProvisionsAccount, OtherLiabilitiesAccount,
+    ];
+
+    /// <summary>Profit &amp; loss accounts an adjustment may post its other side to.</summary>
+    public static IReadOnlyList<LedgerAccount> ProfitAndLossAccounts { get; } =
+        Heads.Values
+            .Where(h => h.Class is AccountClass.Revenue or AccountClass.Expense)
+            .Select(h => new LedgerAccount(h.Code, h.Name, h.NameBn, h.Class))
+            .Append(new LedgerAccount(DepreciationAccount, "Depreciation", "অবচয়", AccountClass.Expense))
+            .DistinctBy(a => a.Code)
+            .OrderBy(a => a.Code, StringComparer.Ordinal)
+            .ToList();
+
+    /// <summary>True when an account's normal balance is a debit (assets, expenses).</summary>
+    public static bool IsDebitNature(string accountCode) =>
+        Account(accountCode).Class is AccountClass.Asset or AccountClass.Expense;
 
     /// <summary>P&amp;L revenue categories — usable in EF queries.</summary>
     public static readonly TransactionCategory[] RevenueCategories =
@@ -186,6 +236,7 @@ public static class AccountChart
     [
         TransactionCategory.InventoryPurchase,
         TransactionCategory.AnimalPurchase,
+        TransactionCategory.FixedAssetPurchase,
         TransactionCategory.FeedCost,
         TransactionCategory.VeterinaryCost,
         TransactionCategory.MedicineCost,
@@ -226,12 +277,21 @@ public static class AccountChart
             : Heads.Values.Where(h => h.Code == code).Select(h => new LedgerAccount(h.Code, h.Name, h.NameBn, h.Class)).FirstOrDefault()
               ?? new LedgerAccount(code, code, code, AccountClass.Expense);
 
+    /// <summary>
+    /// The category name a profit &amp; loss account is reported under ("FeedCost", "AnimalSale"…);
+    /// accounts no category posts to directly are named after themselves ("Depreciation").
+    /// </summary>
+    public static string CategoryKey(string accountCode) =>
+        Heads.Where(h => h.Value.Code == accountCode).Select(h => h.Key.ToString()).FirstOrDefault()
+        ?? (accountCode == DepreciationAccount ? "Depreciation" : Account(accountCode).Name);
+
     public static string SettlementCode(SettlementAccount settlement) => settlement switch
     {
         SettlementAccount.Inventory => InventoryAccount,
         SettlementAccount.Livestock => LivestockAccount,
         SettlementAccount.Payable => PayableAccount,
         SettlementAccount.Receivable => ReceivableAccount,
+        SettlementAccount.FixedAsset => FixedAssetAccount,
         _ => CashAccount,
     };
 
@@ -264,6 +324,8 @@ public static class AccountChart
                 "Investor money is booked from Finance > Investors / Share Market.",
             TransactionCategory.SupplierPayment or TransactionCategory.CustomerReceipt or TransactionCategory.BadDebt =>
                 "Payments against credit bills are recorded in Finance > Payables & Receivables, so the bill and the ledger stay in step.",
+            TransactionCategory.FixedAssetPurchase or TransactionCategory.AssetDisposal =>
+                "Sheds, machinery, vehicles and land are bought and disposed of in Finance > Fixed Assets, so the register and depreciation stay in step.",
             _ => $"'{category}' cannot be recorded as {(type == TransactionType.Income ? "income" : "an expense")}.",
         };
 

@@ -27,6 +27,15 @@ import {
   InvestorPnLSummary,
   TrialBalance,
   BalanceSheet,
+  IncomeStatement,
+  FixedAssetSchedule,
+  AccountingSettings,
+  AccountingSetupOptions,
+  BalanceSheetEntry,
+  SaveBalanceSheetEntryRequest,
+  GenerateOpeningEntriesResult,
+  FixedAsset,
+  SaveFixedAssetRequest,
   FarmShareConfig,
   ShareHolding,
   ShareTransaction,
@@ -206,10 +215,90 @@ export class FinanceService {
     return this.http.get<TrialBalance>(`${this.getBaseUrl(farmId)}/reports/trial-balance`, { params });
   }
 
-  getBalanceSheet(farmId: string, asOfDate?: string): Observable<BalanceSheet> {
+  /** compareDate defaults (server-side) to the previous financial year end; pass comparative=false to omit it. */
+  getBalanceSheet(farmId: string, asOfDate?: string, compareDate?: string | null, comparative = true): Observable<BalanceSheet> {
     let params = new HttpParams();
     if (asOfDate) params = params.set('asOfDate', asOfDate);
+    if (compareDate) params = params.set('compareDate', compareDate);
+    if (!comparative) params = params.set('noComparative', 'true');
     return this.http.get<BalanceSheet>(`${this.getBaseUrl(farmId)}/reports/balance-sheet`, { params });
+  }
+
+  /** Statement of profit or loss; fromDate defaults to the financial year start. */
+  getIncomeStatement(farmId: string, fromDate?: string | null, toDate?: string | null, comparative = true): Observable<IncomeStatement> {
+    let params = new HttpParams().set('comparative', String(comparative));
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    return this.http.get<IncomeStatement>(`${this.getBaseUrl(farmId)}/reports/income-statement`, { params });
+  }
+
+  getFixedAssetSchedule(farmId: string, fromDate?: string | null, toDate?: string | null): Observable<FixedAssetSchedule> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    return this.http.get<FixedAssetSchedule>(`${this.getBaseUrl(farmId)}/reports/fixed-asset-schedule`, { params });
+  }
+
+  // --- Accounts setup (financial year, books start, opening balances, adjustments) ---
+
+  getAccountingSettings(farmId: string): Observable<AccountingSettings> {
+    return this.http.get<AccountingSettings>(`${this.getBaseUrl(farmId)}/accounting/settings`);
+  }
+
+  saveAccountingSettings(farmId: string, body: { fiscalYearStartMonth: number; booksStartDate?: string | null }): Observable<AccountingSettings> {
+    return this.http.put<AccountingSettings>(`${this.getBaseUrl(farmId)}/accounting/settings`, body);
+  }
+
+  getAccountingOptions(farmId: string): Observable<AccountingSetupOptions> {
+    return this.http.get<AccountingSetupOptions>(`${this.getBaseUrl(farmId)}/accounting/options`);
+  }
+
+  getBalanceSheetEntries(farmId: string): Observable<BalanceSheetEntry[]> {
+    return this.http.get<BalanceSheetEntry[]>(`${this.getBaseUrl(farmId)}/accounting/entries`);
+  }
+
+  createBalanceSheetEntry(farmId: string, body: SaveBalanceSheetEntryRequest): Observable<BalanceSheetEntry> {
+    return this.http.post<BalanceSheetEntry>(`${this.getBaseUrl(farmId)}/accounting/entries`, body);
+  }
+
+  updateBalanceSheetEntry(farmId: string, id: string, body: SaveBalanceSheetEntryRequest): Observable<BalanceSheetEntry> {
+    return this.http.put<BalanceSheetEntry>(`${this.getBaseUrl(farmId)}/accounting/entries/${id}`, body);
+  }
+
+  deleteBalanceSheetEntry(farmId: string, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.getBaseUrl(farmId)}/accounting/entries/${id}`);
+  }
+
+  generateOpeningEntries(farmId: string): Observable<GenerateOpeningEntriesResult> {
+    return this.http.post<GenerateOpeningEntriesResult>(`${this.getBaseUrl(farmId)}/accounting/entries/generate-opening`, {});
+  }
+
+  // --- Fixed-asset register ---
+
+  getFixedAssets(farmId: string, asOfDate?: string): Observable<FixedAsset[]> {
+    let params = new HttpParams();
+    if (asOfDate) params = params.set('asOfDate', asOfDate);
+    return this.http.get<FixedAsset[]>(`${this.getBaseUrl(farmId)}/fixed-assets`, { params });
+  }
+
+  createFixedAsset(farmId: string, body: SaveFixedAssetRequest): Observable<FixedAsset> {
+    return this.http.post<FixedAsset>(`${this.getBaseUrl(farmId)}/fixed-assets`, body);
+  }
+
+  updateFixedAsset(farmId: string, id: string, body: SaveFixedAssetRequest): Observable<FixedAsset> {
+    return this.http.put<FixedAsset>(`${this.getBaseUrl(farmId)}/fixed-assets/${id}`, body);
+  }
+
+  deleteFixedAsset(farmId: string, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.getBaseUrl(farmId)}/fixed-assets/${id}`);
+  }
+
+  disposeFixedAsset(farmId: string, id: string, body: { disposalDate: string; proceedsBdt: number }): Observable<FixedAsset> {
+    return this.http.post<FixedAsset>(`${this.getBaseUrl(farmId)}/fixed-assets/${id}/dispose`, body);
+  }
+
+  cancelFixedAssetDisposal(farmId: string, id: string): Observable<FixedAsset> {
+    return this.http.delete<FixedAsset>(`${this.getBaseUrl(farmId)}/fixed-assets/${id}/dispose`);
   }
 
   /** Daily (fromDate === toDate) or date-range income & expense cash book. Dates are yyyy-MM-dd. */

@@ -75,5 +75,20 @@ export const FINANCE_ROUTES: Routes = [
     path: 'reports/balance-sheet',
     loadComponent: () => import('./pages/balance-sheet/balance-sheet.component').then(m => m.BalanceSheetComponent),
     title: 'Balance Sheet - Farm360 AI'
+  },
+  {
+    path: 'reports/income-statement',
+    loadComponent: () => import('./pages/income-statement/income-statement.component').then(m => m.IncomeStatementComponent),
+    title: 'Profit & Loss Statement - Farm360 AI'
+  },
+  {
+    path: 'fixed-assets',
+    loadComponent: () => import('./pages/fixed-assets/fixed-assets.component').then(m => m.FixedAssetsComponent),
+    title: 'Fixed Assets - Farm360 AI'
+  },
+  {
+    path: 'accounts-setup',
+    loadComponent: () => import('./pages/accounts-setup/accounts-setup.component').then(m => m.AccountsSetupComponent),
+    title: 'Accounts Setup - Farm360 AI'
   }
 ];

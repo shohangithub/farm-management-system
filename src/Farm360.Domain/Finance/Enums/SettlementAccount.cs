@@ -21,5 +21,8 @@ public enum SettlementAccount
     Payable = 3,
 
     /// <summary>Sold on credit — owed by the customer until a customer receipt settles it.</summary>
-    Receivable = 4
+    Receivable = 4,
+
+    /// <summary>Property, plant &amp; equipment — e.g. a shed or machine contributed by the owner.</summary>
+    FixedAsset = 5
 }

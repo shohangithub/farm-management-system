@@ -6,10 +6,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FeedingService } from '../../services/feeding.service';
-import { FeedingRuleSet, FeedingPlanType, TargetAnimalType, FeedingPurpose } from '../../models/feeding.models';
+import { FeedingRuleSet, FeedingRuleLine, FeedingPlanType, TargetAnimalType, FeedingPurpose } from '../../models/feeding.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-rule-set-dialog/feeding-rule-set-dialog.component';
 
 @Component({
@@ -92,10 +93,10 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
                   Configured Rules ({{ ruleSet.rules.length }})
                 </div>
                 <div class="divide-y divide-gray-100 dark:divide-gray-800 max-h-32 overflow-y-auto">
-                  @for (rule of ruleSet.rules; track rule.id) {
-                    <div class="px-3 py-2 text-xs flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  @for (rule of sortedRules(ruleSet); track rule.id) {
+                    <div class="px-3 py-2 text-xs flex justify-between items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <span class="text-gray-600 dark:text-gray-400">{{ formatRuleCondition(ruleSet.planType, rule) }}</span>
-                      <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ rule.quantityValue }}{{ ruleSet.planType === 'WeightPercentage' ? '%' : ' kg' }} {{ rule.feedType }}</span>
+                      <span class="font-bold text-emerald-600 dark:text-emerald-400 text-right">{{ rule.quantityValue }}{{ ruleSet.planType === 'WeightPercentage' ? '%' : ' kg' }} {{ feedName(rule) }}</span>
                     </div>
                   }
                   @if (ruleSet.rules.length === 0) {
@@ -106,7 +107,10 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
             </div>
 
             <!-- Footer Action -->
-            <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex justify-end relative z-10">
+            <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex justify-end gap-2 relative z-10">
+              <button (click)="printRuleSet(ruleSet)" title="Print this rule set" class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors shadow-sm inline-flex items-center gap-1">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">print</mat-icon> Print
+              </button>
               <button (click)="openEditDialog(ruleSet)" class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors shadow-sm inline-flex items-center gap-1">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Edit Configuration
               </button>
@@ -121,12 +125,17 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
 export class RuleSetListComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly dialog = inject(MatDialog);
+  private readonly context = inject(WorkingContextService);
 
   readonly isLoading = signal(true);
   readonly ruleSets = signal<FeedingRuleSet[]>([]);
+  readonly formulaNames = signal(new Map<string, string>());
 
   ngOnInit(): void {
     this.loadRuleSets();
+    this.feedingService.getFormulas(1, 500).subscribe({
+      next: res => this.formulaNames.set(new Map(res.items.map(f => [f.id, f.title] as [string, string])))
+    });
   }
 
   loadRuleSets(): void {
@@ -143,7 +152,7 @@ export class RuleSetListComponent implements OnInit {
   openCreateDialog(): void {
     const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, { disableClose: true, 
       width: '95vw', 
-      maxWidth: '800px' 
+      maxWidth: '960px' 
     });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadRuleSets();
@@ -153,12 +162,93 @@ export class RuleSetListComponent implements OnInit {
   openEditDialog(ruleSet: FeedingRuleSet): void {
     const dialogRef = this.dialog.open(FeedingRuleSetDialogComponent, { disableClose: true,
       width: '95vw',
-      maxWidth: '800px',
+      maxWidth: '960px',
       data: ruleSet
     });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadRuleSets();
     });
+  }
+
+  /**
+   * Prints one rule set on its own A4 page — every rule, not just the ones visible in the
+   * card's scroll area — through a hidden iframe, so the app page itself is untouched.
+   */
+  printRuleSet(ruleSet: FeedingRuleSet): void {
+    const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
+    const unit = ruleSet.planType === 'WeightPercentage' ? '% of body weight' : 'kg / head / day';
+    const conditionHeader = this.isWeightBased(ruleSet.planType) ? 'Body weight range'
+      : ruleSet.planType === 'AgeBased' ? 'Age range' : 'Applies to';
+    const farm = this.context.currentFarmValue?.name ?? '';
+    const org = this.context.currentOrgValue?.name ?? 'Farm360';
+    const printed = new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+
+    const rules = this.sortedRules(ruleSet);
+    const rows = rules.length
+      ? rules.map((r, i) => `
+          <tr>
+            <td class="num">${i + 1}</td>
+            <td>${esc(this.formatRuleCondition(ruleSet.planType, r))}</td>
+            <td>${esc(this.feedName(r))}</td>
+            <td class="num"><strong>${esc(r.quantityValue)}</strong> ${ruleSet.planType === 'WeightPercentage' ? '%' : 'kg'}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="4" class="empty">No rules defined</td></tr>`;
+
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(ruleSet.name)} — Feeding Rule Set</title>
+      <style>
+        @page { size: A4; margin: 16mm; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #111827; font-size: 12px; margin: 0; }
+        header { border-bottom: 2px solid #059669; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+        header .org { font-size: 16px; font-weight: 700; }
+        header .farm, header .printed { color: #6b7280; font-size: 11px; }
+        h1 { font-size: 18px; margin: 0 0 4px; }
+        .status { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+                  border: 1px solid ${ruleSet.isActive ? '#a7f3d0' : '#e5e7eb'}; color: ${ruleSet.isActive ? '#047857' : '#374151'}; }
+        dl { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin: 12px 0 16px; }
+        dt { color: #6b7280; } dd { margin: 0; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; }
+        th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+        td.num, th.num { text-align: right; width: 1%; white-space: nowrap; }
+        td.empty { text-align: center; color: #9ca3af; font-style: italic; }
+        .notes { margin-top: 14px; padding: 8px 10px; background: #f9fafb; border-left: 3px solid #059669; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
+        .signatures div { width: 30%; border-top: 1px solid #6b7280; padding-top: 4px; text-align: center; color: #6b7280; font-size: 11px; }
+      </style></head><body>
+      <header>
+        <div><div class="org">${esc(org)}</div><div class="farm">${esc(farm)}</div></div>
+        <div class="printed">Printed ${esc(printed)}</div>
+      </header>
+      <h1>${esc(ruleSet.name)} <span class="status">${ruleSet.isActive ? 'Active' : 'Inactive'}</span></h1>
+      <dl>
+        <dt>Plan type</dt><dd>${esc(this.formatPlanType(ruleSet.planType))}</dd>
+        <dt>Target animals</dt><dd>${esc(this.formatAnimalType(ruleSet.targetAnimalType))}</dd>
+        <dt>Purpose</dt><dd>${esc(this.formatPurpose(ruleSet.feedingPurpose))}</dd>
+        <dt>Number of rules</dt><dd>${ruleSet.rules.length}</dd>
+      </dl>
+      <table>
+        <thead><tr><th class="num">#</th><th>${conditionHeader}</th><th>Formula / ration</th><th class="num">Quantity (${unit})</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${ruleSet.baseNotes ? `<div class="notes"><strong>Notes:</strong> ${esc(ruleSet.baseNotes)}</div>` : ''}
+      <div class="signatures"><div>Prepared by</div><div>Checked by</div><div>Approved by</div></div>
+      </body></html>`;
+
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(frame);
+    const doc = frame.contentWindow?.document;
+    if (!doc) { frame.remove(); return; }
+    doc.open();
+    doc.write(html);
+    doc.close();
+    setTimeout(() => {
+      frame.contentWindow?.focus();
+      frame.contentWindow?.print();
+      setTimeout(() => frame.remove(), 1000);
+    }, 250);
   }
 
   formatPlanType(type: string): string {
@@ -173,18 +263,37 @@ export class RuleSetListComponent implements OnInit {
     return purpose;
   }
 
-  formatRuleCondition(planType: string, rule: any): string {
-    if (planType === 'WeightPercentage') {
-      if (rule.minWeightKg && rule.maxWeightKg) return `${rule.minWeightKg} - ${rule.maxWeightKg} kg`;
-      if (rule.minWeightKg) return `> ${rule.minWeightKg} kg`;
-      if (rule.maxWeightKg) return `< ${rule.maxWeightKg} kg`;
-      return 'All Weights';
+  /** Weight-percentage and weight-quantity plans both use body-weight bands. */
+  isWeightBased(planType: string): boolean {
+    return planType === 'WeightPercentage' || planType === 'WeightQuantity';
+  }
+
+  /** Rules in band order (lightest / youngest first), as they apply to a growing animal. */
+  sortedRules(ruleSet: FeedingRuleSet): FeedingRuleLine[] {
+    const key = (r: FeedingRuleLine) => this.isWeightBased(ruleSet.planType)
+      ? (r.minWeightKg ?? r.maxWeightKg ?? 0)
+      : ruleSet.planType === 'AgeBased' ? (r.minAgeDays ?? r.maxAgeDays ?? 0) : 0;
+    return [...ruleSet.rules].sort((a, b) => key(a) - key(b));
+  }
+
+  /** The ration's name when the rule uses a formula, otherwise the feed category. */
+  feedName(rule: FeedingRuleLine): string {
+    return (rule.formulaId && this.formulaNames().get(rule.formulaId)) || rule.feedType;
+  }
+
+  formatRuleCondition(planType: string, rule: FeedingRuleLine): string {
+    const has = (v: number | null | undefined): v is number => v !== null && v !== undefined;
+    if (this.isWeightBased(planType)) {
+      if (has(rule.minWeightKg) && has(rule.maxWeightKg)) return `${rule.minWeightKg} – ${rule.maxWeightKg} kg`;
+      if (has(rule.minWeightKg)) return `${rule.minWeightKg} kg and above`;
+      if (has(rule.maxWeightKg)) return `Up to ${rule.maxWeightKg} kg`;
+      return 'All weights';
     } else if (planType === 'AgeBased') {
-      if (rule.minAgeDays && rule.maxAgeDays) return `${rule.minAgeDays} - ${rule.maxAgeDays} days`;
-      if (rule.minAgeDays) return `> ${rule.minAgeDays} days`;
-      if (rule.maxAgeDays) return `< ${rule.maxAgeDays} days`;
-      return 'All Ages';
+      if (has(rule.minAgeDays) && has(rule.maxAgeDays)) return `${rule.minAgeDays} – ${rule.maxAgeDays} days`;
+      if (has(rule.minAgeDays)) return `${rule.minAgeDays} days and above`;
+      if (has(rule.maxAgeDays)) return `Up to ${rule.maxAgeDays} days`;
+      return 'All ages';
     }
-    return 'Fixed Amount';
+    return 'Every animal (fixed amount)';
   }
 }

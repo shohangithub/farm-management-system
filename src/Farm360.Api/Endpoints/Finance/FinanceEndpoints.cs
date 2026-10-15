@@ -382,14 +382,135 @@ public static class FinanceEndpoints
             return Results.Ok(result);
         }).Produces<TrialBalanceDto>();
 
+        // compareDate defaults to the previous financial year end; pass noComparative=true to omit it.
         group.MapGet("reports/balance-sheet", async (
             Guid farmId,
             [FromQuery] DateTime? asOfDate,
+            [FromQuery] DateTime? compareDate,
+            [FromQuery] bool noComparative,
             IMediator mediator) =>
         {
-            var result = await mediator.Send(new GetBalanceSheetQuery(farmId, asOfDate));
+            var result = await mediator.Send(new GetBalanceSheetQuery(farmId, asOfDate, noComparative ? DateTime.MinValue : compareDate));
             return Results.Ok(result);
         }).Produces<BalanceSheetDto>();
+
+        // Statement of profit or loss; fromDate defaults to the financial year start.
+        group.MapGet("reports/income-statement", async (
+            Guid farmId,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
+            [FromQuery] bool? comparative,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetIncomeStatementQuery(farmId, fromDate, toDate, comparative ?? true));
+            return Results.Ok(result);
+        }).Produces<IncomeStatementDto>();
+
+        group.MapGet("reports/fixed-asset-schedule", async (
+            Guid farmId,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new GetFixedAssetScheduleQuery(farmId, fromDate, toDate));
+            return Results.Ok(result);
+        }).Produces<FixedAssetScheduleDto>();
+
+        // ── Accounts setup: financial year, books start, opening balances, adjustments ──
+        group.MapGet("accounting/settings", async (Guid farmId, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetAccountingSettingsQuery(farmId))))
+            .Produces<AccountingSettingsDto>();
+
+        group.MapPut("accounting/settings", async (
+            Guid farmId,
+            [FromBody] SaveAccountingSettingsRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new SaveAccountingSettingsCommand(tenantService.TenantId, farmId, request))))
+            .Produces<AccountingSettingsDto>();
+
+        group.MapGet("accounting/options", async (IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetAccountingSetupOptionsQuery())))
+            .Produces<AccountingSetupOptionsDto>();
+
+        group.MapGet("accounting/entries", async (Guid farmId, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetBalanceSheetEntriesQuery(farmId))))
+            .Produces<List<BalanceSheetEntryDto>>();
+
+        group.MapPost("accounting/entries", async (
+            Guid farmId,
+            [FromBody] SaveBalanceSheetEntryRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new CreateBalanceSheetEntryCommand(tenantService.TenantId, farmId, request));
+            return Results.Created($"/api/farms/{farmId}/finance/accounting/entries/{result.Id}", result);
+        }).Produces<BalanceSheetEntryDto>(StatusCodes.Status201Created);
+
+        group.MapPut("accounting/entries/{id:guid}", async (Guid farmId, Guid id, [FromBody] SaveBalanceSheetEntryRequest request, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new UpdateBalanceSheetEntryCommand(farmId, id, request))))
+            .Produces<BalanceSheetEntryDto>();
+
+        group.MapDelete("accounting/entries/{id:guid}", async (Guid farmId, Guid id, IMediator mediator) =>
+        {
+            await mediator.Send(new DeleteBalanceSheetEntryCommand(farmId, id));
+            return Results.NoContent();
+        }).Produces(StatusCodes.Status204NoContent);
+
+        // Turns every posting up to the books start into opening balances.
+        group.MapPost("accounting/entries/generate-opening", async (
+            Guid farmId,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GenerateOpeningEntriesCommand(tenantService.TenantId, farmId))))
+            .Produces<GenerateOpeningEntriesResultDto>();
+
+        // ── Fixed-asset register ──
+        group.MapGet("fixed-assets", async (Guid farmId, [FromQuery] DateTime? asOfDate, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetFixedAssetsQuery(farmId, asOfDate))))
+            .Produces<List<FixedAssetDto>>();
+
+        group.MapPost("fixed-assets", async (
+            Guid farmId,
+            [FromBody] SaveFixedAssetRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new CreateFixedAssetCommand(tenantService.TenantId, farmId, request));
+            return Results.Created($"/api/farms/{farmId}/finance/fixed-assets/{result.Id}", result);
+        }).Produces<FixedAssetDto>(StatusCodes.Status201Created);
+
+        group.MapPut("fixed-assets/{id:guid}", async (
+            Guid farmId,
+            Guid id,
+            [FromBody] SaveFixedAssetRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new UpdateFixedAssetCommand(tenantService.TenantId, farmId, id, request))))
+            .Produces<FixedAssetDto>();
+
+        group.MapDelete("fixed-assets/{id:guid}", async (Guid farmId, Guid id, IMediator mediator) =>
+        {
+            await mediator.Send(new DeleteFixedAssetCommand(farmId, id));
+            return Results.NoContent();
+        }).Produces(StatusCodes.Status204NoContent);
+
+        group.MapPost("fixed-assets/{id:guid}/dispose", async (
+            Guid farmId,
+            Guid id,
+            [FromBody] DisposeFixedAssetRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new DisposeFixedAssetCommand(tenantService.TenantId, farmId, id, request))))
+            .Produces<FixedAssetDto>();
+
+        group.MapDelete("fixed-assets/{id:guid}/dispose", async (
+            Guid farmId,
+            Guid id,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new CancelFixedAssetDisposalCommand(tenantService.TenantId, farmId, id))))
+            .Produces<FixedAssetDto>();
 
         // Daily / date-range income & expense cash book. Omit toDate (or pass the same date) for a
         // single-day report; omit both for today.

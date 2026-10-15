@@ -32,6 +32,13 @@ public enum TransactionCategory
     LivestockLoss = 15,
     /// <summary>Customer balances that will never be collected — written off from Accounts Receivable.</summary>
     BadDebt = 16,
+    /// <summary>Shed, machinery, vehicle or land bought — capitalised as Property, Plant &amp; Equipment.</summary>
+    FixedAssetPurchase = 17,
+    /// <summary>
+    /// Disposal of a fixed asset. Sale proceeds are posted as Income on this expense account, against
+    /// which the asset's net book value is derecognised — the balance is the loss (or gain) on disposal.
+    /// </summary>
+    AssetDisposal = 18,
 
     // ── Income Categories ───────────────────────────────────────────────────
     AnimalSale = 50,

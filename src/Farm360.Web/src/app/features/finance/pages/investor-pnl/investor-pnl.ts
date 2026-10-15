@@ -10,6 +10,7 @@ import { switchMap, catchError, of, combineLatest, BehaviorSubject } from 'rxjs'
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
@@ -20,6 +21,7 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
   selector: 'app-investor-pnl',
   standalone: true,
   imports: [
+    FinanceSubnavComponent,
     CommonModule,
     RouterModule,
     FormsModule,
@@ -50,55 +52,7 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
 
     <div class="px-6 py-4 mx-auto max-w-7xl space-y-6">
 
-      <!-- Sub-Navigation Bar -->
-      <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto">
-        <a routerLink="/finance" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">dashboard</mat-icon> Overview
-        </a>
-        <a routerLink="/finance/transactions" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">receipt_long</mat-icon> General Ledger
-        </a>
-        <a routerLink="/finance/reports/monthly-pnl" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">calendar_view_month</mat-icon> Monthly P&L
-        </a>
-        <a routerLink="/finance/reports/trial-balance" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">balance</mat-icon> Trial Balance
-        </a>
-        <a routerLink="/finance/reports/balance-sheet" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">account_balance_wallet</mat-icon> Balance Sheet
-        </a>
-        <a routerLink="/finance/reports/income-expense" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">swap_vert</mat-icon> Income & Expense
-        </a>
-        <a routerLink="/finance/reports/full-accounts" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">menu_book</mat-icon> Full Accounts
-        </a>
-        <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">request_quote</mat-icon> Payables &amp; Receivables
-        </a>
-        <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">fact_check</mat-icon> Accounting Health
-        </a>
-        <a routerLink="/finance/loans" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">account_balance</mat-icon> Loans & Liabilities
-        </a>
-        <a routerLink="/finance/investors" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">groups</mat-icon> Investors & Equity
-        </a>
-        <a routerLink="/finance/shares" 
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-          <mat-icon class="text-base">pie_chart</mat-icon> Share Market
-        </a>
-      </div>
+      <app-finance-subnav></app-finance-subnav>
 
       <!-- Filter Controls: Date Range & Quick Presets -->
       <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">

@@ -48,6 +48,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Farm360.Application.Finance.Services.ILivestockAccountingService, Farm360.Application.Finance.Services.LivestockAccountingService>();
         services.AddScoped<Farm360.Application.Finance.Services.IAccountingReconciliationService, Farm360.Application.Finance.Services.AccountingReconciliationService>();
         services.AddScoped<Farm360.Application.Finance.Services.ITradeCreditService, Farm360.Application.Finance.Services.TradeCreditService>();
+        services.AddScoped<Farm360.Application.Finance.Services.IFinancialStatementEngine, Farm360.Application.Finance.Services.FinancialStatementEngine>();
 
         // ── Feeding: per-animal feed allocation (docs/32 GAP-1) ──────────────
         services.AddScoped<Farm360.Application.Feeding.Services.IFeedAllocationService, Farm360.Application.Feeding.Services.FeedAllocationService>();

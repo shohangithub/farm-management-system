@@ -9,6 +9,7 @@ import { catchError, of, switchMap, BehaviorSubject } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { IncomeFormDialogComponent } from '../../components/income-form-dialog/income-form-dialog';
@@ -20,6 +21,7 @@ import { MonthlyCashFlowPoint } from '../../models/finance.model';
   selector: 'app-finance-dashboard',
   standalone: true,
   imports: [
+    FinanceSubnavComponent,
     CommonModule,
     RouterLink,
     MatIconModule,

@@ -164,6 +164,9 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<LoanRecord> LoanRecords => Set<LoanRecord>();
     public DbSet<Farm360.Domain.Finance.TradeBill> TradeBills => Set<Farm360.Domain.Finance.TradeBill>();
     public DbSet<Farm360.Domain.Finance.TradeBillPayment> TradeBillPayments => Set<Farm360.Domain.Finance.TradeBillPayment>();
+    public DbSet<Farm360.Domain.Finance.Accounting.FarmAccountingSettings> FarmAccountingSettings => Set<Farm360.Domain.Finance.Accounting.FarmAccountingSettings>();
+    public DbSet<Farm360.Domain.Finance.Accounting.BalanceSheetEntry> BalanceSheetEntries => Set<Farm360.Domain.Finance.Accounting.BalanceSheetEntry>();
+    public DbSet<Farm360.Domain.Finance.Accounting.FixedAsset> FixedAssets => Set<Farm360.Domain.Finance.Accounting.FixedAsset>();
     public DbSet<Investor> Investors => Set<Investor>();
     public DbSet<InvestorTransaction> InvestorTransactions => Set<InvestorTransaction>();
     public DbSet<FarmShareConfig> FarmShareConfigs => Set<FarmShareConfig>();

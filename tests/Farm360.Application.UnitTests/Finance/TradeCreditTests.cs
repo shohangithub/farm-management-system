@@ -185,7 +185,7 @@ public class TradeCreditTests
         var reconciliation = Substitute.For<IAccountingReconciliationService>();
         reconciliation.ReconcileAsync(FarmId, Arg.Any<IReadOnlyCollection<FinancialTransaction>>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ReconciliationLineDto>());
-        var sheet = await new GetBalanceSheetQueryHandler(_ledger, reconciliation)
+        var sheet = await new GetBalanceSheetQueryHandler(new FinancialStatementEngine(_ledger), reconciliation)
             .Handle(new GetBalanceSheetQuery(FarmId, Day), CancellationToken.None);
 
         sheet.Assets.Lines.Single(l => l.LineCode == AccountChart.ReceivableAccount).AmountBdt.Should().Be(8_000m);
