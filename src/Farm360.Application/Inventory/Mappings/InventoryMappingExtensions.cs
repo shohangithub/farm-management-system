@@ -27,7 +27,10 @@ public static class InventoryMappingExtensions
             status,
             status.ToString(),
             item.StorageLocation,
-            item.IsActive);
+            item.IsActive)
+        {
+            DefaultUnitId = item.DefaultUnitId,
+        };
     }
 
     public static SupplierDto ToDto(this Supplier supplier)
@@ -63,6 +66,10 @@ public static class InventoryMappingExtensions
             transaction.BatchNumber,
             transaction.ExpiryDate,
             transaction.Reason,
-            transaction.RecordedBy);
+            transaction.RecordedBy)
+        {
+            EnteredUnitName = transaction.EnteredUnitName,
+            EnteredQuantity = transaction.EnteredQuantity,
+        };
     }
 }

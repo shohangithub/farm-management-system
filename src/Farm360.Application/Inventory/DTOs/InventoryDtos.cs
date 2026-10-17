@@ -17,7 +17,11 @@ public sealed record InventoryItemDto(
     InventoryStatus Status,
     string StatusName,
     string? StorageLocation,
-    bool IsActive);
+    bool IsActive)
+{
+    /// <summary>The unit it is usually bought or issued in (e.g. "Bag (50 kg)").</summary>
+    public Guid? DefaultUnitId { get; init; }
+}
 
 public sealed record SupplierDto(
     Guid Id,
@@ -47,7 +51,12 @@ public sealed record StockTransactionDto(
     string? BatchNumber,
     DateOnly? ExpiryDate,
     string? Reason,
-    string? RecordedBy);
+    string? RecordedBy)
+{
+    /// <summary>The unit it was entered in ("Bag (50 kg)") and that quantity; Quantity is in the base unit.</summary>
+    public string? EnteredUnitName { get; init; }
+    public decimal? EnteredQuantity { get; init; }
+}
 
 public sealed record InventoryValuationReportDto(
     Guid FarmId,

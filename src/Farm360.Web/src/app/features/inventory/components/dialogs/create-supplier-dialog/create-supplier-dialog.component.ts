@@ -27,9 +27,9 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
     MatProgressSpinnerModule
   ],
   template: `
-    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl flex flex-col max-h-[90vh]">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">local_shipping</mat-icon>
@@ -41,8 +41,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
         </button>
       </div>
 
-      <!-- Content -->
-      <div class="p-6">
+      <!-- Content (scrolls) -->
+      <div class="p-6 flex-1 min-h-0 overflow-y-auto">
         @if (error()) {
           <div class="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs border border-red-200 dark:border-red-800 font-medium">
             {{ error() }}
@@ -86,7 +86,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
       </div>
 
       <!-- Actions -->
-      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
+      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2 shrink-0">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
           Cancel
         </button>

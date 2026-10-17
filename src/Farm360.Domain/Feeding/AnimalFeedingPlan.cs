@@ -91,6 +91,22 @@ public sealed class AnimalFeedingPlan : AuditableEntity, IAggregateRoot
         Status = FeedingPlanStatus.Completed;
     }
 
+    /// <summary>
+    /// True when the plan is paused on <paramref name="day"/>: an exclusion for that single day,
+    /// or one that started on or before it and resumes after it.
+    /// </summary>
+    public bool IsPausedOn(DateOnly day) =>
+        _exclusions.Any(e => e.ResumesOn is { } resumes
+            ? e.ExclusionDate <= day && day < resumes
+            : e.ExclusionDate == day);
+
+    /// <summary>The day feeding resumes when paused on <paramref name="day"/>, if known.</summary>
+    public DateOnly? PausedUntil(DateOnly day) =>
+        _exclusions.Where(e => e.ResumesOn is { } r ? e.ExclusionDate <= day && day < r : e.ExclusionDate == day)
+            .Select(e => e.ResumesOn ?? e.ExclusionDate.AddDays(1))
+            .DefaultIfEmpty()
+            .Max() is var d && d != default ? d : null;
+
     public void AddExclusion(DateOnly date, string reason, DateOnly? resumesOn = null)
     {
         var exclusion = new FeedingPlanExclusion(Guid.NewGuid(), Id, date, reason, resumesOn);

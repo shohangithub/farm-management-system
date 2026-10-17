@@ -76,10 +76,16 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
         RaiseDomainEvent(new DailyEntryConfirmedEvent(Guid.NewGuid(), DateTime.UtcNow, Id, TenantId, FarmId, actualKg, inventoryTransactionId));
     }
 
-    public void SetConsumptionCost(decimal unitCostBdt)
+    public void SetConsumptionCost(decimal unitCostBdt) => SetConsumptionCost(unitCostBdt, 1m);
+
+    /// <summary>
+    /// Unit cost and total cost of the feed given. A group plan's quantity is per head, so its
+    /// total covers every head fed (<paramref name="headCount"/>); an individual plan passes 1.
+    /// </summary>
+    public void SetConsumptionCost(decimal unitCostBdt, decimal headCount)
     {
         UnitCostAtConsumptionBdt = Math.Max(0, unitCostBdt);
-        var kg = ActualKg ?? ExpectedKg;
+        var kg = (ActualKg ?? ExpectedKg) * Math.Max(1m, headCount);
         TotalCostBdt = Math.Round(kg * UnitCostAtConsumptionBdt.Value, 2);
     }
 

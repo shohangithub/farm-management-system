@@ -20,6 +20,14 @@ import {
   FeedingCycleReconciliation,
   FeedingEntryCostBreakdown,
   AnimalFeedingSummary
+,
+  FeedingBoard,
+  RationPreviewRequest,
+  RationPreview,
+  ConvertSchedulesResult,
+  FeedRequirement,
+  FeedRequirementRequest,
+  AnimalNutrition
 } from '../models/feeding.models';
 
 export interface PagedResult<T> {
@@ -142,6 +150,31 @@ export class FeedingService {
 
   assignPlan(request: AssignAnimalFeedingPlanRequest): Observable<{ ids: string[] }> {
     return this.http.post<{ ids: string[] }>(`${this.baseUrl}/plans/assign`, request);
+  }
+
+  /** What one animal ate (protein, energy, dry matter, minerals) against its needs, with its growth. */
+  getAnimalNutrition(animalId: string, from: string, to: string): Observable<AnimalNutrition> {
+    return this.http.get<AnimalNutrition>(`${this.baseUrl}/nutrition/${animalId}`, { params: { from, to } });
+  }
+
+  /** What the rations need for the next N days, item by item, against stock — for buying. */
+  getFeedRequirement(request: FeedRequirementRequest): Observable<FeedRequirement> {
+    return this.http.post<FeedRequirement>(`${this.baseUrl}/requirements`, request);
+  }
+
+  /** Who eats what: every animal on the farm with every ration feeding it today. */
+  getBoard(farmId: string): Observable<FeedingBoard> {
+    return this.http.get<FeedingBoard>(`${this.baseUrl}/board`, { params: { farmId } });
+  }
+
+  /** What each animal would get if this ration were saved — nothing is created. */
+  previewRation(request: RationPreviewRequest): Observable<RationPreview> {
+    return this.http.post<RationPreview>(`${this.baseUrl}/plans/preview`, request);
+  }
+
+  /** Turns the farm's old shed/batch schedules into group feeding plans. */
+  convertSchedules(farmId: string): Observable<ConvertSchedulesResult> {
+    return this.http.post<ConvertSchedulesResult>(`${this.baseUrl}/schedules/convert`, {}, { params: { farmId } });
   }
 
   cancelPlan(id: string): Observable<void> {

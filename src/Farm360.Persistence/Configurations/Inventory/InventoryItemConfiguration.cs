@@ -30,11 +30,12 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
         builder.Property(x => x.ReorderThreshold)
             .HasColumnType("decimal(18,2)");
 
+        // 4 decimals: stock kept in kg must still hold a few grams used for one animal.
         builder.Property(x => x.CurrentStock)
-            .HasColumnType("decimal(18,2)");
+            .HasColumnType("decimal(18,4)");
 
         builder.Property(x => x.WeightedAverageCostBdt)
-            .HasColumnType("decimal(18,2)");
+            .HasColumnType("decimal(18,4)");
 
         builder.Property(x => x.StorageLocation)
             .HasMaxLength(150);

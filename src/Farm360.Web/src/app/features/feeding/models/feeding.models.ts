@@ -394,6 +394,7 @@ export interface CreateFeedingRuleSetRequest {
     maxAgeDays?: number;
     feedType: FeedCategory;
     formulaId?: string;
+    inventoryItemId?: string;
     quantityValue: number;
   }[];
 }
@@ -412,6 +413,7 @@ export interface UpdateFeedingRuleSetRequest {
     maxAgeDays?: number;
     feedType: FeedCategory;
     formulaId?: string;
+    inventoryItemId?: string;
     quantityValue: number;
   }[];
 }
@@ -421,8 +423,23 @@ export interface AssignAnimalFeedingPlanRequest {
   feedingRuleSetIds: string[];
   planType: FeedingPlanType;
   startDate: string;
-  animalIds: string[];
+  animalIds?: string[];
+  endDate?: string | null;
+  /** A formula or stock item at a fixed kg a day, without a rule set (e.g. an add-on mineral). */
+  directRations?: DirectRationRequest[];
+  /** Group plan: feeds everyone in the shed / pen / batch, including animals that join later. */
+  shedId?: string | null;
+  penId?: string | null;
+  batchId?: string | null;
+  /** End the animals' other feed charts (extras stay). */
+  replaceExistingCharts?: boolean;
   expectedDailyFeedKg?: number;
+}
+
+export interface DirectRationRequest {
+  formulaId?: string | null;
+  inventoryItemId?: string | null;
+  kgPerDay: number;
 }
 
 export interface AnimalDailyFeedingLog {
@@ -469,3 +486,199 @@ export interface AnimalFeedingSummary {
 }
 
 
+
+
+// ── Who eats what (board) & Set-ration preview ────────────────────────────
+
+/** One ration feeding an animal: a feed chart, an extra (direct ration) or a group (shed/pen/batch) plan. */
+export interface RationItem {
+  planId?: string | null;
+  ruleSetId: string;
+  name: string;
+  kind: 'Chart' | 'Extra' | 'Group' | string;
+  planType: string;
+  feedName: string;
+  kgPerDay: number;
+  costPerDayBdt: number;
+  fit: 'InRange' | 'BelowRange' | 'AboveRange' | 'Unknown' | string;
+  isPaused: boolean;
+  pausedUntil?: string | null;
+}
+
+export interface BoardAnimal {
+  animalId: string;
+  tag: string;
+  species: string;
+  shedId?: string | null;
+  shedName?: string | null;
+  penId?: string | null;
+  penName?: string | null;
+  batchId?: string | null;
+  batchName?: string | null;
+  weightKg?: number | null;
+  ageDays?: number | null;
+  items: RationItem[];
+  totalKgPerDay: number;
+  totalCostPerDayBdt: number;
+}
+
+export interface FeedingBoard {
+  farmId: string;
+  date: string;
+  summary: {
+    animals: number;
+    fed: number;
+    unfed: number;
+    withExtras: number;
+    paused: number;
+    totalKgPerDay: number;
+    totalCostPerDayBdt: number;
+    activeLegacySchedules: number;
+  };
+  animals: BoardAnimal[];
+}
+
+export interface RationPreviewRequest {
+  farmId: string;
+  animalIds?: string[] | null;
+  ruleSetIds?: string[] | null;
+  directRations?: DirectRationRequest[] | null;
+  shedId?: string | null;
+  penId?: string | null;
+  batchId?: string | null;
+  replaceExistingCharts?: boolean;
+}
+
+export interface PreviewAnimal {
+  animalId: string;
+  tag: string;
+  weightKg?: number | null;
+  ageDays?: number | null;
+  items: RationItem[];
+  totalKgPerDay: number;
+  totalCostPerDayBdt: number;
+  warnings: string[];
+  willEnd: string[];
+  alreadyOn: string[];
+}
+
+export interface RationPreview {
+  animals: PreviewAnimal[];
+  groupHeadCount: number;
+  totalKgPerDay: number;
+  totalCostPerDayBdt: number;
+}
+
+export interface ConvertSchedulesResult {
+  converted: number;
+  skipped: number;
+  notes: string[];
+}
+
+// ── Feed purchase plan (what the rations need for the next N days) ─────────
+
+export interface FeedRequirementRequest {
+  farmId: string;
+  days: number;
+  fromDate?: string | null;
+  animalIds?: string[] | null;
+  shedId?: string | null;
+  penId?: string | null;
+  batchId?: string | null;
+  projectGrowth?: boolean;
+  includeConsumables?: boolean;
+}
+
+export interface ItemNeed {
+  inventoryItemId?: string | null;
+  name: string;
+  category: string;
+  baseUnit: string;
+  perDay: number;
+  total: number;
+  inStock: number;
+  toBuy: number;
+  packName?: string | null;
+  packSize?: number | null;
+  packsToBuy?: number | null;
+  unitCostBdt: number;
+  costOfNeedBdt: number;
+  costToBuyBdt: number;
+  usedIn: string[];
+  linkedToStock: boolean;
+}
+
+export interface RecipeNeed { formulaId: string; recipe: string; perDayKg: number; totalKg: number; costBdt: number; }
+export interface AnimalNeed { animalId: string; tag: string; shed?: string | null; weightKg?: number | null; perDayKg: number; totalKg: number; costBdt: number; }
+
+export interface FeedRequirement {
+  farmId: string;
+  fromDate: string;
+  toDate: string;
+  days: number;
+  animals: number;
+  animalsWithoutRation: number;
+  projectedGrowth: boolean;
+  items: ItemNeed[];
+  recipes: RecipeNeed[];
+  perAnimal: AnimalNeed[];
+  totalCostOfNeedBdt: number;
+  totalCostToBuyBdt: number;
+  notes: string[];
+}
+
+// ── Nutrition & growth (one animal) ───────────────────────────────────────
+
+export interface NutritionDay {
+  date: string;
+  weightKg?: number | null;
+  weightIsMeasured: boolean;
+  feedKg: number;
+  dryMatterKg: number;
+  proteinG: number;
+  energyMj: number;
+  fibreG: number;
+  calciumG: number;
+  phosphorusG: number;
+  dryMatterNeedKg?: number | null;
+  proteinNeedG?: number | null;
+  energyNeedMj?: number | null;
+  proteinPercentOfNeed?: number | null;
+  energyPercentOfNeed?: number | null;
+  recipes: string;
+}
+
+export interface NutritionSummary {
+  days: number;
+  fedDays: number;
+  startWeightKg?: number | null;
+  endWeightKg?: number | null;
+  gainKg?: number | null;
+  adgKgPerDay?: number | null;
+  totalFeedKg: number;
+  totalDryMatterKg: number;
+  avgFeedKgPerDay: number;
+  avgDryMatterKgPerDay: number;
+  avgProteinGPerDay: number;
+  avgEnergyMjPerDay: number;
+  dietProteinPercent: number;
+  dietEnergyMjPerKgDm: number;
+  dryMatterPercentOfBodyWeight?: number | null;
+  avgProteinPercentOfNeed?: number | null;
+  avgEnergyPercentOfNeed?: number | null;
+  feedConversionKgDmPerKgGain?: number | null;
+  expectedAdgFromEnergy?: number | null;
+  verdict: string;
+  advice: string[];
+}
+
+export interface AnimalNutrition {
+  animalId: string;
+  tag: string;
+  species: string;
+  from: string;
+  to: string;
+  summary: NutritionSummary;
+  days: NutritionDay[];
+  notes: string[];
+}

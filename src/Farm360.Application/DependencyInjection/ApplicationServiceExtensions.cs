@@ -52,6 +52,8 @@ public static class ApplicationServiceExtensions
 
         // ── Feeding: per-animal feed allocation (docs/32 GAP-1) ──────────────
         services.AddScoped<Farm360.Application.Feeding.Services.IFeedAllocationService, Farm360.Application.Feeding.Services.FeedAllocationService>();
+        services.AddScoped<Farm360.Application.Feeding.Services.IDirectFeedService, Farm360.Application.Feeding.Services.DirectFeedService>();
+        services.AddScoped<Farm360.Application.Inventory.Units.IUnitService, Farm360.Application.Inventory.Units.UnitService>();
 
         // ── Reporting platform (docs/32): registry + execution service ────────
         services.AddReportingServices();

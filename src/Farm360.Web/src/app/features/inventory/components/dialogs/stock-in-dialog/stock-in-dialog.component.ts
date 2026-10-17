@@ -13,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { InventoryService } from '../../../services/inventory.service';
 import { InventoryItem, Supplier } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { UnitPickerComponent, UnitSelection } from '../../unit-picker/unit-picker.component';
 import {
   CreditTermsFieldsComponent,
   buildCreditTermsGroup,
@@ -32,12 +33,13 @@ import {
     MatSelectModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    CreditTermsFieldsComponent
+    CreditTermsFieldsComponent,
+    UnitPickerComponent
   ],
   template: `
-    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl flex flex-col max-h-[90vh]">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">add_business</mat-icon>
@@ -49,8 +51,8 @@ import {
         </button>
       </div>
 
-      <!-- Content -->
-      <div class="p-6">
+      <!-- Content (scrolls) -->
+      <div class="p-6 flex-1 min-h-0 overflow-y-auto">
         @if (error()) {
           <div class="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs border border-red-200 dark:border-red-800 font-medium">
             {{ error() }}
@@ -68,16 +70,21 @@ import {
             <mat-error>Item selection is required</mat-error>
           </mat-form-field>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Received Quantity</mat-label>
-              <input matInput type="number" formControlName="quantity" step="1" min="0.1" required />
+              <mat-label>Quantity</mat-label>
+              <input matInput type="number" formControlName="quantity" step="any" min="0" required />
               <mat-error>Quantity is required</mat-error>
             </mat-form-field>
 
+            <!-- Bought in bags, bottles…: stock is kept in the item's base unit -->
+            <app-unit-picker appearance="material" label="Unit" [itemId]="form.value.inventoryItemId" [quantity]="form.value.quantity"
+              (selectionChange)="onUnit($event)"></app-unit-picker>
+
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Unit Cost (BDT)</mat-label>
-              <input matInput type="number" formControlName="unitCostBdt" step="0.5" min="0" required />
+              <mat-label>Cost / {{ unit()?.name || 'unit' }} (৳)</mat-label>
+              <input matInput type="number" formControlName="unitCostBdt" step="any" min="0" required />
+              <mat-hint *ngIf="purchaseTotal() as t">Total ৳{{ t | number:'1.0-2' }}</mat-hint>
               <mat-error>Unit cost is required</mat-error>
             </mat-form-field>
           </div>
@@ -140,7 +147,7 @@ import {
       </div>
 
       <!-- Actions -->
-      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
+      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2 shrink-0">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
           Cancel
         </button>
@@ -164,11 +171,13 @@ export class StockInDialogComponent implements OnInit {
   readonly error = signal('');
   readonly availableItems = signal<InventoryItem[]>([]);
   readonly suppliers = signal<Supplier[]>([]);
+  /** The unit the quantity and cost are entered in (e.g. "Bag (50 kg)"). */
+  readonly unit = signal<UnitSelection | null>(null);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly form = this.fb.group({
     inventoryItemId: [this.data?.item?.id || '', [Validators.required]],
-    quantity: [null as number | null, [Validators.required, Validators.min(0.1)]],
+    quantity: [null as number | null, [Validators.required, Validators.min(0.0001)]],
     unitCostBdt: [this.data?.item?.weightedAverageCostBdt || null as number | null, [Validators.required, Validators.min(0)]],
     supplierId: [null as string | null],
     transactionDate: [new Date().toISOString().split('T')[0], [Validators.required]],
@@ -188,6 +197,19 @@ export class StockInDialogComponent implements OnInit {
     return total > 0 ? Math.round(total * 100) / 100 : null;
   }
 
+  /** Switching unit re-prices from the item's average cost per base unit (e.g. ৳58/kg → ৳2,900 a 50 kg bag). */
+  onUnit(sel: UnitSelection): void {
+    const previous = this.unit();
+    this.unit.set(sel);
+    const item = this.availableItems().find(x => x.id === this.form.value.inventoryItemId);
+    const cost = Number(this.form.value.unitCostBdt) || 0;
+    if (previous && previous.factor !== sel.factor && cost > 0) {
+      this.form.patchValue({ unitCostBdt: Math.round(cost / previous.factor * sel.factor * 100) / 100 });
+    } else if (!previous && item && item.weightedAverageCostBdt > 0) {
+      this.form.patchValue({ unitCostBdt: Math.round(item.weightedAverageCostBdt * sel.factor * 100) / 100 });
+    }
+  }
+
   ngOnInit(): void {
     this.inventoryService.getItems({ farmId: this.data.farmId, pageSize: 100 }).subscribe({
       next: (res) => this.availableItems.set(res.items),
@@ -205,6 +227,7 @@ export class StockInDialogComponent implements OnInit {
         if (itemId) {
           const selectedItem = this.availableItems().find(x => x.id === itemId);
           if (selectedItem) {
+            this.unit.set(null);
             this.form.patchValue({
               unitCostBdt: selectedItem.weightedAverageCostBdt > 0 ? selectedItem.weightedAverageCostBdt : null,
               quantity: null as any
@@ -241,7 +264,8 @@ export class StockInDialogComponent implements OnInit {
       invoiceNumber: formVal.invoiceNumber ? formVal.invoiceNumber : null,
       batchNumber: formVal.batchNumber ? formVal.batchNumber : null,
       expiryDate: formVal.expiryDate ? formVal.expiryDate : null,
-      notes: formVal.notes ? formVal.notes : null
+      notes: formVal.notes ? formVal.notes : null,
+      unitId: this.unit()?.unitId ?? null
     };
 
     this.inventoryService.recordStockIn(request as any).subscribe({

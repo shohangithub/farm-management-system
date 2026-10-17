@@ -19,6 +19,11 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
     public string? StorageLocation { get; private set; }
     public bool IsActive { get; private set; } = true;
 
+    /// <summary>The unit it is usually bought or issued in (e.g. "Bag (50 kg)"); stock stays in <see cref="UnitOfMeasure"/>.</summary>
+    public Guid? DefaultUnitId { get; private set; }
+
+    public void SetDefaultUnit(Guid? unitConversionId) => DefaultUnitId = unitConversionId;
+
     private InventoryItem() { }
 
     public InventoryItem(

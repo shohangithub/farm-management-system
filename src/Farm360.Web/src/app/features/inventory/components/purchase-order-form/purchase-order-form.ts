@@ -1,3 +1,4 @@
+import { UnitPickerComponent, UnitSelection } from '../unit-picker/unit-picker.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -19,6 +20,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
   selector: 'app-purchase-order-form',
   standalone: true,
   imports: [
+    UnitPickerComponent,
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
@@ -101,7 +103,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                 <tr>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[40%]">Item</th>
                   <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Unit Cost (৳)</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[18%]">Unit</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cost per unit (৳)</th>
                   <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total (৳)</th>
                   <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[60px]">Action</th>
                 </tr>
@@ -118,6 +121,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                   <td class="px-4 py-3">
                     <input type="number" formControlName="quantity" min="0" step="0.01"
                       class="w-full text-right px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                  </td>
+                  <td class="px-4 py-3 align-top">
+                    <!-- Ordered in bags / bottles; kept in the item's base unit -->
+                    <app-unit-picker [itemId]="itemCtrl.value.inventoryItemId" [quantity]="itemCtrl.value.quantity"
+                      (selectionChange)="onUnit(i, $event)"></app-unit-picker>
                   </td>
                   <td class="px-4 py-3">
                     <input type="number" formControlName="unitCostBdt" min="0" step="0.01"
@@ -226,8 +234,10 @@ export class PurchaseOrderForm implements OnInit {
   addItem(): void {
     const itemGroup = this.fb.group({
       inventoryItemId: ['', Validators.required],
-      quantity: [1, [Validators.required, Validators.min(0.01)]],
-      unitCostBdt: [0, [Validators.required, Validators.min(0)]]
+      quantity: [1, [Validators.required, Validators.min(0.0001)]],
+      unitCostBdt: [0, [Validators.required, Validators.min(0)]],
+      unitId: [null as string | null],
+      factor: [1]
     });
 
     // When an item is selected, optionally set its default cost (based on weighted avg)
@@ -242,6 +252,18 @@ export class PurchaseOrderForm implements OnInit {
     });
 
     this.items.push(itemGroup);
+  }
+
+  /** Unit chosen for a row: re-price from the item's average cost per base unit. */
+  onUnit(index: number, sel: UnitSelection): void {
+    const row = this.items.at(index);
+    const item = this.inventoryItems().find(i => i.id === row.value.inventoryItemId);
+    const previousFactor = Number(row.value.factor) || 1;
+    const cost = Number(row.value.unitCostBdt) || 0;
+    const repriced = cost > 0
+      ? cost / previousFactor * sel.factor
+      : (item?.weightedAverageCostBdt ?? 0) * sel.factor;
+    row.patchValue({ unitId: sel.unitId, factor: sel.factor, unitCostBdt: Math.round(repriced * 100) / 100 });
   }
 
   removeItem(index: number): void {
@@ -283,7 +305,8 @@ export class PurchaseOrderForm implements OnInit {
       items: (val.items || []).map((i: any) => ({
         inventoryItemId: i.inventoryItemId,
         quantity: i.quantity,
-        unitCostBdt: i.unitCostBdt
+        unitCostBdt: i.unitCostBdt,
+        unitId: i.unitId || null
       }))
     };
 

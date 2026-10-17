@@ -62,7 +62,7 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
         ReportColumn<ActiveFeedingPlansCostReportRow>.Text("animalTag", new LocalizedText("Animal Tag", "পশুর ট্যাগ"), r => r.AnimalTag, width: 2.0f),
         ReportColumn<ActiveFeedingPlansCostReportRow>.Text("species", new LocalizedText("Species", "প্রজাতি"), r => r.Species, width: 1.6f),
         ReportColumn<ActiveFeedingPlansCostReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.WeightKg, decimals: 1, widthMm: 20f),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("ruleSetName", new LocalizedText("Rule Set", "খাদ্য নিয়ম"), r => r.RuleSetName, width: 2.2f),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("ruleSetName", new LocalizedText("Feed Chart / Ration", "খাদ্য তালিকা"), r => r.RuleSetName, width: 2.2f),
         ReportColumn<ActiveFeedingPlansCostReportRow>.Text("formulaName", new LocalizedText("Formula / Recipe", "রেসিপি / ফর্মুলা"), r => r.FormulaName, width: 2.2f),
         ReportColumn<ActiveFeedingPlansCostReportRow>.Number("concentrate", new LocalizedText("Conc. (kg/d)", "দানাদার (কেজি/দিন)"), r => r.ConcentrateKgPerDay, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
         ReportColumn<ActiveFeedingPlansCostReportRow>.Number("roughage", new LocalizedText("Rough. (kg/d)", "আঁশজাত (কেজি/দিন)"), r => r.RoughageKgPerDay, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
@@ -75,7 +75,7 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
     public override ReportGroup<ActiveFeedingPlansCostReportRow>? Group =>
         ReportGroup<ActiveFeedingPlansCostReportRow>.By(
             r => r.RuleSetName,
-            r => $"Rule Set: {r.RuleSetName}");
+            r => $"Ration: {r.RuleSetName}");
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {

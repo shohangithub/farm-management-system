@@ -202,6 +202,47 @@ public static class FeedingEndpoints
             return Results.Ok(result);
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
 
+        // ── Nutrition & growth: what one animal ate against what it needs ─────
+        group.MapGet("/nutrition/{animalId:guid}", async (
+            [FromRoute] Guid animalId,
+            [FromQuery] DateOnly from,
+            [FromQuery] DateOnly to,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+            Results.Ok(await sender.Send(new Farm360.Application.Feeding.Queries.Nutrition.GetAnimalNutritionQuery(animalId, from, to), ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        // ── Purchase planning: what the rations need for the next N days ──────
+        group.MapPost("/requirements", async (
+            [FromBody] Farm360.Application.Feeding.Queries.Planning.GetFeedRequirementQuery query,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+            Results.Ok(await sender.Send(query, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        // ── Who eats what: the board and the "Set ration" preview ─────────────
+        group.MapGet("/board", async (
+            [FromQuery] Guid farmId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+            Results.Ok(await sender.Send(new Farm360.Application.Feeding.Queries.Board.GetFeedingBoardQuery(farmId), ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/plans/preview", async (
+            [FromBody] Farm360.Application.Feeding.Queries.Board.PreviewRationQuery query,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+            Results.Ok(await sender.Send(query, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        // Old shed/batch schedules become group feeding plans (they never fed anything themselves).
+        group.MapPost("/schedules/convert", async (
+            [FromQuery] Guid farmId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+            Results.Ok(await sender.Send(new ConvertFeedingSchedulesCommand(farmId), ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Create}");
+
         group.MapPost("/plans/assign", async (
             [FromBody] AssignAnimalFeedingPlanCommand command,
             [FromServices] ISender sender,

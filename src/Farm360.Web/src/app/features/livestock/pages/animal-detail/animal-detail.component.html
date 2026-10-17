@@ -956,10 +956,10 @@
                 <div class="min-w-0 pr-2">
                   <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Active Plan</p>
                   <p class="text-lg font-bold text-gray-900 dark:text-white mt-1 truncate" [title]="activeFeedingPlan()?.ruleSetName || 'None'">
-                    {{ activeFeedingPlan()?.ruleSetName || 'No Active Plan' }}
+                    {{ activeFeedingPlans().length > 1 ? activeFeedingPlans().length + ' plans' : (activeFeedingPlan()?.ruleSetName || 'No Active Plan') }}
                   </p>
                   <p class="text-xs text-gray-400 mt-1" *ngIf="activeFeedingPlan()">
-                    Target: {{ (activeFeedingPlan()?.currentConcentrateKgPerDay | number:'1.1-1') || '—' }} kg/day conc.
+                    Target: {{ (activeDailyKg() | number:'1.1-2') || '—' }} kg/day in total
                   </p>
                   <p class="text-xs text-gray-400 mt-1" *ngIf="!activeFeedingPlan()">
                     Not enrolled in active plan
@@ -971,40 +971,58 @@
               </div>
             </div>
 
+            <!-- No ration yet -->
+            <div *ngIf="!activeFeedingPlan()" class="rounded-2xl p-4 border border-dashed border-rose-200 dark:border-rose-800/60 bg-rose-50/40 dark:bg-rose-950/10 flex items-center justify-between gap-3">
+              <span class="text-xs text-rose-700 dark:text-rose-300">This animal has no ration — the system is not feeding it or charging it feed cost.</span>
+              <button type="button" (click)="openSetRation()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">restaurant</mat-icon> Set ration
+              </button>
+            </div>
+
             <!-- Active Feeding Plan Banner -->
             <div *ngIf="activeFeedingPlan()" class="bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white dark:from-emerald-950/20 dark:via-gray-800/40 dark:to-gray-800/20 rounded-2xl p-5 border border-emerald-200/60 dark:border-emerald-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div class="flex items-start gap-3.5">
                 <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-700 dark:text-emerald-300">
                   <mat-icon class="!text-[22px] !w-[22px] !h-[22px]">assignment_turned_in</mat-icon>
                 </div>
-                <div>
+                <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-2">
-                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">{{ activeFeedingPlan()!.ruleSetName }}</h4>
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">Daily ration</h4>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-                      ACTIVE
+                      {{ activeFeedingPlans().length }} ACTIVE
                     </span>
                   </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Enrolled since {{ activeFeedingPlan()!.startDate | date:'mediumDate' }}
-                    <span *ngIf="activeFeedingPlan()!.triggeredByWeightKg"> • Evaluated at {{ activeFeedingPlan()!.triggeredByWeightKg | number:'1.1-1' }} kg</span>
-                  </p>
-                  <div class="flex flex-wrap items-center gap-3 mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                    <span class="flex items-center gap-1">
-                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-emerald-600">grain</mat-icon>
-                      Concentrate: <strong>{{ (activeFeedingPlan()!.currentConcentrateKgPerDay | number:'1.1-1') || '0' }} kg/day</strong>
-                    </span>
-                    <span class="flex items-center gap-1">
-                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-teal-600">grass</mat-icon>
-                      Roughage: <strong>{{ (activeFeedingPlan()!.currentRoughageKgPerDay | number:'1.1-1') || '0' }} kg/day</strong>
-                    </span>
+                  <!-- Every active plan: the base rule set and any direct add-ons (e.g. extra mineral) -->
+                  <div class="mt-2 space-y-1.5">
+                    <div *ngFor="let p of activeFeedingPlans()" class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-700 dark:text-gray-300">
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" [ngClass]="p.ruleSetName.startsWith('Direct · ') ? 'text-amber-600' : 'text-emerald-600'">
+                        {{ p.ruleSetName.startsWith('Direct · ') ? 'add_circle' : 'grain' }}
+                      </mat-icon>
+                      <span class="font-semibold">{{ p.ruleSetName.startsWith('Direct · ') ? p.ruleSetName.substring(9) : p.ruleSetName }}</span>
+                      <span><strong>{{ (p.currentConcentrateKgPerDay | number:'1.1-2') || '0' }} kg/day</strong></span>
+                      <span class="text-gray-400">since {{ p.startDate | date:'mediumDate' }}<span *ngIf="p.triggeredByWeightKg"> • at {{ p.triggeredByWeightKg | number:'1.1-1' }} kg</span></span>
+                    </div>
                   </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 mb-0">Total: <strong>{{ activeDailyKg() | number:'1.1-2' }} kg/day</strong></p>
                 </div>
               </div>
 
               <div class="flex items-center gap-2 self-end md:self-center">
-                <a routerLink="/feeding/plans" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">tune</mat-icon>
-                  Manage Feeding Plans
+                <button type="button" (click)="openSetRation('extra')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 transition-colors shadow-sm">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add_circle</mat-icon>
+                  Add extra
+                </button>
+                <button type="button" (click)="openSetRation('switch')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 transition-colors shadow-sm">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">swap_horiz</mat-icon>
+                  Change ration
+                </button>
+                <a routerLink="/feeding/nutrition" [queryParams]="{ animalId: animal()?.id }" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-50 transition-colors shadow-sm">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">monitor_heart</mat-icon>
+                  Nutrition &amp; growth
+                </a>
+                <a routerLink="/feeding/board" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">grid_view</mat-icon>
+                  Who Eats What
                 </a>
               </div>
             </div>

@@ -58,3 +58,20 @@ public interface IStockTransactionRepository
         CancellationToken cancellationToken = default);
     Task AddAsync(StockTransaction transaction, CancellationToken cancellationToken = default);
 }
+
+public interface IMeasureUnitRepository
+{
+    /// <summary>Every base unit of the tenant with its conversions.</summary>
+    Task<IReadOnlyList<MeasureUnit>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<MeasureUnit?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    /// <summary>The base unit a conversion belongs to, with all its conversions.</summary>
+    Task<MeasureUnit?> GetByConversionIdAsync(Guid conversionId, CancellationToken cancellationToken = default);
+    Task AddAsync(MeasureUnit unit, CancellationToken cancellationToken = default);
+    void Update(MeasureUnit unit);
+    /// <summary>Soft-deletes a base unit and its conversions.</summary>
+    void Remove(MeasureUnit unit);
+    Task<UnitConversion?> GetConversionAsync(Guid id, CancellationToken cancellationToken = default);
+    void RemoveConversion(UnitConversion conversion);
+    /// <summary>Items whose base unit or default unit is one of these (to stop deleting units in use).</summary>
+    Task<IReadOnlyList<string>> ItemsUsingAsync(IReadOnlyCollection<string> baseUnitNames, IReadOnlyCollection<Guid> conversionIds, CancellationToken cancellationToken = default);
+}

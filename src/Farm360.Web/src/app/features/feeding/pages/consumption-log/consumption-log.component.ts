@@ -1,3 +1,4 @@
+import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { Component, ChangeDetectionStrategy, DestroyRef, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -19,6 +20,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
   selector: 'app-consumption-log',
   standalone: true,
   imports: [
+    FeedingSubnavComponent,
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -32,7 +34,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
   template: `
     <app-page-header
       title="Daily Feeding Records"
-      description="Historical feed offered, refusal/wastage, and daily ration expenditure records."
+      description="Older shed-level feed records (read only). Daily feeding is now confirmed on the Today page."
       breadcrumbActiveNode="Feeding Records">
       <div actions class="flex items-center gap-2 no-print">
         <a mat-stroked-button routerLink="/reports/feeding.animal-consumption"
@@ -45,12 +47,14 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
           {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
         </button>
-        <button (click)="openLogDialog()"
+        <a routerLink="/feeding/today"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit_note</mat-icon> Log Daily Feeding
-        </button>
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">today</mat-icon> Record today's feeding
+        </a>
       </div>
     </app-page-header>
+
+    <div class="px-0"><app-feeding-subnav></app-feeding-subnav></div>
 
     <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>

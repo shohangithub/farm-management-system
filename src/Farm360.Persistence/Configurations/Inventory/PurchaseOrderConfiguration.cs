@@ -48,13 +48,17 @@ public class PurchaseOrderItemConfiguration : IEntityTypeConfiguration<PurchaseO
 
         builder.HasKey(x => x.Id);
 
+        // Base-unit quantity and cost (ordered in bags, kept in kg): 4 decimals.
         builder.Property(x => x.Quantity)
-            .HasPrecision(18, 2)
+            .HasPrecision(18, 4)
             .IsRequired();
 
         builder.Property(x => x.UnitCostBdt)
-            .HasPrecision(18, 2)
+            .HasPrecision(18, 4)
             .IsRequired();
+
+        builder.Property(x => x.EnteredUnitName).HasMaxLength(60);
+        builder.Property(x => x.EnteredQuantity).HasPrecision(18, 4);
 
         builder.HasOne<InventoryItem>()
             .WithMany()

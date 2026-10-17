@@ -9,6 +9,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { FeedingService } from '../../../services/feeding.service';
+import { InventoryService } from '../../../../inventory/services/inventory.service';
+import { InventoryCategory, InventoryItem } from '../../../../inventory/models/inventory.models';
+import { WorkingContextService } from '../../../../../core/services/working-context.service';
 import {
   FeedingRuleSet,
   FeedingPlanType,
@@ -72,7 +75,7 @@ interface RuleRow {
             <mat-icon class="!w-5 !h-5 !text-[20px]">rule</mat-icon>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">{{ isEditing ? 'Edit' : 'New' }} Feeding Rule Set</h2>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">{{ isEditing ? 'Edit' : 'New' }} Feed Chart <span class="text-sm font-normal text-gray-400">· খাদ্য তালিকা</span></h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 m-0">How much each animal should eat per day</p>
           </div>
         </div>
@@ -86,7 +89,7 @@ interface RuleRow {
           <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white m-0"><span class="step">1</span> Name &amp; animals</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="md:col-span-3">
-              <input formControlName="name" type="text" class="field" placeholder="Rule set name, e.g. Fattening bull — concentrate" />
+              <input formControlName="name" type="text" class="field" placeholder="Chart name, e.g. Fattening bull — concentrate" />
               <p *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="text-[11px] text-red-500 mt-1 mb-0">Give the rule set a name.</p>
             </div>
             <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Animal
@@ -147,7 +150,12 @@ interface RuleRow {
             <span class="font-semibold text-gray-700 dark:text-gray-200">Ration for all rows:</span>
             <select class="cell !w-auto min-w-[200px]" [ngModel]="defaultFormulaId" [ngModelOptions]="{ standalone: true }" (ngModelChange)="applyFormulaToAll($event)">
               <option [ngValue]="null">— choose a formula —</option>
-              <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}{{ f.totalCostPerKgBdt ? ' (৳' + (f.totalCostPerKgBdt | number:'1.0-2') + '/kg)' : '' }}</option>
+              <optgroup label="Formulas / rations">
+                <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}{{ f.totalCostPerKgBdt ? ' (৳' + (f.totalCostPerKgBdt | number:'1.0-2') + '/kg)' : '' }}</option>
+              </optgroup>
+              <optgroup *ngIf="stockItems().length" label="Stock items (fed as they are)">
+                <option *ngFor="let it of stockItems()" [ngValue]="'i:' + it.id">{{ it.name }} (৳{{ it.weightedAverageCostBdt | number:'1.0-2' }}/{{ it.unitOfMeasure }})</option>
+              </optgroup>
             </select>
             <span class="text-gray-400">or</span>
             <select class="cell !w-auto" [ngModel]="defaultFeedType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="applyFeedTypeToAll($event)">
@@ -209,7 +217,12 @@ interface RuleRow {
                   <td class="px-2 py-2 min-w-[180px]">
                     <select formControlName="formulaId" class="cell">
                       <option [ngValue]="null">No formula — by category</option>
-                      <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}</option>
+                      <optgroup label="Formulas / rations">
+                        <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}</option>
+                      </optgroup>
+                      <optgroup *ngIf="stockItems().length" label="Stock items (fed as they are)">
+                        <option *ngFor="let it of stockItems()" [ngValue]="'i:' + it.id">{{ it.name }}</option>
+                      </optgroup>
                     </select>
                     <select *ngIf="!rule.get('formulaId')?.value" formControlName="feedType" class="cell mt-1">
                       <option *ngFor="let c of categoryOptions" [ngValue]="c.value">{{ c.label }}</option>
@@ -270,7 +283,7 @@ interface RuleRow {
           <button type="button" (click)="submit()" [disabled]="isSubmitting()"
             class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl inline-flex items-center min-w-[130px] justify-center">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-5 !h-5 !text-[20px] mr-2">refresh</mat-icon>
-            {{ isEditing ? 'Save changes' : 'Create rule set' }}
+            {{ isEditing ? 'Save changes' : 'Create feed chart' }}
           </button>
         </div>
       </div>
@@ -285,10 +298,14 @@ export class FeedingRuleSetDialogComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly inventoryService = inject(InventoryService);
+  private readonly context = inject(WorkingContextService);
 
   readonly isEditing = !!this.data;
   readonly isSubmitting = signal(false);
   readonly formulas = signal<FeedFormula[]>([]);
+  /** Stock items that can be fed as they are (a one-ingredient "direct item" formula is made on save). */
+  readonly stockItems = signal<InventoryItem[]>([]);
   readonly showGenerator = signal(false);
   /** Bumped on every form change so the OnPush checks below re-evaluate. */
   readonly revision = signal(0);
@@ -339,6 +356,13 @@ export class FeedingRuleSetDialogComponent implements OnInit {
   ngOnInit(): void {
     this.feedingService.getFormulas(1, 500).subscribe({
       next: (res) => { this.formulas.set(res.items); this.revision.update(v => v + 1); }
+    });
+
+    this.inventoryService.getItems({ farmId: this.context.currentFarmValue?.id, pageSize: 500 }).subscribe({
+      next: res => {
+        this.stockItems.set(res.items.filter(i => ![InventoryCategory.Equipment, InventoryCategory.Medicine, InventoryCategory.Vaccine].includes(i.category)));
+        this.revision.update(v => v + 1);
+      }
     });
 
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.revision.update(v => v + 1));
@@ -547,8 +571,10 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     this.revision();
     const r = this.row(i);
     if (r.quantity === null || r.quantity <= 0) return '';
-    const formulaId = this.rules.at(i).value.formulaId;
-    const costPerKg = this.formulas().find(f => f.id === formulaId)?.totalCostPerKgBdt ?? 0;
+    const formulaId: string | null = this.rules.at(i).value.formulaId;
+    const costPerKg = formulaId?.startsWith('i:')
+      ? this.stockItems().find(it => it.id === formulaId.substring(2))?.weightedAverageCostBdt ?? 0
+      : this.formulas().find(f => f.id === formulaId)?.totalCostPerKgBdt ?? 0;
     const money = (kg: number) => costPerKg ? ` ≈ ৳${(kg * costPerKg).toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day` : '';
 
     if (this.isPercent) {
@@ -584,7 +610,9 @@ export class FeedingRuleSetDialogComponent implements OnInit {
       minAgeDays: this.isAge ? this.num(r.minAgeDays) ?? undefined : undefined,
       maxAgeDays: this.isAge ? this.num(r.maxAgeDays) ?? undefined : undefined,
       feedType: r.feedType as FeedCategory,
-      formulaId: r.formulaId || undefined,
+      // "i:<id>" = a stock item fed as it is; the server wraps it in a direct-item formula.
+      formulaId: r.formulaId && !String(r.formulaId).startsWith('i:') ? r.formulaId : undefined,
+      inventoryItemId: r.formulaId && String(r.formulaId).startsWith('i:') ? String(r.formulaId).substring(2) : undefined,
       quantityValue: +r.quantityValue
     }));
 
@@ -603,7 +631,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
       : this.feedingService.createRuleSet(request);
     call.subscribe({
       next: () => {
-        this.snackBar.open(this.isEditing ? 'Rule set updated' : 'Rule set created', 'Close', { duration: 3000 });
+        this.snackBar.open(this.isEditing ? 'Feed chart updated' : 'Feed chart created', 'Close', { duration: 3000 });
         this.dialogRef.close(true);
       },
       error: (err: { error?: { detail?: string } }) => {

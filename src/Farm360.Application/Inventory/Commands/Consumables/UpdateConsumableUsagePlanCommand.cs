@@ -42,12 +42,15 @@ public sealed class UpdateConsumableUsagePlanCommandHandler : IRequestHandler<Up
     private readonly IConsumableUsagePlanRepository _planRepository;
     private readonly IInventoryItemRepository _inventoryItemRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
 
     public UpdateConsumableUsagePlanCommandHandler(
         IConsumableUsagePlanRepository planRepository,
         IInventoryItemRepository inventoryItemRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
+        _units = units;
         _planRepository = planRepository;
         _inventoryItemRepository = inventoryItemRepository;
         _unitOfWork = unitOfWork;
@@ -84,7 +87,10 @@ public sealed class UpdateConsumableUsagePlanCommandHandler : IRequestHandler<Up
                 var inventoryItem = await _inventoryItemRepository.GetByIdAsync(itemInput.InventoryItemId, cancellationToken)
                     ?? throw new NotFoundException(nameof(InventoryItem), itemInput.InventoryItemId);
 
-                plan.AddItem(inventoryItem.Id, itemInput.PlannedQuantityPerDay, itemInput.Notes);
+                var perDay = _units is null
+                    ? itemInput.PlannedQuantityPerDay
+                    : (await _units.ToBaseAsync(inventoryItem, itemInput.UnitId, itemInput.PlannedQuantityPerDay, 0m, cancellationToken)).BaseQuantity;
+                plan.AddItem(inventoryItem.Id, perDay, itemInput.Notes);
             }
         }
 

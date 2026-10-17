@@ -19,4 +19,9 @@ public record PurchaseOrderItemDto(
     Guid InventoryItemId,
     decimal Quantity,
     decimal UnitCostBdt,
-    decimal TotalCostBdt);
+    decimal TotalCostBdt)
+{
+    /// <summary>The unit it was ordered in ("Bag (50 kg)") and that quantity; Quantity is in the base unit.</summary>
+    public string? EnteredUnitName { get; init; }
+    public decimal? EnteredQuantity { get; init; }
+}

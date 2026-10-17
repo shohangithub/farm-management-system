@@ -22,6 +22,18 @@ public class StockTransaction : AuditableEntity, IAggregateRoot
     public string? RecordedBy { get; private set; }
     public Guid? ReferenceId { get; private set; }
 
+    /// <summary>The unit the quantity was entered in ("Bag (50 kg)"), when not the base unit.</summary>
+    public string? EnteredUnitName { get; private set; }
+
+    /// <summary>The quantity as entered in <see cref="EnteredUnitName"/>; <see cref="Quantity"/> is always in the base unit.</summary>
+    public decimal? EnteredQuantity { get; private set; }
+
+    public void SetEnteredUnit(string? unitName, decimal? quantity)
+    {
+        EnteredUnitName = string.IsNullOrWhiteSpace(unitName) ? null : unitName.Trim();
+        EnteredQuantity = EnteredUnitName is null ? null : quantity;
+    }
+
     private StockTransaction() { }
 
     public StockTransaction(

@@ -73,14 +73,20 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
         {
             Farm360.Domain.Livestock.Animal? animal = null;
             var hasAnimal = p.AnimalId.HasValue && animalDict.TryGetValue(p.AnimalId.Value, out animal);
-            var animalTag = hasAnimal && animal != null ? animal.Tag.TagId : "Unknown";
+            var animalTag = hasAnimal && animal != null ? animal.Tag.TagId
+                : p.AnimalId is null ? (p.PenId.HasValue ? "Pen group" : p.ShedId.HasValue ? "Shed group" : "Batch group")
+                : "Unknown";
             var animalSpecies = hasAnimal && animal != null ? animal.Species.ToString() : "Cattle";
             var animalWeight = (hasAnimal && animal?.LatestWeightKg.HasValue == true) 
                 ? animal.LatestWeightKg 
                 : p.TriggeredByWeightKg;
 
             var ruleSet = ruleSets.FirstOrDefault(r => r.Id == p.FeedingRuleSetId);
-            var ruleSetName = ruleSet?.Name ?? "Unknown Rule Set";
+            // Direct rations read as "Extra: <feed> · <kg>"; group (shed/pen/batch) plans have no single animal.
+            var ruleSetName = ruleSet is null ? "Unknown Rule Set"
+                : ruleSet.Name.StartsWith(Farm360.Application.Feeding.Services.DirectFeedService.DirectRuleSetPrefix, StringComparison.Ordinal)
+                    ? "Extra: " + ruleSet.Name[Farm360.Application.Feeding.Services.DirectFeedService.DirectRuleSetPrefix.Length..]
+                    : ruleSet.Name;
 
             // Resolve rule line
             var ruleLine = p.CurrentRuleLineId.HasValue
@@ -89,9 +95,7 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
 
             if (ruleLine == null && ruleSet?.Lines.Count > 0)
             {
-                var w = animalWeight ?? 0m;
-                ruleLine = ruleSet.Lines.FirstOrDefault(l => w >= l.WeightFromKg && w < l.WeightToKg) 
-                           ?? ruleSet.Lines.OrderBy(l => l.WeightFromKg).FirstOrDefault();
+                ruleLine = Farm360.Application.Feeding.Services.FeedingRuleMatcher.Match(ruleSet, animalWeight, null).Primary;
             }
 
             // Resolve formula and unit cost

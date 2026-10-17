@@ -1,3 +1,4 @@
+import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -19,6 +20,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
   selector: 'app-feeding-dashboard',
   standalone: true,
   imports: [
+    FeedingSubnavComponent,
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -45,6 +47,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         </button>
       </div>
     </app-page-header>
+
+    <div class="px-0"><app-feeding-subnav></app-feeding-subnav></div>
 
     <div class="space-y-6">
       <!-- KPI Summary Cards Grid -->
@@ -124,12 +128,12 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
         </a>
 
-        <a routerLink="../schedules" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
+        <a routerLink="../board" class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex items-center justify-between group shadow-sm">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">schedule</mat-icon>
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">grid_view</mat-icon>
             </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Feeding Schedules</span>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Who Eats What</span>
           </div>
           <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
         </a>
@@ -153,7 +157,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
             <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">rule</mat-icon>
             </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Rule Sets</span>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Feed Charts</span>
           </div>
           <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
         </a>
@@ -163,7 +167,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
             <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">assignment</mat-icon>
             </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Animal Plans</span>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Plan History</span>
           </div>
           <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
         </a>
@@ -197,9 +201,9 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
-              <mat-icon class="text-emerald-600 !text-[20px] !w-[20px] !h-[20px]">schedule</mat-icon> Active Feeding Schedules
+              <mat-icon class="text-emerald-600 !text-[20px] !w-[20px] !h-[20px]">schedule</mat-icon> Old Feeding Schedules
             </h2>
-            <a routerLink="../schedules" class="text-xs font-semibold text-emerald-600 hover:underline">View All</a>
+            <a routerLink="../board" class="text-xs font-semibold text-emerald-600 hover:underline">Convert on Who Eats What</a>
           </div>
 
           <app-empty-state

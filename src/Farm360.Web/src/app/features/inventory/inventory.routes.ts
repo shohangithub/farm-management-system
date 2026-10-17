@@ -23,6 +23,19 @@ export const INVENTORY_ROUTES: Routes = [
     loadComponent: () => import('./pages/stock-ledger/stock-ledger.component').then(m => m.StockLedgerComponent)
   },
   {
+    // Units, as in FrostTrack: base units (kg, ml, piece…) …
+    path: 'base-units',
+    loadComponent: () => import('./pages/base-units/base-units.component').then(m => m.BaseUnitsComponent),
+    title: 'Base Units — Farm360 AI'
+  },
+  {
+    // … and the conversions they are bought / used in (Bag 50 kg = 50 kg…)
+    path: 'unit-conversions',
+    loadComponent: () => import('./pages/unit-conversions/unit-conversions.component').then(m => m.UnitConversionsComponent),
+    title: 'Unit Conversions — Farm360 AI'
+  },
+  { path: 'units', redirectTo: 'base-units', pathMatch: 'full' },
+  {
     path: 'suppliers',
     loadComponent: () => import('./pages/supplier-list/supplier-list.component').then(m => m.SupplierListComponent)
   },

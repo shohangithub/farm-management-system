@@ -12,14 +12,21 @@ public sealed class StockTransactionConfiguration : IEntityTypeConfiguration<Sto
 
         builder.HasKey(x => x.Id);
 
+        // Base-unit quantities and costs: 4 decimals so grams of a kg item and a gram's cost survive.
         builder.Property(x => x.Quantity)
-            .HasColumnType("decimal(18,2)");
+            .HasColumnType("decimal(18,4)");
 
         builder.Property(x => x.UnitCostBdt)
-            .HasColumnType("decimal(18,2)");
+            .HasColumnType("decimal(18,4)");
 
         builder.Property(x => x.BalanceAfter)
-            .HasColumnType("decimal(18,2)");
+            .HasColumnType("decimal(18,4)");
+
+        builder.Property(x => x.EnteredUnitName)
+            .HasMaxLength(60);
+
+        builder.Property(x => x.EnteredQuantity)
+            .HasColumnType("decimal(18,4)");
 
         builder.Property(x => x.InvoiceNumber)
             .HasMaxLength(100);

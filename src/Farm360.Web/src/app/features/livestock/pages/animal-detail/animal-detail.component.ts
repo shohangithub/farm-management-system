@@ -53,6 +53,7 @@ import type { EChartsOption } from 'echarts';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { CattleProfitProjectionComponent } from '../../../intelligence/components/projections/cattle-profit-projection.component';
 import { FeedingService } from '../../../feeding/services/feeding.service';
+import { AssignFeedingPlanDialogComponent, SetRationDialogData } from '../../../feeding/components/dialogs/assign-feeding-plan-dialog/assign-feeding-plan-dialog.component';
 import { AnimalFeedingSummary, DailyFeedingEntryStatus } from '../../../feeding/models/feeding.models';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
@@ -196,6 +197,9 @@ export class AnimalDetailComponent {
   readonly feedingEntries = computed(() => this.animalDataResult()?.feedingSummary?.entries ?? []);
   readonly activeFeedingPlan = computed(() => this.animalDataResult()?.feedingSummary?.activePlan ?? null);
   readonly feedingPlans = computed(() => this.animalDataResult()?.feedingSummary?.plans ?? []);
+  /** Every plan feeding this animal today — the base rule set plus any direct add-ons. */
+  readonly activeFeedingPlans = computed(() => this.feedingPlans().filter(p => String(p.status) === 'Active'));
+  readonly activeDailyKg = computed(() => this.activeFeedingPlans().reduce((sum, p) => sum + (p.currentConcentrateKgPerDay ?? 0), 0));
   readonly farmName = computed(() => this.animalDataResult()?.farmName ?? null);
   readonly shedName = computed(() => this.animalDataResult()?.shedName ?? null);
   readonly penName = computed(() => this.animalDataResult()?.penName ?? null);
@@ -404,6 +408,18 @@ export class AnimalDetailComponent {
   load(): void {
     this.refreshTrigger.update(v => v + 1);
   }
+  /** Set, change (switch chart) or add an extra to this animal's ration. */
+  openSetRation(mode?: 'extra' | 'switch'): void {
+    const animal = this.animal();
+    if (!animal) return;
+    this.dialog.open(AssignFeedingPlanDialogComponent, {
+      disableClose: true, width: '95vw', maxWidth: '860px',
+      data: { animalIds: [animal.id], mode } satisfies SetRationDialogData
+    }).afterClosed().subscribe(saved => {
+      if (saved) this.refreshTrigger.update(v => v + 1);
+    });
+  }
+
 
   sortedWeights() {
     const a = this.animal();

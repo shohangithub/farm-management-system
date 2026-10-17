@@ -22,7 +22,9 @@ public sealed record RecordStockInCommand(
     DateOnly? ExpiryDate = null,
     string? Notes = null,
     StockFundingSource FundingSource = StockFundingSource.CashPurchase,
-    CreditTermsRequest? Credit = null) : IRequest<Guid>;
+    CreditTermsRequest? Credit = null,
+    Guid? UnitId = null) : IRequest<Guid>;
+// Quantity and UnitCostBdt are in UnitId (e.g. 4 "Bag (50 kg)" at ৳2,900 a bag); stock is kept in the item's base unit.
 
 public sealed class RecordStockInCommandValidator : AbstractValidator<RecordStockInCommand>
 {
@@ -56,6 +58,7 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
     private readonly ILedgerPostingService _ledgerPosting;
     private readonly ITradeCreditService _credit;
     private readonly ISupplierRepository _suppliers;
+    private readonly Farm360.Application.Inventory.Units.IUnitService _units;
 
     public RecordStockInCommandHandler(
         IInventoryItemRepository itemRepository,
@@ -65,8 +68,10 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
         IUnitOfWork unitOfWork,
         ILedgerPostingService ledgerPosting,
         ITradeCreditService credit,
-        ISupplierRepository suppliers)
+        ISupplierRepository suppliers,
+        Farm360.Application.Inventory.Units.IUnitService units)
     {
+        _units = units;
         _ledgerPosting = ledgerPosting;
         _credit = credit;
         _suppliers = suppliers;
@@ -84,8 +89,11 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
 
         var transactionId = Guid.NewGuid();
 
+        // Entered in a pack unit (bags, bottles…): stock and average cost are kept in the base unit.
+        var entered = await _units.ToBaseAsync(item, request.UnitId, request.Quantity, request.UnitCostBdt, cancellationToken);
+
         // 1. Receive stock on item (recalculates weighted average cost)
-        item.ReceiveStock(request.Quantity, request.UnitCostBdt, transactionId);
+        item.ReceiveStock(entered.BaseQuantity, entered.BaseUnitCostBdt, transactionId);
 
         // 2. Log stock transaction
         var transaction = new StockTransaction(
@@ -94,8 +102,8 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
             farmId: request.FarmId,
             inventoryItemId: request.InventoryItemId,
             transactionType: StockTransactionType.StockIn,
-            quantity: request.Quantity,
-            unitCostBdt: request.UnitCostBdt,
+            quantity: entered.BaseQuantity,
+            unitCostBdt: entered.BaseUnitCostBdt,
             balanceAfter: item.CurrentStock,
             transactionDate: request.TransactionDate,
             supplierId: request.SupplierId,
@@ -105,6 +113,8 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
             reason: request.Notes,
             recordedBy: _currentUserService.UserId?.ToString(),
             referenceId: null);
+
+        transaction.SetEnteredUnit(entered.EnteredUnitName, entered.EnteredQuantity);
 
         _itemRepository.Update(item);
         await _transactionRepository.AddAsync(transaction, cancellationToken);

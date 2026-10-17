@@ -24,6 +24,37 @@ public static class InventoryEndpoints
             .WithTags("Inventory Module")
             .RequireAuthorization();
 
+        // ── Units: base units (kg, ml, piece…) and the packs they are bought in ──
+        group.MapGet("/units", async (ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new Farm360.Application.Inventory.Units.GetMeasureUnitsQuery(), ct)));
+
+        group.MapPost("/units", async ([FromBody] Farm360.Application.Inventory.Units.SaveMeasureUnitCommand command, ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(command, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}");
+
+        group.MapPost("/units/delete", async ([FromBody] Farm360.Application.Inventory.Units.DeleteMeasureUnitsCommand command, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}");
+
+        // Unit conversions (FrostTrack's second page): unit name, base unit, conversion value.
+        group.MapGet("/unit-conversions", async (ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new Farm360.Application.Inventory.Units.GetUnitConversionsQuery(), ct)));
+
+        group.MapPost("/unit-conversions", async ([FromBody] Farm360.Application.Inventory.Units.SaveUnitConversionCommand command, ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(command, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Create}");
+
+        group.MapPost("/unit-conversions/delete", async ([FromBody] Farm360.Application.Inventory.Units.DeleteUnitConversionsCommand command, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}");
+
+        group.MapGet("/items/{id:guid}/units", async (Guid id, ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new Farm360.Application.Inventory.Units.GetItemUnitsQuery(id), ct)));
+
         // ── Inventory Items Catalog ───────────────────────────────────────────
         group.MapGet("/items", async (
             [FromQuery] int pageNumber = 1,

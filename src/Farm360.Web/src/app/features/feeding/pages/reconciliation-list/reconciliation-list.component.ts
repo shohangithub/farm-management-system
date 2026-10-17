@@ -1,3 +1,4 @@
+import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -16,6 +17,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
   selector: 'app-reconciliation-list',
   standalone: true,
   imports: [
+    FeedingSubnavComponent,
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -41,6 +43,8 @@ import { WorkingContextService } from '../../../../core/services/working-context
         </button>
       </div>
     </app-page-header>
+
+    <div class="px-0"><app-feeding-subnav></app-feeding-subnav></div>
 
     <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>

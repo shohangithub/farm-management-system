@@ -23,6 +23,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPublisher _publisher;
     private readonly ILogger<DailyEntryConfirmedEventHandler> _logger;
+    private readonly IFarmBusinessRulesProvider? _rules;
+    private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
 
     public DailyEntryConfirmedEventHandler(
         IFeedFormulaRepository formulaRepository,
@@ -35,8 +37,12 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
         IStockTransactionRepository transactionRepository,
         IUnitOfWork unitOfWork,
         IPublisher publisher,
-        ILogger<DailyEntryConfirmedEventHandler> logger)
+        ILogger<DailyEntryConfirmedEventHandler> logger,
+        IFarmBusinessRulesProvider? rules = null,
+        Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
+        _rules = rules;
+        _units = units;
         _formulaRepository = formulaRepository;
         _feedIngredientRepository = feedIngredientRepository;
         _entryRepository = entryRepository;
@@ -70,6 +76,13 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                 return;
             }
 
+            // A group plan (shed / pen / batch) gives its quantity to every head: stock, cost and the
+            // ledger posting must cover all of them, not one animal's share.
+            var plan = await _planRepository.GetByIdAsync(entry.FeedingPlanId, cancellationToken);
+            var existingAllocations = await _allocationRepository.GetByEntryIdAcrossTenantsAsync(entry.Id, cancellationToken);
+            var heads = HeadsFed(plan, existingAllocations);
+            var totalActualKg = notification.ActualKg * heads;
+
             var transactionId = Guid.NewGuid();
             bool anyDeducted = false;
             decimal totalDeductedCost = 0m;
@@ -80,7 +93,7 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             {
                 var feedIngredient = await _feedIngredientRepository.GetByIdAsync(formulaIngredient.IngredientId, cancellationToken);
                 decimal cost = formulaIngredient.IngredientCostPerKg;
-                var deductionQty = notification.ActualKg * (formulaIngredient.Percentage / 100m);
+                var deductionQty = totalActualKg * (formulaIngredient.Percentage / 100m);
 
                 // Tracks whether THIS ingredient's cost should actually be counted below. An
                 // ingredient with no linked inventory item has no stock to deduct, so its
@@ -97,16 +110,25 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
 
                     if (inventoryItem != null)
                     {
+                        // Feed is measured in kg; the stock item may be counted in another base unit
+                        // (a premix kept in grams takes kg × 1000).
+                        var stockQty = _units is null || deductionQty <= 0
+                            ? deductionQty
+                            : await _units.KgToItemBaseAsync(inventoryItem, deductionQty, cancellationToken);
+
                         if (inventoryItem.WeightedAverageCostBdt > 0)
                         {
-                            cost = inventoryItem.WeightedAverageCostBdt;
+                            // Cost per kg of feed = cost per stock unit × stock units in a kg.
+                            cost = deductionQty > 0
+                                ? inventoryItem.WeightedAverageCostBdt * stockQty / deductionQty
+                                : inventoryItem.WeightedAverageCostBdt;
                         }
 
                         if (deductionQty > 0)
                         {
-                            if (inventoryItem.IsActive && inventoryItem.CurrentStock >= deductionQty)
+                            if (inventoryItem.IsActive && inventoryItem.CurrentStock >= stockQty)
                             {
-                                inventoryItem.DeductStock(deductionQty, transactionId);
+                                inventoryItem.DeductStock(stockQty, transactionId);
                                 _inventoryRepository.Update(inventoryItem);
 
                                 var transaction = new Farm360.Domain.Inventory.StockTransaction(
@@ -115,8 +137,8 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                                     farmId: notification.FarmId,
                                     inventoryItemId: inventoryItem.Id,
                                     transactionType: Farm360.Domain.Inventory.Enums.StockTransactionType.PlannedFeedConsumption,
-                                    quantity: deductionQty,
-                                    unitCostBdt: cost,
+                                    quantity: stockQty,
+                                    unitCostBdt: inventoryItem.WeightedAverageCostBdt,
                                     balanceAfter: inventoryItem.CurrentStock,
                                     transactionDate: entry.EntryDate,
                                     reason: $"Auto deduction for daily feeding plan entry {entry.Id}",
@@ -134,7 +156,7 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                                 {
                                     _logger.LogWarning(
                                         "Skipped auto-deduction for ingredient '{ItemName}' on feeding entry {EntryId}: Insufficient stock (Requested: {Requested} kg, Available: {Available} kg) or inactive. Its cost is excluded from this entry's total since nothing was actually consumed from inventory.",
-                                        inventoryItem.Name, entry.Id, deductionQty, inventoryItem.CurrentStock);
+                                        inventoryItem.Name, entry.Id, stockQty, inventoryItem.CurrentStock);
                                 }
                             }
                         }
@@ -164,11 +186,11 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             // by ActualKg here, rather than totalDeductedQty, keeps that multiplication exact: a
             // shortfall ingredient excluded above correctly lowers the resulting total cost instead
             // of having the deducted ingredients' rate silently re-applied to the missing portion.
-            decimal blendedUnitCost = notification.ActualKg > 0
-                ? Math.Round(totalDeductedCost / notification.ActualKg, 2)
+            decimal blendedUnitCost = totalActualKg > 0
+                ? Math.Round(totalDeductedCost / totalActualKg, 2)
                 : formula.TotalCostPerKgBdt;
 
-            entry.SetConsumptionCost(blendedUnitCost);
+            entry.SetConsumptionCost(blendedUnitCost, heads);
 
             if (anyDeducted)
             {
@@ -178,8 +200,6 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             _entryRepository.Update(entry);
 
             // Synchronize or create per-animal feed allocations
-            var plan = await _planRepository.GetByIdAsync(entry.FeedingPlanId, cancellationToken);
-            var existingAllocations = await _allocationRepository.GetByEntryIdAcrossTenantsAsync(entry.Id, cancellationToken);
             if (existingAllocations.Count > 0)
             {
                 var perHeadKg = notification.ActualKg;
@@ -249,7 +269,7 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                     notification.TenantId,
                     notification.FarmId,
                     entry.TotalCostBdt.Value,
-                    notification.ActualKg,
+                    totalActualKg,
                     entry.EntryDate,
                     plan?.AnimalId,
                     entry.BatchId,
@@ -264,5 +284,17 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             _logger.LogError(ex, "Failed to process stock deduction or cost snapshot for feeding entry {EntryId}", notification.EntryId);
         }
 #pragma warning restore CA1031
+    }
+
+    /// <summary>Heads a confirmed entry fed: 1 for an animal's own plan, the group's head count for a group plan given per head.</summary>
+    private decimal HeadsFed(Farm360.Domain.Feeding.AnimalFeedingPlan? plan, IReadOnlyList<AnimalFeedAllocation> allocations)
+    {
+        if (plan is null || plan.AnimalId.HasValue)
+            return 1m;
+        var basis = _rules?.Current.GroupPlanQuantityBasis ?? Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead;
+        if (basis != Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead)
+            return 1m;
+        var group = allocations.Where(a => a.Origin != FeedAllocationOrigin.IndividualPlan).ToList();
+        return group.Count > 0 ? Math.Max(1, group[0].HeadCountAtAllocation) : 1m;
     }
 }

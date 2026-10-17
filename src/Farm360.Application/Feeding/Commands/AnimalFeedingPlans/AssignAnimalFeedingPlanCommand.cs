@@ -1,3 +1,4 @@
+using Farm360.Application.Feeding.Services;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Feeding;
@@ -19,14 +20,23 @@ public sealed record AssignAnimalFeedingPlanCommand(
     IReadOnlyList<Guid>? AnimalIds = null,
     Guid? BatchId = null,
     Guid? ShedId = null,
-    Guid? PenId = null) : IRequest<IReadOnlyList<Guid>>;
+    Guid? PenId = null,
+    IReadOnlyList<DirectRation>? DirectRations = null,
+    bool ReplaceExistingCharts = false) : IRequest<IReadOnlyList<Guid>>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class AssignAnimalFeedingPlanCommandValidator : AbstractValidator<AssignAnimalFeedingPlanCommand>
 {
     public AssignAnimalFeedingPlanCommandValidator()
     {
         RuleFor(x => x.FarmId).NotEmpty();
-        RuleFor(x => x.FeedingRuleSetIds).NotEmpty();
+        RuleFor(x => x).Must(x => (x.FeedingRuleSetIds?.Count ?? 0) > 0 || (x.DirectRations?.Count ?? 0) > 0)
+            .WithMessage("Choose at least one rule set or add a direct ration.");
+        RuleForEach(x => x.DirectRations).ChildRules(r =>
+        {
+            r.RuleFor(d => d.KgPerDay).GreaterThan(0).WithMessage("Each direct ration needs kg per day.");
+            r.RuleFor(d => d).Must(d => d.FormulaId.HasValue || d.InventoryItemId.HasValue)
+                .WithMessage("Each direct ration needs a formula or a stock item.");
+        });
         RuleFor(x => x.PlanType).IsInEnum();
         RuleFor(x => x.StartDate).NotEmpty();
         RuleFor(x => x).Must(x => (x.AnimalIds != null && x.AnimalIds.Count > 0) || x.BatchId.HasValue || x.ShedId.HasValue || x.PenId.HasValue)
@@ -45,6 +55,7 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
     private readonly Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository _inventoryRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
+    private readonly IDirectFeedService _directFeed;
 
     public AssignAnimalFeedingPlanCommandHandler(
         IAnimalFeedingPlanRepository repository,
@@ -55,8 +66,10 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         IFeedIngredientRepository feedIngredientRepository,
         Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository inventoryRepository,
         IUnitOfWork unitOfWork,
-        ITenantService tenantService)
+        ITenantService tenantService,
+        IDirectFeedService directFeed)
     {
+        _directFeed = directFeed;
         _repository = repository;
         _ruleSetRepository = ruleSetRepository;
         _animalRepository = animalRepository;
@@ -72,7 +85,7 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
     {
         var createdPlanIds = new List<Guid>();
 
-        var distinctRuleSetIds = request.FeedingRuleSetIds.Distinct().ToList();
+        var distinctRuleSetIds = (request.FeedingRuleSetIds ?? []).Distinct().ToList();
         var targetAnimalIds = request.AnimalIds?.Distinct().ToList() ?? new List<Guid>();
 
         // Validate that all referenced rule sets exist and are currently active
@@ -102,8 +115,42 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
             throw new Farm360.Application.Common.Exceptions.ValidationException(ruleSetValidationFailures);
         }
 
-        // Duplicate Validation: An animal cannot be enrolled in the same active feeding rule set multiple times
-        if (targetAnimalIds.Count > 0)
+        // Direct rations ("this formula / stock item, this many kg a day") become one-line
+        // fixed-quantity rule sets, reused when the same ration was set up before.
+        foreach (var ration in request.DirectRations ?? [])
+        {
+            var species = ruleSetMap.Values.Select(r => r.Species).FirstOrDefault();
+            var direct = await _directFeed.GetOrCreateDirectRuleSetAsync(ration, species, cancellationToken);
+            ruleSetMap[direct.Id] = direct;
+            if (!distinctRuleSetIds.Contains(direct.Id))
+                distinctRuleSetIds.Add(direct.Id);
+        }
+
+        // Already on a chosen rule set: an error, unless switching -- then it is simply kept.
+        var keep = new HashSet<(Guid AnimalId, Guid RuleSetId)>();
+        if (targetAnimalIds.Count > 0 && request.ReplaceExistingCharts)
+        {
+            var activePlans = await _repository.GetActivePlansByFarmAsync(_tenantService.TenantId, request.FarmId, cancellationToken);
+            foreach (var plan in activePlans.Where(p => p.AnimalId.HasValue && targetAnimalIds.Contains(p.AnimalId.Value)))
+            {
+                if (distinctRuleSetIds.Contains(plan.FeedingRuleSetId))
+                {
+                    keep.Add((plan.AnimalId!.Value, plan.FeedingRuleSetId));
+                    continue;
+                }
+
+                // "Switch": end the animal's other feed charts. Direct extras (add-ons) stay.
+                var other = await _ruleSetRepository.GetByIdAsync(plan.FeedingRuleSetId, cancellationToken);
+                var isExtra = other?.Name.StartsWith(DirectFeedService.DirectRuleSetPrefix, StringComparison.Ordinal) ?? false;
+                var choosingChart = ruleSetMap.Values.Any(r => !r.Name.StartsWith(DirectFeedService.DirectRuleSetPrefix, StringComparison.Ordinal));
+                if (!isExtra && choosingChart)
+                {
+                    plan.Cancel();
+                    _repository.Update(plan);
+                }
+            }
+        }
+        else if (targetAnimalIds.Count > 0)
         {
             var activePlans = await _repository.GetActivePlansByFarmAsync(_tenantService.TenantId, request.FarmId, cancellationToken);
             var duplicateConflicts = new List<ValidationFailure>();
@@ -195,6 +242,9 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
 
             foreach (var animalId in targets)
             {
+                if (animalId.HasValue && keep.Contains((animalId.Value, ruleSetId)))
+                    continue;
+
                 var plan = new AnimalFeedingPlan(
                     Guid.NewGuid(),
                     _tenantService.TenantId,
@@ -209,37 +259,23 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                     request.PenId);
 
                 decimal currentWeight = 0;
+                int? ageDays = null;
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
                 if (animalId.HasValue)
                 {
                     var animal = await _animalRepository.GetByIdAsync(animalId.Value, cancellationToken);
                     currentWeight = animal?.LatestWeightKg ?? 0;
+                    if (animal is not null)
+                        ageDays = FeedingRuleMatcher.AgeInDays(animal.DateOfBirth, today);
                 }
 
-                var matchingRule = ruleSet.Lines.FirstOrDefault(l =>
-                    currentWeight >= l.WeightFromKg && (l.WeightToKg == 0 || currentWeight < l.WeightToKg));
-
-                if (matchingRule == null && ruleSet.Lines.Count > 0)
-                {
-                    var maxWeightFrom = ruleSet.Lines.Max(l => l.WeightFromKg);
-                    if (currentWeight >= maxWeightFrom)
-                    {
-                        matchingRule = ruleSet.Lines.OrderByDescending(l => l.WeightFromKg).First();
-                    }
-                    else
-                    {
-                        matchingRule = ruleSet.Lines.OrderBy(l => l.WeightFromKg).First();
-                    }
-                }
+                var matchingRules = FeedingRuleMatcher.Match(ruleSet, currentWeight, ageDays).Lines;
+                var matchingRule = matchingRules.Count > 0 ? matchingRules[0] : null;
 
                 if (matchingRule != null)
                 {
-                    decimal expectedKg = matchingRule.ConcentrateKgPerDay;
-
-                    if (ruleSet.PlanType == FeedingPlanType.WeightPercentage)
-                    {
-                        expectedKg = (currentWeight * matchingRule.ConcentrateKgPerDay) / 100m;
-                    }
+                    var expectedKg = FeedingRuleMatcher.ExpectedKg(ruleSet, matchingRule, currentWeight);
 
                     plan.UpdateCurrentRule(
                         matchingRule.Id,
@@ -253,34 +289,11 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                 createdPlanIds.Add(plan.Id);
 
                 // If plan is active today, immediately generate daily feeding entries for today
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
                 if (request.StartDate <= today && (!request.EndDate.HasValue || request.EndDate.Value >= today))
                 {
-                    var matchingRules = ruleSet.Lines
-                        .Where(l => currentWeight >= l.WeightFromKg && (l.WeightToKg == 0 || currentWeight < l.WeightToKg))
-                        .ToList();
-
-                    if (matchingRules.Count == 0 && ruleSet.Lines.Count > 0)
-                    {
-                        var maxWeight = ruleSet.Lines.Max(l => l.WeightFromKg);
-                        if (currentWeight >= maxWeight)
-                        {
-                            matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == maxWeight).ToList();
-                        }
-                        else
-                        {
-                            var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
-                            matchingRules = ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
-                        }
-                    }
-
                     foreach (var ruleLine in matchingRules)
                     {
-                        decimal expKg = ruleLine.ConcentrateKgPerDay;
-                        if (ruleSet.PlanType == FeedingPlanType.WeightPercentage)
-                        {
-                            expKg = (currentWeight * ruleLine.ConcentrateKgPerDay) / 100m;
-                        }
+                        var expKg = FeedingRuleMatcher.ExpectedKg(ruleSet, ruleLine, currentWeight);
 
                         var entry = new DailyFeedingEntry(
                             id: Guid.NewGuid(),

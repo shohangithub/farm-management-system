@@ -14,7 +14,8 @@ public sealed record UpdateInventoryItemCommand(
     string UnitOfMeasure,
     decimal ReorderThreshold,
     string? StorageLocation = null,
-    bool IsActive = true) : IRequest;
+    bool IsActive = true,
+    Guid? DefaultUnitId = null) : IRequest;
 
 public sealed class UpdateInventoryItemCommandValidator : AbstractValidator<UpdateInventoryItemCommand>
 {
@@ -46,6 +47,7 @@ public sealed class UpdateInventoryItemCommandHandler : IRequestHandler<UpdateIn
 
         item.UpdateDetails(request.Name, request.Category, request.UnitOfMeasure, request.ReorderThreshold, request.StorageLocation);
         item.SetActiveStatus(request.IsActive);
+        item.SetDefaultUnit(request.DefaultUnitId);
 
         _repository.Update(item);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

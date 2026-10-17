@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { InventoryService } from '../../../services/inventory.service';
-import { InventoryCategory, InventoryCategoryNames, InventoryItem } from '../../../models/inventory.models';
+import { InventoryCategory, InventoryCategoryNames, InventoryItem, MeasureUnit, UnitConversion } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 
 @Component({
@@ -82,10 +82,30 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <!-- Base unit: stock, average cost and every use are counted in it -->
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Unit of Measure</mat-label>
-              <input matInput formControlName="unitOfMeasure" placeholder="e.g. kg, vial, bottle, dose" required />
+              <mat-label>Base unit (stock counted in)</mat-label>
+              <mat-select formControlName="unitOfMeasure" required>
+                @for (u of baseUnits(); track u.id) {
+                  <mat-option [value]="u.name">{{ u.name }}{{ u.description ? ' — ' + u.description : '' }}</mat-option>
+                }
+                @if (form.value.unitOfMeasure && !knownBase()) {
+                  <mat-option [value]="form.value.unitOfMeasure">{{ form.value.unitOfMeasure }} (not set up in Units)</mat-option>
+                }
+              </mat-select>
+              <mat-hint>{{ baseLocked ? 'Has stock — base unit is locked' : 'Manage in Inventory → Base Units' }}</mat-hint>
               <mat-error>Unit is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Usually bought / issued in</mat-label>
+              <mat-select formControlName="defaultUnitId">
+                <mat-option [value]="null">{{ form.value.unitOfMeasure || 'Base unit' }}</mat-option>
+                @for (c of packs(); track c.id) {
+                  <mat-option [value]="c.id">{{ c.name }} = {{ c.factor }} {{ form.value.unitOfMeasure }}</mat-option>
+                }
+              </mat-select>
+              <mat-hint>Pre-selected on Stock In and purchase orders</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
@@ -187,8 +207,32 @@ export class CreateItemDialogComponent {
     sku: [this.data?.item?.sku || ''],
     initialStock: [this.data?.item?.currentStock ?? 0, [Validators.min(0)]],
     initialCostBdt: [this.data?.item?.weightedAverageCostBdt ?? 0, [Validators.min(0)]],
-    storageLocation: [this.data?.item?.storageLocation || '']
+    storageLocation: [this.data?.item?.storageLocation || ''],
+    defaultUnitId: [this.data?.item?.defaultUnitId ?? null as string | null]
   });
+
+  /** Changing the base unit of an item that holds stock would silently re-scale it. */
+  readonly baseLocked = this.isEdit && (this.data?.item?.currentStock ?? 0) > 0;
+
+  readonly baseUnits = signal<MeasureUnit[]>([]);
+  private readonly baseName = signal<string>(this.data?.item?.unitOfMeasure || 'kg');
+
+  readonly knownBase = computed(() =>
+    this.baseUnits().some(u => u.name.toLowerCase() === (this.baseName() || '').toLowerCase()));
+
+  /** Packs of the chosen base unit (everything except the base unit itself). */
+  readonly packs = computed<UnitConversion[]>(() =>
+    this.baseUnits().find(u => u.name.toLowerCase() === (this.baseName() || '').toLowerCase())
+      ?.conversions.filter(c => !c.isBase && c.isActive) ?? []);
+
+  constructor() {
+    this.inventoryService.getUnits().subscribe(u => this.baseUnits.set(u.filter(x => x.isActive)));
+    if (this.baseLocked) this.form.controls.unitOfMeasure.disable();
+    this.form.controls.unitOfMeasure.valueChanges.subscribe(v => {
+      this.baseName.set(v || '');
+      this.form.controls.defaultUnitId.setValue(null);
+    });
+  }
 
   onSubmit(): void {
     if (this.form.invalid) return;

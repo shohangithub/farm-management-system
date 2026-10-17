@@ -132,6 +132,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
                 <td class="py-3.5 px-4 text-right font-extrabold"
                   [ngClass]="isStockIn(tx.transactionType) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'">
                   {{ isStockIn(tx.transactionType) ? '+' : '-' }}{{ getAbsQuantity(tx.quantity) }}
+                  <span *ngIf="tx.enteredUnitName" class="block text-[10px] font-normal text-gray-500">{{ tx.enteredQuantity | number:'1.0-4' }} × {{ tx.enteredUnitName }}</span>
                 </td>
                 <td class="py-3.5 px-4 text-right">৳ {{ tx.unitCostBdt }}</td>
                 <td class="py-3.5 px-4 text-right font-bold text-gray-900 dark:text-white">৳ {{ tx.totalCostBdt | number:'1.0-0' }}</td>

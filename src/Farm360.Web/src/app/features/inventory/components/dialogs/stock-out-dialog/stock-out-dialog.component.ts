@@ -12,6 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { InventoryService } from '../../../services/inventory.service';
 import { InventoryItem, StockTransactionType, StockTransactionTypeNames } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { UnitPickerComponent, UnitSelection } from '../../unit-picker/unit-picker.component';
 
 @Component({
   selector: 'app-stock-out-dialog',
@@ -25,12 +26,13 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
     MatInputModule,
     MatSelectModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    UnitPickerComponent
   ],
   template: `
-    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl flex flex-col max-h-[90vh]">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">remove_shopping_cart</mat-icon>
@@ -42,8 +44,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
         </button>
       </div>
 
-      <!-- Content -->
-      <div class="p-6">
+      <!-- Content (scrolls) -->
+      <div class="p-6 flex-1 min-h-0 overflow-y-auto">
         @if (error()) {
           <div class="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs border border-red-200 dark:border-red-800 font-medium">
             {{ error() }}
@@ -71,11 +73,15 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Deducted Quantity</mat-label>
-              <input matInput type="number" formControlName="quantity" step="1" min="0.1" required />
-              <mat-error>Quantity is required</mat-error>
-            </mat-form-field>
+            <div class="grid grid-cols-2 gap-3 items-start">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Quantity</mat-label>
+                <input matInput type="number" formControlName="quantity" step="any" min="0" required />
+                <mat-error>Quantity is required</mat-error>
+              </mat-form-field>
+              <app-unit-picker appearance="material" label="Unit" [itemId]="form.value.inventoryItemId" [quantity]="form.value.quantity" [useDefault]="false"
+                (selectionChange)="unit.set($event)"></app-unit-picker>
+            </div>
           </div>
 
           <mat-form-field appearance="outline" class="w-full">
@@ -91,7 +97,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
       </div>
 
       <!-- Actions -->
-      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
+      <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2 shrink-0">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
           Cancel
         </button>
@@ -116,10 +122,13 @@ export class StockOutDialogComponent implements OnInit {
   readonly availableItems = signal<InventoryItem[]>([]);
   readonly StockTransactionType = StockTransactionType;
 
+  /** The unit the quantity is entered in; stock is deducted in the base unit. */
+  readonly unit = signal<UnitSelection | null>(null);
+
   readonly form = this.fb.group({
     inventoryItemId: [this.data?.item?.id || '', [Validators.required]],
     transactionType: [StockTransactionType.ManualStockOut, [Validators.required]],
-    quantity: [1, [Validators.required, Validators.min(0.1)]],
+    quantity: [1, [Validators.required, Validators.min(0.0001)]],
     transactionDate: [new Date().toISOString().split('T')[0], [Validators.required]],
     reason: ['']
   });
@@ -141,7 +150,8 @@ export class StockOutDialogComponent implements OnInit {
     const request = {
       ...formVal,
       farmId: this.data.farmId,
-      reason: formVal.reason ? formVal.reason : null
+      reason: formVal.reason ? formVal.reason : null,
+      unitId: this.unit()?.unitId ?? null
     };
 
     this.inventoryService.recordStockOut(request as any).subscribe({

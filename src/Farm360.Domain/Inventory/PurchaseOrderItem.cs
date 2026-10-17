@@ -11,6 +11,16 @@ public class PurchaseOrderItem : BaseEntity
     public decimal UnitCostBdt { get; private set; }
     public decimal TotalCostBdt => Math.Round(Quantity * UnitCostBdt, 2);
 
+    /// <summary>The unit it was ordered in ("Bag (50 kg)") when not the base unit; Quantity is always base.</summary>
+    public string? EnteredUnitName { get; private set; }
+    public decimal? EnteredQuantity { get; private set; }
+
+    internal void SetEnteredUnit(string? unitName, decimal? quantity)
+    {
+        EnteredUnitName = string.IsNullOrWhiteSpace(unitName) ? null : unitName.Trim();
+        EnteredQuantity = EnteredUnitName is null ? null : quantity;
+    }
+
     private PurchaseOrderItem() { }
 
     internal PurchaseOrderItem(Guid id, Guid purchaseOrderId, Guid inventoryItemId, decimal quantity, decimal unitCostBdt) : base(id)

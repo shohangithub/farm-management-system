@@ -106,6 +106,8 @@ export interface InventoryItem {
   statusName: string;
   storageLocation?: string;
   isActive: boolean;
+  /** Usual purchase / issue unit (e.g. "Bag (50 kg)"); stock stays in unitOfMeasure. */
+  defaultUnitId?: string | null;
 }
 
 export interface Supplier {
@@ -138,6 +140,9 @@ export interface StockTransaction {
   expiryDate?: string;
   reason?: string;
   recordedBy?: string;
+  /** The unit it was entered in ("Bag (50 kg)") and that quantity; quantity is in the base unit. */
+  enteredUnitName?: string | null;
+  enteredQuantity?: number | null;
 }
 
 export interface InventoryValuationReport {
@@ -166,6 +171,7 @@ export interface CreateInventoryItemRequest {
   initialStock?: number;
   initialCostBdt?: number;
   storageLocation?: string;
+  defaultUnitId?: string | null;
 }
 
 export interface RecordStockInRequest {
@@ -183,6 +189,8 @@ export interface RecordStockInRequest {
   fundingSource?: 'CashPurchase' | 'OwnerContribution';
   /** A CashPurchase not paid in full on the day — the supplier is owed the balance. */
   credit?: CreditTerms | null;
+  /** Quantity and unit cost are in this unit (e.g. bags); the server converts to the base unit. */
+  unitId?: string | null;
 }
 
 export interface RecordStockOutRequest {
@@ -193,6 +201,7 @@ export interface RecordStockOutRequest {
   transactionDate: string;
   reason?: string;
   referenceId?: string;
+  unitId?: string | null;
 }
 
 export interface CreateSupplierRequest {
@@ -218,6 +227,8 @@ export interface PurchaseOrderItem {
   quantity: number;
   unitCostBdt: number;
   totalCostBdt: number;
+  enteredUnitName?: string | null;
+  enteredQuantity?: number | null;
 }
 
 export interface PurchaseOrder {
@@ -237,6 +248,7 @@ export interface PurchaseOrderItemDto {
   inventoryItemId: string;
   quantity: number;
   unitCostBdt: number;
+  unitId?: string | null;
 }
 
 export interface CreatePurchaseOrderRequest {
@@ -446,6 +458,7 @@ export interface ConsumablePlanItemInput {
   inventoryItemId: string;
   plannedQuantityPerDay: number;
   notes?: string;
+  unitId?: string | null;
 }
 
 export interface CreateConsumableUsagePlanRequest {
@@ -484,3 +497,34 @@ export interface SkipDailyConsumableEntryRequest {
 }
 
 
+
+
+// ── Units: base units (kg, ml, piece…) and the packs they are bought / used in ──
+
+export interface UnitConversion {
+  id: string;
+  measureUnitId: string;
+  /** The base unit's name (FrostTrack "Base Unit"). */
+  baseUnitName: string;
+  name: string;
+  description?: string | null;
+  /** Base units in one of this unit (Bag 50 kg → 50; Gram on a kg base → 0.001). */
+  factor: number;
+  isActive: boolean;
+  isBase: boolean;
+}
+
+export interface MeasureUnit {
+  id: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+  conversions: UnitConversion[];
+}
+
+export interface ItemUnits {
+  inventoryItemId: string;
+  baseUnit: string;
+  defaultUnitId?: string | null;
+  units: UnitConversion[];
+}

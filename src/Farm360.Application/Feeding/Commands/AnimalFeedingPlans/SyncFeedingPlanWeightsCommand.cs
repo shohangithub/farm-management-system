@@ -1,3 +1,4 @@
+using Farm360.Application.Feeding.Services;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
@@ -81,30 +82,13 @@ public sealed class SyncFeedingPlanWeightsCommandHandler : IRequestHandler<SyncF
             if (ruleSet == null || !ruleSet.IsActive || ruleSet.Lines.Count == 0)
                 continue;
 
-            var matchingRule = ruleSet.Lines.FirstOrDefault(l =>
-                latestWeight >= l.WeightFromKg && (l.WeightToKg == 0 || latestWeight < l.WeightToKg));
-
-            if (matchingRule == null)
-            {
-                var maxWeightFrom = ruleSet.Lines.Max(l => l.WeightFromKg);
-                if (latestWeight >= maxWeightFrom)
-                {
-                    matchingRule = ruleSet.Lines.OrderByDescending(l => l.WeightFromKg).First();
-                }
-                else
-                {
-                    matchingRule = ruleSet.Lines.OrderBy(l => l.WeightFromKg).First();
-                }
-            }
+            var ageDays = FeedingRuleMatcher.AgeInDays(animal.DateOfBirth, DateOnly.FromDateTime(DateTime.UtcNow));
+            var matchingRule = FeedingRuleMatcher.Match(ruleSet, latestWeight, ageDays).Primary;
 
             if (matchingRule == null)
                 continue;
 
-            decimal expectedKg = matchingRule.ConcentrateKgPerDay;
-            if (ruleSet.PlanType == FeedingPlanType.WeightPercentage)
-            {
-                expectedKg = (latestWeight * matchingRule.ConcentrateKgPerDay) / 100m;
-            }
+            var expectedKg = FeedingRuleMatcher.ExpectedKg(ruleSet, matchingRule, latestWeight);
 
             bool planChanged = plan.TriggeredByWeightKg != latestWeight
                 || plan.CurrentRuleLineId != matchingRule.Id

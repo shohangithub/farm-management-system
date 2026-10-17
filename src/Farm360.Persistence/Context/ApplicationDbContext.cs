@@ -141,6 +141,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
+    public DbSet<MeasureUnit> MeasureUnits => Set<MeasureUnit>();
+    public DbSet<UnitConversion> UnitConversions => Set<UnitConversion>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
     public DbSet<PurchaseReturn> PurchaseReturns => Set<PurchaseReturn>();

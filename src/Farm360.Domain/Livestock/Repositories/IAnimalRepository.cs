@@ -27,6 +27,9 @@ public interface IAnimalRepository
     /// </summary>
     Task<IReadOnlyList<Animal>> GetAllByFarmAsync(Guid farmId, CancellationToken cancellationToken = default);
 
+    /// <summary>Where each animal of the farm is now (its open movement): animal id → (shed, pen).</summary>
+    Task<IReadOnlyDictionary<Guid, (Guid? ShedId, Guid? PenId)>> GetCurrentLocationsByFarmAsync(Guid farmId, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Returns the animals by IDs.
     /// </summary>

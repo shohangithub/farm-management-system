@@ -1,3 +1,4 @@
+using Farm360.Application.Feeding.Services;
 using System.Text.Json.Serialization;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Feeding;
@@ -21,7 +22,8 @@ public record FeedingRuleLineRequest(
     [property: JsonPropertyName("concentrateKgPerDay")] decimal ConcentrateKgPerDay = 0,
     [property: JsonPropertyName("roughageKgPerDay")] decimal RoughageKgPerDay = 0,
     [property: JsonPropertyName("sessionsPerDay")] int SessionsPerDay = 1,
-    [property: JsonPropertyName("proteinTargetPercent")] decimal? ProteinTargetPercent = null);
+    [property: JsonPropertyName("proteinTargetPercent")] decimal? ProteinTargetPercent = null,
+    [property: JsonPropertyName("inventoryItemId")] Guid? InventoryItemId = null);
 
 public sealed record CreateFeedingRuleSetCommand(
     [property: JsonPropertyName("name")] string Name,
@@ -78,15 +80,18 @@ public sealed class CreateFeedingRuleSetCommandHandler : IRequestHandler<CreateF
     private readonly IFeedingRuleSetRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
+    private readonly IDirectFeedService _directFeed;
 
     public CreateFeedingRuleSetCommandHandler(
         IFeedingRuleSetRepository repository,
         IUnitOfWork unitOfWork,
-        ITenantService tenantService)
+        ITenantService tenantService,
+        IDirectFeedService directFeed)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tenantService = tenantService;
+        _directFeed = directFeed;
     }
 
     public async Task<Guid> Handle(CreateFeedingRuleSetCommand request, CancellationToken cancellationToken)
@@ -106,6 +111,11 @@ public sealed class CreateFeedingRuleSetCommandHandler : IRequestHandler<CreateF
 
         foreach (var line in request.RuleLines)
         {
+            // A stock item fed as it is goes through its one-ingredient "direct item" formula.
+            var formulaId = line.InventoryItemId is { } itemId
+                ? (await _directFeed.GetOrCreateItemFormulaAsync(itemId, request.Species, cancellationToken)).Id
+                : line.FormulaId;
+
             ruleSet.AddRuleLine(
                 line.MinWeightKg,
                 line.MaxWeightKg,
@@ -113,7 +123,7 @@ public sealed class CreateFeedingRuleSetCommandHandler : IRequestHandler<CreateF
                 line.MaxAgeDays,
                 line.FeedType,
                 line.QuantityValue > 0 ? line.QuantityValue : line.ConcentrateKgPerDay,
-                line.FormulaId,
+                formulaId,
                 line.SessionsPerDay > 0 ? line.SessionsPerDay : 1);
         }
 

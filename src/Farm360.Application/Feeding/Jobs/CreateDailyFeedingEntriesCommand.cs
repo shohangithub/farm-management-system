@@ -118,7 +118,8 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
                 continue;
 
             // Skip plans that have an exclusion for today
-            if (plan.Exclusions.Any(e => e.ExclusionDate == today && (!e.ResumesOn.HasValue || today < e.ResumesOn.Value)))
+            // (a multi-day pause covers every day from its start until it resumes)
+            if (plan.IsPausedOn(today))
                 continue;
 
             if (!ruleSets.TryGetValue(plan.FeedingRuleSetId, out var ruleSet))
@@ -132,6 +133,7 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
                 continue;
 
             decimal currentWeight = plan.TriggeredByWeightKg ?? 0;
+            int? ageDays = null;
 
             if (plan.AnimalId.HasValue)
             {
@@ -140,43 +142,29 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
                 {
                     currentWeight = animal.LatestWeightKg.Value;
                 }
+                if (animal is not null)
+                {
+                    ageDays = FeedingRuleMatcher.AgeInDays(animal.DateOfBirth, today);
+                }
             }
 
-            var matchingRules = ruleSet.Lines
-                .Where(l => currentWeight >= l.WeightFromKg && (l.WeightToKg == 0 || currentWeight < l.WeightToKg))
-                .ToList();
+            var match = FeedingRuleMatcher.Match(ruleSet, currentWeight, ageDays);
+            var matchingRules = match.Lines.ToList();
 
-            if (matchingRules.Count == 0 && ruleSet.Lines.Count > 0)
+            // Outside every range the rule set defines: the nearest range's ration is used, and
+            // said out loud -- an underweight animal risks over-feeding, an oversized one under-feeding.
+            if (match.Fit != RuleMatchFit.InRange && _logger.IsEnabled(LogLevel.Warning))
             {
-                var maxWeight = ruleSet.Lines.Max(l => l.WeightFromKg);
-                var minWeight = ruleSet.Lines.Min(l => l.WeightFromKg);
-                bool aboveRange = currentWeight >= maxWeight;
-
-                matchingRules = aboveRange
-                    ? ruleSet.Lines.Where(l => l.WeightFromKg == maxWeight).ToList()
-                    : ruleSet.Lines.Where(l => l.WeightFromKg == minWeight).ToList();
-
-                // This animal's weight falls outside every bracket this rule set defines -- it's
-                // getting the nearest bracket's ration, silently, rather than being flagged. A
-                // severely underweight animal risks over-feeding, an oversized one under-feeding.
-                if (_logger.IsEnabled(LogLevel.Warning))
-                {
-                    _logger.LogWarning(
-                        "Plan {PlanId} (animal {AnimalId}): weight {CurrentWeight}kg is {Direction} every bracket in rule set {RuleSetId} (defined range {MinWeight}-{MaxWeight}kg). Falling back to the {FallbackBracket} bracket's ration -- verify this animal's weight and this rule set's coverage.",
-                        plan.Id, plan.AnimalId, currentWeight, aboveRange ? "above" : "below", ruleSet.Id, minWeight, maxWeight, aboveRange ? "highest" : "lowest");
-                }
+                _logger.LogWarning(
+                    "Plan {PlanId} (animal {AnimalId}): {Measure} is {Fit} rule set {RuleSetId} ({PlanType}); using the nearest range's ration -- verify the animal's record and the rule set's coverage.",
+                    plan.Id, plan.AnimalId, match.Measure, match.Fit, ruleSet.Id, ruleSet.PlanType);
             }
 
             // Keep the plan's cached rule and triggered weight updated if changed
             var primaryRule = matchingRules.FirstOrDefault();
             if (primaryRule != null && plan.AnimalId.HasValue && currentWeight > 0 && plan.TriggeredByWeightKg != currentWeight)
             {
-                decimal expKg = primaryRule.ConcentrateKgPerDay;
-                if (ruleSet.PlanType == FeedingPlanType.WeightPercentage)
-                {
-                    expKg = (currentWeight * primaryRule.ConcentrateKgPerDay) / 100m;
-                }
-
+                var expKg = FeedingRuleMatcher.ExpectedKg(ruleSet, primaryRule, currentWeight);
                 plan.UpdateCurrentRule(primaryRule.Id, currentWeight, expKg, primaryRule.RoughageKgPerDay);
                 _planRepository.Update(plan);
             }
@@ -186,12 +174,7 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
                 if (existingPlanIds.Contains((plan.Id, ruleLine.Id)))
                     continue;
 
-                decimal expectedKg = ruleLine.ConcentrateKgPerDay;
-
-                if (ruleSet.PlanType == FeedingPlanType.WeightPercentage)
-                {
-                    expectedKg = (currentWeight * ruleLine.ConcentrateKgPerDay) / 100m;
-                }
+                var expectedKg = FeedingRuleMatcher.ExpectedKg(ruleSet, ruleLine, currentWeight);
 
                 var entry = new DailyFeedingEntry(
                     id: Guid.NewGuid(),
@@ -220,6 +203,11 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
                 {
                     _allocationRepository.AddRange(allocations);
                     allocatedAnimals += allocations.Count;
+
+                    // A group plan's quantity is per head: its planned cost covers every head fed.
+                    var allocatedKg = allocations.Sum(a => a.AllocatedKg);
+                    if (!plan.AnimalId.HasValue && expectedKg > 0 && allocatedKg > expectedKg)
+                        entry.SetConsumptionCost(unitCost, Math.Round(allocatedKg / expectedKg, 4));
                 }
                 else if (_logger.IsEnabled(LogLevel.Warning))
                 {

@@ -1,3 +1,4 @@
+import { UnitPickerComponent } from '../../unit-picker/unit-picker.component';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -24,6 +25,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
   selector: 'app-consumable-plan-dialog',
   standalone: true,
   imports: [
+    UnitPickerComponent,
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -125,15 +127,19 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                       </select>
                     </div>
 
-                    <!-- Quantity Per Day (col 3) -->
-                    <div class="sm:col-span-3">
-                      <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Qty / Day</label>
-                      <input type="number" formControlName="plannedQuantityPerDay" step="0.5" min="0.1" placeholder="e.g. 2"
-                        class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                    <!-- Quantity Per Day + unit (col 4) -->
+                    <div class="sm:col-span-4 grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Qty / Day</label>
+                        <input type="number" formControlName="plannedQuantityPerDay" step="any" min="0" placeholder="e.g. 2"
+                          class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                      </div>
+                      <app-unit-picker label="Unit" [itemId]="itemGroup.value.inventoryItemId" [quantity]="itemGroup.value.plannedQuantityPerDay"
+                        [useDefault]="false" (selectionChange)="itemGroup.patchValue({ unitId: $event.unitId })"></app-unit-picker>
                     </div>
 
-                    <!-- Notes / Shift (col 3) -->
-                    <div class="sm:col-span-3">
+                    <!-- Notes / Shift (col 2) -->
+                    <div class="sm:col-span-2">
                       <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Shift / Notes</label>
                       <input type="text" formControlName="notes" placeholder="e.g. Morning wash"
                         class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500" />
@@ -234,8 +240,10 @@ export class ConsumablePlanDialogComponent implements OnInit {
   createItemFormGroup(inventoryItemId: string = '', plannedQty: number = 1, notes: string = ''): FormGroup {
     return this.fb.group({
       inventoryItemId: [inventoryItemId, [Validators.required]],
-      plannedQuantityPerDay: [plannedQty, [Validators.required, Validators.min(0.01)]],
-      notes: [notes || '']
+      plannedQuantityPerDay: [plannedQty, [Validators.required, Validators.min(0.0001)]],
+      notes: [notes || ''],
+      // Entered in this unit (e.g. "Packet (100 g)"); the plan is stored in the item's base unit.
+      unitId: [null as string | null]
     });
   }
 
@@ -263,7 +271,8 @@ export class ConsumablePlanDialogComponent implements OnInit {
     const itemsPayload: ConsumablePlanItemInput[] = (formVal.items || []).map((i: any) => ({
       inventoryItemId: i.inventoryItemId,
       plannedQuantityPerDay: Number(i.plannedQuantityPerDay),
-      notes: i.notes || null
+      notes: i.notes || null,
+      unitId: i.unitId || null
     }));
 
     if (this.isEdit && this.data.plan) {

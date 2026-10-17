@@ -18,7 +18,8 @@ public sealed record CreateInventoryItemCommand(
     string? Sku = null,
     decimal InitialStock = 0,
     decimal InitialCostBdt = 0,
-    string? StorageLocation = null) : IRequest<Guid>;
+    string? StorageLocation = null,
+    Guid? DefaultUnitId = null) : IRequest<Guid>;
 
 public sealed class CreateInventoryItemCommandValidator : AbstractValidator<CreateInventoryItemCommand>
 {
@@ -71,6 +72,7 @@ public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateIn
             request.InitialCostBdt,
             request.StorageLocation);
 
+        item.SetDefaultUnit(request.DefaultUnitId);
         await _repository.AddAsync(item, cancellationToken);
 
         // Opening stock: record the movement and bring its value into the books as opening

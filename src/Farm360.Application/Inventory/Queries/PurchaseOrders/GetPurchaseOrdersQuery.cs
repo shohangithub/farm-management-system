@@ -55,7 +55,7 @@ public class GetPurchaseOrdersQueryHandler : IRequestHandler<GetPurchaseOrdersQu
                 i.InventoryItemId,
                 i.Quantity,
                 i.UnitCostBdt,
-                i.TotalCostBdt)).ToList())).ToList();
+                i.TotalCostBdt) { EnteredUnitName = i.EnteredUnitName, EnteredQuantity = i.EnteredQuantity }).ToList())).ToList();
 
         return new PagedResult<PurchaseOrderDto>(dtos, count, pageNumber, pageSize);
     }

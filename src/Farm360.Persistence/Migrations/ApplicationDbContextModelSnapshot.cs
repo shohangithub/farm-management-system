@@ -3367,7 +3367,10 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("CurrentStock")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid?>("DefaultUnitId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DeletedAtUtc")
                         .HasColumnType("datetime2");
@@ -3420,7 +3423,7 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("nvarchar(30)");
 
                     b.Property<decimal>("WeightedAverageCostBdt")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,4)");
 
                     b.HasKey("Id");
 
@@ -3428,6 +3431,61 @@ namespace Farm360.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("InventoryItems", "inventory");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Inventory.MeasureUnit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("MeasureUnits", "inventory");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseOrder", b =>
@@ -3506,6 +3564,14 @@ namespace Farm360.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("EnteredQuantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("EnteredUnitName")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
                     b.Property<Guid>("InventoryItemId")
                         .HasColumnType("uniqueidentifier");
 
@@ -3513,12 +3579,12 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<decimal>("UnitCostBdt")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.HasKey("Id");
 
@@ -3655,7 +3721,7 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("BalanceAfter")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("BatchNumber")
                         .HasMaxLength(100)
@@ -3672,6 +3738,13 @@ namespace Farm360.Persistence.Migrations
 
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("EnteredQuantity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("EnteredUnitName")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
 
                     b.Property<DateOnly?>("ExpiryDate")
                         .HasColumnType("date");
@@ -3696,7 +3769,7 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Reason")
                         .HasMaxLength(500)
@@ -3726,7 +3799,7 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("UnitCostBdt")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,4)");
 
                     b.HasKey("Id");
 
@@ -3801,6 +3874,67 @@ namespace Farm360.Persistence.Migrations
                     b.HasIndex("TenantId", "Name");
 
                     b.ToTable("Suppliers", "inventory");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Inventory.UnitConversion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Factor")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MeasureUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MeasureUnitId", "Name")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("UnitConversions", "inventory");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Livestock.Animal", b =>
@@ -5782,6 +5916,15 @@ namespace Farm360.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Farm360.Domain.Inventory.UnitConversion", b =>
+                {
+                    b.HasOne("Farm360.Domain.Inventory.MeasureUnit", null)
+                        .WithMany("Conversions")
+                        .HasForeignKey("MeasureUnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Farm360.Domain.Livestock.Animal", b =>
                 {
                     b.HasOne("Farm360.Domain.Livestock.AnimalBatch", null)
@@ -6080,6 +6223,11 @@ namespace Farm360.Persistence.Migrations
             modelBuilder.Entity("Farm360.Domain.Inventory.ConsumableUsagePlan", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Inventory.MeasureUnit", b =>
+                {
+                    b.Navigation("Conversions");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseOrder", b =>

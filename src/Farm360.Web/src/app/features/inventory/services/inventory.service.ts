@@ -31,7 +31,10 @@ import {
   PurchaseReturn,
   ReturnablePoItem,
   CreatePurchaseReturnRequest,
-  PurchaseReturnParams
+  PurchaseReturnParams,
+  MeasureUnit,
+  ItemUnits,
+  UnitConversion
 } from '../models/inventory.models';
 
 @Injectable({
@@ -58,6 +61,37 @@ export class InventoryService {
 
   getItemById(id: string): Observable<InventoryItem> {
     return this.http.get<InventoryItem>(`${this.baseUrl}/items/${id}`);
+  }
+
+  // ── Units ─────────────────────────────────────────────────────────────────
+  getUnits(): Observable<MeasureUnit[]> {
+    return this.http.get<MeasureUnit[]>(`${this.baseUrl}/units`);
+  }
+
+  saveUnit(body: { id?: string | null; name: string; description?: string | null; isActive?: boolean }): Observable<MeasureUnit> {
+    return this.http.post<MeasureUnit>(`${this.baseUrl}/units`, body);
+  }
+
+  deleteUnits(ids: string[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/units/delete`, { ids });
+  }
+
+  /** Every unit conversion with its base unit (FrostTrack "Unit Conversions"). */
+  getConversions(): Observable<UnitConversion[]> {
+    return this.http.get<UnitConversion[]>(`${this.baseUrl}/unit-conversions`);
+  }
+
+  saveConversion(body: { id?: string | null; measureUnitId: string; name: string; factor: number; description?: string | null; isActive?: boolean }): Observable<UnitConversion> {
+    return this.http.post<UnitConversion>(`${this.baseUrl}/unit-conversions`, body);
+  }
+
+  deleteConversions(ids: string[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/unit-conversions/delete`, { ids });
+  }
+
+  /** The units an item can be entered in (its base unit's packs), and its default unit. */
+  getItemUnits(itemId: string): Observable<ItemUnits> {
+    return this.http.get<ItemUnits>(`${this.baseUrl}/items/${itemId}/units`);
   }
 
   createItem(request: CreateInventoryItemRequest): Observable<{ id: string }> {

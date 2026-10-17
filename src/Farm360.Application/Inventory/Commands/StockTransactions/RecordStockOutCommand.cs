@@ -16,7 +16,9 @@ public sealed record RecordStockOutCommand(
     StockTransactionType TransactionType,
     DateOnly TransactionDate,
     string? Reason = null,
-    Guid? ReferenceId = null) : IRequest<Guid>;
+    Guid? ReferenceId = null,
+    Guid? UnitId = null) : IRequest<Guid>;
+// Quantity is in UnitId (e.g. 2 "Bag (50 kg)"); stock is deducted in the item's base unit.
 
 public sealed class RecordStockOutCommandValidator : AbstractValidator<RecordStockOutCommand>
 {
@@ -38,6 +40,7 @@ public sealed class RecordStockOutCommandHandler : IRequestHandler<RecordStockOu
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILedgerPostingService _ledgerPosting;
+    private readonly Farm360.Application.Inventory.Units.IUnitService _units;
 
     public RecordStockOutCommandHandler(
         IInventoryItemRepository itemRepository,
@@ -45,8 +48,10 @@ public sealed class RecordStockOutCommandHandler : IRequestHandler<RecordStockOu
         ITenantService tenantService,
         ICurrentUserService currentUserService,
         IUnitOfWork unitOfWork,
-        ILedgerPostingService ledgerPosting)
+        ILedgerPostingService ledgerPosting,
+        Farm360.Application.Inventory.Units.IUnitService units)
     {
+        _units = units;
         _ledgerPosting = ledgerPosting;
         _itemRepository = itemRepository;
         _transactionRepository = transactionRepository;
@@ -61,9 +66,10 @@ public sealed class RecordStockOutCommandHandler : IRequestHandler<RecordStockOu
             ?? throw new KeyNotFoundException($"Inventory item with ID '{request.InventoryItemId}' was not found.");
 
         var transactionId = Guid.NewGuid();
+        var entered = await _units.ToBaseAsync(item, request.UnitId, request.Quantity, 0m, cancellationToken);
 
-        // Deduct stock
-        item.DeductStock(request.Quantity, transactionId);
+        // Deduct stock (always in the base unit)
+        item.DeductStock(entered.BaseQuantity, transactionId);
 
         var transaction = new StockTransaction(
             id: transactionId,
@@ -71,7 +77,7 @@ public sealed class RecordStockOutCommandHandler : IRequestHandler<RecordStockOu
             farmId: request.FarmId,
             inventoryItemId: request.InventoryItemId,
             transactionType: request.TransactionType,
-            quantity: request.Quantity,
+            quantity: entered.BaseQuantity,
             unitCostBdt: item.WeightedAverageCostBdt,
             balanceAfter: item.CurrentStock,
             transactionDate: request.TransactionDate,
@@ -83,6 +89,8 @@ public sealed class RecordStockOutCommandHandler : IRequestHandler<RecordStockOu
             recordedBy: _currentUserService.UserId?.ToString(),
             referenceId: request.ReferenceId);
 
+        transaction.SetEnteredUnit(entered.EnteredUnitName, entered.EnteredQuantity);
+
         _itemRepository.Update(item);
         await _transactionRepository.AddAsync(transaction, cancellationToken);
 
@@ -90,7 +98,7 @@ public sealed class RecordStockOutCommandHandler : IRequestHandler<RecordStockOu
         var writeOff = request.TransactionType == StockTransactionType.WriteOff;
         await _ledgerPosting.PostConsumptionAsync(
             item,
-            request.Quantity,
+            entered.BaseQuantity,
             item.WeightedAverageCostBdt,
             request.TransactionDate,
             transactionId,

@@ -158,6 +158,8 @@ export interface MedicalTreatmentDto {
   notes?: string;
   inventoryItemId?: string;
   consumptionQuantity?: number;
+  /** Unit consumptionQuantity is entered in (e.g. "Bottle (10 ml)"); stored in the base unit. */
+  consumptionUnitId?: string | null;
 }
 
 export interface DiseaseIncidentDto {

@@ -1,3 +1,4 @@
+import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -17,6 +18,7 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
   selector: 'app-rule-set-list',
   standalone: true,
   imports: [
+    FeedingSubnavComponent,
     CommonModule,
     RouterModule,
     FormsModule,
@@ -29,16 +31,18 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
   ],
   template: `
     <app-page-header
-      title="Feeding Rule Sets"
-      description="Configure automated smart feeding rules based on animal weight, age, and purpose."
-      breadcrumbActiveNode="Feeding Rules">
+      title="Feed Charts · খাদ্য তালিকা"
+      description="How much to feed by weight or age. Give a chart to animals from Who Eats What."
+      breadcrumbActiveNode="Feed Charts">
       <div actions>
         <button (click)="openCreateDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> New Rule Set
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> New Feed Chart
         </button>
       </div>
     </app-page-header>
+
+    <div class="px-0"><app-feeding-subnav></app-feeding-subnav></div>
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
@@ -47,9 +51,9 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
       <app-empty-state
         *ngIf="!isLoading() && ruleSets().length === 0"
         icon="rule"
-        title="No Feeding Rules Configured"
-        description="Create your first feeding rule set to automate feed calculations."
-        actionLabel="Create Rule Set"
+        title="No Feed Charts Yet"
+        description="Create a feed chart: how many kg a day for each weight or age range."
+        actionLabel="Create Feed Chart"
         (action)="openCreateDialog()">
       </app-empty-state>
 

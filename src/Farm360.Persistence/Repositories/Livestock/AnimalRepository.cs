@@ -28,6 +28,24 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
             .ToListAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<Guid, (Guid? ShedId, Guid? PenId)>> GetCurrentLocationsByFarmAsync(Guid farmId, CancellationToken cancellationToken = default)
+    {
+        var rows = await _animals
+            .Where(a => a.FarmId == farmId)
+            .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null)
+                .Select(m => new { a.Id, m.ShedId, m.PenId, m.PlacedAtUtc }))
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .GroupBy(r => r.Id)
+            .ToDictionary(g => g.Key, g =>
+            {
+                var latest = g.OrderByDescending(r => r.PlacedAtUtc).First();
+                return (latest.ShedId, latest.PenId);
+            });
+    }
+
+    /// <inheritdoc/>
     public async Task<Animal?> GetByIdAsync(Guid animalId, CancellationToken cancellationToken = default) =>
         await _animals
             .Include(a => a.WeightRecords)

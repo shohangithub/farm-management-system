@@ -71,7 +71,8 @@ public sealed class AnimalFeedingReportDefinition : ReportDefinition<AnimalFeedi
 
     public override IReadOnlyList<ReportColumn<AnimalFeedingReportRow>> Columns =>
     [
-        ReportColumn<AnimalFeedingReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date),
+        // One date cell per day, spanning that day's rations (PDF and on-screen; Excel keeps every row filled for filtering).
+        ReportColumn<AnimalFeedingReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date, mergeRepeating: true),
         ReportColumn<AnimalFeedingReportRow>.Text("ruleSet", new LocalizedText("Feeding Rule", "খাদ্য নিয়ম"), r => r.RuleSet, width: 2.2f),
         ReportColumn<AnimalFeedingReportRow>.Text("recipe", new LocalizedText("Recipe", "রেসিপি"), r => r.Recipe, width: 2.2f),
         ReportColumn<AnimalFeedingReportRow>.Number("kg", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.AllocatedKg, decimals: 3, widthMm: 22f, aggregate: ReportAggregate.Sum),
@@ -139,6 +140,10 @@ public sealed class AnimalFeedingReportDefinition : ReportDefinition<AnimalFeedi
                 a.AllocatedCostBdt,
                 DescribeBasis(a),
                 a.HeadCountAtAllocation))
+            // Same-day rations must sit together for the date cell to merge.
+            .OrderBy(r => r.Date)
+            .ThenBy(r => r.RuleSet, StringComparer.Ordinal)
+            .ThenBy(r => r.Recipe, StringComparer.Ordinal)
             .ToList();
     }
 

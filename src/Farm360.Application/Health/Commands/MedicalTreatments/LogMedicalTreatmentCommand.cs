@@ -24,8 +24,10 @@ public sealed record LogMedicalTreatmentCommand(
     string? VeterinarianName,
     string? Notes,
     Guid? InventoryItemId = null,
-    decimal? ConsumptionQuantity = null
+    decimal? ConsumptionQuantity = null,
+    Guid? ConsumptionUnitId = null
 ) : IRequest<Guid>, ITransactionalCommand;
+// ConsumptionQuantity is in ConsumptionUnitId (e.g. 2 "Bottle (10 ml)") and stored in the item's base unit.
 
 public sealed class LogMedicalTreatmentCommandValidator : AbstractValidator<LogMedicalTreatmentCommand>
 {
@@ -49,7 +51,9 @@ internal sealed class LogMedicalTreatmentCommandHandler(
     IAnimalRepository animalRepository,
     ITenantService tenantService,
     IUnitOfWork unitOfWork,
-    IPublisher publisher) : IRequestHandler<LogMedicalTreatmentCommand, Guid>
+    IPublisher publisher,
+    Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository? inventoryItems = null,
+    Farm360.Application.Inventory.Units.IUnitService? units = null) : IRequestHandler<LogMedicalTreatmentCommand, Guid>
 {
     public async Task<Guid> Handle(LogMedicalTreatmentCommand request, CancellationToken cancellationToken)
     {
@@ -65,6 +69,16 @@ internal sealed class LogMedicalTreatmentCommandHandler(
 
         if (hasActiveTreatment)
             throw new OverlappingTreatmentException(animal.Tag.TagId, request.MedicationName);
+
+        // Used from stock in a pack unit: stock, cost and the treatment record keep the base unit.
+        var consumption = request.ConsumptionQuantity;
+        if (consumption is > 0 && request.ConsumptionUnitId is { } unitId && request.InventoryItemId is { } itemId
+            && inventoryItems is not null && units is not null)
+        {
+            var item = await inventoryItems.GetByIdAsync(itemId, cancellationToken)
+                ?? throw new KeyNotFoundException($"Inventory item '{itemId}' was not found.");
+            consumption = (await units.ToBaseAsync(item, unitId, consumption.Value, 0m, cancellationToken)).BaseQuantity;
+        }
 
         var dosage = Dosage.Create(request.DosageAmount, request.DosageUnit);
         var withdrawal = WithdrawalPeriod.Create(request.MilkWithdrawalDays, request.MeatWithdrawalDays);
@@ -82,7 +96,7 @@ internal sealed class LogMedicalTreatmentCommandHandler(
             request.VeterinarianName,
             request.Notes,
             request.InventoryItemId,
-            request.ConsumptionQuantity);
+            consumption);
 
         medicalTreatmentRepository.Add(treatment);
         await unitOfWork.SaveChangesAsync(cancellationToken);

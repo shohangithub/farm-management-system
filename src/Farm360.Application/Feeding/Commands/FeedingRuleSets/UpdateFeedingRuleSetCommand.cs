@@ -1,3 +1,4 @@
+using Farm360.Application.Feeding.Services;
 using System.Text.Json.Serialization;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
@@ -23,7 +24,8 @@ public record UpdateFeedingRuleLineDto(
     [property: JsonPropertyName("concentrateKgPerDay")] decimal ConcentrateKgPerDay = 0,
     [property: JsonPropertyName("roughageKgPerDay")] decimal RoughageKgPerDay = 0,
     [property: JsonPropertyName("sessionsPerDay")] int SessionsPerDay = 1,
-    [property: JsonPropertyName("proteinTargetPercent")] decimal? ProteinTargetPercent = null);
+    [property: JsonPropertyName("proteinTargetPercent")] decimal? ProteinTargetPercent = null,
+    [property: JsonPropertyName("inventoryItemId")] Guid? InventoryItemId = null);
 
 public record UpdateFeedingRuleSetCommand(
     [property: JsonPropertyName("id")] Guid Id,
@@ -80,15 +82,18 @@ public class UpdateFeedingRuleSetCommandHandler : IRequestHandler<UpdateFeedingR
     private readonly IFeedingRuleSetRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<UpdateFeedingRuleSetCommandHandler> _logger;
+    private readonly IDirectFeedService _directFeed;
 
     public UpdateFeedingRuleSetCommandHandler(
         IFeedingRuleSetRepository repository,
         IUnitOfWork unitOfWork,
-        ILogger<UpdateFeedingRuleSetCommandHandler> logger)
+        ILogger<UpdateFeedingRuleSetCommandHandler> logger,
+        IDirectFeedService directFeed)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _directFeed = directFeed;
     }
 
     public async Task Handle(UpdateFeedingRuleSetCommand request, CancellationToken cancellationToken)
@@ -112,6 +117,10 @@ public class UpdateFeedingRuleSetCommandHandler : IRequestHandler<UpdateFeedingR
         
         foreach (var rule in request.RuleLines)
         {
+            var formulaId = rule.InventoryItemId is { } itemId
+                ? (await _directFeed.GetOrCreateItemFormulaAsync(itemId, request.Species, cancellationToken)).Id
+                : rule.FormulaId;
+
             ruleSet.AddRuleLine(
                 rule.MinWeightKg, 
                 rule.MaxWeightKg,
@@ -119,7 +128,7 @@ public class UpdateFeedingRuleSetCommandHandler : IRequestHandler<UpdateFeedingR
                 rule.MaxAgeDays,
                 rule.FeedType,
                 rule.QuantityValue > 0 ? rule.QuantityValue : rule.ConcentrateKgPerDay,
-                rule.FormulaId,
+                formulaId,
                 rule.SessionsPerDay > 0 ? rule.SessionsPerDay : 1);
         }
 

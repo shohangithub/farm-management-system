@@ -1,3 +1,4 @@
+import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -52,6 +53,7 @@ interface ShedGroup {
   selector: 'app-today-feeding-dashboard',
   standalone: true,
   imports: [
+    FeedingSubnavComponent,
     CommonModule,
     RouterModule,
     FormsModule,
@@ -120,6 +122,8 @@ interface ShedGroup {
         </button>
       </div>
     </app-page-header>
+
+    <div class="px-0"><app-feeding-subnav></app-feeding-subnav></div>
 
     <!-- Global Toolbar / Filter Bar -->
     <div class="mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">

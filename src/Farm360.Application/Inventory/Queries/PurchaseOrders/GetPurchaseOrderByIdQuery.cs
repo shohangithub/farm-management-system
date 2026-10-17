@@ -36,6 +36,6 @@ public class GetPurchaseOrderByIdQueryHandler : IRequestHandler<GetPurchaseOrder
                 i.InventoryItemId,
                 i.Quantity,
                 i.UnitCostBdt,
-                i.TotalCostBdt)).ToList());
+                i.TotalCostBdt) { EnteredUnitName = i.EnteredUnitName, EnteredQuantity = i.EnteredQuantity }).ToList());
     }
 }

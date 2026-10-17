@@ -155,6 +155,20 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
           <span class="font-semibold text-gray-900 dark:text-white text-xs">Suppliers</span>
         </a>
 
+        <a routerLink="../base-units" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">straighten</mat-icon>
+          </div>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Base Units</span>
+        </a>
+
+        <a routerLink="../unit-conversions" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-teal-500 transition-all flex flex-col justify-between group shadow-sm">
+          <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">swap_horiz</mat-icon>
+          </div>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">Unit Conversions</span>
+        </a>
+
         <a routerLink="../purchase-orders" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-indigo-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">request_quote</mat-icon>

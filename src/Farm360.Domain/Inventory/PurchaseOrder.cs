@@ -41,7 +41,9 @@ public class PurchaseOrder : AuditableEntity, IAggregateRoot
         PoNumber = GeneratePoNumber();
     }
 
-    public void AddItem(Guid inventoryItemId, decimal quantity, decimal unitCostBdt)
+    /// <param name="quantity">In the item's base unit.</param>
+    /// <param name="enteredUnitName">The pack unit it was ordered in, if any (for display).</param>
+    public void AddItem(Guid inventoryItemId, decimal quantity, decimal unitCostBdt, string? enteredUnitName = null, decimal? enteredQuantity = null)
     {
         if (Status != PurchaseOrderStatus.Draft && Status != PurchaseOrderStatus.PendingApproval)
             throw new InventoryDomainException($"Cannot add items to a purchase order in '{Status}' status.");
@@ -52,7 +54,9 @@ public class PurchaseOrder : AuditableEntity, IAggregateRoot
             throw new InventoryDomainException("Item already exists in the purchase order. Update the quantity instead.");
         }
 
-        _items.Add(new PurchaseOrderItem(Guid.NewGuid(), Id, inventoryItemId, quantity, unitCostBdt));
+        var line = new PurchaseOrderItem(Guid.NewGuid(), Id, inventoryItemId, quantity, unitCostBdt);
+        line.SetEnteredUnit(enteredUnitName, enteredQuantity);
+        _items.Add(line);
     }
 
     public void RemoveItem(Guid purchaseOrderItemId)

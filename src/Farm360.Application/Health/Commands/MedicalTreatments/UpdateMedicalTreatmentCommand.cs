@@ -27,7 +27,8 @@ public sealed record UpdateMedicalTreatmentCommand(
     string? Notes,
     TreatmentStatus Status,
     Guid? InventoryItemId = null,
-    decimal? ConsumptionQuantity = null
+    decimal? ConsumptionQuantity = null,
+    Guid? ConsumptionUnitId = null
 ) : IRequest, ITransactionalCommand;
 
 public sealed class UpdateMedicalTreatmentCommandValidator : AbstractValidator<UpdateMedicalTreatmentCommand>
@@ -54,7 +55,9 @@ internal sealed class UpdateMedicalTreatmentCommandHandler(
     IUnitOfWork unitOfWork,
     ILedgerPostingService ledgerPosting,
     Farm360.Application.Finance.Repositories.IFinancialTransactionRepository transactions,
-    Farm360.Domain.Livestock.Repositories.IAnimalRepository animals) : IRequestHandler<UpdateMedicalTreatmentCommand>
+    Farm360.Domain.Livestock.Repositories.IAnimalRepository animals,
+    Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository? inventoryItems = null,
+    Farm360.Application.Inventory.Units.IUnitService? units = null) : IRequestHandler<UpdateMedicalTreatmentCommand>
 {
     public async Task Handle(UpdateMedicalTreatmentCommand request, CancellationToken cancellationToken)
     {
@@ -63,6 +66,15 @@ internal sealed class UpdateMedicalTreatmentCommandHandler(
 
         if (treatment.TenantId != tenantService.TenantId)
             throw new UnauthorizedAccessException("Treatment does not belong to current tenant.");
+
+        var consumption = request.ConsumptionQuantity;
+        if (consumption is > 0 && request.ConsumptionUnitId is { } unitId && request.InventoryItemId is { } itemId
+            && inventoryItems is not null && units is not null)
+        {
+            var item = await inventoryItems.GetByIdAsync(itemId, cancellationToken)
+                ?? throw new KeyNotFoundException($"Inventory item '{itemId}' was not found.");
+            consumption = (await units.ToBaseAsync(item, unitId, consumption.Value, 0m, cancellationToken)).BaseQuantity;
+        }
 
         var dosage = Dosage.Create(request.DosageAmount, request.DosageUnit);
         var withdrawal = WithdrawalPeriod.Create(request.MilkWithdrawalDays, request.MeatWithdrawalDays);
@@ -79,7 +91,7 @@ internal sealed class UpdateMedicalTreatmentCommandHandler(
             request.Notes,
             request.Status,
             request.InventoryItemId,
-            request.ConsumptionQuantity);
+            consumption);
 
         medicalTreatmentRepository.Update(treatment);
 

@@ -123,6 +123,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-900 dark:text-white text-right font-medium">
                     {{ item.quantity }}
+                    <span *ngIf="item.enteredUnitName" class="block text-[10px] font-normal text-gray-500">{{ item.enteredQuantity | number:'1.0-4' }} × {{ item.enteredUnitName }}</span>
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
                     ৳ {{ item.unitCostBdt | number:'1.2-2' }}
