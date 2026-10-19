@@ -33,12 +33,11 @@ public sealed class MeasureUnitRepository(ApplicationDbContext db) : IMeasureUni
 
     public void RemoveConversion(UnitConversion conversion) => db.UnitConversions.Remove(conversion);
 
-    public async Task<IReadOnlyList<string>> ItemsUsingAsync(IReadOnlyCollection<string> baseUnitNames, IReadOnlyCollection<Guid> conversionIds, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> ItemsUsingAsync(IReadOnlyCollection<Guid> baseUnitIds, IReadOnlyCollection<Guid> conversionIds, CancellationToken cancellationToken = default)
     {
-        // SQL Server's default collation compares case-insensitively ("Kg" = "kg").
-        var names = baseUnitNames.ToList();
         return await db.InventoryItems
-            .Where(i => names.Contains(i.UnitOfMeasure) || (i.DefaultUnitId != null && conversionIds.Contains(i.DefaultUnitId.Value)))
+            .Where(i => (i.BaseUnitId != null && baseUnitIds.Contains(i.BaseUnitId.Value))
+                     || (i.DefaultUnitId != null && conversionIds.Contains(i.DefaultUnitId.Value)))
             .Select(i => i.Name)
             .Take(10)
             .ToListAsync(cancellationToken);

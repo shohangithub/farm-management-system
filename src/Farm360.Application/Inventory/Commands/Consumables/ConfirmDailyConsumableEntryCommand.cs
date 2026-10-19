@@ -14,7 +14,8 @@ namespace Farm360.Application.Inventory.Commands.Consumables;
 public sealed record ConfirmDailyConsumableEntryCommand(
     Guid EntryId,
     decimal ActualQuantity,
-    string? AdjustmentReason = null) : IRequest;
+    string? AdjustmentReason = null,
+    Guid? UnitId = null) : IRequest;
 
 public sealed class ConfirmDailyConsumableEntryCommandValidator : AbstractValidator<ConfirmDailyConsumableEntryCommand>
 {
@@ -33,6 +34,7 @@ public sealed class ConfirmDailyConsumableEntryCommandHandler : IRequestHandler<
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPublisher _publisher;
     private readonly ILogger<ConfirmDailyConsumableEntryCommandHandler> _logger;
+    private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
 
     public ConfirmDailyConsumableEntryCommandHandler(
         IDailyConsumableEntryRepository entryRepository,
@@ -40,7 +42,8 @@ public sealed class ConfirmDailyConsumableEntryCommandHandler : IRequestHandler<
         IStockTransactionRepository stockTransactionRepository,
         IUnitOfWork unitOfWork,
         IPublisher publisher,
-        ILogger<ConfirmDailyConsumableEntryCommandHandler> logger)
+        ILogger<ConfirmDailyConsumableEntryCommandHandler> logger,
+        Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
         _entryRepository = entryRepository;
         _inventoryItemRepository = inventoryItemRepository;
@@ -48,6 +51,7 @@ public sealed class ConfirmDailyConsumableEntryCommandHandler : IRequestHandler<
         _unitOfWork = unitOfWork;
         _publisher = publisher;
         _logger = logger;
+        _units = units;
     }
 
     public async Task Handle(ConfirmDailyConsumableEntryCommand request, CancellationToken cancellationToken)
@@ -63,27 +67,39 @@ public sealed class ConfirmDailyConsumableEntryCommandHandler : IRequestHandler<
         var inventoryItem = await _inventoryItemRepository.GetByIdAsync(entry.InventoryItemId, cancellationToken)
             ?? throw new NotFoundException(nameof(InventoryItem), entry.InventoryItemId);
 
-        if (request.ActualQuantity > 0)
+        var actualBaseQty = request.ActualQuantity;
+        string? enteredUnitName = null;
+        decimal? enteredQty = null;
+
+        if (_units is not null && request.UnitId.HasValue && request.ActualQuantity > 0)
+        {
+            var converted = await _units.ToBaseAsync(inventoryItem, request.UnitId, request.ActualQuantity, 0m, cancellationToken);
+            actualBaseQty = converted.BaseQuantity;
+            enteredUnitName = converted.EnteredUnitName;
+            enteredQty = converted.EnteredQuantity;
+        }
+
+        if (actualBaseQty > 0)
         {
             if (!inventoryItem.IsActive)
             {
                 throw new DomainException($"Inventory item '{inventoryItem.Name}' is inactive.");
             }
 
-            if (inventoryItem.CurrentStock < request.ActualQuantity)
+            if (inventoryItem.CurrentStock < actualBaseQty)
             {
                 throw new DomainException(
-                    $"Insufficient stock for '{inventoryItem.Name}'. Required: {request.ActualQuantity:0.##} {inventoryItem.UnitOfMeasure}, Available: {inventoryItem.CurrentStock:0.##} {inventoryItem.UnitOfMeasure}.");
+                    $"Insufficient stock for '{inventoryItem.Name}'. Required: {actualBaseQty:0.##} {inventoryItem.UnitOfMeasure}, Available: {inventoryItem.CurrentStock:0.##} {inventoryItem.UnitOfMeasure}.");
             }
         }
 
         var unitCost = inventoryItem.WeightedAverageCostBdt;
         Guid? stockTransactionId = null;
 
-        if (request.ActualQuantity > 0)
+        if (actualBaseQty > 0)
         {
             var txId = Guid.NewGuid();
-            inventoryItem.DeductStock(request.ActualQuantity, txId);
+            inventoryItem.DeductStock(actualBaseQty, txId);
             _inventoryItemRepository.Update(inventoryItem);
 
             var stockTx = new StockTransaction(
@@ -92,18 +108,23 @@ public sealed class ConfirmDailyConsumableEntryCommandHandler : IRequestHandler<
                 farmId: entry.FarmId,
                 inventoryItemId: inventoryItem.Id,
                 transactionType: StockTransactionType.AutoConsumableUsage,
-                quantity: request.ActualQuantity,
+                quantity: actualBaseQty,
                 unitCostBdt: unitCost,
                 balanceAfter: inventoryItem.CurrentStock,
                 transactionDate: entry.EntryDate,
                 reason: $"Auto consumable deduction for entry {entry.Id}",
                 referenceId: entry.Id);
 
+            if (enteredUnitName is not null)
+            {
+                stockTx.SetEnteredUnit(enteredUnitName, enteredQty);
+            }
+
             await _stockTransactionRepository.AddAsync(stockTx, cancellationToken);
             stockTransactionId = txId;
         }
 
-        entry.Confirm(request.ActualQuantity, unitCost, stockTransactionId, request.AdjustmentReason);
+        entry.Confirm(actualBaseQty, unitCost, stockTransactionId, request.AdjustmentReason);
         _entryRepository.Update(entry);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

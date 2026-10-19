@@ -57,7 +57,9 @@ public sealed class GetReturnablePoItemsQueryHandler : IRequestHandler<GetReturn
                 alreadyReturned,
                 currentStock,
                 maxReturnable,
-                poItem.UnitCostBdt));
+                poItem.UnitCostBdt,
+                poItem.EnteredUnitName,
+                poItem.EnteredQuantity));
         }
 
         return result;

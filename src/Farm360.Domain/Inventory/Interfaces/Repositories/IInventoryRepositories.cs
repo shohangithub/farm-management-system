@@ -21,6 +21,12 @@ public interface IInventoryItemRepository
     Task AddAsync(InventoryItem item, CancellationToken cancellationToken = default);
     void Update(InventoryItem item);
     void Delete(InventoryItem item);
+
+    /// <summary>The tenant's items not yet linked to a base unit (created before units existed).</summary>
+    Task<IReadOnlyList<InventoryItem>> GetWithoutBaseUnitAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>The tenant's items counted in a base unit.</summary>
+    Task<IReadOnlyList<InventoryItem>> GetByBaseUnitAsync(Guid measureUnitId, CancellationToken cancellationToken = default);
 }
 
 public interface ISupplierRepository
@@ -73,5 +79,5 @@ public interface IMeasureUnitRepository
     Task<UnitConversion?> GetConversionAsync(Guid id, CancellationToken cancellationToken = default);
     void RemoveConversion(UnitConversion conversion);
     /// <summary>Items whose base unit or default unit is one of these (to stop deleting units in use).</summary>
-    Task<IReadOnlyList<string>> ItemsUsingAsync(IReadOnlyCollection<string> baseUnitNames, IReadOnlyCollection<Guid> conversionIds, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> ItemsUsingAsync(IReadOnlyCollection<Guid> baseUnitIds, IReadOnlyCollection<Guid> conversionIds, CancellationToken cancellationToken = default);
 }

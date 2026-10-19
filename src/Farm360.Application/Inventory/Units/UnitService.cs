@@ -31,9 +31,19 @@ public interface IUnitService
 
     /// <summary>The conversions an item can be entered in: those of its base unit.</summary>
     Task<IReadOnlyList<UnitConversion>> ConversionsForAsync(string baseUnitName, CancellationToken cancellationToken = default);
+
+    /// <summary>The base unit an item is counted in (by its BaseUnitId link).</summary>
+    Task<MeasureUnit?> BaseUnitOfAsync(InventoryItem item, CancellationToken cancellationToken = default);
+
+    /// <summary>The base unit called <paramref name="name"/> (usual spellings allowed), created if there is none.</summary>
+    Task<MeasureUnit> ResolveBaseUnitAsync(string name, CancellationToken cancellationToken = default);
 }
 
-public sealed class UnitService(IMeasureUnitRepository units, ITenantService tenant, IUnitOfWork unitOfWork) : IUnitService
+public sealed class UnitService(
+    IMeasureUnitRepository units,
+    ITenantService tenant,
+    IUnitOfWork unitOfWork,
+    IInventoryItemRepository? items = null) : IUnitService
 {
     private static readonly string[] KgNames = ["kg", "kgs", "kilogram", "kilograms", "কেজি"];
 
@@ -71,7 +81,59 @@ public sealed class UnitService(IMeasureUnitRepository units, ITenantService ten
         }
 
         _cache = all;
-        return all;
+        await LinkItemsAsync(cancellationToken);
+        return _cache;
+    }
+
+    /// <summary>
+    /// Items created before units existed only carry a unit name: link each to its base unit
+    /// (matching the usual spellings), creating a base unit for a name that has none. Runs until
+    /// every item has a link, so stock is always tied to a real base unit.
+    /// </summary>
+    private async Task LinkItemsAsync(CancellationToken cancellationToken)
+    {
+        if (items is null || _linked)
+            return;
+        _linked = true;
+
+        var unlinked = await items.GetWithoutBaseUnitAsync(cancellationToken);
+        if (unlinked.Count == 0)
+            return;
+
+        foreach (var item in unlinked)
+        {
+            var unit = await ResolveBaseUnitAsync(item.UnitOfMeasure, cancellationToken);
+            item.SetBaseUnit(unit.Id, unit.Name);
+            items.Update(item);
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private bool _linked;
+
+    public async Task<MeasureUnit> ResolveBaseUnitAsync(string name, CancellationToken cancellationToken = default)
+    {
+        var all = _cache ?? (await units.GetAllAsync(cancellationToken)).ToList();
+        _cache ??= all;
+        var found = all.FirstOrDefault(u => SameUnit(u.Name, name));
+        if (found is not null)
+            return found;
+
+        var unit = new MeasureUnit(Guid.NewGuid(), tenant.TenantId, string.IsNullOrWhiteSpace(name) ? "unit" : name.Trim(),
+            "Created from an item's unit");
+        await units.AddAsync(unit, cancellationToken);
+        _cache.Add(unit);
+        return unit;
+    }
+
+    public async Task<MeasureUnit?> BaseUnitOfAsync(InventoryItem item, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        var all = await GetUnitsAsync(cancellationToken);
+        return item.BaseUnitId is { } id
+            ? all.FirstOrDefault(u => u.Id == id)
+            : all.FirstOrDefault(u => SameUnit(u.Name, item.UnitOfMeasure));
     }
 
     public async Task<IReadOnlyList<UnitConversion>> ConversionsForAsync(string baseUnitName, CancellationToken cancellationToken = default)
@@ -90,11 +152,14 @@ public sealed class UnitService(IMeasureUnitRepository units, ITenantService ten
             ?? throw new ArgumentException("The selected unit was not found.");
         var conversion = owner.Conversions.First(c => c.Id == unitId);
 
-        if (!SameUnit(owner.Name, item.UnitOfMeasure))
+        var itemBase = await BaseUnitOfAsync(item, cancellationToken);
+        if (itemBase is null || itemBase.Id != owner.Id)
             throw new ArgumentException($"'{conversion.Name}' is a unit of {owner.Name}, but {item.Name} is counted in {item.UnitOfMeasure}.");
+        if (!conversion.IsActive)
+            throw new ArgumentException($"'{conversion.Name}' is inactive.");
 
-        // The base unit itself (factor 1, same name) is stored without an "entered" unit.
-        var isBase = conversion.Factor == 1m && SameUnit(conversion.Name, owner.Name);
+        // Stock is kept in the base unit: quantity × conversion value. The base unit itself is not recorded as "entered".
+        var isBase = owner.IsSelf(conversion);
         return new UnitQuantity(
             conversion.ToBase(quantity),
             conversion.Factor == 0 ? ratePerUnit : ratePerUnit / conversion.Factor,
@@ -109,7 +174,7 @@ public sealed class UnitService(IMeasureUnitRepository units, ITenantService ten
         if (KgNames.Any(n => SameUnit(n, item.UnitOfMeasure)))
             return kg;
 
-        var unit = await FindBaseAsync(item.UnitOfMeasure, cancellationToken);
+        var unit = await BaseUnitOfAsync(item, cancellationToken);
         var kgConversion = unit?.Conversions.FirstOrDefault(c => KgNames.Any(n => SameUnit(n, c.Name)));
         // No way to turn kg into this unit: keep the old behaviour (treat it as kg).
         return kgConversion is null ? kg : kgConversion.ToBase(kg);
@@ -139,5 +204,34 @@ public sealed class UnitService(IMeasureUnitRepository units, ITenantService ten
     {
         var u = (unit ?? string.Empty).Trim();
         return Aliases.TryGetValue(u, out var canonical) ? canonical : u.ToLowerInvariant();
+    }
+}
+
+/// <summary>Links an item to its base unit and default (purchase) unit, by id — as FrostTrack's Product → UnitConversion → BaseUnit.</summary>
+public static class ItemUnitLinker
+{
+    /// <param name="baseUnitId">Chosen base unit; when null the unit name is matched (or created).</param>
+    /// <param name="defaultUnitId">Usual purchase / issue unit; must be a conversion of the base unit.</param>
+    public static async Task ApplyAsync(IUnitService units, InventoryItem item, Guid? baseUnitId, string unitName, Guid? defaultUnitId, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(units);
+        ArgumentNullException.ThrowIfNull(item);
+
+        MeasureUnit unit;
+        if (baseUnitId is { } id)
+        {
+            unit = (await units.GetUnitsAsync(cancellationToken)).FirstOrDefault(u => u.Id == id)
+                ?? throw new ArgumentException("The selected base unit was not found.");
+        }
+        else
+        {
+            unit = await units.ResolveBaseUnitAsync(unitName, cancellationToken);
+        }
+
+        item.SetBaseUnit(unit.Id, unit.Name);
+
+        if (defaultUnitId is { } du && unit.Conversions.All(c => c.Id != du))
+            throw new ArgumentException($"The usual unit must be one of {unit.Name}'s conversions.");
+        item.SetDefaultUnit(defaultUnitId);
     }
 }

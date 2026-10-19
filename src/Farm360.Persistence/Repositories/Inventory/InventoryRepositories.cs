@@ -135,6 +135,12 @@ public sealed class InventoryItemRepository : IInventoryItemRepository
     {
         _dbContext.InventoryItems.Remove(item);
     }
+
+    public async Task<IReadOnlyList<InventoryItem>> GetWithoutBaseUnitAsync(CancellationToken cancellationToken = default) =>
+        await _dbContext.InventoryItems.Where(i => i.BaseUnitId == null).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<InventoryItem>> GetByBaseUnitAsync(Guid measureUnitId, CancellationToken cancellationToken = default) =>
+        await _dbContext.InventoryItems.Where(i => i.BaseUnitId == measureUnitId).ToListAsync(cancellationToken);
 }
 
 public sealed class SupplierRepository : ISupplierRepository

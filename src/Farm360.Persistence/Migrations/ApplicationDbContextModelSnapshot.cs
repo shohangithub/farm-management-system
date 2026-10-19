@@ -3357,6 +3357,9 @@ namespace Farm360.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("BaseUnitId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Category")
                         .HasColumnType("int");
 
@@ -3419,13 +3422,17 @@ namespace Farm360.Persistence.Migrations
 
                     b.Property<string>("UnitOfMeasure")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<decimal>("WeightedAverageCostBdt")
                         .HasColumnType("decimal(18,4)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BaseUnitId");
+
+                    b.HasIndex("DefaultUnitId");
 
                     b.HasIndex("TenantId", "FarmId", "Sku")
                         .IsUnique();
@@ -5854,6 +5861,19 @@ namespace Farm360.Persistence.Migrations
                         .HasForeignKey("InventoryItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Inventory.InventoryItem", b =>
+                {
+                    b.HasOne("Farm360.Domain.Inventory.MeasureUnit", null)
+                        .WithMany()
+                        .HasForeignKey("BaseUnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Farm360.Domain.Inventory.UnitConversion", null)
+                        .WithMany()
+                        .HasForeignKey("DefaultUnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Farm360.Domain.Inventory.PurchaseOrder", b =>

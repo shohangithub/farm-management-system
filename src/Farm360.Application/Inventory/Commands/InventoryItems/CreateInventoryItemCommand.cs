@@ -19,7 +19,8 @@ public sealed record CreateInventoryItemCommand(
     decimal InitialStock = 0,
     decimal InitialCostBdt = 0,
     string? StorageLocation = null,
-    Guid? DefaultUnitId = null) : IRequest<Guid>;
+    Guid? DefaultUnitId = null,
+    Guid? BaseUnitId = null) : IRequest<Guid>;
 
 public sealed class CreateInventoryItemCommandValidator : AbstractValidator<CreateInventoryItemCommand>
 {
@@ -42,14 +43,17 @@ public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateIn
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStockTransactionRepository _stockTransactions;
     private readonly ILedgerPostingService _ledgerPosting;
+    private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
 
     public CreateInventoryItemCommandHandler(
         IInventoryItemRepository repository,
         ITenantService tenantService,
         IUnitOfWork unitOfWork,
         IStockTransactionRepository stockTransactions,
-        ILedgerPostingService ledgerPosting)
+        ILedgerPostingService ledgerPosting,
+        Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
+        _units = units;
         _repository = repository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
@@ -72,7 +76,10 @@ public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateIn
             request.InitialCostBdt,
             request.StorageLocation);
 
-        item.SetDefaultUnit(request.DefaultUnitId);
+        if (_units is not null)
+            await Farm360.Application.Inventory.Units.ItemUnitLinker.ApplyAsync(_units, item, request.BaseUnitId, request.UnitOfMeasure, request.DefaultUnitId, cancellationToken);
+        else
+            item.SetDefaultUnit(request.DefaultUnitId);
         await _repository.AddAsync(item, cancellationToken);
 
         // Opening stock: record the movement and bring its value into the books as opening

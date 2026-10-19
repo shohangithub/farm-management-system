@@ -106,7 +106,9 @@ export interface InventoryItem {
   statusName: string;
   storageLocation?: string;
   isActive: boolean;
-  /** Usual purchase / issue unit (e.g. "Bag (50 kg)"); stock stays in unitOfMeasure. */
+  /** Base unit stock is counted in (unitOfMeasure is its name). */
+  baseUnitId?: string | null;
+  /** Usual purchase / issue unit (e.g. "Bag (50 kg)"); stock stays in the base unit. */
   defaultUnitId?: string | null;
 }
 
@@ -171,6 +173,7 @@ export interface CreateInventoryItemRequest {
   initialStock?: number;
   initialCostBdt?: number;
   storageLocation?: string;
+  baseUnitId?: string | null;
   defaultUnitId?: string | null;
 }
 
@@ -339,6 +342,8 @@ export interface ReturnablePoItem {
   currentStock: number;
   maxReturnableQuantity: number;
   unitCostBdt: number;
+  enteredUnitName?: string | null;
+  enteredQuantity?: number | null;
 }
 
 export interface CreatePurchaseReturnItemRequest {

@@ -59,6 +59,8 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
                     reason: $"Received from Purchase Order {purchaseOrder.PoNumber}",
                     referenceId: purchaseOrder.Id);
 
+                stockTransaction.SetEnteredUnit(item.EnteredUnitName, item.EnteredQuantity);
+
                 await _stockTransactionRepository.AddAsync(stockTransaction, cancellationToken);
             }
         }

@@ -9,7 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Feeding.Jobs;
 
-public sealed record CreateDailyFeedingEntriesCommand() : IRequest;
+/// <summary>
+/// Creates each active plan's feeding entries for a day (today when none is given) — the nightly
+/// job, or "Generate entries" for a day that was missed. Days already generated are skipped, so
+/// running it again is safe. With <paramref name="FarmId"/> only that farm's plans are used.
+/// </summary>
+public sealed record CreateDailyFeedingEntriesCommand(DateOnly? Date = null, Guid? FarmId = null) : IRequest;
 
 public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<CreateDailyFeedingEntriesCommand>
 {
@@ -56,9 +61,17 @@ public sealed class CreateDailyFeedingEntriesCommandHandler : IRequestHandler<Cr
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Creating daily feeding entries across all tenants");
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        
-        var activePlans = await _planRepository.GetAllActivePlansAcrossTenantsAsync(cancellationToken);
+        // "today" is the day being generated: today for the nightly job, or a missed day being caught up.
+        var actualToday = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = request.Date ?? actualToday;
+        if (today > actualToday)
+            throw new ArgumentException("Feeding entries can't be created for a future day.");
+        if (today < actualToday.AddDays(-90))
+            throw new ArgumentException("Missed days can be caught up for the last 90 days only.");
+
+        var activePlans = (await _planRepository.GetAllActivePlansAcrossTenantsAsync(cancellationToken))
+            .Where(p => request.FarmId is null || p.FarmId == request.FarmId)
+            .ToList();
         var existingPlanIds = await _entryRepository.GetEntryPlanIdsAcrossTenantsByDateAsync(today, cancellationToken);
         var ruleSets = new Dictionary<Guid, FeedingRuleSet?>();
         var allocatedAnimals = 0;

@@ -15,7 +15,8 @@ public sealed record UpdateInventoryItemCommand(
     decimal ReorderThreshold,
     string? StorageLocation = null,
     bool IsActive = true,
-    Guid? DefaultUnitId = null) : IRequest;
+    Guid? DefaultUnitId = null,
+    Guid? BaseUnitId = null) : IRequest;
 
 public sealed class UpdateInventoryItemCommandValidator : AbstractValidator<UpdateInventoryItemCommand>
 {
@@ -33,9 +34,11 @@ public sealed class UpdateInventoryItemCommandHandler : IRequestHandler<UpdateIn
 {
     private readonly IInventoryItemRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
 
-    public UpdateInventoryItemCommandHandler(IInventoryItemRepository repository, IUnitOfWork unitOfWork)
+    public UpdateInventoryItemCommandHandler(IInventoryItemRepository repository, IUnitOfWork unitOfWork, Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
+        _units = units;
         _repository = repository;
         _unitOfWork = unitOfWork;
     }
@@ -47,7 +50,10 @@ public sealed class UpdateInventoryItemCommandHandler : IRequestHandler<UpdateIn
 
         item.UpdateDetails(request.Name, request.Category, request.UnitOfMeasure, request.ReorderThreshold, request.StorageLocation);
         item.SetActiveStatus(request.IsActive);
-        item.SetDefaultUnit(request.DefaultUnitId);
+        if (_units is not null)
+            await Farm360.Application.Inventory.Units.ItemUnitLinker.ApplyAsync(_units, item, request.BaseUnitId ?? item.BaseUnitId, request.UnitOfMeasure, request.DefaultUnitId, cancellationToken);
+        else
+            item.SetDefaultUnit(request.DefaultUnitId);
 
         _repository.Update(item);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

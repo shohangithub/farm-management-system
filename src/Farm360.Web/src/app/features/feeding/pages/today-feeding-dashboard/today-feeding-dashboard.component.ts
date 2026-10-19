@@ -18,6 +18,8 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { AdjustFeedingEntryDialogComponent } from '../../components/dialogs/adjust-feeding-entry-dialog/adjust-feeding-entry-dialog.component';
+import { ManualFeedingEntryDialogComponent, ManualFeedingDialogData } from '../../components/dialogs/manual-feeding-entry-dialog/manual-feeding-entry-dialog.component';
+import { ManualFeedingResult } from '../../models/feeding.models';
 import { FeedingCostBreakdownDialogComponent } from '../../components/dialogs/feeding-cost-breakdown-dialog/feeding-cost-breakdown-dialog.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 
@@ -112,7 +114,14 @@ interface ShedGroup {
         <button (click)="generateEntries()" [disabled]="isGenerating()"
           class="h-9 px-3.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [class.animate-spin]="isGenerating()">auto_awesome</mat-icon>
-          {{ isGenerating() ? 'Generating...' : 'Generate Entries' }}
+          {{ isGenerating() ? 'Generating...' : (isPast() ? 'Generate Missed Day' : 'Generate Entries') }}
+        </button>
+
+        <!-- Feed given outside the plan -->
+        <button (click)="openManualEntry()" [disabled]="!currentFarmId"
+          matTooltip="Record feed actually given outside the plan — a missed or extra feed, or a cow with no ration"
+          class="h-9 px-3.5 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">edit_note</mat-icon> Manual Feed Entry
         </button>
 
         <!-- Refresh Data -->
@@ -323,6 +332,11 @@ interface ShedGroup {
                   ৳{{ cow.totalCostBdt | number:'1.2-2' }}
                 </div>
               </div>
+
+              <button type="button" (click)="openManualEntry([cow.animalId])" matTooltip="Record extra feed given to this cow"
+                class="px-2.5 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl inline-flex items-center gap-1 shrink-0">
+                <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">add</mat-icon> Add Feed
+              </button>
 
               <button *ngIf="cow.hasPending" (click)="confirmCow(cow)"
                 class="px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1.5 shrink-0">
@@ -690,7 +704,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
   readonly statusFilter = signal<string>('all');
   readonly viewMode = signal<'cows' | 'grouped' | 'list'>('cows');
 
-  private currentFarmId: string | null = null;
+  protected currentFarmId: string | null = null;
 
   // Filtered entries computed signal
   readonly filteredEntries = computed<DailyFeedingEntry[]>(() => {
@@ -754,6 +768,9 @@ export class TodayFeedingDashboardComponent implements OnInit {
   readonly countPending = computed(() => {
     return this.allEntries().filter(e => e.status === 'Pending').length;
   });
+
+  /** A past day: "Generate" then catches up the entries the job missed. */
+  readonly isPast = computed(() => this.selectedDate() < new Date().toISOString().split('T')[0]);
 
   readonly isToday = computed(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -860,7 +877,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
 
   generateEntries(): void {
     this.isGenerating.set(true);
-    this.feedingService.generateEntries().subscribe({
+    this.feedingService.generateEntries(this.selectedDate(), this.currentFarmId || undefined).subscribe({
       next: (res) => {
         this.snackBar.open(res.message || 'Daily entries generated successfully.', 'Close', { duration: 3000 });
         this.isGenerating.set(false);
@@ -871,6 +888,20 @@ export class TodayFeedingDashboardComponent implements OnInit {
         this.isGenerating.set(false);
       }
     });
+  }
+
+  /** Feed given outside the plan for the selected day; saved as confirmed (stock, cost and reports follow). */
+  openManualEntry(animalIds?: string[]): void {
+    if (!this.currentFarmId) return;
+    const data: ManualFeedingDialogData = { farmId: this.currentFarmId, date: this.selectedDate(), animalIds };
+    this.dialog.open<ManualFeedingEntryDialogComponent, ManualFeedingDialogData, ManualFeedingResult>(
+      ManualFeedingEntryDialogComponent, { data, width: '640px', maxWidth: '96vw', maxHeight: '92vh', panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'] })
+      .afterClosed().subscribe(res => {
+        if (!res) return;
+        const msg = `Recorded feed for ${res.recorded} animal${res.recorded === 1 ? '' : 's'}.` + (res.notes.length ? ' ' + res.notes.join(' ') : '');
+        this.snackBar.open(msg, 'Close', { duration: res.notes.length ? 10000 : 4000 });
+        this.loadEntries();
+      });
   }
 
   confirmEntry(entry: DailyFeedingEntry): void {

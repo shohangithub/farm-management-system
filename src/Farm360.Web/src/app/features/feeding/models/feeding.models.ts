@@ -436,6 +436,22 @@ export interface AssignAnimalFeedingPlanRequest {
   expectedDailyFeedKg?: number;
 }
 
+/** Feed given outside the plan; confirmed straight away (POST /feeding/entries/manual). */
+export interface ManualFeedingRequest {
+  farmId: string;
+  date: string;
+  animalIds: string[];
+  formulaId?: string | null;
+  inventoryItemId?: string | null;
+  quantityPerHead: number;
+  notes?: string | null;
+}
+
+export interface ManualFeedingResult {
+  recorded: number;
+  notes: string[];
+}
+
 export interface DirectRationRequest {
   formulaId?: string | null;
   inventoryItemId?: string | null;

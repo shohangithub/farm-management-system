@@ -84,6 +84,13 @@ public sealed class CompletePurchaseReturnCommandHandler : IRequestHandler<Compl
                 recordedBy: _currentUserService.UserId?.ToString(),
                 referenceId: purchaseReturn.Id);
 
+            var poLine = po.Items.FirstOrDefault(i => i.Id == returnItem.PurchaseOrderItemId);
+            if (poLine?.EnteredUnitName is not null && poLine.EnteredQuantity.HasValue && poLine.Quantity > 0)
+            {
+                var enteredReturnQty = Math.Round((returnItem.Quantity / poLine.Quantity) * poLine.EnteredQuantity.Value, 4);
+                transaction.SetEnteredUnit(poLine.EnteredUnitName, enteredReturnQty);
+            }
+
             await _transactionRepository.AddAsync(transaction, cancellationToken);
         }
 

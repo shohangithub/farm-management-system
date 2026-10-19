@@ -19,8 +19,28 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
     public string? StorageLocation { get; private set; }
     public bool IsActive { get; private set; } = true;
 
-    /// <summary>The unit it is usually bought or issued in (e.g. "Bag (50 kg)"); stock stays in <see cref="UnitOfMeasure"/>.</summary>
+    /// <summary>
+    /// The base unit stock is counted in (<see cref="MeasureUnit"/>): CurrentStock, average cost and
+    /// every movement are in it. <see cref="UnitOfMeasure"/> carries its name for display.
+    /// </summary>
+    public Guid? BaseUnitId { get; private set; }
+
+    /// <summary>The unit it is usually bought or issued in (a <see cref="UnitConversion"/> of the base unit, e.g. "Bag (50 kg)").</summary>
     public Guid? DefaultUnitId { get; private set; }
+
+    /// <summary>Links the base unit and keeps the display name in step with it.</summary>
+    public void SetBaseUnit(Guid measureUnitId, string unitName)
+    {
+        if (string.IsNullOrWhiteSpace(unitName))
+            throw new InventoryDomainException("Unit of measure cannot be empty.");
+        if (BaseUnitId is { } current && current != measureUnitId && CurrentStock > 0)
+            throw new InventoryDomainException($"{Name} holds {CurrentStock:0.####} {UnitOfMeasure}; its base unit can't change while it has stock.");
+        BaseUnitId = measureUnitId;
+        UnitOfMeasure = unitName.Trim();
+    }
+
+    /// <summary>The base unit was renamed: the display name follows.</summary>
+    public void RenameBaseUnit(string unitName) => UnitOfMeasure = unitName.Trim();
 
     public void SetDefaultUnit(Guid? unitConversionId) => DefaultUnitId = unitConversionId;
 

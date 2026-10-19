@@ -29,6 +29,7 @@ public static class InventoryMappingExtensions
             item.StorageLocation,
             item.IsActive)
         {
+            BaseUnitId = item.BaseUnitId,
             DefaultUnitId = item.DefaultUnitId,
         };
     }

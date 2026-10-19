@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, effect, untracked } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -9,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { InventoryService } from '../../../services/inventory.service';
 import { InventoryCategory, InventoryCategoryNames, InventoryItem, MeasureUnit, UnitConversion } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
@@ -85,12 +86,9 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             <!-- Base unit: stock, average cost and every use are counted in it -->
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Base unit (stock counted in)</mat-label>
-              <mat-select formControlName="unitOfMeasure" required>
+              <mat-select formControlName="baseUnitId" required>
                 @for (u of baseUnits(); track u.id) {
-                  <mat-option [value]="u.name">{{ u.name }}{{ u.description ? ' — ' + u.description : '' }}</mat-option>
-                }
-                @if (form.value.unitOfMeasure && !knownBase()) {
-                  <mat-option [value]="form.value.unitOfMeasure">{{ form.value.unitOfMeasure }} (not set up in Units)</mat-option>
+                  <mat-option [value]="u.id">{{ u.name }}{{ u.description ? ' — ' + u.description : '' }}</mat-option>
                 }
               </mat-select>
               <mat-hint>{{ baseLocked ? 'Has stock — base unit is locked' : 'Manage in Inventory → Base Units' }}</mat-hint>
@@ -100,9 +98,9 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Usually bought / issued in</mat-label>
               <mat-select formControlName="defaultUnitId">
-                <mat-option [value]="null">{{ form.value.unitOfMeasure || 'Base unit' }}</mat-option>
+                <mat-option [value]="null">{{ selectedBase()?.name || 'Base unit' }}</mat-option>
                 @for (c of packs(); track c.id) {
-                  <mat-option [value]="c.id">{{ c.name }} = {{ c.factor }} {{ form.value.unitOfMeasure }}</mat-option>
+                  <mat-option [value]="c.id">{{ c.name }} = {{ c.factor }} {{ selectedBase()?.name }}</mat-option>
                 }
               </mat-select>
               <mat-hint>Pre-selected on Stock In and purchase orders</mat-hint>
@@ -184,6 +182,7 @@ export class CreateItemDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -202,7 +201,8 @@ export class CreateItemDialogComponent {
   readonly form = this.fb.group({
     name: [this.data?.item?.name || '', [Validators.required, Validators.maxLength(200)]],
     category: [this.data?.item?.category || InventoryCategory.Feed, [Validators.required]],
-    unitOfMeasure: [this.data?.item?.unitOfMeasure || 'kg', [Validators.required, Validators.maxLength(30)]],
+    // Linked by id, as FrostTrack's Product → UnitConversion → BaseUnit; the name is sent for display.
+    baseUnitId: [this.data?.item?.baseUnitId ?? null as string | null, [Validators.required]],
     reorderThreshold: [this.data?.item?.reorderThreshold ?? 50, [Validators.required, Validators.min(0)]],
     sku: [this.data?.item?.sku || ''],
     initialStock: [this.data?.item?.currentStock ?? 0, [Validators.min(0)]],
@@ -214,23 +214,37 @@ export class CreateItemDialogComponent {
   /** Changing the base unit of an item that holds stock would silently re-scale it. */
   readonly baseLocked = this.isEdit && (this.data?.item?.currentStock ?? 0) > 0;
 
-  readonly baseUnits = signal<MeasureUnit[]>([]);
-  private readonly baseName = signal<string>(this.data?.item?.unitOfMeasure || 'kg');
+  readonly baseUnits = toSignal(
+    this.inventoryService.getUnits().pipe(map(u => u.filter(x => x.isActive))),
+    { initialValue: [] as MeasureUnit[] }
+  );
+  private readonly baseId = signal<string | null>(this.data?.item?.baseUnitId ?? null);
 
-  readonly knownBase = computed(() =>
-    this.baseUnits().some(u => u.name.toLowerCase() === (this.baseName() || '').toLowerCase()));
+  readonly selectedBase = computed(() => this.baseUnits().find(u => u.id === this.baseId()));
 
   /** Packs of the chosen base unit (everything except the base unit itself). */
   readonly packs = computed<UnitConversion[]>(() =>
-    this.baseUnits().find(u => u.name.toLowerCase() === (this.baseName() || '').toLowerCase())
-      ?.conversions.filter(c => !c.isBase && c.isActive) ?? []);
+    this.selectedBase()?.conversions.filter(c => !c.isBase && c.isActive) ?? []);
 
   constructor() {
-    this.inventoryService.getUnits().subscribe(u => this.baseUnits.set(u.filter(x => x.isActive)));
-    if (this.baseLocked) this.form.controls.unitOfMeasure.disable();
-    this.form.controls.unitOfMeasure.valueChanges.subscribe(v => {
-      this.baseName.set(v || '');
-      this.form.controls.defaultUnitId.setValue(null);
+    if (this.baseLocked) this.form.controls.baseUnitId.disable();
+    this.form.controls.baseUnitId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(v => {
+        if (v !== this.baseId()) this.form.controls.defaultUnitId.setValue(null);
+        this.baseId.set(v);
+      });
+
+    // No link yet (new item, or one from before units): start on the unit its name matches, else kg.
+    effect(() => {
+      const units = this.baseUnits();
+      if (!units.length || this.form.controls.baseUnitId.value) return;
+      const name = (this.data?.item?.unitOfMeasure || 'kg').toLowerCase();
+      const match = units.find(u => u.name.toLowerCase() === name) ?? units.find(u => u.name.toLowerCase() === 'kg');
+      if (match) untracked(() => {
+        this.baseId.set(match.id);
+        this.form.controls.baseUnitId.setValue(match.id, { emitEvent: false });
+      });
     });
   }
 
@@ -243,6 +257,7 @@ export class CreateItemDialogComponent {
     const formVal = this.form.getRawValue();
     const val = {
       ...formVal,
+      unitOfMeasure: this.selectedBase()?.name ?? this.data?.item?.unitOfMeasure ?? 'kg',
       farmId: this.data.farmId,
       sku: formVal.sku ? formVal.sku : null,
       storageLocation: formVal.storageLocation ? formVal.storageLocation : null

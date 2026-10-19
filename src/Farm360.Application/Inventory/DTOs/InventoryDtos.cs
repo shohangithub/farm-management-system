@@ -19,6 +19,9 @@ public sealed record InventoryItemDto(
     string? StorageLocation,
     bool IsActive)
 {
+    /// <summary>The base unit stock is counted in (UnitOfMeasure is its name).</summary>
+    public Guid? BaseUnitId { get; init; }
+
     /// <summary>The unit it is usually bought or issued in (e.g. "Bag (50 kg)").</summary>
     public Guid? DefaultUnitId { get; init; }
 }

@@ -37,7 +37,9 @@ public sealed record ReturnablePoItemDto(
     decimal AlreadyReturnedQuantity,
     decimal CurrentStock,
     decimal MaxReturnableQuantity,
-    decimal UnitCostBdt);
+    decimal UnitCostBdt,
+    string? EnteredUnitName = null,
+    decimal? EnteredQuantity = null);
 
 public sealed record CreatePurchaseReturnItemRequest(
     Guid PurchaseOrderItemId,

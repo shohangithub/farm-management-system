@@ -312,13 +312,22 @@ public static class FeedingEndpoints
             return result is null ? Results.NotFound() : Results.Ok(result);
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
 
+        // Generate a day's entries from the plans — today, or a missed day (body: { date, farmId }).
         group.MapPost("/entries/generate", async (
+            [FromBody] GenerateEntriesRequest? body,
             [FromServices] ISender sender,
             CancellationToken ct) =>
         {
-            await sender.Send(new Farm360.Application.Feeding.Jobs.CreateDailyFeedingEntriesCommand(), ct);
-            return Results.Ok(new { message = "Daily feeding entries generated successfully." });
+            await sender.Send(new Farm360.Application.Feeding.Jobs.CreateDailyFeedingEntriesCommand(body?.Date, body?.FarmId), ct);
+            return Results.Ok(new { message = body?.Date is { } d ? $"Feeding entries for {d:dd MMM yyyy} generated." : "Daily feeding entries generated successfully." });
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        // Feed given outside the plan (a missed or extra feed, or an animal with no ration) — confirmed straight away.
+        group.MapPost("/entries/manual", async (
+            [FromBody] RecordManualFeedingCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) => Results.Ok(await sender.Send(command, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
 
         group.MapPost("/entries/{id:guid}/confirm", async (
             [FromRoute] Guid id,
@@ -401,3 +410,6 @@ public static class FeedingEndpoints
         return app;
     }
 }
+
+/// <summary>Body of POST /feeding/entries/generate.</summary>
+public sealed record GenerateEntriesRequest(DateOnly? Date, Guid? FarmId);

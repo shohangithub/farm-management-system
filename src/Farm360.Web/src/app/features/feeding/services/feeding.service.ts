@@ -27,7 +27,9 @@ import {
   ConvertSchedulesResult,
   FeedRequirement,
   FeedRequirementRequest,
-  AnimalNutrition
+  AnimalNutrition,
+  ManualFeedingRequest,
+  ManualFeedingResult
 } from '../models/feeding.models';
 
 export interface PagedResult<T> {
@@ -214,8 +216,13 @@ export class FeedingService {
     return this.http.get<FeedingEntryCostBreakdown>(`${this.baseUrl}/entries/${id}/cost-breakdown`);
   }
 
-  generateEntries(): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.baseUrl}/entries/generate`, {});
+  /** Creates the day's entries from active plans — today by default, or a missed past day. */
+  generateEntries(date?: string, farmId?: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/entries/generate`, { date: date ?? null, farmId: farmId ?? null });
+  }
+
+  recordManualFeeding(request: ManualFeedingRequest): Observable<ManualFeedingResult> {
+    return this.http.post<ManualFeedingResult>(`${this.baseUrl}/entries/manual`, request);
   }
 
   confirmEntry(id: string, actualKg: number, notes?: string): Observable<void> {

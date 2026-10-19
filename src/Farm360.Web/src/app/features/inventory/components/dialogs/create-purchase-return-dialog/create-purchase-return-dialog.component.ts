@@ -137,6 +137,9 @@ export interface CreatePurchaseReturnDialogData {
                     </td>
                     <td class="px-3 py-2 text-right text-gray-600 dark:text-gray-300">
                       {{ items()[i].orderedQuantity }}
+                      <span *ngIf="items()[i].enteredUnitName" class="block text-[10px] text-gray-400">
+                        ({{ items()[i].enteredQuantity | number:'1.0-4' }} × {{ items()[i].enteredUnitName }})
+                      </span>
                     </td>
                     <td class="px-3 py-2 text-right text-gray-500">
                       {{ items()[i].alreadyReturnedQuantity }}

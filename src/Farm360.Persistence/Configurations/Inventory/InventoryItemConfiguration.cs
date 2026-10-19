@@ -25,7 +25,19 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
 
         builder.Property(x => x.UnitOfMeasure)
             .IsRequired()
-            .HasMaxLength(30);
+            .HasMaxLength(40);
+
+        // Item → base unit (stock is counted in it) and → its usual purchase/issue unit, as in
+        // FrostTrack: Product.DefaultUnitId → UnitConversion → BaseUnit.
+        builder.HasOne<MeasureUnit>()
+            .WithMany()
+            .HasForeignKey(x => x.BaseUnitId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<UnitConversion>()
+            .WithMany()
+            .HasForeignKey(x => x.DefaultUnitId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(x => x.ReorderThreshold)
             .HasColumnType("decimal(18,2)");

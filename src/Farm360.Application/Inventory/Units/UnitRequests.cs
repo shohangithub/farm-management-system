@@ -64,8 +64,7 @@ public sealed class GetItemUnitsQueryHandler(IUnitService units, IInventoryItemR
     {
         var item = await items.GetByIdAsync(request.InventoryItemId, cancellationToken)
             ?? throw new NotFoundException("InventoryItem", request.InventoryItemId);
-        var all = await units.GetUnitsAsync(cancellationToken);
-        var owner = all.FirstOrDefault(u => u.IsActive && UnitService.SameUnit(u.Name, item.UnitOfMeasure));
+        var owner = await units.BaseUnitOfAsync(item, cancellationToken);
         var list = owner is null ? [] : owner.Conversions.Where(c => c.IsActive).OrderBy(c => c.Factor).Select(c => c.ToDto(owner)).ToList();
         return new ItemUnitsDto(item.Id, item.UnitOfMeasure, item.DefaultUnitId, list);
     }
@@ -75,7 +74,8 @@ public sealed class GetItemUnitsQueryHandler(IUnitService units, IInventoryItemR
 
 public sealed record SaveMeasureUnitCommand(Guid? Id, string Name, string? Description, bool IsActive = true) : IRequest<MeasureUnitDto>;
 
-public sealed class SaveMeasureUnitCommandHandler(IMeasureUnitRepository repo, IUnitService units, ITenantService tenant, IUnitOfWork unitOfWork)
+public sealed class SaveMeasureUnitCommandHandler(
+    IMeasureUnitRepository repo, IUnitService units, ITenantService tenant, IUnitOfWork unitOfWork, IInventoryItemRepository items)
     : IRequestHandler<SaveMeasureUnitCommand, MeasureUnitDto>
 {
     public async Task<MeasureUnitDto> Handle(SaveMeasureUnitCommand request, CancellationToken cancellationToken)
@@ -88,17 +88,23 @@ public sealed class SaveMeasureUnitCommandHandler(IMeasureUnitRepository repo, I
         if (request.Id is { } id)
         {
             unit = await repo.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("MeasureUnit", id);
-            var oldName = unit.Name;
-            if (!string.Equals(oldName, request.Name.Trim(), StringComparison.OrdinalIgnoreCase)
-                && (await repo.ItemsUsingAsync([oldName], [], cancellationToken)).Count > 0)
-                throw new ConflictException($"Items are counted in '{oldName}', so it can't be renamed. Create a new base unit instead.");
-
             // The conversion that is the base unit itself follows the rename.
             var self = unit.Conversions.FirstOrDefault(unit.IsSelf);
+            var renamed = !string.Equals(unit.Name, request.Name.Trim(), StringComparison.Ordinal);
             unit.Rename(request.Name, request.Description);
             self?.Update(unit.Name, 1m, self.Description);
             unit.SetActive(request.IsActive);
             repo.Update(unit);
+
+            // Items are linked by id; only their display name changes. Stock is untouched.
+            if (renamed)
+            {
+                foreach (var item in await items.GetByBaseUnitAsync(unit.Id, cancellationToken))
+                {
+                    item.RenameBaseUnit(unit.Name);
+                    items.Update(item);
+                }
+            }
         }
         else
         {
@@ -124,7 +130,7 @@ public sealed class DeleteMeasureUnitsCommandHandler(IMeasureUnitRepository repo
             targets.Add(await repo.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("MeasureUnit", id));
 
         var inUse = await repo.ItemsUsingAsync(
-            targets.Select(t => t.Name).ToList(),
+            targets.Select(t => t.Id).ToList(),
             targets.SelectMany(t => t.Conversions).Select(c => c.Id).ToList(),
             cancellationToken);
         if (inUse.Count > 0)
@@ -163,7 +169,10 @@ public sealed class SaveUnitConversionCommandHandler(IMeasureUnitRepository repo
                     || !string.Equals(request.Name.Trim(), owner.Name, StringComparison.OrdinalIgnoreCase)))
                 throw new ArgumentException($"'{owner.Name}' is the base unit itself: it always counts as 1 and stays active. Only its description can change.");
 
-            // Changing the value or base unit does not touch past stock: every movement was stored in the base unit.
+            if (conversion.MeasureUnitId != target.Id && (await repo.ItemsUsingAsync([], [conversion.Id], cancellationToken)).Count > 0)
+                throw new ConflictException($"'{conversion.Name}' is an item's usual unit, so it can't move to another base unit.");
+
+            // Changing the value does not touch past stock: every movement was stored in the base unit.
             conversion.Update(request.Name, request.Factor, request.Description);
             conversion.SetActive(request.IsActive);
             conversion.MoveTo(target.Id);

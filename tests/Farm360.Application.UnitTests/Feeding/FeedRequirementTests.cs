@@ -67,6 +67,42 @@ public class FeedRequirementTests
         (await service.KgToItemBaseAsync(Item("Grain", "kg", 0m, 0m), 0.25m)).Should().Be(0.25m);
     }
 
+    [Fact]
+    public async Task ItemsWithOnlyAUnitName_AreLinkedToTheirBaseUnitById_CreatingMissingOnes()
+    {
+        var kg = new MeasureUnit(Guid.NewGuid(), TenantId, "kg");
+        var repo = Substitute.For<IMeasureUnitRepository>();
+        repo.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<MeasureUnit> { kg });
+        var tenant = Substitute.For<ITenantService>();
+        tenant.TenantId.Returns(TenantId);
+        var grain = Item("Maize", "Kgs", 0m, 0m);
+        var vial = Item("Vaccine", "vial", 0m, 0m);
+        var items = Substitute.For<IInventoryItemRepository>();
+        items.GetWithoutBaseUnitAsync(Arg.Any<CancellationToken>()).Returns(new List<InventoryItem> { grain, vial });
+
+        var service = new UnitService(repo, tenant, Substitute.For<IUnitOfWork>(), items);
+        var all = await service.GetUnitsAsync();
+
+        grain.BaseUnitId.Should().Be(kg.Id, "\"Kgs\" is a spelling of kg");
+        grain.UnitOfMeasure.Should().Be("kg");
+        var created = all.Single(u => u.Name == "vial");
+        vial.BaseUnitId.Should().Be(created.Id, "a unit name with no base unit gets one");
+        await repo.Received(1).AddAsync(created, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AConversionOfAnotherBaseUnit_IsRejected_EvenWhenNamesLookAlike()
+    {
+        var (service, kg, g) = Units();
+        var premix = Item("Premix", "g", 0m, 0m);
+        premix.SetBaseUnit(g.Id, g.Name);
+
+        var act = () => service.ToBaseAsync(premix, kg.Conversions.Single(c => c.Name == "Bag (25 kg)").Id, 1m);
+
+        await act.Should().ThrowAsync<ArgumentException>();
+        (await service.ToBaseAsync(premix, g.Conversions.Single(c => c.Name == "Kg").Id, 0.5m)).BaseQuantity.Should().Be(500m);
+    }
+
     // ── Purchase plan ──────────────────────────────────────────────────────
 
     [Fact]
