@@ -29,6 +29,8 @@ import {
   FeedRequirementRequest,
   AnimalNutrition,
   ManualFeedingRequest,
+  DailyFeedingRoutine,
+  DailyFeedingRoutineRequest,
   ManualFeedingResult
 } from '../models/feeding.models';
 
@@ -162,6 +164,11 @@ export class FeedingService {
   /** What the rations need for the next N days, item by item, against stock — for buying. */
   getFeedRequirement(request: FeedRequirementRequest): Observable<FeedRequirement> {
     return this.http.post<FeedRequirement>(`${this.baseUrl}/requirements`, request);
+  }
+
+  /** The day's routine from charts and recipes: per animal, mixing sheet, feeding times. */
+  getDailyRoutine(request: DailyFeedingRoutineRequest): Observable<DailyFeedingRoutine> {
+    return this.http.post<DailyFeedingRoutine>(`${this.baseUrl}/routine`, request);
   }
 
   /** Who eats what: every animal on the farm with every ration feeding it today. */

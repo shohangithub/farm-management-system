@@ -39,6 +39,7 @@ interface FeedingNavLink {
 export class FeedingSubnavComponent {
   readonly links: FeedingNavLink[] = [
     { path: '/feeding/today', icon: 'today', label: 'Today', labelBn: 'আজকের খাবার' },
+    { path: '/feeding/routine', icon: 'checklist', label: 'Daily Routine', labelBn: 'দৈনিক রুটিন' },
     { path: '/feeding/board', icon: 'grid_view', label: 'Who Eats What', labelBn: 'কে কী খায়' },
     { path: '/feeding/planner', icon: 'shopping_cart', label: 'Purchase Plan', labelBn: 'ক্রয় পরিকল্পনা' },
     { path: '/feeding/nutrition', icon: 'monitor_heart', label: 'Nutrition & Growth', labelBn: 'পুষ্টি ও বৃদ্ধি' },

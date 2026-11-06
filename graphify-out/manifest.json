@@ -70,8 +70,8 @@
     "semantic_hash": "5910c67d211e4d68c5f2c00bd223e867"
   },
   "src/Farm360.Api/Endpoints/Feeding/FeedingEndpoints.cs": {
-    "mtime": 1792427744.4824603,
-    "ast_hash": "dbb30485ac3400a125a58739a1e361cd",
+    "mtime": 1793000225.4376419,
+    "ast_hash": "6d5e591efca4259592d13613b9867d77",
     "semantic_hash": ""
   },
   "src/Farm360.Api/Endpoints/Finance/FinanceEndpoints.cs": {
@@ -3325,13 +3325,13 @@
     "semantic_hash": "9381910a631e950f4d9d3ccf69409c52"
   },
   "src/Farm360.Web/src/app/features/feeding/feeding.routes.ts": {
-    "mtime": 1792175754.6195185,
-    "ast_hash": "01e80f2f96b814876761cf86fbf42823",
+    "mtime": 1793000386.7372887,
+    "ast_hash": "5c61fa2146373bbd3993ecfde1ff2da4",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/feeding/models/feeding.models.ts": {
-    "mtime": 1792427840.479239,
-    "ast_hash": "a6231361eacb2fb0a5d8222700108034",
+    "mtime": 1793001738.162989,
+    "ast_hash": "cf9d2a3758e624a1652ace30e1055153",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/feeding/pages/animal-feeding-plan-list/animal-feeding-plan-list.component.ts": {
@@ -3380,8 +3380,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/feeding/services/feeding.service.ts": {
-    "mtime": 1792427911.928572,
-    "ast_hash": "a07df1eb654f02674f627aae222c275e",
+    "mtime": 1793000383.4124126,
+    "ast_hash": "e1ab87b4d0bb16c107145f39abf4d7fd",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/finance/components/expense-form-dialog/expense-form-dialog.ts": {
@@ -6965,8 +6965,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/feeding/components/feeding-subnav/feeding-subnav.component.ts": {
-    "mtime": 1792175754.6195185,
-    "ast_hash": "c12d07f8756816e3715c3997cba217dd",
+    "mtime": 1793000383.4124126,
+    "ast_hash": "0a782544814fbc54d1b348a85ef074fd",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/feeding/pages/feed-planner/feed-planner.component.ts": {
@@ -7032,6 +7032,21 @@
   "tests/Farm360.Application.UnitTests/Feeding/ManualFeedingTests.cs": {
     "mtime": 1792428117.4677691,
     "ast_hash": "34071c8fa0fd260208fe337f90a5e1b3",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Feeding/Queries/Planning/DailyFeedingRoutineQuery.cs": {
+    "mtime": 1793001696.0421731,
+    "ast_hash": "5ef23b2f283f257685d5465e87b69947",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/feeding/pages/daily-routine/daily-routine.component.ts": {
+    "mtime": 1793001738.162989,
+    "ast_hash": "bc03c3ae04b7770e2b17823976020130",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.UnitTests/Feeding/DailyFeedingRoutineTests.cs": {
+    "mtime": 1793001709.261631,
+    "ast_hash": "2f7146116a2c3f085f62a60c538ab360",
     "semantic_hash": ""
   }
 }

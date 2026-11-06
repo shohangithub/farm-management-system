@@ -436,6 +436,37 @@ export interface AssignAnimalFeedingPlanRequest {
   expectedDailyFeedKg?: number;
 }
 
+// ── Daily routine (POST /feeding/routine) ──
+export interface RoutineLine {
+  chart: string; kind: string; band: string; fit: string;
+  formulaId: string | null; recipe: string;
+  kgPerDay: number; sessions: number; kgPerSession: number; costBdt: number;
+}
+export interface RoutineAnimal {
+  animalId: string; tag: string; shed: string | null; pen: string | null;
+  weightKg: number | null; ageDays: number | null;
+  lines: RoutineLine[]; totalKg: number; costBdt: number;
+}
+export interface RoutineSession { session: string; kg: number; animals: number; }
+export interface RoutineIngredient {
+  ingredient: string; percent: number; kg: number;
+  stockItem: string | null; unit: string; need: number | null; inStock: number | null; isShort: boolean;
+}
+export interface RoutineRecipe {
+  formulaId: string; recipe: string; directItem: boolean; animals: number;
+  totalKg: number; costBdt: number; sessions: RoutineSession[]; ingredients: RoutineIngredient[];
+}
+export interface DailyFeedingRoutine {
+  farmId: string; date: string; animals: number; animalsWithoutRation: number;
+  totalKg: number; totalCostBdt: number; sessionOrder: string[];
+  recipes: RoutineRecipe[]; perAnimal: RoutineAnimal[]; notes: string[];
+}
+export interface DailyFeedingRoutineRequest {
+  farmId: string; date?: string | null; shedId?: string | null; penId?: string | null; animalIds?: string[] | null;
+  /** Only this feed chart; with applyToUnassigned, also animals without a ration fed by it. */
+  ruleSetId?: string | null; applyToUnassigned?: boolean;
+}
+
 /** Feed given outside the plan; confirmed straight away (POST /feeding/entries/manual). */
 export interface ManualFeedingRequest {
   farmId: string;

@@ -16,6 +16,11 @@ export const FEEDING_ROUTES: Routes = [
     title: 'Today\'s Feeding — Farm360 AI'
   },
   {
+    path: 'routine',
+    loadComponent: () => import('./pages/daily-routine/daily-routine.component').then(m => m.DailyRoutineComponent),
+    title: 'Daily Feeding Routine — Farm360 AI'
+  },
+  {
     path: 'board',
     loadComponent: () => import('./pages/feeding-board/feeding-board.component').then(m => m.FeedingBoardComponent),
     title: 'Who Eats What — Farm360 AI'

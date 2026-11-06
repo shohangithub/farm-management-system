@@ -220,6 +220,14 @@ public static class FeedingEndpoints
             Results.Ok(await sender.Send(query, ct)))
             .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
 
+        // Daily routine from the feed charts and recipes: per animal, mixing sheet, feeding times.
+        group.MapPost("/routine", async (
+            [FromBody] Farm360.Application.Feeding.Queries.Planning.GetDailyFeedingRoutineQuery query,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+            Results.Ok(await sender.Send(query, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
         // ── Who eats what: the board and the "Set ration" preview ─────────────
         group.MapGet("/board", async (
             [FromQuery] Guid farmId,

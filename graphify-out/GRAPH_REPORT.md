@@ -1,115 +1,115 @@
-# Graph Report - Farm Management System  (2026-10-19)
+# Graph Report - Farm Management System  (2026-10-26)
 
 ## Corpus Check
-- 1283 files · ~788,863 words
+- 1286 files · ~792,990 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 12848 nodes · 29024 edges · 720 communities (635 shown, 85 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 1391 edges (avg confidence: 0.8)
+- 12893 nodes · 29163 edges · 750 communities (670 shown, 80 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 1394 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0cd8d0ab`
+- Built from commit: `12cf0791`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - animal-detail.component.ts
 - inventory.models.ts
-- HealthService
+- IncidentStatus
 - feeding.models.ts
 - finance.model.ts
 - .ReconcileAsync
 - Farm360.Contracts.Finance
 - IConsumableUsagePlanRepository
 - MeasureUnit
-- Farm360.Application.Common.Interfaces
-- .GetTransactionsByFarmIdAsync
+- Farm360.Domain.Common
+- AbstractValidator
 - LocationSelectorComponent
 - ApplicationDbContext
-- Farm360.Domain.Livestock.Repositories
+- Farm360.Domain.Livestock
 - IDomainEvent
 - CancellationToken
 - FarmListComponent
 - report.models.ts
-- TradeCreditCommands.cs
-- DailyConsumableEntry
-- ReportExecutionService
-- InvestorDto
+- TradeBillDto
+- ConsumableUsagePlan
+- ReportRun
+- IInvestorRepository
 - TradeBill
-- Task
-- CancellationToken
+- IUnitOfWork
+- ITenantService
 - ReportContext
 - AnimalFeedingPlan
 - header.component.ts
-- .LoadAsync
+- .Handle
 - TradeBillPayment
-- IInventoryItemRepository
+- IStockTransactionRepository
 - 🌾 Farm360 AI — Comprehensive Enterprise User Manual
 - UserProfileService
 - .Handle
-- AuditableEntity
-- Farm360.Domain.Common
+- FarmShareConfig
+- Farm360.Application.Common.Interfaces
 - LivestockEndpoints
-- .ToDto
+- HealthEndpoints.cs
 - Breed
-- ITransactionalCommand
+- IRequestHandler
 - cattle-profit-projection.component.ts
 - IAggregateRoot
-- FeedIngredient
+- FeedFormula
 - Farm360 AI — Complete Solution Structure
-- Farm360.Application.Intelligence.Interfaces
+- Farm360.Domain.Intelligence
 - dependencies
 - Program.cs
-- AnimalPickerComponent
+- report-entity-picker.component.ts
 - PagedResult
-- UnitRequests.cs
+- UnitConversion
 - Frontend (`Farm360.Web`)
-- Farm360.Domain.Organizations.Repositories
-- Farm360.Application.Reporting.Model
-- BaseValueObject
-- HealthEndpoints.cs
+- IOrganizationRepository
+- Farm360.Domain.Livestock.Repositories
+- Farm360.Application.Intelligence.Interfaces
+- GetHealthDashboardQueryHandler
 - Angular Frontend
 - Animal
 - IAnimalFeedAllocationRepository
 - Farm360.Contracts.Intelligence
-- ReportColumn
-- FinancialTransactionDto
+- ReportDefinition
+- IFinancialTransactionRepository
 - ReportDataSet
-- VaccinationEvent
-- AccountChart
-- Exception
+- VaccinationProtocol
+- TransactionCategory
+- InventoryItem
 - IdentityDbContext
 - devDependencies
 - ActionableInsight
 - Farm360.Persistence.Migrations.ApplicationDb
 - Farm360.Persistence.Migrations.Application
-- TransactionCategory
-- INotificationHandler
-- Investor
-- FinancialTransactionRepository
-- CancelFeedingPlanCommandHandler
+- IPurchaseOrderRepository
+- IAnimalCostLedgerRepository
+- AuditableEntity
+- IRequest
+- AccountChart
 - DiseaseIncident
 - Farm360.Domain.Intelligence.Projections
-- BalanceSheetEntryRepository
+- BalanceSheetEntry
 - GenericRepository
 - .CreateActiveAnimal
 - Farm360ReportDocument
 - .Allocate
 - compilerOptions
-- IFarmRepository
+- FarmListDto
 - IAnimalFeedingPlanRepository
 - .ToDto
 - Phase 1: Authentication & Organization CRUD — Production-Ready Audit & Fix Plan
 - MedicalTreatment
 - IPipelineBehavior
 - FarmLedger
-- SkipDailyFeedingEntryCommandHandler
+- AdjustDailyFeedingEntryCommandHandler
 - IFeedFormulaRepository
-- FeedRequirementQuery.cs
-- GetAnimalNutritionQueryHandler
-- Farm360.Persistence.Context
+- .Handle
+- AnimalNutritionReportDefinition
+- Farm360.Domain.Health.Interfaces.Repositories
 - .Handle
 - HealthDomainTests
 - AnimalCommandValidatorTests
@@ -121,30 +121,30 @@
 - .ReallocateTransactionAsync
 - OverheadAllocationServiceTests
 - Farm360.Infrastructure.csproj
-- .Allocate
-- IFinancialTransactionRepository
-- IBranchRepository
+- BatchRecordVaccinationCommand.cs
+- ILedgerPostingService
+- GetBranchesByOrganizationQueryHandler
 - UpdateVaccinationProtocolCommand.cs
 - Branch
-- .Handle
+- Farm360.Persistence.Configurations.Inventory
 - AnimalDetailComponent
 - TradeCreditDto.cs
-- RecordManualFeedingCommand.cs
-- TenantUser
-- IRequestHandler
+- Exception
+- PermissionAndRoleTests
+- CreateFeedingScheduleCommandHandler
 - AnimalCostLedger
 - Health Module — Animal Picker UX Overhaul
-- IAnimalBatchRepository
+- .LoadAsync
 - Livestock_AddAnimalAggregate
 - .SimulateSaleAsync
 - Livestock Module — Production-Readiness Audit & Gap Analysis
 - Farm360 AI: Smart Farm Intelligence Platform Evolution Strategy
-- IPurchaseOrderRepository
+- .Handle
 - MortalityRecord
-- .Match
-- AnimalListComponent
-- ICurrentUserService
-- CloseFeedingCycleCommandHandler
+- FeedingRuleSet
+- GetAnimalIntelligenceDataQuery.cs
+- IAnalyticsQueryService.cs
+- ApproveFeedingReconciliationCommandHandler
 - .Handle
 - 34. User Management
 - Farm360 AI: Smart Farm Intelligence Platform Evolution Strategy
@@ -157,16 +157,16 @@
 - 5. Login / Onboarding
 - Farm360 AI — Production Stabilization Audit
 - LookupDto
-- BatchPnlReportDefinition
+- ReportParameter
 - .Create
 - Farm360.Api.Authorization
-- FeedAllocationServiceTests
 - AnimalFeedAllocation
+- IVetVisitRepository
 - Farm360 AI — Database Design Document (DDD)
-- VaccinationProtocolDto
-- GetShedsByFarmQueryHandler
+- IBranchRepository
+- GetShedByIdQueryHandler
 - PurchaseReturn
-- FinanceLedgerComponent
+- finance-ledger.component.ts
 - AnimalBatch
 - PermissionConstants
 - TenantSubscriptionRecord
@@ -177,28 +177,28 @@
 - Tenant
 - LoanRecord
 - Application Layer (Commands & Queries)
-- billing.component.ts
+- subscription.model.ts
 - ReportParameterPanelComponent
-- .Handle
-- RecordMortalityCommand.cs
+- OrganizationDto
+- RecordMortalityCommandHandler
 - FinancialStatementsTests
-- .Range
+- IncomeExpenseReportDefinition
 - .GenerateAccessTokenAsync
 - production
 - AuthService
-- AccountingSettingsDto
+- ICurrentUserService
 - AnimalFeedingPlanListComponent
-- .CheckAsync
-- IRequest
+- ReportExecutionService
+- AnimalDto
 - 22. Screen Designs — All MVP Screens
 - 🏛️ Farm360 AI — Project Constitution
 - tsconfig.app.json
-- AnimalRepository
+- IAnalyticsQueryService
 - .Create
 - AnimalMovement
 - .BuildEndpoints
 - 25. Inventory List
-- .SaveChangesAsync
+- ITenantRepository
 - parseApiError
 - FarmBusinessRules
 - 3. Global Component Library
@@ -207,27 +207,27 @@
 - options
 - Farm360.Domain.MasterData.Repositories
 - IEntityTypeConfiguration
-- BatchRecordVaccinationCommand.cs
+- .Range
 - MasterDataEntry
 - BranchListComponent
 - IntelligencePanelComponent
 - মডিউল ১: হাট থেকে গরু কেনার পর প্রাথমিক ও পরিবহন ব্যবস্থাপনা (Post-Purchase & Transport SOP)
 - FinancialStatementsDtos.cs
-- FarmAccountingSettings
-- ProjectionScenario
+- .SaveChangesAsync
+- AutomatedFinanceEventHandlersTests
 - .Handle
-- BreedCommands.cs
+- BreedDto
 - IAnimalOverheadAllocationRepository
 - AuthEndpoints.cs
 - dashboard.model.ts
-- .Id
-- Pen
+- AnimalGrowthReportDefinition
+- PenRepository
 - DataSeeder
 - Task
-- InventoryItem
+- CreateSupplierCommandHandler
 - RedisCacheService
 - NullableDateOnlyJsonConverter
-- ConsumableUsagePlan
+- ReportExportFormat
 - 20. Vaccination Due List
 - Smart Feeding & Nutrition Module — Implementation Plan
 - Farm360 AI — Software Architecture Document (SAD)
@@ -240,12 +240,12 @@
 - PurchaseOrderList
 - StockLedgerComponent
 - IDateTimeService
-- IFarmShareRepository
+- RecordStockInCommandHandler
 - FixedAsset
 - AnimalOverheadAllocationRepository
 - GuardClause
 - SslCommerzGatewayService
-- .For
+- SqlServerFixture.cs
 - CreateOrganizationCommand.cs
 - 🔍 Detailed Completed Feature Log
 - 28. Financial Entries
@@ -256,10 +256,10 @@
 - 2. Daily Operations Simulation (Friction Points)
 - Enterprise Finance Module Implementation Plan & Architecture Analysis
 - Global Working Context — Implementation Plan
-- InvestorListComponent
-- LoanRecordDto
-- AnimalDto
-- SqlServerFixture.cs
+- AnimalPickerComponent
+- ILoanRecordRepository
+- AnimalQueryHandlerTests
+- ReportColumn
 - scripts
 - IntelligenceSignalRService
 - BreedList
@@ -274,13 +274,13 @@
 - 10. Animal List
 - FeedRequirementTests
 - FeedingBoardComponent
-- AnimalFeedingReportDefinition
+- ReportCategory
 - .Handle
-- FeedConsumptionLog
-- Farm360.Infrastructure.Messaging
-- GetPurchaseOrdersQueryHandler
-- InventoryItemDto
-- .ValueAtEndOf
+- BranchConfiguration
+- SignalRServices.cs
+- MeasureUnitRepository
+- .For
+- HerdSummaryReportDefinition
 - BuySellSharesDialogComponent
 - InitialIdentity
 - DependencyRuleTests
@@ -289,39 +289,39 @@
 - Farm360 AI — Enterprise Authentication & Authorization System
 - Proposed Testing Phases
 - .ResolveTenantContextAsync
-- BalanceSheetEntry
-- IInvestorRepository
-- GetTodayFeedingEntriesQueryHandler
+- AnalyticsEndpoints
+- Pen
+- IFarmRepository
 - IBackgroundJobService
 - RefreshTokenService
 - farm360-web
 - SupplierListComponent
-- AddShedManagementModule
+- GetReturnablePoItemsQueryHandler
 - Farm360.Application.IntegrationTests.csproj
 - Premium Dialog Design Pattern
 - AddLivestockPenAndSaleFields
 - BreedEndpoints
 - ReplaceLocationFieldsWithMovementTable
 - InventoryItemListComponent
-- CreateFeedingRuleSetCommand.cs
+- IncomeStatementReportDefinition
 - IShedRepository
 - Balance Sheet & Financial Statements – Implementation Plan (Farm360)
 - TenantRepository
 - Farm360.Application.UnitTests.csproj
-- .Handle
+- TenantUser
 - .GetByIdAsync
-- MedicalTreatmentRepository
+- MonthlyPnlReportDefinition
 - PermissionService
 - Farm360.Api.FunctionalTests.csproj
 - AddDailyConsumables
 - ReportFonts
-- organization.service.ts
-- UnitConversion
-- SqlServerFixture
-- ILedgerPostingService
-- .InvokeAsync
+- OrganizationListComponent
+- IReportExecutionService
+- Organization
+- INotification
+- AllocateOverheadAcrossTenantsCommandHandler
 - PermissionServiceTests
-- VaccinationProtocol
+- PermissionPolicyProvider
 - Proposed Architecture (Option A)
 - 17.2 Subscription Tiers
 - 14. Table Design — Health Schema
@@ -333,10 +333,10 @@
 - GetAnimalFeedingSummaryQuery.cs
 - .Handle
 - AddReportRuns
-- Farm360.Domain.Tenancy
+- Farm360.Persistence.Context
 - .Handle
 - Farm360.Persistence.Migrations
-- AssignFeedingPlanDialogComponent
+- Farm360.Application.Analytics.Queries
 - AddAnimalOverheadAllocations
 - HealthDashboardRepository
 - auth.service.ts
@@ -350,9 +350,9 @@
 - Farm360 AI Agent Instructions & Frontend Architecture Rules
 - AddPurchaseReturns
 - graphify reference: extra exports and benchmark
-- OrganizationListComponent
-- .UploadFileAsync
-- Farm360.Persistence.Configurations.Inventory
+- GetPendingSubscriptionsQueryHandler
+- UploadAnimalPhotoCommandHandler
+- .Handle
 - GetReconciliationsQuery
 - .Handle
 - 8. Executive Dashboard
@@ -365,12 +365,12 @@
 - Farm360 Angular Frontend Guidelines & Patterns
 - GlobalSearchComponent
 - tsconfig.spec.json
-- MeasureUnitRepository
-- .FetchAsync
-- UnitConversionsComponent
+- LookupDto
+- ReportGroup
+- BatchPnlReportDefinition
 - GetExpiringItemsQueryHandler
 - Farm360.slnx
-- ReportDiseaseIncidentCommand.cs
+- .ApprovePendingSubscription_ShouldActivateTenantAndCompleteRecord
 - BalanceSheetReportDefinition
 - AddFarmShareMarketTables
 - InvestorPnLComponent
@@ -394,7 +394,7 @@
 - Sprint 5: Platform Core Features (F-007, F-009, F-012)
 - Sprint 6: Export, Polish & Quality Assurance
 - page-header.component.ts
-- .AddItem
+- Role
 - Farm360.Application.csproj
 - IMasterDataRepository
 - GetFeedingRuleSetsQuery.cs
@@ -405,27 +405,27 @@
 - .Handle
 - AddMasterDataModule
 - LivestockEndpoints.cs
-- .ApprovePendingSubscription_ShouldActivateTenantAndCompleteRecord
+- GetVetVisitDetailQuery.cs
 - MappingProfile.cs
 - .Handle
-- BackfillPlannedCostForExistingDailyFeedingEntries
+- GetFcrAnalyticsQueryHandler
 - 11. Animal Detail
 - AddAutomatedFieldsToFinancialTransactions
-- IncomeStatementReportDefinition
-- .Create
+- ReportDescriptor
+- TradeBillTests
 - BreedingRecord
-- .PostAsync
+- FarmRepository
 - AddRuleLineIdToDailyFeedingEntry
-- PurchaseOrderItem
-- Farm360.Persistence.Seed
+- UpdateBranchCommand.cs
+- GetMasterDataByIdQuery.cs
 - FeedingRuleSetDialogComponent
 - ShareMarketDashboardComponent
-- .FetchAsync
+- HerdRegisterReportDefinition
 - FinanceDashboardComponent
 - Farm360 Accounting Policy
 - MortalityListComponent
 - schematics
-- AnimalPhoto
+- AddShedManagementModule
 - FarmFormComponent
 - MonthlyPnlReportComponent
 - TrialBalanceComponent
@@ -435,7 +435,7 @@
 - OrganizationFormComponent
 - Farm360 Pagination Pattern
 - [Unreleased]
-- .Handle
+- InitialTenancy
 - GetInventoryMovementReportQueryHandler
 - .CreateTenantForUserAsync
 - 12. Register Animal
@@ -456,40 +456,40 @@
 - 21. Security Rules
 - 22. Multi-Tenant Rules
 - 1.3 Application Layer (CQRS)
-- BackfillAnimalFeedAllocationsCommandHandler
-- AddOrganizationModule
-- FeedingRuleSet
 - AddAnimalFeedingPlanModule
-- ReconciliationListComponent
-- PermissionPolicyProvider
+- AddOrganizationModule
 - .Handle
-- Farm360.Persistence.Configurations.Health
-- LoggingSmsService
-- SaveProjectionScenarioCommandHandler
+- DeleteShedCommandHandler
+- AddInventoryToHealthEvents
+- ShedRepository
+- .Handle
+- Farm360.Domain.Organizations.Events
+- AccountsSetupComponent
+- ProjectionScenario
 - PenEndpoints.cs
-- GetDiseaseIncidentListQuery.cs
+- .HandleExceptionAsync
 - BranchFormComponent
 - architect
-- DashboardService
-- FarmSummaryCard
+- dashboard.service.ts
+- GetBreedingAnalyticsQueryHandler
 - Executive Dashboard Page Template
 - AdgTrendChartComponent
 - FeedCostTrendChartComponent
 - BreadcrumbComponent
-- .GetAsync
-- ShedDetailComponent
-- ShedFormComponent
+- GetHealthAnalyticsQueryHandler
+- FarmDetailComponent
+- GetFeedingPlansQueryHandler
 - ShedListComponent
 - ConsumptionLogComponent
-- AllocateOverheadAcrossTenantsCommandHandler
+- DataTableComponent
 - package.json
 - BalanceSheetComponent
-- PurchaseReturnItem
+- DeleteFarmCommandHandler
 - HealthDashboardComponent
 - VaccinationDueListComponent
 - LogTreatmentDialog
 - branch.service.ts
-- FeedEvents.cs
+- RecordStockWriteOffCommandHandler
 - GetFeedingEntryCostBreakdownQueryHandler
 - graphify reference: query, path, explain
 - BaseIntegrationEvent
@@ -512,19 +512,19 @@
 - 15. Future Integrations
 - 5. Session Management & Auto-Login Lifecycle
 - Sprint 1: Finance & Accounting Module (F-058 → F-070)
-- ManualFeedingTests
+- Fixture
 - Sprint 4: Intelligence UI & Breed Integration (Doc 29 Phases 2.5/3)
-- InfrastructureServiceExtensions.cs
-- InventoryEvents.cs
-- UpdateFeedIngredientCommand.cs
+- HangfireBackgroundJobService
+- BaseValueObject
+- CreateConsumableUsagePlanCommandHandler
 - IDiseaseIncidentRepository
 - AddPenManagementModule
 - AddCostSnapshotToDailyFeedingEntry
 - CreateBatchCommandHandler
-- AddBreedManagement
-- AddBranchManagementFeatures
+- CreateInventoryItemCommandHandler
 - Migration
-- BodyConditionScore
+- AddFarmManagementModule
+- ShedFormComponent
 - FeedingDashboardComponent
 - AddPurchaseOrderModule
 - AnimalCostLedgerComponent
@@ -538,7 +538,7 @@
 - OutboxMessage
 - @angular/platform-browser
 - Farm360.Application.UnitTests/UnitTest1.cs
-- AdjustDailyFeedingEntryCommandHandler
+- FeedingDomainTests
 - OpenApiConfiguration.cs
 - Farm360.Domain.UnitTests/UnitTest1.cs
 - Farm360 — Livestock Module Implementation Plan
@@ -571,14 +571,14 @@
 - 9. Authorization Architecture
 - 1.1 Domain Layer Enhancements
 - Sprint 2: Inventory Module Completion (F-048 → F-057 gaps)
-- chart.js
+- ApplicationServiceExtensions.cs
 - Q: What connects LogoutRequest, RefreshTokenApiRequest, CreatePenRequest to the rest of the system?
 - Main Layout Shell Template
 - Farms Overview Widget Template
 - html2canvas
 - AddUnitsOfMeasure
 - VaccinationProtocolDetailComponent
-- AnimalDiedEvent
+- PurchaseReturnListComponent
 - InventoryMovementReport
 - IntelligencePanelComponent
 - AddUnitConversionDescription
@@ -632,7 +632,7 @@
 - 7. Multi-Device Login
 - 8. Account Lockout
 - FinanceEndpoints
-- LoanListComponent
+- CloseFeedingCycleCommandHandler
 - ng2-charts
 - Log Treatment Dialog (Placeholder Template)
 - CurrentStock
@@ -677,16 +677,16 @@
 - Incident Detail Page (Placeholder Template)
 - Intelligence Panel (Unused Stub)
 - Confirmation Dialog Component (Stub)
-- .SetConsumptionCost
+- GetBatchDetailsQueryHandler
 - tslib
 - zone.js
-- LinkInventoryItemsToUnits
+- FeedEvents.cs
 - UpdateFeedingRuleSetModel
-- AddInventoryToHealthEvents
+- VetVisitDetailDialogComponent
 - karma-coverage
-- PenListComponent
+- InventoryEvents.cs
 - Sprint 3: Executive Dashboard & Analytics (F-071 → F-080)
-- Farm360.Application.Health.DTOs
+- GetMilkWithdrawalAnimalsQuery
 - Assign Protocol Dialog (Placeholder Template)
 - Vet Visit Detail Dialog
 - Milk Withdrawal Page (Placeholder Template)
@@ -698,37 +698,67 @@
 - Application Root HTML Shell
 - OnboardTenantCommand.cs
 - UpdateMyProfileCommand.cs
-- AddHealthSchema
-- ApplicationServiceExtensions.cs
+- BillingComponent
+- ReportExecutionService.cs
 - VaccinationProtocolListComponent
-- GetCurrentStockSummaryQueryHandler
-- FeedingEndpoints.cs
+- .GetSummaryAsync
+- GetTodayFeedingEntriesQueryHandler
 - GetInventoryValuationReportQueryHandler
-- GetBatchDetailsQueryHandler
-- InventoryEnums.cs
-- FeedPlannerComponent
-- FeedingScheduleListComponent
-- FarmDetailComponent
+- TenantUserRepository
 - TransferAnimalDialogComponent
-- TenantEndpoints.cs
-- DesignTimeTenantService
-- Weight
-- ExportService
-- PenDetailComponent
-- InventoryEndpoints
-- PaginationFilter.cs
+- FeedPlannerComponent
+- AnimalRegisterComponent
+- IdentitySeeder.cs
+- CreateVaccinationProtocolCommand.cs
+- GetConsumableUsagePlansQueryHandler
+- ActiveFeedingPlansCostReportDefinition
+- OverheadAllocationCalculator.cs
+- VetVisitCreatedEventHandler
+- LoanListComponent
+- .Send
+- VaccinationComplianceReportDefinition
 - .MapLivestockEndpoints
+- FeedStockValuationReportDefinition
+- BatchWeightDialogComponent
+- AnimalFeedsCostReportDialogComponent
 - BatchList
+- PurchaseReturnCompletedFinanceHandler
+- PurchaseOrderFulfilledEvent
+- 10_Farm360_UI_Blueprint.md
+- GetShedsByFarmQueryHandler
+- echarts
+- CreateMasterDataCommand.cs
+- AddProjectionScenarios
+- AddInvestorTables
+- ConfigureSharesDialogComponent
+- DeletePenCommandHandler
+- ConvertFeedingSchedulesCommand
+- UpdateFarmCommand.cs
+- GetFarmByIdQueryHandler
+- UpdatePenCommand.cs
+- GetPensByShedQueryHandler
+- UpdateShedCommand.cs
+- GetBreakEvenCalculatorQueryHandler
+- UpdateMasterDataCommand.cs
+- ITenantUserRepository
+- DailyRoutineComponent
+- InvestorTransactionDialogComponent
+- PurchaseOrderDetail
+- GetBatchesQuery
+- Farm360.Infrastructure.Messaging
+- IInventoryItemRepository
+- Financial Transaction Form Dialog
+- FinanceDashboardComponent
 
 ## God Nodes (most connected - your core abstractions)
-1. `Farm360.Application.Common.Interfaces` - 235 edges
+1. `Farm360.Application.Common.Interfaces` - 237 edges
 2. `IUnitOfWork` - 137 edges
 3. `ApplicationDbContext` - 129 edges
 4. `Farm360.Domain.Common` - 128 edges
-5. `parseApiError()` - 125 edges
+5. `parseApiError()` - 127 edges
 6. `FinancialTransaction` - 103 edges
-7. `FinanceService` - 98 edges
-8. `PageHeaderComponent` - 98 edges
+7. `PageHeaderComponent` - 99 edges
+8. `FinanceService` - 98 edges
 9. `Farm360.Contracts.Finance` - 96 edges
 10. `ITenantService` - 95 edges
 
@@ -766,163 +796,163 @@
 - **Pen Detail/Form/List CRUD Triad** — src_farm360_web_src_app_features_farms_pen_detail_pen_detail_component_page, src_farm360_web_src_app_features_farms_pen_form_pen_form_component_page, src_farm360_web_src_app_features_farms_pen_list_pen_list_component_page [INFERRED 0.85]
 - **Shed Detail/Form/List CRUD Triad** — src_farm360_web_src_app_features_farms_shed_detail_shed_detail_component_page, src_farm360_web_src_app_features_farms_shed_form_shed_form_component_page, src_farm360_web_src_app_features_farms_shed_list_shed_list_component_page [INFERRED 0.85]
 
-## Communities (720 total, 85 thin omitted)
+## Communities (750 total, 80 thin omitted)
 
 ### Community 0 - "animal-detail.component.ts"
 Cohesion: 0.02
-Nodes (127): FarmDashboardComponent, Component, ShedDashboardComponent, Component, FarmCardComponent, Component, Input, CreateFarmCommand (+119 more)
+Nodes (96): MortalityDetailDialog, Component, Inject, CauseOfDeath, MortalityRecordDto, AnimalEditDialogComponent, Component, Inject (+88 more)
 
 ### Community 1 - "inventory.models.ts"
 Cohesion: 0.03
-Nodes (84): RFC-7807, CreditTerms, ConfirmConsumableEntryDialogComponent, Component, CreateItemDialogComponent, Component, CreatePurchaseReturnDialogData, CreateSupplierDialogComponent (+76 more)
+Nodes (75): RFC-7807, CreditTerms, ConfirmConsumableEntryDialogComponent, Component, CreateItemDialogComponent, Component, CreatePurchaseReturnDialogData, FulfillPoDialogData (+67 more)
 
-### Community 2 - "HealthService"
-Cohesion: 0.03
-Nodes (54): Optional, AssignProtocolDialog, Component, CreateProtocolDialogComponent, Component, Inject, MortalityDetailDialog, Component (+46 more)
+### Community 2 - "IncidentStatus"
+Cohesion: 0.15
+Nodes (6): IncidentSeverity, IncidentStatus, IncidentDetailComponent, Component, IncidentListComponent, Component
 
 ### Community 3 - "feeding.models.ts"
 Cohesion: 0.02
-Nodes (95): AdjustDialogData, AdjustFeedingEntryDialogComponent, Component, AnimalFeedsCostReportDialogComponent, FeedsCostReportDialogData, Component, ViewChild, CostBreakdownDialogData (+87 more)
+Nodes (109): AdjustDialogData, AdjustFeedingEntryDialogComponent, Component, FeedsCostReportDialogData, AssignFeedingPlanDialogComponent, DirectRationRow, SetRationDialogData, Component (+101 more)
 
 ### Community 4 - "finance.model.ts"
 Cohesion: 0.02
-Nodes (132): UserProfile, LookupService, Injectable, Injectable, WorkingContextService, BuySellSharesDialogData, ConfigureSharesDialogData, EditTransactionDialogComponent (+124 more)
+Nodes (104): BuySellSharesDialogData, ConfigureSharesDialogData, InvestorFormDialogComponent, Component, InvestorTransactionDialogData, TradeBillDialogMode, AccountGroup, AccountingHealth (+96 more)
 
 ### Community 5 - ".ReconcileAsync"
-Cohesion: 0.09
-Nodes (31): Disbursements, Disposals, Resynced, Splits, CancellationToken, Guid, List, Task (+23 more)
+Cohesion: 0.12
+Nodes (25): Disbursements, Disposals, Resynced, Splits, CancellationToken, Guid, List, Task (+17 more)
 
 ### Community 6 - "Farm360.Contracts.Finance"
 Cohesion: 0.05
-Nodes (33): Farm360.Application.Finance.Services, Farm360.Application.Finance.EventHandlers.Integration, Farm360.Domain.Livestock.Events, Farm360.Persistence.Repositories.Finance, Farm360.Domain.Finance.Accounting, Farm360.Domain.UnitTests.Finance, Farm360.Application.Finance.Queries, Farm360.Application.UnitTests.Finance (+25 more)
+Nodes (29): Farm360.Application.Finance.Services, Farm360.Application.Finance.EventHandlers.Integration, Farm360.Domain.Finance.Accounting, Farm360.Application.Finance.Queries, Farm360.Application.UnitTests.Finance, Farm360.Contracts.Finance, Farm360.Domain.Finance.Enums, Farm360.Application.Finance.Commands (+21 more)
 
 ### Community 7 - "IConsumableUsagePlanRepository"
-Cohesion: 0.05
-Nodes (57): Farm360.Application.Inventory.Queries.Consumables, CancellationToken, ILogger, ISender, Task, BulkConfirmDailyConsumableEntriesCommand, BulkConfirmDailyConsumableEntriesCommandHandler, ConfirmDailyConsumableEntryCommand (+49 more)
+Cohesion: 0.06
+Nodes (55): Farm360.Application.Inventory.Jobs, Farm360.Application.Inventory.Queries.Consumables, CancellationToken, ILogger, IPublisher, ISender, Task, BulkConfirmDailyConsumableEntriesCommand (+47 more)
 
 ### Community 8 - "MeasureUnit"
 Cohesion: 0.16
-Nodes (16): Farm360.Application.Inventory.Units, bool, CancellationToken, Dictionary, Guid, IReadOnlyList, List, string (+8 more)
+Nodes (15): bool, CancellationToken, Dictionary, Guid, IReadOnlyList, List, string, Task (+7 more)
 
-### Community 9 - "Farm360.Application.Common.Interfaces"
+### Community 9 - "Farm360.Domain.Common"
 Cohesion: 0.04
-Nodes (42): Farm360.Application.Inventory.Commands.StockTransactions, Farm360.Application.UnitTests.Organizations.Branches.Commands, Farm360.Application.Inventory.Queries.Reports, Farm360.Domain.Inventory.Exceptions, Farm360.Application.Common.Behaviors, Farm360.Domain.Inventory.Enums, Farm360.Application.Inventory.Commands.InventoryItems, Farm360.Application.UnitTests.Farms.Pens.Commands (+34 more)
+Nodes (38): Farm360.Application.Inventory.Commands.StockTransactions, Farm360.Application.Inventory.Queries.Reports, Farm360.Domain.Inventory.Exceptions, Farm360.Application.Common.Behaviors, Farm360.Domain.Inventory.Enums, Farm360.Application.Inventory.Commands.InventoryItems, Farm360.Persistence.Repositories.Inventory, Farm360.Application.Inventory.Queries.InventoryItems (+30 more)
 
-### Community 10 - ".GetTransactionsByFarmIdAsync"
-Cohesion: 0.37
-Nodes (6): CancellationToken, Guid, IReadOnlyList, ShareHolding, ShareTransaction, Task
+### Community 10 - "AbstractValidator"
+Cohesion: 0.07
+Nodes (44): AbstractValidator, CancellationToken, Task, ConfigureFarmSharesCommand, ConfigureFarmSharesCommandHandler, ConfigureFarmSharesCommandValidator, CancellationToken, Task (+36 more)
 
 ### Community 11 - "LocationSelectorComponent"
 Cohesion: 0.05
 Nodes (22): MasterDataComponent, Component, LocationSelectorComponent, Component, Input, MasterDataDropdownComponent, Component, Input (+14 more)
 
 ### Community 12 - "ApplicationDbContext"
-Cohesion: 0.11
-Nodes (15): DbContext, EntityTrackedEventArgs, IDesignTimeDbContextFactory, DateTime, Guid, Notification, NotificationType, EntityTypeBuilder (+7 more)
+Cohesion: 0.04
+Nodes (36): Farm360.Persistence.Configurations, DbContext, EntityTrackedEventArgs, IDesignTimeDbContextFactory, ITenantService, Guid, IReadOnlyCollection, List (+28 more)
 
-### Community 13 - "Farm360.Domain.Livestock.Repositories"
-Cohesion: 0.08
-Nodes (19): Farm360.Domain.Livestock.Repositories, Farm360.Domain.UnitTests.Feeding, Farm360.Application.Livestock, Farm360.Application.Livestock.Commands, Farm360.Domain.BusinessRules, Farm360.Application.Livestock.DTOs, Farm360.Persistence.Configurations.Livestock, Farm360.Persistence.Repositories.Livestock (+11 more)
+### Community 13 - "Farm360.Domain.Livestock"
+Cohesion: 0.06
+Nodes (29): Farm360.Application.Livestock, Farm360.Application.Livestock.Commands, Farm360.Application.Livestock.DTOs, Farm360.Persistence.Repositories.Livestock, Farm360.Application.Livestock.Queries, Farm360.Application.UnitTests.Livestock, Farm360.Domain.Livestock.Enums, Farm360.Domain.Livestock.Exceptions (+21 more)
 
 ### Community 14 - "IDomainEvent"
 Cohesion: 0.05
-Nodes (45): Farm360.Domain.Organizations.Events, DateTime, Guid, IReadOnlyList, List, BaseEntity, IDomainEvent, FarmCreatedEvent (+37 more)
+Nodes (44): CancellationToken, Task, AnimalDiedFinanceEventHandler, DateTime, Guid, IReadOnlyList, List, BaseEntity (+36 more)
 
 ### Community 15 - "CancellationToken"
 Cohesion: 0.11
-Nodes (21): CancellationToken, Task, CancellationToken, Task, AnimalTag, CancellationToken, DateOnly, Event (+13 more)
+Nodes (22): CancellationToken, Task, CancellationToken, Task, AnimalTag, CancellationToken, DateOnly, Event (+14 more)
 
 ### Community 17 - "report.models.ts"
 Cohesion: 0.03
-Nodes (49): AccountHeadSummary, FullAccountsReport, IncomeExpenseReport, FullAccountsReportComponent, SectionKey, Component, IncomeExpenseReportComponent, ReportMode (+41 more)
+Nodes (47): AccountHeadSummary, FullAccountsReportComponent, SectionKey, Component, IncomeExpenseReportComponent, ReportMode, SummaryCell, Component (+39 more)
 
-### Community 18 - "TradeCreditCommands.cs"
-Cohesion: 0.16
+### Community 18 - "TradeBillDto"
+Cohesion: 0.14
 Nodes (22): CancellationToken, DateOnly, Guid, Task, CancelTradeBillCommand, CancelTradeBillCommandHandler, OpenTradeBillCommand, OpenTradeBillCommandHandler (+14 more)
 
-### Community 19 - "DailyConsumableEntry"
-Cohesion: 0.14
-Nodes (18): DateOnly, Guid, DailyConsumableEntry, EntityTypeBuilder, DailyConsumableEntryConfiguration, CancellationToken, DateOnly, Guid (+10 more)
+### Community 19 - "ConsumableUsagePlan"
+Cohesion: 0.08
+Nodes (25): DateOnly, Guid, IReadOnlyCollection, List, ConsumableUsagePlan, ConsumableUsagePlanItem, DateOnly, Guid (+17 more)
 
-### Community 20 - "ReportExecutionService"
-Cohesion: 0.05
-Nodes (45): Farm360.Persistence.Repositories.Reporting, Farm360.Persistence.Configurations.Reporting, DataSet, Run, CancellationToken, IEndpointRouteBuilder, IResult, Task (+37 more)
+### Community 20 - "ReportRun"
+Cohesion: 0.09
+Nodes (18): Farm360.Persistence.Configurations.Reporting, CancellationToken, Guid, IReadOnlyList, Task, IReportRunRepository, DateTime, Guid (+10 more)
 
-### Community 21 - "InvestorDto"
-Cohesion: 0.14
-Nodes (18): CancellationToken, Task, CreateInvestorCommand, CreateInvestorCommandHandler, CancellationToken, Task, ToggleInvestorStatusCommand, ToggleInvestorStatusCommandHandler (+10 more)
+### Community 21 - "IInvestorRepository"
+Cohesion: 0.07
+Nodes (39): CancellationToken, Task, CreateInvestorCommand, CreateInvestorCommandHandler, CancellationToken, Task, RecordInvestorTransactionCommand, RecordInvestorTransactionCommandHandler (+31 more)
 
 ### Community 22 - "TradeBill"
 Cohesion: 0.09
-Nodes (25): CancellationToken, Guid, Task, LedgerPosting, LedgerPostingService, CancellationToken, DateOnly, Guid (+17 more)
+Nodes (27): CancellationToken, Guid, Task, LedgerPosting, LedgerPostingService, CancellationToken, DateOnly, Guid (+19 more)
 
-### Community 23 - "Task"
-Cohesion: 0.09
-Nodes (17): IAsyncDisposable, CancellationToken, Func, Guid, IEnumerable, Stream, Task, TimeSpan (+9 more)
+### Community 23 - "IUnitOfWork"
+Cohesion: 0.07
+Nodes (29): IAsyncDisposable, CancellationToken, Func, Guid, IEnumerable, Stream, Task, TimeSpan (+21 more)
 
-### Community 24 - "CancellationToken"
+### Community 24 - "ITenantService"
 Cohesion: 0.11
-Nodes (23): InventoryMappingExtensions, StockTransactionType, DateOnly, Guid, StockTransaction, Supplier, CancellationToken, DateOnly (+15 more)
+Nodes (24): ITenantService, InventoryMappingExtensions, StockTransactionType, DateOnly, Guid, StockTransaction, Supplier, CancellationToken (+16 more)
 
 ### Community 25 - "ReportContext"
-Cohesion: 0.05
-Nodes (50): CancellationToken, DateOnly, Guid, IReadOnlyDictionary, IReadOnlyList, IRequest, ISender, Task (+42 more)
+Cohesion: 0.11
+Nodes (23): DateOnly, IReadOnlyDictionary, IReadOnlyList, ISender, ReportContext, CancellationToken, Guid, IReadOnlyList (+15 more)
 
 ### Community 26 - "AnimalFeedingPlan"
-Cohesion: 0.10
-Nodes (21): Guid, IReadOnlyCollection, List, AnimalFeedingPlan, DateOnly, Guid, DailyFeedingEntry, FeedingPlanStatus (+13 more)
+Cohesion: 0.08
+Nodes (26): DateOnly, Guid, IReadOnlyCollection, List, AnimalFeedingPlan, FeedingPlanExclusion, DateOnly, Guid (+18 more)
 
 ### Community 27 - "header.component.ts"
-Cohesion: 0.15
-Nodes (5): ContextSelectorComponent, Component, HeaderComponent, Component, Output
+Cohesion: 0.09
+Nodes (12): ContextSelectorComponent, Component, HeaderComponent, Component, Output, MainLayoutComponent, Component, ViewChild (+4 more)
 
-### Community 28 - ".LoadAsync"
-Cohesion: 0.11
-Nodes (20): FormulaId, CancellationToken, CostPerKg, DateOnly, Dictionary, Guid, IEnumerable, IReadOnlyList (+12 more)
+### Community 28 - ".Handle"
+Cohesion: 0.15
+Nodes (15): FormulaId, CancellationToken, CostPerKg, Dictionary, Guid, IReadOnlyList, Task, FeedingBoardDto (+7 more)
 
 ### Community 29 - "TradeBillPayment"
-Cohesion: 0.09
-Nodes (19): TradeBillKind, TradeBillStatus, DateOnly, Guid, TradeBillPayment, EntityTypeBuilder, TradeBillConfiguration, TradeBillPaymentConfiguration (+11 more)
+Cohesion: 0.10
+Nodes (17): DateOnly, Guid, TradeBillPayment, EntityTypeBuilder, TradeBillConfiguration, TradeBillPaymentConfiguration, CancellationToken, Guid (+9 more)
 
-### Community 30 - "IInventoryItemRepository"
-Cohesion: 0.04
-Nodes (70): CancellationToken, ILogger, IPublisher, IReadOnlyList, Task, DailyEntryConfirmedEventHandler, CancellationToken, ILogger (+62 more)
+### Community 30 - "IStockTransactionRepository"
+Cohesion: 0.09
+Nodes (28): CancellationToken, Task, DeleteSupplierCommand, DeleteSupplierCommandHandler, CancellationToken, Task, UpdateSupplierCommand, UpdateSupplierCommandHandler (+20 more)
 
 ### Community 31 - "🌾 Farm360 AI — Comprehensive Enterprise User Manual"
 Cohesion: 0.04
 Nodes (47): 10.1 Running a Simulation, 10.2 Understanding the Simulation Outputs, 10. AI Intelligence & Profit Projections (`/livestock/:id`), 11. User Roles & Standard Operating Procedures (SOPs), 12. Troubleshooting & FAQs, 1. Fixed Quantity per Head Mode (`FixedQuantity`), 1. System Architecture & Tenant Context, 2.1 Logging In (+39 more)
 
 ### Community 32 - "UserProfileService"
-Cohesion: 0.33
-Nodes (7): IdentityResult, CancellationToken, Guid, string, Task, UserProfileService, UserManager
+Cohesion: 0.18
+Nodes (12): IdentityResult, CancellationToken, Guid, Task, IUserProfileService, UserProfileDetails, CancellationToken, Guid (+4 more)
 
 ### Community 33 - ".Handle"
 Cohesion: 0.06
-Nodes (47): Category, CancellationToken, Task, GetFinancialDashboardQuery, GetFinancialDashboardQueryHandler, CancellationToken, Task, GetFinancialTransactionSummaryQuery (+39 more)
+Nodes (42): Category, CancellationToken, Task, GetFinancialDashboardQuery, GetFinancialDashboardQueryHandler, CancellationToken, DateTime, Dictionary (+34 more)
 
-### Community 34 - "AuditableEntity"
-Cohesion: 0.06
-Nodes (25): DateTime, Guid, AuditableEntity, DateTime, Guid, ISoftDeletable, ITenantEntity, ShareTransactionType (+17 more)
+### Community 34 - "FarmShareConfig"
+Cohesion: 0.08
+Nodes (18): ShareTransactionType, DateTime, Guid, FarmShareConfig, Guid, ShareHolding, DateTime, Guid (+10 more)
 
-### Community 35 - "Farm360.Domain.Common"
-Cohesion: 0.07
-Nodes (31): Farm360.Domain.Feeding.Interfaces.Repositories, Farm360.Domain.Feeding, Farm360.Application.Feeding.Commands.FeedingSchedules, Farm360.Application.Feeding.Queries.Board, Farm360.Domain.Common, Farm360.Application.Feeding.Commands.FeedFormulas, Farm360.Domain.Feeding.Events, Farm360.Application.Feeding.Services (+23 more)
+### Community 35 - "Farm360.Application.Common.Interfaces"
+Cohesion: 0.04
+Nodes (60): Farm360.Domain.Feeding.Interfaces.Repositories, Farm360.Application.Feeding.Commands.AnimalFeedingPlans, Farm360.Application.Feeding.Queries.AnimalFeedingPlans, Farm360.Domain.Livestock.Events, Farm360.Application.Feeding.Commands.ConsumptionLogs, Farm360.Domain.Feeding, Farm360.Domain.UnitTests.Feeding, Farm360.Application.Inventory.Units (+52 more)
 
 ### Community 36 - "LivestockEndpoints"
 Cohesion: 0.27
 Nodes (9): IFormFile, IMediator, CancellationToken, Guid, IResult, ISender, List, Task (+1 more)
 
-### Community 37 - ".ToDto"
-Cohesion: 0.17
-Nodes (14): Farm360.Application.Health.Mappings, MedicalTreatmentDto, VaccinationEventDto, HealthMappingExtensions, CancellationToken, Task, GetTreatmentListQuery, GetTreatmentListQueryHandler (+6 more)
+### Community 37 - "HealthEndpoints.cs"
+Cohesion: 0.04
+Nodes (66): Farm360.Application.Health.Queries.AnimalHealth, Farm360.Application.Health.Queries.SpecializedReports, Farm360.Application.Health.Queries.DiseaseIncidents, Farm360.Application.Health.Queries.VaccinationProtocols, Farm360.Application.Health.Queries.VaccinationEvents, Farm360.Application.Health.Queries.MortalityRecords, Farm360.Application.Health.Mappings, Farm360.Application.Health.Queries.Deworming (+58 more)
 
 ### Community 38 - "Breed"
-Cohesion: 0.07
-Nodes (23): CancellationToken, Guid, Task, ProjectionDefaultsResolver, BreedMappings, Breed, CancellationToken, Guid (+15 more)
+Cohesion: 0.10
+Nodes (16): Breed, CancellationToken, Guid, IReadOnlyList, Items, Task, TotalCount, IBreedRepository (+8 more)
 
-### Community 39 - "ITransactionalCommand"
-Cohesion: 0.15
-Nodes (25): Method, ITransactionalCommand, CancellationToken, Guid, string, Task, CancelFixedAssetDisposalCommand, CancelFixedAssetDisposalCommandHandler (+17 more)
+### Community 39 - "IRequestHandler"
+Cohesion: 0.11
+Nodes (36): IRequestHandler, Method, ITransactionalCommand, CancellationToken, Date, DateOnly, Guid, string (+28 more)
 
 ### Community 40 - "cattle-profit-projection.component.ts"
 Cohesion: 0.08
@@ -930,103 +960,103 @@ Nodes (29): CattleProfitProjectionComponent, Component, ProjectionDailyTableComp
 
 ### Community 41 - "IAggregateRoot"
 Cohesion: 0.08
-Nodes (31): Farm360.Domain.MasterData.Locations, IReadOnlyList, IAggregateRoot, Country, Guid, District, Guid, Division (+23 more)
+Nodes (32): Farm360.Persistence.Configurations.MasterData, Farm360.Domain.MasterData.Locations, IReadOnlyList, IAggregateRoot, Country, Guid, District, Guid (+24 more)
 
-### Community 42 - "FeedIngredient"
-Cohesion: 0.10
-Nodes (18): FeedCategory, ScheduleFrequency, Guid, FeedIngredient, DateOnly, Guid, FeedingSchedule, IEnumerable (+10 more)
+### Community 42 - "FeedFormula"
+Cohesion: 0.07
+Nodes (29): DailyFeedingEntryStatus, FeedCategory, FormulaStatus, ReconciliationStatus, ScheduleFrequency, Guid, IReadOnlyCollection, List (+21 more)
 
 ### Community 43 - "Farm360 AI — Complete Solution Structure"
 Cohesion: 0.05
 Nodes (41): 10.1 What Will Change, 10.2 Stability Hierarchy, 10.3 Team Scaling Notes, 10.4 The Promises This Architecture Makes, 10. Ten-Year Maintainability Notes, 1.1 Technology Decisions (from ADRs), 1.2 Project Count Summary, 1. Solution Overview (+33 more)
 
-### Community 44 - "Farm360.Application.Intelligence.Interfaces"
-Cohesion: 0.08
-Nodes (24): Farm360.Persistence.Repositories.Intelligence, Farm360.Domain.Intelligence, Farm360.Persistence.Repositories.Dashboard, Farm360.Application.Intelligence.Interfaces, Farm360.Domain.Dashboard.Interfaces, Farm360.Domain.Intelligence.Enums, Farm360.Infrastructure.BackgroundServices.Intelligence, Farm360.Domain.Intelligence.Interfaces.Repositories (+16 more)
+### Community 44 - "Farm360.Domain.Intelligence"
+Cohesion: 0.20
+Nodes (5): Farm360.Persistence.Repositories.Intelligence, Farm360.Domain.Intelligence, Farm360.Persistence.Repositories.Dashboard, Farm360.Persistence.Configurations.Intelligence, Farm360.Domain.Dashboard.Interfaces
 
 ### Community 45 - "dependencies"
 Cohesion: 0.07
-Nodes (27): @angular/animations, @angular/common, @angular/compiler, @angular/core, @angular/forms, @angular/platform-browser-dynamic, @angular/router, jspdf (+19 more)
+Nodes (27): @angular/animations, @angular/common, @angular/compiler, @angular/core, @angular/forms, @angular/platform-browser-dynamic, @angular/router, chart.js (+19 more)
 
 ### Community 46 - "Program.cs"
-Cohesion: 0.14
-Nodes (18): Farm360.Api.Endpoints, Farm360.Api.Endpoints.Health, Farm360.Api.Endpoints.MasterData, Farm360.Api.FunctionalTests, Farm360.Api.Endpoints.Organizations, Farm360.Api.Endpoints.Inventory, Farm360.Api.Endpoints.Livestock, Farm360.Api.Endpoints.Tenants (+10 more)
+Cohesion: 0.11
+Nodes (21): Farm360.Api.Endpoints, Farm360.Api.Endpoints.Health, Farm360.Api.Endpoints.MasterData, Farm360.Api.FunctionalTests, Farm360.Api.Endpoints.Organizations, Farm360.Api.Endpoints.Inventory, Farm360.Api.Endpoints.Livestock, Farm360.Api.Endpoints.Tenants (+13 more)
 
-### Community 47 - "AnimalPickerComponent"
-Cohesion: 0.06
-Nodes (18): buildCreditTermsGroup(), CreditTermsFieldsComponent, toCreditTerms(), Component, Input, ExpenseFormDialogComponent, Component, IncomeFormDialogComponent (+10 more)
+### Community 47 - "report-entity-picker.component.ts"
+Cohesion: 0.05
+Nodes (37): DASHBOARD_ROUTES, FarmDashboardComponent, Component, ShedDashboardComponent, Component, FarmCardComponent, Component, Input (+29 more)
 
 ### Community 48 - "PagedResult"
-Cohesion: 0.12
-Nodes (23): Farm360.Application.Health.Queries.Deworming, IReadOnlyList, PagedResult, DewormingCalendarEventDto, VetVisitDto, CancellationToken, Task, GetDewormingCalendarQuery (+15 more)
+Cohesion: 0.07
+Nodes (41): IReadOnlyList, PagedResult, DewormingCalendarEventDto, VetVisitDto, CancellationToken, Task, GetDewormingCalendarQuery, GetDewormingCalendarQueryHandler (+33 more)
 
-### Community 49 - "UnitRequests.cs"
-Cohesion: 0.16
-Nodes (20): CancellationToken, IReadOnlyList, Task, DeleteMeasureUnitsCommand, DeleteMeasureUnitsCommandHandler, DeleteUnitConversionsCommand, DeleteUnitConversionsCommandHandler, GetItemUnitsQuery (+12 more)
+### Community 49 - "UnitConversion"
+Cohesion: 0.10
+Nodes (23): CancellationToken, IReadOnlyList, Task, DeleteMeasureUnitsCommand, DeleteMeasureUnitsCommandHandler, DeleteUnitConversionsCommand, DeleteUnitConversionsCommandHandler, GetItemUnitsQuery (+15 more)
 
 ### Community 50 - "Frontend (`Farm360.Web`)"
 Cohesion: 0.05
 Nodes (38): API Layer (`Farm360.Api`), Application Layer (`Farm360.Application`), Architecture Diagram, Automated Tests, Contracts Layer (`Farm360.Contracts`), Domain Layer (`Farm360.Domain`), Frontend (`Farm360.Web`), How Profit/Loss Sharing Works (+30 more)
 
-### Community 51 - "Farm360.Domain.Organizations.Repositories"
-Cohesion: 0.06
-Nodes (43): Farm360.Application.Organizations.Commands, Farm360.Domain.Organizations.Repositories, Farm360.Application.Organizations.DTOs, Farm360.Application.Organizations.Queries, Farm360.Application.UnitTests.Organizations.Commands, Farm360.Persistence.Repositories.Organizations, Farm360.Domain.Organizations, CancellationToken (+35 more)
-
-### Community 52 - "Farm360.Application.Reporting.Model"
-Cohesion: 0.06
-Nodes (36): Farm360.Domain.Reporting, Farm360.Application.Reporting.Definitions.Health, Farm360.Application.Reporting.Model, Farm360.Application.Reporting.Definitions.Livestock, Farm360.Application.Reporting.Registry, Farm360.Application.Reporting.Services, Farm360.Application.Reporting.Definitions.Finance, Farm360.Infrastructure.Reporting.Pdf (+28 more)
-
-### Community 53 - "BaseValueObject"
-Cohesion: 0.06
-Nodes (22): Farm360.Domain.Intelligence.ValueObjects, IEquatable, CancellationToken, Guid, Task, CancellationToken, Guid, Task (+14 more)
-
-### Community 54 - "HealthEndpoints.cs"
+### Community 51 - "IOrganizationRepository"
 Cohesion: 0.09
-Nodes (24): Farm360.Application.Health.Queries.AnimalHealth, Farm360.Application.Health.Queries.SpecializedReports, Farm360.Application.Health.Commands.VetVisits, Farm360.Application.Health.Queries.MortalityRecords, Farm360.Application.Health.Queries.MedicalTreatments, Farm360.Application.Health.Commands.MortalityRecords, IEndpointRouteBuilder, AdministerVaccinationRequest (+16 more)
+Nodes (27): CancellationToken, Task, ActivateOrganizationCommand, ActivateOrganizationCommandHandler, CancellationToken, Task, CancellationToken, Task (+19 more)
+
+### Community 52 - "Farm360.Domain.Livestock.Repositories"
+Cohesion: 0.12
+Nodes (12): Farm360.Domain.Livestock.Repositories, Farm360.Application.Reporting.Definitions.Health, Farm360.Application.Reporting.Model, Farm360.Application.Reporting.Definitions.Livestock, Farm360.Application.Reporting.Definitions.Finance, Farm360.Infrastructure.Reporting.Pdf, Farm360.Application.Reporting.Definitions.Feeding, Farm360.Infrastructure.Reporting.Csv (+4 more)
+
+### Community 53 - "Farm360.Application.Intelligence.Interfaces"
+Cohesion: 0.06
+Nodes (25): Farm360.Domain.Intelligence.ValueObjects, Farm360.Application.Intelligence.Interfaces, Farm360.Application.Intelligence.EventHandlers, Farm360.Infrastructure.BackgroundServices.Intelligence, Farm360.Domain.Intelligence.Interfaces.Repositories, CancellationToken, Guid, Task (+17 more)
+
+### Community 54 - "GetHealthDashboardQueryHandler"
+Cohesion: 0.60
+Nodes (4): Farm360.Application.Health.Queries.Dashboard, HealthDashboardDto, GetHealthDashboardQuery, GetHealthDashboardQueryHandler
 
 ### Community 55 - "Angular Frontend"
 Cohesion: 0.05
 Nodes (37): Angular Frontend, API Layer, Application Layer, Automated Tests, Current State — Gap Analysis, Domain Layer, Health & Vaccination Module — Implementation Plan, Manual Verification (+29 more)
 
 ### Community 56 - "Animal"
-Cohesion: 0.13
-Nodes (11): DateOnly, Guid, IReadOnlyCollection, List, Animal, AcquisitionType, AnimalSex, AnimalSpecies (+3 more)
+Cohesion: 0.08
+Nodes (25): DateOnly, Guid, IReadOnlyCollection, List, Animal, DateOnly, Guid, BodyConditionScore (+17 more)
 
 ### Community 57 - "IAnimalFeedAllocationRepository"
-Cohesion: 0.14
-Nodes (17): CancellationToken, DateOnly, IReadOnlyList, Task, AnimalGrowthReportDefinition, AnimalGrowthReportRow, AnimalFeedAllocation, CancellationToken (+9 more)
+Cohesion: 0.12
+Nodes (24): CancellationToken, ILogger, IPublisher, IReadOnlyList, Task, DailyEntryConfirmedEventHandler, CancellationToken, ILogger (+16 more)
 
 ### Community 58 - "Farm360.Contracts.Intelligence"
-Cohesion: 0.08
-Nodes (24): Farm360.Contracts.Intelligence, Farm360.Application.Intelligence.Queries.GetProjectionDefaults, Farm360.Application.Intelligence.Services, CancellationToken, Guid, Task, CostAndProfitSnapshot, ICostAndProfitEngine (+16 more)
+Cohesion: 0.06
+Nodes (33): Farm360.Contracts.Intelligence, Farm360.Application.Intelligence.Queries.GetProjectionDefaults, Farm360.Application.Intelligence.Services, CancellationToken, Guid, Task, CostAndProfitSnapshot, ICostAndProfitEngine (+25 more)
 
-### Community 59 - "ReportColumn"
-Cohesion: 0.11
-Nodes (34): CancellationToken, Func, IReadOnlyList, Task, IReportDefinition, ReportDefinition, ReportGroup, ActiveFeedingPlansCostReportDefinition (+26 more)
+### Community 59 - "ReportDefinition"
+Cohesion: 0.12
+Nodes (14): CultureInfo, IConvertible, CancellationToken, IReadOnlyCollection, IReadOnlyList, Task, IReportDefinition, ReportDefinition (+6 more)
 
-### Community 60 - "FinancialTransactionDto"
-Cohesion: 0.11
-Nodes (23): CancellationToken, Task, CreateFinancialTransactionCommand, CreateFinancialTransactionCommandHandler, CancellationToken, Task, RecordExpenseCommand, RecordExpenseCommandHandler (+15 more)
+### Community 60 - "IFinancialTransactionRepository"
+Cohesion: 0.05
+Nodes (51): CancellationToken, Task, CreateFinancialTransactionCommand, CreateFinancialTransactionCommandHandler, CancellationToken, Task, RecordExpenseCommand, RecordExpenseCommandHandler (+43 more)
 
 ### Community 61 - "ReportDataSet"
-Cohesion: 0.07
-Nodes (27): CultureInfo, IConvertible, IXLCell, IXLWorksheet, IReadOnlyCollection, CancellationToken, Task, IReportRenderer (+19 more)
+Cohesion: 0.20
+Nodes (10): IXLCell, IXLWorksheet, ReportDataSet, ReportGroupTotals, ReportRow, CancellationToken, DateTime, int (+2 more)
 
-### Community 62 - "VaccinationEvent"
-Cohesion: 0.15
-Nodes (14): DateOnly, Guid, VaccinationEvent, AnimalTag, CancellationToken, DateOnly, Event, Guid (+6 more)
+### Community 62 - "VaccinationProtocol"
+Cohesion: 0.08
+Nodes (22): DateOnly, Guid, VaccinationEvent, Guid, IReadOnlyCollection, List, VaccinationProtocol, VaccinationProtocolStep (+14 more)
 
-### Community 63 - "AccountChart"
-Cohesion: 0.11
-Nodes (13): AccountHead, Amount, Credit, Debit, EndExclusive, DateTime, Dictionary, IReadOnlyList (+5 more)
+### Community 63 - "TransactionCategory"
+Cohesion: 0.12
+Nodes (12): SettlementAccount, TransactionCategory, TransactionType, DateTime, Guid, DateTime, Fact, Guid (+4 more)
 
-### Community 64 - "Exception"
-Cohesion: 0.11
-Nodes (18): DateTimeOffset, Exception, IDictionary, ReadOnlyDictionary, AccountLockedException, ConflictException, ForbiddenAccessException, NotFoundException (+10 more)
+### Community 64 - "InventoryItem"
+Cohesion: 0.12
+Nodes (8): InventoryCategory, Guid, InventoryItem, EntityTypeBuilder, InventoryItemConfiguration, Fact, Guid, InventoryDomainTests
 
 ### Community 65 - "IdentityDbContext"
-Cohesion: 0.24
-Nodes (15): IdentityRole, IdentityUser, DateTime, DbSet, Guid, ModelBuilder, AuthAuditLog, ExternalProvider (+7 more)
+Cohesion: 0.19
+Nodes (16): Farm360.Identity.Entities, IdentityRole, IdentityUser, DateTime, DbSet, Guid, ModelBuilder, AuthAuditLog (+8 more)
 
 ### Community 66 - "devDependencies"
 Cohesion: 0.06
@@ -1034,123 +1064,123 @@ Nodes (31): @angular/cli, @angular/compiler-cli, @angular-devkit/build-angular, 
 
 ### Community 67 - "ActionableInsight"
 Cohesion: 0.11
-Nodes (18): Farm360.Persistence.Configurations.Intelligence, Guid, ActionableInsight, InsightSeverity, InsightType, CancellationToken, Guid, List (+10 more)
+Nodes (18): Farm360.Domain.Intelligence.Enums, ActionableInsightDto, CancellationToken, Guid, List, Task, Guid, ActionableInsight (+10 more)
 
 ### Community 68 - "Farm360.Persistence.Migrations.ApplicationDb"
-Cohesion: 0.06
-Nodes (16): Farm360.Persistence.Migrations.ApplicationDb, MigrationBuilder, ModelBuilder, AddHealthModule, MigrationBuilder, ModelBuilder, AddLivestockBatchAndBcs, MigrationBuilder (+8 more)
+Cohesion: 0.05
+Nodes (19): Farm360.Persistence.Migrations.ApplicationDb, MigrationBuilder, ModelBuilder, AddHealthModule, MigrationBuilder, ModelBuilder, AddLivestockBatchAndBcs, MigrationBuilder (+11 more)
 
 ### Community 69 - "Farm360.Persistence.Migrations.Application"
 Cohesion: 0.06
-Nodes (16): Farm360.Persistence.Migrations.Application, MigrationBuilder, ModelBuilder, InitialTenancy, MigrationBuilder, ModelBuilder, AddInventoryModuleEntities, MigrationBuilder (+8 more)
+Nodes (16): Farm360.Persistence.Migrations.Application, MigrationBuilder, ModelBuilder, AddInventoryModuleEntities, MigrationBuilder, ModelBuilder, AddBreedManagement, MigrationBuilder (+8 more)
 
-### Community 70 - "TransactionCategory"
-Cohesion: 0.14
-Nodes (11): TransactionCategory, TransactionType, DateTime, Guid, DateTime, Fact, Guid, InlineData (+3 more)
+### Community 70 - "IPurchaseOrderRepository"
+Cohesion: 0.09
+Nodes (33): CancellationToken, Task, Unit, ApprovePurchaseOrderCommand, ApprovePurchaseOrderCommandHandler, CancellationToken, Guid, Task (+25 more)
 
-### Community 71 - "INotificationHandler"
-Cohesion: 0.04
-Nodes (68): Farm360.Application.Finance.EventHandlers.Internal, Farm360.Application.Intelligence.EventHandlers, Farm360.Domain.Finance.Events, INotification, INotificationHandler, ILogger, AnimalDiedEventHandler, CancellationToken (+60 more)
+### Community 71 - "IAnimalCostLedgerRepository"
+Cohesion: 0.06
+Nodes (42): Farm360.Application.Finance.EventHandlers.Internal, Farm360.Domain.Finance.Events, CancellationToken, ILogger, Task, AnimalAcquisitionPriceUpdatedEventHandler, AnimalAcquisitionPriceUpdatedNotification, CancellationToken (+34 more)
 
-### Community 72 - "Investor"
-Cohesion: 0.11
-Nodes (17): InvestorTransactionType, DateTime, Guid, IReadOnlyCollection, List, Investor, DateTime, Guid (+9 more)
+### Community 72 - "AuditableEntity"
+Cohesion: 0.08
+Nodes (24): DateTime, Guid, AuditableEntity, DateTime, Guid, ISoftDeletable, ITenantEntity, InvestorTransactionType (+16 more)
 
-### Community 73 - "FinancialTransactionRepository"
-Cohesion: 0.20
-Nodes (13): CancellationToken, DateOnly, DateTime, Guid, IReadOnlyList, Items, Task, TotalCount (+5 more)
+### Community 73 - "IRequest"
+Cohesion: 0.28
+Nodes (19): Farm360.Application.MasterData.DTOs, IRequest, CountryDto, DistrictDto, DivisionDto, LocationMappingExtensions, UnionDto, UpazilaDto (+11 more)
 
-### Community 74 - "CancelFeedingPlanCommandHandler"
-Cohesion: 0.17
-Nodes (11): Farm360.Application.Feeding.Commands.AnimalFeedingPlans, CancellationToken, ILogger, Task, CancelFeedingPlanCommand, CancelFeedingPlanCommandHandler, CancellationToken, ILogger (+3 more)
+### Community 74 - "AccountChart"
+Cohesion: 0.10
+Nodes (13): AccountHead, Amount, Credit, Debit, EndExclusive, DateTime, Dictionary, IReadOnlyList (+5 more)
 
 ### Community 75 - "DiseaseIncident"
-Cohesion: 0.13
-Nodes (17): DateOnly, Guid, IEnumerable, IReadOnlyCollection, List, DiseaseIncident, DewormingFrequency, IncidentSeverity (+9 more)
+Cohesion: 0.11
+Nodes (19): DateOnly, Guid, IEnumerable, IReadOnlyCollection, List, DiseaseIncident, DewormingFrequency, IncidentSeverity (+11 more)
 
 ### Community 76 - "Farm360.Domain.Intelligence.Projections"
-Cohesion: 0.08
-Nodes (17): Farm360.Domain.UnitTests.Intelligence, Farm360.Application.Intelligence.Queries.SolveBreakEven, Farm360.Domain.Intelligence.Projections, Farm360.Domain.Intelligence.Repositories, BreakEvenTarget, CancellationToken, Task, SolveBreakEvenQuery (+9 more)
+Cohesion: 0.09
+Nodes (16): Farm360.Domain.UnitTests.Intelligence, Farm360.Application.Intelligence.Queries.SolveBreakEven, Farm360.Domain.Intelligence.Projections, BreakEvenTarget, CancellationToken, Task, SolveBreakEvenQuery, SolveBreakEvenQueryHandler (+8 more)
 
-### Community 77 - "BalanceSheetEntryRepository"
-Cohesion: 0.18
-Nodes (8): CancellationToken, Guid, IEnumerable, IReadOnlyList, Task, BalanceSheetEntryRepository, CodeNumbers, FixedAssetRepository
+### Community 77 - "BalanceSheetEntry"
+Cohesion: 0.06
+Nodes (27): DateOnly, Guid, BalanceSheetEntry, BalanceSheetEntryType, DateOnly, Guid, FarmAccountingSettings, CancellationToken (+19 more)
 
 ### Community 78 - "GenericRepository"
 Cohesion: 0.06
 Nodes (22): Farm360.Shared.Primitives, CancellationToken, Guid, IReadOnlyList, Task, IGenericRepository, CancellationToken, DbSet (+14 more)
 
 ### Community 79 - ".CreateActiveAnimal"
-Cohesion: 0.15
-Nodes (6): IEnumerable, AnimalTag, DateOnly, Fact, Guid, AnimalTests
+Cohesion: 0.11
+Nodes (9): AcquisitionType, AnimalSex, AnimalSpecies, IEnumerable, AnimalTag, DateOnly, Fact, Guid (+1 more)
 
 ### Community 80 - "Farm360ReportDocument"
 Cohesion: 0.13
 Nodes (12): Color, DocumentMetadata, float, IContainer, IDocument, IDocumentContainer, ReportAlign, Guid (+4 more)
 
 ### Community 81 - ".Allocate"
-Cohesion: 0.15
-Nodes (12): DateOnly, int, IReadOnlyList, OverheadAllocationCalculator, OverheadAllocationShare, OverheadAllocationSubject, Fact, Guid (+4 more)
+Cohesion: 0.16
+Nodes (11): DateOnly, int, IReadOnlyList, OverheadAllocationCalculator, OverheadAllocationSubject, Fact, Guid, InlineData (+3 more)
 
 ### Community 82 - "compilerOptions"
 Cohesion: 0.07
 Nodes (29): dom, ES2022, angularCompilerOptions, enableI18nLegacyMessageIdFormat, strictInjectionParameters, strictInputAccessModifiers, strictTemplates, compileOnSave (+21 more)
 
-### Community 83 - "IFarmRepository"
-Cohesion: 0.08
-Nodes (29): Farm360.Application.Farms.DTOs, CancellationToken, Task, DeleteFarmCommand, DeleteFarmCommandHandler, FarmDto, FarmListDto, FarmMappingExtensions (+21 more)
+### Community 83 - "FarmListDto"
+Cohesion: 0.25
+Nodes (11): FarmListDto, CancellationToken, IReadOnlyList, Task, GetAllFarmsQuery, GetAllFarmsQueryHandler, CancellationToken, IReadOnlyList (+3 more)
 
 ### Community 84 - "IAnimalFeedingPlanRepository"
-Cohesion: 0.09
-Nodes (34): CancellationToken, Task, CancellationToken, ILogger, Task, WeightRecordedEventHandler, CancellationToken, ILogger (+26 more)
+Cohesion: 0.11
+Nodes (29): ILogger, WeightRecordedEventHandler, CancellationToken, ILogger, Task, CreateDailyFeedingEntriesCommand, CreateDailyFeedingEntriesCommandHandler, AnimalFeedingPlan (+21 more)
 
 ### Community 85 - ".ToDto"
-Cohesion: 0.08
-Nodes (32): Farm360.Application.Feeding.Queries.Analytics, Farm360.Application.Feeding.Mappings, Farm360.Application.Feeding.DTOs, ConsumptionDetailDto, FcrAnalyticsDto, FeedConsumptionLogDto, FeedIngredientDto, FeedingScheduleDto (+24 more)
+Cohesion: 0.10
+Nodes (26): Farm360.Application.Feeding.Mappings, Farm360.Application.Feeding.DTOs, ConsumptionDetailDto, FeedConsumptionLogDto, FeedIngredientDto, FeedingScheduleDto, FormulaIngredientDto, MonthlyFcrDataPointDto (+18 more)
 
 ### Community 86 - "Phase 1: Authentication & Organization CRUD — Production-Ready Audit & Fix Plan"
 Cohesion: 0.07
 Nodes (28): Architecture Audit Findings, Automated Tests, Background, Component 1: Backend — Authentication Fix (Identity Layer), Component 2: Backend — Organization CRUD Fix (Application + Domain), Component 3: Frontend — Authentication Fix (Angular), Component 4: Frontend — Organization CRUD Fix (Angular), 🔴 CRITICAL (Breaks core functionality) (+20 more)
 
 ### Community 87 - "MedicalTreatment"
-Cohesion: 0.18
-Nodes (9): TreatmentStatus, DateOnly, Guid, MedicalTreatment, IEnumerable, Dosage, WithdrawalPeriod, EntityTypeBuilder (+1 more)
+Cohesion: 0.12
+Nodes (17): TreatmentStatus, DateOnly, Guid, MedicalTreatment, IEnumerable, Dosage, WithdrawalPeriod, EntityTypeBuilder (+9 more)
 
 ### Community 88 - "IPipelineBehavior"
 Cohesion: 0.07
 Nodes (22): IPipelineBehavior, CancellationToken, RequestHandlerDelegate, Task, CachingBehavior, CancellationToken, RequestHandlerDelegate, Task (+14 more)
 
 ### Community 89 - "FarmLedger"
-Cohesion: 0.09
-Nodes (25): LedgerAccount, DateOnly, CancellationToken, Task, GetMonthlyPnLReportQuery, GetMonthlyPnLReportQueryHandler, CancellationToken, Task (+17 more)
+Cohesion: 0.06
+Nodes (40): LedgerAccount, LineSpec, CancellationToken, DateOnly, Dictionary, IReadOnlyList, string, Task (+32 more)
 
-### Community 90 - "SkipDailyFeedingEntryCommandHandler"
-Cohesion: 0.38
-Nodes (5): CancellationToken, ILogger, Task, SkipDailyFeedingEntryCommand, SkipDailyFeedingEntryCommandHandler
+### Community 90 - "AdjustDailyFeedingEntryCommandHandler"
+Cohesion: 0.11
+Nodes (17): CancellationToken, ILogger, IPublisher, Task, AdjustDailyFeedingEntryCommand, AdjustDailyFeedingEntryCommandHandler, CancellationToken, IPublisher (+9 more)
 
 ### Community 91 - "IFeedFormulaRepository"
-Cohesion: 0.08
-Nodes (32): Farm360.Application.Feeding.Commands.ConsumptionLogs, CancellationToken, Guid, IPublisher, Task, ConsumptionIngredientDetailRequest, LogFeedConsumptionCommand, LogFeedConsumptionCommandHandler (+24 more)
-
-### Community 92 - "FeedRequirementQuery.cs"
-Cohesion: 0.13
-Nodes (21): Farm360.Application.Feeding.Queries.Planning, Name, CancellationToken, CostPerKg, DateOnly, Dictionary, Guid, HashSet (+13 more)
-
-### Community 93 - "GetAnimalNutritionQueryHandler"
-Cohesion: 0.15
-Nodes (16): CpG, Farm360.Application.Feeding.Queries.Nutrition, DmKg, MeMj, CancellationToken, Date, DateOnly, decimal (+8 more)
-
-### Community 94 - "Farm360.Persistence.Context"
 Cohesion: 0.06
-Nodes (37): Farm360.Domain.Health.ValueObjects, Farm360.Domain.Health.Events, Farm360.Domain.Health, Farm360.Persistence.Queries, Farm360.Persistence.Permissions, Farm360.Persistence.Repositories.Farms, Farm360.Persistence.Context, Farm360.Domain.Farms.Repositories (+29 more)
+Nodes (41): CancellationToken, Guid, IPublisher, Task, LogFeedConsumptionCommand, LogFeedConsumptionCommandHandler, LogFeedConsumptionCommandValidator, CancellationToken (+33 more)
+
+### Community 92 - ".Handle"
+Cohesion: 0.16
+Nodes (17): Name, CancellationToken, CostPerKg, DateOnly, Dictionary, Guid, HashSet, IReadOnlyDictionary (+9 more)
+
+### Community 93 - "AnimalNutritionReportDefinition"
+Cohesion: 0.12
+Nodes (20): CpG, Farm360.Application.Feeding.Queries.Nutrition, DmKg, MeMj, CancellationToken, Date, DateOnly, decimal (+12 more)
+
+### Community 94 - "Farm360.Domain.Health.Interfaces.Repositories"
+Cohesion: 0.05
+Nodes (43): Farm360.Domain.Health.ValueObjects, Farm360.Domain.Health.Events, Farm360.Domain.Health, Farm360.Persistence.Configurations.Health, Farm360.Domain.Health.Exceptions, Farm360.Application.Health.Commands.DiseaseIncidents, Farm360.Domain.Health.Interfaces.Repositories, Farm360.Application.Health.Commands.MedicalTreatments (+35 more)
 
 ### Community 95 - ".Handle"
 Cohesion: 0.12
 Nodes (20): CancellationToken, DateTime, IEnumerable, int, IReadOnlyCollection, IReadOnlyList, List, Task (+12 more)
 
 ### Community 96 - "HealthDomainTests"
-Cohesion: 0.24
-Nodes (3): Fact, Guid, HealthDomainTests
+Cohesion: 0.20
+Nodes (5): CancellationToken, Task, Fact, Guid, HealthDomainTests
 
 ### Community 97 - "AnimalCommandValidatorTests"
 Cohesion: 0.20
@@ -1161,12 +1191,12 @@ Cohesion: 0.07
 Nodes (26): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+18 more)
 
 ### Community 99 - "ITradeBillRepository"
-Cohesion: 0.17
-Nodes (13): CancellationToken, Task, DeleteFinancialTransactionCommand, DeleteFinancialTransactionCommandHandler, CancellationToken, Task, CancellationToken, Guid (+5 more)
+Cohesion: 0.20
+Nodes (11): CancellationToken, Task, DeleteFinancialTransactionCommand, DeleteFinancialTransactionCommandHandler, CancellationToken, Guid, IReadOnlyList, Task (+3 more)
 
 ### Community 100 - "Shed"
-Cohesion: 0.14
-Nodes (11): ShedStatus, Guid, Shed, EntityTypeBuilder, ShedConfiguration, CancellationToken, Guid, IReadOnlyDictionary (+3 more)
+Cohesion: 0.18
+Nodes (5): ShedStatus, Guid, Shed, EntityTypeBuilder, ShedConfiguration
 
 ### Community 101 - ".Handle"
 Cohesion: 0.21
@@ -1188,65 +1218,65 @@ Nodes (6): FakeAllocationRepository, DateOnly, Fact, Task, TestRules, OverheadAl
 Cohesion: 0.07
 Nodes (27): AWSSDK.S3, AWSSDK.SimpleNotificationService, ClosedXML, Hangfire.AspNetCore, Hangfire.Core, Hangfire.SqlServer, Microsoft.Extensions.Http, Microsoft.Extensions.Http.Resilience (+19 more)
 
-### Community 106 - ".Allocate"
+### Community 106 - "BatchRecordVaccinationCommand.cs"
+Cohesion: 0.13
+Nodes (17): Farm360.Application.Health.Commands.VaccinationEvents, CancellationToken, Task, BatchRecordVaccinationCommand, BatchRecordVaccinationCommandHandler, BatchRecordVaccinationCommandValidator, CancellationToken, Task (+9 more)
+
+### Community 107 - "ILedgerPostingService"
 Cohesion: 0.14
-Nodes (12): ProportionalSplit, int, IReadOnlyList, FeedAllocationCalculator, FeedAllocationShare, FeedAllocationSubject, Fact, Guid (+4 more)
+Nodes (17): CancellationToken, ILogger, Task, DailyConsumableCostCalculatedFinanceEventHandler, CancellationToken, DateOnly, Guid, string (+9 more)
 
-### Community 107 - "IFinancialTransactionRepository"
-Cohesion: 0.11
-Nodes (23): CancellationToken, Task, GetPagedFinancialTransactionsQuery, GetPagedFinancialTransactionsQueryHandler, CancellationToken, DateOnly, DateTime, Guid (+15 more)
-
-### Community 108 - "IBranchRepository"
-Cohesion: 0.11
-Nodes (20): Farm360.Application.Organizations.Branches.DTOs, BranchDto, BranchListDto, BranchMappingExtensions, CancellationToken, Task, GetBranchByIdQuery, GetBranchByIdQueryHandler (+12 more)
+### Community 108 - "GetBranchesByOrganizationQueryHandler"
+Cohesion: 0.13
+Nodes (14): Farm360.Application.Organizations.Branches.Queries, Farm360.Application.Organizations.Branches.Commands, Farm360.Application.Organizations.Branches.DTOs, IEndpointRouteBuilder, BranchEndpoints, BranchDto, BranchListDto, BranchMappingExtensions (+6 more)
 
 ### Community 109 - "UpdateVaccinationProtocolCommand.cs"
-Cohesion: 0.12
-Nodes (18): Farm360.Application.Health.Commands.VaccinationProtocols, CancellationToken, Task, AssignProtocolToAnimalsCommand, AssignProtocolToAnimalsCommandValidator, CancellationToken, Guid, Task (+10 more)
+Cohesion: 0.36
+Nodes (6): CancellationToken, Task, UpdateVaccinationProtocolCommand, UpdateVaccinationProtocolCommandHandler, UpdateVaccinationProtocolCommandValidator, UpdateVaccinationProtocolStepDto
 
 ### Community 110 - "Branch"
-Cohesion: 0.05
-Nodes (31): Farm360.Domain.Organizations.ValueObjects, Farm360.Persistence.Configurations.Organizations, Farm360.Domain.Organizations.Enums, LookupItem, Guid, Branch, BranchStatus, BusinessType (+23 more)
+Cohesion: 0.16
+Nodes (10): Guid, Branch, BranchStatus, CancellationToken, Guid, IReadOnlyList, Items, Task (+2 more)
 
-### Community 111 - ".Handle"
-Cohesion: 0.36
-Nodes (6): CancellationToken, Task, GetConsolidatedPnLReportQuery, GetConsolidatedPnLReportQueryHandler, ConsolidatedPnLReportDto, FarmPnLSnapshotDto
+### Community 111 - "Farm360.Persistence.Configurations.Inventory"
+Cohesion: 0.11
+Nodes (10): Farm360.Persistence.Configurations.Inventory, EntityTypeBuilder, DailyConsumableEntryConfiguration, EntityTypeBuilder, StockTransactionConfiguration, EntityTypeBuilder, SupplierConfiguration, EntityTypeBuilder (+2 more)
 
 ### Community 113 - "TradeCreditDto.cs"
 Cohesion: 0.12
 Nodes (18): DateOnly, IReadOnlyList, GetTradeCreditOverviewQuery, GetTradeCreditOverviewQueryHandler, DateOnly, IEnumerable, string, TradeBillMapping (+10 more)
 
-### Community 114 - "RecordManualFeedingCommand.cs"
-Cohesion: 0.11
-Nodes (21): Farm360.Domain.Exceptions, InvalidOperationException, CancellationToken, Task, ManualFeedingResult, RecordManualFeedingCommand, RecordManualFeedingCommandHandler, RecordManualFeedingCommandValidator (+13 more)
+### Community 114 - "Exception"
+Cohesion: 0.09
+Nodes (24): DateTimeOffset, Exception, IDictionary, AccountLockedException, ConflictException, ForbiddenAccessException, NotFoundException, TenantSuspendedException (+16 more)
 
-### Community 115 - "TenantUser"
-Cohesion: 0.04
-Nodes (30): Farm360.Domain.UnitTests.Identity, Farm360.Domain.Identity, Guid, IReadOnlyCollection, List, Permission, Guid, IReadOnlyCollection (+22 more)
+### Community 115 - "PermissionAndRoleTests"
+Cohesion: 0.16
+Nodes (5): Farm360.Domain.UnitTests.Identity, Fact, InlineData, Theory, PermissionAndRoleTests
 
-### Community 116 - "IRequestHandler"
-Cohesion: 0.03
-Nodes (97): IRequestHandler, ITenantService, IUnitOfWork, CancellationToken, Task, UpdateFarmCommand, UpdateFarmCommandHandler, UpdateFarmCommandValidator (+89 more)
+### Community 116 - "CreateFeedingScheduleCommandHandler"
+Cohesion: 0.43
+Nodes (6): CancellationToken, Guid, Task, CreateFeedingScheduleCommand, CreateFeedingScheduleCommandHandler, CreateFeedingScheduleCommandValidator
 
 ### Community 117 - "AnimalCostLedger"
-Cohesion: 0.08
-Nodes (14): Farm360.Persistence.Configurations.Finance, TransactionCategory, AnimalCostLedger, EntityTypeBuilder, AnimalCostLedgerConfiguration, EntityTypeBuilder, AnimalOverheadAllocationConfiguration, EntityTypeBuilder (+6 more)
+Cohesion: 0.13
+Nodes (9): TransactionCategory, AnimalCostLedger, EntityTypeBuilder, AnimalCostLedgerConfiguration, CancellationToken, Guid, IReadOnlyList, Task (+1 more)
 
 ### Community 118 - "Health Module — Animal Picker UX Overhaul"
 Cohesion: 0.08
 Nodes (25): Affected Dialogs (4 total), Architectural Approach, Automated Verification, Backend: Lightweight Animal Lookup Endpoint, Component 1: `AnimalPickerComponent` (Single Select), Component 2: `AnimalMultiPickerComponent` (Multi Select), Current State (All 4 Dialogs), Design Philosophy (+17 more)
 
-### Community 119 - "IAnimalBatchRepository"
-Cohesion: 0.14
-Nodes (17): CancellationToken, Task, AssignAnimalsToBatchCommand, AssignAnimalsToBatchCommandHandler, PagedBatchListDto, CancellationToken, Task, GetBatchesQuery (+9 more)
+### Community 119 - ".LoadAsync"
+Cohesion: 0.17
+Nodes (13): IEnumerable, CancellationToken, Task, AssignAnimalsToBatchCommand, AssignAnimalsToBatchCommandHandler, AnimalBatch, CancellationToken, Guid (+5 more)
 
 ### Community 120 - "Livestock_AddAnimalAggregate"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, Livestock_AddAnimalAggregate
 
 ### Community 121 - ".SimulateSaleAsync"
-Cohesion: 0.14
-Nodes (15): CancellationToken, DateOnly, Guid, Task, ISimulationEngine, SaleSimulationResult, CancellationToken, Task (+7 more)
+Cohesion: 0.22
+Nodes (10): CancellationToken, DateOnly, Guid, Task, ISimulationEngine, SaleSimulationResult, CancellationToken, Task (+2 more)
 
 ### Community 122 - "Livestock Module — Production-Readiness Audit & Gap Analysis"
 Cohesion: 0.08
@@ -1256,29 +1286,33 @@ Nodes (24): 1.1 Add Missing FluentValidation Validators, 1.2 Enforce Photo Limit
 Cohesion: 0.08
 Nodes (24): 10. API Evolution Strategy, 11. Frontend Evolution Strategy, 12. Dashboard & KPI Strategy, 13. Reporting Strategy, 14. AI & Analytics Roadmap, 15. Implementation Roadmap (Prioritized Phases), 16. Risk Assessment, 17. Refactoring Recommendations (+16 more)
 
-### Community 124 - "IPurchaseOrderRepository"
-Cohesion: 0.05
-Nodes (55): CancellationToken, ILogger, Task, PurchaseOrderFulfilledEventHandler, CancellationToken, Task, Unit, ApprovePurchaseOrderCommand (+47 more)
+### Community 124 - ".Handle"
+Cohesion: 0.10
+Nodes (25): CancellationToken, Task, CancelPurchaseReturnCommand, CancelPurchaseReturnCommandHandler, CancelPurchaseReturnCommandValidator, CancellationToken, IPublisher, Task (+17 more)
 
 ### Community 125 - "MortalityRecord"
 Cohesion: 0.15
 Nodes (13): CauseOfDeath, DateOnly, Guid, MortalityRecord, EntityTypeBuilder, MortalityRecordConfiguration, CancellationToken, Guid (+5 more)
 
-### Community 126 - ".Match"
-Cohesion: 0.16
-Nodes (12): CancellationToken, ILogger, Task, SyncFeedingPlanWeightsCommand, SyncFeedingPlanWeightsCommandHandler, SyncFeedingPlanWeightsResultDto, DateOnly, FeedingRuleMatcher (+4 more)
-
-### Community 128 - "ICurrentUserService"
+### Community 126 - "FeedingRuleSet"
 Cohesion: 0.06
-Nodes (51): Farm360.Application.Analytics.Queries, Guid, IEndpointRouteBuilder, IResult, ISender, Task, AnalyticsEndpoints, Guid (+43 more)
+Nodes (35): DateOnly, string, RationCalculator, RationItemDto, CancellationToken, IReadOnlyList, Task, DailyFeedingRoutineDto (+27 more)
 
-### Community 129 - "CloseFeedingCycleCommandHandler"
-Cohesion: 0.11
-Nodes (18): Farm360.Application.Feeding.Commands.FeedingReconciliations, CancellationToken, ILogger, Task, ApproveFeedingReconciliationCommand, ApproveFeedingReconciliationCommandHandler, CancellationToken, ILogger (+10 more)
+### Community 127 - "GetAnimalIntelligenceDataQuery.cs"
+Cohesion: 0.19
+Nodes (12): CancellationToken, Task, ActionableInsightDto, AnimalIntelligenceDataResponse, GetAnimalIntelligenceDataQuery, GetAnimalIntelligenceDataQueryHandler, GrowthCurveDto, CancellationToken (+4 more)
+
+### Community 128 - "IAnalyticsQueryService.cs"
+Cohesion: 0.18
+Nodes (15): ActivityFeedItemDto, AdgTrendDto, AdgTrendPointDto, FarmSummaryCardDto, FeedCostTrendDto, FeedCostTrendPointDto, HerdCompositionDto, MonthlyRevenueExpenseDto (+7 more)
+
+### Community 129 - "ApproveFeedingReconciliationCommandHandler"
+Cohesion: 0.17
+Nodes (11): Farm360.Application.Feeding.Commands.FeedingReconciliations, CancellationToken, ILogger, Task, ApproveFeedingReconciliationCommand, ApproveFeedingReconciliationCommandHandler, CancellationToken, ILogger (+3 more)
 
 ### Community 130 - ".Handle"
-Cohesion: 0.11
-Nodes (17): CancellationToken, Guid, IReadOnlyList, Task, AssignAnimalFeedingPlanCommand, AssignAnimalFeedingPlanCommandHandler, AssignAnimalFeedingPlanCommandValidator, CancellationToken (+9 more)
+Cohesion: 0.06
+Nodes (30): CancellationToken, ILogger, Task, CancelFeedingPlanCommand, CancelFeedingPlanCommandHandler, CancellationToken, ILogger, Task (+22 more)
 
 ### Community 131 - "34. User Management"
 Cohesion: 0.09
@@ -1289,8 +1323,8 @@ Cohesion: 0.08
 Nodes (23): 10. API Evolution Strategy, 11. Frontend Evolution Strategy, 12. Dashboard & KPI Strategy, 13. Reporting Strategy, 14. AI & Analytics Roadmap, 15. Implementation Roadmap (Prioritized Phases), 16. Risk Assessment, 17. Refactoring Recommendations (+15 more)
 
 ### Community 133 - "Farm"
-Cohesion: 0.14
-Nodes (12): FarmStatus, FarmType, Guid, Farm, EntityTypeBuilder, FarmConfiguration, CancellationToken, Guid (+4 more)
+Cohesion: 0.17
+Nodes (6): FarmStatus, FarmType, Guid, Farm, EntityTypeBuilder, FarmConfiguration
 
 ### Community 134 - "IAnimalRepository"
 Cohesion: 0.21
@@ -1305,8 +1339,8 @@ Cohesion: 0.11
 Nodes (17): BackgroundService, Channel, IServiceProvider, CancellationToken, IAsyncEnumerable, INotification, ValueTask, IIntelligenceEventChannel (+9 more)
 
 ### Community 138 - "FinancialTransaction"
-Cohesion: 0.11
-Nodes (20): DateTime, Guid, FinancialTransaction, DateOnly, Fact, Guid, Task, AutomatedFinanceEventHandlersTests (+12 more)
+Cohesion: 0.10
+Nodes (28): FinancialTransaction, EntityTypeBuilder, FinancialTransactionConfiguration, CancellationToken, DateOnly, DateTime, Guid, IReadOnlyList (+20 more)
 
 ### Community 139 - "5. Login / Onboarding"
 Cohesion: 0.11
@@ -1320,45 +1354,45 @@ Nodes (22): 10. Root Cause Analysis, 11. Prioritized Fix Plan, 1. Executive Audi
 Cohesion: 0.16
 Nodes (16): LookupDto, CancellationToken, IReadOnlyList, Task, GetFarmLookupQuery, GetFarmLookupQueryHandler, CancellationToken, IReadOnlyList (+8 more)
 
-### Community 142 - "BatchPnlReportDefinition"
-Cohesion: 0.38
-Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, BatchPnlReportDefinition, BatchPnlReportRow
+### Community 142 - "ReportParameter"
+Cohesion: 0.14
+Nodes (4): IReadOnlyList, ReportParameter, ReportParameterType, ReportSelectOption
 
 ### Community 143 - ".Create"
-Cohesion: 0.11
-Nodes (14): TagType, DateOnly, Fact, Guid, Task, AnimalNutritionTests, Fact, Mock (+6 more)
+Cohesion: 0.09
+Nodes (18): TagType, DateOnly, Fact, Guid, Task, AnimalNutritionTests, Fact, Mock (+10 more)
 
 ### Community 144 - "Farm360.Api.Authorization"
 Cohesion: 0.18
 Nodes (9): AuthorizationHandler, AuthorizationHandlerContext, AuthorizeAttribute, Farm360.Api.Authorization, IAuthorizationRequirement, Task, PermissionHandler, PermissionRequirement (+1 more)
 
-### Community 145 - "FeedAllocationServiceTests"
-Cohesion: 0.22
-Nodes (13): Animals, Origin, CancellationToken, DateOnly, IReadOnlyList, Task, FeedAllocationService, DateOnly (+5 more)
+### Community 145 - "AnimalFeedAllocation"
+Cohesion: 0.06
+Nodes (41): Animals, Origin, CancellationToken, DateOnly, IReadOnlyList, Task, FeedAllocationService, FeedAllocationMethod (+33 more)
 
-### Community 146 - "AnimalFeedAllocation"
-Cohesion: 0.16
-Nodes (14): DateOnly, Guid, AnimalFeedAllocation, FeedAllocationOrigin, EntityTypeBuilder, AnimalFeedAllocationConfiguration, CancellationToken, DateOnly (+6 more)
+### Community 146 - "IVetVisitRepository"
+Cohesion: 0.20
+Nodes (10): CancellationToken, Guid, IPublisher, Task, CreateVetVisitCommand, CreateVetVisitCommandHandler, CancellationToken, Task (+2 more)
 
 ### Community 147 - "Farm360 AI — Database Design Document (DDD)"
 Cohesion: 0.09
 Nodes (21): 10.1 Schema Overview, 10. Database Schema — Catalog, 20.1 TenantId Enforcement Architecture, 20.2 Background Job Tenant Context, 20.3 Enterprise Tenant — Dedicated Database, 20. Multi-Tenant Database Design, 2.1 Domain Overview, 2.2 Domain Vocabulary (Ubiquitous Language) (+13 more)
 
-### Community 148 - "VaccinationProtocolDto"
-Cohesion: 0.24
-Nodes (10): Farm360.Application.Health.Queries.VaccinationProtocols, VaccinationProtocolDto, CancellationToken, Task, GetVaccinationProtocolDetailQuery, GetVaccinationProtocolDetailQueryHandler, CancellationToken, Task (+2 more)
-
-### Community 149 - "GetShedsByFarmQueryHandler"
+### Community 148 - "IBranchRepository"
 Cohesion: 0.12
-Nodes (17): Farm360.Application.Farms.Sheds.Commands, Farm360.Application.Farms.Sheds.DTOs, Farm360.Application.Farms.Sheds.Queries, IEndpointRouteBuilder, ShedEndpoints, ShedDto, ShedListDto, ShedMappingExtensions (+9 more)
+Nodes (18): CancellationToken, Task, ActivateBranchCommand, ActivateBranchCommandHandler, CancellationToken, Task, DeleteBranchCommand, DeleteBranchCommandHandler (+10 more)
+
+### Community 149 - "GetShedByIdQueryHandler"
+Cohesion: 0.23
+Nodes (7): Farm360.Application.Farms.Sheds.DTOs, ShedDto, ShedMappingExtensions, CancellationToken, Task, GetShedByIdQuery, GetShedByIdQueryHandler
 
 ### Community 150 - "PurchaseReturn"
-Cohesion: 0.16
-Nodes (14): PurchaseReturnStatus, DateOnly, Guid, IReadOnlyCollection, List, PurchaseReturn, CancellationToken, Dictionary (+6 more)
+Cohesion: 0.09
+Nodes (24): ConsumableUsagePlanStatus, DailyConsumableEntryStatus, InventoryStatus, PurchaseReturnReason, PurchaseReturnStatus, StockFundingSource, DateOnly, Guid (+16 more)
 
-### Community 151 - "FinanceLedgerComponent"
-Cohesion: 0.10
-Nodes (3): FinanceLedgerComponent, Component, ViewChild
+### Community 151 - "finance-ledger.component.ts"
+Cohesion: 0.03
+Nodes (32): buildCreditTermsGroup(), CreditTermsFieldsComponent, toCreditTerms(), Component, Input, EditTransactionDialogComponent, Component, ExpenseFormDialogComponent (+24 more)
 
 ### Community 152 - "AnimalBatch"
 Cohesion: 0.13
@@ -1385,64 +1419,64 @@ Cohesion: 0.14
 Nodes (14): VetVisitType, DateOnly, DateTime, Guid, VetVisit, EntityTypeBuilder, VetVisitConfiguration, CancellationToken (+6 more)
 
 ### Community 158 - "PurchaseOrder"
-Cohesion: 0.17
-Nodes (13): PurchaseOrderStatus, DateOnly, Guid, IReadOnlyCollection, List, PurchaseOrder, CancellationToken, Guid (+5 more)
+Cohesion: 0.08
+Nodes (23): PurchaseOrderStatus, DateOnly, Guid, IReadOnlyCollection, List, PurchaseOrder, Guid, PurchaseOrderItem (+15 more)
 
 ### Community 159 - "Tenant"
 Cohesion: 0.11
 Nodes (17): OrganizationType, SubscriptionTier, TenantStatus, Dictionary, SubscriptionPlanCatalog, SubscriptionPlanPricing, DateTime, Guid (+9 more)
 
 ### Community 160 - "LoanRecord"
-Cohesion: 0.12
-Nodes (12): Interest, Principal, LoanMapping, RepaymentSchedule, LoanRecord, EntityTypeBuilder, LoanRecordConfiguration, CancellationToken (+4 more)
+Cohesion: 0.11
+Nodes (14): Interest, Principal, LoanMapping, RepaymentSchedule, DateTime, Guid, LoanRecord, EntityTypeBuilder (+6 more)
 
 ### Community 161 - "Application Layer (Commands & Queries)"
 Cohesion: 0.10
 Nodes (19): API Layer, Application Layer (Commands & Queries), Automated Tests, Frontend Layer (Angular UI), Health & Vaccination Module — Phase 2 (Extended) Implementation Plan, Manual Verification, [MODIFY] Dialog Form Implementations, [MODIFY] [HealthEndpoints.cs](file:///d:/Personel/Farm Management System/src/Farm360.Api/Endpoints/Health/HealthEndpoints.cs) (+11 more)
 
-### Community 162 - "billing.component.ts"
-Cohesion: 0.07
-Nodes (24): MainLayoutComponent, Component, ViewChild, MenuItem, SidebarComponent, Component, Input, CheckoutSession (+16 more)
+### Community 162 - "subscription.model.ts"
+Cohesion: 0.20
+Nodes (12): CheckoutSession, InitiateCheckoutRequest, StartTrialRequest, SubscribeRequest, SubscriptionCatalog, SubscriptionPlan, TenantSubscriptionRecord, TenantSubscriptionStatus (+4 more)
 
 ### Community 163 - "ReportParameterPanelComponent"
 Cohesion: 0.19
 Nodes (3): ReportParameterPanelComponent, Component, ReportParameter
 
-### Community 164 - ".Handle"
-Cohesion: 0.43
-Nodes (5): CancellationToken, Task, RecordInvestorTransactionCommand, RecordInvestorTransactionCommandHandler, InvestorTransactionDto
+### Community 164 - "OrganizationDto"
+Cohesion: 0.12
+Nodes (16): Farm360.Application.Organizations.Commands, Farm360.Application.Organizations.DTOs, Farm360.Application.Organizations.Queries, IEndpointRouteBuilder, OrganizationEndpoints, MappingExtensions, AddressDto, OrganizationDto (+8 more)
 
-### Community 165 - "RecordMortalityCommand.cs"
-Cohesion: 0.16
-Nodes (11): CancellationToken, Guid, IPublisher, Task, RecordMortalityCommand, RecordMortalityCommandHandler, RecordMortalityCommandValidator, MortalityRecord (+3 more)
+### Community 165 - "RecordMortalityCommandHandler"
+Cohesion: 0.31
+Nodes (7): CancellationToken, Guid, IPublisher, Task, RecordMortalityCommand, RecordMortalityCommandHandler, MortalityRecord
 
 ### Community 166 - "FinancialStatementsTests"
 Cohesion: 0.31
 Nodes (6): DateOnly, Fact, Guid, List, Task, FinancialStatementsTests
 
-### Community 167 - ".Range"
-Cohesion: 0.09
-Nodes (18): CancellationToken, IReadOnlyList, Task, CancellationToken, IReadOnlyList, Task, CancellationToken, Guid (+10 more)
+### Community 167 - "IncomeExpenseReportDefinition"
+Cohesion: 0.20
+Nodes (12): CancellationToken, IReadOnlyList, Task, FullAccountsReportDefinition, FullAccountsReportRow, CancellationToken, Guid, IReadOnlyList (+4 more)
 
 ### Community 168 - ".GenerateAccessTokenAsync"
-Cohesion: 0.14
-Nodes (11): Farm360.Identity.Configuration, ITokenService, TokenClaimsResult, TokenResult, string, JwtConfiguration, CancellationToken, Guid (+3 more)
+Cohesion: 0.18
+Nodes (8): TokenClaimsResult, string, JwtConfiguration, CancellationToken, Guid, IEnumerable, Task, JwtTokenService
 
 ### Community 169 - "production"
 Cohesion: 0.20
 Nodes (10): serve, production, budgets, buildTarget, fileReplacements, optimization, outputHashing, builder (+2 more)
 
-### Community 171 - "AccountingSettingsDto"
-Cohesion: 0.26
-Nodes (11): CancellationToken, Task, GetAccountingSettingsQuery, GetAccountingSettingsQueryHandler, GetAccountingSetupOptionsQuery, GetAccountingSetupOptionsQueryHandler, GetFixedAssetScheduleQuery, GetFixedAssetScheduleQueryHandler (+3 more)
+### Community 171 - "ICurrentUserService"
+Cohesion: 0.36
+Nodes (8): Guid, IEndpointRouteBuilder, IResult, ISender, Task, DashboardEndpoints, IReadOnlyList, ICurrentUserService
 
-### Community 173 - ".CheckAsync"
-Cohesion: 0.19
-Nodes (15): Date, DateOnly, Type, BalanceSheetEntryRules, CreateBalanceSheetEntryCommand, CreateBalanceSheetEntryCommandHandler, UpdateBalanceSheetEntryCommand, UpdateBalanceSheetEntryCommandHandler (+7 more)
+### Community 173 - "ReportExecutionService"
+Cohesion: 0.16
+Nodes (15): DataSet, Run, CancellationToken, Dictionary, IEnumerable, ILogger, int, IReadOnlyDictionary (+7 more)
 
-### Community 174 - "IRequest"
-Cohesion: 0.03
-Nodes (89): AbstractValidator, Farm360.Application.MasterData.DTOs, IRequest, CancellationToken, Task, UpdatePenCommand, UpdatePenCommandValidator, CancellationToken (+81 more)
+### Community 174 - "AnimalDto"
+Cohesion: 0.09
+Nodes (27): CancellationToken, Task, DeleteAnimalCommand, DeleteAnimalCommandHandler, QuarantineAnimalCommand, QuarantineAnimalCommandHandler, QuarantineAnimalCommandValidator, RecordAnimalDeathCommand (+19 more)
 
 ### Community 175 - "22. Screen Designs — All MVP Screens"
 Cohesion: 0.11
@@ -1456,9 +1490,9 @@ Nodes (17): 15.1 Branch Model: Trunk-Based Development, 15.2 Branch Protection R
 Cohesion: 0.20
 Nodes (9): src/main.ts, compilerOptions, outDir, types, extends, files, include, src/**/*.d.ts (+1 more)
 
-### Community 178 - "AnimalRepository"
-Cohesion: 0.16
-Nodes (14): AnimalStatus, CancellationToken, DateOnly, DbSet, Guid, IEnumerable, IReadOnlyDictionary, IReadOnlyList (+6 more)
+### Community 178 - "IAnalyticsQueryService"
+Cohesion: 0.38
+Nodes (6): CancellationToken, DateOnly, Guid, IReadOnlyList, Task, IAnalyticsQueryService
 
 ### Community 179 - ".Create"
 Cohesion: 0.19
@@ -1476,17 +1510,17 @@ Nodes (6): Endpoint, Assembly, Fact, IServiceCollection, List, EndpointRoutingTe
 Cohesion: 0.11
 Nodes (19): 25. Inventory List, 26. Stock In Form, 27. Stock Movement Ledger, Breadcrumb, Breadcrumb, Breadcrumb, Command Bar, Context Panel (+11 more)
 
-### Community 183 - ".SaveChangesAsync"
-Cohesion: 0.03
-Nodes (84): Farm360.Api.Endpoints.Subscriptions, Farm360.Application.UnitTests.Subscriptions, Farm360.Application.Subscriptions.Commands, Farm360.Application.Subscriptions.Queries, Farm360.Application.Tenants.Jobs, Farm360.Application.Subscriptions.DTOs, RouteGroupBuilder, ApproveSubscriptionRequest (+76 more)
+### Community 183 - "ITenantRepository"
+Cohesion: 0.08
+Nodes (33): Farm360.Application.Tenants.Jobs, Farm360.Application.Subscriptions.DTOs, CancellationToken, Task, AdminExtendTrialCommand, AdminExtendTrialCommandHandler, AdminExtendTrialCommandValidator, CancellationToken (+25 more)
 
 ### Community 184 - "parseApiError"
 Cohesion: 0.02
-Nodes (37): parseApiError(), CreateFormulaDialogComponent, Component, CreateIngredientDialogComponent, Component, CreateScheduleDialogComponent, Component, TodayFeedingDashboardComponent (+29 more)
+Nodes (48): Optional, parseApiError(), CreateFormulaDialogComponent, Component, CreateScheduleDialogComponent, Component, ManualFeedingEntryDialogComponent, Component (+40 more)
 
 ### Community 185 - "FarmBusinessRules"
-Cohesion: 0.18
-Nodes (15): Farm360.Infrastructure.BusinessRules, IOptionsMonitor, IFarmBusinessRulesProvider, string, AnimalValuationPolicy, FarmBusinessRules, FeedAllocationMethod, GroupPlanQuantityBasis (+7 more)
+Cohesion: 0.20
+Nodes (15): Farm360.Infrastructure.BusinessRules, IOptionsMonitor, IFarmBusinessRulesProvider, string, AnimalValuationPolicy, FarmBusinessRules, GroupPlanQuantityBasis, OverheadAllocationMethod (+7 more)
 
 ### Community 186 - "3. Global Component Library"
 Cohesion: 0.12
@@ -1497,28 +1531,28 @@ Cohesion: 0.12
 Nodes (16): 10.1 Card Variants, 10.2 Card Interaction States, 10. Card Component Design, 13.1 Dialog (Modal) Anatomy, 13.2 Drawer (Side Panel) Design, 13. Dialog & Drawer Design, 16.1 Table Variants, 16. Table Design (+8 more)
 
 ### Community 188 - "Farm360.Identity.Services"
-Cohesion: 0.13
-Nodes (10): Farm360.Identity.Seed, Farm360.Identity.DependencyInjection, Farm360.Identity.Context, Farm360.Identity.Entities, Farm360.Identity.Services, IConfiguration, IServiceCollection, IdentityServiceExtensions (+2 more)
+Cohesion: 0.18
+Nodes (7): Farm360.Identity.DependencyInjection, Farm360.Identity.Context, Farm360.Identity.Services, Farm360.Identity.Configuration, IConfiguration, IServiceCollection, IdentityServiceExtensions
 
 ### Community 189 - "options"
 Cohesion: 0.17
 Nodes (16): src/assets, src/favicon.ico, src/styles.scss, zone.js, zone.js/testing, options, assets, browser (+8 more)
 
 ### Community 190 - "Farm360.Domain.MasterData.Repositories"
-Cohesion: 0.14
-Nodes (12): Farm360.Domain.MasterData, Farm360.Domain.MasterData.Enums, Farm360.Persistence.Repositories.MasterData, Farm360.Domain.MasterData.Repositories, Farm360.Domain.MasterData.Events, CancellationToken, Guid, Task (+4 more)
+Cohesion: 0.18
+Nodes (7): Farm360.Domain.MasterData, Farm360.Domain.MasterData.Enums, Farm360.Persistence.Repositories.MasterData, Farm360.Domain.MasterData.Repositories, Farm360.Domain.MasterData.Events, EntityTypeBuilder, MasterDataConfiguration
 
 ### Community 191 - "IEntityTypeConfiguration"
-Cohesion: 0.06
-Nodes (29): Farm360.Persistence.Configurations.Feeding, IEntityTypeConfiguration, Func, List, RuleMatch, FeedingPlanExclusion, DateOnly, DateTime (+21 more)
+Cohesion: 0.07
+Nodes (27): Farm360.Persistence.Configurations.Feeding, IEntityTypeConfiguration, DateOnly, Guid, IReadOnlyCollection, List, ConsumptionDetail, FeedConsumptionLog (+19 more)
 
-### Community 192 - "BatchRecordVaccinationCommand.cs"
-Cohesion: 0.10
-Nodes (21): Farm360.Application.Health.Commands.VaccinationEvents, CancellationToken, Task, BatchRecordVaccinationCommand, BatchRecordVaccinationCommandHandler, BatchRecordVaccinationCommandValidator, CancellationToken, Task (+13 more)
+### Community 192 - ".Range"
+Cohesion: 0.16
+Nodes (12): CancellationToken, IReadOnlyList, Task, AnimalWiseConsumptionReportDefinition, AnimalWiseConsumptionReportRow, CancellationToken, IReadOnlyList, Task (+4 more)
 
 ### Community 193 - "MasterDataEntry"
-Cohesion: 0.17
-Nodes (11): Farm360.Persistence.Configurations.MasterData, MasterDataType, Guid, MasterDataEntry, EntityTypeBuilder, MasterDataConfiguration, CancellationToken, Guid (+3 more)
+Cohesion: 0.25
+Nodes (8): MasterDataType, Guid, MasterDataEntry, CancellationToken, Guid, IReadOnlyList, Task, MasterDataRepository
 
 ### Community 194 - "BranchListComponent"
 Cohesion: 0.13
@@ -1533,23 +1567,23 @@ Cohesion: 0.12
 Nodes (15): 🐄 গরু মোটাতাজাকরণ ও খামার ব্যবস্থাপনা গাইডলাইন (কমপ্লিট এসওপি ও বিস্তারিত নির্দেশিকা), মডিউল ১: হাট থেকে গরু কেনার পর প্রাথমিক ও পরিবহন ব্যবস্থাপনা (Post-Purchase & Transport SOP), মডিউল ২: কৃমিনাশক ও স্বাস্থ্য ব্যবস্থাপনা (Deworming & Vaccination Protocol), মডিউল ৩: খাদ্য ব্যবস্থাপনা ও সুষম রেশন (Feeding & Nutrition Management), মডিউল ৪: খামার ব্যবসায়িক ও আর্থিক কৌশল (Business & Financial Strategy), ১.১ গরু নির্বাচন ও জাত বাছাই (Breed & Size Selection), ১.২ পরিবহন সতর্কতা (Transport Guidelines), ১.৩ কোয়ারেন্টাইন বা আইসোলেশন প্রটোকল (Quarantine Management) (+7 more)
 
 ### Community 197 - "FinancialStatementsDtos.cs"
-Cohesion: 0.12
-Nodes (18): IReadOnlySet, CancellationToken, Dictionary, Func, IReadOnlyList, List, Task, GetIncomeStatementQuery (+10 more)
+Cohesion: 0.07
+Nodes (36): IReadOnlySet, CancellationToken, IReadOnlyList, Task, GetAccountingSettingsQuery, GetAccountingSettingsQueryHandler, GetAccountingSetupOptionsQuery, GetAccountingSetupOptionsQueryHandler (+28 more)
 
-### Community 198 - "FarmAccountingSettings"
-Cohesion: 0.15
-Nodes (9): DateOnly, Guid, FarmAccountingSettings, IFarmAccountingSettingsRepository, EntityTypeBuilder, BalanceSheetEntryConfiguration, FarmAccountingSettingsConfiguration, FixedAssetConfiguration (+1 more)
+### Community 198 - ".SaveChangesAsync"
+Cohesion: 0.07
+Nodes (41): Farm360.Persistence.Repositories.Tenancy, Farm360.Application.UnitTests.Subscriptions, Farm360.Application.Subscriptions.Commands, Farm360.Domain.Tenancy.Repositories, Farm360.Domain.Tenancy, CancellationToken, ILogger, Task (+33 more)
 
-### Community 199 - "ProjectionScenario"
-Cohesion: 0.14
-Nodes (14): Guid, ProjectionScenario, CancellationToken, Guid, IReadOnlyList, Task, IProjectionScenarioRepository, EntityTypeBuilder (+6 more)
+### Community 199 - "AutomatedFinanceEventHandlersTests"
+Cohesion: 0.17
+Nodes (11): CancellationToken, Task, GetConsolidatedPnLReportQuery, GetConsolidatedPnLReportQueryHandler, ConsolidatedPnLReportDto, FarmPnLSnapshotDto, DateOnly, Fact (+3 more)
 
 ### Community 200 - ".Handle"
-Cohesion: 0.13
-Nodes (18): CancellationToken, Task, PurchaseSharesCommand, PurchaseSharesCommandHandler, PurchaseSharesCommandValidator, CancellationToken, Task, SellSharesCommand (+10 more)
+Cohesion: 0.17
+Nodes (10): CancellationToken, Task, ManualFeedingResult, RecordManualFeedingCommand, RecordManualFeedingCommandHandler, RecordManualFeedingCommandValidator, Fact, Guid (+2 more)
 
-### Community 201 - "BreedCommands.cs"
-Cohesion: 0.19
+### Community 201 - "BreedDto"
+Cohesion: 0.17
 Nodes (17): CancellationToken, Task, CreateBreedCommand, CreateBreedCommandHandler, CreateBreedCommandValidator, DeleteBreedCommand, DeleteBreedCommandHandler, UpdateBreedCommand (+9 more)
 
 ### Community 202 - "IAnimalOverheadAllocationRepository"
@@ -1557,32 +1591,32 @@ Cohesion: 0.26
 Nodes (10): AnimalOverheadAllocation, CancellationToken, DateOnly, Guid, HashSet, IEnumerable, IReadOnlyCollection, IReadOnlyList (+2 more)
 
 ### Community 203 - "AuthEndpoints.cs"
-Cohesion: 0.15
-Nodes (12): Farm360.Application.Auth.Commands, Farm360.Application.Auth.Queries, AuthEndpoints, LogoutRequest, RefreshTokenApiRequest, RouteGroupBuilder, UsersEndpoints, CancellationToken (+4 more)
+Cohesion: 0.22
+Nodes (6): Farm360.Application.Auth.Commands, Farm360.Application.Auth.Queries, LogoutRequest, RefreshTokenApiRequest, RouteGroupBuilder, UsersEndpoints
 
 ### Community 204 - "dashboard.model.ts"
-Cohesion: 0.22
-Nodes (8): ActivityFeedItem, AdgTrend, ExecutiveDashboardData, TrendPoint, VaccinationCompliance, RecentActivityFeedComponent, Component, Input
+Cohesion: 0.24
+Nodes (6): ActivityFeedItem, InsightType, TrendPoint, RecentActivityFeedComponent, Component, Input
 
-### Community 205 - ".Id"
-Cohesion: 0.11
-Nodes (15): CancellationToken, IReadOnlyList, Task, CancellationToken, IReadOnlyList, Task, CancellationToken, IReadOnlyList (+7 more)
+### Community 205 - "AnimalGrowthReportDefinition"
+Cohesion: 0.33
+Nodes (6): CancellationToken, DateOnly, IReadOnlyList, Task, AnimalGrowthReportDefinition, AnimalGrowthReportRow
 
-### Community 206 - "Pen"
-Cohesion: 0.17
-Nodes (9): PenStatus, Guid, Pen, CancellationToken, Guid, IReadOnlyDictionary, IReadOnlyList, Task (+1 more)
+### Community 206 - "PenRepository"
+Cohesion: 0.39
+Nodes (6): CancellationToken, Guid, IReadOnlyDictionary, IReadOnlyList, Task, PenRepository
 
 ### Community 207 - "DataSeeder"
 Cohesion: 0.28
 Nodes (8): permId, roleId, CancellationToken, Dictionary, Guid, List, Task, DataSeeder
 
 ### Community 208 - "Task"
-Cohesion: 0.23
+Cohesion: 0.22
 Nodes (5): CancellationToken, Func, Task, ValueTask, EfCoreTransaction
 
-### Community 209 - "InventoryItem"
-Cohesion: 0.13
-Nodes (6): InventoryCategory, Guid, InventoryItem, Fact, Guid, InventoryDomainTests
+### Community 209 - "CreateSupplierCommandHandler"
+Cohesion: 0.43
+Nodes (6): CancellationToken, Guid, Task, CreateSupplierCommand, CreateSupplierCommandHandler, CreateSupplierCommandValidator
 
 ### Community 210 - "RedisCacheService"
 Cohesion: 0.20
@@ -1592,9 +1626,9 @@ Nodes (8): Farm360.Infrastructure.Caching, CancellationToken, Guid, JsonSerializ
 Cohesion: 0.24
 Nodes (10): Farm360.Api.Converters, JsonConverter, DateOnly, Guid, JsonSerializerOptions, Type, NullableDateOnlyJsonConverter, NullableGuidJsonConverter (+2 more)
 
-### Community 212 - "ConsumableUsagePlan"
-Cohesion: 0.13
-Nodes (9): DateOnly, Guid, IReadOnlyCollection, List, ConsumableUsagePlan, ConsumableUsagePlanItem, EntityTypeBuilder, ConsumableUsagePlanConfiguration (+1 more)
+### Community 212 - "ReportExportFormat"
+Cohesion: 0.16
+Nodes (11): CancellationToken, Task, IReportRenderer, ReportExportFormat, CancellationToken, Task, CsvReportRenderer, CancellationToken (+3 more)
 
 ### Community 213 - "20. Vaccination Due List"
 Cohesion: 0.08
@@ -1617,8 +1651,8 @@ Cohesion: 0.33
 Nodes (7): DateTime, Guid, IEndpointRouteBuilder, IResult, ISender, Task, IntelligenceEndpoints
 
 ### Community 218 - "OtpService"
-Cohesion: 0.26
-Nodes (7): IOtpService, OtpPurpose, CancellationToken, int, Task, TimeSpan, OtpService
+Cohesion: 0.33
+Nodes (6): OtpPurpose, CancellationToken, int, Task, TimeSpan, OtpService
 
 ### Community 219 - ".ToDto"
 Cohesion: 0.11
@@ -1633,20 +1667,20 @@ Cohesion: 0.20
 Nodes (9): AppComponent, Component, appConfig, routes, addTokenHeader(), authInterceptor(), refreshTokenSubject, resetRefreshState() (+1 more)
 
 ### Community 222 - "PurchaseOrderList"
-Cohesion: 0.16
-Nodes (5): PurchaseOrderDetail, Component, PurchaseOrderList, Component, PurchaseOrderStatus
+Cohesion: 0.22
+Nodes (3): PurchaseOrderList, Component, PurchaseOrderStatus
 
 ### Community 224 - "IDateTimeService"
 Cohesion: 0.16
 Nodes (12): ClaimsPrincipal, DateOnly, DateTime, IDateTimeService, DateOnly, DateTime, Guid, IReadOnlyList (+4 more)
 
-### Community 225 - "IFarmShareRepository"
-Cohesion: 0.17
-Nodes (13): CancellationToken, Task, ConfigureFarmSharesCommand, ConfigureFarmSharesCommandHandler, ConfigureFarmSharesCommandValidator, CancellationToken, Task, UpdateShareValuationCommand (+5 more)
+### Community 225 - "RecordStockInCommandHandler"
+Cohesion: 0.19
+Nodes (12): CancellationToken, Guid, Task, RecordStockInCommand, RecordStockInCommandHandler, RecordStockInCommandValidator, CancellationToken, Guid (+4 more)
 
 ### Community 226 - "FixedAsset"
-Cohesion: 0.19
-Nodes (10): DateOnly, AccountingSetupMappings, FixedAssetSchedule, DepreciationMethod, DateOnly, Guid, FixedAsset, FixedAssetAcquisition (+2 more)
+Cohesion: 0.17
+Nodes (13): DateOnly, AccountingSetupMappings, FixedAssetSchedule, DateOnly, IEnumerable, DepreciationBasis, DepreciationCalculator, DepreciationMethod (+5 more)
 
 ### Community 227 - "AnimalOverheadAllocationRepository"
 Cohesion: 0.26
@@ -1660,13 +1694,13 @@ Nodes (5): Farm360.SharedKernel.Guards, Guid, IEnumerable, Guard, GuardClause
 Cohesion: 0.14
 Nodes (15): Farm360.Infrastructure.Payments, IHttpClientFactory, CancellationToken, Task, IPaymentGatewayService, PaymentSessionRequest, PaymentSessionResult, PaymentValidationResult (+7 more)
 
-### Community 230 - ".For"
-Cohesion: 0.35
-Nodes (5): Guid, TestTenantService, SqlServerFact, Task, FeedingPersistenceTests
+### Community 230 - "SqlServerFixture.cs"
+Cohesion: 0.18
+Nodes (10): FactAttribute, IAsyncLifetime, ICollectionFixture, MsSqlContainer, string, Task, SqlServerAvailability, SqlServerCollection (+2 more)
 
 ### Community 231 - "CreateOrganizationCommand.cs"
-Cohesion: 0.14
-Nodes (14): CancellationToken, Task, UpdateBranchCommand, UpdateBranchCommandValidator, CancellationToken, Guid, Task, CreateOrganizationCommand (+6 more)
+Cohesion: 0.29
+Nodes (8): Guid, CreateOrganizationCommand, CreateOrganizationCommandHandler, CreateOrganizationCommandValidator, Fact, Mock, Task, CreateOrganizationCommandHandlerTests
 
 ### Community 232 - "🔍 Detailed Completed Feature Log"
 Cohesion: 0.14
@@ -1704,17 +1738,21 @@ Nodes (13): 1. Architectural Gap Analysis: Current vs. Enterprise, 2. Cross-Modu
 Cohesion: 0.14
 Nodes (13): 1. `WorkingContextService` (State Management), 2. Context Selector UI (Global Navigation), 3. Module Refactoring (Integration), A. Health Module, Architectural Approach, Automated Checks, B. Livestock Module, C. Farms/Organizations Module (+5 more)
 
-### Community 242 - "LoanRecordDto"
-Cohesion: 0.18
-Nodes (14): CancellationToken, Task, CreateLoanRecordCommand, CreateLoanRecordCommandHandler, CancellationToken, Task, RecordLoanRepaymentCommand, RecordLoanRepaymentCommandHandler (+6 more)
+### Community 241 - "AnimalPickerComponent"
+Cohesion: 0.17
+Nodes (3): AnimalPickerComponent, Component, Input
 
-### Community 243 - "AnimalDto"
-Cohesion: 0.16
-Nodes (17): RegisterAnimalCommand, RegisterAnimalCommandHandler, RegisterAnimalCommandValidator, AnimalDto, PagedAnimalListDto, CancellationToken, IReadOnlyList, Task (+9 more)
+### Community 242 - "ILoanRecordRepository"
+Cohesion: 0.12
+Nodes (20): CancellationToken, Task, CreateLoanRecordCommand, CreateLoanRecordCommandHandler, CancellationToken, Task, RecordLoanRepaymentCommand, RecordLoanRepaymentCommandHandler (+12 more)
 
-### Community 244 - "SqlServerFixture.cs"
+### Community 243 - "AnimalQueryHandlerTests"
 Cohesion: 0.22
-Nodes (6): Farm360.Persistence.Repositories.Feeding, Farm360.Application.IntegrationTests.Persistence, Farm360.Application.IntegrationTests.Infrastructure, FactAttribute, SqlServerAvailability, SqlServerFactAttribute
+Nodes (11): PagedAnimalListDto, CancellationToken, IReadOnlyList, Task, GetAnimalListQuery, GetAnimalListQueryHandler, GetAnimalWeightHistoryQuery, GetAnimalWeightHistoryQueryHandler (+3 more)
+
+### Community 244 - "ReportColumn"
+Cohesion: 0.20
+Nodes (8): Func, ReportColumn, LocalizedText, ReportAggregate, ReportLanguage, ReportMetaField, ReportOrientation, List
 
 ### Community 245 - "scripts"
 Cohesion: 0.25
@@ -1725,12 +1763,12 @@ Cohesion: 0.19
 Nodes (6): IntelligenceSignalRService, Injectable, ActionableInsight, AnimalFinancialSnapshot, AnimalIntelligenceData, GrowthCurve
 
 ### Community 248 - "MasterDataDto"
-Cohesion: 0.17
-Nodes (13): Farm360.Application.MasterData.Queries, IEndpointRouteBuilder, LocationEndpoints, MasterDataDto, CancellationToken, Task, GetMasterDataByIdQuery, GetMasterDataByIdQueryHandler (+5 more)
+Cohesion: 0.31
+Nodes (7): MasterDataDto, MasterDataMappingExtensions, CancellationToken, IReadOnlyList, Task, GetMasterDataByTypeQuery, GetMasterDataByTypeQueryHandler
 
 ### Community 249 - "AnimalOverheadAllocation"
-Cohesion: 0.16
-Nodes (14): OverheadAllocationMethod, DateOnly, Guid, AnimalOverheadAllocation, OverheadBucket, AnimalOverheadTotals, CancellationToken, Guid (+6 more)
+Cohesion: 0.12
+Nodes (16): Farm360.Persistence.Configurations.Finance, DateOnly, Guid, AnimalOverheadAllocation, OverheadBucket, AnimalOverheadTotals, EntityTypeBuilder, AnimalOverheadAllocationConfiguration (+8 more)
 
 ### Community 250 - ".SavingChangesAsync"
 Cohesion: 0.29
@@ -1753,7 +1791,7 @@ Cohesion: 0.15
 Nodes (13): 6.1 Aggregate Boundaries and Invariants, 6. Aggregates, Aggregate: Animal, Aggregate: AnimalBatch, Aggregate: Farm, Aggregate: FeedConsumptionLog, Aggregate: FeedFormula, Aggregate: FinancialEntry (+5 more)
 
 ### Community 255 - "IPenRepository"
-Cohesion: 0.29
+Cohesion: 0.26
 Nodes (7): CancellationToken, Guid, IReadOnlyDictionary, IReadOnlyList, Pen, Task, IPenRepository
 
 ### Community 256 - "10. Animal List"
@@ -1768,33 +1806,33 @@ Nodes (9): G, Service, DateOnly, Fact, Guid, Kg, List, Task (+1 more)
 Cohesion: 0.15
 Nodes (4): BoardAnimal, RationItem, FeedingBoardComponent, Component
 
-### Community 259 - "AnimalFeedingReportDefinition"
-Cohesion: 0.36
-Nodes (7): CancellationToken, Dictionary, Guid, IReadOnlyList, Task, AnimalFeedingReportDefinition, AnimalFeedingReportRow
+### Community 259 - "ReportCategory"
+Cohesion: 0.14
+Nodes (19): Guid, CancellationToken, Dictionary, Guid, IReadOnlyList, Task, AnimalFeedingReportDefinition, AnimalFeedingReportRow (+11 more)
 
 ### Community 260 - ".Handle"
 Cohesion: 0.23
 Nodes (11): CancellationToken, Guid, Task, CreateBranchCommand, CreateBranchCommandHandler, CreateBranchCommandValidator, Fact, Guid (+3 more)
 
-### Community 261 - "FeedConsumptionLog"
-Cohesion: 0.23
-Nodes (9): DateOnly, Guid, IReadOnlyCollection, List, ConsumptionDetail, FeedConsumptionLog, EntityTypeBuilder, ConsumptionDetailConfiguration (+1 more)
+### Community 261 - "BranchConfiguration"
+Cohesion: 0.22
+Nodes (5): Farm360.Persistence.Configurations.Organizations, EntityTypeBuilder, BranchConfiguration, EntityTypeBuilder, OrganizationConfiguration
 
-### Community 262 - "Farm360.Infrastructure.Messaging"
-Cohesion: 0.12
-Nodes (13): Farm360.Infrastructure.Messaging, Hub, IEmailService, INotificationService, CancellationToken, Task, LoggingEmailService, CancellationToken (+5 more)
+### Community 262 - "SignalRServices.cs"
+Cohesion: 0.24
+Nodes (7): Hub, CancellationToken, Exception, Guid, Task, FarmNotificationHub, SignalRNotificationService
 
-### Community 263 - "GetPurchaseOrdersQueryHandler"
-Cohesion: 0.29
-Nodes (9): CancellationToken, Task, GetPurchaseOrderByIdQuery, GetPurchaseOrderByIdQueryHandler, CancellationToken, Task, GetPurchaseOrdersQuery, GetPurchaseOrdersQueryHandler (+1 more)
+### Community 263 - "MeasureUnitRepository"
+Cohesion: 0.31
+Nodes (6): CancellationToken, Guid, IReadOnlyCollection, IReadOnlyList, Task, MeasureUnitRepository
 
-### Community 264 - "InventoryItemDto"
-Cohesion: 0.26
-Nodes (10): Guid, InventoryItemDto, CancellationToken, Task, GetInventoryItemDetailQuery, GetInventoryItemDetailQueryHandler, CancellationToken, Task (+2 more)
+### Community 264 - ".For"
+Cohesion: 0.35
+Nodes (5): Guid, TestTenantService, SqlServerFact, Task, FeedingPersistenceTests
 
-### Community 265 - ".ValueAtEndOf"
-Cohesion: 0.25
-Nodes (7): DateOnly, IEnumerable, DepreciationBasis, DepreciationCalculator, DateOnly, int, FiscalYear
+### Community 265 - "HerdSummaryReportDefinition"
+Cohesion: 0.42
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, HerdSummaryReportDefinition, HerdSummaryReportRow
 
 ### Community 267 - "InitialIdentity"
 Cohesion: 0.12
@@ -1821,36 +1859,32 @@ Cohesion: 0.17
 Nodes (11): Automated/Subagent Verification, Farm360 QA End-to-End Testing Plan, Open Questions, Output Generation, Phase 1: Authentication & User Profile, Phase 2: Core Livestock & Health Workflows, Phase 3: Operations (Feeding & Inventory), Phase 4: Business (Finance, Organizations, Settings) (+3 more)
 
 ### Community 273 - ".ResolveTenantContextAsync"
-Cohesion: 0.19
-Nodes (13): RouteGroupBuilder, CancellationToken, Task, IAuthService, LoginRequest, LoginResponse, RegisterRequest, CancellationToken (+5 more)
+Cohesion: 0.17
+Nodes (14): RouteGroupBuilder, AuthEndpoints, CancellationToken, Task, IAuthService, LoginRequest, LoginResponse, RegisterRequest (+6 more)
 
-### Community 274 - "BalanceSheetEntry"
-Cohesion: 0.20
-Nodes (9): DateOnly, Guid, BalanceSheetEntry, BalanceSheetEntryType, CancellationToken, Guid, IReadOnlyList, Task (+1 more)
+### Community 274 - "AnalyticsEndpoints"
+Cohesion: 0.38
+Nodes (6): Guid, IEndpointRouteBuilder, IResult, ISender, Task, AnalyticsEndpoints
 
-### Community 275 - "IInvestorRepository"
-Cohesion: 0.21
-Nodes (10): CancellationToken, Task, UpdateInvestorCommand, UpdateInvestorCommandHandler, CancellationToken, Guid, Investor, IReadOnlyList (+2 more)
+### Community 275 - "Pen"
+Cohesion: 0.14
+Nodes (6): PenMappingExtensions, PenStatus, Guid, Pen, EntityTypeBuilder, PenConfiguration
 
-### Community 276 - "GetTodayFeedingEntriesQueryHandler"
-Cohesion: 0.50
-Nodes (6): CancellationToken, IReadOnlyList, Task, DailyFeedingEntryDto, GetTodayFeedingEntriesQuery, GetTodayFeedingEntriesQueryHandler
-
-### Community 277 - "IBackgroundJobService"
-Cohesion: 0.21
-Nodes (5): Expression, IBackgroundJobService, Expression, TimeSpan, HangfireBackgroundJobService
+### Community 276 - "IFarmRepository"
+Cohesion: 0.30
+Nodes (7): CancellationToken, Farm, Guid, IReadOnlyDictionary, IReadOnlyList, Task, IFarmRepository
 
 ### Community 278 - "RefreshTokenService"
-Cohesion: 0.37
-Nodes (6): SessionRevokeReason, CancellationToken, Guid, int, Task, RefreshTokenService
+Cohesion: 0.41
+Nodes (5): CancellationToken, Guid, int, Task, RefreshTokenService
 
 ### Community 279 - "farm360-web"
 Cohesion: 0.17
 Nodes (11): cli, analytics, prefix, projectType, root, sourceRoot, newProjectRoot, projects (+3 more)
 
-### Community 281 - "AddShedManagementModule"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, AddShedManagementModule
+### Community 281 - "GetReturnablePoItemsQueryHandler"
+Cohesion: 0.31
+Nodes (8): CreatePurchaseReturnItemRequest, PurchaseReturnItemDto, ReturnablePoItemDto, CancellationToken, IReadOnlyList, Task, GetReturnablePoItemsQuery, GetReturnablePoItemsQueryHandler
 
 ### Community 282 - "Farm360.Application.IntegrationTests.csproj"
 Cohesion: 0.15
@@ -1872,13 +1906,13 @@ Nodes (8): CancellationToken, Guid, IResult, ISender, RouteGroupBuilder, Task, B
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, ReplaceLocationFieldsWithMovementTable
 
-### Community 288 - "CreateFeedingRuleSetCommand.cs"
-Cohesion: 0.17
-Nodes (15): Farm360.Application.Feeding.Commands.FeedingRuleSets, CancellationToken, Guid, IReadOnlyList, Task, CreateFeedingRuleSetCommand, CreateFeedingRuleSetCommandHandler, CreateFeedingRuleSetCommandValidator (+7 more)
+### Community 288 - "IncomeStatementReportDefinition"
+Cohesion: 0.44
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, IncomeStatementReportDefinition, IncomeStatementReportRow
 
 ### Community 289 - "IShedRepository"
-Cohesion: 0.19
-Nodes (12): CancellationToken, Task, UpdateShedCommand, UpdateShedCommandHandler, UpdateShedCommandValidator, CancellationToken, Guid, IReadOnlyDictionary (+4 more)
+Cohesion: 0.26
+Nodes (7): CancellationToken, Guid, IReadOnlyDictionary, IReadOnlyList, Shed, Task, IShedRepository
 
 ### Community 290 - "Balance Sheet & Financial Statements – Implementation Plan (Farm360)"
 Cohesion: 0.15
@@ -1892,17 +1926,17 @@ Nodes (8): AnimalsCount, CancellationToken, FarmsCount, Guid, IReadOnlyList, Tas
 Cohesion: 0.17
 Nodes (11): Moq, Bogus, coverlet.collector, FluentAssertions, FluentValidation, MediatR, Microsoft.NET.Test.Sdk, NSubstitute (+3 more)
 
-### Community 293 - ".Handle"
-Cohesion: 0.43
-Nodes (6): CancellationToken, Guid, Task, LogMedicalTreatmentCommand, LogMedicalTreatmentCommandHandler, LogMedicalTreatmentCommandValidator
+### Community 293 - "TenantUser"
+Cohesion: 0.21
+Nodes (5): DateTime, Guid, TenantUser, EntityTypeBuilder, TenantUserConfiguration
 
 ### Community 294 - ".GetByIdAsync"
-Cohesion: 0.24
-Nodes (8): SellAnimalCommand, SellAnimalCommandHandler, SellAnimalCommandValidator, Fact, Guid, IPublisher, Task, AnimalCommandHandlerTests
+Cohesion: 0.33
+Nodes (5): Fact, Guid, IPublisher, Task, AnimalCommandHandlerTests
 
-### Community 295 - "MedicalTreatmentRepository"
-Cohesion: 0.24
-Nodes (9): AnimalTag, CancellationToken, Guid, IReadOnlyList, Items, Task, TotalCount, Treatment (+1 more)
+### Community 295 - "MonthlyPnlReportDefinition"
+Cohesion: 0.38
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, MonthlyPnlReportDefinition, MonthlyPnlReportRow
 
 ### Community 296 - "PermissionService"
 Cohesion: 0.36
@@ -1920,33 +1954,33 @@ Nodes (3): MigrationBuilder, ModelBuilder, AddDailyConsumables
 Cohesion: 0.27
 Nodes (5): Farm360.Infrastructure.Reporting, object, bool, string, ReportFonts
 
-### Community 300 - "organization.service.ts"
-Cohesion: 0.22
-Nodes (5): CreateOrganizationCommand, UpdateOrganizationCommand, OrganizationService, Injectable, PagedResult
+### Community 300 - "OrganizationListComponent"
+Cohesion: 0.11
+Nodes (8): CreateOrganizationCommand, Organization, UpdateOrganizationCommand, OrganizationListComponent, Component, OrganizationService, Injectable, PagedResult
 
-### Community 301 - "UnitConversion"
-Cohesion: 0.17
-Nodes (6): UnitMappings, Guid, UnitConversion, EntityTypeBuilder, MeasureUnitConfiguration, UnitConversionConfiguration
+### Community 301 - "IReportExecutionService"
+Cohesion: 0.25
+Nodes (7): CancellationToken, IEndpointRouteBuilder, IResult, Task, ReportEndpoints, RunReportRequest, IReportExecutionService
 
-### Community 302 - "SqlServerFixture"
-Cohesion: 0.29
-Nodes (7): IAsyncLifetime, ICollectionFixture, MsSqlContainer, string, Task, SqlServerCollection, SqlServerFixture
+### Community 302 - "Organization"
+Cohesion: 0.13
+Nodes (13): LookupItem, BusinessType, Guid, Organization, IEnumerable, Address, CancellationToken, Guid (+5 more)
 
-### Community 303 - "ILedgerPostingService"
-Cohesion: 0.06
-Nodes (33): CancellationToken, ILogger, Task, DailyConsumableCostCalculatedFinanceEventHandler, ILogger, DailyEntryConfirmedFinanceEventHandler, CancellationToken, ILogger (+25 more)
+### Community 303 - "INotification"
+Cohesion: 0.23
+Nodes (11): INotification, CancellationToken, Task, AnimalRegisteredNotification, IntelligenceEventDispatcher, WeightRecordedNotification, CancellationToken, ILogger (+3 more)
 
-### Community 304 - ".InvokeAsync"
-Cohesion: 0.14
-Nodes (12): Farm360.Api.Middleware, HttpContext, string, Task, CorrelationIdMiddleware, TenantCacheEntry, TenantResolutionMiddleware, Exception (+4 more)
+### Community 304 - "AllocateOverheadAcrossTenantsCommandHandler"
+Cohesion: 0.13
+Nodes (13): Farm360.Api.Middleware, Farm360.Application.Finance.Jobs, HttpContext, string, Task, CorrelationIdMiddleware, TenantCacheEntry, TenantResolutionMiddleware (+5 more)
 
 ### Community 305 - "PermissionServiceTests"
 Cohesion: 0.38
 Nodes (4): Farm360.Application.UnitTests.Identity, Fact, Task, PermissionServiceTests
 
-### Community 306 - "VaccinationProtocol"
-Cohesion: 0.17
-Nodes (7): Guid, IReadOnlyCollection, List, VaccinationProtocol, VaccinationProtocolStep, EntityTypeBuilder, VaccinationProtocolConfiguration
+### Community 306 - "PermissionPolicyProvider"
+Cohesion: 0.33
+Nodes (6): AuthorizationOptions, AuthorizationPolicy, IAuthorizationPolicyProvider, string, Task, PermissionPolicyProvider
 
 ### Community 307 - "Proposed Architecture (Option A)"
 Cohesion: 0.20
@@ -1992,9 +2026,9 @@ Nodes (7): Farm360.Application.Intelligence.Queries, Farm360.Application.Feature
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddReportRuns
 
-### Community 318 - "Farm360.Domain.Tenancy"
-Cohesion: 0.06
-Nodes (28): Farm360.Domain.Farms.Enums, Farm360.Application.UnitTests.Farms.Commands, Farm360.Persistence.Configurations, Farm360.Persistence.Repositories.Tenancy, Farm360.Application.UnitTests.Farms.Sheds.Commands, Farm360.Domain.Tenancy.Repositories, Farm360.Domain.Farms, Farm360.Persistence.Configurations.Farms (+20 more)
+### Community 318 - "Farm360.Persistence.Context"
+Cohesion: 0.04
+Nodes (39): Farm360.Application.UnitTests.Organizations.Branches.Commands, Farm360.Persistence.Repositories.Finance, Farm360.Application.UnitTests.Farms.Pens.Commands, Farm360.Persistence.Queries, Farm360.Persistence.Permissions, Farm360.Persistence.Repositories.Farms, Farm360.Domain.Farms.Enums, Farm360.Persistence.Context (+31 more)
 
 ### Community 319 - ".Handle"
 Cohesion: 0.23
@@ -2002,7 +2036,11 @@ Nodes (11): CancellationToken, Guid, Task, CreatePenCommand, CreatePenCommandHan
 
 ### Community 320 - "Farm360.Persistence.Migrations"
 Cohesion: 0.10
-Nodes (11): Farm360.Persistence.Migrations, MigrationBuilder, ModelBuilder, AddProjectionScenarios, MigrationBuilder, ModelBuilder, AddInvestorTables, MigrationBuilder (+3 more)
+Nodes (11): Farm360.Persistence.Migrations, MigrationBuilder, ModelBuilder, BackfillPlannedCostForExistingDailyFeedingEntries, MigrationBuilder, string, ModelBuilder, FilterOverheadAllocationUniqueIndexToLiveRows (+3 more)
+
+### Community 321 - "Farm360.Application.Analytics.Queries"
+Cohesion: 0.33
+Nodes (6): Farm360.Application.Analytics.Queries, CancellationToken, Task, GetFinanceAnalyticsQuery, GetFinanceAnalyticsQueryHandler, FinanceAnalyticsDto
 
 ### Community 322 - "AddAnimalOverheadAllocations"
 Cohesion: 0.29
@@ -2025,8 +2063,8 @@ Cohesion: 0.20
 Nodes (7): HerdComposition, CompositionTab, HerdCompositionChartComponent, LegendItem, Component, Input, ViewChild
 
 ### Community 327 - "VaccinationComplianceChartComponent"
-Cohesion: 0.20
-Nodes (4): Component, Input, ViewChild, VaccinationComplianceChartComponent
+Cohesion: 0.18
+Nodes (5): VaccinationCompliance, Component, Input, ViewChild, VaccinationComplianceChartComponent
 
 ### Community 328 - "RuleSetListComponent"
 Cohesion: 0.27
@@ -2048,29 +2086,29 @@ Nodes (3): MigrationBuilder, ModelBuilder, AddPurchaseReturns
 Cohesion: 0.22
 Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 335 - "OrganizationListComponent"
-Cohesion: 0.21
-Nodes (3): Organization, OrganizationListComponent, Component
+### Community 335 - "GetPendingSubscriptionsQueryHandler"
+Cohesion: 0.13
+Nodes (17): Farm360.Api.Endpoints.Subscriptions, Farm360.Application.Subscriptions.Queries, RouteGroupBuilder, ApproveSubscriptionRequest, RejectSubscriptionRequest, SubscriptionEndpoints, CancellationToken, IReadOnlyList (+9 more)
 
-### Community 336 - ".UploadFileAsync"
-Cohesion: 0.12
-Nodes (13): Farm360.Infrastructure.Storage, IWebHostEnvironment, IEndpointRouteBuilder, OrganizationEndpoints, CancellationToken, Stream, Task, IFileStorageService (+5 more)
+### Community 336 - "UploadAnimalPhotoCommandHandler"
+Cohesion: 0.10
+Nodes (20): Farm360.Infrastructure.Storage, IWebHostEnvironment, CancellationToken, Stream, Task, IFileStorageService, AddAnimalPhotoCommand, AddAnimalPhotoCommandHandler (+12 more)
 
-### Community 337 - "Farm360.Persistence.Configurations.Inventory"
-Cohesion: 0.14
-Nodes (7): Farm360.Persistence.Configurations.Inventory, EntityTypeBuilder, InventoryItemConfiguration, EntityTypeBuilder, StockTransactionConfiguration, EntityTypeBuilder, SupplierConfiguration
+### Community 337 - ".Handle"
+Cohesion: 0.23
+Nodes (11): CancellationToken, Guid, Task, CreateFarmCommand, CreateFarmCommandHandler, CreateFarmCommandValidator, Fact, Guid (+3 more)
 
 ### Community 338 - "GetReconciliationsQuery"
 Cohesion: 0.42
 Nodes (7): Farm360.Application.Feeding.Queries.FeedingReconciliations, CancellationToken, List, Task, FeedingReconciliationDto, GetReconciliationsQuery, GetReconciliationsQueryHandler
 
 ### Community 339 - ".Handle"
-Cohesion: 0.14
-Nodes (15): LineSpec, CancellationToken, Dictionary, IReadOnlyList, string, Task, BalanceSheetPosition, GetBalanceSheetQuery (+7 more)
+Cohesion: 0.31
+Nodes (6): CancellationToken, Task, Fact, Mock, Task, PurchaseReturnCompletedFinanceHandlerTests
 
 ### Community 340 - "8. Executive Dashboard"
-Cohesion: 0.10
-Nodes (19): 8. Executive Dashboard, 9. Farm Dashboard, Breadcrumb, Breadcrumb, Cards Detail, Dashboard Widgets Grid (below KPI row), Empty State, Farm360 AI — Complete UI Blueprint (+11 more)
+Cohesion: 0.17
+Nodes (12): 8. Executive Dashboard, Breadcrumb, Cards Detail, Dashboard Widgets Grid (below KPI row), Empty State, Filters, Keyboard Shortcuts, Loading State (+4 more)
 
 ### Community 341 - "Health & Vaccination Module — Phase 1 Tasks"
 Cohesion: 0.22
@@ -2108,13 +2146,17 @@ Nodes (4): HostListener, GlobalSearchComponent, Component, ViewChild
 Cohesion: 0.20
 Nodes (9): jasmine, src/**/*.spec.ts, compilerOptions, outDir, types, extends, include, src/**/*.d.ts (+1 more)
 
-### Community 350 - "MeasureUnitRepository"
-Cohesion: 0.31
-Nodes (6): CancellationToken, Guid, IReadOnlyCollection, IReadOnlyList, Task, MeasureUnitRepository
+### Community 350 - "LookupDto"
+Cohesion: 0.19
+Nodes (3): LookupService, Injectable, LookupDto
 
-### Community 351 - ".FetchAsync"
-Cohesion: 0.29
-Nodes (5): CancellationToken, IReadOnlyList, List, Task, HerdPerformanceReportRow
+### Community 351 - "ReportGroup"
+Cohesion: 0.17
+Nodes (13): Func, ReportGroup, CancellationToken, IReadOnlyList, Task, AnimalSummaryReportDefinition, AnimalSummaryReportRow, CancellationToken (+5 more)
+
+### Community 352 - "BatchPnlReportDefinition"
+Cohesion: 0.42
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, BatchPnlReportDefinition, BatchPnlReportRow
 
 ### Community 353 - "GetExpiringItemsQueryHandler"
 Cohesion: 0.31
@@ -2124,12 +2166,12 @@ Nodes (8): Farm360.Application.Inventory.Queries.GetExpiringItems, List, Expirin
 Cohesion: 0.15
 Nodes (12): MediatR.Contracts, Microsoft.NET.Sdk, Microsoft.NET.Sdk, Microsoft.NET.Sdk, Bogus, coverlet.collector, FluentAssertions, Microsoft.NET.Test.Sdk (+4 more)
 
-### Community 355 - "ReportDiseaseIncidentCommand.cs"
-Cohesion: 0.22
-Nodes (10): CancellationToken, Guid, Task, ReportDiseaseIncidentCommand, ReportDiseaseIncidentCommandHandler, ReportDiseaseIncidentCommandValidator, Fact, Mock (+2 more)
+### Community 355 - ".ApprovePendingSubscription_ShouldActivateTenantAndCompleteRecord"
+Cohesion: 0.31
+Nodes (6): Fact, InlineData, Mock, Task, Theory, SubscriptionCommandHandlerTests
 
 ### Community 356 - "BalanceSheetReportDefinition"
-Cohesion: 0.40
+Cohesion: 0.44
 Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, BalanceSheetReportDefinition, BalanceSheetReportRow
 
 ### Community 357 - "AddFarmShareMarketTables"
@@ -2209,20 +2251,20 @@ Cohesion: 0.25
 Nodes (8): 6.1 Server-Side Report Export (F-069, F-010), 6.2 Dashboard Export (FR-DA-10), 6.3 Unit & Integration Tests, 6.4 Visual Polish Pass, [NEW] Angular: Export buttons on all report pages, [NEW] API Endpoints, [NEW] Backend: `Farm360.Infrastructure/Reporting/`, Sprint 6: Export, Polish & Quality Assurance
 
 ### Community 378 - "page-header.component.ts"
-Cohesion: 0.04
-Nodes (80): AnalyticsService, BreedingAnalyticsDto, FinanceAnalyticsDto, HealthAnalyticsDto, MonthlyRevenueExpenseDto, Injectable, Farm Detail Page, Farm Detail Stub Template (+72 more)
+Cohesion: 0.03
+Nodes (112): AnalyticsService, BreedingAnalyticsDto, FinanceAnalyticsDto, HealthAnalyticsDto, MonthlyRevenueExpenseDto, Injectable, UserProfile, Injectable (+104 more)
 
-### Community 379 - ".AddItem"
+### Community 379 - "Role"
 Cohesion: 0.31
-Nodes (5): Fact, Guid, Mock, Task, PurchaseReturnCommandHandlerTests
+Nodes (4): Guid, IReadOnlyCollection, List, Role
 
 ### Community 380 - "Farm360.Application.csproj"
 Cohesion: 0.22
 Nodes (8): AutoMapper, FluentValidation.DependencyInjectionExtensions, FluentValidation, MediatR, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Logging.Abstractions, Microsoft.Extensions.Options, Microsoft.NET.Sdk
 
 ### Community 381 - "IMasterDataRepository"
-Cohesion: 0.33
-Nodes (6): CancellationToken, Guid, IReadOnlyList, MasterDataEntry, Task, IMasterDataRepository
+Cohesion: 0.22
+Nodes (10): CancellationToken, Task, DeleteMasterDataCommand, DeleteMasterDataCommandHandler, CancellationToken, Guid, IReadOnlyList, MasterDataEntry (+2 more)
 
 ### Community 382 - "GetFeedingRuleSetsQuery.cs"
 Cohesion: 0.42
@@ -2237,8 +2279,8 @@ Cohesion: 0.25
 Nodes (8): Farm360.Application.Intelligence.Queries.CalculateProfitProjection, CancellationToken, Task, CalculateProfitProjectionQuery, CalculateProfitProjectionQueryHandler, FatteningProjectionDayDto, FatteningProjectionSummaryDto, ProfitProjectionResponse
 
 ### Community 386 - "executive-dashboard.component.ts"
-Cohesion: 0.29
-Nodes (4): DASHBOARD_ROUTES, InsightType, FarmGuidelinesDialogComponent, Component
+Cohesion: 0.24
+Nodes (5): FarmSummaryCardsComponent, Component, Input, FarmGuidelinesDialogComponent, Component
 
 ### Community 387 - ".Handle"
 Cohesion: 0.23
@@ -2252,9 +2294,9 @@ Nodes (3): MigrationBuilder, ModelBuilder, AddMasterDataModule
 Cohesion: 0.18
 Nodes (10): AddPhotoRequest, ConfirmPregnancyRequest, QuarantineAnimalRequest, RecordBcsRequest, RecordCalvingRequest, RecordDeathRequest, RecordMatingRequest, RecordWeightRequest (+2 more)
 
-### Community 390 - ".ApprovePendingSubscription_ShouldActivateTenantAndCompleteRecord"
-Cohesion: 0.31
-Nodes (6): Fact, InlineData, Mock, Task, Theory, SubscriptionCommandHandlerTests
+### Community 390 - "GetVetVisitDetailQuery.cs"
+Cohesion: 0.43
+Nodes (6): Farm360.Application.Health.Queries.VetVisits, CancellationToken, Task, GetVetVisitDetailQuery, GetVetVisitDetailQueryHandler, VetVisitDetailDto
 
 ### Community 391 - "MappingProfile.cs"
 Cohesion: 0.29
@@ -2264,9 +2306,9 @@ Nodes (5): Farm360.Application.Common.Mappings, Profile, Assembly, IMapFrom, Map
 Cohesion: 0.31
 Nodes (7): CancellationToken, string, Task, GetShareMarketOverviewQuery, GetShareMarketOverviewQueryHandler, ShareDistributionSliceDto, ShareMarketOverviewDto
 
-### Community 393 - "BackfillPlannedCostForExistingDailyFeedingEntries"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, BackfillPlannedCostForExistingDailyFeedingEntries
+### Community 393 - "GetFcrAnalyticsQueryHandler"
+Cohesion: 0.39
+Nodes (6): Farm360.Application.Feeding.Queries.Analytics, FcrAnalyticsDto, CancellationToken, Task, GetFcrAnalyticsQuery, GetFcrAnalyticsQueryHandler
 
 ### Community 394 - "11. Animal Detail"
 Cohesion: 0.25
@@ -2276,41 +2318,41 @@ Nodes (8): 11. Animal Detail, Actions, Breadcrumb, Inline Editing, Keyboard Shor
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddAutomatedFieldsToFinancialTransactions
 
-### Community 396 - "IncomeStatementReportDefinition"
-Cohesion: 0.40
-Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, IncomeStatementReportDefinition, IncomeStatementReportRow
+### Community 396 - "ReportDescriptor"
+Cohesion: 0.22
+Nodes (6): ReadOnlyDictionary, IReadOnlyList, IReportRegistry, ReportDescriptor, ReportRegistry, IReadOnlyList
 
-### Community 397 - ".Create"
-Cohesion: 0.35
-Nodes (4): Guid, DateOnly, Fact, TradeBillTests
+### Community 397 - "TradeBillTests"
+Cohesion: 0.44
+Nodes (3): DateOnly, Fact, TradeBillTests
 
 ### Community 398 - "BreedingRecord"
-Cohesion: 0.24
-Nodes (6): DateOnly, DateTime, Guid, BreedingRecord, EntityTypeBuilder, BreedingRecordConfiguration
+Cohesion: 0.07
+Nodes (16): Farm360.Persistence.Configurations.Livestock, DateTime, Guid, AnimalPhoto, DateOnly, DateTime, Guid, BreedingRecord (+8 more)
 
-### Community 399 - ".PostAsync"
-Cohesion: 0.33
-Nodes (6): CancellationToken, DateOnly, Guid, string, Task, InventoryAccounting
+### Community 399 - "FarmRepository"
+Cohesion: 0.40
+Nodes (6): CancellationToken, Guid, IReadOnlyDictionary, IReadOnlyList, Task, FarmRepository
 
 ### Community 400 - "AddRuleLineIdToDailyFeedingEntry"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddRuleLineIdToDailyFeedingEntry
 
-### Community 401 - "PurchaseOrderItem"
-Cohesion: 0.24
-Nodes (5): Guid, PurchaseOrderItem, EntityTypeBuilder, PurchaseOrderConfiguration, PurchaseOrderItemConfiguration
+### Community 401 - "UpdateBranchCommand.cs"
+Cohesion: 0.36
+Nodes (5): CancellationToken, Task, UpdateBranchCommand, UpdateBranchCommandHandler, UpdateBranchCommandValidator
 
-### Community 402 - "Farm360.Persistence.Seed"
-Cohesion: 0.11
-Nodes (10): Farm360.Application.Organizations.Branches.Queries, Farm360.Application.Farms.Commands, Farm360.Persistence.Seed, Farm360.Application.MasterData.Commands, IEndpointRouteBuilder, FarmEndpoints, IEndpointRouteBuilder, MasterDataEndpoints (+2 more)
+### Community 402 - "GetMasterDataByIdQuery.cs"
+Cohesion: 0.22
+Nodes (7): Farm360.Application.MasterData.Queries, IEndpointRouteBuilder, LocationEndpoints, CancellationToken, Task, GetMasterDataByIdQuery, GetMasterDataByIdQueryHandler
 
 ### Community 404 - "ShareMarketDashboardComponent"
 Cohesion: 0.39
 Nodes (3): ShareActionType, ShareMarketDashboardComponent, Component
 
-### Community 405 - ".FetchAsync"
-Cohesion: 0.43
-Nodes (4): CancellationToken, Guid, IReadOnlyList, Task
+### Community 405 - "HerdRegisterReportDefinition"
+Cohesion: 0.42
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, HerdRegisterReportDefinition, HerdRegisterReportRow
 
 ### Community 407 - "Farm360 Accounting Policy"
 Cohesion: 0.22
@@ -2324,9 +2366,9 @@ Nodes (3): MortalityListComponent, Component, ViewChild
 Cohesion: 0.25
 Nodes (8): schematics, standalone, style, standalone, standalone, @schematics/angular:component, @schematics/angular:directive, @schematics/angular:pipe
 
-### Community 410 - "AnimalPhoto"
-Cohesion: 0.22
-Nodes (5): DateTime, Guid, AnimalPhoto, EntityTypeBuilder, AnimalPhotoConfiguration
+### Community 410 - "AddShedManagementModule"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, AddShedManagementModule
 
 ### Community 412 - "MonthlyPnlReportComponent"
 Cohesion: 0.25
@@ -2348,17 +2390,17 @@ Nodes (6): 1. Backend: Entity Framework & Repository Layer, 2. Backend: MediatR 
 Cohesion: 0.25
 Nodes (7): Added, Changed, Changed, Changelog, Fixed, Refactored & Hardened (Enterprise Architecture Sprint), [Unreleased]
 
-### Community 420 - ".Handle"
-Cohesion: 0.43
-Nodes (6): CancellationToken, IReadOnlyList, Task, GetShareTransactionsQuery, GetShareTransactionsQueryHandler, ShareTransactionDto
+### Community 420 - "InitialTenancy"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, InitialTenancy
 
 ### Community 421 - "GetInventoryMovementReportQueryHandler"
 Cohesion: 0.33
 Nodes (7): Farm360.Application.Inventory.Queries.GetInventoryMovementReport, GetInventoryMovementReportQuery, InventoryMovementItemDto, InventoryMovementReportDto, CancellationToken, Task, GetInventoryMovementReportQueryHandler
 
 ### Community 422 - ".CreateTenantForUserAsync"
-Cohesion: 0.39
-Nodes (5): TenantMembership, CancellationToken, Guid, Task, TenantMembershipService
+Cohesion: 0.48
+Nodes (4): CancellationToken, Guid, Task, TenantMembershipService
 
 ### Community 423 - "12. Register Animal"
 Cohesion: 0.08
@@ -2432,69 +2474,69 @@ Nodes (7): 22.1 Tenancy Model, 22.2 The Golden Rules of Multi-Tenancy (Never Vio
 Cohesion: 0.50
 Nodes (4): 1.3 Application Layer (CQRS), [NEW] Commands, [NEW] Event Handlers (Auto-Posting — FR-FM-04, FR-FM-05), [NEW] Queries
 
-### Community 441 - "BackfillAnimalFeedAllocationsCommandHandler"
-Cohesion: 0.43
-Nodes (6): CancellationToken, ILogger, Task, BackfillAnimalFeedAllocationsCommand, BackfillAnimalFeedAllocationsCommandHandler, BackfillAnimalFeedAllocationsResult
+### Community 441 - "AddAnimalFeedingPlanModule"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, AddAnimalFeedingPlanModule
 
 ### Community 442 - "AddOrganizationModule"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddOrganizationModule
 
-### Community 443 - "FeedingRuleSet"
-Cohesion: 0.06
-Nodes (32): CancellationToken, Dictionary, Guid, string, Task, DirectFeedService, DirectRation, IDirectFeedService (+24 more)
+### Community 443 - ".Handle"
+Cohesion: 0.09
+Nodes (28): CancellationToken, Guid, IReadOnlyList, Task, AssignAnimalFeedingPlanCommand, AssignAnimalFeedingPlanCommandHandler, AssignAnimalFeedingPlanCommandValidator, CancellationToken (+20 more)
 
-### Community 444 - "AddAnimalFeedingPlanModule"
+### Community 444 - "DeleteShedCommandHandler"
+Cohesion: 0.20
+Nodes (8): Farm360.Application.Farms.Sheds.Commands, Farm360.Application.Farms.Sheds.Queries, IEndpointRouteBuilder, ShedEndpoints, CancellationToken, Task, DeleteShedCommand, DeleteShedCommandHandler
+
+### Community 445 - "AddInventoryToHealthEvents"
 Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, AddAnimalFeedingPlanModule
+Nodes (3): MigrationBuilder, ModelBuilder, AddInventoryToHealthEvents
 
-### Community 445 - "ReconciliationListComponent"
-Cohesion: 0.29
-Nodes (3): FeedingCycleReconciliation, ReconciliationListComponent, Component
-
-### Community 446 - "PermissionPolicyProvider"
-Cohesion: 0.33
-Nodes (6): AuthorizationOptions, AuthorizationPolicy, IAuthorizationPolicyProvider, string, Task, PermissionPolicyProvider
+### Community 446 - "ShedRepository"
+Cohesion: 0.39
+Nodes (6): CancellationToken, Guid, IReadOnlyDictionary, IReadOnlyList, Task, ShedRepository
 
 ### Community 447 - ".Handle"
 Cohesion: 0.57
 Nodes (5): CancellationToken, Task, AnimalSoldEventHandler, AnimalSoldNotification, AnimalSoldEvent
 
-### Community 448 - "Farm360.Persistence.Configurations.Health"
-Cohesion: 0.22
-Nodes (5): Farm360.Persistence.Configurations.Health, EntityTypeBuilder, DiseaseIncidentConfiguration, EntityTypeBuilder, VaccinationEventConfiguration
+### Community 448 - "Farm360.Domain.Organizations.Events"
+Cohesion: 0.29
+Nodes (4): Farm360.Domain.Organizations.Events, OrganizationCreatedEvent, OrganizationDeactivatedEvent, OrganizationUpdatedEvent
 
-### Community 449 - "LoggingSmsService"
-Cohesion: 0.60
-Nodes (3): CancellationToken, Task, LoggingSmsService
-
-### Community 450 - "SaveProjectionScenarioCommandHandler"
-Cohesion: 0.36
-Nodes (7): Farm360.Application.Intelligence.Commands.SaveProjectionScenario, CancellationToken, Guid, Task, SaveProjectionScenarioCommand, SaveProjectionScenarioCommandHandler, SaveProjectionScenarioValidator
+### Community 450 - "ProjectionScenario"
+Cohesion: 0.10
+Nodes (22): Farm360.Application.Intelligence.Commands.SaveProjectionScenario, Farm360.Domain.Intelligence.Repositories, CancellationToken, Guid, Task, SaveProjectionScenarioCommand, SaveProjectionScenarioCommandHandler, SaveProjectionScenarioValidator (+14 more)
 
 ### Community 451 - "PenEndpoints.cs"
-Cohesion: 0.12
-Nodes (18): Farm360.Application.Farms.Pens.DTOs, Farm360.Application.Farms.Pens.Queries, IEndpointRouteBuilder, CreatePenRequest, PenEndpoints, UpdatePenRequest, PenDto, PenListDto (+10 more)
+Cohesion: 0.16
+Nodes (12): Farm360.Application.Farms.Pens.DTOs, Farm360.Application.Farms.Pens.Queries, Farm360.Application.Farms.Pens.Commands, IEndpointRouteBuilder, CreatePenRequest, PenEndpoints, UpdatePenRequest, PenDto (+4 more)
 
-### Community 452 - "GetDiseaseIncidentListQuery.cs"
-Cohesion: 0.21
-Nodes (11): Farm360.Application.Health.Queries.DiseaseIncidents, DiseaseIncidentDetailDto, DiseaseIncidentDto, CancellationToken, Task, GetDiseaseIncidentDetailQuery, GetDiseaseIncidentDetailQueryHandler, CancellationToken (+3 more)
+### Community 452 - ".HandleExceptionAsync"
+Cohesion: 0.43
+Nodes (5): Exception, HttpContext, JsonSerializerOptions, Task, GlobalExceptionMiddleware
 
 ### Community 454 - "architect"
 Cohesion: 0.29
 Nodes (7): extract-i18n, test, builder, options, architect, buildTarget, builder
 
-### Community 456 - "FarmSummaryCard"
-Cohesion: 0.33
-Nodes (4): FarmSummaryCard, FarmSummaryCardsComponent, Component, Input
+### Community 455 - "dashboard.service.ts"
+Cohesion: 0.32
+Nodes (4): ExecutiveDashboardData, FarmSummaryCard, DashboardService, Injectable
+
+### Community 456 - "GetBreedingAnalyticsQueryHandler"
+Cohesion: 0.48
+Nodes (5): CancellationToken, Task, GetBreedingAnalyticsQuery, GetBreedingAnalyticsQueryHandler, BreedingAnalyticsDto
 
 ### Community 457 - "Executive Dashboard Page Template"
 Cohesion: 0.29
 Nodes (7): Executive Dashboard Page Template, ADG Trend Chart Widget Stub Template (unused), Farm Summary Cards Widget Stub Template (unused), Feed Cost Trend Chart Widget Stub Template (unused), Herd Composition Chart Widget Stub Template (unused), Recent Activity Feed Widget Stub Template (unused), Vaccination Compliance Chart Widget Stub Template (unused)
 
 ### Community 458 - "AdgTrendChartComponent"
-Cohesion: 0.40
-Nodes (4): AdgTrendChartComponent, Component, Input, ViewChild
+Cohesion: 0.25
+Nodes (5): AdgTrend, AdgTrendChartComponent, Component, Input, ViewChild
 
 ### Community 459 - "FeedCostTrendChartComponent"
 Cohesion: 0.25
@@ -2504,13 +2546,21 @@ Nodes (5): FeedCostTrend, FeedCostTrendChartComponent, Component, Input, ViewChi
 Cohesion: 0.38
 Nodes (3): BreadcrumbComponent, Component, Input
 
-### Community 461 - ".GetAsync"
-Cohesion: 0.39
-Nodes (5): CancellationToken, Guid, Task, IUserProfileService, UserProfileDetails
+### Community 461 - "GetHealthAnalyticsQueryHandler"
+Cohesion: 0.48
+Nodes (5): CancellationToken, Task, GetHealthAnalyticsQuery, GetHealthAnalyticsQueryHandler, HealthAnalyticsDto
 
-### Community 466 - "AllocateOverheadAcrossTenantsCommandHandler"
-Cohesion: 0.28
-Nodes (6): Farm360.Application.Finance.Jobs, CancellationToken, ILogger, Task, AllocateOverheadAcrossTenantsCommand, AllocateOverheadAcrossTenantsCommandHandler
+### Community 462 - "FarmDetailComponent"
+Cohesion: 0.07
+Nodes (8): FarmDetailComponent, Component, PenDetailComponent, Component, PenListComponent, Component, ShedDetailComponent, Component
+
+### Community 463 - "GetFeedingPlansQueryHandler"
+Cohesion: 0.52
+Nodes (6): CancellationToken, IReadOnlyList, Task, AnimalFeedingPlanDto, GetFeedingPlansQuery, GetFeedingPlansQueryHandler
+
+### Community 466 - "DataTableComponent"
+Cohesion: 0.17
+Nodes (5): DataTableComponent, Component, Input, Output, ViewChild
 
 ### Community 467 - "package.json"
 Cohesion: 0.33
@@ -2520,25 +2570,29 @@ Nodes (5): description, name, private, $schema, version
 Cohesion: 0.20
 Nodes (3): BalanceSheetComponent, Component, ViewChild
 
-### Community 469 - "PurchaseReturnItem"
-Cohesion: 0.28
-Nodes (5): Guid, PurchaseReturnItem, EntityTypeBuilder, PurchaseReturnConfiguration, PurchaseReturnItemConfiguration
+### Community 469 - "DeleteFarmCommandHandler"
+Cohesion: 0.47
+Nodes (4): CancellationToken, Task, DeleteFarmCommand, DeleteFarmCommandHandler
 
 ### Community 471 - "VaccinationDueListComponent"
 Cohesion: 0.29
 Nodes (3): Component, ViewChild, VaccinationDueListComponent
 
+### Community 472 - "LogTreatmentDialog"
+Cohesion: 0.15
+Nodes (6): LogTreatmentDialog, Component, MedicalTreatmentDto, TreatmentListComponent, Component, ViewChild
+
 ### Community 473 - "branch.service.ts"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (11): BranchWidgetComponent, Component, Input, BranchDetailComponent, Component, Branch, CreateBranchCommand, UpdateBranchCommand (+3 more)
 
-### Community 474 - "FeedEvents.cs"
-Cohesion: 0.60
-Nodes (5): DateTime, Guid, FeedConsumptionLoggedEvent, FeedFormulaCreatedEvent, FeedingScheduleCreatedEvent
+### Community 474 - "RecordStockWriteOffCommandHandler"
+Cohesion: 0.24
+Nodes (8): Farm360.Application.Inventory.Commands.RecordStockWriteOff, Guid, RecordStockWriteOffCommand, CancellationToken, Guid, Task, RecordStockWriteOffCommandHandler, RecordStockWriteOffCommandValidator
 
 ### Community 475 - "GetFeedingEntryCostBreakdownQueryHandler"
-Cohesion: 0.43
-Nodes (6): CancellationToken, Task, FeedingEntryCostBreakdownDto, FeedingEntryIngredientCostDto, GetFeedingEntryCostBreakdownQuery, GetFeedingEntryCostBreakdownQueryHandler
+Cohesion: 0.20
+Nodes (12): CancellationToken, Guid, Task, CreateFeedIngredientCommand, CreateFeedIngredientCommandHandler, CreateFeedIngredientCommandValidator, CancellationToken, Task (+4 more)
 
 ### Community 476 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -2624,29 +2678,29 @@ Nodes (6): 5.1 Frontend Session Persistence & Initialization (`provideAppInitial
 Cohesion: 0.15
 Nodes (13): 1.2 Persistence Layer, 1.4 API Layer, 1.5 Angular UI, Current State Assessment, [MODIFY] `Farm360.Persistence/ApplicationDbContext.cs`, [MODIFY] [finance.routes.ts](file:///d:/Personel/Farm%20Management%20System/src/Farm360.Web/src/app/features/finance/finance.routes.ts), [MODIFY] [FinanceEndpoints.cs](file:///d:/Personel/Farm%20Management%20System/src/Farm360.Api/Endpoints/Finance/FinanceEndpoints.cs), [NEW] `Farm360.Domain/Finance/Interfaces/IAnimalCostLedgerRepository.cs` + Implementation (+5 more)
 
-### Community 497 - "ManualFeedingTests"
-Cohesion: 0.33
-Nodes (5): DateOnly, Fact, Guid, Task, ManualFeedingTests
+### Community 497 - "Fixture"
+Cohesion: 0.26
+Nodes (8): DateOnly, Fact, Guid, ISender, List, Task, Fixture, ManualFeedingTests
 
 ### Community 498 - "Sprint 4: Intelligence UI & Breed Integration (Doc 29 Phases 2.5/3)"
 Cohesion: 0.25
 Nodes (8): 4.1 Angular UI — Breed Management, 4.2 Angular UI — Intelligence Panels, Current State Assessment, [NEW] `features/livestock/components/batch-intelligence-panel/`, [NEW] `features/livestock/components/intelligence-panel/`, [NEW] `features/livestock/pages/breed-form/`, [NEW] `features/livestock/pages/breed-list/`, Sprint 4: Intelligence UI & Breed Integration (Doc 29 Phases 2.5/3)
 
-### Community 499 - "InfrastructureServiceExtensions.cs"
-Cohesion: 0.14
-Nodes (10): Farm360.Infrastructure.Logging, Farm360.Infrastructure.DependencyInjection, LoggerConfiguration, IConfiguration, IHostEnvironment, IServiceCollection, InfrastructureServiceExtensions, IConfiguration (+2 more)
+### Community 499 - "HangfireBackgroundJobService"
+Cohesion: 0.10
+Nodes (13): Farm360.Infrastructure.Logging, Farm360.Infrastructure.DependencyInjection, LoggerConfiguration, Expression, TimeSpan, HangfireBackgroundJobService, IConfiguration, IHostEnvironment (+5 more)
 
-### Community 500 - "InventoryEvents.cs"
-Cohesion: 0.60
-Nodes (5): DateTime, Guid, LowStockAlertEvent, StockDeductedEvent, StockReceivedEvent
+### Community 500 - "BaseValueObject"
+Cohesion: 0.22
+Nodes (5): IEquatable, IEnumerable, BaseValueObject, IEnumerable, AnimalPerformanceScore
 
-### Community 501 - "UpdateFeedIngredientCommand.cs"
-Cohesion: 0.36
-Nodes (6): Farm360.Application.Feeding.Commands.FeedIngredients, CancellationToken, Task, UpdateFeedIngredientCommand, UpdateFeedIngredientCommandHandler, UpdateFeedIngredientCommandValidator
+### Community 501 - "CreateConsumableUsagePlanCommandHandler"
+Cohesion: 0.43
+Nodes (6): CancellationToken, Guid, Task, CreateConsumableUsagePlanCommand, CreateConsumableUsagePlanCommandHandler, CreateConsumableUsagePlanCommandValidator
 
 ### Community 502 - "IDiseaseIncidentRepository"
-Cohesion: 0.36
-Nodes (4): CancellationToken, Task, DiseaseIncident, IDiseaseIncidentRepository
+Cohesion: 0.27
+Nodes (7): CancellationToken, Task, UpdateDiseaseIncidentCommand, UpdateDiseaseIncidentCommandHandler, UpdateDiseaseIncidentCommandValidator, DiseaseIncident, IDiseaseIncidentRepository
 
 ### Community 503 - "AddPenManagementModule"
 Cohesion: 0.29
@@ -2660,21 +2714,17 @@ Nodes (3): MigrationBuilder, ModelBuilder, AddCostSnapshotToDailyFeedingEntry
 Cohesion: 0.43
 Nodes (6): CancellationToken, Guid, Task, CreateBatchCommand, CreateBatchCommandHandler, CreateBatchCommandValidator
 
-### Community 506 - "AddBreedManagement"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, AddBreedManagement
+### Community 506 - "CreateInventoryItemCommandHandler"
+Cohesion: 0.43
+Nodes (6): CancellationToken, Guid, Task, CreateInventoryItemCommand, CreateInventoryItemCommandHandler, CreateInventoryItemCommandValidator
 
-### Community 507 - "AddBranchManagementFeatures"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, AddBranchManagementFeatures
-
-### Community 508 - "Migration"
+### Community 507 - "Migration"
 Cohesion: 0.25
-Nodes (4): Migration, MigrationBuilder, ModelBuilder, AddFarmManagementModule
+Nodes (4): Migration, MigrationBuilder, ModelBuilder, AddBranchManagementFeatures
 
-### Community 509 - "BodyConditionScore"
+### Community 508 - "AddFarmManagementModule"
 Cohesion: 0.29
-Nodes (5): DateOnly, Guid, BodyConditionScore, EntityTypeBuilder, BodyConditionScoreConfiguration
+Nodes (3): MigrationBuilder, ModelBuilder, AddFarmManagementModule
 
 ### Community 511 - "AddPurchaseOrderModule"
 Cohesion: 0.29
@@ -2712,9 +2762,9 @@ Nodes (4): Farm360.Contracts.Envelopes, DateTime, Guid, OutboxMessage
 Cohesion: 0.40
 Nodes (3): Farm360.Application.UnitTests, Fact, PlaceholderTest
 
-### Community 523 - "AdjustDailyFeedingEntryCommandHandler"
-Cohesion: 0.33
-Nodes (6): CancellationToken, ILogger, IPublisher, Task, AdjustDailyFeedingEntryCommand, AdjustDailyFeedingEntryCommandHandler
+### Community 523 - "FeedingDomainTests"
+Cohesion: 0.43
+Nodes (3): Fact, Guid, FeedingDomainTests
 
 ### Community 524 - "OpenApiConfiguration.cs"
 Cohesion: 0.40
@@ -2844,6 +2894,10 @@ Nodes (5): 1.1 Domain Layer Enhancements, [MODIFY] [FinancialTransaction.cs](fil
 Cohesion: 0.18
 Nodes (11): 2.1 Domain Layer, 2.2 Application Layer, 2.3 Angular UI, Current State Assessment, [MODIFY] [InventoryItem.cs](file:///d:/Personel/Farm%20Management%20System/src/Farm360.Domain/Inventory/InventoryItem.cs), [NEW] Background Workers, [NEW] Commands, [NEW] `Farm360.Domain/Inventory/Events/StockWriteOffEvent.cs` (+3 more)
 
+### Community 556 - "ApplicationServiceExtensions.cs"
+Cohesion: 0.33
+Nodes (4): Farm360.Application.DependencyInjection, Farm360.Application.Reporting.DependencyInjection, IServiceCollection, ApplicationServiceExtensions
+
 ### Community 557 - "Q: What connects LogoutRequest, RefreshTokenApiRequest, CreatePenRequest to the rest of the system?"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: What connects LogoutRequest, RefreshTokenApiRequest, CreatePenRequest to the rest of the system?, Source Nodes
@@ -2860,9 +2914,9 @@ Nodes (5): Active Branches Summary Widget Template, Farms Overview Widget Templa
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, AddUnitsOfMeasure
 
-### Community 563 - "AnimalDiedEvent"
-Cohesion: 0.50
-Nodes (4): CancellationToken, Task, AnimalDiedFinanceEventHandler, AnimalDiedEvent
+### Community 563 - "PurchaseReturnListComponent"
+Cohesion: 0.21
+Nodes (4): PurchaseReturn, PurchaseReturnStatus, PurchaseReturnListComponent, Component
 
 ### Community 565 - "IntelligencePanelComponent"
 Cohesion: 0.40
@@ -3068,6 +3122,10 @@ Nodes (4): 7.1 Design Principle, 7.2 Session Limit Enforcement, 7.3 Cross-Device
 Cohesion: 0.50
 Nodes (4): 8.1 Lockout Policy (Progressive), 8.2 Lockout State Response, 8.3 Admin Unlock Flow, 8. Account Lockout
 
+### Community 617 - "CloseFeedingCycleCommandHandler"
+Cohesion: 0.40
+Nodes (5): CancellationToken, ILogger, Task, CloseFeedingCycleCommand, CloseFeedingCycleCommandHandler
+
 ### Community 619 - "Log Treatment Dialog (Placeholder Template)"
 Cohesion: 0.50
 Nodes (4): Log Treatment Dialog (Placeholder Template), Log Veterinary Visit Dialog, Record Mortality Dialog (Placeholder Template), Schedule Vaccination Dialog (Placeholder Template)
@@ -3168,105 +3226,217 @@ Nodes (3): MilkWithdrawalComponent, Component, ViewChild
 Cohesion: 0.40
 Nodes (3): ExpiringItemsPanel, Component, Input
 
-### Community 663 - ".SetConsumptionCost"
-Cohesion: 0.23
-Nodes (5): DateOnly, Fact, Guid, Task, FeedingSimplificationTests
+### Community 663 - "GetBatchDetailsQueryHandler"
+Cohesion: 0.53
+Nodes (5): BatchDto, CancellationToken, Task, GetBatchDetailsQuery, GetBatchDetailsQueryHandler
 
-### Community 669 - "LinkInventoryItemsToUnits"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, LinkInventoryItemsToUnits
+### Community 669 - "FeedEvents.cs"
+Cohesion: 0.60
+Nodes (5): DateTime, Guid, FeedConsumptionLoggedEvent, FeedFormulaCreatedEvent, FeedingScheduleCreatedEvent
 
 ### Community 670 - "UpdateFeedingRuleSetModel"
 Cohesion: 0.29
 Nodes (3): MigrationBuilder, ModelBuilder, UpdateFeedingRuleSetModel
 
-### Community 671 - "AddInventoryToHealthEvents"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, AddInventoryToHealthEvents
+### Community 671 - "VetVisitDetailDialogComponent"
+Cohesion: 0.24
+Nodes (3): Component, Inject, VetVisitDetailDialogComponent
+
+### Community 673 - "InventoryEvents.cs"
+Cohesion: 0.60
+Nodes (5): DateTime, Guid, LowStockAlertEvent, StockDeductedEvent, StockReceivedEvent
 
 ### Community 674 - "Sprint 3: Executive Dashboard & Analytics (F-071 → F-080)"
 Cohesion: 0.29
 Nodes (7): 3.1 Application Layer, 3.2 Angular UI — Install `ng2-charts` + `chart.js`, Current State Assessment, [MODIFY] [executive-dashboard.component.html](file:///d:/Personel/Farm%20Management%20System/src/Farm360.Web/src/app/features/dashboard/pages/executive-dashboard/executive-dashboard.component.html), [NEW] Dashboard Widgets, [NEW] Queries, Sprint 3: Executive Dashboard & Analytics (F-071 → F-080)
 
-### Community 675 - "Farm360.Application.Health.DTOs"
-Cohesion: 0.15
-Nodes (17): Farm360.Application.Health.Queries.Dashboard, Farm360.Application.Health.DTOs, HealthDashboardDto, MilkWithdrawalDto, MortalityRecordDto, VaccinationProtocolStepDto, GetHealthDashboardQuery, GetHealthDashboardQueryHandler (+9 more)
+### Community 675 - "GetMilkWithdrawalAnimalsQuery"
+Cohesion: 0.46
+Nodes (6): MilkWithdrawalDto, CancellationToken, IReadOnlyList, Task, GetMilkWithdrawalAnimalsQuery, GetMilkWithdrawalAnimalsQueryHandler
 
 ### Community 697 - "OnboardTenantCommand.cs"
-Cohesion: 0.12
-Nodes (17): Farm360.Domain.Identity.Repositories, Farm360.Persistence.Repositories.Identity, CancellationToken, Guid, Task, OnboardTenantCommand, OnboardTenantCommandHandler, OnboardTenantCommandValidator (+9 more)
+Cohesion: 0.24
+Nodes (8): Farm360.Domain.Identity.Repositories, Farm360.Domain.Interfaces.Repositories, CancellationToken, Guid, Task, OnboardTenantCommand, OnboardTenantCommandHandler, OnboardTenantCommandValidator
 
 ### Community 698 - "UpdateMyProfileCommand.cs"
 Cohesion: 0.43
 Nodes (5): CancellationToken, Task, UpdateMyProfileCommand, UpdateMyProfileCommandHandler, UpdateMyProfileCommandValidator
 
-### Community 699 - "AddHealthSchema"
-Cohesion: 0.29
-Nodes (3): MigrationBuilder, ModelBuilder, AddHealthSchema
-
-### Community 700 - "ApplicationServiceExtensions.cs"
-Cohesion: 0.33
-Nodes (4): Farm360.Application.DependencyInjection, Farm360.Application.Reporting.DependencyInjection, IServiceCollection, ApplicationServiceExtensions
+### Community 700 - "ReportExecutionService.cs"
+Cohesion: 0.15
+Nodes (10): Farm360.Domain.Reporting, Farm360.Persistence.Repositories.Reporting, Farm360.Application.Reporting.Registry, Farm360.Application.Reporting.Services, ReportCatalogItemResponse, ReportRunHistoryResponse, IServiceCollection, ReportingServiceExtensions (+2 more)
 
 ### Community 701 - "VaccinationProtocolListComponent"
 Cohesion: 0.32
 Nodes (3): Component, ViewChild, VaccinationProtocolListComponent
 
-### Community 702 - "GetCurrentStockSummaryQueryHandler"
-Cohesion: 0.53
-Nodes (5): CurrentStockSummaryDto, CancellationToken, Task, GetCurrentStockSummaryQuery, GetCurrentStockSummaryQueryHandler
+### Community 702 - ".GetSummaryAsync"
+Cohesion: 0.24
+Nodes (9): CurrentStockSummaryDto, CancellationToken, Task, GetCurrentStockSummaryQuery, GetCurrentStockSummaryQueryHandler, LowStockCount, OutOfStockCount, TotalItems (+1 more)
 
-### Community 703 - "FeedingEndpoints.cs"
-Cohesion: 0.15
-Nodes (15): Farm360.Application.Feeding.Queries.AnimalFeedingPlans, Farm360.Application.Feeding.Queries.FeedingSchedules, Farm360.Application.Feeding.Queries.FeedIngredients, Farm360.Application.Feeding.Queries.FeedingRuleSets, Farm360.Application.Feeding.Queries.ConsumptionLogs, Farm360.Application.Feeding.Queries.DailyFeedingEntries, IEndpointRouteBuilder, FeedingEndpoints (+7 more)
+### Community 703 - "GetTodayFeedingEntriesQueryHandler"
+Cohesion: 0.50
+Nodes (6): CancellationToken, IReadOnlyList, Task, DailyFeedingEntryDto, GetTodayFeedingEntriesQuery, GetTodayFeedingEntriesQueryHandler
 
 ### Community 704 - "GetInventoryValuationReportQueryHandler"
 Cohesion: 0.53
 Nodes (5): InventoryValuationReportDto, CancellationToken, Task, GetInventoryValuationReportQuery, GetInventoryValuationReportQueryHandler
 
-### Community 705 - "GetBatchDetailsQueryHandler"
-Cohesion: 0.53
-Nodes (5): BatchDto, CancellationToken, Task, GetBatchDetailsQuery, GetBatchDetailsQueryHandler
+### Community 705 - "TenantUserRepository"
+Cohesion: 0.47
+Nodes (4): CancellationToken, Guid, Task, TenantUserRepository
 
-### Community 706 - "InventoryEnums.cs"
-Cohesion: 0.33
-Nodes (5): ConsumableUsagePlanStatus, DailyConsumableEntryStatus, InventoryStatus, PurchaseReturnReason, StockFundingSource
-
-### Community 711 - "TenantEndpoints.cs"
+### Community 709 - "IdentitySeeder.cs"
 Cohesion: 0.40
-Nodes (3): Farm360.Application.Tenants.Commands, IEndpointRouteBuilder, TenantEndpoints
+Nodes (3): Farm360.Identity.Seed, Task, IdentitySeeder
 
-### Community 712 - "DesignTimeTenantService"
+### Community 710 - "CreateVaccinationProtocolCommand.cs"
+Cohesion: 0.18
+Nodes (13): Farm360.Application.Health.Commands.VaccinationProtocols, CancellationToken, Task, AssignProtocolToAnimalsCommand, AssignProtocolToAnimalsCommandHandler, AssignProtocolToAnimalsCommandValidator, CancellationToken, Guid (+5 more)
+
+### Community 711 - "GetConsumableUsagePlansQueryHandler"
+Cohesion: 0.44
+Nodes (7): ConsumableUsagePlanDto, CancellationToken, Task, GetConsumableUsagePlanByIdQuery, GetConsumableUsagePlanByIdQueryHandler, GetConsumableUsagePlansQuery, GetConsumableUsagePlansQueryHandler
+
+### Community 712 - "ActiveFeedingPlansCostReportDefinition"
+Cohesion: 0.42
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, ActiveFeedingPlansCostReportDefinition, ActiveFeedingPlansCostReportRow
+
+### Community 713 - "OverheadAllocationCalculator.cs"
+Cohesion: 0.40
+Nodes (3): Farm360.Domain.UnitTests.Finance, Farm360.Domain.Finance.Allocation, OverheadAllocationShare
+
+### Community 714 - "VetVisitCreatedEventHandler"
 Cohesion: 0.50
-Nodes (3): ITenantService, Guid, DesignTimeTenantService
+Nodes (4): CancellationToken, Task, VetVisitCreatedEventHandler, VetVisitCreatedEvent
 
-### Community 719 - "BatchList"
+### Community 716 - ".Send"
+Cohesion: 0.17
+Nodes (14): CancellationToken, IRequest, Task, CancellationToken, IReadOnlyList, Task, AnimalCostLedgerReportDefinition, AnimalCostLedgerReportRow (+6 more)
+
+### Community 717 - "VaccinationComplianceReportDefinition"
+Cohesion: 0.42
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, VaccinationComplianceReportDefinition, VaccinationComplianceReportRow
+
+### Community 719 - "FeedStockValuationReportDefinition"
+Cohesion: 0.42
+Nodes (6): CancellationToken, Guid, IReadOnlyList, Task, FeedStockValuationReportDefinition, InventoryStockValuationReportRow
+
+### Community 721 - "AnimalFeedsCostReportDialogComponent"
+Cohesion: 0.22
+Nodes (3): AnimalFeedsCostReportDialogComponent, Component, ViewChild
+
+### Community 722 - "BatchList"
 Cohesion: 0.40
 Nodes (3): BatchList, Component, ViewChild
+
+### Community 723 - "PurchaseReturnCompletedFinanceHandler"
+Cohesion: 0.50
+Nodes (3): ILogger, PurchaseReturnCompletedFinanceHandler, PurchaseReturnCompletedNotification
+
+### Community 724 - "PurchaseOrderFulfilledEvent"
+Cohesion: 0.67
+Nodes (3): DateTime, Guid, PurchaseOrderFulfilledEvent
+
+### Community 725 - "10_Farm360_UI_Blueprint.md"
+Cohesion: 0.25
+Nodes (7): 9. Farm Dashboard, Breadcrumb, Farm360 AI — Complete UI Blueprint, PART III — DASHBOARD, Purpose, Table of Contents, Widgets
+
+### Community 726 - "GetShedsByFarmQueryHandler"
+Cohesion: 0.46
+Nodes (6): ShedListDto, CancellationToken, IReadOnlyList, Task, GetShedsByFarmQuery, GetShedsByFarmQueryHandler
+
+### Community 728 - "CreateMasterDataCommand.cs"
+Cohesion: 0.43
+Nodes (6): CancellationToken, Guid, Task, CreateMasterDataCommand, CreateMasterDataCommandHandler, CreateMasterDataCommandValidator
+
+### Community 730 - "AddProjectionScenarios"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, AddProjectionScenarios
+
+### Community 731 - "AddInvestorTables"
+Cohesion: 0.29
+Nodes (3): MigrationBuilder, ModelBuilder, AddInvestorTables
+
+### Community 737 - "DeletePenCommandHandler"
+Cohesion: 0.50
+Nodes (4): CancellationToken, Task, DeletePenCommand, DeletePenCommandHandler
+
+### Community 738 - "ConvertFeedingSchedulesCommand"
+Cohesion: 0.15
+Nodes (15): CancellationToken, Task, GetCurrentUserQuery, GetCurrentUserQueryHandler, UserProfileDto, CancellationToken, Task, ConvertFeedingSchedulesCommand (+7 more)
+
+### Community 739 - "UpdateFarmCommand.cs"
+Cohesion: 0.43
+Nodes (5): CancellationToken, Task, UpdateFarmCommand, UpdateFarmCommandHandler, UpdateFarmCommandValidator
+
+### Community 740 - "GetFarmByIdQueryHandler"
+Cohesion: 0.23
+Nodes (7): Farm360.Application.Farms.DTOs, FarmDto, FarmMappingExtensions, CancellationToken, Task, GetFarmByIdQuery, GetFarmByIdQueryHandler
+
+### Community 741 - "UpdatePenCommand.cs"
+Cohesion: 0.43
+Nodes (5): CancellationToken, Task, UpdatePenCommand, UpdatePenCommandHandler, UpdatePenCommandValidator
+
+### Community 742 - "GetPensByShedQueryHandler"
+Cohesion: 0.46
+Nodes (6): PenListDto, CancellationToken, IReadOnlyList, Task, GetPensByShedQuery, GetPensByShedQueryHandler
+
+### Community 743 - "UpdateShedCommand.cs"
+Cohesion: 0.43
+Nodes (5): CancellationToken, Task, UpdateShedCommand, UpdateShedCommandHandler, UpdateShedCommandValidator
+
+### Community 744 - "GetBreakEvenCalculatorQueryHandler"
+Cohesion: 0.43
+Nodes (5): CancellationToken, Task, GetBreakEvenCalculatorQuery, GetBreakEvenCalculatorQueryHandler, BreakEvenCalculatorDto
+
+### Community 746 - "UpdateMasterDataCommand.cs"
+Cohesion: 0.43
+Nodes (5): CancellationToken, Task, UpdateMasterDataCommand, UpdateMasterDataCommandHandler, UpdateMasterDataCommandValidator
+
+### Community 747 - "ITenantUserRepository"
+Cohesion: 0.43
+Nodes (5): CancellationToken, Guid, Task, TenantUser, ITenantUserRepository
+
+### Community 755 - "GetBatchesQuery"
+Cohesion: 0.53
+Nodes (5): PagedBatchListDto, CancellationToken, Task, GetBatchesQuery, GetBatchesQueryHandler
+
+### Community 757 - "Farm360.Infrastructure.Messaging"
+Cohesion: 0.21
+Nodes (7): Farm360.Infrastructure.Messaging, CancellationToken, Task, LoggingEmailService, CancellationToken, Task, LoggingSmsService
+
+### Community 761 - "IInventoryItemRepository"
+Cohesion: 0.08
+Nodes (32): INotificationHandler, CancellationToken, ILogger, Task, PurchaseOrderFulfilledEventHandler, CancellationToken, Task, VaccinationAdministeredFinanceEventHandler (+24 more)
+
+### Community 764 - "Financial Transaction Form Dialog"
+Cohesion: 1.00
+Nodes (3): Expense Form Dialog Stub Template, Financial Transaction Form Dialog, Income Form Dialog Stub Template
 
 ## Ambiguous Edges - Review These
 - `Health & Mortality Analytics Widget` → `Health Dashboard Page`  [AMBIGUOUS]
   src/Farm360.Web/src/app/features/health/components/health-dashboard/health-dashboard.html · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **2073 isolated node(s):** `LogoutRequest`, `RefreshTokenApiRequest`, `CreatePenRequest`, `UpdatePenRequest`, `GenerateEntriesRequest` (+2068 more)
+- **2082 isolated node(s):** `LogoutRequest`, `RefreshTokenApiRequest`, `CreatePenRequest`, `UpdatePenRequest`, `GenerateEntriesRequest` (+2077 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **85 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **80 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `Health & Mortality Analytics Widget` and `Health Dashboard Page`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `ApplicationDbContext` connect `ApplicationDbContext` to `ICurrentUserService`, `BodyConditionScore`, `Farm`, `FeedConsumptionLog`, `MeasureUnit`, `FinancialTransaction`, `BreedingRecord`, `PurchaseOrderItem`, `AnimalFeedAllocation`, `BalanceSheetEntry`, `DailyConsumableEntry`, `ReportExecutionService`, `TradeBill`, `PurchaseReturn`, `CancellationToken`, `AnimalBatch`, `AnimalFeedingPlan`, `AnimalPhoto`, `TenantSubscriptionRecord`, `TradeBillPayment`, `VetVisit`, `PurchaseOrder`, `LoanRecord`, `Tenant`, `AuditableEntity`, `Farm360.Domain.Common`, `TenantRepository`, `Breed`, `IAggregateRoot`, `FeedIngredient`, `UnitConversion`, `SqlServerFixture`, `VaccinationProtocol`, `Animal`, `OnboardTenantCommand.cs`, `FeedingRuleSet`, `VaccinationEvent`, `IEntityTypeConfiguration`, `Farm360.Domain.Tenancy`, `MasterDataEntry`, `ActionableInsight`, `FarmAccountingSettings`, `ProjectionScenario`, `Investor`, `FinancialTransactionRepository`, `DiseaseIncident`, `Pen`, `Task`, `InventoryItem`, `ConsumableUsagePlan`, `PurchaseReturnItem`, `MedicalTreatment`, `.ToDto`, `ExecutiveDashboardRepository`, `FixedAsset`, `AnimalOverheadAllocationRepository`, `Shed`, `Branch`, `TenantUser`, `IRequestHandler`, `AnimalCostLedger`, `Task`, `AnimalOverheadAllocation`, `MortalityRecord`?**
-  _High betweenness centrality (0.087) - this node is a cross-community bridge._
-- **Why does `Farm360.Application.Common.Interfaces` connect `Farm360.Application.Common.Interfaces` to `GetFeedingRuleSetsQuery.cs`, `.Handle`, `.Handle`, `Farm360.Contracts.Finance`, `Farm360.Infrastructure.Messaging`, `MeasureUnit`, `LookupDto`, `Farm360.Domain.Livestock.Repositories`, `Farm360.Api.Authorization`, `.ResolveTenantContextAsync`, `TradeCreditCommands.cs`, `GetTodayFeedingEntriesQueryHandler`, `GetShedsByFarmQueryHandler`, `VaccinationProtocolDto`, `Task`, `CreateFeedingRuleSetCommand.cs`, `IShedRepository`, `Farm360.Domain.Common`, `Farm360.Application.Health.DTOs`, `RecordMortalityCommand.cs`, `ITransactionalCommand`, `.GenerateAccessTokenAsync`, `Farm360.Application.Intelligence.Interfaces`, `IRequest`, `ILedgerPostingService`, `UnitRequests.cs`, `Farm360.Identity.Services`, `Farm360.Domain.Organizations.Repositories`, `Farm360.Application.Reporting.Model`, `OnboardTenantCommand.cs`, `PermissionServiceTests`, `.SaveChangesAsync`, `FarmBusinessRules`, `UpdateMyProfileCommand.cs`, `BackfillAnimalFeedAllocationsCommandHandler`, `ApplicationServiceExtensions.cs`, `GetAnimalFeedingSummaryQuery.cs`, `Farm360.Domain.Tenancy`, `.Handle`, `FeedingEndpoints.cs`, `BatchRecordVaccinationCommand.cs`, `SaveProjectionScenarioCommandHandler`, `PenEndpoints.cs`, `Farm360.Domain.MasterData.Repositories`, `IdentityDbContext`, `INotificationHandler`, `BreedCommands.cs`, `CancelFeedingPlanCommandHandler`, `AuthEndpoints.cs`, `.GetAsync`, `.UploadFileAsync`, `AllocateOverheadAcrossTenantsCommandHandler`, `IFarmRepository`, `RedisCacheService`, `.ToDto`, `IFeedFormulaRepository`, `GetFeedingEntryCostBreakdownQueryHandler`, `FeedRequirementQuery.cs`, `Farm360.Persistence.Context`, `IDateTimeService`, `ReportDiseaseIncidentCommand.cs`, `.Handle`, `SslCommerzGatewayService`, `CreateOrganizationCommand.cs`, `GetFeedFormulasQuery.cs`, `UpdateVaccinationProtocolCommand.cs`, `IBranchRepository`, `RecordManualFeedingCommand.cs`, `InfrastructureServiceExtensions.cs`, `IRequestHandler`, `UpdateFeedIngredientCommand.cs`, `SqlServerFixture.cs`, `IAnimalBatchRepository`, `MasterDataDto`, `CreateBatchCommandHandler`, `.Match`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
-- **Why does `Farm360.Persistence.Context` connect `Farm360.Persistence.Context` to `AddMasterDataModule`, `AddAnimalFeedAllocations`, `AddFinancialStatementsSetup`, `Farm360.Contracts.Finance`, `BackfillPlannedCostForExistingDailyFeedingEntries`, `Farm360.Application.Common.Interfaces`, `AddAutomatedFieldsToFinancialTransactions`, `InitialIdentity`, `Farm360.Domain.Livestock.Repositories`, `AddRuleLineIdToDailyFeedingEntry`, `Farm360.Persistence.Seed`, `ReportExecutionService`, `AddShedManagementModule`, `AnimalFeedingPlan`, `AddLivestockPenAndSaleFields`, `LinkInventoryItemsToUnits`, `ReplaceLocationFieldsWithMovementTable`, `UpdateFeedingRuleSetModel`, `AddInventoryToHealthEvents`, `Farm360.Domain.Common`, `AddDailyConsumables`, `FeedIngredient`, `Farm360.Application.Intelligence.Interfaces`, `AddUnitsOfMeasure`, `Farm360.Domain.Organizations.Repositories`, `AddUnitConversionDescription`, `OnboardTenantCommand.cs`, `AddOrganizationModule`, `AddHealthSchema`, `AddAnimalFeedingPlanModule`, `AddReportRuns`, `Farm360.Domain.MasterData.Repositories`, `Farm360.Domain.Tenancy`, `Farm360.Persistence.Migrations`, `AddAnimalOverheadAllocations`, `Farm360.Persistence.Migrations.ApplicationDb`, `Farm360.Persistence.Migrations.Application`, `DesignTimeTenantService`, `AddSubscriptionAndTrialFeatures`, `Farm360.Domain.Intelligence.Projections`, `AddPurchaseReturns`, `Livestock_AddAnimalAggregate`, `AddFarmShareMarketTables`, `AccountingDoubleEntrySettlement`, `TradeCreditPayablesReceivables`, `SqlServerFixture.cs`, `AddPenManagementModule`, `AddCostSnapshotToDailyFeedingEntry`, `AddBreedManagement`, `AddBranchManagementFeatures`, `Migration`, `AddPurchaseOrderModule`?**
+- **Why does `ApplicationDbContext` connect `ApplicationDbContext` to `IAnalyticsQueryService.cs`, `Farm`, `MeasureUnit`, `Farm360.Domain.Common`, `FinancialTransaction`, `BreedingRecord`, `FarmRepository`, `AnimalFeedAllocation`, `Pen`, `ConsumableUsagePlan`, `ReportRun`, `TradeBill`, `IUnitOfWork`, `ITenantService`, `PurchaseReturn`, `AnimalFeedingPlan`, `AnimalBatch`, `TenantSubscriptionRecord`, `TradeBillPayment`, `VetVisit`, `PurchaseOrder`, `LoanRecord`, `Tenant`, `FarmShareConfig`, `TenantRepository`, `TenantUser`, `Breed`, `IAggregateRoot`, `FeedFormula`, `Organization`, `UnitConversion`, `Animal`, `VaccinationProtocol`, `IEntityTypeConfiguration`, `InventoryItem`, `MasterDataEntry`, `ProjectionScenario`, `ActionableInsight`, `ShedRepository`, `TenantUserRepository`, `AuditableEntity`, `DiseaseIncident`, `BalanceSheetEntry`, `PenRepository`, `Task`, `MedicalTreatment`, `.ToDto`, `ExecutiveDashboardRepository`, `FixedAsset`, `AnimalOverheadAllocationRepository`, `Shed`, `SqlServerFixture.cs`, `Branch`, `AnimalCostLedger`, `AnimalOverheadAllocation`, `Role`, `MortalityRecord`, `FeedingRuleSet`?**
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
+- **Why does `Farm360.Application.Common.Interfaces` connect `Farm360.Application.Common.Interfaces` to `Farm360.Contracts.Finance`, `IConsumableUsagePlanRepository`, `MeasureUnit`, `Farm360.Domain.Common`, `Farm360.Domain.Livestock`, `IUnitOfWork`, `UserProfileService`, `HealthEndpoints.cs`, `IRequestHandler`, `ApplicationServiceExtensions.cs`, `IOrganizationRepository`, `GetHealthDashboardQueryHandler`, `IdentityDbContext`, `IAnimalCostLedgerRepository`, `IRequest`, `FarmListDto`, `.ToDto`, `Farm360.Domain.Health.Interfaces.Repositories`, `.Handle`, `BatchRecordVaccinationCommand.cs`, `GetBranchesByOrganizationQueryHandler`, `UpdateVaccinationProtocolCommand.cs`, `.LoadAsync`, `GetAnimalIntelligenceDataQuery.cs`, `LookupDto`, `Farm360.Api.Authorization`, `IBranchRepository`, `GetShedByIdQueryHandler`, `OrganizationDto`, `ITenantRepository`, `FarmBusinessRules`, `OnboardTenantCommand.cs`, `UpdateMyProfileCommand.cs`, `ReportExecutionService.cs`, `Farm360.Identity.Services`, `GetTodayFeedingEntriesQueryHandler`, `CreateVaccinationProtocolCommand.cs`, `.SaveChangesAsync`, `AuthEndpoints.cs`, `RedisCacheService`, `GetShedsByFarmQueryHandler`, `CreateMasterDataCommand.cs`, `IDateTimeService`, `ConvertFeedingSchedulesCommand`, `UpdateFarmCommand.cs`, `GetFarmByIdQueryHandler`, `SslCommerzGatewayService`, `UpdatePenCommand.cs`, `GetPensByShedQueryHandler`, `UpdateShedCommand.cs`, `CreateOrganizationCommand.cs`, `UpdateMasterDataCommand.cs`, `SqlServerFixture.cs`, `Farm360.Infrastructure.Messaging`, `MasterDataDto`, `.Handle`, `SignalRServices.cs`, `.ResolveTenantContextAsync`, `AllocateOverheadAcrossTenantsCommandHandler`, `PermissionServiceTests`, `GetAnimalFeedingSummaryQuery.cs`, `Farm360.Persistence.Context`, `.Handle`, `UploadAnimalPhotoCommandHandler`, `.Handle`, `GetFeedFormulasQuery.cs`, `GetFeedingRuleSetsQuery.cs`, `.Handle`, `GetFcrAnalyticsQueryHandler`, `UpdateBranchCommand.cs`, `GetMasterDataByIdQuery.cs`, `DeleteShedCommandHandler`, `ProjectionScenario`, `PenEndpoints.cs`, `DeleteFarmCommandHandler`, `GetFeedingEntryCostBreakdownQueryHandler`, `HangfireBackgroundJobService`, `IDiseaseIncidentRepository`, `CreateBatchCommandHandler`?**
+  _High betweenness centrality (0.057) - this node is a cross-community bridge._
+- **Why does `Farm360.Persistence.Context` connect `Farm360.Persistence.Context` to `AddMasterDataModule`, `AddAnimalFeedAllocations`, `AddFinancialStatementsSetup`, `Farm360.Domain.Common`, `AddAutomatedFieldsToFinancialTransactions`, `ApplicationDbContext`, `InitialIdentity`, `Farm360.Domain.Livestock`, `AddRuleLineIdToDailyFeedingEntry`, `AddShedManagementModule`, `AnimalFeedingPlan`, `AddLivestockPenAndSaleFields`, `ReplaceLocationFieldsWithMovementTable`, `UpdateFeedingRuleSetModel`, `Farm360.Application.Common.Interfaces`, `InitialTenancy`, `AddDailyConsumables`, `FeedFormula`, `Farm360.Domain.Intelligence`, `AddUnitsOfMeasure`, `AddUnitConversionDescription`, `AddAnimalFeedingPlanModule`, `AddOrganizationModule`, `ReportExecutionService.cs`, `AddReportRuns`, `AddInventoryToHealthEvents`, `Farm360.Domain.MasterData.Repositories`, `Farm360.Persistence.Migrations`, `AddAnimalOverheadAllocations`, `Farm360.Persistence.Migrations.ApplicationDb`, `Farm360.Persistence.Migrations.Application`, `.SaveChangesAsync`, `AddSubscriptionAndTrialFeatures`, `AddPurchaseReturns`, `BalanceSheetEntry`, `AddProjectionScenarios`, `AddInvestorTables`, `Livestock_AddAnimalAggregate`, `Farm360.Domain.Health.Interfaces.Repositories`, `AddFarmShareMarketTables`, `SqlServerFixture.cs`, `AccountingDoubleEntrySettlement`, `TradeCreditPayablesReceivables`, `AddPenManagementModule`, `AddCostSnapshotToDailyFeedingEntry`, `Migration`, `AddFarmManagementModule`, `AddPurchaseOrderModule`?**
   _High betweenness centrality (0.043) - this node is a cross-community bridge._
 - **What connects `LogoutRequest`, `RefreshTokenApiRequest`, `CreatePenRequest` to the rest of the system?**
-  _2073 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2082 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `animal-detail.component.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.015278952869158414 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.016547619047619047 - nodes in this community are weakly interconnected._
 - **Should `inventory.models.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.025121723816430127 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.02861120779672816 - nodes in this community are weakly interconnected._
