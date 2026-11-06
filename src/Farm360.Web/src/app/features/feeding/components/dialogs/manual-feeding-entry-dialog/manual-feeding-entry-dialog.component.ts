@@ -10,6 +10,7 @@ import { FeedingService } from '../../../services/feeding.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
 import { InventoryCategory, InventoryItem } from '../../../../inventory/models/inventory.models';
 import { FeedFormula, ManualFeedingResult } from '../../../models/feeding.models';
+import { UnitPickerComponent, UnitSelection } from '../../../../inventory/components/unit-picker/unit-picker.component';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 
@@ -24,7 +25,7 @@ export interface ManualFeedingDialogData {
   selector: 'app-manual-feeding-entry-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent],
   styles: [`
     .field { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 1px solid rgb(209 213 219); background: white; font-size: 0.8125rem; color: rgb(17 24 39); outline: none; }
     .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(16, 185, 129, .15); }
@@ -53,9 +54,13 @@ export interface ManualFeedingDialogData {
           </label>
           <label class="block">
             <span class="font-semibold text-gray-700 dark:text-gray-300">{{ isItem() ? 'Quantity per animal' : 'Kg per animal' }}</span>
-            <div class="relative mt-1">
-              <input type="number" step="0.01" min="0" class="field pr-12" formControlName="quantityPerHead" placeholder="0" />
-              <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-400">{{ unitLabel() }}</span>
+            <div class="flex gap-2 mt-1">
+              <input type="number" step="0.01" min="0" class="field flex-1" formControlName="quantityPerHead" placeholder="0" />
+              <div class="w-40 shrink-0">
+                <app-unit-picker *ngIf="isItem(); else kgUnit" [itemId]="itemId()" [quantity]="value().quantityPerHead" [useDefault]="false"
+                  (selectionChange)="unit.set($event)"></app-unit-picker>
+                <ng-template #kgUnit><div class="field text-gray-500">kg</div></ng-template>
+              </div>
             </div>
           </label>
         </div>
@@ -68,7 +73,10 @@ export interface ManualFeedingDialogData {
               <option *ngFor="let f of formulas()" [value]="'f:' + f.id">{{ f.title }}</option>
             </optgroup>
             <optgroup label="Stock items (fed as they are)">
-              <option *ngFor="let it of stockItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+              <option *ngFor="let it of feedItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+            </optgroup>
+            <optgroup label="Supplements & medicines (liver tonic, zinc…)">
+              <option *ngFor="let it of supplementItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
             </optgroup>
           </select>
         </label>
@@ -110,6 +118,8 @@ export class ManualFeedingEntryDialogComponent implements OnInit {
   readonly today = new Date().toISOString().split('T')[0];
   readonly formulas = signal<FeedFormula[]>([]);
   readonly stockItems = signal<InventoryItem[]>([]);
+  readonly feedItems = computed(() => this.stockItems().filter(i => i.category !== InventoryCategory.Medicine));
+  readonly supplementItems = computed(() => this.stockItems().filter(i => i.category === InventoryCategory.Medicine));
   readonly saving = signal(false);
 
   readonly form = this.fb.nonNullable.group({
@@ -120,20 +130,20 @@ export class ManualFeedingEntryDialogComponent implements OnInit {
     notes: ['']
   });
 
-  private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+  protected readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
   readonly count = computed(() => (this.value().animalIds ?? []).length);
   readonly isItem = computed(() => (this.value().source ?? '').startsWith('i:'));
-  readonly unitLabel = computed(() => {
-    const src = this.value().source ?? '';
-    return src.startsWith('i:') ? (this.stockItems().find(i => i.id === src.slice(2))?.unitOfMeasure ?? '') : 'kg';
-  });
+  readonly itemId = computed(() => this.isItem() ? (this.value().source ?? '').slice(2) : null);
+  /** The unit chosen for a stock item (ml, Bottle (100 ml)…); recipes are in kg. */
+  readonly unit = signal<UnitSelection | null>(null);
+  readonly unitLabel = computed(() => this.isItem() ? (this.unit()?.name || '') : 'kg');
   readonly total = computed(() => this.count() * (Number(this.value().quantityPerHead) || 0));
 
   ngOnInit(): void {
     this.feedingService.getFormulas(1, 500).subscribe(res =>
       this.formulas.set(res.items.filter(f => !f.title.endsWith('(direct item)'))));
     this.inventoryService.getItems({ farmId: this.data.farmId, pageSize: 500 }).subscribe(res =>
-      this.stockItems.set(res.items.filter(i => ![InventoryCategory.Equipment, InventoryCategory.Medicine, InventoryCategory.Vaccine].includes(i.category))));
+      this.stockItems.set(res.items.filter(i => ![InventoryCategory.Equipment, InventoryCategory.Vaccine].includes(i.category))));
   }
 
   save(): void {
@@ -148,7 +158,8 @@ export class ManualFeedingEntryDialogComponent implements OnInit {
       formulaId: v.source.startsWith('f:') ? id : null,
       inventoryItemId: v.source.startsWith('i:') ? id : null,
       quantityPerHead: Number(v.quantityPerHead),
-      notes: v.notes || null
+      notes: v.notes || null,
+      unitId: v.source.startsWith('i:') ? this.unit()?.unitId ?? null : null
     }).subscribe({
       next: res => this.dialogRef.close(res),
       error: err => {

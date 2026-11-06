@@ -45,8 +45,8 @@ public sealed record ItemNeedDto(
     IReadOnlyList<string> UsedIn,
     bool LinkedToStock);
 
-/// <summary>A recipe (formula) to mix for the period, in kg.</summary>
-public sealed record RecipeNeedDto(Guid FormulaId, string Recipe, decimal PerDayKg, decimal TotalKg, decimal CostBdt);
+/// <summary>A recipe (formula) to mix for the period, in kg — or a stock item given directly, in its own unit.</summary>
+public sealed record RecipeNeedDto(Guid FormulaId, string Recipe, decimal PerDayKg, decimal TotalKg, decimal CostBdt, string Unit = "kg");
 
 public sealed record AnimalNeedDto(Guid AnimalId, string Tag, string? Shed, decimal? WeightKg, decimal PerDayKg, decimal TotalKg, decimal CostBdt);
 
@@ -131,6 +131,7 @@ public sealed class GetFeedRequirementQueryHandler(
         var itemUsedIn = new Dictionary<Guid, HashSet<string>>();
         var unlinkedKg = new Dictionary<Guid, (string Name, decimal Kg, decimal CostPerKg, HashSet<string> UsedIn)>();
         var recipeKg = new Dictionary<Guid, decimal>();
+        var recipeUnit = new Dictionary<Guid, string>();
         var perAnimal = new List<AnimalNeedDto>();
         var withoutRation = 0;
 
@@ -167,7 +168,9 @@ public sealed class GetFeedRequirementQueryHandler(
                     {
                         var kg = FeedingRuleMatcher.ExpectedKg(set, line, isGroup ? plan.TriggeredByWeightKg ?? 0m : weight ?? 0m);
                         if (kg <= 0) continue;
-                        animalKg += kg;
+                        // 20 ml of tonic is not 20 kg of feed: kg totals count kg only.
+                        var unit = DirectFeedService.UnitFromName(set.Name);
+                        if (unit == "kg") animalKg += kg;
 
                         if (!formulaById.TryGetValue(line.FormulaId, out var formula))
                         {
@@ -178,6 +181,7 @@ public sealed class GetFeedRequirementQueryHandler(
 
                         animalCost += kg * formula.TotalCostPerKgBdt;
                         recipeKg[formula.Id] = recipeKg.GetValueOrDefault(formula.Id) + kg;
+                        recipeUnit[formula.Id] = unit;
                         Explode(formula, kg, ingredientById, items, itemKg, itemUsedIn, unlinkedKg);
                     }
                 }
@@ -248,7 +252,7 @@ public sealed class GetFeedRequirementQueryHandler(
 
         var recipeNeeds = recipeKg
             .Select(r => new RecipeNeedDto(r.Key, formulaById[r.Key].Title, Math.Round(r.Value / request.Days, 3), Math.Round(r.Value, 3),
-                Math.Round(r.Value * formulaById[r.Key].TotalCostPerKgBdt, 2)))
+                Math.Round(r.Value * formulaById[r.Key].TotalCostPerKgBdt, 2), recipeUnit.GetValueOrDefault(r.Key, "kg")))
             .OrderByDescending(r => r.TotalKg)
             .ToList();
 

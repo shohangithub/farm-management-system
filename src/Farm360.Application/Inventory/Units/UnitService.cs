@@ -29,6 +29,12 @@ public interface IUnitService
     /// <summary>Kilograms of feed in the item's base unit (a gram-based item takes kg × 1000).</summary>
     Task<decimal> KgToItemBaseAsync(InventoryItem item, decimal kg, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The reverse of <see cref="KgToItemBaseAsync"/>: a quantity in the item's base unit as feeding
+    /// records it — kg when the item converts to kg (500 g → 0.5 kg), otherwise its own unit (20 ml).
+    /// </summary>
+    Task<(decimal Quantity, string Unit)> ItemBaseToFeedAsync(InventoryItem item, decimal baseQuantity, CancellationToken cancellationToken = default);
+
     /// <summary>The conversions an item can be entered in: those of its base unit.</summary>
     Task<IReadOnlyList<UnitConversion>> ConversionsForAsync(string baseUnitName, CancellationToken cancellationToken = default);
 
@@ -178,6 +184,19 @@ public sealed class UnitService(
         var kgConversion = unit?.Conversions.FirstOrDefault(c => KgNames.Any(n => SameUnit(n, c.Name)));
         // No way to turn kg into this unit: keep the old behaviour (treat it as kg).
         return kgConversion is null ? kg : kgConversion.ToBase(kg);
+    }
+
+    public async Task<(decimal Quantity, string Unit)> ItemBaseToFeedAsync(InventoryItem item, decimal baseQuantity, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (KgNames.Any(n => SameUnit(n, item.UnitOfMeasure)))
+            return (baseQuantity, "kg");
+
+        var unit = await BaseUnitOfAsync(item, cancellationToken);
+        var kgConversion = unit?.Conversions.FirstOrDefault(c => KgNames.Any(n => SameUnit(n, c.Name)));
+        return kgConversion is { Factor: > 0 }
+            ? (baseQuantity / kgConversion.Factor, "kg")
+            : (baseQuantity, string.IsNullOrWhiteSpace(item.UnitOfMeasure) ? "kg" : item.UnitOfMeasure.Trim());
     }
 
     private async Task<MeasureUnit?> FindBaseAsync(string name, CancellationToken ct) =>

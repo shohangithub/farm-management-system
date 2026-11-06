@@ -17,6 +17,7 @@ import { PenList } from '../../../../farms/models/pen.model';
 import {
   FeedingRuleSet, FeedFormula, DirectRationRequest, RationPreview, RationPreviewRequest
 } from '../../../models/feeding.models';
+import { UnitPickerComponent, UnitSelection } from '../../../../inventory/components/unit-picker/unit-picker.component';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 
@@ -24,6 +25,9 @@ interface DirectRationRow {
   /** "f:<formulaId>" or "i:<inventoryItemId>" */
   source: string;
   kgPerDay: number | null;
+  /** Stock item: the unit the amount is in (null = its base unit). */
+  unitId?: string | null;
+  unitName?: string;
 }
 
 /** How the wizard was opened: from the board's row actions or the animal page. */
@@ -43,7 +47,7 @@ type Who = 'animals' | 'group';
 @Component({
   selector: 'app-assign-feeding-plan-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent],
   styles: [`
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.4); border-radius: 20px; }
@@ -157,12 +161,12 @@ type Who = 'animals' | 'group';
 
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold m-0">Fixed amount / extras <span class="font-normal text-xs text-gray-500">— a recipe or stock item, kg a day</span></h3>
+              <h3 class="text-sm font-bold m-0">Fixed amount / extras <span class="font-normal text-xs text-gray-500">— a recipe (kg) or stock item (in any of its units) a day</span></h3>
               <button type="button" (click)="addDirect()" class="px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1">
                 <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon> Add
               </button>
             </div>
-            <p class="text-[11px] text-gray-500 m-0">e.g. <b>Extra Mineral 0.1 kg/day</b> on top of the chart, or a recipe at a set amount without any chart.</p>
+            <p class="text-[11px] text-gray-500 m-0">e.g. <b>Extra Mineral 0.1 kg/day</b> on top of the chart, or <b>Liver Tonic 20 ml/day</b> for some days (set the end date in step 3). Stock items are given in their own unit.</p>
             <div *ngFor="let d of directRows(); let i = index" class="flex items-center gap-2">
               <select class="field flex-1" [ngModel]="d.source" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateDirect(i, { source: $event })">
                 <option value="">— choose —</option>
@@ -170,12 +174,20 @@ type Who = 'animals' | 'group';
                   <option *ngFor="let f of formulas()" [value]="'f:' + f.id">{{ f.title }}</option>
                 </optgroup>
                 <optgroup label="Stock items (fed as they are)">
-                  <option *ngFor="let it of stockItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+                  <option *ngFor="let it of feedItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+                </optgroup>
+                <optgroup label="Supplements & medicines (liver tonic, zinc…)">
+                  <option *ngFor="let it of supplementItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
                 </optgroup>
               </select>
-              <div class="relative w-36 shrink-0">
-                <input type="number" step="0.01" min="0" class="field pr-16" placeholder="0" [ngModel]="d.kgPerDay" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateDirect(i, { kgPerDay: $event })" />
-                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-400">{{ who() === 'group' ? 'kg/head' : 'kg/day' }}</span>
+              <div class="relative w-28 shrink-0">
+                <input type="number" step="0.01" min="0" class="field pr-12" placeholder="0" [ngModel]="d.kgPerDay" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateDirect(i, { kgPerDay: $event })" />
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">{{ who() === 'group' ? '/head' : '/day' }}</span>
+              </div>
+              <div class="w-44 shrink-0">
+                <app-unit-picker *ngIf="d.source.startsWith('i:'); else kgUnit" [itemId]="d.source.slice(2)" [quantity]="d.kgPerDay" [useDefault]="false"
+                  (selectionChange)="onDirectUnit(i, $event)"></app-unit-picker>
+                <ng-template #kgUnit><div class="field text-gray-500">kg</div></ng-template>
               </div>
               <button type="button" (click)="removeDirect(i)" class="p-1 text-gray-400 hover:text-red-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
             </div>
@@ -214,7 +226,7 @@ type Who = 'animals' | 'group';
                     <td class="px-3 py-2 text-gray-500">{{ a.weightKg ? (a.weightKg | number:'1.0-1') + ' kg' : 'no weight' }}<span *ngIf="a.ageDays !== null && a.ageDays !== undefined"> · {{ a.ageDays }} d</span></td>
                     <td class="px-3 py-2">
                       <div *ngFor="let it of a.items" [class.line-through]="a.alreadyOn.includes(it.name)">
-                        {{ it.name }}: <b>{{ it.kgPerDay | number:'1.0-3' }} kg</b> <span class="text-gray-400">{{ it.feedName }}</span>
+                        {{ it.name }}: <b>{{ it.kgPerDay | number:'1.0-3' }} {{ it.unit || 'kg' }}</b> <span class="text-gray-400">{{ it.feedName }}</span>
                       </div>
                       <div *ngFor="let n of a.alreadyOn" class="text-[11px] text-gray-500">Already on "{{ n }}" — kept as it is.</div>
                       <div *ngFor="let n of a.willEnd" class="text-[11px] text-amber-700 dark:text-amber-400">Ends "{{ n }}".</div>
@@ -273,6 +285,8 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
   readonly ruleSets = signal<FeedingRuleSet[]>([]);
   readonly formulas = signal<FeedFormula[]>([]);
   readonly stockItems = signal<InventoryItem[]>([]);
+  readonly feedItems = computed(() => this.stockItems().filter(i => i.category !== InventoryCategory.Medicine));
+  readonly supplementItems = computed(() => this.stockItems().filter(i => i.category === InventoryCategory.Medicine));
   readonly sheds = signal<ShedList[]>([]);
   readonly pens = signal<PenList[]>([]);
   readonly batches = signal<{ id: string; name: string }[]>([]);
@@ -283,6 +297,7 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
   readonly batchId = signal<string | null>(null);
   readonly selectedRuleSetIds = signal<string[]>([]);
   readonly directRows = signal<DirectRationRow[]>([]);
+
   readonly replace = signal(false);
 
   readonly preview = signal<RationPreview | null>(null);
@@ -337,7 +352,7 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
     this.feedingService.getFormulas(1, 500).subscribe(res =>
       this.formulas.set(res.items.filter(f => !f.title.endsWith('(direct item)'))));
     this.inventoryService.getItems({ farmId, pageSize: 500 }).subscribe(res =>
-      this.stockItems.set(res.items.filter(i => ![InventoryCategory.Equipment, InventoryCategory.Medicine, InventoryCategory.Vaccine].includes(i.category))));
+      this.stockItems.set(res.items.filter(i => ![InventoryCategory.Equipment, InventoryCategory.Vaccine].includes(i.category))));
 
     if (farmId) {
       this.shedService.getShedsByFarm(farmId).subscribe(s => this.sheds.set(s));
@@ -372,7 +387,13 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
   }
 
   updateDirect(i: number, change: Partial<DirectRationRow>): void {
+    // A different item has different units: start again on its base unit.
+    if (change.source !== undefined) change = { ...change, unitId: null, unitName: undefined };
     this.directRows.update(rows => rows.map((r, k) => k === i ? { ...r, ...change } : r));
+  }
+
+  onDirectUnit(i: number, sel: UnitSelection): void {
+    this.directRows.update(rows => rows.map((r, k) => k === i ? { ...r, unitId: sel.unitId, unitName: sel.name } : r));
   }
 
   removeDirect(i: number): void {
@@ -384,6 +405,7 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
       formulaId: d.source.startsWith('f:') ? d.source.substring(2) : null,
       inventoryItemId: d.source.startsWith('i:') ? d.source.substring(2) : null,
       kgPerDay: +d.kgPerDay!,
+      unitId: d.source.startsWith('i:') ? d.unitId ?? null : null,
     }));
   }
 

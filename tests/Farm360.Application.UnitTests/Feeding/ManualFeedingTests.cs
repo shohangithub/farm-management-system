@@ -40,9 +40,9 @@ public class ManualFeedingTests
 
         public Fixture()
         {
-            var ruleSet = new FeedingRuleSet(Guid.NewGuid(), TenantId, "Direct · CP Starter · 2 kg/day", TargetAnimalType.Cattle,
+            var ruleSet = new FeedingRuleSet(Guid.NewGuid(), TenantId, "Direct · CP Starter · 1.5 kg/day", TargetAnimalType.Cattle,
                 FeedingPurpose.Growth, FeedingPlanType.FixedQuantity);
-            ruleSet.AddRuleLine(null, null, null, null, FeedCategory.Concentrate, 2m, Formula.Id);
+            ruleSet.AddRuleLine(null, null, null, null, FeedCategory.Concentrate, 1.5m, Formula.Id);
             Direct.GetOrCreateDirectRuleSetAsync(Arg.Any<DirectRation>(), Arg.Any<TargetAnimalType>(), Arg.Any<CancellationToken>()).Returns(ruleSet);
             Plans.AddAsync(Arg.Do<AnimalFeedingPlan>(AddedPlans.Add), Arg.Any<CancellationToken>());
             Entries.AddAsync(Arg.Do<DailyFeedingEntry>(AddedEntries.Add), Arg.Any<CancellationToken>());

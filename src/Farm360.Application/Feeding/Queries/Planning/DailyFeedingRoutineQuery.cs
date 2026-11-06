@@ -35,7 +35,8 @@ public sealed record RoutineLineDto(
     decimal KgPerDay,
     int Sessions,
     decimal KgPerSession,
-    decimal CostBdt);
+    decimal CostBdt,
+    string Unit = "kg");
 
 public sealed record RoutineAnimalDto(
     Guid AnimalId,
@@ -72,7 +73,8 @@ public sealed record RoutineRecipeDto(
     decimal TotalKg,
     decimal CostBdt,
     IReadOnlyList<RoutineSessionDto> Sessions,
-    IReadOnlyList<RoutineIngredientDto> Ingredients);
+    IReadOnlyList<RoutineIngredientDto> Ingredients,
+    string Unit = "kg");
 
 public sealed record DailyFeedingRoutineDto(
     Guid FarmId,
@@ -155,6 +157,7 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
         var recipeKg = new Dictionary<Guid, decimal>();
         var recipeAnimals = new Dictionary<Guid, HashSet<Guid>>();
         var recipeSessions = new Dictionary<Guid, Dictionary<string, (decimal Kg, HashSet<Guid> Animals)>>();
+        var recipeUnit = new Dictionary<Guid, string>();
         var withoutRation = 0;
 
         foreach (var animal in subjects)
@@ -186,6 +189,7 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
             void AddLines(FeedingRuleSet set, string kind, decimal? w, int? ageDays)
             {
                 var match = FeedingRuleMatcher.Match(set, w, ageDays);
+                var unit = DirectFeedService.UnitFromName(set.Name);
                 foreach (var line in match.Lines)
                 {
                     var kg = FeedingRuleMatcher.ExpectedKg(set, line, w ?? 0m);
@@ -203,9 +207,11 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
                         Math.Round(kg, 3),
                         sessions,
                         Math.Round(kg / sessions, 3),
-                        Math.Round(kg * (formula?.TotalCostPerKgBdt ?? 0m), 2)));
+                        Math.Round(kg * (formula?.TotalCostPerKgBdt ?? 0m), 2),
+                        unit));
 
                     if (formula is null) continue;
+                    recipeUnit[formula.Id] = unit;
                     recipeKg[formula.Id] = recipeKg.GetValueOrDefault(formula.Id) + kg;
                     if (!recipeAnimals.TryGetValue(formula.Id, out var who)) recipeAnimals[formula.Id] = who = [];
                     who.Add(animal.Id);
@@ -227,7 +233,7 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
 
             perAnimal.Add(new RoutineAnimalDto(
                 animal.Id, animal.Tag.TagId, names.Shed(place.ShedId), names.Pen(place.PenId), weight is null ? null : Math.Round(weight.Value, 1), age,
-                lines, Math.Round(lines.Sum(l => l.KgPerDay), 3), Math.Round(lines.Sum(l => l.CostBdt), 2)));
+                lines, Math.Round(lines.Where(l => l.Unit == "kg").Sum(l => l.KgPerDay), 3), Math.Round(lines.Sum(l => l.CostBdt), 2)));
         }
 
         // ── Mixing sheet: each recipe's ingredients for today's total, against stock ──
@@ -278,7 +284,8 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
                     r.Name, r.Pct, Math.Round(r.Kg, 3), r.Item?.Name, r.Item?.UnitOfMeasure ?? "kg",
                     r.Need is null ? null : Math.Round(r.Need.Value, 3),
                     r.Item is null ? null : Math.Round(r.Item.CurrentStock, 3),
-                    r.Item is not null && itemNeed[r.Item.Id] > r.Item.CurrentStock)).ToList());
+                    r.Item is not null && itemNeed[r.Item.Id] > r.Item.CurrentStock)).ToList(),
+                recipeUnit.GetValueOrDefault(formula.Id, "kg"));
         })
         .OrderByDescending(r => r.TotalKg)
         .ToList();

@@ -119,7 +119,7 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
                   <div *ngFor="let it of a.items" class="flex flex-wrap items-center gap-x-2 text-xs py-0.5" [class.opacity-50]="it.isPaused">
                     <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase" [ngClass]="kindClass(it)">{{ kindLabel(it) }}</span>
                     <span class="font-semibold">{{ it.name }}</span>
-                    <span class="text-gray-500">{{ it.kgPerDay | number:'1.0-3' }} kg<span *ngIf="it.feedName && it.feedName !== it.name"> · {{ it.feedName }}</span></span>
+                    <span class="text-gray-500">{{ it.kgPerDay | number:'1.0-3' }} {{ it.unit || 'kg' }}<span *ngIf="it.feedName && it.feedName !== it.name"> · {{ it.feedName }}</span></span>
                     <span *ngIf="it.fit === 'BelowRange' || it.fit === 'AboveRange'" class="text-amber-600" title="Outside the chart's ranges — the nearest range is used">⚠ {{ it.fit === 'BelowRange' ? 'below' : 'above' }} chart</span>
                     <span *ngIf="it.isPaused" class="text-sky-600">paused{{ it.pausedUntil ? ' until ' + (it.pausedUntil | date:'d MMM') : '' }}</span>
                     <span *ngIf="it.planId && it.kind !== 'Group'" class="ml-auto inline-flex gap-0.5">

@@ -26,7 +26,7 @@ public sealed record ManualFeedingResult(int Recorded, IReadOnlyList<string> Not
 /// </summary>
 /// <param name="FormulaId">A recipe, or…</param>
 /// <param name="InventoryItemId">…a stock item fed as it is.</param>
-/// <param name="QuantityPerHead">Kg per animal (for a stock item, in its own unit when that isn't kg).</param>
+/// <param name="QuantityPerHead">Kg of a recipe per animal; for a stock item, in <paramref name="UnitId"/> (or its base unit).</param>
 public sealed record RecordManualFeedingCommand(
     Guid FarmId,
     DateOnly Date,
@@ -34,7 +34,8 @@ public sealed record RecordManualFeedingCommand(
     Guid? FormulaId,
     Guid? InventoryItemId,
     decimal QuantityPerHead,
-    string? Notes = null) : IRequest<ManualFeedingResult>;
+    string? Notes = null,
+    Guid? UnitId = null) : IRequest<ManualFeedingResult>;
 
 public sealed class RecordManualFeedingCommandValidator : AbstractValidator<RecordManualFeedingCommand>
 {
@@ -67,9 +68,10 @@ public sealed class RecordManualFeedingCommandHandler(
     {
         // The ration as a one-line fixed rule set ("Direct · <recipe or item> · <kg>/day"), reused if it exists.
         var ruleSet = await directFeed.GetOrCreateDirectRuleSetAsync(
-            new DirectRation(request.InventoryItemId is null ? request.FormulaId : null, request.InventoryItemId, request.QuantityPerHead),
+            new DirectRation(request.InventoryItemId is null ? request.FormulaId : null, request.InventoryItemId, request.QuantityPerHead, UnitId: request.UnitId),
             TargetAnimalType.Cattle, cancellationToken);
         var line = ruleSet.Lines.First();
+        var perHead = line.ConcentrateKgPerDay; // kg, or the stock item's own unit (ml) — as the line records it
         var formula = await formulas.GetByIdAsync(line.FormulaId, cancellationToken);
         var unitCost = formula?.TotalCostPerKgBdt ?? 0m;
         var reason = "Manual entry" + (string.IsNullOrWhiteSpace(request.Notes) ? string.Empty : $": {request.Notes.Trim()}");
@@ -93,12 +95,12 @@ public sealed class RecordManualFeedingCommandHandler(
             // A one-day plan holds the entry (it is closed straight away, so the daily job never repeats it).
             var plan = new AnimalFeedingPlan(Guid.NewGuid(), tenant.TenantId, request.FarmId, ruleSet.Id,
                 FeedingPlanType.FixedQuantity, request.Date, request.Date, animalId);
-            plan.UpdateCurrentRule(line.Id, animal.LatestWeightKg ?? 0m, request.QuantityPerHead, 0m);
+            plan.UpdateCurrentRule(line.Id, animal.LatestWeightKg ?? 0m, perHead, 0m);
             plan.Complete();
             await plans.AddAsync(plan, cancellationToken);
 
             var entry = new DailyFeedingEntry(Guid.NewGuid(), tenant.TenantId, plan.Id, request.FarmId, request.Date,
-                line.FormulaId, request.QuantityPerHead, line.Id);
+                line.FormulaId, perHead, line.Id);
             entry.SetConsumptionCost(unitCost);
             await entries.AddAsync(entry, cancellationToken);
 
@@ -118,7 +120,7 @@ public sealed class RecordManualFeedingCommandHandler(
         {
             try
             {
-                await sender.Send(new ConfirmDailyFeedingEntryCommand(entry.Id, request.QuantityPerHead, null, reason), cancellationToken);
+                await sender.Send(new ConfirmDailyFeedingEntryCommand(entry.Id, perHead, null, reason), cancellationToken);
                 confirmed++;
             }
             catch (DomainException ex)

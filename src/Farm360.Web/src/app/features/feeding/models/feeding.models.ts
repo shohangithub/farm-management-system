@@ -440,7 +440,7 @@ export interface AssignAnimalFeedingPlanRequest {
 export interface RoutineLine {
   chart: string; kind: string; band: string; fit: string;
   formulaId: string | null; recipe: string;
-  kgPerDay: number; sessions: number; kgPerSession: number; costBdt: number;
+  kgPerDay: number; sessions: number; kgPerSession: number; costBdt: number; unit: string;
 }
 export interface RoutineAnimal {
   animalId: string; tag: string; shed: string | null; pen: string | null;
@@ -454,7 +454,7 @@ export interface RoutineIngredient {
 }
 export interface RoutineRecipe {
   formulaId: string; recipe: string; directItem: boolean; animals: number;
-  totalKg: number; costBdt: number; sessions: RoutineSession[]; ingredients: RoutineIngredient[];
+  totalKg: number; costBdt: number; sessions: RoutineSession[]; ingredients: RoutineIngredient[]; unit: string;
 }
 export interface DailyFeedingRoutine {
   farmId: string; date: string; animals: number; animalsWithoutRation: number;
@@ -476,6 +476,8 @@ export interface ManualFeedingRequest {
   inventoryItemId?: string | null;
   quantityPerHead: number;
   notes?: string | null;
+  /** Stock item only: the unit quantityPerHead is in. */
+  unitId?: string | null;
 }
 
 export interface ManualFeedingResult {
@@ -486,7 +488,10 @@ export interface ManualFeedingResult {
 export interface DirectRationRequest {
   formulaId?: string | null;
   inventoryItemId?: string | null;
+  /** Kg of a recipe; for a stock item, the quantity in unitId (or its base unit). */
   kgPerDay: number;
+  /** Stock item only: the unit the quantity is entered in (ml, Bottle (100 ml)…). */
+  unitId?: string | null;
 }
 
 export interface AnimalDailyFeedingLog {
@@ -550,6 +555,8 @@ export interface RationItem {
   fit: 'InRange' | 'BelowRange' | 'AboveRange' | 'Unknown' | string;
   isPaused: boolean;
   pausedUntil?: string | null;
+  /** What kgPerDay is in: kg, or a stock item's own unit (ml). */
+  unit?: string;
 }
 
 export interface BoardAnimal {
@@ -655,7 +662,9 @@ export interface ItemNeed {
   linkedToStock: boolean;
 }
 
-export interface RecipeNeed { formulaId: string; recipe: string; perDayKg: number; totalKg: number; costBdt: number; }
+export interface RecipeNeed { formulaId: string; recipe: string; perDayKg: number; totalKg: number; costBdt: number;   /** kg, or a directly-given stock item's own unit (ml). */
+  unit?: string;
+}
 export interface AnimalNeed { animalId: string; tag: string; shed?: string | null; weightKg?: number | null; perDayKg: number; totalKg: number; costBdt: number; }
 
 export interface FeedRequirement {

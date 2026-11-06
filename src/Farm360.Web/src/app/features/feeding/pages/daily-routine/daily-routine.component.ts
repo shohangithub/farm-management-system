@@ -102,8 +102,8 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
                 <tbody>
                   <tr *ngFor="let x of r.recipes" class="row">
                     <td class="px-4 py-2 font-semibold">{{ x.recipe }} <span class="text-[11px] font-normal text-gray-500">· {{ x.animals }} animal(s)</span></td>
-                    <td *ngFor="let s of r.sessionOrder" class="px-3 py-2 text-right font-mono">{{ sessionKg(x.sessions, s) }}</td>
-                    <td class="px-4 py-2 text-right font-mono font-bold">{{ x.totalKg | number:'1.0-2' }} kg</td>
+                    <td *ngFor="let s of r.sessionOrder" class="px-3 py-2 text-right font-mono">{{ sessionKg(x.sessions, s, x.unit) }}</td>
+                    <td class="px-4 py-2 text-right font-mono font-bold">{{ x.totalKg | number:'1.0-2' }} {{ x.unit }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -117,7 +117,7 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
               <div *ngFor="let x of r.recipes" class="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden break-inside-avoid">
                 <div class="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-between">
                   <span class="font-bold text-sm">{{ x.recipe }}<span *ngIf="x.directItem" class="ml-1 text-[10px] font-normal text-gray-500">(fed as it is)</span></span>
-                  <span class="font-mono font-black text-emerald-700 dark:text-emerald-300">{{ x.totalKg | number:'1.0-2' }} kg</span>
+                  <span class="font-mono font-black text-emerald-700 dark:text-emerald-300">{{ x.totalKg | number:'1.0-2' }} {{ x.unit }}</span>
                 </div>
                 <table class="w-full text-xs">
                   <thead class="thead"><tr><th class="text-left px-3 py-1.5">Ingredient</th><th class="text-right px-2 py-1.5">%</th><th class="text-right px-2 py-1.5">Kg</th><th class="text-right px-3 py-1.5">Stock</th></tr></thead>
@@ -175,8 +175,8 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
                         <span *ngIf="l.kind === 'Extra' || l.kind === 'Group'" class="ml-1 text-[10px] text-gray-400">{{ l.kind === 'Extra' ? 'extra' : 'shed ration' }}</span>
                       </td>
                       <td class="px-3 py-1.5">{{ l.recipe }}</td>
-                      <td class="px-3 py-1.5 text-right font-mono text-xs">{{ l.sessions > 1 ? l.sessions + ' × ' + (l.kgPerSession | number:'1.0-3') : (l.kgPerSession | number:'1.0-3') }} kg</td>
-                      <td class="px-3 py-1.5 text-right font-mono font-bold">{{ l.kgPerDay | number:'1.0-3' }}</td>
+                      <td class="px-3 py-1.5 text-right font-mono text-xs">{{ l.sessions > 1 ? l.sessions + ' × ' + (l.kgPerSession | number:'1.0-3') : (l.kgPerSession | number:'1.0-3') }} {{ l.unit }}</td>
+                      <td class="px-3 py-1.5 text-right font-mono font-bold">{{ l.kgPerDay | number:'1.0-3' }}<span *ngIf="l.unit !== 'kg'" class="text-[10px] font-normal"> {{ l.unit }}</span></td>
                       <td class="px-4 py-1.5 text-right font-mono text-gray-500">{{ l.costBdt | number:'1.0-0' }}</td>
                     </tr>
                   </ng-container>
@@ -275,9 +275,9 @@ export class DailyRoutineComponent {
     });
   }
 
-  sessionKg(sessions: { session: string; kg: number }[], name: string): string {
+  sessionKg(sessions: { session: string; kg: number }[], name: string, unit = 'kg'): string {
     const s = sessions.find(x => x.session === name);
-    return s ? `${(Math.round(s.kg * 1000) / 1000).toLocaleString()} kg` : '—';
+    return s ? `${(Math.round(s.kg * 1000) / 1000).toLocaleString()} ${unit}` : '—';
   }
 
   print(): void {

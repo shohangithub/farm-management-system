@@ -21,6 +21,7 @@ namespace Farm360.Application.Feeding.Queries.Board;
 
 /// <param name="Kind">Chart (rule set), Extra (direct ration) or Group (shed / pen / batch plan).</param>
 /// <param name="Fit">InRange, BelowRange, AboveRange or Unknown — whether the animal sits inside the chart's ranges.</param>
+/// <param name="Unit">What <paramref name="KgPerDay"/> is in: kg, or a stock item's own unit (ml) for an extra.</param>
 public sealed record RationItemDto(
     Guid? PlanId,
     Guid RuleSetId,
@@ -32,7 +33,8 @@ public sealed record RationItemDto(
     decimal CostPerDayBdt,
     string Fit,
     bool IsPaused,
-    DateOnly? PausedUntil);
+    DateOnly? PausedUntil,
+    string Unit = "kg");
 
 public sealed record BoardAnimalDto(
     Guid AnimalId,
@@ -134,7 +136,8 @@ internal sealed class RationCalculator
             Math.Round(cost, 2),
             match.Fit.ToString(),
             paused,
-            paused ? plan!.PausedUntil(day) : null);
+            paused ? plan!.PausedUntil(day) : null,
+            DirectFeedService.UnitFromName(ruleSet.Name));
     }
 }
 
@@ -207,7 +210,8 @@ public sealed class GetFeedingBoardQueryHandler(
                 animal.LatestWeightKg,
                 age,
                 items.OrderBy(i => i.Kind == "Chart" ? 0 : i.Kind == "Group" ? 1 : 2).ToList(),
-                Math.Round(feeding.Sum(i => i.KgPerDay), 3),
+                // Kg totals count kg only — 20 ml of tonic is not 20 kg of feed.
+                Math.Round(feeding.Where(i => i.Unit == "kg").Sum(i => i.KgPerDay), 3),
                 Math.Round(feeding.Sum(i => i.CostPerDayBdt), 2)));
         }
 
@@ -258,7 +262,8 @@ public sealed class PreviewRationQueryHandler(
     IFeedingRuleSetRepository ruleSets,
     IFeedFormulaRepository formulas,
     IInventoryItemRepository inventory,
-    ITenantService tenant) : IRequestHandler<PreviewRationQuery, RationPreviewDto>
+    ITenantService tenant,
+    IDirectFeedService directFeed) : IRequestHandler<PreviewRationQuery, RationPreviewDto>
 {
     public async Task<RationPreviewDto> Handle(PreviewRationQuery request, CancellationToken cancellationToken)
     {
@@ -274,10 +279,13 @@ public sealed class PreviewRationQueryHandler(
         foreach (var ration in request.DirectRations ?? [])
         {
             var (formulaId, title, costPerKg) = await DescribeAsync(ration, formulaList, cancellationToken);
+            var amount = await directFeed.FeedQuantityAsync(ration, cancellationToken);
+            if (ration.InventoryItemId is not null) costPerKg = amount.CostPerUnitBdt;
             var lineFormulaId = formulaId ?? Guid.NewGuid();
-            var temp = new FeedingRuleSet(Guid.NewGuid(), tenantId, $"{RationCalculator.DirectPrefix}{title} · {ration.KgPerDay:0.###} kg/day",
+            var temp = new FeedingRuleSet(Guid.NewGuid(), tenantId,
+                $"{RationCalculator.DirectPrefix}{title} · {amount.Quantity.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)} {amount.Unit}/day",
                 TargetAnimalType.Cattle, FeedingPurpose.Growth, FeedingPlanType.FixedQuantity);
-            temp.AddRuleLine(null, null, null, null, ration.FeedType ?? FeedCategory.Concentrate, ration.KgPerDay, lineFormulaId);
+            temp.AddRuleLine(null, null, null, null, ration.FeedType ?? FeedCategory.Concentrate, Math.Round(amount.Quantity, 4), lineFormulaId);
             directPreviews.Add(temp);
             if (formulaId is null)
             {
@@ -347,7 +355,7 @@ public sealed class PreviewRationQueryHandler(
 
             var counted = items.Where(i => !alreadyOn.Contains(i.Name)).ToList();
             rows.Add(new PreviewAnimalDto(animal.Id, animal.Tag.TagId, animal.LatestWeightKg, age, items,
-                Math.Round(counted.Sum(i => i.KgPerDay), 3), Math.Round(counted.Sum(i => i.CostPerDayBdt), 2),
+                Math.Round(counted.Where(i => i.Unit == "kg").Sum(i => i.KgPerDay), 3), Math.Round(counted.Sum(i => i.CostPerDayBdt), 2),
                 warnings, willEnd, alreadyOn));
         }
 

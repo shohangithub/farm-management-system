@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Feeding.Queries.Planning;
+using Farm360.Application.Feeding.Services;
 using Farm360.Application.Inventory.Units;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Feeding;
@@ -103,6 +104,36 @@ public class FeedRequirementTests
         (await service.ToBaseAsync(premix, g.Conversions.Single(c => c.Name == "Kg").Id, 0.5m)).BaseQuantity.Should().Be(500m);
     }
 
+    // ── Direct rations in any unit ─────────────────────────────────────────
+
+    [Theory]
+    [InlineData("ml", null, 20, 20, "ml", 1.5)]               // syrup: 20 ml a day, ৳1.5 a ml
+    [InlineData("ml", "Bottle (100 ml)", 0.5, 50, "ml", 1.5)] // half a bottle = 50 ml
+    [InlineData("g", null, 100, 0.1, "kg", 500)]             // 100 g of premix is recorded as 0.1 kg (৳0.5/g → ৳500/kg)
+    [InlineData("kg", "Bag (25 kg)", 1, 25, "kg", 40)]
+    public async Task ADirectStockItem_IsEnteredInAnyOfItsUnits_AndRecordedAsFeedingCountsIt(
+        string baseUnit, string? unitName, double entered, double recorded, string recordedUnit, double costPerUnit)
+    {
+        var (units, _, _) = Units();
+        var wac = baseUnit switch { "ml" => 1.5m, "g" => 0.5m, _ => 40m };
+        var item = Item("Syp. Xinc B", baseUnit, 3000m, wac);
+        var unitId = unitName is null ? (Guid?)null
+            : (await units.ConversionsForAsync(baseUnit)).Single(c => c.Name == unitName).Id;
+        var inventory = Substitute.For<IInventoryItemRepository>();
+        inventory.GetByIdAsync(item.Id, Arg.Any<CancellationToken>()).Returns(item);
+        var tenant = Substitute.For<ITenantService>();
+        tenant.TenantId.Returns(TenantId);
+        var direct = new DirectFeedService(inventory, Substitute.For<IFeedIngredientRepository>(), Substitute.For<IFeedFormulaRepository>(),
+            Substitute.For<IFeedingRuleSetRepository>(), tenant, units);
+
+        var q = await direct.FeedQuantityAsync(new DirectRation(null, item.Id, (decimal)entered, UnitId: unitId));
+
+        q.Quantity.Should().Be((decimal)recorded);
+        q.Unit.Should().Be(recordedUnit);
+        q.CostPerUnitBdt.Should().Be((decimal)costPerUnit);
+        DirectFeedService.UnitFromName($"Direct · Syp. Xinc B (direct item) · {recorded} {recordedUnit}/day").Should().Be(recordedUnit);
+    }
+
     // ── Purchase plan ──────────────────────────────────────────────────────
 
     [Fact]
@@ -178,6 +209,7 @@ public class FeedRequirementTests
         var g = new MeasureUnit(Guid.NewGuid(), TenantId, "g");
         g.AddConversion("Kg", 1000m);
         var ml = new MeasureUnit(Guid.NewGuid(), TenantId, "ml");
+        ml.AddConversion("Bottle (100 ml)", 100m);
 
         var repo = Substitute.For<IMeasureUnitRepository>();
         repo.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<MeasureUnit> { kg, g, ml });

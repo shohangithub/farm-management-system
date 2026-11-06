@@ -163,8 +163,8 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
               <tbody>
                 <tr *ngFor="let x of r.recipes" class="border-t border-gray-50 dark:border-gray-700/50">
                   <td class="px-5 py-2 font-semibold">{{ x.recipe }}</td>
-                  <td class="px-3 py-2 text-right font-mono text-gray-500">{{ x.perDayKg | number:'1.0-2' }} kg/day</td>
-                  <td class="px-3 py-2 text-right font-mono font-bold">{{ x.totalKg | number:'1.0-1' }} kg</td>
+                  <td class="px-3 py-2 text-right font-mono text-gray-500">{{ x.perDayKg | number:'1.0-2' }} {{ x.unit || 'kg' }}/day</td>
+                  <td class="px-3 py-2 text-right font-mono font-bold">{{ x.totalKg | number:'1.0-1' }} {{ x.unit || 'kg' }}</td>
                   <td class="px-5 py-2 text-right font-mono">৳{{ x.costBdt | number:'1.0-0' }}</td>
                 </tr>
               </tbody>
