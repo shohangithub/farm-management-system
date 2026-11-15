@@ -12,6 +12,15 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
+import { BatchPnLReport } from '../../models/finance.model';
+
+/** Batch P&L with the unrealised-value fields the API now returns (ratios are 0–1 fractions). */
+interface BatchPnLReportView extends BatchPnLReport {
+  onHandAnimals?: number;
+  unrealisedValueBdt?: number;
+  estimatedTotalProfitBdt?: number;
+  estimatedRoiPercent?: number;
+}
 
 @Component({
   selector: 'app-batch-pnl-report',
@@ -77,7 +86,7 @@ import { ReportService } from '../../../reports/services/report.service';
         <div class="flex flex-col md:flex-row gap-6 mb-8 border-b border-gray-100 dark:border-gray-700/50 pb-8">
           <!-- Total Income -->
           <div class="flex-1">
-            <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Total Income</p>
+            <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Realised Income</p>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
               {{ report.totalIncomeBdt | currency:'BDT ':'symbol':'1.0-0' }}
             </h2>
@@ -97,7 +106,7 @@ import { ReportService } from '../../../reports/services/report.service';
           <!-- Gross Profit -->
           <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Gross Profit</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Realised Profit / Loss</p>
               <h3 class="text-2xl font-bold" [ngClass]="report.grossProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
                 {{ Math.abs(report.grossProfitBdt) | currency:'BDT ':'symbol':'1.0-0' }}
                 <span *ngIf="report.grossProfitBdt < 0" class="text-sm">Loss</span>
@@ -111,9 +120,9 @@ import { ReportService } from '../../../reports/services/report.service';
           <!-- ROI -->
           <div class="bg-blue-50/50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800/50 flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400 mb-1">Return on Investment (ROI)</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400 mb-1">Realised ROI</p>
               <h3 class="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                {{ report.returnOnInvestmentPercent / 100 | percent:'1.2-2' }}
+                {{ report.returnOnInvestmentPercent | percent:'1.2-2' }}
               </h3>
             </div>
             <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-300 flex items-center justify-center">
@@ -123,9 +132,33 @@ import { ReportService } from '../../../reports/services/report.service';
 
         </div>
 
+        <!-- Unrealised value & estimated P&L (animals still on the farm) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div class="bg-amber-50/50 dark:bg-amber-900/20 rounded-xl p-6 border border-amber-100 dark:border-amber-800/50">
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400 mb-1">Unrealised value ({{ report.onHandAnimals ?? 0 }} on hand)</p>
+            <h3 class="text-2xl font-bold text-amber-900 dark:text-amber-100">
+              {{ (report.unrealisedValueBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}
+            </h3>
+          </div>
+          <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Estimated Total P&amp;L</p>
+            <h3 class="text-2xl font-bold" [ngClass]="(report.estimatedTotalProfitBdt ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+              {{ Math.abs(report.estimatedTotalProfitBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}
+              <span *ngIf="(report.estimatedTotalProfitBdt ?? 0) < 0" class="text-sm">Loss</span>
+            </h3>
+          </div>
+          <div class="bg-blue-50/50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800/50">
+            <p class="text-xs font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400 mb-1">Estimated ROI</p>
+            <h3 class="text-2xl font-bold text-blue-900 dark:text-blue-100">
+              {{ (report.estimatedRoiPercent ?? 0) | percent:'1.2-2' }}
+            </h3>
+          </div>
+        </div>
+
         <div class="mt-6 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg border border-gray-100 dark:border-gray-700/50">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">info</mat-icon>
-          <span>This batch contains <strong>{{ report.totalAnimals }}</strong> animals. ROI is calculated as (Gross Profit / Total Cost) * 100.</span>
+          <span>This batch contains <strong>{{ report.totalAnimals }}</strong> animals. Realised P&amp;L = realised income − total cost of every animal;
+            the estimate adds the value of animals still on the farm at the farm's valuation rate. ROI = profit ÷ total cost.</span>
         </div>
 
       </div>
@@ -159,7 +192,9 @@ export class BatchPnlReportComponent implements OnInit {
       if (!batchId || !farm) {
         return of(null);
       }
-      return this.financeService.getBatchPnL(farm.id, batchId).pipe(catchError(() => of(null)));
+      return this.financeService.getBatchPnL(farm.id, batchId).pipe(
+        map(r => r as BatchPnLReportView | null),
+        catchError(() => of(null as BatchPnLReportView | null)));
     })
   );
 
@@ -206,8 +241,10 @@ export class BatchPnlReportComponent implements OnInit {
                 currency: 'BDT (৳)',
                 metaFields: [
                   { label: 'Total Animals', value: `${report?.totalAnimals || 0}` },
-                  { label: 'Gross Profit', value: `৳ ${(report?.grossProfitBdt || 0).toLocaleString()}` },
-                  { label: 'ROI', value: `${((report?.returnOnInvestmentPercent || 0)).toFixed(2)}%` }
+                  { label: 'Realised P&L', value: `৳ ${(report?.grossProfitBdt || 0).toLocaleString()}` },
+                  { label: 'Realised ROI', value: `${((report?.returnOnInvestmentPercent || 0) * 100).toFixed(2)}%` },
+                  { label: 'Estimated P&L', value: `৳ ${(report?.estimatedTotalProfitBdt || 0).toLocaleString()}` },
+                  { label: 'Estimated ROI', value: `${((report?.estimatedRoiPercent || 0) * 100).toFixed(2)}%` }
                 ]
               },
               showSignatures: true

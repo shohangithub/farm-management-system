@@ -18,8 +18,19 @@ public sealed class GetProjectionDefaultsQueryHandler : IRequestHandler<GetProje
         _resolver = resolver;
     }
 
-    public Task<ProjectionDefaultsDto> Handle(GetProjectionDefaultsQuery request, CancellationToken cancellationToken)
+    public async Task<ProjectionDefaultsDto> Handle(GetProjectionDefaultsQuery request, CancellationToken cancellationToken)
     {
-        return _resolver.ResolveDefaultsAsync(request.AnimalId, cancellationToken);
+        var defaults = await _resolver.ResolveDefaultsAsync(request.AnimalId, cancellationToken);
+
+        // The projection starts at the animal's latest weight, i.e. today. Day 0's investment is
+        // therefore everything already spent on it, not just the price paid at purchase — using the
+        // bare purchase price would leave out all feed, vet and labour to date and overstate profit.
+        if (defaults.CostToDateBdt is { Value: > 0 } costToDate
+            && costToDate.Value > defaults.PurchasePriceBdt.Value)
+        {
+            defaults = defaults with { PurchasePriceBdt = costToDate };
+        }
+
+        return defaults;
     }
 }

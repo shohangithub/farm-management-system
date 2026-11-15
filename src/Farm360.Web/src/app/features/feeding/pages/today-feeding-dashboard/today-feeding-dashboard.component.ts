@@ -733,29 +733,54 @@ export class TodayFeedingDashboardComponent implements OnInit {
     });
   });
 
-  // KPI Computations
+  // KPI Computations — across every head an entry covers (group plans), kg-only (ml extras are not kg),
+  // and cost/consumption from confirmed entries only (a pending entry's cost is just a plan).
+  private static heads(e: DailyFeedingEntry): number {
+    return e.headCount && e.headCount > 0 ? e.headCount : 1;
+  }
+
+  private static isKg(e: DailyFeedingEntry): boolean {
+    return !e.unit || e.unit.toLowerCase() === 'kg';
+  }
+
+  private static isFed(e: DailyFeedingEntry): boolean {
+    return e.status === 'Confirmed' || e.status === 'Adjusted';
+  }
+
+  private static fedKg(e: DailyFeedingEntry): number {
+    return e.totalKg ?? (e.actualKg ?? 0) * TodayFeedingDashboardComponent.heads(e);
+  }
+
+  private static fedCost(e: DailyFeedingEntry): number {
+    if (e.totalCostBdt != null) return e.totalCostBdt;
+    if (e.unitCostBdt != null) return TodayFeedingDashboardComponent.fedKg(e) * e.unitCostBdt;
+    return 0;
+  }
+
   readonly totalExpectedKg = computed(() => {
-    return this.filteredEntries().reduce((sum, e) => sum + e.expectedKg, 0);
+    return this.filteredEntries()
+      .filter(e => TodayFeedingDashboardComponent.isKg(e) && e.status !== 'Skipped')
+      .reduce((sum, e) => sum + e.expectedKg * TodayFeedingDashboardComponent.heads(e), 0);
   });
 
   readonly totalActualKg = computed(() => {
-    return this.filteredEntries().reduce((sum, e) => sum + (e.actualKg ?? 0), 0);
+    return this.filteredEntries()
+      .filter(e => TodayFeedingDashboardComponent.isFed(e) && TodayFeedingDashboardComponent.isKg(e))
+      .reduce((sum, e) => sum + TodayFeedingDashboardComponent.fedKg(e), 0);
   });
 
   readonly totalFeedCost = computed(() => {
-    return this.filteredEntries().reduce((sum, e) => {
-      if (e.totalCostBdt != null) return sum + e.totalCostBdt;
-      if (e.unitCostBdt != null && (e.actualKg != null || e.status !== 'Pending')) {
-        return sum + ((e.actualKg ?? e.expectedKg) * e.unitCostBdt);
-      }
-      return sum;
-    }, 0);
+    return this.filteredEntries()
+      .filter(e => TodayFeedingDashboardComponent.isFed(e))
+      .reduce((sum, e) => sum + TodayFeedingDashboardComponent.fedCost(e), 0);
   });
 
+  /** Cost per kg of the kg feed actually given (ml extras excluded from both sides). */
   readonly averageBlendedCost = computed(() => {
-    const consumedKg = this.totalActualKg();
-    const totalCost = this.totalFeedCost();
-    return consumedKg > 0 ? (totalCost / consumedKg) : 0;
+    const fed = this.filteredEntries().filter(e => TodayFeedingDashboardComponent.isFed(e) && TodayFeedingDashboardComponent.isKg(e));
+    const kg = fed.reduce((sum, e) => sum + TodayFeedingDashboardComponent.fedKg(e), 0);
+    const cost = fed.reduce((sum, e) => sum + TodayFeedingDashboardComponent.fedCost(e), 0);
+    return kg > 0 ? cost / kg : 0;
   });
 
   readonly progressPct = computed(() => {

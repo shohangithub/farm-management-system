@@ -13,6 +13,7 @@ import { FinanceService } from '../../services/finance.service';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { AccountingSettings, AccountingSetupOptions, BalanceSheetEntry, SaveBalanceSheetEntryRequest } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 /**
  * Accounts setup: the financial year, the date the books start from, the opening position on that
  * date, and year-end adjustments (accruals, prepayments, provisions). Opening balances are not
@@ -280,7 +281,7 @@ export class AccountsSetupComponent {
     this.editingId.set(null);
     this.entry.set({
       entryType: type,
-      entryDate: type === 'Opening' ? (this.settings()?.booksStartDate ?? '').substring(0, 10) : new Date().toISOString().split('T')[0],
+      entryDate: type === 'Opening' ? (this.settings()?.booksStartDate ?? '').substring(0, 10) : toLocalIsoDate(),
       accountCode: (type === 'Opening' ? opts?.openingAccounts[0]?.code : opts?.adjustmentAccounts[0]?.code) ?? '',
       amountBdt: 0,
       description: '',

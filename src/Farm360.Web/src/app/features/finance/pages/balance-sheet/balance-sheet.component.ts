@@ -16,6 +16,7 @@ import { ReportService } from '../../../reports/services/report.service';
 import { BalanceSheet, BalanceSheetLine } from '../../models/finance.model';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 interface StatementGroup { title: string | null; lines: BalanceSheetLine[]; total: number; priorTotal: number; }
 interface StatementBlock { title: string; totalLabel: string; total: number; priorTotal: number; color: string; groups: StatementGroup[]; }
 
@@ -211,6 +212,9 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
           <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700/60 text-[11px] text-gray-500 dark:text-gray-400 flex items-start gap-2">
             <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">info</mat-icon>
             <span>
+              <strong class="text-gray-700 dark:text-gray-200">Livestock is valued at cost</strong> (purchase price of the animals
+              on the farm), not at market value — herd values shown elsewhere in the app (e.g. at meat-yield market price) are
+              estimates and do not affect these statements; the gain is recognised only when an animal is sold.
               Livestock and inventory are carried at cost until sold, used or written off. Fixed assets are shown at cost less
               depreciation from the fixed-asset register. Retained earnings brought forward are the profits of earlier financial
               years; the profit for the year runs from {{ sheet.fiscalYearStart | date:'d MMM yyyy' }}.
@@ -267,7 +271,7 @@ export class BalanceSheetComponent {
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
 
-  private readonly todayStr = new Date().toISOString().split('T')[0];
+  private readonly todayStr = toLocalIsoDate();
 
   readonly filterForm = this.fb.group({
     asOfDate: [this.todayStr],

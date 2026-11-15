@@ -13,13 +13,13 @@ public sealed class DailyFeedingEntryConfiguration : IEntityTypeConfiguration<Da
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.ExpectedKg)
-            .HasPrecision(18, 2);
+            .HasPrecision(18, 4);
 
         builder.Property(e => e.ActualKg)
-            .HasPrecision(18, 2);
+            .HasPrecision(18, 4);
 
         builder.Property(e => e.UnitCostAtConsumptionBdt)
-            .HasPrecision(18, 2);
+            .HasPrecision(18, 4);
 
         builder.Property(e => e.TotalCostBdt)
             .HasPrecision(18, 2);

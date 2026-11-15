@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Intelligence.Services;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
@@ -11,7 +12,7 @@ using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Livestock;
 
-/// <summary>One animal's performance over the period, for ranking against its herd-mates.</summary>
+/// <summary>One animal's lifetime cost performance, for ranking against the herd-mates present in the period.</summary>
 public sealed record HerdPerformanceReportRow(
     string Tag,
     string Status,
@@ -44,15 +45,18 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
     private readonly IAnimalRepository _animals;
     private readonly IAnimalFeedAllocationRepository _feed;
     private readonly IAnimalCostLedgerRepository _ledgers;
+    private readonly IAnimalValuationService _valuation;
 
     public HerdPerformanceReportDefinition(
         IAnimalRepository animals,
         IAnimalFeedAllocationRepository feed,
-        IAnimalCostLedgerRepository ledgers)
+        IAnimalCostLedgerRepository ledgers,
+        IAnimalValuationService valuation)
     {
         _animals = animals;
         _feed = feed;
         _ledgers = ledgers;
+        _valuation = valuation;
     }
 
     public override string Key => "livestock.herd-performance";
@@ -60,8 +64,8 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
     public override LocalizedText Title => new("Herd Growth & Performance Ranking", "পালের বৃদ্ধি ও কর্মক্ষমতা র‍্যাঙ্কিং");
 
     public override LocalizedText Description => new(
-        "Every animal ranked by cost per kg, with ADG, feed and full-absorption total cost.",
-        "প্রতি কেজি খরচ অনুসারে সকল পশুর ক্রম, দৈনিক বৃদ্ধি, খাদ্য ও মোট খরচসহ।");
+        "Every animal present in the period, ranked by lifetime cost per kg of live weight, with lifetime ADG, feed and full-absorption total cost.",
+        "নির্বাচিত সময়ে উপস্থিত সকল পশুর আজীবন প্রতি জীবন্ত কেজি খরচ অনুসারে ক্রম, আজীবন দৈনিক বৃদ্ধি, খাদ্য ও মোট খরচসহ।");
 
     public override ReportCategory Category => ReportCategory.Livestock;
 
@@ -79,11 +83,14 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
         ReportColumn<HerdPerformanceReportRow>.Text("tag", new LocalizedText("Tag", "ট্যাগ"), r => r.Tag, 28f, false),
         ReportColumn<HerdPerformanceReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, 24f, false),
         ReportColumn<HerdPerformanceReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.CurrentWeightKg, 1, 24f),
-        ReportColumn<HerdPerformanceReportRow>.Number("adg", new LocalizedText("ADG (kg/d)", "দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 22f),
-        ReportColumn<HerdPerformanceReportRow>.Number("feedKg", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, 2, 24f, ReportAggregate.Sum),
-        ReportColumn<HerdPerformanceReportRow>.Money("feedCost", new LocalizedText("Feed cost", "খাদ্য খরচ"), r => r.FeedCostBdt, 2, 26f),
-        ReportColumn<HerdPerformanceReportRow>.Money("totalCost", new LocalizedText("Total cost", "মোট খরচ"), r => r.TotalCostBdt, 2, 28f),
-        ReportColumn<HerdPerformanceReportRow>.Money("costPerKg", new LocalizedText("Cost / kg", "প্রতি কেজি"), r => r.CostPerKgBdt, 2, 24f, ReportAggregate.None),
+        // Every figure below is lifetime (acquisition to today); the period only chooses which
+        // animals appear. Mixing period feed with a lifetime total let a row show feed cost that
+        // was not the feed inside its own total cost.
+        ReportColumn<HerdPerformanceReportRow>.Number("adg", new LocalizedText("Lifetime ADG (kg/d)", "আজীবন দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 22f),
+        ReportColumn<HerdPerformanceReportRow>.Number("feedKg", new LocalizedText("Lifetime feed (kg)", "আজীবন খাদ্য (কেজি)"), r => r.FeedKg, 2, 24f, ReportAggregate.Sum),
+        ReportColumn<HerdPerformanceReportRow>.Money("feedCost", new LocalizedText("Lifetime feed cost", "আজীবন খাদ্য খরচ"), r => r.FeedCostBdt, 2, 26f),
+        ReportColumn<HerdPerformanceReportRow>.Money("totalCost", new LocalizedText("Lifetime total cost", "আজীবন মোট খরচ"), r => r.TotalCostBdt, 2, 28f),
+        ReportColumn<HerdPerformanceReportRow>.Money("costPerKg", new LocalizedText("Lifetime cost / live kg", "আজীবন খরচ / জীবন্ত কেজি"), r => r.CostPerKgBdt, 2, 24f, ReportAggregate.None),
         ReportColumn<HerdPerformanceReportRow>.Text("band", new LocalizedText("Band", "স্তর"), r => r.Band, 22f, false),
     ];
 
@@ -108,21 +115,31 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
             return [];
         }
 
-        // One grouped query for the whole herd's feed rather than one per animal.
+        // Lifetime feed for the whole farm in one grouped query, and every ledger in one more,
+        // rather than one round trip per animal.
         var feedTotals = (await _feed
-                .GetTotalsForFarmAsync(farmId, period.From, period.To, cancellationToken)
+                .GetTotalsForFarmAsync(farmId, DateOnly.MinValue, DateOnly.MaxValue, cancellationToken)
                 .ConfigureAwait(false))
             .ToDictionary(t => t.AnimalId);
+
+        var ledgers = (await _ledgers.GetByFarmIdAsync(farmId, cancellationToken).ConfigureAwait(false))
+            .GroupBy(l => l.AnimalId)
+            .ToDictionary(g => g.Key, g => g.First());
 
         var rows = new List<HerdPerformanceReportRow>(herd.Count);
 
         foreach (var animal in herd)
         {
-            var ledger = await _ledgers.GetByAnimalIdAsync(animal.Id, cancellationToken).ConfigureAwait(false);
+            ledgers.TryGetValue(animal.Id, out var ledger);
             var feed = feedTotals.TryGetValue(animal.Id, out var f) ? f : default;
 
             var weight = animal.LatestWeightKg ?? 0m;
-            var totalCost = ledger?.TotalCostBdt ?? 0m;
+
+            // The feed cost shown is the feed inside the total: both come from the cost ledger
+            // (whose feed bucket mirrors the confirmed allocations), or both from the allocations
+            // when the animal has no ledger yet.
+            var cost = _valuation.CostToDate(animal, ledger, feed.TotalCostBdt);
+            var totalCost = cost.TotalBdt;
 
             rows.Add(new HerdPerformanceReportRow(
                 animal.Tag.TagId,
@@ -130,7 +147,7 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
                 weight,
                 animal.AdgKgPerDay ?? 0m,
                 feed.TotalKg,
-                feed.TotalCostBdt,
+                cost.FeedBdt,
                 totalCost,
                 weight > 0 ? decimal.Round(totalCost / weight, 2, MidpointRounding.AwayFromZero) : 0m,
                 "Unranked"));

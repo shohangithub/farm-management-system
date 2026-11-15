@@ -46,8 +46,9 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
         builder.Property(x => x.CurrentStock)
             .HasColumnType("decimal(18,4)");
 
+        // 6 decimals in the base unit: a gram of premix can cost 0.0021 BDT (InventoryItem.CostDecimals).
         builder.Property(x => x.WeightedAverageCostBdt)
-            .HasColumnType("decimal(18,4)");
+            .HasColumnType("decimal(18,6)");
 
         builder.Property(x => x.StorageLocation)
             .HasMaxLength(150);

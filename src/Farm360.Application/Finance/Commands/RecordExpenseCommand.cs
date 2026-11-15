@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Common.Interfaces;
@@ -31,12 +32,14 @@ public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand,
     private readonly IFinancialTransactionRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITradeCreditService _credit;
+    private readonly IPublisher _publisher;
 
-    public RecordExpenseCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork, ITradeCreditService credit)
+    public RecordExpenseCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork, ITradeCreditService credit, IPublisher publisher)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _credit = credit;
+        _publisher = publisher;
     }
 
     public async Task<FinancialTransactionDto> Handle(RecordExpenseCommand request, CancellationToken cancellationToken)
@@ -71,7 +74,17 @@ public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand,
                 cancellationToken);
         }
 
+        var domainEvents = transaction.DomainEvents.ToList();
+        transaction.ClearDomainEvents();
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Domain events are published by hand in this codebase. Without this, an expense tagged to an
+        // animal never reached that animal's cost ledger (AnimalCostLedgerUpdater).
+        foreach (var domainEvent in domainEvents)
+        {
+            await _publisher.Publish(domainEvent, cancellationToken);
+        }
 
         return transaction.ToDto();
     }

@@ -307,10 +307,10 @@
         <mat-icon class="absolute -right-4 -bottom-4 text-[100px] opacity-[0.03] rotate-[-10deg] pointer-events-none">payments</mat-icon>
         <div class="relative z-10">
           <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Financial Summary</p>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
               <p class="text-[10px] text-gray-500 mb-1">Purchase Cost</p>
-              <p class="text-lg font-bold text-gray-900 dark:text-white">৳ {{ (animal()!.acquisitionPriceBdt || 0) | number:'1.0-0' }}</p>
+              <p class="text-lg font-bold text-gray-900 dark:text-white">৳ {{ acquisitionCost() | number:'1.0-0' }}</p>
             </div>
             <div>
               <p class="text-[10px] text-gray-500 mb-1">Health Care Cost</p>
@@ -319,6 +319,10 @@
             <div>
               <p class="text-[10px] text-gray-500 mb-1">Feed Cost</p>
               <p class="text-lg font-bold text-gray-900 dark:text-white">৳ {{ totalFeedCost() | number:'1.0-0' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-500 mb-1">Labour &amp; Overhead</p>
+              <p class="text-lg font-bold text-gray-900 dark:text-white">৳ {{ laborOverheadCost() | number:'1.0-0' }}</p>
             </div>
             <div>
               <p class="text-[10px] text-gray-500 mb-1">Total Investment</p>
@@ -330,47 +334,69 @@
 
       <!-- Row 3: Current Profit / Loss -->
       <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 flex flex-col justify-center shrink-0"
-           [ngClass]="netProfit() >= 0 ? 'border-l-4 !border-l-emerald-500' : 'border-l-4 !border-l-red-500'">
-        
-        <div class="flex justify-between items-start mb-2">
+           [ngClass]="(isSold() || hasValuationWeight()) ? (netProfit() >= 0 ? 'border-l-4 !border-l-emerald-500' : 'border-l-4 !border-l-red-500') : 'border-l-4 !border-l-gray-300'">
+
+        <div class="flex justify-between items-start mb-2 gap-3">
           <div>
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               {{ isSold() ? 'Final Profit / Loss' : 'Projected Profit / Loss' }}
             </p>
-            <p *ngIf="!isSold()" class="text-[10px] text-gray-400 mt-0.5">Based on latest weight and market price</p>
+            <p *ngIf="!isSold()" class="text-[10px] text-gray-400 mt-0.5">If sold today: latest weight × live rate − total investment</p>
+            <p *ngIf="isSold()" class="text-[10px] text-gray-400 mt-0.5">Sale revenue − total investment</p>
           </div>
-          
+
           <div class="flex items-center gap-3">
-            <!-- Dynamic Price Input for Unsold -->
-            <div *ngIf="!isSold()" class="flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1 border border-gray-200 dark:border-gray-700 no-print">
+            <!-- Live rate (defaults to the farm's valuation rate; editable) -->
+            <div *ngIf="!isSold()" class="flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1 border border-gray-200 dark:border-gray-700 no-print"
+                 [title]="'Live-weight rate (BDT/kg) — ' + liveWeightPriceSource()">
               <span class="text-[10px] text-gray-500 mr-1">৳/kg</span>
-              <input type="number" 
-                     [ngModel]="liveWeightPrice()" 
-                     (ngModelChange)="liveWeightPrice.set($event)"
-                     class="w-14 bg-transparent border-none text-xs font-semibold text-gray-900 dark:text-white p-0 text-right focus:ring-0 appearance-none" 
-                     title="Live Weight Price (BDT/Kg)">
-              <mat-icon class="!text-[12px] !w-[12px] !h-[12px] text-gray-400 ml-1">edit</mat-icon>
+              <input type="number" min="0" step="1"
+                     [ngModel]="liveWeightPrice()"
+                     (ngModelChange)="onLiveWeightPriceChange($event)"
+                     class="w-16 bg-transparent border-none text-xs font-semibold text-gray-900 dark:text-white p-0 text-right focus:ring-0 appearance-none"
+                     aria-label="Live weight price (BDT per kg)">
+              <button type="button" *ngIf="liveWeightPriceSource() === 'Manual rate'" (click)="resetLiveWeightPrice()"
+                      class="ml-1 text-gray-400 hover:text-gray-600" title="Reset to farm valuation rate">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">restart_alt</mat-icon>
+              </button>
+              <mat-icon *ngIf="liveWeightPriceSource() !== 'Manual rate'" class="!text-[12px] !w-[12px] !h-[12px] text-gray-400 ml-1">edit</mat-icon>
             </div>
 
             <!-- Status Badge -->
-            <div class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+            <div *ngIf="isSold() || hasValuationWeight()" class="px-2 py-0.5 rounded-full text-[10px] font-bold"
                  [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'">
               {{ netProfit() >= 0 ? 'PROFIT' : 'LOSS' }}
             </div>
           </div>
         </div>
 
-        <div class="flex items-end gap-3 mt-1">
-          <p class="text-3xl font-bold tracking-tight" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
-            {{ netProfit() >= 0 ? '+' : '' }}৳ {{ netProfit() | number:'1.0-0' }}
-          </p>
-        </div>
+        <ng-container *ngIf="isSold() || hasValuationWeight(); else noWeightForValuation">
+          <div class="flex items-end gap-3 mt-1">
+            <p class="text-3xl font-bold tracking-tight" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+              {{ netProfit() > 0 ? '+' : '' }}৳ {{ netProfit() | number:'1.0-0' }}
+            </p>
+            <p *ngIf="totalCost() > 0" class="text-xs font-semibold mb-1" [ngClass]="netProfit() >= 0 ? 'text-emerald-600' : 'text-red-600'">
+              ({{ netProfit() / totalCost() | percent:'1.1-1' }} on cost)
+            </p>
+          </div>
 
-        <!-- Breakdown Tooltip/Text for Unsold -->
-        <div *ngIf="!isSold()" class="mt-3 flex items-center text-[10px] text-gray-500 bg-gray-50/50 dark:bg-gray-900/30 rounded p-1.5 border border-gray-100 dark:border-gray-800">
-          <mat-icon class="!text-[12px] !w-[12px] !h-[12px] mr-1 text-gray-400">info</mat-icon>
-          Calculation: ({{ animal()!.latestWeightKg || 0 }} kg × ৳{{ liveWeightPrice() }}) - ৳{{ totalCost() | number:'1.0-0' }} (Total Cost)
-        </div>
+          <!-- Breakdown -->
+          <div *ngIf="!isSold()" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500 bg-gray-50/50 dark:bg-gray-900/30 rounded p-1.5 border border-gray-100 dark:border-gray-800">
+            <span class="flex items-center">
+              <mat-icon class="!text-[12px] !w-[12px] !h-[12px] mr-1 text-gray-400">info</mat-icon>
+              ({{ animal()!.latestWeightKg | number:'1.0-1' }} kg × ৳{{ liveWeightPrice() | number:'1.0-2' }}) = ৳{{ currentEstimatedValue() | number:'1.0-0' }} − ৳{{ totalCost() | number:'1.0-0' }} (Total Investment)
+            </span>
+            <span class="text-gray-400">Break-even rate: <b class="text-gray-600 dark:text-gray-300">৳{{ breakEvenLiveRate() | number:'1.0-2' }}/kg</b></span>
+            <span class="text-gray-400">Rate: {{ liveWeightPriceSource() }}</span>
+          </div>
+          <div *ngIf="isSold()" class="mt-3 flex items-center text-[10px] text-gray-500 bg-gray-50/50 dark:bg-gray-900/30 rounded p-1.5 border border-gray-100 dark:border-gray-800">
+            <mat-icon class="!text-[12px] !w-[12px] !h-[12px] mr-1 text-gray-400">info</mat-icon>
+            ৳{{ totalRevenue() | number:'1.0-0' }} (Sale) − ৳{{ totalCost() | number:'1.0-0' }} (Total Investment)
+          </div>
+        </ng-container>
+        <ng-template #noWeightForValuation>
+          <p class="text-sm text-gray-500 mt-1">Record a weight to value this animal. Investment so far: <b>৳{{ totalCost() | number:'1.0-0' }}</b>.</p>
+        </ng-template>
       </div>
 
     </div>
@@ -1322,10 +1348,10 @@
           <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Financial Investment Breakdown</p>
           <span class="text-[11px] font-bold text-slate-700">Cumulative Ledger</span>
         </div>
-        <div class="grid grid-cols-4 gap-2 pt-1 border-t border-slate-200/80">
+        <div class="grid grid-cols-5 gap-2 pt-1 border-t border-slate-200/80">
           <div>
             <p class="text-[10px] text-slate-400 font-medium">Acquisition</p>
-            <p class="text-sm font-bold text-slate-800 mt-0.5">৳ {{ (animal()!.acquisitionPriceBdt || 0) | number:'1.0-0' }}</p>
+            <p class="text-sm font-bold text-slate-800 mt-0.5">৳ {{ acquisitionCost() | number:'1.0-0' }}</p>
           </div>
           <div>
             <p class="text-[10px] text-slate-400 font-medium">Healthcare</p>
@@ -1334,6 +1360,10 @@
           <div>
             <p class="text-[10px] text-slate-400 font-medium">Feeding</p>
             <p class="text-sm font-bold text-slate-800 mt-0.5">৳ {{ totalFeedCost() | number:'1.0-0' }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-400 font-medium">Labour &amp; Overhead</p>
+            <p class="text-sm font-bold text-slate-800 mt-0.5">৳ {{ laborOverheadCost() | number:'1.0-0' }}</p>
           </div>
           <div>
             <p class="text-[10px] text-emerald-700 font-bold uppercase">Total Cost</p>
@@ -1351,12 +1381,12 @@
               {{ isSold() ? 'Realized Profit / Loss' : 'Market Valuation & Projected Margin' }}
             </p>
             <p class="text-[11px] text-slate-500 mt-0.5">
-              Live Weight Valuation: {{ animal()!.latestWeightKg || 0 }} kg &times; ৳{{ liveWeightPrice() }}/kg = ৳{{ currentEstimatedValue() | number:'1.0-0' }}
+              Live Weight Valuation: {{ (animal()!.latestWeightKg || 0) | number:'1.0-1' }} kg &times; ৳{{ liveWeightPrice() | number:'1.0-2' }}/kg = ৳{{ currentEstimatedValue() | number:'1.0-0' }}
             </p>
           </div>
           <div class="flex items-center gap-2">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200/80 text-slate-700">
-              Rate: ৳{{ liveWeightPrice() }}/kg
+              Rate: ৳{{ liveWeightPrice() | number:'1.0-2' }}/kg
             </span>
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase"
                   [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'">

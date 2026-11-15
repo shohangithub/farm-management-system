@@ -16,7 +16,7 @@ import { FeedCostTrend } from '../../models/dashboard.model';
       <div class="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 dark:border-gray-800/60">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Unit:</span>
-          <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Cost per Head (BDT/Month)</span>
+          <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Feed cost per average head on farm (BDT/Month)</span>
         </div>
 
         <div *ngIf="hasData()" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-400 border border-violet-200/50">
@@ -42,8 +42,8 @@ import { FeedCostTrend } from '../../models/dashboard.model';
           <div class="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50 flex items-center justify-center mb-3">
             <mat-icon class="text-2xl text-gray-400">restaurant</mat-icon>
           </div>
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No feed expense records</p>
-          <p class="text-xs text-gray-400 max-w-[220px]">Confirm daily feed logs or feed purchase expenses to see cost trends.</p>
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No confirmed feeding records</p>
+          <p class="text-xs text-gray-400 max-w-[220px]">Confirm daily feed logs to see monthly feed cost per head.</p>
         </div>
       </ng-template>
     </div>
@@ -59,7 +59,7 @@ export class FeedCostTrendChartComponent implements OnChanges {
 
   public hasData = computed(() => {
     const list = this.rawData();
-    return !!list && list.length > 0 && list.some(g => g.dataPoints && g.dataPoints.length > 0);
+    return !!list && list.length > 0 && list.some(g => g.dataPoints?.some(p => p.costPerAnimal !== null));
   });
 
   public latestCost = computed(() => {
@@ -67,8 +67,9 @@ export class FeedCostTrendChartComponent implements OnChanges {
     if (!list || list.length === 0) return '0';
     const firstGroup = list[0];
     if (!firstGroup || firstGroup.dataPoints.length === 0) return '0';
-    const lastPoint = firstGroup.dataPoints[firstGroup.dataPoints.length - 1];
-    return lastPoint.costPerAnimal.toLocaleString();
+    // Latest month that actually has data.
+    const lastPoint = [...firstGroup.dataPoints].reverse().find(p => p.costPerAnimal !== null);
+    return lastPoint && lastPoint.costPerAnimal !== null ? lastPoint.costPerAnimal.toLocaleString() : '—';
   });
 
   public chartData: ChartData<'bar'> = {
@@ -102,8 +103,10 @@ export class FeedCostTrendChartComponent implements OnChanges {
         callbacks: {
           label: (context) => {
             const label = context.dataset.label || '';
-            const val = context.parsed.y !== null ? context.parsed.y.toLocaleString() : '0';
-            return ` ${label}: ৳ ${val} / head`;
+            if (context.parsed.y === null || context.parsed.y === undefined) {
+              return ` ${label}: no data`;
+            }
+            return ` ${label}: ৳ ${context.parsed.y.toLocaleString()} / head`;
           }
         }
       }
@@ -139,8 +142,8 @@ export class FeedCostTrendChartComponent implements OnChanges {
           datasets: this.data.map((group, index) => ({
             data: group.dataPoints.map(p => p.costPerAnimal),
             label: group.groupName,
-            backgroundColor: index === 0 ? 'rgba(99, 102, 241, 0.85)' : 'rgba(20, 184, 166, 0.55)',
-            hoverBackgroundColor: index === 0 ? '#6366f1' : 'rgba(20, 184, 166, 0.85)',
+            backgroundColor: 'rgba(99, 102, 241, 0.85)',
+            hoverBackgroundColor: '#6366f1',
             borderRadius: 6,
             borderSkipped: false,
             barPercentage: 0.65,

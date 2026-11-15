@@ -471,21 +471,23 @@ public class OverheadAllocationServiceTests
     }
 
     [Fact]
-    public async Task LinkingTheExpenseToOneAnimalAfterAllocation_RemovesTheSharedSplit()
+    public async Task LinkingTheExpenseToOneAnimalAfterAllocation_MovesTheWholeAmountToThatAnimal()
     {
-        // Once linked, the whole amount is that animal's direct cost; keeping the shared split
-        // as well would count the same money twice.
+        // Once linked, the whole amount is that animal's direct cost: the shared split goes (keeping
+        // it would count the same money twice) and a single 100 % row for the linked animal replaces
+        // it — before, the split was removed and the linked animal received nothing at all.
         var a = AnimalPresent("B-001", new DateOnly(2025, 1, 1));
         var b = AnimalPresent("B-002", new DateOnly(2025, 1, 1));
         var ledgerB = LedgerFor(b);
-        LedgerFor(a);
+        var ledgerA = LedgerFor(a);
         var expense = AllocatedLabour(12_000m, a, b);
         await _sut.AllocateAsync(FarmId, From, To);
 
         Edit(expense, animalId: a.Id);
         await _sut.ReallocateTransactionAsync(expense.Id);
 
-        _allocations.Rows.Should().BeEmpty();
+        _allocations.Rows.Should().ContainSingle(r => r.AnimalId == a.Id && r.AllocatedAmountBdt == 12_000m);
+        ledgerA.TotalLaborCostBdt.Should().Be(12_000m);
         ledgerB.TotalLaborCostBdt.Should().Be(0m);
     }
 

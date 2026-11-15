@@ -1,5 +1,6 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Livestock.DTOs;
+using Farm360.Domain.Livestock;
 using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 using MediatR;
@@ -40,6 +41,7 @@ public sealed class GetBatchesQueryHandler : IRequestHandler<GetBatchesQuery, Pa
             b.Name,
             b.Status,
             b.Notes,
+            b.Animals.Count(a => AnimalStatusGroups.IsOnFarm(a.Status)),
             b.Animals.Count,
             b.CreatedAtUtc)).ToList().AsReadOnly();
 

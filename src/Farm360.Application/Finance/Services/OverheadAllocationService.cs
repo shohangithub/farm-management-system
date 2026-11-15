@@ -1,3 +1,4 @@
+using Farm360.Application.Finance.EventHandlers.Internal;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -182,22 +183,40 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
             .GetBySourceTransactionAsync(transactionId, cancellationToken)
             .ConfigureAwait(false);
 
-        if (existing.Count == 0)
+        var transaction = await _transactions.GetByIdAsync(transactionId, cancellationToken).ConfigureAwait(false);
+
+        // A hand-entered expense tagged to one animal is carried as a single 100 % row (written by
+        // AnimalCostLedgerUpdater). An edit can change its amount, category or animal — or turn an
+        // untagged expense into a tagged one — so it must be rewritten even if no row exists yet.
+        var directRow = transaction is not null && AnimalCostLedgerUpdater.IsManualAnimalExpense(transaction)
+            ? AnimalCostLedgerUpdater.BuildDirectAllocation(transaction)
+            : null;
+
+        if (existing.Count == 0 && directRow is null)
         {
             // Never split yet: the next run will simply pick up the expense's current values.
             return false;
         }
 
         var touchedAnimals = existing.Select(r => r.AnimalId).ToHashSet();
-        var wasBackfill = existing[0].IsBackfilled;
+        var wasBackfill = existing.Count > 0 && existing[0].IsBackfilled;
 
-        _allocations.RemoveRange(existing);
-        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        if (existing.Count > 0)
+        {
+            _allocations.RemoveRange(existing);
+            await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
 
-        var transaction = await _transactions.GetByIdAsync(transactionId, cancellationToken).ConfigureAwait(false);
         var rewritten = 0;
 
-        if (transaction is not null && !transaction.IsDeleted && IsSharedCost(transaction))
+        if (directRow is not null)
+        {
+            _allocations.AddRange([directRow]);
+            touchedAnimals.Add(directRow.AnimalId);
+            rewritten = 1;
+            await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else if (transaction is not null && !transaction.IsDeleted && IsSharedCost(transaction))
         {
             var rules = _rules.Current;
             var (periodStart, periodEnd) = CostPeriodFor(transaction, rules.OverheadCostPeriod);

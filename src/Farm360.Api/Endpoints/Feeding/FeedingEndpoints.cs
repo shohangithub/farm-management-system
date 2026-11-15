@@ -415,6 +415,18 @@ public static class FeedingEndpoints
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Delete}")
           .WithSummary("Backfills per-animal feed allocations for a historical date range.");
 
+        // One-off repair: zero skipped entries' allocations and reset every animal ledger's feed
+        // bucket on the farm to its confirmed allocation total. Idempotent.
+        group.MapPost("/allocations/resync-costs/{farmId:guid}", async (
+            [FromRoute] Guid farmId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new Farm360.Application.Feeding.Jobs.ResyncAnimalFeedCostsCommand(farmId), ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Delete}")
+          .WithSummary("Recomputes every animal ledger's feed cost on a farm from confirmed feed allocations.");
+
         return app;
     }
 }

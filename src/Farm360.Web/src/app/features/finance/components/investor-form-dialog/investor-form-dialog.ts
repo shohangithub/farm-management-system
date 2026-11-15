@@ -8,6 +8,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { Investor, CreateInvestorRequest, UpdateInvestorRequest } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-investor-form-dialog',
   standalone: true,
@@ -173,7 +174,7 @@ export class InvestorFormDialogComponent implements OnInit {
   form!: FormGroup;
 
   ngOnInit(): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate();
 
     this.form = this.fb.group({
       name: [this.data?.name || '', [Validators.required, Validators.maxLength(200)]],

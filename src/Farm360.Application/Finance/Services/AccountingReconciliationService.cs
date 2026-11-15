@@ -29,6 +29,12 @@ public interface IAccountingReconciliationService
     Task<AccountingHealthDto> CheckAsync(Guid farmId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ReconciliationLineDto>> ReconcileAsync(Guid farmId, IReadOnlyCollection<FinancialTransaction> postings, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reconciles account balances already computed on the balance-sheet basis (opening entries
+    /// plus postings after the books start — <see cref="FarmLedger.BalancesAt"/>) against the registers.
+    /// </summary>
+    Task<IReadOnlyList<ReconciliationLineDto>> ReconcileBalancesAsync(Guid farmId, IReadOnlyDictionary<string, decimal> balances, CancellationToken cancellationToken = default);
 }
 
 public sealed class AccountingReconciliationService : IAccountingReconciliationService
@@ -81,7 +87,15 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(postings);
-        var balances = AccountChart.Balances(postings);
+        return await ReconcileBalancesAsync(farmId, AccountChart.Balances(postings), cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ReconciliationLineDto>> ReconcileBalancesAsync(
+        Guid farmId,
+        IReadOnlyDictionary<string, decimal> balances,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(balances);
         decimal Bal(string code) => balances.GetValueOrDefault(code);
 
         // Inventory: stock on hand at weighted average cost.

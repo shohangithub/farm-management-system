@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Finance.Queries;
 using Farm360.Application.Finance.Repositories;
+using Farm360.Application.Finance.Services;
 using Farm360.Contracts.Finance;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Finance.Enums;
@@ -40,7 +41,7 @@ public class IncomeExpenseReportQueryTests
             Tx(TransactionType.Expense, TransactionCategory.LaborCost, 700m, Day.AddHours(17)),
             Tx(TransactionType.Expense, TransactionCategory.Utilities, 999m, Day.AddDays(1)));
 
-        var handler = new GetIncomeExpenseReportQueryHandler(_txRepo.Object);
+        var handler = new GetIncomeExpenseReportQueryHandler(new FinancialStatementEngine(_txRepo.Object));
         var result = await handler.Handle(new GetIncomeExpenseReportQuery(FarmId, Day, Day), CancellationToken.None);
 
         result.IsSingleDay.Should().BeTrue();
@@ -63,7 +64,7 @@ public class IncomeExpenseReportQueryTests
             Tx(TransactionType.Expense, TransactionCategory.AnimalPurchase, 15_000m, Day),
             Tx(TransactionType.Expense, TransactionCategory.ProfitDistribution, 5_000m, Day));
 
-        var handler = new GetIncomeExpenseReportQueryHandler(_txRepo.Object);
+        var handler = new GetIncomeExpenseReportQueryHandler(new FinancialStatementEngine(_txRepo.Object));
         var result = await handler.Handle(new GetIncomeExpenseReportQuery(FarmId, Day, Day), CancellationToken.None);
 
         result.NetBalanceBdt.Should().Be(40_000m);
@@ -82,7 +83,7 @@ public class IncomeExpenseReportQueryTests
             Tx(TransactionType.Income, TransactionCategory.OtherIncome, 1_000m, Day),
             Tx(TransactionType.Expense, TransactionCategory.Transport, 300m, Day.AddDays(2)));
 
-        var handler = new GetIncomeExpenseReportQueryHandler(_txRepo.Object);
+        var handler = new GetIncomeExpenseReportQueryHandler(new FinancialStatementEngine(_txRepo.Object));
         var result = await handler.Handle(new GetIncomeExpenseReportQuery(FarmId, Day, Day.AddDays(2)), CancellationToken.None);
 
         result.IsSingleDay.Should().BeFalse();
@@ -113,7 +114,7 @@ public class IncomeExpenseReportQueryTests
         sender.Setup(s => s.Send(It.IsAny<GetInvestorPnLQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new InvestorPnLSummaryDto(FarmId, Day, Day, 40_000m, 10_000m, 30_000m, 5m, 1_500m, 28_500m, 0m, 0m, 0m, []));
 
-        var handler = new GetFullAccountsReportQueryHandler(_txRepo.Object, investorRepo.Object, shareRepo.Object, loanRepo.Object, sender.Object);
+        var handler = new GetFullAccountsReportQueryHandler(new FinancialStatementEngine(_txRepo.Object), investorRepo.Object, shareRepo.Object, loanRepo.Object, sender.Object);
         var result = await handler.Handle(new GetFullAccountsReportQuery(FarmId, Day, Day), CancellationToken.None);
 
         result.Cash.OpeningBalanceBdt.Should().Be(100_000m);

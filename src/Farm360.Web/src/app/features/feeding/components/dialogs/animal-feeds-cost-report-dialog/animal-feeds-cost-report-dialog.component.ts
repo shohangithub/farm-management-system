@@ -235,8 +235,9 @@ export interface FeedsCostReportDialogData {
                     <td class="px-3 py-2 text-right text-gray-600 dark:text-gray-300">
                       ৳ {{ (plan.estimatedCostPerKgBdt || 0) | number:'1.2-2' }}
                     </td>
-                    <td class="px-4 py-2 text-right font-bold text-gray-900 dark:text-white">
+                    <td class="px-4 py-2 text-right font-bold text-gray-900 dark:text-white" [attr.title]="plan.costBasis || 'Concentrate ration only'">
                       ৳ {{ (plan.estimatedDailyCostBdt || 0) | number:'1.2-2' }}
+                      <span class="block text-[10px] font-normal text-gray-400">{{ plan.costBasis || 'Concentrate ration only' }}</span>
                     </td>
                     <td class="px-4 py-2 text-right font-bold text-rose-600 dark:text-rose-400">
                       ৳ {{ ((plan.estimatedDailyCostBdt || 0) * 30) | number:'1.0-0' }}

@@ -36,11 +36,11 @@ public static class ApplicationServiceExtensions
         // ── FluentValidation (auto-discover all validators in assembly) ───────
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
 
-        services.AddScoped<Farm360.Application.Intelligence.Interfaces.ICostAndProfitEngine, Farm360.Application.Intelligence.Services.CostAndProfitEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.IGrowthPredictionEngine, Farm360.Application.Intelligence.Services.GrowthPredictionEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.IRuleEngine, Farm360.Application.Intelligence.Services.RuleEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.ISimulationEngine, Farm360.Application.Intelligence.Services.SimulationEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Services.IProjectionDefaultsResolver, Farm360.Application.Intelligence.Services.ProjectionDefaultsResolver>();
+        services.AddScoped<Farm360.Application.Intelligence.Services.IAnimalValuationService, Farm360.Application.Intelligence.Services.AnimalValuationService>();
 
         // ── Finance: labour and overhead allocation (docs/32 GAP-2) ──────────
         services.AddScoped<Farm360.Application.Finance.Services.IOverheadAllocationService, Farm360.Application.Finance.Services.OverheadAllocationService>();

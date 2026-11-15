@@ -9,6 +9,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinancialTransaction, PAYMENT_METHODS, TradeBill, categoryLabel } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 export type TradeBillDialogMode = 'payment' | 'write-off' | 'terms' | 'open';
 
 export interface TradeBillDialogData {
@@ -194,7 +195,7 @@ export class TradeBillDialogComponent implements OnInit {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly methods = PAYMENT_METHODS;
-  readonly today = new Date().toISOString().split('T')[0];
+  readonly today = toLocalIsoDate();
   readonly input = 'block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white';
   readonly label = categoryLabel;
 

@@ -767,6 +767,20 @@ public static class FinanceEndpoints
         // file names itself. Covered by EndpointRoutingTests.EndpointNamesAreGloballyUnique.
         .WithSummary("Allocates farm labour and overhead onto animals for a period.")
         .Produces<OverheadAllocationResult>();
+
+        // One-off repair: hand-entered expenses tagged to an animal recorded before they reached the
+        // animal's cost ledger. Idempotent — each expense records what it has posted.
+        group.MapPost("ledger/backfill-manual-animal-expenses", async (
+            Guid farmId,
+            IMediator mediator,
+            CancellationToken ct) =>
+        {
+            var result = await mediator.Send(
+                new Farm360.Application.Finance.Commands.BackfillManualAnimalExpensesCommand(farmId), ct);
+            return Results.Ok(result);
+        })
+        .WithSummary("Posts manually-entered animal-tagged expenses onto animal cost ledgers (one-off, re-runnable).")
+        .Produces<Farm360.Application.Finance.Commands.ManualAnimalExpenseBackfillResult>();
     }
 }
 

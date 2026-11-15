@@ -8,6 +8,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { Investor, RecordInvestorTransactionRequest } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 export interface InvestorTransactionDialogData {
   investor: Investor;
   defaultType?: 'CapitalContribution' | 'CapitalWithdrawal' | 'ProfitDistribution';
@@ -195,7 +196,7 @@ export class InvestorTransactionDialogComponent implements OnInit {
   form!: FormGroup;
 
   ngOnInit(): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate();
     const initialType = this.data.defaultType || 'CapitalContribution';
     this.selectedType.set(initialType);
 

@@ -42,6 +42,17 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
     /// </summary>
     public Guid? SourceDocumentId { get; private set; }
 
+    /// <summary>
+    /// For a hand-entered vet/medicine expense tagged to an animal: the animal and amount this
+    /// posting has actually added to that animal's cost-ledger vet bucket. Null = nothing posted.
+    /// Recording what was posted (rather than inferring it) is what lets edits, deletes and the
+    /// backfill move exactly that amount, and makes re-running the backfill a no-op.
+    /// </summary>
+    public Guid? LedgerVetPostedAnimalId { get; private set; }
+
+    /// <inheritdoc cref="LedgerVetPostedAnimalId"/>
+    public decimal? LedgerVetPostedBdt { get; private set; }
+
     /// <summary>True when the posting moves money in or out of the cash book.</summary>
     public bool AffectsCash => Settlement == SettlementAccount.Cash;
 
@@ -155,5 +166,12 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
         SourceDocumentId = sourceDocumentId;
         if (!string.IsNullOrWhiteSpace(sourceModule))
             SourceModule = sourceModule;
+    }
+
+    /// <summary>Records what this expense has put into an animal's vet bucket (null clears it).</summary>
+    public void MarkLedgerVetPosting(Guid? animalId, decimal? amountBdt)
+    {
+        LedgerVetPostedAnimalId = animalId;
+        LedgerVetPostedBdt = animalId.HasValue ? amountBdt : null;
     }
 }

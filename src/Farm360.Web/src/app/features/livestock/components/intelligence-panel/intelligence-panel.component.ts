@@ -7,8 +7,8 @@ import { IntelligenceSignalRService } from '../../../../core/services/intelligen
 export interface AnimalFinancialSnapshot {
   animalId: string;
   totalInvestmentBdt: number;
-  projected30DayFeedCostBdt: number;
-  projected60DayFeedCostBdt: number;
+  projected30DayCostBdt: number;
+  projected60DayCostBdt: number;
   estimatedMarketValueBdt: number;
   currentProfitMarginBdt: number;
 }

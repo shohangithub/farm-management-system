@@ -28,6 +28,7 @@ import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
+import { formatAnimalAge } from '../../utils/animal-age';
 
 @Component({
   selector: 'app-animal-list',
@@ -223,12 +224,7 @@ export class AnimalListComponent {
   }
 
   ageLabel(dob: string): string {
-    const days = Math.floor((Date.now() - new Date(dob).getTime()) / 86_400_000);
-    if (days < 30) return `${days}d`;
-    if (days < 365) return `${Math.floor(days / 30)}mo`;
-    const y = Math.floor(days / 365);
-    const m = Math.floor((days % 365) / 30);
-    return m > 0 ? `${y}y ${m}m` : `${y}y`;
+    return formatAnimalAge(dob);
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────

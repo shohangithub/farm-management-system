@@ -1,5 +1,6 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Feeding.Services;
+using Farm360.Domain.BusinessRules;
 using Farm360.Domain.Common;
 using Farm360.Domain.Feeding;
 using Farm360.Domain.Feeding.Events;
@@ -25,6 +26,7 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
     private readonly ILogger<DailyEntryConfirmedEventHandler> _logger;
     private readonly IFarmBusinessRulesProvider? _rules;
     private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
+    private readonly Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository? _ledgerRepository;
 
     public DailyEntryConfirmedEventHandler(
         IFeedFormulaRepository formulaRepository,
@@ -39,8 +41,10 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
         IPublisher publisher,
         ILogger<DailyEntryConfirmedEventHandler> logger,
         IFarmBusinessRulesProvider? rules = null,
-        Farm360.Application.Inventory.Units.IUnitService? units = null)
+        Farm360.Application.Inventory.Units.IUnitService? units = null,
+        Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository? ledgerRepository = null)
     {
+        _ledgerRepository = ledgerRepository;
         _rules = rules;
         _units = units;
         _formulaRepository = formulaRepository;
@@ -76,119 +80,84 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                 return;
             }
 
-            // A group plan (shed / pen / batch) gives its quantity to every head: stock, cost and the
-            // ledger posting must cover all of them, not one animal's share.
+            // A group plan (shed / pen / batch) gives its quantity to every head (or, under the
+            // WholeGroup basis, its quantity already is the group's total): stock, cost and the
+            // per-animal rows must all read it the same way.
             var plan = await _planRepository.GetByIdAsync(entry.FeedingPlanId, cancellationToken);
-            var existingAllocations = await _allocationRepository.GetByEntryIdAcrossTenantsAsync(entry.Id, cancellationToken);
-            var heads = HeadsFed(plan, existingAllocations);
+            var allocations = (await _allocationRepository.GetByEntryIdAcrossTenantsAsync(entry.Id, cancellationToken)).ToList();
+            var isNewAllocation = false;
+            if (allocations.Count == 0 && plan != null)
+            {
+                // Rows normally exist from the moment the entry was generated; build them now if not,
+                // so the head count is known before stock is deducted.
+                allocations = (await _allocationService.BuildAllocationsAsync(entry, plan, isBackfill: false, cancellationToken)).ToList();
+                isNewAllocation = allocations.Count > 0;
+            }
+
+            var basis = _rules?.Current.GroupPlanQuantityBasis ?? GroupPlanQuantityBasis.PerHead;
+            var heads = FeedEntryHeads.Multiplier(plan, allocations, basis);
             var totalActualKg = notification.ActualKg * heads;
 
             var transactionId = Guid.NewGuid();
             bool anyDeducted = false;
             decimal totalDeductedCost = 0m;
-            decimal totalDeductedQty = 0m;
             decimal stockDeductedCost = 0m;
 
-            foreach (var formulaIngredient in formula.Ingredients)
+            // Same calculator the confirm/adjust pre-check uses: % normalised by the recipe's total,
+            // kg converted to each item's base unit, priced per kg of feed.
+            var calculator = new FeedCostCalculator(_feedIngredientRepository, _inventoryRepository, _units);
+            var requirement = await calculator.RequirementAsync(formula, totalActualKg, cancellationToken);
+
+            foreach (var line in requirement.Ingredients)
             {
-                var feedIngredient = await _feedIngredientRepository.GetByIdAsync(formulaIngredient.IngredientId, cancellationToken);
-                decimal cost = formulaIngredient.IngredientCostPerKg;
-                var deductionQty = totalActualKg * (formulaIngredient.Percentage / 100m);
+                if (line.Kg <= 0)
+                    continue;
 
-                // Tracks whether THIS ingredient's cost should actually be counted below. An
-                // ingredient with no linked inventory item has no stock to deduct, so its
-                // formula-defined cost is counted as-is. One WITH a linked item must only be
-                // counted if stock was actually deducted -- previously the cost was added
-                // unconditionally even when deduction was skipped for insufficient stock, so feed
-                // cost reports and animal cost ledgers showed expense for feed that was never
-                // actually taken out of inventory.
-                bool countCost = feedIngredient?.InventoryItemId is null;
-
-                if (feedIngredient?.InventoryItemId != null)
+                // An ingredient not tracked in stock (or whose item is gone) is counted at its recipe cost.
+                // A stock-tracked one is only counted when it was actually taken out of stock.
+                if (line.Item is not { } inventoryItem)
                 {
-                    var inventoryItem = await _inventoryRepository.GetByIdAsync(feedIngredient.InventoryItemId.Value, cancellationToken);
-
-                    if (inventoryItem != null)
-                    {
-                        // Feed is measured in kg; the stock item may be counted in another base unit
-                        // (a premix kept in grams takes kg × 1000).
-                        var stockQty = _units is null || deductionQty <= 0
-                            ? deductionQty
-                            : await _units.KgToItemBaseAsync(inventoryItem, deductionQty, cancellationToken);
-
-                        if (inventoryItem.WeightedAverageCostBdt > 0)
-                        {
-                            // Cost per kg of feed = cost per stock unit × stock units in a kg.
-                            cost = deductionQty > 0
-                                ? inventoryItem.WeightedAverageCostBdt * stockQty / deductionQty
-                                : inventoryItem.WeightedAverageCostBdt;
-                        }
-
-                        if (deductionQty > 0)
-                        {
-                            if (inventoryItem.IsActive && inventoryItem.CurrentStock >= stockQty)
-                            {
-                                inventoryItem.DeductStock(stockQty, transactionId);
-                                _inventoryRepository.Update(inventoryItem);
-
-                                var transaction = new Farm360.Domain.Inventory.StockTransaction(
-                                    id: Guid.NewGuid(),
-                                    tenantId: notification.TenantId,
-                                    farmId: notification.FarmId,
-                                    inventoryItemId: inventoryItem.Id,
-                                    transactionType: Farm360.Domain.Inventory.Enums.StockTransactionType.PlannedFeedConsumption,
-                                    quantity: stockQty,
-                                    unitCostBdt: inventoryItem.WeightedAverageCostBdt,
-                                    balanceAfter: inventoryItem.CurrentStock,
-                                    transactionDate: entry.EntryDate,
-                                    reason: $"Auto deduction for daily feeding plan entry {entry.Id}",
-                                    referenceId: Guid.TryParse(entry.Id.ToString(), out var refId) ? refId : null
-                                );
-
-                                await _transactionRepository.AddAsync(transaction, cancellationToken);
-                                anyDeducted = true;
-                                countCost = true;
-                                stockDeductedCost += deductionQty * cost;
-                            }
-                            else
-                            {
-                                if (_logger.IsEnabled(LogLevel.Warning))
-                                {
-                                    _logger.LogWarning(
-                                        "Skipped auto-deduction for ingredient '{ItemName}' on feeding entry {EntryId}: Insufficient stock (Requested: {Requested} kg, Available: {Available} kg) or inactive. Its cost is excluded from this entry's total since nothing was actually consumed from inventory.",
-                                        inventoryItem.Name, entry.Id, stockQty, inventoryItem.CurrentStock);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Nothing to deduct (zero quantity), so there's nothing to exclude either.
-                            countCost = true;
-                        }
-                    }
-                    else
-                    {
-                        // Linked inventory item no longer exists; fall back to the formula's cost
-                        // rather than silently dropping the ingredient from the total.
-                        countCost = true;
-                    }
+                    totalDeductedCost += line.CostBdt;
+                    continue;
                 }
 
-                if (deductionQty > 0 && countCost)
+                if (!line.IsShort)
                 {
-                    totalDeductedCost += deductionQty * cost;
-                    totalDeductedQty += deductionQty;
+                    inventoryItem.DeductStock(line.StockQuantity, transactionId);
+                    _inventoryRepository.Update(inventoryItem);
+
+                    var transaction = new Farm360.Domain.Inventory.StockTransaction(
+                        id: Guid.NewGuid(),
+                        tenantId: notification.TenantId,
+                        farmId: notification.FarmId,
+                        inventoryItemId: inventoryItem.Id,
+                        transactionType: Farm360.Domain.Inventory.Enums.StockTransactionType.PlannedFeedConsumption,
+                        quantity: line.StockQuantity,
+                        unitCostBdt: inventoryItem.WeightedAverageCostBdt,
+                        balanceAfter: inventoryItem.CurrentStock,
+                        transactionDate: entry.EntryDate,
+                        reason: $"Auto deduction for daily feeding plan entry {entry.Id}",
+                        referenceId: entry.Id
+                    );
+
+                    await _transactionRepository.AddAsync(transaction, cancellationToken);
+                    anyDeducted = true;
+                    totalDeductedCost += line.CostBdt;
+                    stockDeductedCost += line.CostBdt;
+                }
+                else if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning(
+                        "Skipped auto-deduction for ingredient '{ItemName}' on feeding entry {EntryId}: Insufficient stock (Requested: {Requested}, Available: {Available}) or inactive. Its cost is excluded from this entry's total since nothing was actually consumed from inventory.",
+                        inventoryItem.Name, entry.Id, line.StockQuantity, inventoryItem.CurrentStock);
                 }
             }
 
-            // SetConsumptionCost derives TotalCostBdt as unitCost * ActualKg (the FULL quantity
-            // given, not just the portion whose ingredients were actually counted above). Dividing
-            // by ActualKg here, rather than totalDeductedQty, keeps that multiplication exact: a
-            // shortfall ingredient excluded above correctly lowers the resulting total cost instead
-            // of having the deducted ingredients' rate silently re-applied to the missing portion.
+            // Unit cost per kg of everything given; SetConsumptionCost multiplies it back by the
+            // quantity x heads, so a shortfall ingredient excluded above lowers the total.
             decimal blendedUnitCost = totalActualKg > 0
-                ? Math.Round(totalDeductedCost / totalActualKg, 2)
-                : formula.TotalCostPerKgBdt;
+                ? Math.Round(totalDeductedCost / totalActualKg, 4)
+                : await calculator.FormulaCostPerKgAsync(formula, cancellationToken);
 
             entry.SetConsumptionCost(blendedUnitCost, heads);
 
@@ -199,59 +168,50 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
 
             _entryRepository.Update(entry);
 
-            // Synchronize or create per-animal feed allocations
-            if (existingAllocations.Count > 0)
+            // Per-animal rows carry exactly what was given and what it cost.
+            if (allocations.Count > 0)
             {
-                var perHeadKg = notification.ActualKg;
-                var unitCost = blendedUnitCost;
+                var entryCost = entry.TotalCostBdt ?? Math.Round(totalActualKg * blendedUnitCost, 2);
 
-                foreach (var alloc in existingAllocations)
+                foreach (var alloc in allocations.Where(a => a.Origin == FeedAllocationOrigin.IndividualPlan))
                 {
-                    if (alloc.Origin == FeedAllocationOrigin.IndividualPlan)
-                    {
-                        var allocCost = entry.TotalCostBdt ?? Math.Round(perHeadKg * unitCost, 2);
-                        alloc.UpdateConsumption(perHeadKg, allocCost, unitCost);
-                    }
+                    alloc.UpdateConsumption(notification.ActualKg, entryCost, blendedUnitCost);
                 }
 
-                // Group-origin allocations share the entry's one totalKg/totalCost across several
-                // animals via ShareFactor. Rounding each row's share independently (the previous
-                // approach) does not guarantee the rows sum back to the entry's actual total --
-                // exactly the paisa-drift ProportionalSplit exists to prevent on first allocation
-                // (see FeedAllocationCalculator). Re-running it here on re-confirmation keeps that
-                // same "sums to the penny" guarantee instead of quietly losing it on this update path.
-                var groupAllocations = existingAllocations
+                // Group shares split the entry's one total via ProportionalSplit so the rows sum to
+                // the penny (see FeedAllocationCalculator).
+                var groupAllocations = allocations
                     .Where(a => a.Origin != FeedAllocationOrigin.IndividualPlan)
                     .ToList();
 
                 if (groupAllocations.Count > 0)
                 {
-                    var headCount = groupAllocations[0].HeadCountAtAllocation;
-                    var totalKg = perHeadKg * headCount;
-                    var totalCost = entry.TotalCostBdt ?? Math.Round(totalKg * unitCost, 2);
                     var shareFactors = groupAllocations.Select(a => a.ShareFactor).ToArray();
-
-                    var kgShares = ProportionalSplit.Distribute(totalKg, shareFactors, decimals: 4);
-                    var costShares = ProportionalSplit.Distribute(totalCost, shareFactors, decimals: 2);
+                    var kgShares = ProportionalSplit.Distribute(totalActualKg, shareFactors, decimals: 4);
+                    var costShares = ProportionalSplit.Distribute(entryCost, shareFactors, decimals: 2);
 
                     for (var i = 0; i < groupAllocations.Count; i++)
                     {
-                        groupAllocations[i].UpdateConsumption(kgShares[i], costShares[i], unitCost);
+                        groupAllocations[i].UpdateConsumption(kgShares[i], costShares[i], blendedUnitCost);
                     }
                 }
 
-                _allocationRepository.UpdateRange(existingAllocations);
-            }
-            else if (plan != null)
-            {
-                var newAllocations = await _allocationService.BuildAllocationsAsync(entry, plan, isBackfill: false, cancellationToken);
-                if (newAllocations.Count > 0)
-                {
-                    _allocationRepository.AddRange(newAllocations);
-                }
+                if (isNewAllocation)
+                    _allocationRepository.AddRange(allocations);
+                else
+                    _allocationRepository.UpdateRange(allocations);
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Every animal this entry touched gets its ledger feed bucket set (not added to) from
+            // its confirmed allocation total, so an adjustment or a repeat can never double count.
+            if (_ledgerRepository is not null && allocations.Count > 0)
+            {
+                await AnimalFeedCostSync.SyncAsync(_allocationRepository, _ledgerRepository, notification.TenantId, notification.FarmId,
+                    allocations.Select(a => a.AnimalId), cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
@@ -284,17 +244,5 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
             _logger.LogError(ex, "Failed to process stock deduction or cost snapshot for feeding entry {EntryId}", notification.EntryId);
         }
 #pragma warning restore CA1031
-    }
-
-    /// <summary>Heads a confirmed entry fed: 1 for an animal's own plan, the group's head count for a group plan given per head.</summary>
-    private decimal HeadsFed(Farm360.Domain.Feeding.AnimalFeedingPlan? plan, IReadOnlyList<AnimalFeedAllocation> allocations)
-    {
-        if (plan is null || plan.AnimalId.HasValue)
-            return 1m;
-        var basis = _rules?.Current.GroupPlanQuantityBasis ?? Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead;
-        if (basis != Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead)
-            return 1m;
-        var group = allocations.Where(a => a.Origin != FeedAllocationOrigin.IndividualPlan).ToList();
-        return group.Count > 0 ? Math.Max(1, group[0].HeadCountAtAllocation) : 1m;
     }
 }

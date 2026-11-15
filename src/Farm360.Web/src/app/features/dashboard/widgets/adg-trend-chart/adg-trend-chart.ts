@@ -16,7 +16,7 @@ import { AdgTrend } from '../../models/dashboard.model';
       <div class="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 dark:border-gray-800/60">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Metric:</span>
-          <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Average Daily Gain (kg/day)</span>
+          <span class="text-xs font-medium text-gray-600 dark:text-gray-300">Average Daily Gain (kg/day) &middot; gaps = no weigh-ins</span>
         </div>
 
         <div *ngIf="hasData()" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/50">
@@ -43,7 +43,7 @@ import { AdgTrend } from '../../models/dashboard.model';
             <mat-icon class="text-2xl text-gray-400">show_chart</mat-icon>
           </div>
           <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No ADG trends available</p>
-          <p class="text-xs text-gray-400 max-w-[220px]">Log consecutive weight records to calculate growth velocity.</p>
+          <p class="text-xs text-gray-400 max-w-[220px]">Record at least two weigh-ins per animal within a month to calculate its daily gain.</p>
         </div>
       </ng-template>
     </div>
@@ -66,9 +66,10 @@ export class AdgTrendChartComponent implements OnChanges {
 
   public hasData = computed(() => {
     const list = this.rawData();
-    return !!list && list.length > 0 && list.some(b => b.dataPoints && b.dataPoints.length > 0);
+    return !!list && list.length > 0 && list.some(b => b.dataPoints?.some(p => p.adgValue !== null));
   });
 
+  /** Mean of the measured months only; months without data are gaps, not zeros. */
   public overallAvgAdg = computed(() => {
     const list = this.rawData();
     if (!list || list.length === 0) return '0.00';
@@ -76,6 +77,7 @@ export class AdgTrendChartComponent implements OnChanges {
     let count = 0;
     for (const b of list) {
       for (const p of b.dataPoints) {
+        if (p.adgValue === null) continue;
         total += p.adgValue;
         count++;
       }
@@ -114,8 +116,10 @@ export class AdgTrendChartComponent implements OnChanges {
         callbacks: {
           label: (context) => {
             const label = context.dataset.label || '';
-            const val = context.parsed.y !== null ? context.parsed.y.toFixed(2) : '0.00';
-            return ` ${label}: ${val} kg/day`;
+            if (context.parsed.y === null || context.parsed.y === undefined) {
+              return ` ${label}: no data`;
+            }
+            return ` ${label}: ${context.parsed.y.toFixed(2)} kg/day`;
           }
         }
       }
@@ -151,7 +155,9 @@ export class AdgTrendChartComponent implements OnChanges {
           datasets: this.data.map((batch, index) => {
             const color = this.palette[index % this.palette.length];
             return {
+              // null = no weigh-ins that month: drawn as a gap, never as an estimate.
               data: batch.dataPoints.map(p => p.adgValue),
+              spanGaps: false,
               label: batch.batchName,
               borderColor: color.border,
               backgroundColor: color.bg,

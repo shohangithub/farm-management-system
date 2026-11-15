@@ -30,10 +30,12 @@ public record HerdCompositionDto(
     Dictionary<string, int> ByStatus
 );
 
-public record AdgTrendPointDto(string Label, double AdgValue);
+/// <summary>AdgValue is null for a month with no measurable per-animal gain (no fabricated value).</summary>
+public record AdgTrendPointDto(string Label, double? AdgValue);
 public record AdgTrendDto(string BatchId, string BatchName, IReadOnlyList<AdgTrendPointDto> DataPoints);
 
-public record FeedCostTrendPointDto(string Label, decimal CostPerAnimal);
+/// <summary>CostPerAnimal is null for a month with no confirmed feed allocations or no animals on farm.</summary>
+public record FeedCostTrendPointDto(string Label, decimal? CostPerAnimal);
 public record FeedCostTrendDto(string GroupName, IReadOnlyList<FeedCostTrendPointDto> DataPoints);
 
 public record VaccinationComplianceDto(int Completed, int Due, int Overdue);

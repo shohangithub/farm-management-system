@@ -185,11 +185,20 @@
           <td class="v num" [class.inc]="d.netBalanceBdt >= 0" [class.exp]="d.netBalanceBdt < 0">
             ৳ {{ (d.netBalanceBdt < 0 ? -d.netBalanceBdt : d.netBalanceBdt) | number: '1.2-2' }}
           </td>
-          <td class="k">পরিচালন ফলাফল / Operating {{ d.netOperatingProfitBdt >= 0 ? 'Profit' : 'Loss' }}</td>
+          <td class="k">পরিচালন নগদ ফলাফল / Operating Cash {{ d.netOperatingProfitBdt >= 0 ? 'Surplus' : 'Deficit' }}</td>
           <td class="v num" [class.inc]="d.netOperatingProfitBdt >= 0" [class.exp]="d.netOperatingProfitBdt < 0">
             ৳ {{ d.netOperatingProfitBdt | number: '1.2-2' }}
           </td>
         </tr>
+        @if (d.netProfitBdt !== undefined && d.netProfitBdt !== null) {
+          <tr>
+            <td class="k" colspan="3">নিট মুনাফা (আয় বিবরণী) / Net {{ d.netProfitBdt >= 0 ? 'Profit' : 'Loss' }} per income statement
+              <span class="muted">(stock used, animals sold at cost, depreciation &amp; credit included)</span></td>
+            <td class="v num" [class.inc]="d.netProfitBdt >= 0" [class.exp]="d.netProfitBdt < 0">
+              ৳ {{ d.netProfitBdt | number: '1.2-2' }}
+            </td>
+          </tr>
+        }
       </table>
 
       <!-- ── Head-wise summary (two-sided cash book) ── -->
@@ -251,7 +260,7 @@
       @if (hasCapitalMoney()) {
         <div class="callout">
           Heads marked <b>Asset</b> (stock and animals bought), <b>Capital</b> or <b>Financing</b> (investor and owner money, loans) or <b>Trade</b> (paying supplier bills, collecting customer dues) move cash
-          but are not income or expense — they are excluded from the operating result
+          but are not income or expense — they are excluded from the operating cash result
           (Operating cash received ৳ {{ d.operatingIncomeBdt | number: '1.2-2' }} − operating cash paid ৳ {{ d.operatingExpenseBdt | number: '1.2-2' }}).
           Stock bought becomes a cost when it is used; see the Full Accounts statement for profit &amp; loss.
         </div>

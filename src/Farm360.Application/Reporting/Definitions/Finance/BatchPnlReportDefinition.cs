@@ -73,11 +73,14 @@ public sealed class BatchPnlReportDefinition : ReportDefinition<BatchPnlReportRo
 
         return
         [
-            new BatchPnlReportRow("Total Cattle Enrolled", "Operational", data.TotalAnimals, $"{data.TotalAnimals} head of cattle in batch"),
-            new BatchPnlReportRow("Batch Realized Revenue", "Revenue", data.TotalIncomeBdt, "Total income recognized from animal & milk sales"),
-            new BatchPnlReportRow("Total Accumulated Cost", "Expenditure", data.TotalCostBdt, "Direct feed, healthcare, overhead, and acquisition cost"),
-            new BatchPnlReportRow("Net Operating Profit / Loss", "Margin", data.GrossProfitBdt, "Gross margin = Realized Revenue - Total Cost"),
-            new BatchPnlReportRow("Return on Investment (ROI %)", "Profitability", data.ReturnOnInvestmentPercent, "ROI % = (Net Profit / Total Cost) * 100"),
+            new BatchPnlReportRow("Total Cattle Enrolled", "Operational", data.TotalAnimals, $"{data.TotalAnimals} head in batch, {data.OnHandAnimals} still on the farm"),
+            new BatchPnlReportRow("Batch Realized Revenue", "Revenue", data.TotalIncomeBdt, "Income recognised from animal sales and other batch revenue"),
+            new BatchPnlReportRow("Total Accumulated Cost", "Expenditure", data.TotalCostBdt, "Acquisition, feed, healthcare, labour and overhead of every animal in the batch"),
+            new BatchPnlReportRow("Realised Profit / Loss", "Margin", data.GrossProfitBdt, "Realised revenue − total cost (ignores animals still on hand)"),
+            new BatchPnlReportRow("Realised ROI (%)", "Profitability", decimal.Round(data.ReturnOnInvestmentPercent * 100m, 2), "Realised profit ÷ total cost × 100"),
+            new BatchPnlReportRow("Unrealised Value of On-hand Animals", "Valuation", data.UnrealisedValueBdt, "Active and quarantined animals at the farm's valuation rate"),
+            new BatchPnlReportRow("Estimated Total Profit / Loss", "Margin", data.EstimatedTotalProfitBdt, "Realised revenue + unrealised value − total cost"),
+            new BatchPnlReportRow("Estimated ROI (%)", "Profitability", decimal.Round(data.EstimatedRoiPercent * 100m, 2), "Estimated profit ÷ total cost × 100"),
         ];
     }
 

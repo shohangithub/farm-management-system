@@ -125,6 +125,8 @@ public sealed class GetFeedRequirementQueryHandler(
         var ingredientById = (await ingredients.GetAllAsync(tenantId, includePreloaded: true, cancellationToken)).ToDictionary(i => i.Id);
         var items = (await inventory.GetByFarmIdAsync(request.FarmId, null, cancellationToken)).ToDictionary(i => i.Id);
         var allUnits = await units.GetUnitsAsync(cancellationToken);
+        // Live cost per kg of each recipe: stock items priced per kg of feed, % normalised.
+        var costs = new FeedCostCalculator(ingredients, inventory, units, ingredientById.Values, items.Values);
 
         // Accumulators: stock item (or unlinked ingredient) → kg of feed; recipe → kg; animal → kg & cost.
         var itemKg = new Dictionary<Guid, decimal>();
@@ -179,7 +181,7 @@ public sealed class GetFeedRequirementQueryHandler(
                             continue;
                         }
 
-                        animalCost += kg * formula.TotalCostPerKgBdt;
+                        animalCost += kg * await costs.FormulaCostPerKgAsync(formula, cancellationToken);
                         recipeKg[formula.Id] = recipeKg.GetValueOrDefault(formula.Id) + kg;
                         recipeUnit[formula.Id] = unit;
                         Explode(formula, kg, ingredientById, items, itemKg, itemUsedIn, unlinkedKg);
@@ -250,9 +252,13 @@ public sealed class GetFeedRequirementQueryHandler(
         if (request.ProjectGrowth)
             notes.Add("Weights are grown by each animal's average daily gain, so weight-based charts step up during the period.");
 
+        var recipeCost = new Dictionary<Guid, decimal>();
+        foreach (var formulaId in recipeKg.Keys)
+            recipeCost[formulaId] = await costs.FormulaCostPerKgAsync(formulaById[formulaId], cancellationToken);
+
         var recipeNeeds = recipeKg
             .Select(r => new RecipeNeedDto(r.Key, formulaById[r.Key].Title, Math.Round(r.Value / request.Days, 3), Math.Round(r.Value, 3),
-                Math.Round(r.Value * formulaById[r.Key].TotalCostPerKgBdt, 2), recipeUnit.GetValueOrDefault(r.Key, "kg")))
+                Math.Round(r.Value * recipeCost[r.Key], 2), recipeUnit.GetValueOrDefault(r.Key, "kg")))
             .OrderByDescending(r => r.TotalKg)
             .ToList();
 
@@ -312,12 +318,9 @@ public sealed class GetFeedRequirementQueryHandler(
         Dictionary<Guid, HashSet<string>> itemUsedIn,
         Dictionary<Guid, (string Name, decimal Kg, decimal CostPerKg, HashSet<string> UsedIn)> unlinked)
     {
-        var totalPct = formula.Ingredients.Sum(i => i.Percentage);
-        if (totalPct <= 0) totalPct = 100m;
-
         foreach (var fi in formula.Ingredients)
         {
-            var share = kg * fi.Percentage / totalPct;
+            var share = kg * formula.ShareOf(fi);
             if (share <= 0) continue;
 
             ingredientById.TryGetValue(fi.IngredientId, out var ingredient);

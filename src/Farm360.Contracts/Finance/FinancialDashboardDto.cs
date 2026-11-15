@@ -21,4 +21,10 @@ public record FinancialDashboardDto(
     IReadOnlyList<MonthlyCashFlowPointDto>? CashFlowTrend = null,
     IReadOnlyList<CategoryExpenseBreakdownDto>? ExpenseBreakdown = null,
     IReadOnlyList<FinancialTransactionDto>? RecentTransactions = null
-);
+)
+{
+    /// <summary>First day of the fiscal-year-to-date window the YTD figures cover.</summary>
+    public DateTime? FiscalYearStart { get; init; }
+
+    public int FiscalYearStartMonth { get; init; }
+}

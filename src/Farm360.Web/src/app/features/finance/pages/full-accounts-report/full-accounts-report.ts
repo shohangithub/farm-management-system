@@ -96,8 +96,8 @@ export class FullAccountsReportComponent {
     return d ? Math.max(0, d.loans.disbursedInPeriodBdt - d.capital.loanReceivedBdt) : 0;
   });
 
-  readonly principalDue = computed(() =>
-    (this.data()?.loans.loans ?? []).reduce((sum, l) => sum + l.outstandingPrincipalBdt, 0));
+  /** Principal owed at the period end, as computed by the server (not re-summed here). */
+  readonly principalDue = computed(() => this.data()?.loans.totalOutstandingPrincipalBdt ?? 0);
 
   readonly maxCostGroup = computed(() => {
     const d = this.data();

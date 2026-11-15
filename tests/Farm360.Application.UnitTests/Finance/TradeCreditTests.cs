@@ -183,7 +183,7 @@ public class TradeCreditTests
         await Manual(TransactionCategory.OwnerCapital, 10_000m);
 
         var reconciliation = Substitute.For<IAccountingReconciliationService>();
-        reconciliation.ReconcileAsync(FarmId, Arg.Any<IReadOnlyCollection<FinancialTransaction>>(), Arg.Any<CancellationToken>())
+        reconciliation.ReconcileBalancesAsync(FarmId, Arg.Any<IReadOnlyDictionary<string, decimal>>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ReconciliationLineDto>());
         var sheet = await new GetBalanceSheetQueryHandler(new FinancialStatementEngine(_ledger), reconciliation)
             .Handle(new GetBalanceSheetQuery(FarmId, Day), CancellationToken.None);

@@ -52,12 +52,14 @@ import { NgxEchartsModule } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
 import { CattleProfitProjectionComponent } from '../../../intelligence/components/projections/cattle-profit-projection.component';
+import { IntelligenceService } from '../../../intelligence/services/intelligence.service';
 import { FeedingService } from '../../../feeding/services/feeding.service';
 import { AssignFeedingPlanDialogComponent, SetRationDialogData } from '../../../feeding/components/dialogs/assign-feeding-plan-dialog/assign-feeding-plan-dialog.component';
 import { AnimalFeedingSummary, DailyFeedingEntryStatus } from '../../../feeding/models/feeding.models';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { ReportService } from '../../../reports/services/report.service';
+import { formatAnimalAge } from '../../utils/animal-age';
 
 @Component({
   selector: 'app-animal-detail',
@@ -90,6 +92,7 @@ export class AnimalDetailComponent {
   private readonly contextService = inject(WorkingContextService);
   private readonly reportService = inject(ReportService);
   private readonly breedSvc = inject(BreedService);
+  private readonly intelligenceSvc = inject(IntelligenceService);
 
   readonly isExporting = signal(false);
   readonly AnimalStatus = AnimalStatus;
@@ -101,7 +104,18 @@ export class AnimalDetailComponent {
   readonly Math = Math;
 
   private refreshTrigger = signal(0);
-  readonly liveWeightPrice = signal<number>(400);
+  /** Fallback live rate until the farm's valuation rate loads (FarmBusinessRules default). */
+  private static readonly FALLBACK_LIVE_RATE = 400;
+  /** Rate the user typed into the card; null = use the farm's valuation rate. */
+  private readonly liveWeightPriceOverride = signal<number | null>(null);
+  readonly liveWeightPrice = computed(() =>
+    this.liveWeightPriceOverride()
+    ?? this.animalDataResult()?.projectionDefaults?.liveWeightValuePerKgBdt?.value
+    ?? AnimalDetailComponent.FALLBACK_LIVE_RATE);
+  readonly liveWeightPriceSource = computed(() =>
+    this.liveWeightPriceOverride() !== null
+      ? 'Manual rate'
+      : this.animalDataResult()?.projectionDefaults?.liveWeightValuePerKgBdt?.sourceLabel ?? 'Default live rate');
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -124,6 +138,7 @@ export class AnimalDetailComponent {
               animal: of(animal),
               breedName: animal.breedId ? this.breedSvc.getBreedById(animal.breedId).pipe(map(b => b.name), catchError(() => of(null))) : of(null),
               ledger: animal.farmId ? this.financeSvc.getAnimalCostLedger(animal.farmId, animal.id).pipe(catchError(() => of(null))) : of(null),
+              projectionDefaults: this.intelligenceSvc.getProjectionDefaults(animal.id).pipe(catchError(() => of(null))),
               healthHistory: this.healthSvc.getAnimalHealthHistory(animal.id).pipe(catchError(() => of(null))),
               feedingSummary: this.feedingSvc.getAnimalFeedingSummary(animal.id).pipe(catchError(() => of(null))),
               farmName: animal.farmId ? this.farmSvc.getFarmById(animal.farmId).pipe(map(f => f.farmName), catchError(() => of(null))) : of(null),
@@ -251,10 +266,19 @@ export class AnimalDetailComponent {
   });
 
   // Financial calculations
+  // The cost ledger is the source of truth: its feed bucket is re-synced from feed allocations
+  // (which cover group-fed animals too) every time it is read. The feeding summary only sees the
+  // animal's own daily entries, so it is a fallback for when no ledger exists.
+  readonly acquisitionCost = computed(() => {
+    const l = this.ledger();
+    if (l) return l.acquisitionCostBdt || 0;
+    return this.animal()?.acquisitionPriceBdt || 0;
+  });
+
   readonly totalTreatmentCost = computed(() => {
     const l = this.ledger();
-    if (l) return l.totalVetCostBdt;
-    
+    if (l) return l.totalVetCostBdt || 0;
+
     // Fallback if ledger not initialized
     const history = this.healthHistory();
     if (!history || !history.treatments) return 0;
@@ -262,33 +286,31 @@ export class AnimalDetailComponent {
   });
 
   readonly totalFeedCost = computed(() => {
-    const summaryCost = this.feedingSummary()?.totalFeedCostBdt;
-    if (summaryCost !== undefined && summaryCost !== null && summaryCost > 0) {
-      return summaryCost;
-    }
-    return this.ledger()?.totalFeedCostBdt || 0;
-  });
-
-  readonly totalCost = computed(() => {
     const l = this.ledger();
-    const feedCost = this.totalFeedCost();
-    if (l) {
-      return (l.acquisitionCostBdt || 0) + feedCost + (l.totalVetCostBdt || 0) + (l.totalLaborCostBdt || 0) + (l.totalOverheadBdt || 0);
-    }
-
-    const a = this.animal();
-    if (!a) return 0;
-    return (a.acquisitionPriceBdt || 0) + this.totalTreatmentCost() + feedCost;
+    if (l) return l.totalFeedCostBdt || 0;
+    return this.feedingSummary()?.totalFeedCostBdt || 0;
   });
+
+  /** Labour + allocated overhead — part of total cost, so shown in the breakdown too. */
+  readonly laborOverheadCost = computed(() => {
+    const l = this.ledger();
+    return l ? (l.totalLaborCostBdt || 0) + (l.totalOverheadBdt || 0) : 0;
+  });
+
+  readonly totalCost = computed(() =>
+    this.acquisitionCost() + this.totalFeedCost() + this.totalTreatmentCost() + this.laborOverheadCost());
 
   readonly totalRevenue = computed(() => {
     const l = this.ledger();
     if (l && l.saleRevenueBdt) return l.saleRevenueBdt;
-    
+
     const a = this.animal();
     if (!a) return 0;
     return a.salePriceBdt || 0;
   });
+
+  /** A live valuation needs a recorded weight; without one the "profit" would just be −cost. */
+  readonly hasValuationWeight = computed(() => (this.animal()?.latestWeightKg ?? 0) > 0);
 
   readonly currentEstimatedValue = computed(() => {
     const a = this.animal();
@@ -305,6 +327,21 @@ export class AnimalDetailComponent {
       return this.currentEstimatedValue() - this.totalCost();
     }
   });
+
+  /** Live-weight price at which selling today exactly recovers the cost to date. */
+  readonly breakEvenLiveRate = computed(() => {
+    const w = this.animal()?.latestWeightKg ?? 0;
+    return w > 0 ? this.totalCost() / w : 0;
+  });
+
+  onLiveWeightPriceChange(value: number | string | null): void {
+    const n = Number(value);
+    this.liveWeightPriceOverride.set(value === null || value === '' || !Number.isFinite(n) || n < 0 ? null : n);
+  }
+
+  resetLiveWeightPrice(): void {
+    this.liveWeightPriceOverride.set(null);
+  }
 
   readonly weightChartOptions = computed<EChartsOption | null>(() => {
     const a = this.animal();
@@ -461,9 +498,7 @@ export class AnimalDetailComponent {
   }
 
   ageLabel(dob: string): string {
-    const days = Math.floor((Date.now() - new Date(dob).getTime()) / 86_400_000);
-    if (days < 365) return `${Math.floor(days / 30)}mo old`;
-    return `${Math.floor(days / 365)}y old`;
+    return formatAnimalAge(dob) + ' old';
   }
 
   onQuarantine(): void {

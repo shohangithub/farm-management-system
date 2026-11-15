@@ -90,10 +90,29 @@ internal sealed class RationCalculator
     public const string DirectPrefix = DirectFeedService.DirectRuleSetPrefix;
 
     private readonly Dictionary<Guid, FeedFormula> _formulas;
+    private readonly IReadOnlyDictionary<Guid, decimal> _costPerKg;
 
-    public RationCalculator(IEnumerable<FeedFormula> formulas)
+    /// <param name="costPerKg">Live cost per kg by formula (see <see cref="FeedCostCalculator"/>); a formula missing from it uses its stored cost.</param>
+    public RationCalculator(IEnumerable<FeedFormula> formulas, IReadOnlyDictionary<Guid, decimal>? costPerKg = null)
     {
         _formulas = formulas.GroupBy(f => f.Id).ToDictionary(g => g.Key, g => g.First());
+        _costPerKg = costPerKg ?? new Dictionary<Guid, decimal>();
+    }
+
+    /// <summary>Live cost per kg for the formulas the given rule sets use.</summary>
+    public static async Task<Dictionary<Guid, decimal>> LiveCostsAsync(
+        IEnumerable<FeedFormula> formulas, IEnumerable<FeedingRuleSet> ruleSets, FeedCostCalculator? costs, CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<Guid, decimal>();
+        if (costs is null)
+            return result;
+        var byId = formulas.GroupBy(f => f.Id).ToDictionary(g => g.Key, g => g.First());
+        foreach (var id in ruleSets.SelectMany(r => r.Lines).Select(l => l.FormulaId).Distinct())
+        {
+            if (byId.TryGetValue(id, out var formula))
+                result[id] = await costs.FormulaCostPerKgAsync(formula, cancellationToken).ConfigureAwait(false);
+        }
+        return result;
     }
 
     public static string KindOf(FeedingRuleSet ruleSet, AnimalFeedingPlan? plan) =>
@@ -115,7 +134,7 @@ internal sealed class RationCalculator
             kg += lineKg;
             if (_formulas.TryGetValue(line.FormulaId, out var formula))
             {
-                cost += lineKg * formula.TotalCostPerKgBdt;
+                cost += lineKg * (_costPerKg.TryGetValue(formula.Id, out var live) ? live : formula.TotalCostPerKgBdt);
                 feeds.Add(formula.Title.Replace(DirectFeedService.DirectItemSuffix, string.Empty, StringComparison.Ordinal));
             }
             else
@@ -155,7 +174,10 @@ public sealed class GetFeedingBoardQueryHandler(
     IShedRepository sheds,
     IPenRepository pens,
     IAnimalBatchRepository batches,
-    ITenantService tenant) : IRequestHandler<GetFeedingBoardQuery, FeedingBoardDto>
+    ITenantService tenant,
+    IFeedIngredientRepository? ingredients = null,
+    IInventoryItemRepository? inventory = null,
+    Farm360.Application.Inventory.Units.IUnitService? units = null) : IRequestHandler<GetFeedingBoardQuery, FeedingBoardDto>
 {
     public async Task<FeedingBoardDto> Handle(GetFeedingBoardQuery request, CancellationToken cancellationToken)
     {
@@ -169,7 +191,10 @@ public sealed class GetFeedingBoardQueryHandler(
         var locations = await animals.GetCurrentLocationsByFarmAsync(request.FarmId, cancellationToken);
         var activePlans = await plans.GetActivePlansByFarmAsync(tenantId, request.FarmId, cancellationToken);
         var sets = (await ruleSets.GetAllAsync(cancellationToken)).ToDictionary(r => r.Id);
-        var calc = new RationCalculator(await formulas.GetListAsync(tenantId, 1, 2000, null, cancellationToken));
+        var boardFormulas = await formulas.GetListAsync(tenantId, 1, 2000, null, cancellationToken);
+        var liveCosts = await RationCalculator.LiveCostsAsync(boardFormulas, sets.Values,
+            ingredients is null || inventory is null ? null : new FeedCostCalculator(ingredients, inventory, units), cancellationToken);
+        var calc = new RationCalculator(boardFormulas, liveCosts);
 
         var names = await LocationNames.LoadAsync(tenantId, request.FarmId, herd, sheds, pens, batches, cancellationToken);
 
@@ -263,7 +288,9 @@ public sealed class PreviewRationQueryHandler(
     IFeedFormulaRepository formulas,
     IInventoryItemRepository inventory,
     ITenantService tenant,
-    IDirectFeedService directFeed) : IRequestHandler<PreviewRationQuery, RationPreviewDto>
+    IDirectFeedService directFeed,
+    IFeedIngredientRepository? ingredients = null,
+    Farm360.Application.Inventory.Units.IUnitService? units = null) : IRequestHandler<PreviewRationQuery, RationPreviewDto>
 {
     public async Task<RationPreviewDto> Handle(PreviewRationQuery request, CancellationToken cancellationToken)
     {
@@ -294,7 +321,9 @@ public sealed class PreviewRationQueryHandler(
             }
         }
 
-        var calc = new RationCalculator(formulaList.Concat(standIns));
+        var liveCosts = await RationCalculator.LiveCostsAsync(formulaList, sets.Values.Concat(directPreviews),
+            ingredients is null ? null : new FeedCostCalculator(ingredients, inventory, units), cancellationToken);
+        var calc = new RationCalculator(formulaList.Concat(standIns), liveCosts);
 
         var herd = (await animals.GetAllByFarmAsync(request.FarmId, cancellationToken))
             .Where(a => a.Status is AnimalStatus.Active or AnimalStatus.Quarantined)

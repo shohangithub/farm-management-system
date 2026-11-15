@@ -1,12 +1,12 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe, PercentPipe } from '@angular/common';
 import { ProfitProjectionResponse } from '../../models/projection.model';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-projection-daily-table',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, MatIconModule],
+  imports: [CommonModule, DecimalPipe, PercentPipe, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6">
@@ -25,20 +25,26 @@ import { MatIconModule } from '@angular/material/icon';
             <tr>
               <th scope="col" class="px-4 py-3 rounded-tl-lg">Day</th>
               <th scope="col" class="px-4 py-3">Weight (kg)</th>
-              <th scope="col" class="px-4 py-3">Meat Yield (kg)</th>
+              <th scope="col" class="px-4 py-3">Meat (kg)</th>
               <th scope="col" class="px-4 py-3">Feed (kg)</th>
               <th scope="col" class="px-4 py-3">Feed Cost</th>
-              <th scope="col" class="px-4 py-3">Cum. Inv.</th>
+              <th scope="col" class="px-4 py-3" title="Grass + other + labour (monthly ÷ 30)">Fixed Cost</th>
+              <th scope="col" class="px-4 py-3">Day Cost</th>
+              <th scope="col" class="px-4 py-3">Total Inv.</th>
               <th scope="col" class="px-4 py-3">Meat Val.</th>
-              <th scope="col" class="px-4 py-3 rounded-tr-lg">Net Profit</th>
+              <th scope="col" class="px-4 py-3">Profit / Loss</th>
+              <th scope="col" class="px-4 py-3 rounded-tr-lg">ROI</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let day of data()?.days; let i = index" 
                 class="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 [ngClass]="{'bg-emerald-50/30 dark:bg-emerald-900/10': day.day === data()?.summary?.breakEvenDay}">
-              <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+              <td class="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">
                 {{ day.day }}
+                <span *ngIf="day.day === data()?.summary?.optimalSaleDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                  Best
+                </span>
                 <span *ngIf="day.day === data()?.summary?.breakEvenDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
                   Break-Even
                 </span>
@@ -46,12 +52,17 @@ import { MatIconModule } from '@angular/material/icon';
               <td class="px-4 py-3">{{ day.liveWeightKg | number:'1.1-2' }}</td>
               <td class="px-4 py-3 text-emerald-600 dark:text-emerald-400">{{ day.meatWeightKg | number:'1.2-2' }}</td>
               <td class="px-4 py-3">{{ day.feedQtyKg | number:'1.1-2' }}</td>
-              <td class="px-4 py-3">{{ day.feedCostBdt | number:'1.0-0' }}</td>
+              <td class="px-4 py-3">{{ day.feedCostBdt | number:'1.0-2' }}</td>
+              <td class="px-4 py-3">{{ (day.grassCostBdt + day.otherCostBdt + day.laborCostBdt) | number:'1.0-2' }}</td>
+              <td class="px-4 py-3">{{ day.dailyTotalCostBdt | number:'1.0-2' }}</td>
               <td class="px-4 py-3">{{ day.totalInvestmentBdt | number:'1.0-0' }}</td>
               <td class="px-4 py-3 font-medium text-indigo-600 dark:text-indigo-400">{{ day.meatValueBdt | number:'1.0-0' }}</td>
               <td class="px-4 py-3 font-medium" 
                   [ngClass]="day.profitLossBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
                 {{ day.profitLossBdt | number:'1.0-0' }}
+              </td>
+              <td class="px-4 py-3" [ngClass]="day.profitPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                {{ day.profitPercent | percent:'1.1-1' }}
               </td>
             </tr>
           </tbody>

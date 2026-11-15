@@ -69,6 +69,7 @@ public class GetAnimalFeedingSummaryQueryHandler : IRequestHandler<GetAnimalFeed
     private readonly IPenRepository _penRepository;
     private readonly IAnimalRepository _animalRepository;
     private readonly ITenantService _tenantService;
+    private readonly IAnimalFeedAllocationRepository? _allocationRepository;
 
     public GetAnimalFeedingSummaryQueryHandler(
         IDailyFeedingEntryRepository entryRepository,
@@ -78,8 +79,10 @@ public class GetAnimalFeedingSummaryQueryHandler : IRequestHandler<GetAnimalFeed
         IShedRepository shedRepository,
         IPenRepository penRepository,
         IAnimalRepository animalRepository,
-        ITenantService tenantService)
+        ITenantService tenantService,
+        IAnimalFeedAllocationRepository? allocationRepository = null)
     {
+        _allocationRepository = allocationRepository;
         _entryRepository = entryRepository;
         _planRepository = planRepository;
         _ruleSetRepository = ruleSetRepository;
@@ -198,6 +201,16 @@ public class GetAnimalFeedingSummaryQueryHandler : IRequestHandler<GetAnimalFeed
                 shedName,
                 penName);
         }).ToList();
+
+        // Totals come from the animal's confirmed feed allocations — the same numbers its cost ledger
+        // carries. The entries above are only the animal's own plans, so a group-fed animal (batch,
+        // shed or pen plan) would otherwise show no feed cost at all.
+        if (_allocationRepository is not null)
+        {
+            var totals = await _allocationRepository.GetTotalsForAnimalAsync(request.AnimalId, DateOnly.MinValue, DateOnly.MaxValue, cancellationToken);
+            totalFeedCost = totals.TotalCostBdt;
+            totalFeedConsumedKg = totals.TotalKg;
+        }
 
         decimal avgCostPerKg = totalFeedConsumedKg > 0 
             ? Math.Round(totalFeedCost / totalFeedConsumedKg, 2) 

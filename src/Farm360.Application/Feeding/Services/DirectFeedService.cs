@@ -124,6 +124,11 @@ public sealed class DirectFeedService : IDirectFeedService
 
         var tenantId = _tenant.TenantId;
 
+        // Feed counts the item in kg when its unit converts to kg (a gram premix), else in its own unit
+        // (ml): the recipe's cost must be per that feed unit, not per base unit (2 BDT/g = 2000 BDT/kg).
+        var basePerFeedUnit = _units is null ? 1m : await _units.KgToItemBaseAsync(item, 1m, cancellationToken);
+        var costPerFeedUnit = FeedCostCalculator.CostPerKg(item.WeightedAverageCostBdt, basePerFeedUnit);
+
         // The feed ingredient that stands for this stock item (reuse the one linked to it, if any).
         var ingredient = (await _ingredients.GetAllAsync(tenantId, includePreloaded: false, cancellationToken))
             .FirstOrDefault(i => i.InventoryItemId == inventoryItemId);
@@ -144,7 +149,7 @@ public sealed class DirectFeedService : IDirectFeedService
         {
             formula = new FeedFormula(Guid.NewGuid(), tenantId, title, species,
                 description: "Feeds the stock item as it is (100%). Created automatically for direct feeding.");
-            formula.AddIngredient(ingredient.Id, 100m, item.WeightedAverageCostBdt, ingredient.NutritionalProfile);
+            formula.AddIngredient(ingredient.Id, 100m, costPerFeedUnit, ingredient.NutritionalProfile);
             formula.SetStatus(FormulaStatus.Active);
             await _formulas.AddAsync(formula, cancellationToken);
         }

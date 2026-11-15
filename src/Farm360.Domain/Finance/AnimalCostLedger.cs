@@ -58,6 +58,15 @@ public sealed class AnimalCostLedger : AuditableEntity, IAggregateRoot
     }
 
     /// <summary>
+    /// Reverses (negative) or re-applies (positive) a previously recorded vet/medicine amount, for
+    /// when a hand-entered vet expense is edited or deleted. Never takes the bucket below zero.
+    /// </summary>
+    public void AdjustVetCost(decimal deltaBdt)
+    {
+        TotalVetCostBdt = Math.Max(0m, Math.Round(TotalVetCostBdt + deltaBdt, 2));
+    }
+
+    /// <summary>
     /// Accumulates a cost into the appropriate bucket based on the transaction category.
     /// </summary>
     public void RecordCost(Enums.TransactionCategory category, decimal amountBdt)

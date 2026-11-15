@@ -66,10 +66,10 @@ export interface CostBreakdownDialogData {
             <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-xs">
               <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Quantity</span>
               <div class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mt-1">
-                {{ b.actualKg ?? b.expectedKg }} <span class="text-xs font-normal text-gray-500">kg</span>
+                {{ (b.totalKg ?? (b.actualKg ?? b.expectedKg)) | number:'1.0-3' }} <span class="text-xs font-normal text-gray-500">kg</span>
               </div>
               <span class="text-[10px] text-gray-400 block mt-0.5">
-                {{ b.actualKg != null ? 'Actual consumed' : 'Expected planned' }}
+                {{ b.actualKg != null ? 'Actual consumed' : 'Expected planned' }}<ng-container *ngIf="(b.headCount ?? 1) > 1"> · {{ b.actualKg ?? b.expectedKg }} kg x {{ b.headCount }} head</ng-container>
               </span>
             </div>
 
@@ -84,7 +84,7 @@ export interface CostBreakdownDialogData {
             <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-xs">
               <span class="text-[11px] font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider block">Total Cost</span>
               <div class="text-base sm:text-lg font-bold text-teal-700 dark:text-teal-300 mt-1">
-                ৳{{ (b.totalCostBdt ?? ((b.actualKg ?? b.expectedKg) * (b.blendedUnitCostBdt ?? 0))) | number:'1.2-2' }}
+                ৳{{ (b.totalCostBdt ?? ((b.totalKg ?? (b.actualKg ?? b.expectedKg)) * (b.blendedUnitCostBdt ?? 0))) | number:'1.2-2' }}
               </div>
               <span class="text-[10px] text-gray-400 block mt-0.5">Total feeding value</span>
             </div>
@@ -175,13 +175,13 @@ export interface CostBreakdownDialogData {
                       {{ totalPercentage(b) }}%
                     </td>
                     <td class="py-2.5 px-3 text-right">
-                      {{ (b.actualKg ?? b.expectedKg) | number:'1.2-2' }} kg
+                      {{ (b.totalKg ?? (b.actualKg ?? b.expectedKg)) | number:'1.2-2' }} kg
                     </td>
                     <td class="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
                       ৳{{ (b.blendedUnitCostBdt ?? 0) | number:'1.2-2' }}
                     </td>
                     <td class="py-2.5 px-3 text-right font-mono text-teal-700 dark:text-teal-300">
-                      ৳{{ (b.totalCostBdt ?? ((b.actualKg ?? b.expectedKg) * (b.blendedUnitCostBdt ?? 0))) | number:'1.2-2' }}
+                      ৳{{ (b.totalCostBdt ?? ((b.totalKg ?? (b.actualKg ?? b.expectedKg)) * (b.blendedUnitCostBdt ?? 0))) | number:'1.2-2' }}
                     </td>
                     <td></td>
                   </tr>

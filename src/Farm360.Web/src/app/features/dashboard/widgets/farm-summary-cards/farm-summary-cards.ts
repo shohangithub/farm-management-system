@@ -12,7 +12,7 @@ import { FarmSummaryCard } from '../../models/dashboard.model';
         <h3 class="text-gray-500 text-sm font-medium">{{card.farmName}}</h3>
         <div class="mt-2 space-y-1">
           <div class="flex justify-between">
-            <span class="text-sm text-gray-600">Total Animals</span>
+            <span class="text-sm text-gray-600">Animals on Farm</span>
             <span class="text-sm font-semibold text-gray-900">{{card.animalCount}}</span>
           </div>
           <div class="flex justify-between">

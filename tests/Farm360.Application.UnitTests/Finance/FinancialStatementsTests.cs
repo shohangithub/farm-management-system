@@ -224,7 +224,133 @@ public class FinancialStatementsTests
         sheet.IsBalanced.Should().BeTrue();
     }
 
+    // ── Every P&L-like report agrees with the statements ───────────────────
+
+    [Fact]
+    public async Task InvestorPnL_NetProfit_EqualsIncomeStatement_IncludingDepreciation()
+    {
+        Opening(AccountChart.CashAccount, 50_000m);
+        Opening(AccountChart.OwnerCapitalAccount, 120_000m);
+        _assets.Add(FixedAsset.Create(TenantId, FarmId, "FA-0001", "Cattle shed", FixedAssetCategory.BuildingAndShed,
+            FixedAssetAcquisition.Opening, BooksStart, 70_000m, DepreciationMethod.ReducingBalance, 10m, 0m, 0m));
+        await Post(TransactionCategory.MilkSale, 10_000m, new DateOnly(2026, 8, 1));
+        await Post(TransactionCategory.LaborCost, 2_000m, new DateOnly(2026, 9, 1));
+
+        var income = await new GetIncomeStatementQueryHandler(Engine())
+            .Handle(new GetIncomeStatementQuery(FarmId, null, YearEnd.ToDateTime(TimeOnly.MinValue)), CancellationToken.None);
+        var pnl = await InvestorPnL(new DateOnly(2026, 7, 1), YearEnd);
+
+        income.Totals.NetProfitBdt.Should().Be(1_000m, "10,000 − 2,000 − 7,000 depreciation");
+        pnl.NetFarmProfitBdt.Should().Be(income.Totals.NetProfitBdt);
+        pnl.TotalFarmRevenueBdt.Should().Be(income.Totals.RevenueBdt);
+        pnl.TotalFarmExpensesBdt.Should().Be(9_000m);
+    }
+
+    [Fact]
+    public async Task CashBookOpening_EqualsBalanceSheetCash_AtThePeriodStart()
+    {
+        await Post(TransactionCategory.OwnerCapital, 999_000m, BooksStart.AddDays(-10)); // replaced by the opening position
+        Opening(AccountChart.CashAccount, 50_000m);
+        Opening(AccountChart.OwnerCapitalAccount, 50_000m);
+        await Post(TransactionCategory.MilkSale, 10_000m, new DateOnly(2026, 8, 1));
+        await Post(TransactionCategory.LaborCost, 3_000m, new DateOnly(2026, 9, 5));
+
+        var periodStart = new DateOnly(2026, 9, 1);
+        var sheet = await BalanceSheet(periodStart.AddDays(-1));
+        var cashBook = await new GetIncomeExpenseReportQueryHandler(Engine())
+            .Handle(new GetIncomeExpenseReportQuery(FarmId, Dt(periodStart), Dt(new DateOnly(2026, 9, 30))), CancellationToken.None);
+
+        cashBook.OpeningBalanceBdt.Should().Be(Line(sheet.Assets, AccountChart.CashAccount)).And.Be(60_000m);
+        cashBook.ClosingBalanceBdt.Should().Be(57_000m);
+        cashBook.NetProfitBdt.Should().Be(-3_000m);
+
+        // A period starting on or before the books start opens with the opening entries.
+        var fromStart = await new GetIncomeExpenseReportQueryHandler(Engine())
+            .Handle(new GetIncomeExpenseReportQuery(FarmId, Dt(BooksStart.AddDays(-30)), Dt(new DateOnly(2026, 9, 30))), CancellationToken.None);
+        fromStart.OpeningBalanceBdt.Should().Be(50_000m);
+        fromStart.ClosingBalanceBdt.Should().Be(Line((await BalanceSheet(new DateOnly(2026, 9, 30))).Assets, AccountChart.CashAccount));
+
+        var full = await FullAccounts(periodStart, new DateOnly(2026, 9, 30));
+        full.Cash.OpeningBalanceBdt.Should().Be(60_000m);
+        full.Cash.ClosingBalanceBdt.Should().Be(57_000m);
+    }
+
+    [Fact]
+    public async Task FullAccounts_ExpenseHeads_SumToTheTotal_WithADisposalAndDepreciation()
+    {
+        var bought = new DateOnly(2026, 7, 1);
+        var sold = new DateOnly(2027, 6, 30);
+        Opening(AccountChart.CashAccount, 100_000m);
+        Opening(AccountChart.OwnerCapitalAccount, 100_000m);
+        var tractor = FixedAsset.Create(TenantId, FarmId, "FA-0001", "Tractor", FixedAssetCategory.Vehicle,
+            FixedAssetAcquisition.Cash, bought, 100_000m, DepreciationMethod.ReducingBalance, 10m, 0m, 0m);
+        tractor.RecordDisposal(sold, 80_000m);
+        _assets.Add(tractor);
+        await Post(TransactionCategory.FixedAssetPurchase, 100_000m, bought);
+        await Post(TransactionCategory.AssetDisposal, 80_000m, sold);
+        await Post(TransactionCategory.MilkSale, 30_000m, new DateOnly(2026, 10, 1));
+        await Post(TransactionCategory.FeedCost, 5_000m, new DateOnly(2026, 10, 1));
+
+        var full = await FullAccounts(bought, YearEnd);
+        var income = await new GetIncomeStatementQueryHandler(Engine())
+            .Handle(new GetIncomeStatementQuery(FarmId, null, YearEnd.ToDateTime(TimeOnly.MinValue)), CancellationToken.None);
+
+        // 5,000 feed + 10,000 depreciation + 10,000 loss on disposal (90,000 book value − 80,000 proceeds).
+        full.Operating.TotalExpenseBdt.Should().Be(25_000m);
+        full.Operating.ExpenseLines.Sum(h => h.TotalBdt).Should().Be(full.Operating.TotalExpenseBdt);
+        full.Operating.ExpenseLines.Should().OnlyContain(h => h.PercentOfTotal <= 100m);
+        full.Operating.ExpenseLines.Single(h => h.Code == AccountChart.DepreciationAccount).TotalBdt.Should().Be(10_000m);
+        full.Operating.ExpenseLines.Single(h => h.Code == AccountChart.AssetDisposalAccount).TotalBdt.Should().Be(10_000m);
+        full.Costs.Groups.Sum(g => g.AmountBdt).Should().Be(full.Costs.TotalOperatingCostBdt);
+        full.Operating.NetOperatingProfitBdt.Should().Be(income.Totals.NetProfitBdt).And.Be(5_000m);
+        full.ProfitShare.NetOperatingProfitBdt.Should().Be(income.Totals.NetProfitBdt);
+    }
+
+    [Fact]
+    public async Task EndOfDayPosting_IsIncludedInTheLastDay()
+    {
+        Opening(AccountChart.CashAccount, 1_000m);
+        Opening(AccountChart.OwnerCapitalAccount, 1_000m);
+        var day = new DateOnly(2026, 9, 30);
+        await _ledger.AddAsync(FinancialTransaction.Create(TenantId, FarmId, TransactionType.Income, TransactionCategory.MilkSale,
+            4_000m, day.ToDateTime(new TimeOnly(18, 30))));
+
+        var pnl = await InvestorPnL(new DateOnly(2026, 9, 1), day);
+        pnl.NetFarmProfitBdt.Should().Be(4_000m);
+
+        var full = await FullAccounts(new DateOnly(2026, 9, 1), day);
+        full.Operating.TotalRevenueBdt.Should().Be(4_000m);
+        full.ProfitShare.NetOperatingProfitBdt.Should().Be(4_000m);
+        full.Cash.ClosingBalanceBdt.Should().Be(5_000m);
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────
+
+    private static DateTime Dt(DateOnly d) => d.ToDateTime(TimeOnly.MinValue);
+
+    private async Task<InvestorPnLSummaryDto> InvestorPnL(DateOnly from, DateOnly to)
+    {
+        var investors = Substitute.For<IInvestorRepository>();
+        investors.GetByFarmIdAsync(FarmId, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new List<Investor>());
+        return await new GetInvestorPnLQueryHandler(Engine(), investors)
+            .Handle(new GetInvestorPnLQuery(FarmId, Dt(from), Dt(to)), CancellationToken.None);
+    }
+
+    private async Task<FullAccountsReportDto> FullAccounts(DateOnly from, DateOnly to)
+    {
+        var investors = Substitute.For<IInvestorRepository>();
+        investors.GetByFarmIdAsync(FarmId, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(new List<Investor>());
+        var shares = Substitute.For<IFarmShareRepository>();
+        shares.GetHoldingsByFarmIdAsync(FarmId, Arg.Any<CancellationToken>()).Returns(new List<ShareHolding>());
+        shares.GetTransactionsByFarmIdAsync(FarmId, Arg.Any<CancellationToken>()).Returns(new List<ShareTransaction>());
+        var loans = Substitute.For<ILoanRecordRepository>();
+        loans.GetByFarmIdAsync(FarmId, Arg.Any<CancellationToken>()).Returns(new List<LoanRecord>());
+        var sender = Substitute.For<MediatR.ISender>();
+        sender.Send(Arg.Any<GetInvestorPnLQuery>(), Arg.Any<CancellationToken>())
+            .Returns(ci => new GetInvestorPnLQueryHandler(Engine(), investors).Handle(ci.Arg<GetInvestorPnLQuery>(), CancellationToken.None));
+        return await new GetFullAccountsReportQueryHandler(Engine(), investors, shares, loans, sender)
+            .Handle(new GetFullAccountsReportQuery(FarmId, Dt(from), Dt(to)), CancellationToken.None);
+    }
 
     private void Opening(string account, decimal amount) =>
         _entries.Add(BalanceSheetEntry.Create(TenantId, FarmId, $"OB-{_entries.Count + 1:0000}", BalanceSheetEntryType.Opening,
@@ -249,7 +375,7 @@ public class FinancialStatementsTests
     private async Task<BalanceSheetDto> BalanceSheet(DateOnly asOf)
     {
         var reconciliation = Substitute.For<IAccountingReconciliationService>();
-        reconciliation.ReconcileAsync(FarmId, Arg.Any<IReadOnlyCollection<FinancialTransaction>>(), Arg.Any<CancellationToken>())
+        reconciliation.ReconcileBalancesAsync(FarmId, Arg.Any<IReadOnlyDictionary<string, decimal>>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ReconciliationLineDto>());
         return await new GetBalanceSheetQueryHandler(Engine(), reconciliation)
             .Handle(new GetBalanceSheetQuery(FarmId, asOf.ToDateTime(TimeOnly.MinValue)), CancellationToken.None);

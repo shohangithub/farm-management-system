@@ -31,13 +31,17 @@ public interface IAnimalFeedAllocationRepository
         Guid? shedId = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Feed actually eaten by one animal: only rows whose entry is Confirmed or Adjusted.
+    /// TotalKg leaves out non-kg quantities (a liquid fed in ml); TotalCostBdt includes them.
+    /// </summary>
     Task<AnimalFeedTotals> GetTotalsForAnimalAsync(
         Guid animalId,
         DateOnly from,
         DateOnly to,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Per-animal totals across a farm, for herd-level ranking and reconciliation.</summary>
+    /// <summary>Per-animal totals across a farm (same rules as <see cref="GetTotalsForAnimalAsync"/>), for herd-level ranking and reconciliation.</summary>
     Task<IReadOnlyList<AnimalFeedTotals>> GetTotalsForFarmAsync(
         Guid farmId,
         DateOnly from,
@@ -67,4 +71,14 @@ public interface IAnimalFeedAllocationRepository
         CancellationToken cancellationToken = default);
 
     void UpdateRange(IEnumerable<AnimalFeedAllocation> allocations);
+
+    /// <summary>Tracked rows of a farm's skipped entries that still carry feed or cost (for the resync to zero).</summary>
+    Task<IReadOnlyList<AnimalFeedAllocation>> GetNonZeroForSkippedEntriesAsync(
+        Guid farmId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Every animal that has any allocation row on the farm.</summary>
+    Task<IReadOnlyList<Guid>> GetAnimalIdsByFarmAsync(
+        Guid farmId,
+        CancellationToken cancellationToken = default);
 }

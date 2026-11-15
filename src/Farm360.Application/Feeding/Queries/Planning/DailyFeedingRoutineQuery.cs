@@ -142,6 +142,10 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
         var activePlans = await plans.GetActivePlansByFarmAsync(tenantId, request.FarmId, cancellationToken);
         var sets = (await ruleSets.GetAllAsync(cancellationToken)).ToDictionary(r => r.Id);
         var formulaById = (await formulas.GetListAsync(tenantId, 1, 2000, null, cancellationToken)).ToDictionary(f => f.Id);
+        var ingredientById = (await ingredients.GetAllAsync(tenantId, includePreloaded: true, cancellationToken)).ToDictionary(i => i.Id);
+        var items = (await inventory.GetByFarmIdAsync(request.FarmId, null, cancellationToken)).ToDictionary(i => i.Id);
+        // Live cost per kg of each recipe: stock items priced per kg of feed, % normalised.
+        var costs = new FeedCostCalculator(ingredients, inventory, units, ingredientById.Values, items.Values);
         var names = await LocationNames.LoadAsync(tenantId, request.FarmId, subjects, sheds, pens, batches, cancellationToken);
 
         FeedingRuleSet? chosen = null;
@@ -153,6 +157,7 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
                 notes.Add($"'{chosen.Name}' is inactive, so the daily entries don't use it.");
         }
 
+        var liveCosts = await RationCalculator.LiveCostsAsync(formulaById.Values, sets.Values, costs, cancellationToken);
         var perAnimal = new List<RoutineAnimalDto>();
         var recipeKg = new Dictionary<Guid, decimal>();
         var recipeAnimals = new Dictionary<Guid, HashSet<Guid>>();
@@ -207,7 +212,7 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
                         Math.Round(kg, 3),
                         sessions,
                         Math.Round(kg / sessions, 3),
-                        Math.Round(kg * (formula?.TotalCostPerKgBdt ?? 0m), 2),
+                        Math.Round(kg * (formula is null ? 0m : liveCosts.GetValueOrDefault(formula.Id, formula.TotalCostPerKgBdt)), 2),
                         unit));
 
                     if (formula is null) continue;
@@ -237,21 +242,16 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
         }
 
         // ── Mixing sheet: each recipe's ingredients for today's total, against stock ──
-        var ingredientById = (await ingredients.GetAllAsync(tenantId, includePreloaded: true, cancellationToken)).ToDictionary(i => i.Id);
-        var items = (await inventory.GetByFarmIdAsync(request.FarmId, null, cancellationToken)).ToDictionary(i => i.Id);
-
         // Several recipes can draw on one stock item, so shortfalls are judged on the combined need.
         var itemNeed = new Dictionary<Guid, decimal>();
         var draft = new List<(Guid FormulaId, List<(string Name, decimal Pct, decimal Kg, InventoryItem? Item, decimal? Need)> Rows)>();
         foreach (var (formulaId, kg) in recipeKg)
         {
             var formula = formulaById[formulaId];
-            var totalPct = formula.Ingredients.Sum(i => i.Percentage);
-            if (totalPct <= 0) totalPct = 100m;
             var rows = new List<(string, decimal, decimal, InventoryItem?, decimal?)>();
             foreach (var fi in formula.Ingredients.OrderByDescending(i => i.Percentage))
             {
-                var share = kg * fi.Percentage / totalPct;
+                var share = kg * formula.ShareOf(fi);
                 ingredientById.TryGetValue(fi.IngredientId, out var ingredient);
                 InventoryItem? item = null;
                 decimal? need = null;
@@ -261,10 +261,14 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
                     need = await units.KgToItemBaseAsync(found, share, cancellationToken);
                     itemNeed[itemId] = itemNeed.GetValueOrDefault(itemId) + need.Value;
                 }
-                rows.Add((ingredient?.Name ?? "Unknown ingredient", Math.Round(fi.Percentage * 100m / totalPct, 2), share, item, need));
+                rows.Add((ingredient?.Name ?? "Unknown ingredient", Math.Round(formula.ShareOf(fi) * 100m, 2), share, item, need));
             }
             draft.Add((formulaId, rows));
         }
+
+        var recipeCost = new Dictionary<Guid, decimal>();
+        foreach (var formulaId in recipeKg.Keys)
+            recipeCost[formulaId] = await costs.FormulaCostPerKgAsync(formulaById[formulaId], cancellationToken);
 
         var sessionOrder = recipeSessions.Values.SelectMany(s => s.Keys).Distinct().OrderBy(SessionRank).ToList();
         var recipes = draft.Select(d =>
@@ -277,7 +281,7 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
                 formula.Title.EndsWith(DirectFeedService.DirectItemSuffix, StringComparison.Ordinal),
                 recipeAnimals[formula.Id].Count,
                 Math.Round(kg, 3),
-                Math.Round(kg * formula.TotalCostPerKgBdt, 2),
+                Math.Round(kg * recipeCost[formula.Id], 2),
                 recipeSessions[formula.Id].OrderBy(s => SessionRank(s.Key))
                     .Select(s => new RoutineSessionDto(s.Key, Math.Round(s.Value.Kg, 3), s.Value.Animals.Count)).ToList(),
                 d.Rows.Select(r => new RoutineIngredientDto(

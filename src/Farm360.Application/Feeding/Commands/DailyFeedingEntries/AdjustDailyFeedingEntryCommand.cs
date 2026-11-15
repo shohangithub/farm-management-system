@@ -1,7 +1,9 @@
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Exceptions;
+using Farm360.Application.Feeding.Services;
 using Farm360.Domain.Feeding;
+using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
 using MediatR;
@@ -23,6 +25,10 @@ public class AdjustDailyFeedingEntryCommandHandler : IRequestHandler<AdjustDaily
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPublisher _publisher;
     private readonly ILogger<AdjustDailyFeedingEntryCommandHandler> _logger;
+    private readonly IAnimalFeedingPlanRepository? _planRepository;
+    private readonly IAnimalFeedAllocationRepository? _allocationRepository;
+    private readonly IFarmBusinessRulesProvider? _rules;
+    private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
 
     public AdjustDailyFeedingEntryCommandHandler(
         IDailyFeedingEntryRepository repository,
@@ -31,8 +37,16 @@ public class AdjustDailyFeedingEntryCommandHandler : IRequestHandler<AdjustDaily
         IInventoryItemRepository inventoryRepository,
         IUnitOfWork unitOfWork,
         IPublisher publisher,
-        ILogger<AdjustDailyFeedingEntryCommandHandler> logger)
+        ILogger<AdjustDailyFeedingEntryCommandHandler> logger,
+        IAnimalFeedingPlanRepository? planRepository = null,
+        IAnimalFeedAllocationRepository? allocationRepository = null,
+        IFarmBusinessRulesProvider? rules = null,
+        Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
+        _planRepository = planRepository;
+        _allocationRepository = allocationRepository;
+        _rules = rules;
+        _units = units;
         _repository = repository;
         _formulaRepository = formulaRepository;
         _feedIngredientRepository = feedIngredientRepository;
@@ -47,31 +61,23 @@ public class AdjustDailyFeedingEntryCommandHandler : IRequestHandler<AdjustDaily
         var entry = await _repository.GetByIdAsync(request.EntryId, cancellationToken)
             ?? throw new NotFoundException(nameof(DailyFeedingEntry), request.EntryId);
 
+        // Confirm() silently ignores an entry that is already confirmed, so an adjustment would have
+        // returned success while changing nothing (stock and cost already posted). Say so instead.
+        if (entry.Status is DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted)
+            throw new DomainException("This feeding entry is already confirmed; its stock and cost have been posted and it can no longer be adjusted.");
+
+        // The same requirement the confirmation handler deducts: quantity x heads fed (honouring the
+        // group-plan quantity basis), split by normalised recipe %, converted to each item's base unit.
         if (request.ActualKg > 0)
         {
             var formula = await _formulaRepository.GetByIdAsync(entry.FormulaId, cancellationToken);
             if (formula != null)
             {
-                var shortfalls = new List<string>();
-
-                foreach (var formulaIngredient in formula.Ingredients)
-                {
-                    var feedIngredient = await _feedIngredientRepository.GetByIdAsync(formulaIngredient.IngredientId, cancellationToken);
-                    if (feedIngredient?.InventoryItemId != null)
-                    {
-                        var inventoryItem = await _inventoryRepository.GetByIdAsync(feedIngredient.InventoryItemId.Value, cancellationToken);
-                        if (inventoryItem != null)
-                        {
-                            var requiredQty = request.ActualKg * (formulaIngredient.Percentage / 100m);
-                            if (requiredQty > 0 && (!inventoryItem.IsActive || inventoryItem.CurrentStock < requiredQty))
-                            {
-                                shortfalls.Add(
-                                    $"Insufficient stock for '{inventoryItem.Name}'. Required: {requiredQty:0.##} {inventoryItem.UnitOfMeasure}, Available: {inventoryItem.CurrentStock:0.##} {inventoryItem.UnitOfMeasure}.");
-                            }
-                        }
-                    }
-                }
-
+                var basis = _rules?.Current.GroupPlanQuantityBasis ?? Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead;
+                var heads = await FeedEntryHeads.MultiplierAsync(entry, _planRepository, _allocationRepository, basis, cancellationToken);
+                var calculator = new FeedCostCalculator(_feedIngredientRepository, _inventoryRepository, _units);
+                var requirement = await calculator.RequirementAsync(formula, request.ActualKg * heads, cancellationToken);
+                var shortfalls = requirement.Shortfalls();
                 if (shortfalls.Count > 0)
                 {
                     throw new DomainException(string.Join(" ", shortfalls));

@@ -31,7 +31,8 @@ import { EditTransactionDialogComponent } from '../../components/edit-transactio
 import { TradeBillDialogComponent } from '../../components/trade-bill-dialog/trade-bill-dialog.component';
 import { canBeOnCredit } from '../../models/finance.model';
 import { parseApiError } from '../../../../core/utils/error-parser';
-
+
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-finance-ledger',
   standalone: true,
@@ -337,7 +338,7 @@ export class FinanceLedgerComponent {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `finance_ledger_${new Date().toISOString().substring(0, 10)}.csv`;
+        a.download = `finance_ledger_${toLocalIsoDate()}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.isExporting.set(false);
@@ -362,7 +363,7 @@ export class FinanceLedgerComponent {
     this.isExportingPdf.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_General_Ledger_${new Date().toISOString().split('T')[0]}`,
+        filename: `Farm360_General_Ledger_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'General Ledger Transactions',

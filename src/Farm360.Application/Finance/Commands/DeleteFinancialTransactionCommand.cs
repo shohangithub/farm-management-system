@@ -1,3 +1,4 @@
+using Farm360.Application.Finance.EventHandlers.Internal;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,13 +21,16 @@ public sealed class DeleteFinancialTransactionCommandHandler : IRequestHandler<D
     private readonly IOverheadAllocationService _overheadAllocation;
     private readonly IUnitOfWork _unitOfWork;
     private readonly Farm360.Domain.Finance.Interfaces.ITradeBillRepository _bills;
+    private readonly Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository _ledgers;
 
     public DeleteFinancialTransactionCommandHandler(
         IFinancialTransactionRepository repository,
         IOverheadAllocationService overheadAllocation,
         IUnitOfWork unitOfWork,
-        Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills)
+        Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills,
+        Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository ledgers)
     {
+        _ledgers = ledgers;
         _repository = repository;
         _overheadAllocation = overheadAllocation;
         _unitOfWork = unitOfWork;
@@ -49,6 +53,9 @@ public sealed class DeleteFinancialTransactionCommandHandler : IRequestHandler<D
             bill.Cancel();
             _bills.Update(bill);
         }
+
+        // A hand-entered vet expense was added straight into the animal's vet bucket: take it back out.
+        await AnimalCostLedgerUpdater.SyncManualVetAsync(_ledgers, transaction, cancellationToken, removed: true);
 
         await _repository.DeleteAsync(transaction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -39,23 +39,24 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
         (AccountChart.CostLabour, "Labour & Wages", "শ্রমিক মজুরি"),
         (AccountChart.CostInventory, "Consumables & Stock Losses", "ভোগ্যপণ্য ও মজুদ ক্ষতি"),
         (AccountChart.CostOverhead, "Utilities, Transport & Overhead", "ইউটিলিটি, পরিবহন ও অন্যান্য"),
-        (AccountChart.CostFinance, "Loan Interest", "ঋণের সুদ"),
+        (AccountChart.CostFinance, "Loan Interest & Bad Debts", "ঋণের সুদ ও অনাদায়ী পাওনা"),
+        (AccountChart.CostDepreciation, "Depreciation & Asset Disposals", "অবচয় ও সম্পদ বিক্রয়"),
     ];
 
-    private readonly IFinancialTransactionRepository _transactionRepository;
+    private readonly IFinancialStatementEngine _engine;
     private readonly IInvestorRepository _investorRepository;
     private readonly IFarmShareRepository _shareRepository;
     private readonly ILoanRecordRepository _loanRepository;
     private readonly ISender _sender;
 
     public GetFullAccountsReportQueryHandler(
-        IFinancialTransactionRepository transactionRepository,
+        IFinancialStatementEngine engine,
         IInvestorRepository investorRepository,
         IFarmShareRepository shareRepository,
         ILoanRecordRepository loanRepository,
         ISender sender)
     {
-        _transactionRepository = transactionRepository;
+        _engine = engine;
         _investorRepository = investorRepository;
         _shareRepository = shareRepository;
         _loanRepository = loanRepository;
@@ -68,17 +69,20 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
         var end = endExclusive.AddDays(-1);
         var days = (int)(endExclusive - start).TotalDays;
 
-        var allTx = await _transactionRepository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
-        var before = allTx.Where(t => t.TransactionDate < start).ToList();
-        var inPeriod = allTx
-            .Where(t => t.TransactionDate >= start && t.TransactionDate < endExclusive)
-            .OrderBy(t => t.TransactionDate)
-            .ThenBy(t => t.CreatedAtUtc)
-            .ToList();
+        var fromDay = DateOnly.FromDateTime(start);
+        var toDay = DateOnly.FromDateTime(end);
+
+        // Every figure comes from the financial statement engine's books: postings after the books
+        // start, the opening entries, adjustments, depreciation and disposals — so opening and
+        // closing balances match the balance sheet and profit matches the income statement.
+        var books = await _engine.LoadAsync(request.FarmId, toDay, cancellationToken);
+        var openingBalances = books.OpeningBalancesFor(fromDay);
+        var closingBalances = books.BalancesAt(toDay);
+        var inPeriod = books.PostingsBetween(fromDay, toDay).ToList();
         var cashRows = inPeriod.Where(t => t.AffectsCash).ToList();
 
         // ── Cash position (cash book only) ───────────────────────────────────
-        var openingBalance = before.Sum(AccountChart.CashEffect);
+        var openingBalance = openingBalances.GetValueOrDefault(AccountChart.CashAccount);
         var totalInflow = AccountChart.CashIn(cashRows);
         var totalOutflow = AccountChart.CashOut(cashRows);
         var cash = new CashPositionDto(
@@ -90,22 +94,23 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             cashRows.Count);
 
         // ── Profit & loss (revenue and expense accounts, cash or not) ────────
-        var revenueRows = inPeriod.Where(AccountChart.IsRevenue).ToList();
-        var expenseRows = inPeriod.Where(AccountChart.IsExpense).ToList();
-        var revenue = AccountChart.Revenue(revenueRows);
-        var opCost = AccountChart.Expenses(expenseRows);
+        // Heads are the ledger movement of each account — net of refunds and disposal proceeds,
+        // with depreciation and the book value of assets disposed of as heads of their own — so
+        // they add up to the totals, which equal the income statement for the same days.
+        var revenue = books.RevenueBetween(fromDay, toDay);
+        var opCost = books.ExpensesBetween(fromDay, toDay);
         var netOperating = revenue - opCost;
         var operating = new OperatingStatementDto(
-            GetIncomeExpenseReportQueryHandler.SummariseHeads(revenueRows, revenue),
-            GetIncomeExpenseReportQueryHandler.SummariseHeads(expenseRows, opCost),
+            GetIncomeExpenseReportQueryHandler.SummariseProfitAndLossHeads(books, fromDay, toDay, revenue: true),
+            GetIncomeExpenseReportQueryHandler.SummariseProfitAndLossHeads(books, fromDay, toDay, revenue: false),
             R(revenue),
             R(opCost),
             R(netOperating),
             revenue > 0 ? R(netOperating / revenue * 100m) : 0m);
 
-        var costs = BuildCostAnalysis(expenseRows, opCost, days);
+        var costs = BuildCostAnalysis(books, fromDay, toDay, inPeriod, opCost, days);
         var capital = BuildCapitalFlow(cashRows);
-        var assets = BuildAssetMovement(before, inPeriod);
+        var assets = BuildAssetMovement(openingBalances, closingBalances, inPeriod);
 
         // ── Investors, profit sharing, shares, loans ─────────────────────────
         var investors = await _investorRepository.GetByFarmIdAsync(request.FarmId, includeTransactions: true, cancellationToken: cancellationToken);
@@ -116,8 +121,9 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
 
         // Profit entitlement reuses the Investor P&L query so this report and the Profit Sharing
         // page can never disagree about who is owed what for the same period.
+        // Both dates are whole days, inclusive.
         var pnl = await _sender.Send(
-            new GetInvestorPnLQuery(request.FarmId, start, endExclusive.AddTicks(-1)),
+            new GetInvestorPnLQuery(request.FarmId, start, end),
             cancellationToken);
 
         var investorAccounts = BuildInvestorAccounts(investors, holdings, shareConfig, pnl, start, endExclusive);
@@ -134,10 +140,10 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
 
         var investorNames = investors.ToDictionary(i => i.Id, i => i.Name);
         var shares = BuildShareSummary(shareConfig, shareTx, investorNames, start, endExclusive);
-        var loanSummary = BuildLoanSummary(loans, inPeriod, start, endExclusive);
+        var loanSummary = BuildLoanSummary(loans, inPeriod, books.AllPostings, start, endExclusive);
 
         var granularity = days <= MaxDailyTrendDays ? "Daily" : "Monthly";
-        var trend = BuildTrend(inPeriod, start, endExclusive, openingBalance, granularity == "Daily");
+        var trend = BuildTrend(books, inPeriod, start, endExclusive, openingBalance, granularity == "Daily");
         var ledger = BuildLedger(cashRows, openingBalance);
 
         return new FullAccountsReportDto(
@@ -158,15 +164,15 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             trend,
             ledger)
         {
-            Credit = BuildCreditMovement(before, inPeriod),
+            Credit = BuildCreditMovement(openingBalances, closingBalances, inPeriod),
         };
     }
 
-    private static TradeCreditMovementDto BuildCreditMovement(List<FinancialTransaction> before, List<FinancialTransaction> inPeriod)
+    private static TradeCreditMovementDto BuildCreditMovement(
+        Dictionary<string, decimal> opening,
+        Dictionary<string, decimal> closing,
+        List<FinancialTransaction> inPeriod)
     {
-        var opening = AccountChart.Balances(before);
-        var closing = AccountChart.Balances(before.Concat(inPeriod));
-
         decimal Settled(SettlementAccount settlement, TransactionType type) =>
             inPeriod.Where(t => t.Settlement == settlement && t.Type == type).Sum(t => t.AmountBdt);
         decimal Category(TransactionCategory category) =>
@@ -187,26 +193,45 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
 
     private static decimal R(decimal value) => Math.Round(value, 2);
 
-    private static CostAnalysisDto BuildCostAnalysis(List<FinancialTransaction> expenseRows, decimal total, int days)
+    private static CostAnalysisDto BuildCostAnalysis(
+        FarmLedger books,
+        DateOnly from,
+        DateOnly to,
+        List<FinancialTransaction> inPeriod,
+        decimal total,
+        int days)
     {
-        var byGroup = expenseRows.ToLookup(t => AccountChart.For(t.Category).CostGroup ?? AccountChart.CostOverhead);
+        // Expense lines of the ledger, so depreciation, disposals and adjustments are in a bucket
+        // and the buckets add up to the total expenses.
+        var expenseLines = books.ProfitAndLossLinesBetween(from, to)
+            .Where(l => !FarmLedger.IsRevenue(l.Account))
+            .ToList();
+        var byGroup = expenseLines.ToLookup(l => AccountChart.CostGroupOf(l.Account));
+        // Percentages of the buckets that add to the total, so a gain on disposal (a negative
+        // bucket) cannot push the others above 100%.
+        var percentBase = CostGroups.Select(g => byGroup[g.Key].Sum(l => l.Amount)).Where(a => a > 0m).Sum();
 
         var groups = CostGroups
             .Select(g =>
             {
                 var items = byGroup[g.Key].ToList();
-                var amount = -items.Sum(AccountChart.ProfitEffect);
+                var amount = items.Sum(l => l.Amount);
                 return new CostGroupDto(
                     g.Key,
                     g.Name,
                     g.NameBn,
                     R(amount),
-                    total > 0 ? R(amount / total * 100m) : 0m,
+                    percentBase > 0 ? R(amount / percentBase * 100m) : 0m,
                     items.Count);
             })
             .ToList();
 
         decimal Of(string key) => groups.First(g => g.Key == key).AmountBdt;
+
+        // Manual = hand-entered postings and year-end adjustments; everything else (automated
+        // postings, depreciation, disposals) is booked by the system.
+        var manual = -inPeriod.Where(t => !t.IsAutomated && AccountChart.IsExpense(t)).Sum(AccountChart.ProfitEffect)
+                     + expenseLines.Where(l => l.Source is LedgerLineSource.Adjustment or LedgerLineSource.Reversal).Sum(l => l.Amount);
 
         return new CostAnalysisDto(
             groups,
@@ -216,8 +241,8 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             Of(AccountChart.CostHealth),
             Of(AccountChart.CostLivestock),
             Of(AccountChart.CostOverhead) + Of(AccountChart.CostInventory),
-            R(-expenseRows.Where(t => t.IsAutomated).Sum(AccountChart.ProfitEffect)),
-            R(-expenseRows.Where(t => !t.IsAutomated).Sum(AccountChart.ProfitEffect)),
+            R(total - manual),
+            R(manual),
             days > 0 ? R(total / days) : 0m);
     }
 
@@ -248,11 +273,11 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
         };
     }
 
-    private static AssetMovementDto BuildAssetMovement(List<FinancialTransaction> before, List<FinancialTransaction> inPeriod)
+    private static AssetMovementDto BuildAssetMovement(
+        Dictionary<string, decimal> opening,
+        Dictionary<string, decimal> closing,
+        List<FinancialTransaction> inPeriod)
     {
-        var opening = AccountChart.Balances(before);
-        var closing = AccountChart.Balances(before.Concat(inPeriod));
-
         decimal Sum(TransactionCategory category, SettlementAccount? settlement = null) =>
             inPeriod.Where(t => t.Category == category && (settlement is null || t.Settlement == settlement)).Sum(t => t.AmountBdt);
 
@@ -409,6 +434,7 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
     private static LoanSummaryDto BuildLoanSummary(
         IReadOnlyList<LoanRecord> loans,
         List<FinancialTransaction> inPeriod,
+        IReadOnlyList<FinancialTransaction> allPostings,
         DateTime start,
         DateTime endExclusive)
     {
@@ -420,31 +446,55 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             .ThenByDescending(l => l.DisbursementDate)
             .FirstOrDefault();
 
+        static bool IsRepayment(FinancialTransaction t) =>
+            t.Category is TransactionCategory.LoanRepayment or TransactionCategory.InterestExpense;
+
         var repaidByLoan = new Dictionary<Guid, decimal>();
-        foreach (var tx in inPeriod.Where(t => t.Category is TransactionCategory.LoanRepayment or TransactionCategory.InterestExpense))
+        foreach (var tx in inPeriod.Where(IsRepayment))
         {
             if (Match(tx) is { } loan)
                 repaidByLoan[loan.Id] = repaidByLoan.GetValueOrDefault(loan.Id) + tx.AmountBdt;
         }
 
+        // The register holds today's totals; the position at the end of the period is today's less
+        // whatever was repaid after it.
+        var principalAfter = new Dictionary<Guid, decimal>();
+        var interestAfter = new Dictionary<Guid, decimal>();
+        foreach (var tx in allPostings.Where(t => IsRepayment(t) && t.TransactionDate >= endExclusive))
+        {
+            if (Match(tx) is not { } loan)
+                continue;
+            var bucket = tx.Category == TransactionCategory.LoanRepayment ? principalAfter : interestAfter;
+            bucket[loan.Id] = bucket.GetValueOrDefault(loan.Id) + tx.AmountBdt;
+        }
+
         var relevant = loans
             .Where(l => l.DisbursementDate < endExclusive)
             .OrderBy(l => l.DisbursementDate)
-            .Select(l => new LoanAccountDto(
-                l.Id,
-                l.LenderName,
-                l.DisbursementDate,
-                R(l.PrincipalAmountBdt),
-                l.InterestRatePercent,
-                R(l.TotalPayableBdt),
-                R(repaidByLoan.GetValueOrDefault(l.Id)),
-                R(l.TotalRepaidBdt),
-                R(l.OutstandingBalanceBdt),
-                R(l.PrincipalRepaidBdt),
-                R(l.InterestPaidBdt),
-                R(l.OutstandingPrincipalBdt),
-                l.DisbursementDate >= start,
-                l.IsActive))
+            .Select(l =>
+            {
+                var principalLater = principalAfter.GetValueOrDefault(l.Id);
+                var interestLater = interestAfter.GetValueOrDefault(l.Id);
+                var principalRepaid = Math.Max(0m, l.PrincipalRepaidBdt - principalLater);
+                var interestPaid = Math.Max(0m, l.InterestPaidBdt - interestLater);
+                var totalRepaid = Math.Max(0m, l.TotalRepaidBdt - principalLater - interestLater);
+                var outstanding = Math.Max(0m, l.TotalPayableBdt - totalRepaid);
+                return new LoanAccountDto(
+                    l.Id,
+                    l.LenderName,
+                    l.DisbursementDate,
+                    R(l.PrincipalAmountBdt),
+                    l.InterestRatePercent,
+                    R(l.TotalPayableBdt),
+                    R(repaidByLoan.GetValueOrDefault(l.Id)),
+                    R(totalRepaid),
+                    R(outstanding),
+                    R(principalRepaid),
+                    R(interestPaid),
+                    R(Math.Max(0m, l.PrincipalAmountBdt - principalRepaid)),
+                    l.DisbursementDate >= start,
+                    outstanding > 0.01m);
+            })
             .ToList();
 
         return new LoanSummaryDto(
@@ -454,10 +504,14 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             R(relevant.Sum(l => l.PrincipalAmountBdt)),
             R(relevant.Sum(l => l.OutstandingBdt)),
             relevant.Count(l => l.IsActive),
-            relevant);
+            relevant)
+        {
+            TotalOutstandingPrincipalBdt = R(relevant.Sum(l => l.OutstandingPrincipalBdt)),
+        };
     }
 
     private static List<PeriodTrendDto> BuildTrend(
+        FarmLedger books,
         List<FinancialTransaction> inPeriod,
         DateTime start,
         DateTime endExclusive,
@@ -482,17 +536,20 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             var to = bucketEnd;
             var txs = inPeriod.Where(t => t.TransactionDate >= from && t.TransactionDate < to).ToList();
 
-            // Operating = profit & loss; capital in/out = cash that moved outside P&L (investors,
-            // owner, loans, stock and animal purchases).
-            var opIn = AccountChart.Revenue(txs);
-            var opOut = AccountChart.Expenses(txs);
+            // Operating = profit & loss (from the ledger, depreciation and disposals included);
+            // capital in/out = cash that moved outside P&L (investors, owner, loans, stock and
+            // animal purchases).
+            var bucketFrom = DateOnly.FromDateTime(from);
+            var bucketTo = DateOnly.FromDateTime(to).AddDays(-1);
+            var opIn = books.RevenueBetween(bucketFrom, bucketTo);
+            var opOut = books.ExpensesBetween(bucketFrom, bucketTo);
             var nonPnlCash = txs.Where(t => t.AffectsCash && !AccountChart.IsProfitAndLoss(t)).ToList();
             var capIn = AccountChart.CashIn(nonPnlCash);
             var capOut = AccountChart.CashOut(nonPnlCash);
             running += txs.Sum(AccountChart.CashEffect);
 
             // Long ranges skip silent days; months are always shown so the trend has no gaps.
-            if (!daily || txs.Count > 0 || (endExclusive - start).TotalDays <= 31)
+            if (!daily || txs.Count > 0 || opIn != 0m || opOut != 0m || (endExclusive - start).TotalDays <= 31)
             {
                 result.Add(new PeriodTrendDto(
                     daily

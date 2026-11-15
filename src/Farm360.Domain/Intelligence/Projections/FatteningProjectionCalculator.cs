@@ -84,8 +84,9 @@ public static class FatteningProjectionCalculator
         var lastDay = days.Last();
         decimal totalGainKg = inputs.DailyLiveWeightGainKg * inputs.FatteningPeriodDays;
         decimal totalFarmingCostBdt = cumulativeCost;
-        decimal breakEvenPricePerLiveKgBdt = lastDay.TotalInvestmentBdt / lastDay.LiveWeightKg;
-        decimal breakEvenPricePerMeatKgBdt = lastDay.TotalInvestmentBdt / lastDay.MeatWeightKg;
+        decimal breakEvenPricePerLiveKgBdt = lastDay.LiveWeightKg > 0 ? lastDay.TotalInvestmentBdt / lastDay.LiveWeightKg : 0;
+        // A 0% meat yield is a legal input; without the guard it threw DivideByZeroException (HTTP 500).
+        decimal breakEvenPricePerMeatKgBdt = lastDay.MeatWeightKg > 0 ? lastDay.TotalInvestmentBdt / lastDay.MeatWeightKg : 0;
         decimal costPerKgGainBdt = totalGainKg > 0 ? totalFarmingCostBdt / totalGainKg : 0;
         decimal roiPercent = lastDay.TotalInvestmentBdt > 0 ? lastDay.ProfitLossBdt / lastDay.TotalInvestmentBdt : 0;
         decimal dailyProfitRateBdt = lastDay.ProfitLossBdt / inputs.FatteningPeriodDays;

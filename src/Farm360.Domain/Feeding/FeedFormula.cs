@@ -84,6 +84,34 @@ public sealed class FeedFormula : AuditableEntity, IAggregateRoot
         Status = status;
     }
 
+    /// <summary>How far a recipe's percentages may stray from 100 and still be accepted.</summary>
+    public const decimal PercentageTolerance = 0.01m;
+
+    /// <summary>Sum of the ingredient percentages (100 for a well-formed recipe).</summary>
+    public decimal PercentageTotal => _ingredients.Sum(i => i.Percentage);
+
+    /// <summary>
+    /// This ingredient's fraction of one kg of the recipe — its percentage over the sum of all the
+    /// recipe's percentages, so a recipe saved at 99.9% or 101% still splits exactly one kg.
+    /// The one place every consumer (stock deduction, costing, planning) gets its split from.
+    /// </summary>
+    public decimal ShareOf(FormulaIngredient ingredient)
+    {
+        ArgumentNullException.ThrowIfNull(ingredient);
+        return Share(ingredient.Percentage, PercentageTotal);
+    }
+
+    /// <summary>A percentage's fraction of <paramref name="totalPercentage"/> (falls back to /100 when the total is 0).</summary>
+    public static decimal Share(decimal percentage, decimal totalPercentage) =>
+        totalPercentage > 0 ? percentage / totalPercentage : percentage / 100m;
+
+    /// <summary>True when the percentages add up to 100 (± <see cref="PercentageTolerance"/>).</summary>
+    public static bool PercentagesSumTo100(IEnumerable<decimal> percentages)
+    {
+        ArgumentNullException.ThrowIfNull(percentages);
+        return Math.Abs(percentages.Sum() - 100m) <= PercentageTolerance;
+    }
+
     public void RecalculateTotals()
     {
         if (_ingredients.Count == 0)
@@ -93,8 +121,7 @@ public sealed class FeedFormula : AuditableEntity, IAggregateRoot
             return;
         }
 
-        decimal totalPercentage = _ingredients.Sum(i => i.Percentage);
-        if (totalPercentage <= 0) totalPercentage = 100;
+        decimal totalPercentage = PercentageTotal;
 
         decimal costSum = 0;
         decimal dmSum = 0;
@@ -106,7 +133,7 @@ public sealed class FeedFormula : AuditableEntity, IAggregateRoot
 
         foreach (var item in _ingredients)
         {
-            decimal ratio = item.Percentage / totalPercentage;
+            decimal ratio = Share(item.Percentage, totalPercentage);
             costSum += item.IngredientCostPerKg * ratio;
             dmSum += item.IngredientNutritionalProfile.DryMatterPercentage * ratio;
             cpSum += item.IngredientNutritionalProfile.CrudeProteinPercentage * ratio;

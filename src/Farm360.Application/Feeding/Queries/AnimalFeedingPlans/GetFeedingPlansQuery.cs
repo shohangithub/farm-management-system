@@ -25,7 +25,9 @@ public sealed record AnimalFeedingPlanDto(
     string? FormulaName,
     decimal EstimatedCostPerKgBdt,
     decimal EstimatedDailyCostBdt,
-    IReadOnlyList<object> Exclusions);
+    IReadOnlyList<object> Exclusions,
+    int HeadCount = 1,
+    string CostBasis = "Concentrate ration only");
 
 internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPlansQuery, IReadOnlyList<AnimalFeedingPlanDto>>
 {
@@ -34,14 +36,24 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
     private readonly IFeedFormulaRepository _formulaRepository;
     private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository _animalRepository;
     private readonly ITenantService _tenantService;
+    private readonly Farm360.Application.Feeding.Services.FeedCostCalculator? _calculator;
+    private readonly IFarmBusinessRulesProvider? _rules;
 
     public GetFeedingPlansQueryHandler(
         IAnimalFeedingPlanRepository repository, 
         IFeedingRuleSetRepository ruleSetRepository, 
         IFeedFormulaRepository formulaRepository,
         Farm360.Domain.Livestock.Repositories.IAnimalRepository animalRepository,
-        ITenantService tenantService)
+        ITenantService tenantService,
+        IFeedIngredientRepository? ingredientRepository = null,
+        Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository? inventoryRepository = null,
+        IFarmBusinessRulesProvider? rules = null,
+        Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
+        _calculator = ingredientRepository is not null && inventoryRepository is not null
+            ? new Farm360.Application.Feeding.Services.FeedCostCalculator(ingredientRepository, inventoryRepository, units)
+            : null;
+        _rules = rules;
         _repository = repository;
         _ruleSetRepository = ruleSetRepository;
         _formulaRepository = formulaRepository;
@@ -69,7 +81,10 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
         var animals = animalIds.Count > 0 ? await _animalRepository.GetByIdsAsync(animalIds, cancellationToken) : [];
         var animalDict = animals.ToDictionary(a => a.Id);
 
-        return plans.Select(p =>
+        var basis = _rules?.Current.GroupPlanQuantityBasis ?? Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead;
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var result = new List<AnimalFeedingPlanDto>(plans.Count);
+        foreach (var p in plans)
         {
             Farm360.Domain.Livestock.Animal? animal = null;
             var hasAnimal = p.AnimalId.HasValue && animalDict.TryGetValue(p.AnimalId.Value, out animal);
@@ -106,7 +121,19 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
             }
 
             var formulaName = formula?.Title ?? (ruleLine != null ? ruleLine.FeedType.ToString() : "Standard Feed");
-            var unitCost = formula?.TotalCostPerKgBdt ?? 0m;
+            // Live cost per kg of the recipe (stock items priced per kg of feed).
+            var unitCost = _calculator is null
+                ? formula?.TotalCostPerKgBdt ?? 0m
+                : Math.Round(await _calculator.FormulaCostPerKgAsync(formula, cancellationToken), 2);
+
+            // A group plan feeds its ration to every head (PerHead basis) or its quantity already is the group's total.
+            var headCount = 1;
+            if (!p.AnimalId.HasValue && p.Status == FeedingPlanStatus.Active)
+            {
+                var members = await _animalRepository.GetActiveByScopeAcrossTenantsAsync(p.TenantId, p.BatchId, p.ShedId, p.PenId, today, cancellationToken);
+                headCount = Math.Max(1, members.Count);
+            }
+            var heads = Farm360.Domain.Feeding.Allocation.GroupFeedQuantity.HeadMultiplier(!p.AnimalId.HasValue, headCount, basis);
 
             // Calculate rations
             decimal concentrateKg = 0m;
@@ -131,9 +158,11 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
                 ? (concentrateKg + roughageKg)
                 : ((p.CurrentConcentrateKgPerDay ?? 0) + (p.CurrentRoughageKgPerDay ?? 0));
 
-            decimal dailyCost = Math.Round(totalFeedKg * unitCost, 2);
+            // Daily entries and stock cover the concentrate ration only (FeedingRuleMatcher.ExpectedKg):
+            // roughage is not priced with the concentrate recipe's cost.
+            decimal dailyCost = Math.Round(concentrateKg * unitCost * heads, 2);
 
-            return new AnimalFeedingPlanDto(
+            result.Add(new AnimalFeedingPlanDto(
                 p.Id,
                 p.AnimalId ?? Guid.Empty,
                 animalTag,
@@ -150,8 +179,14 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
                 formulaName,
                 unitCost,
                 dailyCost,
-                new List<object>()
-            );
-        }).ToList();
+                new List<object>(),
+                headCount,
+                p.AnimalId.HasValue ? "Concentrate ration only"
+                    : basis == Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead
+                        ? $"Concentrate ration only, {headCount} head(s)"
+                        : "Concentrate ration only, whole group"));
+        }
+
+        return result;
     }
 }

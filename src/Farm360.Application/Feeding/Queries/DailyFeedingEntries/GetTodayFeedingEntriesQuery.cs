@@ -22,7 +22,10 @@ public record DailyFeedingEntryDto(
     DateTime? ConfirmedAtUtc,
     string? FormulaName,
     decimal? UnitCostBdt = null,
-    decimal? TotalCostBdt = null);
+    decimal? TotalCostBdt = null,
+    decimal HeadCount = 1m,
+    decimal TotalKg = 0m,
+    string Unit = "kg");
 
 public sealed record GetTodayFeedingEntriesQuery(Guid? FarmId = null, DateOnly? TargetDate = null) : IRequest<IReadOnlyList<DailyFeedingEntryDto>>;
 
@@ -35,6 +38,9 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
     private readonly IPenRepository _penRepository;
     private readonly IFeedFormulaRepository _formulaRepository;
     private readonly ITenantService _tenantService;
+    private readonly IAnimalFeedAllocationRepository? _allocationRepository;
+    private readonly IFeedingRuleSetRepository? _ruleSetRepository;
+    private readonly IFarmBusinessRulesProvider? _rules;
 
     public GetTodayFeedingEntriesQueryHandler(
         IDailyFeedingEntryRepository repository,
@@ -43,8 +49,14 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
         IShedRepository shedRepository,
         IPenRepository penRepository,
         IFeedFormulaRepository formulaRepository,
-        ITenantService tenantService)
+        ITenantService tenantService,
+        IAnimalFeedAllocationRepository? allocationRepository = null,
+        IFeedingRuleSetRepository? ruleSetRepository = null,
+        IFarmBusinessRulesProvider? rules = null)
     {
+        _allocationRepository = allocationRepository;
+        _ruleSetRepository = ruleSetRepository;
+        _rules = rules;
         _repository = repository;
         _planRepository = planRepository;
         _animalRepository = animalRepository;
@@ -96,9 +108,34 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
         var formulas = await _formulaRepository.GetListAsync(tenantId, 1, 1000, null, cancellationToken);
         var formulaDict = formulas.ToDictionary(f => f.Id, f => f.Title);
 
+        // Heads each entry's quantity covers (group plans, by the quantity basis) and its unit (a liquid
+        // fed as it is is recorded in ml, not kg), so the page can total kg and cost correctly.
+        var allocationsByEntry = new Dictionary<Guid, List<Farm360.Domain.Feeding.AnimalFeedAllocation>>();
+        if (_allocationRepository is not null)
+        {
+            foreach (var fid in farmIds.Where(f => f != Guid.Empty))
+            {
+                foreach (var a in await _allocationRepository.GetByFarmAsync(fid, targetDate, targetDate, cancellationToken: cancellationToken))
+                {
+                    if (!allocationsByEntry.TryGetValue(a.DailyFeedingEntryId, out var list))
+                        allocationsByEntry[a.DailyFeedingEntryId] = list = [];
+                    list.Add(a);
+                }
+            }
+        }
+        var ruleSetNames = _ruleSetRepository is null
+            ? new Dictionary<Guid, string>()
+            : (await _ruleSetRepository.GetAllAsync(cancellationToken)).ToDictionary(r => r.Id, r => r.Name);
+        var basis = _rules?.Current.GroupPlanQuantityBasis ?? Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead;
+
         return entries.Select(e =>
         {
             planDict.TryGetValue(e.FeedingPlanId, out var plan);
+            var heads = Farm360.Application.Feeding.Services.FeedEntryHeads.Multiplier(plan,
+                allocationsByEntry.TryGetValue(e.Id, out var rows) ? rows : [], basis);
+            var unit = plan is not null && ruleSetNames.TryGetValue(plan.FeedingRuleSetId, out var rsName)
+                ? Farm360.Application.Feeding.Services.DirectFeedService.UnitFromName(rsName)
+                : "kg";
             var animalId = plan?.AnimalId ?? Guid.Empty;
             animalDict.TryGetValue(animalId, out var animal);
             var animalTag = animal?.Tag?.TagId ?? (animalId != Guid.Empty ? "Tag N/A" : "General Herd");
@@ -125,7 +162,10 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
                 null,
                 formulaName,
                 e.UnitCostAtConsumptionBdt,
-                e.TotalCostBdt
+                e.TotalCostBdt,
+                heads,
+                Math.Round((e.ActualKg ?? e.ExpectedKg) * heads, 4),
+                unit
             );
         }).ToList();
     }

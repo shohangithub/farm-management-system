@@ -242,6 +242,9 @@ export interface FinancialDashboard {
   cashFlowTrend?: MonthlyCashFlowPoint[];
   expenseBreakdown?: CategoryExpenseBreakdown[];
   recentTransactions?: FinancialTransaction[];
+  /** First day of the fiscal-year-to-date window the YTD figures cover. */
+  fiscalYearStart?: string | null;
+  fiscalYearStartMonth?: number;
 }
 
 /**
@@ -894,7 +897,10 @@ export interface IncomeExpenseReport {
   closingBalanceBdt: number;
   operatingIncomeBdt: number;
   operatingExpenseBdt: number;
+  /** Operating cash received less operating cash paid — a cash figure, not profit. */
   netOperatingProfitBdt: number;
+  /** Net profit for the same days on the income-statement (accrual) basis. */
+  netProfitBdt?: number;
   incomeHeads: AccountHeadSummary[];
   expenseHeads: AccountHeadSummary[];
   incomeTransactions: CashBookLine[];
@@ -1042,6 +1048,8 @@ export interface LoanSummary {
   interestPaidInPeriodBdt: number;
   totalPrincipalBdt: number;
   totalOutstandingBdt: number;
+  /** Principal still owed at the end of the period. */
+  totalOutstandingPrincipalBdt: number;
   activeLoanCount: number;
   loans: LoanAccount[];
 }

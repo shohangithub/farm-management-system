@@ -1,7 +1,7 @@
 export interface ProjectionDefaultValue<T> {
   value: T;
-  source: string; // SystemDefault, FarmSetting, BreedStandard, AnimalRecord, ManualOverride
-  notes: string;
+  source: string; // SystemDefault, FarmSetting, BreedStandard, AnimalRecord, InventoryAverage, ManualOverride
+  sourceLabel: string;
 }
 
 export interface ProjectionDefaults {
@@ -17,6 +17,10 @@ export interface ProjectionDefaults {
   dailyOtherCostBdt: ProjectionDefaultValue<number>;
   monthlyLaborCostBdt: ProjectionDefaultValue<number>;
   fatteningPeriodDays: ProjectionDefaultValue<number>;
+  /** Everything already spent on the animal (acquisition + feed + vet + labour + overhead). */
+  costToDateBdt?: ProjectionDefaultValue<number> | null;
+  /** Farm live-weight valuation rate (meat price × dressing %, or the live market rate). */
+  liveWeightValuePerKgBdt?: ProjectionDefaultValue<number> | null;
 }
 
 export interface FatteningProjectionInputs {
@@ -80,6 +84,7 @@ export interface ProfitProjectionSummary {
 }
 
 export interface ProfitProjectionResponse {
+  inputs?: FatteningProjectionInputs;
   summary: ProfitProjectionSummary;
   days: ProfitProjectionDayResult[];
 }

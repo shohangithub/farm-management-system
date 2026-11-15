@@ -29,6 +29,7 @@ public sealed class GetBatchDetailsQueryHandler : IRequestHandler<GetBatchDetail
             batch.Name,
             batch.Status,
             batch.Notes,
+            batch.Animals.Count(a => AnimalStatusGroups.IsOnFarm(a.Status)),
             batch.Animals.Count,
             batch.CreatedAtUtc);
     }

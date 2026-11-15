@@ -530,8 +530,8 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("ActualKg")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("AdjustmentReason")
                         .HasMaxLength(250)
@@ -556,8 +556,8 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("date");
 
                     b.Property<decimal>("ExpectedKg")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<Guid>("FarmId")
                         .HasColumnType("uniqueidentifier");
@@ -604,8 +604,8 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("UnitCostAtConsumptionBdt")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.HasKey("Id");
 
@@ -1742,6 +1742,13 @@ namespace Farm360.Persistence.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<Guid?>("LedgerVetPostedAnimalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("LedgerVetPostedBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
@@ -3426,7 +3433,7 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("nvarchar(40)");
 
                     b.Property<decimal>("WeightedAverageCostBdt")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal(18,6)");
 
                     b.HasKey("Id");
 

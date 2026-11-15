@@ -15,7 +15,8 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
 import { TrialBalance, TrialBalanceLine } from '../../models/finance.model';
-
+
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-trial-balance',
   standalone: true,
@@ -299,7 +300,7 @@ export class TrialBalanceComponent {
 
   readonly selectedGroup = signal<'ALL' | 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense'>('ALL');
 
-  private readonly todayStr = new Date().toISOString().split('T')[0];
+  private readonly todayStr = toLocalIsoDate();
 
   readonly filterForm = this.fb.group({
     asOfDate: [this.todayStr]

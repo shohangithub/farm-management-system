@@ -23,6 +23,11 @@ public sealed class CreateFeedFormulaCommandValidator : AbstractValidator<Create
     {
         RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
         RuleFor(x => x.TargetSpecies).IsInEnum();
+        RuleFor(x => x.Ingredients)
+            .Must(i => i is null || i.Count == 0 || Farm360.Domain.Feeding.FeedFormula.PercentagesSumTo100(i.Select(x => x.Percentage)))
+            .WithMessage("Ingredient percentages must add up to 100%.");
+        RuleForEach(x => x.Ingredients).Must(i => i.Percentage > 0 && i.Percentage <= 100)
+            .WithMessage("Each ingredient percentage must be between 0 and 100.");
     }
 }
 

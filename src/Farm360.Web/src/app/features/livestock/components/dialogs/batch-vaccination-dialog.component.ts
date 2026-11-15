@@ -7,6 +7,7 @@ import { AnimalListItemDto } from '../../models/animal.models';
 import { HealthService } from '../../../health/services/health.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { formatAnimalAge } from '../../utils/animal-age';
 
 export interface BatchVaccinationDialogData {
   animals: AnimalListItemDto[];
@@ -154,12 +155,7 @@ export class BatchVaccinationDialogComponent implements OnInit {
   ngOnInit(): void {}
 
   ageLabel(dob: string): string {
-    const days = Math.floor((Date.now() - new Date(dob).getTime()) / 86_400_000);
-    if (days < 30)  return `${days}d`;
-    if (days < 365) return `${Math.floor(days / 30)}mo`;
-    const y = Math.floor(days / 365);
-    const m = Math.floor((days % 365) / 30);
-    return m > 0 ? `${y}y ${m}m` : `${y}y`;
+    return formatAnimalAge(dob);
   }
 
   onSubmit(): void {

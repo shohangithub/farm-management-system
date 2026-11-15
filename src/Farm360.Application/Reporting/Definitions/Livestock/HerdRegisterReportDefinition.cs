@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Farms.Queries;
+using Farm360.Application.Intelligence.Services;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 using Farm360.Domain.Livestock.Repositories;
@@ -111,7 +112,7 @@ public sealed class HerdRegisterReportDefinition : ReportDefinition<HerdRegister
         return items
             .Select(a =>
             {
-                var ageMonths = Math.Max(0, (today.DayNumber - a.DateOfBirth.DayNumber) / 30);
+                var ageMonths = AnimalAge.CompletedMonths(a.DateOfBirth, today);
                 return new HerdRegisterReportRow(
                     TagId: a.Tag.TagId,
                     Name: string.IsNullOrWhiteSpace(a.Notes) ? a.Tag.TagId : a.Notes,

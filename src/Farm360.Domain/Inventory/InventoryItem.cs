@@ -14,6 +14,9 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
     public string UnitOfMeasure { get; private set; } = null!;
     public decimal ReorderThreshold { get; private set; }
     public decimal CurrentStock { get; private set; }
+    /// <summary>Decimals kept on the weighted-average cost (in the base unit): a gram of premix can cost 0.0021 BDT.</summary>
+    public const int CostDecimals = 6;
+
     public decimal WeightedAverageCostBdt { get; private set; }
     public decimal TotalValueBdt => CurrentStock * WeightedAverageCostBdt;
     public string? StorageLocation { get; private set; }
@@ -107,7 +110,7 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
         decimal receivedTotalValue = receivedQuantity * unitCostBdt;
         decimal newStock = CurrentStock + receivedQuantity;
 
-        WeightedAverageCostBdt = newStock > 0 ? Math.Round((currentTotalValue + receivedTotalValue) / newStock, 2) : unitCostBdt;
+        WeightedAverageCostBdt = newStock > 0 ? Math.Round((currentTotalValue + receivedTotalValue) / newStock, CostDecimals) : unitCostBdt;
         CurrentStock = newStock;
 
         RaiseDomainEvent(new StockReceivedEvent(transactionId, Id, TenantId, FarmId, receivedQuantity, unitCostBdt, CurrentStock));
@@ -129,7 +132,7 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
         if (newStock > 0)
         {
             decimal remainingValue = Math.Max(0, currentTotalValue - returnTotalValue);
-            WeightedAverageCostBdt = Math.Round(remainingValue / newStock, 2);
+            WeightedAverageCostBdt = Math.Round(remainingValue / newStock, CostDecimals);
         }
 
         CurrentStock = newStock;

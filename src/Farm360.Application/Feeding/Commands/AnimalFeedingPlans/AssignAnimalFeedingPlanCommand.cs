@@ -56,6 +56,7 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
     private readonly IDirectFeedService _directFeed;
+    private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
 
     public AssignAnimalFeedingPlanCommandHandler(
         IAnimalFeedingPlanRepository repository,
@@ -67,8 +68,10 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository inventoryRepository,
         IUnitOfWork unitOfWork,
         ITenantService tenantService,
-        IDirectFeedService directFeed)
+        IDirectFeedService directFeed,
+        Farm360.Application.Inventory.Units.IUnitService? units = null)
     {
+        _units = units;
         _directFeed = directFeed;
         _repository = repository;
         _ruleSetRepository = ruleSetRepository;
@@ -186,53 +189,13 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
             targets.Add(null); // to run at least once for Batch/Shed/Pen
         }
 
-        var formulaCostCache = new Dictionary<Guid, decimal>();
+        // Live cost per kg of feed (stock items priced per kg, % normalised) — shared with the daily job.
+        var calculator = new FeedCostCalculator(_feedIngredientRepository, _inventoryRepository, _units);
 
         async Task<decimal> ResolveUnitCostAsync(Guid formulaId)
         {
-            if (formulaCostCache.TryGetValue(formulaId, out var cached))
-                return cached;
-
             var formula = await _formulaRepository.GetByIdAsync(formulaId, cancellationToken);
-            if (formula == null)
-            {
-                formulaCostCache[formulaId] = 0m;
-                return 0m;
-            }
-
-            decimal cost = formula.TotalCostPerKgBdt;
-
-            if (formula.Ingredients.Count > 0)
-            {
-                decimal totalWeightedCost = 0m;
-                decimal totalPercentage = formula.Ingredients.Sum(i => i.Percentage);
-                if (totalPercentage <= 0) totalPercentage = 100m;
-
-                bool hasInventoryCost = false;
-                foreach (var fi in formula.Ingredients)
-                {
-                    decimal ingCost = fi.IngredientCostPerKg;
-                    var feedIng = await _feedIngredientRepository.GetByIdAsync(fi.IngredientId, cancellationToken);
-                    if (feedIng?.InventoryItemId != null)
-                    {
-                        var invItem = await _inventoryRepository.GetByIdAsync(feedIng.InventoryItemId.Value, cancellationToken);
-                        if (invItem != null && invItem.WeightedAverageCostBdt > 0)
-                        {
-                            ingCost = invItem.WeightedAverageCostBdt;
-                            hasInventoryCost = true;
-                        }
-                    }
-                    totalWeightedCost += ingCost * (fi.Percentage / totalPercentage);
-                }
-
-                if (hasInventoryCost && totalWeightedCost > 0)
-                {
-                    cost = Math.Round(totalWeightedCost, 2);
-                }
-            }
-
-            formulaCostCache[formulaId] = cost;
-            return cost;
+            return Math.Round(await calculator.FormulaCostPerKgAsync(formula, cancellationToken), 4);
         }
 
         foreach (var ruleSetId in distinctRuleSetIds)

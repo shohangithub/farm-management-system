@@ -5,11 +5,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Analytics.Queries;
+using Farm360.Application.Analytics.Services;
+using Farm360.Application.Finance.Services;
+using Farm360.Domain.Feeding.Interfaces.Repositories;
+using Farm360.Domain.Livestock;
 using Farm360.Domain.Livestock.Enums;
-using Farm360.Domain.Finance;
-using Farm360.Domain.Finance.Enums;
 using Farm360.Domain.Health.Enums;
 using Farm360.Persistence.Context;
+using Farm360.Persistence.Repositories.Dashboard;
 using Microsoft.EntityFrameworkCore;
 
 namespace Farm360.Persistence.Queries;
@@ -17,10 +20,29 @@ namespace Farm360.Persistence.Queries;
 public class AnalyticsQueryService : IAnalyticsQueryService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAnimalFeedAllocationRepository _feedAllocations;
 
-    public AnalyticsQueryService(ApplicationDbContext context)
+    /// <summary>Months shown on the trend charts (current month included).</summary>
+    private const int TrendMonths = 6;
+
+    public AnalyticsQueryService(ApplicationDbContext context, IAnimalFeedAllocationRepository feedAllocations)
     {
         _context = context;
+        _feedAllocations = feedAllocations;
+    }
+
+    private static List<(string Label, DateOnly Start, DateOnly End)> TrendWindow(DateOnly today)
+    {
+        var months = new List<(string Label, DateOnly Start, DateOnly End)>();
+        var currentStart = new DateOnly(today.Year, today.Month, 1);
+        for (int i = TrendMonths - 1; i >= 0; i--)
+        {
+            var start = currentStart.AddMonths(-i);
+            // The current month runs to today only, so a part-month is not averaged over future days.
+            var end = i == 0 ? today : start.AddMonths(1).AddDays(-1);
+            months.Add((start.ToString("MMM", CultureInfo.InvariantCulture), start, end));
+        }
+        return months;
     }
 
     public async Task<BreedingAnalyticsDto> GetBreedingAnalyticsAsync(Guid? farmId, CancellationToken cancellationToken = default)
@@ -49,43 +71,26 @@ public class AnalyticsQueryService : IAnalyticsQueryService
             Math.Round(conceptionRate, 2));
     }
 
-    // Revenue/expense = profit & loss heads only (AccountChart is the single source of truth).
-    // Investor capital, loans and stock/animal purchases are not revenue or expense.
-    private static readonly TransactionCategory[] RevenueCategories =
-        Farm360.Application.Finance.Services.AccountChart.RevenueCategories;
-
-    private static readonly TransactionCategory[] ExpenseCategories =
-        Farm360.Application.Finance.Services.AccountChart.ExpenseCategories;
-
+    // Revenue/expense = profit & loss heads only, classified by AccountChart (the same code the
+    // finance dashboard uses). Investor capital, loans and stock/animal purchases are not revenue
+    // or expense; income-type rows on expense accounts reduce expense.
     public async Task<FinanceAnalyticsDto> GetFinanceAnalyticsAsync(Guid? farmId, int year, CancellationToken cancellationToken = default)
     {
-        var financeQuery = _context.FinancialTransactions.AsNoTracking()
-            .Where(t => t.TransactionDate.Year == year);
+        var start = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var postings = await DashboardMetricQueries.LoadProfitAndLossPostingsAsync(
+            _context, null, farmId, start, start.AddYears(1), cancellationToken);
 
-        if (farmId.HasValue)
-        {
-            financeQuery = financeQuery.Where(t => t.FarmId == farmId.Value);
-        }
-
-        var groupedData = await financeQuery
-            .GroupBy(t => t.TransactionDate.Month)
-            .Select(g => new
-            {
-                Month = g.Key,
-                Revenue = g.Where(t => t.Type == TransactionType.Income && RevenueCategories.Contains(t.Category)).Sum(t => t.AmountBdt),
-                Expense = g.Where(t => t.Type == TransactionType.Expense && ExpenseCategories.Contains(t.Category)).Sum(t => t.AmountBdt)
-            })
-            .ToListAsync(cancellationToken);
+        var byMonth = postings.ToLookup(t => t.TransactionDate.Month);
 
         var monthlyData = new List<MonthlyRevenueExpenseDto>();
         for (int i = 1; i <= 12; i++)
         {
-            var data = groupedData.FirstOrDefault(d => d.Month == i);
+            var month = byMonth[i];
             monthlyData.Add(new MonthlyRevenueExpenseDto(
                 i,
                 year,
-                data?.Revenue ?? 0,
-                data?.Expense ?? 0));
+                AccountChart.Revenue(month),
+                AccountChart.Expenses(month)));
         }
 
         return new FinanceAnalyticsDto(monthlyData);
@@ -105,31 +110,22 @@ public class AnalyticsQueryService : IAnalyticsQueryService
 
         var deaths = await mortalityQuery.CountAsync(cancellationToken);
 
-        // Calculate vaccination compliance (e.g. % of active animals vaccinated in the last 6 months)
+        // Vaccination compliance: % of animals on the farm vaccinated in the last 6 months.
         var sixMonthsAgo = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-6));
-        
-        var animalsQuery = _context.Animals.AsNoTracking();
-        if (farmId.HasValue)
-        {
-            animalsQuery = animalsQuery.Where(a => a.FarmId == farmId.Value);
-        }
-        
-        var totalActiveAnimals = await animalsQuery.CountAsync(cancellationToken);
-        
+
+        var onFarm = DashboardMetricQueries.OnFarmAnimals(_context, null, farmId);
+        var onFarmCount = await onFarm.CountAsync(cancellationToken);
+
         int vaccinatedAnimals = 0;
-        if (totalActiveAnimals > 0)
+        if (onFarmCount > 0)
         {
-            var recentlyVaccinatedAnimalIds = await _context.VaccinationEvents
-                .Where(v => v.Status == VaccinationStatus.Completed && v.AdministeredDate >= sixMonthsAgo)
-                .Select(v => v.AnimalId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-                
-            vaccinatedAnimals = recentlyVaccinatedAnimalIds.Count(id => 
-                _context.Animals.Any(a => a.Id == id && (!farmId.HasValue || a.FarmId == farmId.Value)));
+            vaccinatedAnimals = await onFarm
+                .Where(a => _context.VaccinationEvents.Any(v =>
+                    v.AnimalId == a.Id && v.Status == VaccinationStatus.Completed && v.AdministeredDate >= sixMonthsAgo))
+                .CountAsync(cancellationToken);
         }
 
-        var compliance = totalActiveAnimals == 0 ? 0 : (double)vaccinatedAnimals / totalActiveAnimals * 100.0;
+        var compliance = onFarmCount == 0 ? 0 : (double)vaccinatedAnimals / onFarmCount * 100.0;
 
         return new HealthAnalyticsDto(
             deaths,
@@ -143,247 +139,132 @@ public class AnalyticsQueryService : IAnalyticsQueryService
 
         var animals = await query.Select(a => new { a.Species, a.BreedId, a.Sex, a.Status }).ToListAsync(cancellationToken);
 
-        var bySpecies = animals.GroupBy(a => a.Species.ToString()).ToDictionary(g => g.Key, g => g.Count());
-        var byBreed = animals.GroupBy(a => a.BreedId.ToString()).ToDictionary(g => g.Key, g => g.Count());
-        var bySex = animals.GroupBy(a => a.Sex.ToString()).ToDictionary(g => g.Key, g => g.Count());
+        // Species/breed/sex describe the herd on the farm now; status keeps the full history
+        // (sold, dead, ...) so the status breakdown still shows where animals went.
+        var onFarm = animals.Where(a => AnimalStatusGroups.IsOnFarm(a.Status)).ToList();
+        var bySpecies = onFarm.GroupBy(a => a.Species.ToString()).ToDictionary(g => g.Key, g => g.Count());
+        var byBreed = onFarm.GroupBy(a => a.BreedId.ToString()).ToDictionary(g => g.Key, g => g.Count());
+        var bySex = onFarm.GroupBy(a => a.Sex.ToString()).ToDictionary(g => g.Key, g => g.Count());
         var byStatus = animals.GroupBy(a => a.Status.ToString()).ToDictionary(g => g.Key, g => g.Count());
 
         return new HerdCompositionDto(bySpecies, byBreed, bySex, byStatus);
     }
 
+    /// <summary>
+    /// Monthly herd ADG per active batch (or per species when there are no batches). Each month's
+    /// value is the mean of per-animal gains (an animal's own first-to-last weigh-in in that month
+    /// divided by the days between them); weigh-ins of different animals are never mixed. Months
+    /// without such data are null: no value is estimated.
+    /// </summary>
     public async Task<IReadOnlyList<AdgTrendDto>> GetAdgTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default)
     {
-        var now = DateTime.UtcNow;
-        var months = new List<(string Label, DateOnly Start, DateOnly End)>();
-        for (int i = 5; i >= 0; i--)
-        {
-            var d = now.AddMonths(-i);
-            var start = new DateOnly(d.Year, d.Month, 1);
-            var end = start.AddMonths(1).AddDays(-1);
-            months.Add((d.ToString("MMM", CultureInfo.InvariantCulture), start, end));
-        }
+        var months = TrendWindow(DateOnly.FromDateTime(DateTime.UtcNow));
+        var earliestDate = months[0].Start;
 
-        var animalsQuery = _context.Animals.AsNoTracking().Where(a => a.Status == AnimalStatus.Active);
+        // Every animal of the farm (not only today's Active ones): an animal sold last month still
+        // grew on this farm during the months it was here.
+        var animalsQuery = _context.Animals.AsNoTracking();
         if (farmId.HasValue)
         {
             animalsQuery = animalsQuery.Where(a => a.FarmId == farmId.Value);
         }
 
-        var animals = await animalsQuery.Select(a => new
-        {
-            a.Id,
-            a.BatchId,
-            a.Species,
-            a.AdgKgPerDay,
-            a.LatestWeightKg
-        }).ToListAsync(cancellationToken);
+        var animals = await animalsQuery
+            .Select(a => new { a.Id, a.BatchId, a.Species })
+            .ToListAsync(cancellationToken);
 
         if (animals.Count == 0)
         {
             return Array.Empty<AdgTrendDto>();
         }
 
-        var animalIds = animals.Select(a => a.Id).ToHashSet();
-        var earliestDate = months.First().Start;
-
-        var weightRecords = await _context.WeightRecords.AsNoTracking()
-            .Where(w => animalIds.Contains(w.AnimalId) && w.RecordedDate >= earliestDate)
-            .OrderBy(w => w.RecordedDate)
-            .Select(w => new { w.AnimalId, w.RecordedDate, WeightKg = w.Weight.WeightKg })
-            .ToListAsync(cancellationToken);
+        var animalIds = animals.Select(a => a.Id).ToList();
+        var weighIns = (await _context.WeightRecords.AsNoTracking()
+                .Where(w => animalIds.Contains(w.AnimalId) && w.RecordedDate >= earliestDate)
+                .Select(w => new { w.AnimalId, w.RecordedDate, WeightKg = w.Weight.WeightKg })
+                .ToListAsync(cancellationToken))
+            .Select(w => new HerdMetrics.WeighIn(w.AnimalId, w.RecordedDate, w.WeightKg))
+            .ToList();
 
         var batchesQuery = _context.AnimalBatches.AsNoTracking().Where(b => b.Status == BatchStatus.Active);
         if (farmId.HasValue)
         {
             batchesQuery = batchesQuery.Where(b => b.FarmId == farmId.Value);
         }
-        var batches = await batchesQuery.Take(4).ToListAsync(cancellationToken);
+        var batches = await batchesQuery
+            .OrderBy(b => b.Name)
+            .Select(b => new { b.Id, b.Name })
+            .Take(4)
+            .ToListAsync(cancellationToken);
+
+        var groups = batches.Count > 0
+            ? batches.Select(b => (Key: b.Id.ToString(), Name: b.Name, Ids: animals.Where(a => a.BatchId == b.Id).Select(a => a.Id).ToHashSet())).ToList()
+            : animals.GroupBy(a => a.Species).Take(3)
+                .Select(g => (Key: g.Key.ToString(), Name: $"{g.Key} Herd", Ids: g.Select(a => a.Id).ToHashSet())).ToList();
 
         var result = new List<AdgTrendDto>();
-
-        if (batches.Count > 0)
+        foreach (var group in groups)
         {
-            foreach (var batch in batches)
+            var groupWeighIns = weighIns.Where(w => group.Ids.Contains(w.AnimalId)).ToList();
+            var points = months
+                .Select(m => new AdgTrendPointDto(m.Label, HerdMetrics.AverageDailyGain(groupWeighIns, m.Start, m.End)))
+                .ToList();
+
+            // A series with no measurable month is omitted rather than drawn as a flat invented line.
+            if (points.Any(p => p.AdgValue.HasValue))
             {
-                var batchAnimals = animals.Where(a => a.BatchId == batch.Id).ToList();
-                var batchAnimalIds = batchAnimals.Select(a => a.Id).ToHashSet();
-
-                var knownAdg = batchAnimals
-                    .Where(a => a.AdgKgPerDay.HasValue && a.AdgKgPerDay > 0)
-                    .Select(a => (double)a.AdgKgPerDay!.Value)
-                    .ToList();
-
-                double baseAdg = knownAdg.Count > 0 ? knownAdg.Average() : 0.82;
-
-                var dataPoints = new List<AdgTrendPointDto>();
-                int monthIdx = 0;
-                foreach (var m in months)
-                {
-                    // Check if there are actual weights in this month for this batch
-                    var monthWeights = weightRecords.Where(w => batchAnimalIds.Contains(w.AnimalId) && w.RecordedDate >= m.Start && w.RecordedDate <= m.End).ToList();
-                    double monthAdg;
-                    if (monthWeights.Count >= 2)
-                    {
-                        var first = monthWeights.First();
-                        var last = monthWeights.Last();
-                        var days = Math.Max(1, last.RecordedDate.DayNumber - first.RecordedDate.DayNumber);
-                        monthAdg = Math.Round((double)(last.WeightKg - first.WeightKg) / days, 2);
-                        if (monthAdg <= 0) monthAdg = Math.Round(baseAdg * (0.94 + (monthIdx * 0.02)), 2);
-                    }
-                    else
-                    {
-                        monthAdg = Math.Round(Math.Max(0.1, baseAdg * (0.92 + (monthIdx * 0.03))), 2);
-                    }
-
-                    dataPoints.Add(new AdgTrendPointDto(m.Label, monthAdg));
-                    monthIdx++;
-                }
-
-                result.Add(new AdgTrendDto(batch.Id.ToString(), batch.Name, dataPoints));
-            }
-        }
-        else
-        {
-            // Group by Species if no batches
-            var speciesGroups = animals.GroupBy(a => a.Species).Take(3);
-            foreach (var group in speciesGroups)
-            {
-                var speciesAnimals = group.ToList();
-                var speciesAnimalIds = speciesAnimals.Select(a => a.Id).ToHashSet();
-
-                var knownAdg = speciesAnimals
-                    .Where(a => a.AdgKgPerDay.HasValue && a.AdgKgPerDay > 0)
-                    .Select(a => (double)a.AdgKgPerDay!.Value)
-                    .ToList();
-
-                double defaultBase = (group.Key == AnimalSpecies.CattleBeef || group.Key == AnimalSpecies.CattleDairy) ? 0.88 : (group.Key == AnimalSpecies.Goat ? 0.16 : 0.22);
-                double baseAdg = knownAdg.Count > 0 ? knownAdg.Average() : defaultBase;
-
-                var dataPoints = new List<AdgTrendPointDto>();
-                int monthIdx = 0;
-                foreach (var m in months)
-                {
-                    var monthWeights = weightRecords.Where(w => speciesAnimalIds.Contains(w.AnimalId) && w.RecordedDate >= m.Start && w.RecordedDate <= m.End).ToList();
-                    double monthAdg;
-                    if (monthWeights.Count >= 2)
-                    {
-                        var first = monthWeights.First();
-                        var last = monthWeights.Last();
-                        var days = Math.Max(1, last.RecordedDate.DayNumber - first.RecordedDate.DayNumber);
-                        monthAdg = Math.Round((double)(last.WeightKg - first.WeightKg) / days, 2);
-                        if (monthAdg <= 0) monthAdg = Math.Round(baseAdg * (0.93 + (monthIdx * 0.025)), 2);
-                    }
-                    else
-                    {
-                        monthAdg = Math.Round(Math.Max(0.05, baseAdg * (0.91 + (monthIdx * 0.03))), 2);
-                    }
-
-                    dataPoints.Add(new AdgTrendPointDto(m.Label, monthAdg));
-                    monthIdx++;
-                }
-
-                result.Add(new AdgTrendDto(group.Key.ToString(), $"{group.Key} Herd", dataPoints));
+                result.Add(new AdgTrendDto(group.Key, group.Name, points));
             }
         }
 
         return result;
     }
 
+    /// <summary>
+    /// Monthly feed cost per head: confirmed feed allocated to animals that month (the same
+    /// AnimalFeedAllocations totals every feed-cost report uses) divided by the average number of
+    /// animals on the farm that month (head-days / days, from acquisition and sale/death dates).
+    /// Months with no allocated feed or no animals are null. There is no budget source, so there
+    /// is no budget series.
+    /// </summary>
     public async Task<IReadOnlyList<FeedCostTrendDto>> GetFeedCostTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default)
     {
-        var now = DateTime.UtcNow;
-        var months = new List<(string Label, int Month, int Year, DateOnly Start, DateOnly End)>();
-        for (int i = 5; i >= 0; i--)
+        var months = TrendWindow(DateOnly.FromDateTime(DateTime.UtcNow));
+
+        var farmIds = farmId.HasValue
+            ? new List<Guid> { farmId.Value }
+            : await _context.Farms.AsNoTracking().Select(f => f.Id).ToListAsync(cancellationToken);
+
+        var residencies = (await _context.Animals.AsNoTracking()
+                .Where(a => farmIds.Contains(a.FarmId))
+                .Select(a => new { a.AcquisitionDate, a.Status, a.SaleDate, a.DeathDate, a.ModifiedAtUtc })
+                .ToListAsync(cancellationToken))
+            .Select(a => new HerdMetrics.Residency(
+                a.AcquisitionDate,
+                HerdMetrics.ExitDate(a.Status, a.SaleDate, a.DeathDate, a.ModifiedAtUtc)))
+            .ToList();
+
+        var points = new List<FeedCostTrendPointDto>();
+        foreach (var m in months)
         {
-            var d = now.AddMonths(-i);
-            var start = new DateOnly(d.Year, d.Month, 1);
-            var end = start.AddMonths(1).AddDays(-1);
-            months.Add((d.ToString("MMM", CultureInfo.InvariantCulture), d.Month, d.Year, start, end));
+            decimal monthCost = 0m;
+            foreach (var id in farmIds)
+            {
+                var totals = await _feedAllocations.GetTotalsForFarmAsync(id, m.Start, m.End, cancellationToken);
+                monthCost += totals.Sum(t => t.TotalCostBdt);
+            }
+
+            var avgHead = HerdMetrics.AverageHeadCount(residencies, m.Start, m.End);
+            decimal? perHead = monthCost > 0m && avgHead > 0m ? Math.Round(monthCost / avgHead, 2) : null;
+            points.Add(new FeedCostTrendPointDto(m.Label, perHead));
         }
 
-        var earliestStart = months.First().Start;
-        var earliestDateUtc = new DateTime(earliestStart.Year, earliestStart.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        var animalsCountQuery = _context.Animals.AsNoTracking().Where(a => a.Status == AnimalStatus.Active);
-        if (farmId.HasValue)
-        {
-            animalsCountQuery = animalsCountQuery.Where(a => a.FarmId == farmId.Value);
-        }
-        var totalAnimals = await animalsCountQuery.CountAsync(cancellationToken);
-        if (totalAnimals == 0)
+        if (points.All(p => p.CostPerAnimal is null))
         {
             return Array.Empty<FeedCostTrendDto>();
         }
 
-        int animalCount = Math.Max(1, totalAnimals);
-
-        // 1. Query DailyFeedingEntries
-        var feedingQuery = _context.DailyFeedingEntries.AsNoTracking()
-            .Where(f => f.EntryDate >= earliestStart && (f.Status == Domain.Feeding.Enums.DailyFeedingEntryStatus.Confirmed || f.Status == Domain.Feeding.Enums.DailyFeedingEntryStatus.Adjusted));
-        if (farmId.HasValue)
-        {
-            feedingQuery = feedingQuery.Where(f => f.FarmId == farmId.Value);
-        }
-        var feedingEntries = await feedingQuery
-            .Select(f => new { f.EntryDate, Cost = f.TotalCostBdt ?? ((f.ActualKg ?? f.ExpectedKg) * (f.UnitCostAtConsumptionBdt ?? 35m)) })
-            .ToListAsync(cancellationToken);
-
-        // 2. Query FinancialTransactions for FeedCost
-        var financeQuery = _context.FinancialTransactions.AsNoTracking()
-            .Where(t => t.TransactionDate >= earliestDateUtc && t.Type == TransactionType.Expense && t.Category == TransactionCategory.FeedCost);
-        if (farmId.HasValue)
-        {
-            financeQuery = financeQuery.Where(t => t.FarmId == farmId.Value);
-        }
-        var financeEntries = await financeQuery
-            .Select(t => new { t.TransactionDate, t.AmountBdt })
-            .ToListAsync(cancellationToken);
-
-        var actualPoints = new List<FeedCostTrendPointDto>();
-        var targetPoints = new List<FeedCostTrendPointDto>();
-
-        bool hasActualRecordedExpenses = false;
-        foreach (var m in months)
-        {
-            var feedingCost = feedingEntries.Where(f => f.EntryDate >= m.Start && f.EntryDate <= m.End).Sum(f => f.Cost);
-            var financeCost = financeEntries.Where(f => f.TransactionDate.Month == m.Month && f.TransactionDate.Year == m.Year).Sum(f => f.AmountBdt);
-
-            var totalMonthCost = Math.Max(feedingCost, financeCost);
-            if (totalMonthCost > 0) hasActualRecordedExpenses = true;
-
-            decimal costPerHead = totalMonthCost > 0 
-                ? Math.Round(totalMonthCost / animalCount, 2)
-                : 0m;
-
-            actualPoints.Add(new FeedCostTrendPointDto(m.Label, costPerHead));
-            decimal target = costPerHead > 0 ? Math.Round(costPerHead * 0.94m, 2) : 0m;
-            targetPoints.Add(new FeedCostTrendPointDto(m.Label, target));
-        }
-
-        var result = new List<FeedCostTrendDto>();
-        if (hasActualRecordedExpenses)
-        {
-            result.Add(new FeedCostTrendDto("Actual Cost / Head (BDT)", actualPoints));
-            result.Add(new FeedCostTrendDto("Budget Target (BDT)", targetPoints));
-        }
-        else
-        {
-            // Calculate benchmark feed cost per head based on healthy livestock feeding rates (BDT ~1,100 - 1,350/mo)
-            var benchmarkActual = new List<FeedCostTrendPointDto>();
-            var benchmarkTarget = new List<FeedCostTrendPointDto>();
-            int idx = 0;
-            foreach (var m in months)
-            {
-                decimal cost = Math.Round(1150m + (idx * 30m), 2);
-                benchmarkActual.Add(new FeedCostTrendPointDto(m.Label, cost));
-                benchmarkTarget.Add(new FeedCostTrendPointDto(m.Label, Math.Round(cost * 0.92m, 2)));
-                idx++;
-            }
-            result.Add(new FeedCostTrendDto("Est. Feed Cost / Head (BDT)", benchmarkActual));
-            result.Add(new FeedCostTrendDto("Budget Target (BDT)", benchmarkTarget));
-        }
-
-        return result;
+        return [new FeedCostTrendDto("Feed Cost / Head (BDT)", points)];
     }
 
     public async Task<VaccinationComplianceDto> GetVaccinationComplianceAsync(Guid? farmId, CancellationToken cancellationToken = default)
@@ -414,12 +295,13 @@ public class AnalyticsQueryService : IAnalyticsQueryService
             return [];
         }
 
-        var animalCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id, cancellationToken);
-        var sickCount = await _context.Animals.AsNoTracking().CountAsync(a => a.FarmId == farm.Id && a.Status == AnimalStatus.Quarantined, cancellationToken);
-        var monthlyRevenue = await _context.FinancialTransactions.AsNoTracking()
-            .Where(t => t.FarmId == farm.Id && t.Type == TransactionType.Income && RevenueCategories.Contains(t.Category)
-                        && t.TransactionDate.Month == DateTime.UtcNow.Month && t.TransactionDate.Year == DateTime.UtcNow.Year)
-            .SumAsync(t => t.AmountBdt, cancellationToken);
+        // Same definitions as the executive dashboard cards: animals on farm, distinct sick animals
+        // in open incidents, and AccountChart revenue for the current calendar month.
+        var animalCount = await DashboardMetricQueries.OnFarmAnimals(_context, null, farm.Id).CountAsync(cancellationToken);
+        var sickCount = await DashboardMetricQueries.CountSickAnimalsAsync(_context, null, farm.Id, cancellationToken);
+        var (monthStart, nextMonthStart) = DashboardMetricQueries.CurrentMonth(DateTime.UtcNow);
+        var monthlyRevenue = AccountChart.Revenue(await DashboardMetricQueries.LoadProfitAndLossPostingsAsync(
+            _context, null, farm.Id, monthStart, nextMonthStart, cancellationToken));
 
         return [new FarmSummaryCardDto(farm.Id, farm.FarmName, animalCount, sickCount, monthlyRevenue)];
     }

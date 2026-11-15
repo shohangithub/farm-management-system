@@ -8,7 +8,8 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { AnimalPickerComponent } from '../../../../shared/components/animal-picker/animal-picker.component';
 import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../credit-terms-fields/credit-terms-fields.component';
-
+
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-income-form-dialog',
   standalone: true,
@@ -145,7 +146,7 @@ export class IncomeFormDialogComponent implements OnInit {
   error = signal('');
 
   ngOnInit(): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate();
     
     this.form = this.fb.group({
       category: ['MilkSale', Validators.required],

@@ -28,14 +28,17 @@ public sealed class DailyEntryConfirmedFinanceEventHandler : INotificationHandle
     private readonly ILedgerPostingService _ledgerPosting;
     private readonly IAnimalCostLedgerRepository _ledgerRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Domain.Feeding.Interfaces.Repositories.IAnimalFeedAllocationRepository? _allocationRepository;
     private readonly ILogger<DailyEntryConfirmedFinanceEventHandler> _logger;
 
     public DailyEntryConfirmedFinanceEventHandler(
         ILedgerPostingService ledgerPosting,
         IAnimalCostLedgerRepository ledgerRepository,
         IUnitOfWork unitOfWork,
-        ILogger<DailyEntryConfirmedFinanceEventHandler> logger)
+        ILogger<DailyEntryConfirmedFinanceEventHandler> logger,
+        Farm360.Domain.Feeding.Interfaces.Repositories.IAnimalFeedAllocationRepository? allocationRepository = null)
     {
+        _allocationRepository = allocationRepository;
         _ledgerPosting = ledgerPosting;
         _ledgerRepository = ledgerRepository;
         _unitOfWork = unitOfWork;
@@ -64,21 +67,16 @@ public sealed class DailyEntryConfirmedFinanceEventHandler : INotificationHandle
             Notes: "Ingredients not linked to inventory — paid directly",
             AnimalId: notification.AnimalId, BatchId: notification.BatchId, ShedId: notification.ShedId), cancellationToken);
 
-        // Single-animal plan: the animal's cost ledger carries the full feed cost.
-        if (notification.AnimalId.HasValue)
+        // The animal cost ledger is NOT accumulated here: adding the entry's cost on every confirmation
+        // double counted adjustments and re-confirmations, and missed group-fed animals entirely.
+        // DailyEntryConfirmedEventHandler sets each touched animal's feed bucket from its confirmed
+        // allocation total (idempotent). Re-setting it here is harmless and covers single-animal plans
+        // when this handler runs on its own.
+        if (notification.AnimalId.HasValue && _allocationRepository is not null)
         {
-            var ledger = await _ledgerRepository.GetByAnimalIdAsync(notification.AnimalId.Value, cancellationToken);
-            if (ledger == null)
-            {
-                ledger = AnimalCostLedger.Create(notification.TenantId, notification.AnimalId.Value, notification.FarmId, 0m);
-                ledger.RecordCost(TransactionCategory.FeedCost, notification.TotalCostBdt);
-                _ledgerRepository.Add(ledger);
-            }
-            else
-            {
-                ledger.RecordCost(TransactionCategory.FeedCost, notification.TotalCostBdt);
-                _ledgerRepository.Update(ledger);
-            }
+            await Farm360.Application.Feeding.Services.AnimalFeedCostSync.SyncAsync(
+                _allocationRepository, _ledgerRepository, notification.TenantId, notification.FarmId,
+                [notification.AnimalId.Value], cancellationToken);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

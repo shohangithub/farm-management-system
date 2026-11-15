@@ -105,7 +105,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
                   <mat-form-field appearance="outline" class="w-32 shrink-0">
                     <mat-label>Ratio (%)</mat-label>
-                    <input matInput type="number" formControlName="percentage" min="1" max="100" required />
+                    <input matInput type="number" formControlName="percentage" min="0.01" max="100" step="0.01" required />
                   </mat-form-field>
 
                   <button mat-icon-button type="button" color="warn" class="shrink-0" (click)="removeIngredientRow($index)" [disabled]="ingredientsArray.length <= 1">
@@ -113,6 +113,9 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                   </button>
                 </div>
               }
+              <div class="text-xs mt-1" [class.text-red-600]="percentageTotal() < 99.99 || percentageTotal() > 100.01" [class.text-gray-500]="percentageTotal() >= 99.99 && percentageTotal() <= 100.01">
+                Total: {{ percentageTotal() | number:'1.0-2' }}% (must be 100%)
+              </div>
             </div>
           </div>
         </form>
@@ -170,7 +173,7 @@ export class CreateFormulaDialogComponent implements OnInit {
       this.data.ingredients.forEach(i => {
         this.ingredientsArray.push(this.fb.group({
           ingredientId: [i.ingredientId, Validators.required],
-          percentage: [i.percentage, [Validators.required, Validators.min(1), Validators.max(100)]]
+          percentage: [i.percentage, [Validators.required, Validators.min(0.01), Validators.max(100)]]
         }));
       });
     } else {
@@ -188,7 +191,7 @@ export class CreateFormulaDialogComponent implements OnInit {
   addIngredientRow(): void {
     this.ingredientsArray.push(this.fb.group({
       ingredientId: ['', Validators.required],
-      percentage: [25, [Validators.required, Validators.min(1), Validators.max(100)]]
+      percentage: [25, [Validators.required, Validators.min(0.01), Validators.max(100)]]
     }));
   }
 
@@ -198,8 +201,19 @@ export class CreateFormulaDialogComponent implements OnInit {
     }
   }
 
+  /** Sum of the ingredient ratios; a recipe must add up to 100%. */
+  percentageTotal(): number {
+    return (this.ingredientsArray.getRawValue() as { percentage: number }[])
+      .reduce((sum, i) => sum + (Number(i.percentage) || 0), 0);
+  }
+
   onSubmit(): void {
     if (this.form.invalid) return;
+    const total = this.percentageTotal();
+    if (Math.abs(total - 100) > 0.01) {
+      this.error.set(`Ingredient ratios add up to ${total.toFixed(2)}%. They must add up to 100%.`);
+      return;
+    }
 
     this.isSubmitting.set(true);
     this.error.set('');

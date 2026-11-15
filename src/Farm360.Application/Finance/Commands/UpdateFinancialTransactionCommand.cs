@@ -1,3 +1,4 @@
+using Farm360.Application.Finance.EventHandlers.Internal;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,13 +46,16 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
     private readonly IOverheadAllocationService _overheadAllocation;
     private readonly IUnitOfWork _unitOfWork;
     private readonly Farm360.Domain.Finance.Interfaces.ITradeBillRepository _bills;
+    private readonly Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository _ledgers;
 
     public UpdateFinancialTransactionCommandHandler(
         IFinancialTransactionRepository repository,
         IOverheadAllocationService overheadAllocation,
         IUnitOfWork unitOfWork,
-        Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills)
+        Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills,
+        Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository ledgers)
     {
+        _ledgers = ledgers;
         _repository = repository;
         _overheadAllocation = overheadAllocation;
         _unitOfWork = unitOfWork;
@@ -98,6 +102,10 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
             bill.Revise(transaction.AmountBdt, DateOnly.FromDateTime(transaction.TransactionDate));
             _bills.Update(bill);
         }
+
+        // A hand-entered vet expense lives directly in the animal's vet bucket: move exactly what it
+        // posted to the new amount/category/animal rather than leave the old figure behind.
+        await AnimalCostLedgerUpdater.SyncManualVetAsync(_ledgers, transaction, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

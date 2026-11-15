@@ -10,7 +10,10 @@ export interface BatchDto {
   name: string;
   status: BatchStatus;
   notes?: string;
+  /** Animals currently on the farm (Active + Quarantined). */
   animalCount: number;
+  /** Every animal ever assigned to the batch, including sold / slaughtered / dead. */
+  totalEverInBatch: number;
   createdAtUtc: string;
 }
 

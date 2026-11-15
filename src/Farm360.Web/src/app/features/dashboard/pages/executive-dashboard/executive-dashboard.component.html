@@ -42,12 +42,12 @@
             <mat-icon>pets</mat-icon>
           </div>
           <div>
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Animals</p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Animals on Farm</p>
             <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboard.totalAnimals }}</h3>
           </div>
         </div>
         <div class="flex items-center text-sm">
-          <span class="text-emerald-500 font-medium flex items-center"><mat-icon class="text-[16px] w-[16px] h-[16px]">trending_up</mat-icon> Active</span>
+          <span class="text-gray-500 font-medium flex items-center">Active + quarantined head</span>
         </div>
       </div>
 
@@ -135,7 +135,7 @@
           </div>
         </div>
         <div class="flex items-center text-sm">
-          <span class="text-red-500 font-medium flex items-center" *ngIf="dashboard.deathsThisMonth > 0"><mat-icon class="text-[16px] w-[16px] h-[16px]">trending_up</mat-icon> Attention needed</span>
+          <span class="text-red-500 font-medium flex items-center" *ngIf="dashboard.deathsThisMonth > 0"><mat-icon class="text-[16px] w-[16px] h-[16px]">warning</mat-icon> Attention needed</span>
           <span class="text-emerald-500 font-medium flex items-center" *ngIf="dashboard.deathsThisMonth === 0"><mat-icon class="text-[16px] w-[16px] h-[16px]">check_circle</mat-icon> No mortalities</span>
         </div>
       </div>
@@ -349,7 +349,7 @@
               </div>
               <div>
                 <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">ADG Growth Trends</h3>
-                <p class="text-xs text-gray-400 m-0">6-month average daily gain growth velocity trajectory</p>
+                <p class="text-xs text-gray-400 m-0">6-month average of per-animal daily gain, from weigh-ins</p>
               </div>
             </div>
           </div>
@@ -368,7 +368,7 @@
               </div>
               <div>
                 <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">Feed Cost Trends</h3>
-                <p class="text-xs text-gray-400 m-0">Monthly cost per head vs. planned budget benchmarks</p>
+                <p class="text-xs text-gray-400 m-0">Confirmed feed cost per month ÷ average head on farm</p>
               </div>
             </div>
           </div>

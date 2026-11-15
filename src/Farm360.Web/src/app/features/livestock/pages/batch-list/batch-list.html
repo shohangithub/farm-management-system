@@ -60,8 +60,10 @@
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">pets</mat-icon>
         </div>
         <div>
-          <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Animals</p>
-          <p class="text-sm font-bold text-gray-900 dark:text-white">{{ batch.animalCount }}</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">On farm</p>
+          <p class="text-sm font-bold text-gray-900 dark:text-white">{{ batch.animalCount }}
+            <span *ngIf="batch.totalEverInBatch > batch.animalCount" class="text-xs font-medium text-gray-400">/ {{ batch.totalEverInBatch }} ever</span>
+          </p>
         </div>
       </div>
       <div class="text-gray-300 dark:text-gray-600 group-hover:text-primary-500 transition-colors transform group-hover:translate-x-1">

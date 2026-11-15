@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Health.Queries.SpecializedReports;
 using Farm360.Application.Livestock.Queries;
+using Farm360.Application.Intelligence.Services;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 
@@ -77,8 +78,8 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
             return null;
         }
 
-        var age = (context.Today.DayNumber - animal.DateOfBirth.DayNumber) / 30;
-        return $"Tag {animal.TagId} · {animal.Species} · {animal.Sex} · {age} months · {animal.Status}";
+        var age = AnimalAge.Format(animal.DateOfBirth, context.Today);
+        return $"Tag {animal.TagId} · {animal.Species} · {animal.Sex} · {age} · {animal.Status}";
     }
 
     protected override async Task<IReadOnlyList<AnimalHealthReportRow>> FetchAsync(

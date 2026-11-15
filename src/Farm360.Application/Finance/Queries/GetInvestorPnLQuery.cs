@@ -20,31 +20,33 @@ public record GetInvestorPnLQuery(
 
 public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, InvestorPnLSummaryDto>
 {
-    private readonly IFinancialTransactionRepository _transactionRepository;
+    private readonly IFinancialStatementEngine _engine;
     private readonly IInvestorRepository _investorRepository;
 
     public GetInvestorPnLQueryHandler(
-        IFinancialTransactionRepository transactionRepository,
+        IFinancialStatementEngine engine,
         IInvestorRepository investorRepository)
     {
-        _transactionRepository = transactionRepository;
+        _engine = engine;
         _investorRepository = investorRepository;
     }
 
     public async Task<InvestorPnLSummaryDto> Handle(GetInvestorPnLQuery request, CancellationToken cancellationToken)
     {
-        var allTx = await _transactionRepository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
+        // Whole days, both ends inclusive: a posting at 18:00 on the last day belongs to the period.
+        var fromDay = request.FromDate.HasValue ? DateOnly.FromDateTime(request.FromDate.Value) : DateOnly.MinValue;
+        var toDay = DateOnly.FromDateTime(request.ToDate ?? DateTime.UtcNow);
+        if (toDay < fromDay)
+            (fromDay, toDay) = (toDay, fromDay);
+        var periodStart = request.FromDate.HasValue ? fromDay.ToDateTime(TimeOnly.MinValue) : DateTime.MinValue;
+        var periodEndExclusive = toDay == DateOnly.MaxValue ? DateTime.MaxValue : toDay.AddDays(1).ToDateTime(TimeOnly.MinValue);
 
-        if (request.FromDate.HasValue)
-            allTx = allTx.Where(t => t.TransactionDate >= request.FromDate.Value).ToList();
-
-        if (request.ToDate.HasValue)
-            allTx = allTx.Where(t => t.TransactionDate <= request.ToDate.Value).ToList();
-
-        // Profit & loss from the chart of accounts: the same figures as the P&L statement. Stock and
-        // animal purchases are not expenses until used/sold; capital and loan money is never profit.
-        var operatingRevenue = AccountChart.Revenue(allTx);
-        var operatingExpenses = AccountChart.Expenses(allTx);
+        // Profit & loss from the financial statement engine — the same lines as the income statement
+        // and balance sheet, so depreciation, the book value of assets disposed of and year-end
+        // adjustments are shared too. Capital and loan money is never profit.
+        var ledger = await _engine.LoadAsync(request.FarmId, toDay, cancellationToken);
+        var operatingRevenue = ledger.RevenueBetween(fromDay, toDay);
+        var operatingExpenses = ledger.ExpensesBetween(fromDay, toDay);
 
         var netFarmProfit = operatingRevenue - operatingExpenses;
 
@@ -103,8 +105,8 @@ public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, I
             // no period is given). Using the lifetime total made every period look over-distributed.
             decimal distributedProfit = inv.Transactions
                 .Where(t => t.Type == InvestorTransactionType.ProfitDistribution
-                            && (!request.FromDate.HasValue || t.TransactionDate >= request.FromDate.Value)
-                            && (!request.ToDate.HasValue || t.TransactionDate <= request.ToDate.Value))
+                            && t.TransactionDate >= periodStart
+                            && (!request.ToDate.HasValue || t.TransactionDate < periodEndExclusive))
                 .Sum(t => t.AmountBdt);
             if (inv.Transactions.Count == 0 && !request.FromDate.HasValue && !request.ToDate.HasValue)
                 distributedProfit = inv.TotalProfitPaidBdt;

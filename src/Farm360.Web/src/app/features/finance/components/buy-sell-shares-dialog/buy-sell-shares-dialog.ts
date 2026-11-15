@@ -15,6 +15,7 @@ import {
   UpdateShareValuationRequest 
 } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 export type ShareActionType = 'purchase' | 'sell' | 'transfer' | 'valuation';
 
 export interface BuySellSharesDialogData {
@@ -287,7 +288,7 @@ export class BuySellSharesDialogComponent implements OnInit {
   ngOnInit(): void {
     this.actionType.set(this.data.actionType);
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toLocalIsoDate();
 
     this.form = this.fb.group({
       investorId: [this.data.selectedInvestorId ?? '', Validators.required],

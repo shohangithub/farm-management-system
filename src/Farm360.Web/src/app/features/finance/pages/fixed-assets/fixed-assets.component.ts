@@ -13,6 +13,7 @@ import { FinanceService } from '../../services/finance.service';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { AccountingSettings, FixedAsset, FixedAssetSchedule, SaveFixedAssetRequest } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 interface AssetForm extends SaveFixedAssetRequest {
   supplierName: string;
   supplierPhone: string;
@@ -330,7 +331,7 @@ export class FixedAssetsComponent {
   }
 
   private today(): string {
-    return new Date().toISOString().split('T')[0];
+    return toLocalIsoDate();
   }
 
   categoryLabel(value: string): string {

@@ -150,7 +150,11 @@ public record LoanSummaryDto(
     decimal TotalOutstandingBdt,
     int ActiveLoanCount,
     IReadOnlyList<LoanAccountDto> Loans
-);
+)
+{
+    /// <summary>Principal still owed at the end of the period, per the loans' repayments up to then.</summary>
+    public decimal TotalOutstandingPrincipalBdt { get; init; }
+}
 
 /// <summary>One bucket of the period trend — a day for short ranges, a month for long ones.</summary>
 public record PeriodTrendDto(

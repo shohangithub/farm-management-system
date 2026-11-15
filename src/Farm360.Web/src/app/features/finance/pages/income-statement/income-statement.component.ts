@@ -14,6 +14,7 @@ import { FinanceService } from '../../services/finance.service';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { IncomeStatement, IncomeStatementTotals } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 interface Period { fromDate: string | null; toDate: string; comparative: boolean; }
 
 /**
@@ -161,7 +162,7 @@ export class IncomeStatementComponent {
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
 
-  period: Period = { fromDate: null, toDate: new Date().toISOString().split('T')[0], comparative: true };
+  period: Period = { fromDate: null, toDate: toLocalIsoDate(), comparative: true };
   private readonly period$ = new BehaviorSubject<Period>(this.period);
 
   constructor() {

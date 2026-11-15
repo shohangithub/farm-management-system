@@ -6,12 +6,11 @@
  * what the user sees is exactly what comes out of the printer.
  */
 
+import { toLocalIsoDate } from '../../../shared/utils/local-date';
+
 /** Local calendar date as yyyy-MM-dd. `toISOString()` would shift to UTC — before 06:00 in Dhaka that is yesterday. */
 export function toIsoDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return toLocalIsoDate(date);
 }
 
 export function addDays(date: Date, days: number): Date {

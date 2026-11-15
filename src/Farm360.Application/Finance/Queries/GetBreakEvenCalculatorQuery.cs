@@ -33,21 +33,22 @@ public class GetBreakEvenCalculatorQueryHandler : IRequestHandler<GetBreakEvenCa
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
         var ledger = await _ledgerRepository.GetByAnimalIdAsync(request.AnimalId, cancellationToken);
-        
-        // If there's no ledger yet, assume 0 cost.
-        decimal totalCost = ledger?.TotalCostBdt ?? 0m;
-        
-        // Get the latest weight record, or default to 0
-        var currentWeight = animal.WeightRecords.OrderByDescending(w => w.RecordedDate).FirstOrDefault()?.Weight.WeightKg ?? 0m;
 
-        // Use the ledger's domain method if ledger exists, otherwise calculate directly
-        decimal breakEvenPrice = ledger != null 
-            ? ledger.GetBreakEvenPricePerKg(currentWeight)
-            : (currentWeight > 0 ? Math.Round(totalCost / currentWeight, 2) : 0m);
+        // The same total the cost-ledger screen shows (its feed bucket is kept in step with the
+        // confirmed feed allocations). Without a ledger yet, the purchase price is the cost.
+        decimal totalCost = ledger?.TotalCostBdt ?? (animal.AcquisitionPriceBdt ?? 0m);
 
-        decimal price10 = currentWeight > 0 ? Math.Round((totalCost * 1.10m) / currentWeight, 2) : 0m;
-        decimal price20 = currentWeight > 0 ? Math.Round((totalCost * 1.20m) / currentWeight, 2) : 0m;
-        decimal price30 = currentWeight > 0 ? Math.Round((totalCost * 1.30m) / currentWeight, 2) : 0m;
+        // Break-even is per kg of LIVE weight: the latest recorded weight.
+        var currentWeight = animal.LatestWeightKg
+            ?? animal.WeightRecords.OrderByDescending(w => w.RecordedDate).FirstOrDefault()?.Weight.WeightKg
+            ?? 0m;
+
+        decimal PerLiveKg(decimal amount) => currentWeight > 0 ? Math.Round(amount / currentWeight, 2) : 0m;
+
+        var breakEvenPrice = PerLiveKg(totalCost);
+        var price10 = PerLiveKg(totalCost * 1.10m);
+        var price20 = PerLiveKg(totalCost * 1.20m);
+        var price30 = PerLiveKg(totalCost * 1.30m);
 
         return new BreakEvenCalculatorDto(
             request.AnimalId,

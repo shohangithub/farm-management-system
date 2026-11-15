@@ -7,7 +7,8 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoanRecord } from '../../models/finance.model';
-
+
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-loan-repayment-dialog',
   standalone: true,
@@ -159,7 +160,7 @@ export class LoanRepaymentDialogComponent implements OnInit {
   error = signal('');
 
   ngOnInit(): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate();
 
     this.form = this.fb.group({
       amountBdt: [null, [Validators.required, Validators.min(1), Validators.max(Math.ceil(this.data.outstandingBalanceBdt))]],

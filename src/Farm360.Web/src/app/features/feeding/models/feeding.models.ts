@@ -314,8 +314,13 @@ export interface AnimalFeedingPlan {
   animalSpecies?: string;
   formulaName?: string;
   estimatedCostPerKgBdt?: number;
+  /** Concentrate ration only, x heads for a group plan (per-head basis). */
   estimatedDailyCostBdt?: number;
   exclusions: FeedingPlanExclusion[];
+  /** Heads a group plan feeds today; 1 for an animal's own plan. */
+  headCount?: number;
+  /** What the daily cost covers, e.g. "Concentrate ration only, 12 head(s)". */
+  costBasis?: string;
 }
 
 export interface DailyFeedingEntry {
@@ -334,6 +339,12 @@ export interface DailyFeedingEntry {
   formulaName?: string;
   unitCostBdt?: number;
   totalCostBdt?: number;
+  /** Heads the quantity covers (group plan, per-head basis); 1 otherwise. */
+  headCount?: number;
+  /** Quantity x heads: the feed this entry stands for (planned while pending). */
+  totalKg?: number;
+  /** 'kg', or the item's own unit (ml) for a liquid fed as it is. */
+  unit?: string;
 }
 
 export interface FeedingEntryIngredientCost {
@@ -358,6 +369,10 @@ export interface FeedingEntryCostBreakdown {
   totalCostBdt?: number;
   status: string;
   ingredients: FeedingEntryIngredientCost[];
+  /** Heads the quantity covers (group plan, per-head basis). */
+  headCount?: number;
+  /** Quantity x heads: what the ingredient rows add up to. */
+  totalKg?: number;
 }
 
 export interface FeedingCycleReconciliationLine {

@@ -29,7 +29,9 @@ export interface ActionableInsight {
 }
 
 export interface ExecutiveDashboardData {
+  /** Animals currently on the farm (Active + Quarantined); excludes sold/dead/slaughtered history. */
   totalAnimals: number;
+  /** Distinct on-farm animals in open (unresolved) disease incidents. */
   sickAnimals: number;
   feedLowStockCount: number;
   currentMonthIncome: number;
@@ -56,12 +58,14 @@ export interface TrendPoint {
 export interface AdgTrend {
   batchId: string;
   batchName: string;
-  dataPoints: { label: string; adgValue: number }[];
+  /** adgValue is null for a month with no measurable per-animal weight gain. */
+  dataPoints: { label: string; adgValue: number | null }[];
 }
 
 export interface FeedCostTrend {
   groupName: string;
-  dataPoints: { label: string; costPerAnimal: number }[];
+  /** costPerAnimal is null for a month with no confirmed feed allocations. */
+  dataPoints: { label: string; costPerAnimal: number | null }[];
 }
 
 export interface VaccinationCompliance {

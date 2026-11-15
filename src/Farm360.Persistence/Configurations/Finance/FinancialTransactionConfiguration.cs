@@ -52,6 +52,10 @@ public class FinancialTransactionConfiguration : IEntityTypeConfiguration<Financ
         builder.Property(t => t.SourceModule)
             .HasMaxLength(50);
 
+        builder.Property(t => t.LedgerVetPostedAnimalId);
+        builder.Property(t => t.LedgerVetPostedBdt)
+            .HasPrecision(18, 2);
+
         // Stored as text like Type/Category. Existing rows are cash postings, hence the default.
         builder.Property(t => t.Settlement)
             .HasConversion<string>()

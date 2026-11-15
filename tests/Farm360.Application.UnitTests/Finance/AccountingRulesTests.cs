@@ -176,7 +176,7 @@ public class AccountingRulesTests
         }
 
         var reconciliation = Substitute.For<IAccountingReconciliationService>();
-        reconciliation.ReconcileAsync(FarmId, Arg.Any<IReadOnlyCollection<FinancialTransaction>>(), Arg.Any<CancellationToken>())
+        reconciliation.ReconcileBalancesAsync(FarmId, Arg.Any<IReadOnlyDictionary<string, decimal>>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ReconciliationLineDto>());
         var handler = new GetBalanceSheetQueryHandler(new FinancialStatementEngine(ledger), reconciliation);
 

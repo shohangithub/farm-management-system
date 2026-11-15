@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Farms.Queries;
+using Farm360.Application.Intelligence.Services;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
@@ -26,6 +27,7 @@ public sealed record HerdSummaryReportRow(
     decimal PurchaseCostBdt,
     decimal FeedCostBdt,
     decimal VetCostBdt,
+    decimal LabourOverheadBdt,
     decimal TotalCostBdt,
     decimal ProjectedValueBdt,
     decimal ProjectedProfitBdt,
@@ -37,34 +39,27 @@ public sealed record HerdSummaryReportRow(
 /// </summary>
 public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryReportRow>
 {
-    private static readonly IReadOnlyList<ReportSelectOption> LiveWeightPriceOptions =
-    [
-        new("350", new LocalizedText("৳ 350 / kg (Conservative / সাধারণ)", "৳ ৩৫০ / কেজি (সাধারণ)")),
-        new("380", new LocalizedText("৳ 380 / kg (Moderate / মাঝারি)", "৳ ৩৮০ / কেজি (মাঝারি)")),
-        new("400", new LocalizedText("৳ 400 / kg (Standard Benchmark / প্রমিত দর)", "৳ ৪০০ / কেজি (প্রমিত দর)")),
-        new("420", new LocalizedText("৳ 420 / kg (High Quality Beef / উন্নত জাত)", "৳ ৪২০ / কেজি (উন্নত জাত)")),
-        new("450", new LocalizedText("৳ 450 / kg (Eid / Festival Market / ঈদ বাজার)", "৳ ৪৫০ / কেজি (ঈদ বাজার)")),
-        new("500", new LocalizedText("৳ 500 / kg (Peak Premium / সর্বোচ্চ প্রিমিয়াম)", "৳ ৫০০ / কেজি (সর্বোচ্চ প্রিমিয়াম)"))
-    ];
-
     private readonly IAnimalRepository _animals;
     private readonly IBreedRepository _breeds;
     private readonly IShedRepository _sheds;
     private readonly IAnimalCostLedgerRepository _ledgers;
     private readonly IAnimalFeedAllocationRepository _feed;
+    private readonly IAnimalValuationService _valuation;
 
     public HerdSummaryReportDefinition(
         IAnimalRepository animals,
         IBreedRepository breeds,
         IShedRepository sheds,
         IAnimalCostLedgerRepository ledgers,
-        IAnimalFeedAllocationRepository feed)
+        IAnimalFeedAllocationRepository feed,
+        IAnimalValuationService valuation)
     {
         _animals = animals;
         _breeds = breeds;
         _sheds = sheds;
         _ledgers = ledgers;
         _feed = feed;
+        _valuation = valuation;
     }
 
     public override string Key => "livestock.herd-summary";
@@ -83,12 +78,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
     [
         ReportParameter.Farm(required: true),
         ReportParameter.Batch(required: false),
-        ReportParameter.Select(
-            "pricePerKg",
-            new LocalizedText("Live Weight Price Option", "জীবন্ত ওজনের দর নির্বাচন"),
-            LiveWeightPriceOptions,
-            @default: "400",
-            required: false)
+        LiveWeightRateParameter.Create(_valuation),
     ];
 
     public override IReadOnlyList<ReportColumn<HerdSummaryReportRow>> Columns =>
@@ -106,9 +96,10 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
         ReportColumn<HerdSummaryReportRow>.Money("purchaseCost", new LocalizedText("Purchase (৳)", "ক্রয় মূল্য"), r => r.PurchaseCostBdt, 0, 22f, ReportAggregate.Sum),
         ReportColumn<HerdSummaryReportRow>.Money("feedCost", new LocalizedText("Feed (৳)", "খাদ্য খরচ"), r => r.FeedCostBdt, 0, 22f, ReportAggregate.Sum),
         ReportColumn<HerdSummaryReportRow>.Money("vetCost", new LocalizedText("Vet / Care (৳)", "চিকিৎসা"), r => r.VetCostBdt, 0, 20f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("labourOverhead", new LocalizedText("Labour & OH (৳)", "শ্রম ও পরোক্ষ"), r => r.LabourOverheadBdt, 0, 22f, ReportAggregate.Sum),
         ReportColumn<HerdSummaryReportRow>.Money("totalCost", new LocalizedText("Total Cost (৳)", "মোট খরচ"), r => r.TotalCostBdt, 0, 24f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("projectedValue", new LocalizedText("Est. Value (৳)", "বাজারমূল্য"), r => r.ProjectedValueBdt, 0, 24f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("projectedProfit", new LocalizedText("Net P/L (৳)", "সম্ভাব্য লাভ/ক্ষতি"), r => r.ProjectedProfitBdt, 0, 24f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("projectedValue", new LocalizedText("Value (৳) — est. / realised", "মূল্য (আনুমানিক / প্রাপ্ত)"), r => r.ProjectedValueBdt, 0, 24f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("projectedProfit", new LocalizedText("Net P/L (৳)", "লাভ/ক্ষতি"), r => r.ProjectedProfitBdt, 0, 24f, ReportAggregate.Sum),
         ReportColumn<HerdSummaryReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, 18f, false),
     ];
 
@@ -131,11 +122,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
 
         var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
         var batchId = context.IdOrNull("batchId");
-        var marketPricePerKg = context.Number("pricePerKg", 400m);
-        if (marketPricePerKg <= 0)
-        {
-            marketPricePerKg = 400m;
-        }
+        var rateOverride = LiveWeightRateParameter.ReadOverride(context);
 
         // Fetches every page, not just the first 5000: a farm with more animals than that used to
         // have its grand totals (purchase/feed/vet/total cost, projected value) silently computed
@@ -201,21 +188,18 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
 
             var location = movement?.PenId.HasValue == true ? $"{shedLabel} / Pen" : shedLabel;
 
-            var ageDays = Math.Max(0, today.DayNumber - a.DateOfBirth.DayNumber);
-            var ageMonths = ageDays / 30;
-            var ageYears = ageMonths / 12;
-            var ageRem = ageMonths % 12;
-            var ageLabel = ageYears > 0 ? $"{ageYears}y {ageRem}m" : $"{ageMonths}mo";
+            var ageLabel = AnimalAge.Format(a.DateOfBirth, today);
 
             var weight = a.LatestWeightKg ?? 0m;
             var adg = a.AdgKgPerDay ?? 0m;
 
-            var purchaseCost = a.AcquisitionPriceBdt ?? ledger?.AcquisitionCostBdt ?? 0m;
-            var feedCost = ledger?.TotalFeedCostBdt ?? feed.TotalCostBdt;
-            var vetCost = ledger?.TotalVetCostBdt ?? 0m;
-            var totalCost = ledger?.TotalCostBdt ?? (purchaseCost + feedCost + vetCost);
+            // Cost ledger buckets (purchase falls back to the animal record); without a ledger,
+            // purchase + allocated feed. The columns always sum to the total.
+            var cost = _valuation.CostToDate(a, ledger, feed.TotalCostBdt);
+            var totalCost = cost.TotalBdt;
 
-            var projectedValue = weight * marketPricePerKg;
+            // On-farm animals at weight × rate, sold at realised revenue, dead at zero.
+            var projectedValue = _valuation.CurrentValue(a, ledger, totalCost, rateOverride);
             var projectedProfit = projectedValue - totalCost;
 
             rows.Add(new HerdSummaryReportRow(
@@ -226,9 +210,10 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
                 Location: location,
                 LatestWeightKg: weight,
                 AdgKg: adg,
-                PurchaseCostBdt: purchaseCost,
-                FeedCostBdt: feedCost,
-                VetCostBdt: vetCost,
+                PurchaseCostBdt: cost.PurchaseBdt,
+                FeedCostBdt: cost.FeedBdt,
+                VetCostBdt: cost.VetBdt,
+                LabourOverheadBdt: cost.LabourBdt + cost.OverheadBdt,
                 TotalCostBdt: totalCost,
                 ProjectedValueBdt: projectedValue,
                 ProjectedProfitBdt: projectedProfit,

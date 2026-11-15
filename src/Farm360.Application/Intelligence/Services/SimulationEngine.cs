@@ -12,13 +12,16 @@ public class SimulationEngine : ISimulationEngine
 {
     private readonly IAnimalRepository _animalRepository;
     private readonly IProjectionDefaultsResolver _defaultsResolver;
+    private readonly IAnimalValuationService _valuation;
 
     public SimulationEngine(
         IAnimalRepository animalRepository,
-        IProjectionDefaultsResolver defaultsResolver)
+        IProjectionDefaultsResolver defaultsResolver,
+        IAnimalValuationService valuation)
     {
         _animalRepository = animalRepository;
         _defaultsResolver = defaultsResolver;
+        _valuation = valuation;
     }
 
     public async Task<SaleSimulationResult?> SimulateSaleAsync(Guid animalId, DateOnly targetDate, CancellationToken cancellationToken = default)
@@ -32,34 +35,27 @@ public class SimulationEngine : ISimulationEngine
         if (daysFromNow <= 0) return null;
 
         var defaults = await _defaultsResolver.ResolveDefaultsAsync(animalId, cancellationToken);
-        var inputs = new FatteningProjectionInputs(
-            defaults.StartingLiveWeightKg.Value,
-            defaults.PurchasePriceBdt.Value,
-            defaults.CurrentMeatPriceBdtPerKg.Value,
-            defaults.InitialMeatYieldRatio.Value,
-            defaults.DailyLiveWeightGainKg.Value,
-            defaults.MeatYieldOnDailyGainRatio.Value,
-            defaults.DailyFeedQuantityKgAtStart.Value,
-            defaults.FeedPriceBdtPerKg.Value,
-            defaults.DailyGrassCostBdt.Value,
-            defaults.DailyOtherCostBdt.Value,
-            defaults.MonthlyLaborCostBdt.Value,
-            Math.Max(daysFromNow, defaults.FatteningPeriodDays.Value) // Ensure projection goes far enough
-        );
 
+        // The projection starts at today's weight, so day 0's investment is the cost to date —
+        // not the bare purchase price, which would leave out all feed, vet and labour so far.
+        var inputs = ProjectionInputsFactory.FromToday(defaults, Math.Max(daysFromNow, defaults.FatteningPeriodDays.Value));
         var result = FatteningProjectionCalculator.Calculate(inputs);
 
         var targetDayResult = result.Days.FirstOrDefault(d => d.Day == daysFromNow) ?? result.Days[^1];
+        var totalCost = targetDayResult.TotalInvestmentBdt;
+        var saleValue = _valuation.ValueAtWeight(targetDayResult.LiveWeightKg, totalCost);
 
         return new SaleSimulationResult(
             AnimalId: animalId,
             TargetDate: targetDate,
             DaysFromNow: daysFromNow,
             ProjectedWeightKg: targetDayResult.LiveWeightKg,
-            EstimatedSalePriceBdt: targetDayResult.MeatValueBdt,
-            ProjectedAdditionalCostBdt: targetDayResult.CumulativeCostBdt, // This represents cost from day 1 to daysFromNow
-            ProjectedTotalCostBdt: targetDayResult.TotalInvestmentBdt,
-            ProjectedProfitMarginBdt: targetDayResult.ProfitLossBdt
+            EstimatedSalePriceBdt: saleValue,
+            // Running cost from today to the sale date: feed + grass + other + labour.
+            ProjectedAdditionalCostBdt: Math.Round(targetDayResult.CumulativeCostBdt, 2),
+            // Cost to date + the running cost above.
+            ProjectedTotalCostBdt: Math.Round(totalCost, 2),
+            ProjectedProfitMarginBdt: Math.Round(saleValue - totalCost, 2)
         );
     }
 }

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Intelligence.Services;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
@@ -27,22 +28,13 @@ public sealed record AnimalSummaryReportRow(
 /// </summary>
 public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSummaryReportRow>
 {
-    private static readonly IReadOnlyList<ReportSelectOption> LiveWeightPriceOptions =
-    [
-        new("350", new LocalizedText("৳ 350 / kg (Conservative / সাধারণ)", "৳ ৩৫০ / কেজি (সাধারণ)")),
-        new("380", new LocalizedText("৳ 380 / kg (Moderate / মাঝারি)", "৳ ৩৮০ / কেজি (মাঝারি)")),
-        new("400", new LocalizedText("৳ 400 / kg (Standard Benchmark / প্রমিত দর)", "৳ ৪০০ / কেজি (প্রমিত দর)")),
-        new("420", new LocalizedText("৳ 420 / kg (High Quality Beef / উন্নত জাত)", "৳ ৪২০ / কেজি (উন্নত জাত)")),
-        new("450", new LocalizedText("৳ 450 / kg (Eid / Festival Market / ঈদ বাজার)", "৳ ৪৫০ / কেজি (ঈদ বাজার)")),
-        new("500", new LocalizedText("৳ 500 / kg (Peak Premium / সর্বোচ্চ প্রিমিয়াম)", "৳ ৫০০ / কেজি (সর্বোচ্চ প্রিমিয়াম)"))
-    ];
-
     private readonly IAnimalRepository _animals;
     private readonly IBreedRepository _breeds;
     private readonly IShedRepository _sheds;
     private readonly IPenRepository _pens;
     private readonly IAnimalCostLedgerRepository _ledgers;
     private readonly IAnimalFeedAllocationRepository _feed;
+    private readonly IAnimalValuationService _valuation;
 
     public AnimalSummaryReportDefinition(
         IAnimalRepository animals,
@@ -50,7 +42,8 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         IShedRepository sheds,
         IPenRepository pens,
         IAnimalCostLedgerRepository ledgers,
-        IAnimalFeedAllocationRepository feed)
+        IAnimalFeedAllocationRepository feed,
+        IAnimalValuationService valuation)
     {
         _animals = animals;
         _breeds = breeds;
@@ -58,6 +51,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         _pens = pens;
         _ledgers = ledgers;
         _feed = feed;
+        _valuation = valuation;
     }
 
     public override string Key => "livestock.animal-summary";
@@ -75,12 +69,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
         ReportParameter.Animal("animalId", required: true),
-        ReportParameter.Select(
-            "pricePerKg",
-            new LocalizedText("Live Weight Price Option", "জীবন্ত ওজনের দর নির্বাচন"),
-            LiveWeightPriceOptions,
-            @default: "400",
-            required: false)
+        LiveWeightRateParameter.Create(_valuation),
     ];
 
     public override IReadOnlyList<ReportColumn<AnimalSummaryReportRow>> Columns =>
@@ -104,8 +93,8 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             return null;
         }
 
-        var ageMonths = Math.Max(0, (context.Today.DayNumber - animal.DateOfBirth.DayNumber) / 30);
-        return $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {ageMonths} mo · {animal.Status}";
+        var age = AnimalAge.Format(animal.DateOfBirth, context.Today);
+        return $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {age} · {animal.Status}";
     }
 
     protected override async Task<IReadOnlyList<AnimalSummaryReportRow>> FetchAsync(
@@ -115,11 +104,8 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         ArgumentNullException.ThrowIfNull(context);
 
         var animalId = context.Id("animalId");
-        var marketPricePerKg = context.Number("pricePerKg", 400m);
-        if (marketPricePerKg <= 0)
-        {
-            marketPricePerKg = 400m;
-        }
+        var rateOverride = LiveWeightRateParameter.ReadOverride(context);
+        var marketPricePerKg = LiveWeightRateParameter.EffectiveRate(context, _valuation);
 
         var animal = await _animals.GetByIdAsync(animalId, cancellationToken).ConfigureAwait(false);
         if (animal is null)
@@ -154,11 +140,8 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
 
         // Computations
         var today = context.Today;
-        var ageDays = Math.Max(0, today.DayNumber - animal.DateOfBirth.DayNumber);
-        var ageMonths = ageDays / 30;
-        var ageYears = ageMonths / 12;
-        var remMonths = ageMonths % 12;
-        var ageFormatted = ageYears > 0 ? $"{ageYears}y {remMonths}m ({ageDays} days)" : $"{ageMonths} months ({ageDays} days)";
+        var ageDays = AnimalAge.Days(animal.DateOfBirth, today);
+        var ageFormatted = $"{AnimalAge.Format(animal.DateOfBirth, today)} ({ageDays} days)";
 
         var latestWeight = animal.LatestWeightKg ?? 0m;
         var adg = animal.AdgKgPerDay ?? 0m;
@@ -167,18 +150,29 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         var initialWeight = weightRecords.FirstOrDefault()?.Weight.WeightKg ?? latestWeight;
         var totalGainKg = Math.Max(0m, latestWeight - initialWeight);
 
-        // Financials
-        var purchaseCost = animal.AcquisitionPriceBdt ?? ledger?.AcquisitionCostBdt ?? 0m;
-        var feedCost = ledger?.TotalFeedCostBdt ?? feedTotals.TotalCostBdt;
-        var vetCost = ledger?.TotalVetCostBdt ?? 0m;
-        var laborCost = ledger?.TotalLaborCostBdt ?? 0m;
-        var overheadCost = ledger?.TotalOverheadBdt ?? 0m;
-        var totalInvestment = purchaseCost + feedCost + vetCost + laborCost + overheadCost;
+        // Financials — the cost ledger (feed bucket mirrors confirmed feed allocations); without a
+        // ledger, purchase price + allocated feed.
+        var cost = _valuation.CostToDate(animal, ledger, feedTotals.TotalCostBdt);
+        var purchaseCost = cost.PurchaseBdt;
+        var feedCost = cost.FeedBdt;
+        var vetCost = cost.VetBdt;
+        var laborCost = cost.LabourBdt;
+        var overheadCost = cost.OverheadBdt;
+        var totalInvestment = cost.TotalBdt;
 
-        // Valuations
-        var projectedValue = latestWeight * marketPricePerKg;
+        // Valuation by status: on-farm animals at latest weight × rate, sold animals at what they
+        // realised, dead animals at nothing.
+        var onHand = _valuation.IsOnHand(animal);
+        var projectedValue = _valuation.CurrentValue(animal, ledger, totalInvestment, rateOverride);
         var projectedProfit = projectedValue - totalInvestment;
         var marginPct = totalInvestment > 0 ? decimal.Round((projectedProfit / totalInvestment) * 100m, 1) : 0m;
+        var valueBasis = onHand
+            ? (rateOverride is null && _valuation.Policy == Farm360.Domain.BusinessRules.AnimalValuationPolicy.CostBasis
+                ? "Cost-basis valuation policy: value = cost to date"
+                : $"Based on live weight: {latestWeight:N1} kg × ৳ {marketPricePerKg:N0}")
+            : animal.Status is Farm360.Domain.Livestock.Enums.AnimalStatus.Sold or Farm360.Domain.Livestock.Enums.AnimalStatus.Slaughtered
+                ? "Realised sale revenue"
+                : "Animal died — no realisable value";
 
         var rows = new List<AnimalSummaryReportRow>
         {
@@ -211,9 +205,9 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             new("4. Financial Investment Breakdown", "Total Accumulated Investment", $"৳ {totalInvestment:N2}", "Full-absorption cumulative cost to date"),
 
             // ── Section 5: Valuation & Profit Projections ─────────────────────
-            new("5. Valuation & Profit Projections", "Live Weight Market Rate", $"৳ {marketPricePerKg:N2} / kg", "Selected benchmark pricing basis"),
-            new("5. Valuation & Profit Projections", "Estimated Market Value", $"৳ {projectedValue:N2}", $"Based on live weight: {latestWeight:N1} kg × ৳ {marketPricePerKg:N0}"),
-            new("5. Valuation & Profit Projections", "Projected Net Profit / Margin", $"৳ {projectedProfit:N2}", projectedProfit >= 0 ? "PROFITABLE INVESTMENT" : "DEFICIT / LOSS"),
+            new("5. Valuation & Profit Projections", "Live Weight Valuation Rate", $"৳ {marketPricePerKg:N2} / live kg", rateOverride is null ? _valuation.RateBasisDescription : "User-selected override rate"),
+            new("5. Valuation & Profit Projections", onHand ? "Estimated Market Value" : "Realised Value", $"৳ {projectedValue:N2}", valueBasis),
+            new("5. Valuation & Profit Projections", onHand ? "Projected Net Profit / Margin" : "Realised Net Profit / Loss", $"৳ {projectedProfit:N2}", projectedProfit >= 0 ? "PROFITABLE INVESTMENT" : "DEFICIT / LOSS"),
             new("5. Valuation & Profit Projections", "Return on Investment (ROI)", $"{marginPct:+0.0;-0.0;0.0}%", $"Net margin over total investment (৳ {totalInvestment:N0})")
         };
 

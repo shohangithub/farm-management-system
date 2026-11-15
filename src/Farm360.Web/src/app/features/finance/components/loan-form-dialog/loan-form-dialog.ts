@@ -7,6 +7,7 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-loan-form-dialog',
   standalone: true,
@@ -136,7 +137,7 @@ export class LoanFormDialogComponent implements OnInit {
   error = signal('');
 
   ngOnInit(): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate();
     
     this.form = this.fb.group({
       lenderName: ['', Validators.required],

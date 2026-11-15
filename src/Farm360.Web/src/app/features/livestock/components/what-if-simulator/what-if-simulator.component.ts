@@ -66,11 +66,12 @@ export interface SaleSimulationResult {
              <p class="text-xl font-bold">{{ result.projectedWeightKg | number:'1.1-1' }} kg</p>
           </div>
           <div class="bg-black/20 rounded-xl p-4 border border-white/5">
-             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Est. Feed Cost</p>
+             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Projected running cost</p>
              <p class="text-xl font-bold text-amber-300">৳ {{ result.projectedAdditionalCostBdt | number:'1.0-0' }}</p>
+             <p class="text-[10px] text-purple-200/70 mt-0.5">feed + grass + other + labour</p>
           </div>
           <div class="bg-purple-500/20 rounded-xl p-4 border border-purple-400/50">
-             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Proj. Net Profit</p>
+             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1" title="Projected value minus (cost to date + projected running cost)">Proj. Net Profit</p>
              <p class="text-xl font-bold text-emerald-300 flex items-center gap-1">
                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">account_balance_wallet</mat-icon>
                ৳ {{ result.projectedProfitMarginBdt | number:'1.0-0' }}

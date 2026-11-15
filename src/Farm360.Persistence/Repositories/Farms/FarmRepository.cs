@@ -66,7 +66,7 @@ public sealed class FarmRepository : IFarmRepository
     public async Task<IReadOnlyDictionary<Guid, int>> GetOccupancyByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
         var animalQuery = _context.Set<Farm360.Domain.Livestock.Animal>()
-            .Where(a => a.TenantId == tenantId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined));
+            .Where(a => a.TenantId == tenantId && Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status));
 
         var grouped = await animalQuery
             .GroupBy(a => a.FarmId)
@@ -79,7 +79,7 @@ public sealed class FarmRepository : IFarmRepository
     public async Task<int> GetOccupancyByFarmAsync(Guid tenantId, Guid farmId, CancellationToken cancellationToken = default)
     {
         return await _context.Set<Farm360.Domain.Livestock.Animal>()
-            .CountAsync(a => a.TenantId == tenantId && a.FarmId == farmId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined), cancellationToken);
+            .CountAsync(a => a.TenantId == tenantId && a.FarmId == farmId && Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status), cancellationToken);
     }
 
     public void Add(Farm farm)

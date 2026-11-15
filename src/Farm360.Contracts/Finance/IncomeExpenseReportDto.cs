@@ -69,4 +69,11 @@ public record IncomeExpenseReportDto(
     IReadOnlyList<CashBookLineDto> IncomeTransactions,
     IReadOnlyList<CashBookLineDto> ExpenseTransactions,
     IReadOnlyList<DailyCashSummaryDto> DailyBreakdown
-);
+)
+{
+    /// <summary>
+    /// Net profit for the same days on the income-statement (accrual) basis — differs from the
+    /// operating cash result by stock used, animals sold at cost, depreciation and credit.
+    /// </summary>
+    public decimal NetProfitBdt { get; init; }
+}

@@ -59,6 +59,7 @@ public static class AccountChart
     public const string CostInventory = "inventory";
     public const string CostOverhead = "overhead";
     public const string CostFinance = "finance";
+    public const string CostDepreciation = "depreciation";
 
     // ── Ledger (balance) accounts ───────────────────────────────────────────
     public const string CashAccount = "1010";
@@ -284,6 +285,15 @@ public static class AccountChart
     public static string CategoryKey(string accountCode) =>
         Heads.Where(h => h.Value.Code == accountCode).Select(h => h.Key.ToString()).FirstOrDefault()
         ?? (accountCode == DepreciationAccount ? "Depreciation" : Account(accountCode).Name);
+
+    /// <summary>
+    /// The cost-analysis bucket of a profit &amp; loss account. Depreciation and the book value of
+    /// assets disposed of have their own bucket, so the buckets add up to total expenses.
+    /// </summary>
+    public static string CostGroupOf(string accountCode) =>
+        accountCode is DepreciationAccount or AssetDisposalAccount
+            ? CostDepreciation
+            : Heads.Values.Where(h => h.Code == accountCode).Select(h => h.CostGroup).FirstOrDefault() ?? CostOverhead;
 
     public static string SettlementCode(SettlementAccount settlement) => settlement switch
     {

@@ -69,7 +69,7 @@
             {{ Math.abs(data.revenueMomPercent) }}%
           </span>
           <span class="text-gray-400 ml-1.5">vs last month</span>
-          <span class="ml-auto text-gray-400">YTD: {{ data.revenueYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+          <span class="ml-auto text-gray-400">Fiscal YTD: {{ data.revenueYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
         </div>
         <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-emerald-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
       </div>
@@ -94,7 +94,7 @@
             {{ Math.abs(data.expensesMomPercent) }}%
           </span>
           <span class="text-gray-400 ml-1.5">vs last month</span>
-          <span class="ml-auto text-gray-400">YTD: {{ data.expensesYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+          <span class="ml-auto text-gray-400">Fiscal YTD: {{ data.expensesYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
         </div>
         <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-rose-500/5 rotate-[-10deg] pointer-events-none">receipt_long</mat-icon>
       </div>
@@ -120,7 +120,7 @@
             {{ Math.abs(data.netProfitMomPercent) }}%
           </span>
           <span class="text-gray-400 ml-1.5">vs last month</span>
-          <span class="ml-auto text-gray-400">YTD: {{ data.netProfitYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+          <span class="ml-auto text-gray-400">Fiscal YTD: {{ data.netProfitYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
         </div>
         <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-blue-500/5 rotate-[-10deg] pointer-events-none">savings</mat-icon>
       </div>
@@ -140,7 +140,7 @@
           </div>
         </div>
         <div class="mt-4 flex items-center text-xs text-gray-400">
-          <span>YTD Total: {{ (data.netProfitYtdBdt ?? 0) >= 0 ? '+' : '' }}{{ data.netProfitYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+          <span>Fiscal YTD Total: {{ (data.netProfitYtdBdt ?? 0) >= 0 ? '+' : '' }}{{ data.netProfitYtdBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
         </div>
         <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-amber-500/5 rotate-[-10deg] pointer-events-none">pie_chart</mat-icon>
       </div>

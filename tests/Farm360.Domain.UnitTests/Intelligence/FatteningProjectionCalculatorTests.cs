@@ -62,4 +62,16 @@ public class FatteningProjectionCalculatorTests
         result.Summary.OptimalSaleDay.Should().Be(10);
         result.Summary.OptimalProfitBdt.Should().BeApproximately(-11974.58m, 0.01m);
     }
+
+    [Fact]
+    public void Calculate_WithZeroMeatYield_DoesNotThrowAndReportsZeroBreakEvenMeatPrice()
+    {
+        var inputs = GetSampleInputs() with { InitialMeatYieldRatio = 0m };
+
+        var result = FatteningProjectionCalculator.Calculate(inputs);
+
+        result.Summary.BreakEvenPricePerMeatKgBdt.Should().Be(0m);
+        result.Summary.ExpectedSaleValueBdt.Should().Be(0m);
+        result.Summary.ProfitLossBdt.Should().Be(-result.Summary.TotalInvestmentBdt);
+    }
 }

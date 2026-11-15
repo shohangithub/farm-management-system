@@ -103,8 +103,8 @@ import { ReportService } from '../../../reports/services/report.service';
               </div>
               <div>
                 <p class="text-xs font-bold uppercase text-emerald-100 tracking-wider">Break-Even Price</p>
-                <p class="text-3xl font-black">{{ be.breakEvenPricePerKgBdt | currency:'BDT ':'symbol':'1.0-2' }} <span class="text-sm font-medium text-emerald-100">/ Kg</span></p>
-                <p class="text-[11px] text-emerald-100/80 mt-0.5">Minimum viable price to recover all costs</p>
+                <p class="text-3xl font-black">{{ be.breakEvenPricePerKgBdt | currency:'BDT ':'symbol':'1.0-2' }} <span class="text-sm font-medium text-emerald-100">/ live kg</span></p>
+                <p class="text-[11px] text-emerald-100/80 mt-0.5">Minimum price per kg of live weight to recover all costs</p>
               </div>
             </div>
           </div>
@@ -317,7 +317,7 @@ export class AnimalCostLedgerComponent implements OnInit {
                 currency: 'BDT (৳)',
                 metaFields: [
                   { label: 'Total Accumulated Cost', value: `৳ ${(ledger?.totalCostBdt || 0).toLocaleString()}` },
-                  { label: 'Break-Even Price', value: `৳ ${(be?.breakEvenPricePerKgBdt || 0).toFixed(2)}/kg` },
+                  { label: 'Break-Even Price', value: `৳ ${(be?.breakEvenPricePerKgBdt || 0).toFixed(2)}/live kg` },
                   { label: 'Target +20% Margin', value: `৳ ${(be?.targetPrice20PercentMarginPerKg || 0).toFixed(2)}/kg` }
                 ]
               },

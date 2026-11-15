@@ -8,6 +8,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { finalize } from 'rxjs';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-financial-transaction-form',
   standalone: true,
@@ -34,7 +35,7 @@ export class FinancialTransactionFormComponent {
     type: ['Income', Validators.required],
     category: ['LivestockSale', Validators.required],
     amountBdt: [0, [Validators.required, Validators.min(0.01)]],
-    transactionDate: [new Date().toISOString().substring(0, 10), Validators.required],
+    transactionDate: [toLocalIsoDate(), Validators.required],
     referenceId: [''],
     notes: ['']
   });

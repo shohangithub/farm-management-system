@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { switchMap, catchError, of, combineLatest, BehaviorSubject } from 'rxjs';
+import { switchMap, catchError, of, combineLatest, BehaviorSubject, map } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -17,6 +17,8 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 import { InvestorTransactionDialogComponent } from '../../components/investor-transaction-dialog/investor-transaction-dialog';
 import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
 
+
+import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-investor-pnl',
   standalone: true,
@@ -63,10 +65,11 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
             All Time
           </button>
-          <button type="button" (click)="setPreset('year')"
-                  [ngClass]="activePreset() === 'year' ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
+          <button type="button" (click)="setPreset('fiscal')"
+                  [ngClass]="activePreset() === 'fiscal' ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
+                  title="The farm's financial year to date — the same period as the income statement and the balance sheet's profit for the year"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-            This Year
+            This Fiscal Year
           </button>
           <button type="button" (click)="setPreset('month')"
                   [ngClass]="activePreset() === 'month' ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
@@ -336,7 +339,19 @@ export class InvestorPnLComponent {
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
   private dateFilter$ = new BehaviorSubject<{ from?: string; to?: string }>({ from: undefined, to: undefined });
 
-  readonly activePreset = signal<'all' | 'year' | 'month'>('all');
+  readonly activePreset = signal<'all' | 'fiscal' | 'month'>('all');
+
+  /** First month of the farm's financial year, from Accounts setup (July–June when not set). */
+  private readonly fiscalYearStartMonth = toSignal(
+    this.workingContextService.currentFarm$.pipe(
+      switchMap(farm => farm
+        ? this.financeService.getAccountingSettings(farm.id).pipe(
+            map(s => s.fiscalYearStartMonth),
+            catchError(() => of(7)))
+        : of(7)),
+    ),
+    { initialValue: 7 },
+  );
   readonly fromDate = signal<string | undefined>(undefined);
   readonly toDate = signal<string | undefined>(undefined);
 
@@ -356,19 +371,20 @@ export class InvestorPnLComponent {
   readonly summary = toSignal(this.summary$);
   readonly isLoading = computed(() => this.summary() === undefined);
 
-  setPreset(preset: 'all' | 'year' | 'month'): void {
+  setPreset(preset: 'all' | 'fiscal' | 'month'): void {
     this.activePreset.set(preset);
     const now = new Date();
 
     let from: string | undefined = undefined;
     let to: string | undefined = undefined;
 
-    if (preset === 'year') {
-      from = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
-      to = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+    if (preset === 'fiscal') {
+      // Fiscal year to date, matching the income statement and the balance sheet's profit for the year.
+      from = toLocalIsoDate(fiscalYearStart(now, this.fiscalYearStartMonth()));
+      to = toLocalIsoDate(now);
     } else if (preset === 'month') {
-      from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      from = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+      to = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
     }
 
     this.fromDate.set(from);
@@ -423,7 +439,7 @@ export class InvestorPnLComponent {
     this.isExporting.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Investor_PnL_${new Date().toISOString().split('T')[0]}`,
+        filename: `Farm360_Investor_PnL_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Profit & Loss Sharing Report',

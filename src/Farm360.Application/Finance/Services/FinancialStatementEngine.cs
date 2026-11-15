@@ -68,8 +68,59 @@ public sealed class FarmLedger
     public decimal ProfitBetween(DateOnly from, DateOnly to) =>
         -Lines.Where(l => l.Date >= from && l.Date <= to && IsProfitAndLoss(l.Account)).Sum(l => l.Amount);
 
+    /// <summary>Total revenue (credit movement of the revenue accounts) earned in [from, to].</summary>
+    public decimal RevenueBetween(DateOnly from, DateOnly to) =>
+        -ProfitAndLossLinesBetween(from, to).Where(l => IsRevenue(l.Account)).Sum(l => l.Amount);
+
+    /// <summary>
+    /// Total expenses in [from, to] — postings plus depreciation, the book value of assets disposed
+    /// of and year-end adjustments. A gain on disposal shows as a negative expense.
+    /// </summary>
+    public decimal ExpensesBetween(DateOnly from, DateOnly to) =>
+        ProfitAndLossLinesBetween(from, to).Where(l => !IsRevenue(l.Account)).Sum(l => l.Amount);
+
+    /// <summary>Every profit &amp; loss line (revenue and expense accounts) dated in [from, to].</summary>
+    public IEnumerable<LedgerLine> ProfitAndLossLinesBetween(DateOnly from, DateOnly to) =>
+        Lines.Where(l => l.Date >= from && l.Date <= to && IsProfitAndLoss(l.Account));
+
     /// <summary>First day the statements calculate from: the day after the books start, or the beginning.</summary>
     public DateOnly FirstCalculatedDay => BooksStartDate?.AddDays(1) ?? DateOnly.MinValue;
+
+    /// <summary>
+    /// The day whose closing balances open a period starting on <paramref name="periodStart"/>: the
+    /// day before it — or the books-start date when the period begins on or before it, since nothing
+    /// earlier is in the books and the opening entries are the position on that date.
+    /// </summary>
+    public DateOnly? OpeningDayFor(DateOnly periodStart)
+    {
+        if (BooksStartDate is { } start && start >= periodStart.AddDays(-1))
+            return start;
+        return periodStart == DateOnly.MinValue ? null : periodStart.AddDays(-1);
+    }
+
+    /// <summary>Balances that open a period starting on <paramref name="periodStart"/> (see <see cref="OpeningDayFor"/>).</summary>
+    public Dictionary<string, decimal> OpeningBalancesFor(DateOnly periodStart) =>
+        OpeningDayFor(periodStart) is { } day ? BalancesAt(day) : new Dictionary<string, decimal>(StringComparer.Ordinal);
+
+    /// <summary>True when a posting is in the books — i.e. dated after the books start (earlier ones are replaced by the opening entries).</summary>
+    public bool IsInBooks(FinancialTransaction posting) =>
+        BooksStartDate is not { } start || DateOnly.FromDateTime(posting.TransactionDate) > start;
+
+    /// <summary>Postings in the books dated in [from, to], in date order.</summary>
+    public IReadOnlyList<FinancialTransaction> PostingsBetween(DateOnly from, DateOnly to) =>
+        AllPostings
+            .Where(t => IsInBooks(t))
+            .Where(t =>
+            {
+                var d = DateOnly.FromDateTime(t.TransactionDate);
+                return d >= from && d <= to;
+            })
+            .OrderBy(t => t.TransactionDate)
+            .ThenBy(t => t.CreatedAtUtc)
+            .ToList();
+
+    public static bool IsRevenue(string account) =>
+        AccountChart.Account(account).Class == AccountClass.Revenue;
 
     public static bool IsProfitAndLoss(string account) =>
         AccountChart.Account(account).Class is AccountClass.Revenue or AccountClass.Expense;

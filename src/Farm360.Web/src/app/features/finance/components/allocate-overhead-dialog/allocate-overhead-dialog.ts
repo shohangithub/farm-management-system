@@ -8,6 +8,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { OverheadAllocationResult } from '../../models/finance.model';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 /**
  * Runs the labour/overhead allocation for a period: splits every unattributed indirect expense
  * (labour, utilities, transport, misc...) across the animals present during that window and
@@ -190,6 +191,6 @@ export class AllocateOverheadDialogComponent implements OnInit {
   }
 
   private toDateString(date: Date): string {
-    return date.toISOString().split('T')[0];
+    return toLocalIsoDate(date);
   }
 }

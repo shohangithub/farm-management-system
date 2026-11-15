@@ -26,31 +26,30 @@ public class GetIncomeExpenseReportQueryHandler : IRequestHandler<GetIncomeExpen
 {
     private const int MaxDaysListedInFull = 92;
 
-    private readonly IFinancialTransactionRepository _repository;
+    private readonly IFinancialStatementEngine _engine;
 
-    public GetIncomeExpenseReportQueryHandler(IFinancialTransactionRepository repository)
+    public GetIncomeExpenseReportQueryHandler(IFinancialStatementEngine engine)
     {
-        _repository = repository;
+        _engine = engine;
     }
 
     public async Task<IncomeExpenseReportDto> Handle(GetIncomeExpenseReportQuery request, CancellationToken cancellationToken)
     {
         var (start, endExclusive) = AccountChart.Window(request.FromDate, request.ToDate);
+        var fromDay = DateOnly.FromDateTime(start);
+        var toDay = DateOnly.FromDateTime(endExclusive.AddDays(-1));
 
-        var all = await _repository.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
+        var ledger = await _engine.LoadAsync(request.FarmId, toDay, cancellationToken);
 
-        // Opening balance is every cash movement before the period — the same "net of all recorded
-        // transactions" definition the Balance Sheet uses for cash, so the two always agree.
-        var openingBalance = all.Where(t => t.TransactionDate < start).Sum(AccountChart.CashEffect);
+        // Opening balance is the balance sheet's cash at the close of the day before the period —
+        // opening entries included, postings on or before the books start replaced by them — so
+        // the cash book and the balance sheet always agree.
+        var openingBalance = ledger.OpeningBalancesFor(fromDay).GetValueOrDefault(AccountChart.CashAccount);
 
         // A cash book lists money that actually moved. Non-cash postings (feed issued from stock,
         // the cost of an animal sold) are real costs but belong to the P&L, not the cash book —
         // the cash for them left when the stock or animal was bought.
-        var inPeriod = all
-            .Where(t => t.AffectsCash && t.TransactionDate >= start && t.TransactionDate < endExclusive)
-            .OrderBy(t => t.TransactionDate)
-            .ThenBy(t => t.CreatedAtUtc)
-            .ToList();
+        var inPeriod = ledger.PostingsBetween(fromDay, toDay).Where(t => t.AffectsCash).ToList();
 
         var income = inPeriod.Where(t => t.Type == TransactionType.Income).ToList();
         var expense = inPeriod.Where(t => t.Type == TransactionType.Expense).ToList();
@@ -79,9 +78,18 @@ public class GetIncomeExpenseReportQueryHandler : IRequestHandler<GetIncomeExpen
             SummariseHeads(expense, totalExpense),
             income.Select(ToLine).ToList(),
             expense.Select(ToLine).ToList(),
-            daily);
+            daily)
+        {
+            // The accrual result for the same days, from the income statement's lines (stock used,
+            // animals sold at cost, depreciation, disposals, adjustments) — not a cash figure.
+            NetProfitBdt = Math.Round(ledger.ProfitBetween(fromDay, toDay), 2),
+        };
     }
 
+    /// <summary>
+    /// Cash-book head summary: what was actually received or paid under each head (gross amounts).
+    /// For profit &amp; loss use <see cref="SummariseProfitAndLossHeads"/>.
+    /// </summary>
     internal static IReadOnlyList<AccountHeadSummaryDto> SummariseHeads(
         IEnumerable<FinancialTransaction> transactions,
         decimal total) =>
@@ -103,6 +111,46 @@ public class GetIncomeExpenseReportQueryHandler : IRequestHandler<GetIncomeExpen
             })
             .OrderByDescending(h => h.TotalBdt)
             .ToList();
+
+    /// <summary>
+    /// Profit &amp; loss head summary for [from, to] from the ledger: revenue heads by their credit
+    /// movement, expense heads by their debit movement — net of refunds and disposal proceeds, and
+    /// including depreciation, the book value of assets disposed of and year-end adjustments — so
+    /// the heads add up to the period's total revenue or expenses.
+    /// </summary>
+    internal static IReadOnlyList<AccountHeadSummaryDto> SummariseProfitAndLossHeads(
+        FarmLedger ledger,
+        DateOnly from,
+        DateOnly to,
+        bool revenue)
+    {
+        var heads = ledger.ProfitAndLossLinesBetween(from, to)
+            .Where(l => FarmLedger.IsRevenue(l.Account) == revenue)
+            .GroupBy(l => l.Account)
+            .Select(g => (Code: g.Key, Count: g.Count(), Amount: revenue ? -g.Sum(l => l.Amount) : g.Sum(l => l.Amount)))
+            .Where(h => h.Amount != 0m)
+            .ToList();
+        // Percentages are of the heads that add to the total; a gain (a negative expense head)
+        // reduces the total but must not push the other heads above 100%.
+        var total = heads.Where(h => h.Amount > 0m).Sum(h => h.Amount);
+
+        return heads
+            .Select(h =>
+            {
+                var account = AccountChart.Account(h.Code);
+                return new AccountHeadSummaryDto(
+                    h.Code,
+                    AccountChart.CategoryKey(h.Code),
+                    account.Name,
+                    account.NameBn,
+                    AccountChart.Operating,
+                    h.Count,
+                    Math.Round(h.Amount, 2),
+                    total > 0 ? Math.Round(h.Amount / total * 100m, 2) : 0m);
+            })
+            .OrderByDescending(h => h.TotalBdt)
+            .ToList();
+    }
 
     internal static CashBookLineDto ToLine(FinancialTransaction t)
     {

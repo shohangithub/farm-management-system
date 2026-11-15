@@ -68,8 +68,10 @@ public class GetBalanceSheetQueryHandler : IRequestHandler<GetBalanceSheetQuery,
         var difference = R(current.TotalAssets - current.TotalLiabilitiesAndEquity);
 
         var reconciliations = asOfDateTime.Date >= DateTime.UtcNow.Date
-            // Registers are current snapshots, so the comparison is only meaningful for today.
-            ? await _reconciliation.ReconcileAsync(request.FarmId, ledger.AllPostings.ToList(), cancellationToken)
+            // Registers are current snapshots, so the comparison is only meaningful for today. The
+            // books side is the balance sheet's own basis: opening entries plus postings after the
+            // books start, so a reconciled line means the figure on this statement is right.
+            ? await _reconciliation.ReconcileBalancesAsync(request.FarmId, ledger.BalancesAt(asOf), cancellationToken)
             : [];
 
         return new BalanceSheetDto(
