@@ -10,10 +10,13 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
+
 @Component({
   selector: 'app-pen-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent],
   templateUrl: './pen-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -23,6 +26,7 @@ export class PenListComponent {
   private readonly router = inject(Router);
 
   isLoading = signal<boolean>(true);
+  readonly loadError = signal<string | null>(null);
   Math = Math;
 
   searchTerm = signal<string>('');
@@ -61,10 +65,10 @@ export class PenListComponent {
   readonly pensResult = toSignal(
     toObservable(this.fetchParams).pipe(
       filter(params => !!params.shedId),
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ shedId }) => this.penService.getPensByShed(shedId).pipe(
         catchError(err => {
-          console.error('Failed to load pens', err);
+          this.loadError.set(parseApiError(err, 'Could not load pens.'));
           return of([] as PenList[]);
         })
       )),

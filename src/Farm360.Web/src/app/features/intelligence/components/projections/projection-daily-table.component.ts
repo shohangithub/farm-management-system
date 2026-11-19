@@ -42,10 +42,10 @@ import { MatIconModule } from '@angular/material/icon';
                 [ngClass]="{'bg-emerald-50/30 dark:bg-emerald-900/10': day.day === data()?.summary?.breakEvenDay}">
               <td class="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">
                 {{ day.day }}
-                <span *ngIf="day.day === data()?.summary?.optimalSaleDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                <span *ngIf="day.day === data()?.summary?.optimalSaleDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
                   Best
                 </span>
-                <span *ngIf="day.day === data()?.summary?.breakEvenDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <span *ngIf="day.day === data()?.summary?.breakEvenDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
                   Break-Even
                 </span>
               </td>

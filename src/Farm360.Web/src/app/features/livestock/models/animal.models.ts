@@ -118,6 +118,12 @@ export interface AnimalDto {
   acquisitionPriceBdt?: number;
   salePriceBdt?: number;
   saleDate?: string;
+  buyerName?: string | null;
+  saleWeightKg?: number | null;
+  /** Date of death (Dead animals). */
+  deathDate?: string | null;
+  /** Date the animal left the farm: saleDate (Sold) or deathDate (Dead). */
+  exitDate?: string | null;
   status: AnimalStatus;
   quarantineReason?: string;
   disposalReason?: DisposalReason;
@@ -262,6 +268,19 @@ export interface RecordCalvingRequest {
 
 // ── Filter params ─────────────────────────────────────────────────────────────
 
+export type AnimalPresence = 'OnFarm' | 'LeftFarm';
+
+/**
+ * Farm rule: an animal is "on farm" only while Active or Quarantined.
+ * Sold / Dead / Slaughtered / Transferred animals have left the farm — their
+ * history stays visible, but they must not be offered for new actions.
+ */
+export const ON_FARM_STATUSES: readonly AnimalStatus[] = [AnimalStatus.Active, AnimalStatus.Quarantined];
+
+export function isOnFarm(status: AnimalStatus | string | null | undefined): boolean {
+  return status === AnimalStatus.Active || status === AnimalStatus.Quarantined;
+}
+
 export interface AnimalListParams {
   pageNumber?: number;
   pageSize?: number;
@@ -272,6 +291,8 @@ export interface AnimalListParams {
   species?: AnimalSpecies;
   sex?: AnimalSex;
   status?: AnimalStatus;
+  /** OnFarm = Active/Quarantined; LeftFarm = Sold/Dead/Slaughtered/Transferred; omitted = all. */
+  presence?: AnimalPresence;
   search?: string;
   sortBy?: string;
   sortDesc?: boolean;

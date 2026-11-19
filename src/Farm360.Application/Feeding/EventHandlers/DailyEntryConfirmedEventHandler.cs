@@ -11,6 +11,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Feeding.EventHandlers;
 
+/// <summary>
+/// Deducts stock, snapshots cost, writes per-animal allocations and the ledger feed bucket for a
+/// confirmed feeding entry, then publishes <see cref="DailyFeedingCostCalculatedEvent"/> for the
+/// finance postings. Runs inside the confirming command's transaction; failures are logged and
+/// rethrown so the confirmation is rolled back (all or nothing).
+/// </summary>
 public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<DailyEntryConfirmedEvent>
 {
     private readonly IFeedFormulaRepository _formulaRepository;
@@ -238,11 +244,13 @@ public sealed class DailyEntryConfirmedEventHandler : INotificationHandler<Daily
                 ), cancellationToken);
             }
         }
-#pragma warning disable CA1031 // Prevent background event handler from crashing the pipeline
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process stock deduction or cost snapshot for feeding entry {EntryId}", notification.EntryId);
+            // Never swallow: this handler runs inside the confirming command's transaction, and the
+            // entry must not end up "confirmed" without its stock deduction, cost and ledger rows.
+            // Rethrowing rolls the whole confirmation back (TransactionBehavior).
+            _logger.LogError(ex, "Failed to process stock deduction or cost snapshot for feeding entry {EntryId}; the confirmation is rolled back", notification.EntryId);
+            throw;
         }
-#pragma warning restore CA1031
     }
 }

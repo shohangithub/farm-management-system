@@ -27,6 +27,9 @@ public interface IDailyConsumableEntryRepository
     Task<IReadOnlyList<DailyConsumableEntry>> GetByDateRangeAsync(Guid farmId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default);
     Task<HashSet<(Guid PlanId, Guid PlanItemId)>> GetExistingEntryPlanItemIdsByDateAsync(Guid farmId, DateOnly date, CancellationToken cancellationToken = default);
     Task<HashSet<(Guid PlanId, Guid PlanItemId)>> GetExistingEntryPlanItemIdsAcrossTenantsByDateAsync(DateOnly date, CancellationToken cancellationToken = default);
+
+    /// <summary>The latest day consumable entries exist for in the current tenant, or null.</summary>
+    Task<DateOnly?> GetLastEntryDateAsync(CancellationToken cancellationToken = default);
     Task AddAsync(DailyConsumableEntry entry, CancellationToken cancellationToken = default);
     Task AddRangeAsync(IEnumerable<DailyConsumableEntry> entries, CancellationToken cancellationToken = default);
     void Update(DailyConsumableEntry entry);

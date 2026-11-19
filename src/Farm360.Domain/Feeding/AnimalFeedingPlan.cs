@@ -68,13 +68,30 @@ public sealed class AnimalFeedingPlan : AuditableEntity, IAggregateRoot
         CurrentRoughageKgPerDay = roughageKgPerDay;
     }
 
-    public void Cancel()
+    /// <param name="today">The farm's local date (IFarmClock); UTC date when omitted.</param>
+    public void Cancel(DateOnly? today = null)
     {
         if (Status == FeedingPlanStatus.Cancelled || Status == FeedingPlanStatus.Completed)
             return;
             
         Status = FeedingPlanStatus.Cancelled;
-        EndDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        EndDate = today ?? DateOnly.FromDateTime(DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// The plan's animal left the farm (sold or died) on <paramref name="exitDate"/>: the plan is
+    /// cancelled and ends on that day, the last day it can have fed anything. Returns false when the
+    /// plan was already closed, so running an exit twice changes nothing.
+    /// </summary>
+    public bool EndOnExit(DateOnly exitDate)
+    {
+        if (Status is FeedingPlanStatus.Cancelled or FeedingPlanStatus.Completed)
+            return false;
+
+        Status = FeedingPlanStatus.Cancelled;
+        if (EndDate is null || EndDate.Value > exitDate)
+            EndDate = exitDate < StartDate ? StartDate : exitDate;
+        return true;
     }
 
     public void UpdateLocation(Guid? shedId, Guid? penId)

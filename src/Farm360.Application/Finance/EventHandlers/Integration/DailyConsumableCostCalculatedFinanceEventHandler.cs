@@ -51,11 +51,12 @@ public sealed class DailyConsumableCostCalculatedFinanceEventHandler : INotifica
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-#pragma warning disable CA1031
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to post automated financial transaction for daily consumable entry {EntryId}", notification.EntryId);
+            // Runs inside ConfirmDailyConsumableEntryCommand's transaction: rethrow so the stock
+            // deduction is rolled back with the missing ledger posting (all or nothing).
+            _logger.LogError(ex, "Failed to post automated financial transaction for daily consumable entry {EntryId}; the confirmation is rolled back", notification.EntryId);
+            throw;
         }
-#pragma warning restore CA1031
     }
 }

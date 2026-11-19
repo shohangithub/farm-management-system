@@ -16,13 +16,14 @@ public sealed record RecordCalvingCommand(
 
 public sealed class RecordCalvingCommandValidator : AbstractValidator<RecordCalvingCommand>
 {
-    public RecordCalvingCommandValidator()
+    public RecordCalvingCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
         RuleFor(x => x.BreedingRecordId).NotEmpty();
         
         RuleFor(x => x.CalvingDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Calving date cannot be in the future.");
             
         RuleFor(x => x.Outcome)

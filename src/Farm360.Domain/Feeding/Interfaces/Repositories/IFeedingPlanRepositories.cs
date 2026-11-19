@@ -39,6 +39,12 @@ public interface IDailyFeedingEntryRepository
     Task<IReadOnlyList<DailyFeedingEntry>> GetPendingEntriesByPlanIdAndDateAsync(Guid tenantId, Guid planId, DateOnly date, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DailyFeedingEntry>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<HashSet<(Guid PlanId, Guid? RuleLineId)>> GetEntryPlanIdsAcrossTenantsByDateAsync(DateOnly date, CancellationToken cancellationToken);
+
+    /// <summary>(plan, rule line) keys already generated for one farm on one day — the daily job's idempotency key.</summary>
+    Task<HashSet<(Guid PlanId, Guid? RuleLineId)>> GetEntryKeysAsync(Guid tenantId, Guid farmId, DateOnly date, CancellationToken cancellationToken = default);
+
+    /// <summary>The latest day the daily job generated entries for a tenant (manual one-day feeds excluded), or null.</summary>
+    Task<DateOnly?> GetLastGeneratedEntryDateAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }
 
 public interface IFeedingReconciliationRepository

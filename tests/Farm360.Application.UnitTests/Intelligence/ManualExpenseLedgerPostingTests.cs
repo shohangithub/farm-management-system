@@ -177,6 +177,7 @@ public class ManualExpenseLedgerPostingTests
         var animals = Substitute.For<Farm360.Domain.Livestock.Repositories.IAnimalRepository>();
         var rules = Substitute.For<IFarmBusinessRulesProvider>();
         rules.Current.Returns(new Farm360.Domain.BusinessRules.FarmBusinessRules());
+        rules.For(Arg.Any<Guid>(), Arg.Any<Guid?>()).Returns(new Farm360.Domain.BusinessRules.FarmBusinessRules());
         var service = new Farm360.Application.Finance.Services.OverheadAllocationService(
             _transactions, _allocations, _ledgers, animals, rules, Substitute.For<IUnitOfWork>(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<Farm360.Application.Finance.Services.OverheadAllocationService>.Instance);
@@ -215,6 +216,9 @@ public class ManualExpenseLedgerPostingTests
 
         public Task<IReadOnlyList<AnimalOverheadAllocation>> GetByAnimalAsync(Guid animalId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<AnimalOverheadAllocation>>(Rows.Where(r => r.AnimalId == animalId).ToList());
+
+        public Task<IReadOnlyList<AnimalOverheadAllocation>> GetByFarmAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<AnimalOverheadAllocation>>(Rows.Where(r => r.FarmId == farmId && r.PeriodEnd >= from && r.PeriodStart <= to).ToList());
 
         private AnimalOverheadTotals Totals(Guid animalId) => new(
             animalId,

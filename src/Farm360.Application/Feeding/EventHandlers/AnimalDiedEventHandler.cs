@@ -1,44 +1,20 @@
-using Farm360.Domain.Feeding.Interfaces.Repositories;
+using Farm360.Application.Feeding.Services;
 using Farm360.Domain.Livestock.Events;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Feeding.EventHandlers;
 
-public sealed class AnimalDiedEventHandler : INotificationHandler<AnimalDiedEvent>
+/// <summary>
+/// A dead animal stops being fed from its death date: its plans end, pending entries from that day
+/// are skipped, confirmed ones after it reversed, and group entries re-split without it
+/// (<see cref="IAnimalExitService"/>, idempotent, saves its own work).
+/// </summary>
+public sealed class AnimalDiedEventHandler(IAnimalExitService exitService) : INotificationHandler<AnimalDiedEvent>
 {
-    private readonly IAnimalFeedingPlanRepository _planRepository;
-    private readonly ILogger<AnimalDiedEventHandler> _logger;
-    private readonly Farm360.Application.Common.Interfaces.IUnitOfWork _unitOfWork;
-
-    public AnimalDiedEventHandler(
-        IAnimalFeedingPlanRepository planRepository,
-        ILogger<AnimalDiedEventHandler> logger,
-        Farm360.Application.Common.Interfaces.IUnitOfWork unitOfWork)
-    {
-        _planRepository = planRepository;
-        _logger = logger;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task Handle(AnimalDiedEvent notification, CancellationToken cancellationToken)
     {
-        if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Processing AnimalDiedEvent for AnimalId: {AnimalId}. Cancelling any active feeding plans.", notification.AnimalId);
-
-        var activePlans = await _planRepository.GetActivePlansForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
-        if (activePlans.Count > 0)
-        {
-            foreach (var activePlan in activePlans)
-            {
-                activePlan.Cancel();
-                _planRepository.Update(activePlan);
-                
-                if (_logger.IsEnabled(LogLevel.Information))
-                    _logger.LogInformation("Cancelled active feeding plan {PlanId} for dead animal {AnimalId}", activePlan.Id, notification.AnimalId);
-            }
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        ArgumentNullException.ThrowIfNull(notification);
+        await exitService.ProcessExitAsync(notification.AnimalId, notification.DeathDate,
+            AnimalExitService.DiedReason(notification.DeathDate), cancellationToken);
     }
 }

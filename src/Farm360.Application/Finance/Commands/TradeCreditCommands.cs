@@ -22,8 +22,11 @@ public sealed class OpenTradeBillCommandHandler(
     IFinancialTransactionRepository transactions,
     ITradeBillRepository bills,
     ITradeCreditService credit,
-    IUnitOfWork unitOfWork) : IRequestHandler<OpenTradeBillCommand, TradeBillDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<OpenTradeBillCommand, TradeBillDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<TradeBillDto> Handle(OpenTradeBillCommand command, CancellationToken cancellationToken)
     {
         var r = command.Request;
@@ -39,7 +42,7 @@ public sealed class OpenTradeBillCommandHandler(
         return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), Today);
     }
 
-    private static DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
+    private DateOnly Today => _clock.Today;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -51,19 +54,22 @@ public sealed record RecordBillPaymentCommand(Guid FarmId, Guid BillId, RecordBi
 public sealed class RecordBillPaymentCommandHandler(
     ITradeBillRepository bills,
     ITradeCreditService credit,
-    IUnitOfWork unitOfWork) : IRequestHandler<RecordBillPaymentCommand, TradeBillDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<RecordBillPaymentCommand, TradeBillDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<TradeBillDto> Handle(RecordBillPaymentCommand command, CancellationToken cancellationToken)
     {
         var bill = await TradeBillLookup.LoadAsync(bills, command.FarmId, command.BillId, cancellationToken);
         var r = command.Request;
-        if (r.PaymentDate > DateOnly.FromDateTime(DateTime.Today))
+        if (r.PaymentDate > _clock.Today)
             throw new InvalidOperationException("A payment cannot be dated in the future.");
 
         await credit.RecordPaymentAsync(bill, r.AmountBdt, r.PaymentDate, r.Method, r.Reference, r.Notes, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), DateOnly.FromDateTime(DateTime.Today));
+        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), _clock.Today);
     }
 }
 
@@ -72,8 +78,11 @@ public sealed record VoidBillPaymentCommand(Guid FarmId, Guid BillId, Guid Payme
 public sealed class VoidBillPaymentCommandHandler(
     ITradeBillRepository bills,
     ITradeCreditService credit,
-    IUnitOfWork unitOfWork) : IRequestHandler<VoidBillPaymentCommand, TradeBillDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<VoidBillPaymentCommand, TradeBillDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<TradeBillDto> Handle(VoidBillPaymentCommand command, CancellationToken cancellationToken)
     {
         var bill = await TradeBillLookup.LoadAsync(bills, command.FarmId, command.BillId, cancellationToken);
@@ -84,7 +93,7 @@ public sealed class VoidBillPaymentCommandHandler(
         await credit.VoidPaymentAsync(bill, payment, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), DateOnly.FromDateTime(DateTime.Today));
+        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), _clock.Today);
     }
 }
 
@@ -97,8 +106,11 @@ public sealed record WriteOffTradeBillCommand(Guid FarmId, Guid BillId, WriteOff
 public sealed class WriteOffTradeBillCommandHandler(
     ITradeBillRepository bills,
     ITradeCreditService credit,
-    IUnitOfWork unitOfWork) : IRequestHandler<WriteOffTradeBillCommand, TradeBillDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<WriteOffTradeBillCommand, TradeBillDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<TradeBillDto> Handle(WriteOffTradeBillCommand command, CancellationToken cancellationToken)
     {
         var bill = await TradeBillLookup.LoadAsync(bills, command.FarmId, command.BillId, cancellationToken);
@@ -107,7 +119,7 @@ public sealed class WriteOffTradeBillCommandHandler(
         await credit.WriteOffAsync(bill, r.AmountBdt, r.Date, r.Reason, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), DateOnly.FromDateTime(DateTime.Today));
+        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), _clock.Today);
     }
 }
 
@@ -130,8 +142,11 @@ public sealed record UpdateTradeBillTermsCommand(Guid FarmId, Guid BillId, Updat
 
 public sealed class UpdateTradeBillTermsCommandHandler(
     ITradeBillRepository bills,
-    IUnitOfWork unitOfWork) : IRequestHandler<UpdateTradeBillTermsCommand, TradeBillDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<UpdateTradeBillTermsCommand, TradeBillDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<TradeBillDto> Handle(UpdateTradeBillTermsCommand command, CancellationToken cancellationToken)
     {
         var bill = await TradeBillLookup.LoadAsync(bills, command.FarmId, command.BillId, cancellationToken);
@@ -141,7 +156,7 @@ public sealed class UpdateTradeBillTermsCommandHandler(
         bills.Update(bill);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), DateOnly.FromDateTime(DateTime.Today));
+        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), _clock.Today);
     }
 }
 

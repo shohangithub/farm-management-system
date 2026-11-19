@@ -100,31 +100,35 @@
       <!-- Farm Size -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="farmSize" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Farm Size (Acres)</label>
-        <input type="number" step="any" formControlName="farmSize" id="farmSize" 
+        <input type="number" step="any" min="0" formControlName="farmSize" id="farmSize" 
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        <p *ngIf="getError('farmSize')" class="text-xs text-red-500 mt-1">{{ getError('farmSize') }}</p>
       </div>
 
       <!-- Land Area -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="landArea" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Land Area (Sq Ft)</label>
-        <input type="number" step="any" formControlName="landArea" id="landArea" 
+        <input type="number" step="any" min="0" formControlName="landArea" id="landArea" 
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        <p *ngIf="getError('landArea')" class="text-xs text-red-500 mt-1">{{ getError('landArea') }}</p>
       </div>
       
       <!-- Latitude -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="latitude" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Latitude</label>
-        <input type="number" step="any" formControlName="latitude" id="latitude"
+        <input type="number" step="any" min="-90" max="90" formControlName="latitude" id="latitude"
                placeholder="e.g. 23.8103"
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        <p *ngIf="getError('latitude')" class="text-xs text-red-500 mt-1">{{ getError('latitude') }}</p>
       </div>
       
       <!-- Longitude -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="longitude" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Longitude</label>
-        <input type="number" step="any" formControlName="longitude" id="longitude"
+        <input type="number" step="any" min="-180" max="180" formControlName="longitude" id="longitude"
                placeholder="e.g. 90.4125"
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        <p *ngIf="getError('longitude')" class="text-xs text-red-500 mt-1">{{ getError('longitude') }}</p>
       </div>
       
       <!-- Map Polygon -->
@@ -148,7 +152,7 @@
       <!-- Capacity -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="capacity" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Max Capacity (Animals)</label>
-        <input type="number" formControlName="capacity" id="capacity"
+        <input type="number" min="0" step="1" formControlName="capacity" id="capacity"
                placeholder="e.g. 500"
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                       [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">

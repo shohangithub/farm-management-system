@@ -16,12 +16,13 @@ public sealed record RecordMatingCommand(
 
 public sealed class RecordMatingCommandValidator : AbstractValidator<RecordMatingCommand>
 {
-    public RecordMatingCommandValidator()
+    public RecordMatingCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
         
         RuleFor(x => x.MatingDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Mating date cannot be in the future.");
             
         RuleFor(x => x.SireExternalId)
@@ -50,6 +51,15 @@ public sealed class RecordMatingCommandHandler : IRequestHandler<RecordMatingCom
     {
         var animal = await _repository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
+
+        // A registered sire must still be on the farm on the mating date (farm rule: on farm on
+        // day D = acquired by D and not yet sold/dead on D). The dam is guarded by the domain.
+        if (request.SireAnimalId is { } sireId)
+        {
+            var sire = await _repository.GetByIdAsync(sireId, cancellationToken)
+                ?? throw new NotFoundException(nameof(Animal), sireId);
+            sire.EnsureCanRecordOn(request.MatingDate, "a mating as sire");
+        }
 
         animal.AddBreedingRecord(
             request.MatingDate,

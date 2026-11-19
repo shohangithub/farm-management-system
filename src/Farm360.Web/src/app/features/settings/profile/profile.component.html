@@ -64,4 +64,39 @@
 
     </form>
   </div>
+
+  <!-- Change password -->
+  <div class="max-w-3xl mx-auto mt-6 bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+    <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="p-6" novalidate>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Change password</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">You'll stay signed in here; all other devices are signed out.</p>
+
+      <div *ngIf="passwordError()" role="alert" class="mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-3 rounded-r-md text-sm text-red-700 dark:text-red-400 whitespace-pre-line">{{ passwordError() }}</div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="currentPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current password</label>
+          <input id="currentPassword" type="password" formControlName="currentPassword" autocomplete="current-password" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+          <p *ngIf="passwordForm.controls.currentPassword.touched && passwordForm.controls.currentPassword.invalid" class="mt-1 text-xs text-red-600">Enter your current password.</p>
+        </div>
+        <div>
+          <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New password</label>
+          <input id="newPassword" type="password" formControlName="newPassword" autocomplete="new-password" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+          <p *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid" class="mt-1 text-xs text-red-600">{{ passwordHint }}</p>
+        </div>
+        <div>
+          <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm new password</label>
+          <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+          <p *ngIf="passwordForm.controls.confirmPassword.touched && passwordForm.errors?.['mismatch']" class="mt-1 text-xs text-red-600">Passwords don't match.</p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button type="submit" [disabled]="isChangingPassword()" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-sm font-bold flex items-center gap-2 disabled:opacity-50">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isChangingPassword()">{{ isChangingPassword() ? 'autorenew' : 'lock_reset' }}</mat-icon>
+          {{ isChangingPassword() ? 'Changing…' : 'Change password' }}
+        </button>
+      </div>
+    </form>
+  </div>
 </div>

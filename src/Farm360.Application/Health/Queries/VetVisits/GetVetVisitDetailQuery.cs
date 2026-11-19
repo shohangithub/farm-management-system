@@ -49,7 +49,7 @@ internal sealed class GetVetVisitDetailQueryHandler : IRequestHandler<GetVetVisi
             visit.Recommendations,
             visit.CostBdt,
             visit.NextVisitDate,
-            visit.CreatedAt
+            visit.CreatedAtUtc
         );
     }
 }

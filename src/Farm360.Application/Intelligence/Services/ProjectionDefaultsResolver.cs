@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using System;
 using System.Linq;
 using System.Threading;
@@ -13,6 +14,8 @@ namespace Farm360.Application.Intelligence.Services;
 
 public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
 {
+    private readonly IFarmClock _clock;
+
     private const decimal FallbackFeedPriceBdtPerKg = 45m;
     private const int RecentFeedPriceWindowDays = 30;
 
@@ -29,8 +32,10 @@ public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
         IAnimalCostLedgerRepository ledgerRepository,
         IAnimalFeedAllocationRepository feedAllocationRepository,
         IAnimalFeedingPlanRepository feedingPlanRepository,
-        IAnimalValuationService valuation)
+        IAnimalValuationService valuation,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _animalRepository = animalRepository;
         _breedRepository = breedRepository;
         _ledgerRepository = ledgerRepository;
@@ -131,7 +136,7 @@ public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
 
     private async Task<ProjectionDefaultValueDto<decimal>> ResolveFeedPriceAsync(Guid animalId, CancellationToken cancellationToken)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
         var recent = await _feedAllocationRepository.GetTotalsForAnimalAsync(
             animalId, today.AddDays(-RecentFeedPriceWindowDays), today, cancellationToken);
         if (recent.TotalKg > 0 && recent.TotalCostBdt > 0)

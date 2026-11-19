@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { ReportService } from '../../services/report.service';
+import { ReportRerun, ReportService } from '../../services/report.service';
 import { ReportPaperComponent } from '../../components/report-paper/report-paper.component';
 import { ReportParameterPanelComponent } from '../../components/report-parameter-panel/report-parameter-panel.component';
 import {
@@ -48,6 +48,8 @@ import {
           <app-report-parameter-panel
             [parameters]="def.parameters"
             [initial]="lastParameters()"
+            [initialLanguage]="language()"
+            [initialBengaliNumerals]="bengaliNumerals()"
             [busy]="running()"
             (run)="run($event)" />
         }
@@ -59,13 +61,18 @@ import {
             <span class="meta">{{ d.totalRowCount }} rows · run {{ d.meta.runId.slice(0, 8) }}</span>
           }
           <span class="spacer"></span>
-          <button mat-stroked-button [disabled]="!data()" (click)="print()">
+          <button mat-stroked-button [disabled]="!data() || running()" (click)="print()">
             <mat-icon>print</mat-icon> Print
           </button>
-          <button mat-flat-button color="primary" [disabled]="!data() || exporting()"
-                  [matMenuTriggerFor]="exportMenu">
-            <mat-icon>download</mat-icon> Export
-          </button>
+          @if (canExport()) {
+            <!-- Disabled while anything is generating: an export of a half-finished run, or a
+                 second export queued behind the first, is never what the user meant. -->
+            <button mat-flat-button color="primary" [disabled]="!data() || exporting() || running()"
+                    [matMenuTriggerFor]="exportMenu">
+              <mat-icon>{{ exporting() ? 'hourglass_top' : 'download' }}</mat-icon>
+              {{ exporting() ? 'Exporting…' : 'Export' }}
+            </button>
+          }
           <mat-menu #exportMenu="matMenu">
             <button mat-menu-item (click)="exportAs('pdf')">
               <mat-icon>picture_as_pdf</mat-icon> PDF
@@ -84,13 +91,21 @@ import {
         }
 
         @if (error()) {
-          <div class="state error no-print">
+          <div class="state error no-print" role="alert">
             <mat-icon>error_outline</mat-icon>
+            <p class="title">{{ errorTitle() }}</p>
             <p>{{ error() }}</p>
           </div>
         }
 
         @if (data(); as d) {
+          @if (d.totalRowCount === 0) {
+            <div class="state empty no-print">
+              <mat-icon>inbox</mat-icon>
+              <p class="title">{{ language() === 'bn' ? 'কোনো তথ্য পাওয়া যায়নি' : 'Nothing to show for these choices' }}</p>
+              <p>{{ language() === 'bn' ? 'সময়কাল বা ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।' : 'Try a wider period or fewer filters, then run the report again.' }}</p>
+            </div>
+          }
           <app-report-paper [data]="d" [language]="language()" />
         } @else if (!running() && !error()) {
           <div class="state no-print">
@@ -126,7 +141,10 @@ import {
     .state { display: flex; flex-direction: column; align-items: center; gap: 8px;
              padding: 60px; opacity: .7; color: #4b5563; }
     :host-context(.dark) .state { color: #9ca3af; }
-    .state.error { color: var(--mat-sys-error, #b3261e); }
+    .state.error { color: var(--mat-sys-error, #b3261e); opacity: 1; }
+    .state .title { font-weight: 700; margin: 0; }
+    .state p { margin: 0; text-align: center; max-width: 520px; }
+    .state.empty { padding: 24px; }
 
     @media (max-width: 900px) {
       .viewer { grid-template-columns: 1fr; }
@@ -143,6 +161,7 @@ import {
 })
 export class ReportViewerComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly reports = inject(ReportService);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -153,6 +172,13 @@ export class ReportViewerComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly language = signal<ReportLanguage>('en');
   protected readonly lastParameters = signal<Record<string, string | null>>({});
+  protected readonly bengaliNumerals = signal(false);
+  protected readonly canExport = signal(false);
+  protected readonly errorTitle = signal('The report could not be run');
+
+  /** A past run handed over by "Run again" in the Report Center. */
+  private readonly rerun: ReportRerun | null =
+    (this.router.getCurrentNavigation()?.extras.state?.['rerun'] as ReportRerun | undefined) ?? null;
 
   private key = '';
   private lastRequest: RunReportRequest | null = null;
@@ -168,11 +194,15 @@ export class ReportViewerComponent implements OnInit {
         this.definition.set(found);
 
         if (!found) {
-          this.error.set(`No report with key "${this.key}".`);
+          this.errorTitle.set('Report not available');
+          this.error.set('This report does not exist, or your role does not include permission to run it.');
           return;
         }
 
-        const remembered = this.reports.recallParameters(this.key);
+        this.canExport.set(found.canExport === true);
+        this.reports.markOpened(this.key);
+
+        const remembered = this.rerun ?? this.reports.recallParameters(this.key);
         const params: Record<string, string | null> = { ...(remembered?.parameters ?? {}) };
         const queryParams = this.route.snapshot.queryParamMap;
         for (const p of found.parameters) {
@@ -184,6 +214,12 @@ export class ReportViewerComponent implements OnInit {
         this.lastParameters.set(params);
         if (remembered) {
           this.language.set(remembered.language);
+          this.bengaliNumerals.set(remembered.bengaliNumerals === true);
+        }
+
+        if (this.rerun) {
+          this.run({ parameters: params, language: this.language(), bengaliNumerals: this.bengaliNumerals() });
+          return;
         }
 
         if (queryParams.get('autoRun') === 'true' || queryParams.get('autoRun') === '1') {
@@ -198,36 +234,57 @@ export class ReportViewerComponent implements OnInit {
           });
         }
       },
-      error: () => this.error.set('Could not load the report definition.'),
+      error: () => {
+        this.errorTitle.set('Could not reach the server');
+        this.error.set('The report list could not be loaded. Check your connection and refresh the page.');
+      },
     });
+  }
+
+  /** Turns an API failure into something the user can act on. */
+  private describeError(err: unknown): { title: string; message: string } {
+    const e = err as { status?: number; error?: { message?: string; detail?: string } } | null;
+    const serverMessage = e?.error?.message ?? e?.error?.detail;
+    switch (e?.status) {
+      case 400:
+        return { title: 'Check the parameters', message: serverMessage ?? 'One of the parameters is not valid.' };
+      case 403:
+        return { title: 'Not permitted', message: 'Your role does not include permission to run or export this report. Ask the farm owner to grant it.' };
+      case 404:
+        return { title: 'Report not available', message: serverMessage ?? 'This report no longer exists.' };
+      case 0:
+        return { title: 'No connection', message: 'The server could not be reached. Check your connection and try again.' };
+      default:
+        return { title: 'Something went wrong', message: 'The report could not be produced. Try again; if it keeps failing, tell your administrator.' };
+    }
   }
 
   protected run(request: RunReportRequest): void {
     this.running.set(true);
     this.error.set(null);
     this.language.set(request.language);
+    this.bengaliNumerals.set(request.bengaliNumerals);
     this.lastRequest = request;
 
     this.reports.run(this.key, request).subscribe({
       next: result => {
         this.data.set(result);
         this.running.set(false);
-
-        if (result.totalRowCount === 0) {
-          this.snackBar.open('No data for the selected criteria.', 'Dismiss', { duration: 4000 });
-        }
       },
       error: err => {
         // The API returns a specific message for a bad parameter or an oversized result; showing
         // it beats a generic failure the user cannot act on.
-        this.error.set(err?.error?.message ?? 'The report could not be run.');
+        const { title, message } = this.describeError(err);
+        this.errorTitle.set(title);
+        this.error.set(message);
+        this.data.set(null);
         this.running.set(false);
       },
     });
   }
 
   protected exportAs(format: ReportExportFormat): void {
-    if (!this.lastRequest) {
+    if (!this.lastRequest || this.exporting() || this.running()) {
       return;
     }
 
@@ -241,8 +298,8 @@ export class ReportViewerComponent implements OnInit {
         }
         this.exporting.set(false);
       },
-      error: () => {
-        this.snackBar.open('Export failed.', 'Dismiss', { duration: 4000 });
+      error: err => {
+        this.snackBar.open(`Export failed: ${this.describeError(err).message}`, 'Dismiss', { duration: 6000 });
         this.exporting.set(false);
       },
     });

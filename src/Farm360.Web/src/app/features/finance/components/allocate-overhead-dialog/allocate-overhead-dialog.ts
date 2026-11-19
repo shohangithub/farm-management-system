@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,8 +7,9 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { OverheadAllocationResult } from '../../models/finance.model';
-
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+
 /**
  * Runs the labour/overhead allocation for a period: splits every unattributed indirect expense
  * (labour, utilities, transport, misc...) across the animals present during that window and
@@ -18,7 +19,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-allocate-overhead-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, CurrencyPipe],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] w-full">
       <!-- Header -->
@@ -32,7 +33,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
             Spread this period's labour and overhead expenses across the animals present during it
           </p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -108,7 +109,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           <dl class="grid grid-cols-2 gap-3 text-sm">
             <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <dt class="text-xs text-gray-500 dark:text-gray-400">Amount allocated</dt>
-              <dd class="font-bold text-gray-900 dark:text-white m-0">{{ result()!.amountAllocatedBdt | currency:'BDT':'symbol-narrow':'1.0-2' }}</dd>
+              <dd class="font-bold text-gray-900 dark:text-white m-0">{{ result()!.amountAllocatedBdt | money:2 }}</dd>
             </div>
             <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <dt class="text-xs text-gray-500 dark:text-gray-400">Animal ledgers updated</dt>

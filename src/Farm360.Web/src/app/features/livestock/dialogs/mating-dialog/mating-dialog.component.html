@@ -7,7 +7,7 @@
       </h2>
       <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Record mating event for {{ data.animalTag }}</p>
     </div>
-    <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+    <button aria-label="Close" mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
       <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
     </button>
   </div>
@@ -48,9 +48,12 @@
         <h3 class="text-sm font-bold text-gray-900 dark:text-white">Sire Information (Optional)</h3>
         
         <div class="space-y-1.5" *ngIf="!form.get('isAI')?.value">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Internal Sire (Farm Animal ID)</label>
-          <input type="text" formControlName="sireAnimalId" placeholder="e.g. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Internal Sire (on-farm male)</label>
+          <select formControlName="sireAnimalId"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <option value="">-- None / external sire --</option>
+            <option *ngFor="let s of sires()" [value]="s.id">{{ s.tagId }} — {{ s.breedName }}</option>
+          </select>
         </div>
 
         <div class="space-y-1.5">

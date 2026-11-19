@@ -17,4 +17,10 @@ public interface IAuthService
     Task<LoginResponse> LoginWithPasswordAsync(LoginRequest request, CancellationToken cancellationToken = default);
     Task<LoginResponse> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task RegisterUserAsync(RegisterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Issues a fresh access + refresh token pair for an already-verified user (e.g. right after a
+    /// password change revoked every older session), preferring <paramref name="preferredTenantId"/>.
+    /// </summary>
+    Task<LoginResponse> IssueSessionAsync(Guid userId, Guid? preferredTenantId, CancellationToken cancellationToken = default);
 }

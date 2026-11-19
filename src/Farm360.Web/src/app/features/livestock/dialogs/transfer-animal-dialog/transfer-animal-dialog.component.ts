@@ -10,6 +10,7 @@ import { ShedService } from '../../../farms/services/shed.service';
 import { PenService } from '../../../farms/services/pen.service';
 import { ShedList } from '../../../farms/models/shed.model';
 import { PenList } from '../../../farms/models/pen.model';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
 export interface TransferAnimalDialogData {
   animalId: string;
@@ -38,7 +39,7 @@ export class TransferAnimalDialogComponent implements OnInit, OnDestroy {
   readonly form = this.fb.group({
     shedId: [this.data.currentShedId || ''],
     penId: [this.data.currentPenId || ''],
-    transferDate: [new Date().toISOString().split('T')[0], Validators.required],
+    transferDate: [toLocalIsoDate(), Validators.required],
     reason: ['']
   });
 

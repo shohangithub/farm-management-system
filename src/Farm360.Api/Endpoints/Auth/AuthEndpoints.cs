@@ -21,6 +21,7 @@ public static class AuthEndpoints
             return Results.Ok(result);
         })
         .AllowAnonymous()
+        .RequireRateLimiting(Farm360.Api.Configuration.RateLimitingSetup.AuthPolicy)
         .WithTags("Auth")
         .Produces<LoginResponse>();
 
@@ -30,14 +31,41 @@ public static class AuthEndpoints
             return Results.Ok(result);
         })
         .AllowAnonymous()
+        .RequireRateLimiting(Farm360.Api.Configuration.RateLimitingSetup.AuthPolicy)
         .WithTags("Auth")
         .Produces<LoginResponse>();
 
-        group.MapPost("/logout", async ([FromBody] LogoutRequest request, IRefreshTokenService refreshTokenService) =>
+        // Revokes only the caller's own refresh token: a token belonging to another user is ignored.
+        group.MapPost("/logout", async (
+            [FromBody] LogoutRequest request,
+            IRefreshTokenService refreshTokenService,
+            ICurrentUserService currentUser) =>
         {
-            await refreshTokenService.RevokeSessionAsync(
+            if (currentUser.UserId is not { } userId)
+            {
+                return Results.Unauthorized();
+            }
+
+            await refreshTokenService.RevokeOwnSessionAsync(
+                userId,
                 request.RefreshToken,
                 SessionRevokeReason.Logout);
+            return Results.NoContent();
+        })
+        .RequireAuthorization()
+        .WithTags("Auth")
+        .Produces(StatusCodes.Status204NoContent);
+
+        // Signs the caller out everywhere: revokes all refresh tokens and bumps the token version so
+        // every access token already issued stops working (see TokenVersionCheck).
+        group.MapPost("/logout-all", async (IRefreshTokenService refreshTokenService, ICurrentUserService currentUser) =>
+        {
+            if (currentUser.UserId is not { } userId)
+            {
+                return Results.Unauthorized();
+            }
+
+            await refreshTokenService.RevokeAllSessionsAsync(userId, SessionRevokeReason.Logout);
             return Results.NoContent();
         })
         .RequireAuthorization()
@@ -50,6 +78,7 @@ public static class AuthEndpoints
             return Results.Ok(new { message = "User registered successfully" });
         })
         .AllowAnonymous()
+        .RequireRateLimiting(Farm360.Api.Configuration.RateLimitingSetup.RegistrationPolicy)
         .WithTags("Auth")
         .Produces(StatusCodes.Status200OK);
 
@@ -62,9 +91,8 @@ public static class AuthEndpoints
         .WithTags("Auth")
         .Produces<UserProfileDto>();
 
-        // Phase 2: Password Reset via OTP (F360-AUTH-2026-001 §4 — not implemented yet)
-        // POST /forgot-password → generate OTP, send via SMS
-        // POST /reset-password  → verify OTP, set new password
+        // Password change / OTP password reset / invitation accept (AccountEndpoints.cs)
+        group.MapAccountEndpoints();
 
         return group;
     }

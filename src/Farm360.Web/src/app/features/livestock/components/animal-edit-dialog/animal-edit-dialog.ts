@@ -3,7 +3,6 @@ import {
 } from '@angular/core';
 import { CommonModule }           from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,6 +13,7 @@ import { AnimalService }          from '../../services/animal.service';
 import { BreedService }           from '../../services/breed.service';
 import { AnimalDto, AnimalSpecies, AnimalSex, AcquisitionType, TagType, SPECIES_LABELS } from '../../models/animal.models';
 import { BreedDto }               from '../../models/breed.models';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-animal-edit-dialog',
@@ -27,7 +27,7 @@ import { BreedDto }               from '../../models/breed.models';
 export class AnimalEditDialogComponent implements OnInit {
   private readonly svc      = inject(AnimalService);
   private readonly fb       = inject(FormBuilder);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly breedSvc = inject(BreedService);
   
@@ -110,10 +110,7 @@ export class AnimalEditDialogComponent implements OnInit {
     .pipe(finalize(() => this.submitting.set(false)))
     .subscribe({
       next:  a => {
-        this.snackBar.open('Animal details updated successfully!', 'Close', {
-          duration: 3000,
-          panelClass: ['snack-success']
-        });
+        this.notify.success('Animal details updated successfully!');
         this.dialogRef.close(true);
       },
       error: err => {
@@ -131,5 +128,19 @@ export class AnimalEditDialogComponent implements OnInit {
         this.error.set(msg);
       }
     });
+  }
+
+  /** Human-readable message for the first validation error on a control. */
+  fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
+    const e = group.get(name)?.errors;
+    if (!e) return '';
+    if (e['required']) return 'This field is required.';
+    if (e['min']) return `Must be at least ${e['min'].min}.`;
+    if (e['max']) return `Must be at most ${e['max'].max}.`;
+    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
+    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
+    if (e['email']) return 'Enter a valid email address.';
+    if (e['pattern']) return 'Invalid format.';
+    return 'Invalid value.';
   }
 }

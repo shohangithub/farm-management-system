@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -19,14 +20,18 @@ namespace Farm360.Persistence.Queries;
 
 public class AnalyticsQueryService : IAnalyticsQueryService
 {
+    private readonly IFarmClock _clock;
+
     private readonly ApplicationDbContext _context;
     private readonly IAnimalFeedAllocationRepository _feedAllocations;
 
     /// <summary>Months shown on the trend charts (current month included).</summary>
     private const int TrendMonths = 6;
 
-    public AnalyticsQueryService(ApplicationDbContext context, IAnimalFeedAllocationRepository feedAllocations)
+    public AnalyticsQueryService(ApplicationDbContext context, IAnimalFeedAllocationRepository feedAllocations,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _context = context;
         _feedAllocations = feedAllocations;
     }
@@ -47,7 +52,9 @@ public class AnalyticsQueryService : IAnalyticsQueryService
 
     public async Task<BreedingAnalyticsDto> GetBreedingAnalyticsAsync(Guid? farmId, CancellationToken cancellationToken = default)
     {
-        var breedingQuery = _context.BreedingRecords.AsNoTracking();
+        // BreedingRecord is not an ITenantEntity: scope it through the tenant-filtered Animals set.
+        var breedingQuery = _context.BreedingRecords.AsNoTracking()
+            .Where(br => _context.Animals.Any(a => a.Id == br.AnimalId));
         
         if (farmId.HasValue)
         {
@@ -58,9 +65,12 @@ public class AnalyticsQueryService : IAnalyticsQueryService
         var confirmedPregnancies = await breedingQuery.CountAsync(br => br.IsPregnancyConfirmed, cancellationToken);
         
         var next30Days = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30));
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
         
+        // Expected calvings are an alert: only dams still on the farm and not yet calved.
         var expectedCalvings = await breedingQuery
+            .Where(br => br.ActualCalvingDate == null &&
+                         _context.Animals.Any(a => a.Id == br.AnimalId && AnimalStatusGroups.OnFarm.Contains(a.Status)))
             .CountAsync(br => br.ExpectedCalvingDate >= today && br.ExpectedCalvingDate <= next30Days, cancellationToken);
 
         var conceptionRate = totalMatings == 0 ? 0 : (double)confirmedPregnancies / totalMatings * 100.0;
@@ -158,7 +168,7 @@ public class AnalyticsQueryService : IAnalyticsQueryService
     /// </summary>
     public async Task<IReadOnlyList<AdgTrendDto>> GetAdgTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default)
     {
-        var months = TrendWindow(DateOnly.FromDateTime(DateTime.UtcNow));
+        var months = TrendWindow(_clock.Today);
         var earliestDate = months[0].Start;
 
         // Every animal of the farm (not only today's Active ones): an animal sold last month still
@@ -229,7 +239,7 @@ public class AnalyticsQueryService : IAnalyticsQueryService
     /// </summary>
     public async Task<IReadOnlyList<FeedCostTrendDto>> GetFeedCostTrendsAsync(Guid? farmId, CancellationToken cancellationToken = default)
     {
-        var months = TrendWindow(DateOnly.FromDateTime(DateTime.UtcNow));
+        var months = TrendWindow(_clock.Today);
 
         var farmIds = farmId.HasValue
             ? new List<Guid> { farmId.Value }
@@ -269,7 +279,7 @@ public class AnalyticsQueryService : IAnalyticsQueryService
 
     public async Task<VaccinationComplianceDto> GetVaccinationComplianceAsync(Guid? farmId, CancellationToken cancellationToken = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
 
         var query = _context.VaccinationEvents.AsNoTracking();
         if (farmId.HasValue)
@@ -278,8 +288,11 @@ public class AnalyticsQueryService : IAnalyticsQueryService
         }
 
         var completed = await query.CountAsync(v => v.Status == VaccinationStatus.Completed, cancellationToken);
-        var due = await query.CountAsync(v => v.Status == VaccinationStatus.Scheduled && v.ScheduledDate <= today.AddDays(7) && v.ScheduledDate >= today, cancellationToken);
-        var overdue = await query.CountAsync(v => v.Status == VaccinationStatus.Overdue || (v.Status == VaccinationStatus.Scheduled && v.ScheduledDate < today), cancellationToken);
+        // Due/overdue is work still to do: only for animals on the farm (AnimalStatusGroups.OnFarm).
+        // Completed doses stay counted for animals since sold/dead (history).
+        var pending = query.Where(v => _context.Animals.Any(a => a.Id == v.AnimalId && AnimalStatusGroups.OnFarm.Contains(a.Status)));
+        var due = await pending.CountAsync(v => v.Status == VaccinationStatus.Scheduled && v.ScheduledDate <= today.AddDays(7) && v.ScheduledDate >= today, cancellationToken);
+        var overdue = await pending.CountAsync(v => v.Status == VaccinationStatus.Overdue || (v.Status == VaccinationStatus.Scheduled && v.ScheduledDate < today), cancellationToken);
 
         return new VaccinationComplianceDto(completed, due, overdue);
     }

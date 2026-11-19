@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,6 +10,7 @@ import {
   buildCreditTermsGroup,
   toCreditTerms,
 } from '../../../../finance/components/credit-terms-fields/credit-terms-fields.component';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
 export interface FulfillPoDialogData {
   id: string;
@@ -25,7 +26,7 @@ export interface FulfillPoDialogData {
 @Component({
   selector: 'app-fulfill-po-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, DecimalPipe, CreditTermsFieldsComponent],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, CreditTermsFieldsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -37,7 +38,7 @@ export interface FulfillPoDialogData {
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">All items go into stock and the inventory balance is updated.</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+        <button aria-label="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -53,7 +54,7 @@ export interface FulfillPoDialogData {
           </div>
           <div class="text-right">
             <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Order total</div>
-            <div class="text-lg font-black text-gray-900 dark:text-white">৳ {{ data.totalAmountBdt | number: '1.2-2' }}</div>
+            <div class="text-lg font-black text-gray-900 dark:text-white">{{ data.totalAmountBdt | money:2 }}</div>
           </div>
         </div>
 

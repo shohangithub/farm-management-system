@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, Inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Inject, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -10,15 +10,19 @@ import { VetVisitDto } from '../../../models/health.models';
 import { finalize, map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { NotificationService } from '../../../../../shared/services/notification.service';
+import { parseApiError } from '../../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-vet-visit-detail-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule],
   templateUrl: './vet-visit-detail-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VetVisitDetailDialogComponent implements OnInit {
+  private readonly notify = inject(NotificationService);
   isEditing = signal(false);
   isLoading = signal(true);
   isSaving = signal(false);
@@ -89,7 +93,7 @@ export class VetVisitDetailDialogComponent implements OnInit {
           }
         },
         error: (err) => {
-          console.error('Failed to load visit details', err);
+          this.notify.error(parseApiError(err, 'Could not load the vet visit.'));
           this.dialogRef.close();
         }
       });
@@ -132,7 +136,7 @@ export class VetVisitDetailDialogComponent implements OnInit {
           this.dialogRef.close(true); // Return true to indicate success
         },
         error: (err) => {
-          console.error('Failed to update visit', err);
+          this.notify.error(parseApiError(err, 'Could not save the vet visit. Please try again.'));
         }
       });
   }

@@ -405,11 +405,27 @@ public static class FeedingEndpoints
         // One-off admin operation that fills in allocations for feeding entries recorded before
         // the per-animal grain existed. Idempotent: it only picks up entries that have none, so
         // it is safe to re-run or to work through history in nightly chunks.
-        group.MapPost("/allocations/backfill", async (
-            [FromBody] Farm360.Application.Feeding.Jobs.BackfillAnimalFeedAllocationsCommand command,
+        // Scoped to the caller's tenant (from the token, never the body) and to one farm; the
+        // cross-tenant variant runs only from the startup/background job.
+        group.MapPost("/allocations/backfill/{farmId:guid}", async (
+            [FromRoute] Guid farmId,
+            [FromBody] BackfillAllocationsRequest request,
+            [FromServices] Farm360.Application.Common.Interfaces.ITenantService tenantService,
             [FromServices] ISender sender,
             CancellationToken ct) =>
         {
+            if (tenantService.TenantId == Guid.Empty)
+            {
+                return Results.Forbid();
+            }
+
+            var command = new Farm360.Application.Feeding.Jobs.BackfillAnimalFeedAllocationsCommand(
+                request.From,
+                request.To,
+                Math.Clamp(request.BatchSize ?? 500, 1, 2_000),
+                Math.Clamp(request.MaxBatches ?? 200, 1, 500),
+                TenantId: tenantService.TenantId,
+                FarmId: farmId);
             var result = await sender.Send(command, ct);
             return Results.Ok(result);
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Delete}")
@@ -427,9 +443,25 @@ public static class FeedingEndpoints
         }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Delete}")
           .WithSummary("Recomputes every animal ledger's feed cost on a farm from confirmed feed allocations.");
 
+        // One-off repair: apply every sold or dead animal's exit to feeding (plans ended, pending
+        // entries from the exit day skipped, confirmed ones after it reversed with stock returned,
+        // group entries re-split without it, ledger feed buckets re-synced). Idempotent.
+        group.MapPost("/allocations/reprocess-exited-animals/{farmId:guid}", async (
+            [FromRoute] Guid farmId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new Farm360.Application.Feeding.Jobs.ReprocessExitedAnimalsCommand(farmId), ct);
+            return Results.Ok(result);
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Delete}")
+          .WithSummary("Stops feeding and feed cost for sold or dead animals from their exit date (repairs late-recorded exits).");
+
         return app;
     }
 }
+
+/// <summary>Body of POST /feeding/allocations/backfill/{farmId}.</summary>
+public sealed record BackfillAllocationsRequest(DateOnly From, DateOnly To, int? BatchSize = null, int? MaxBatches = null);
 
 /// <summary>Body of POST /feeding/entries/generate.</summary>
 public sealed record GenerateEntriesRequest(DateOnly? Date, Guid? FarmId);

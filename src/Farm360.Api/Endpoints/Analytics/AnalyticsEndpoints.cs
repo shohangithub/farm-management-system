@@ -1,3 +1,4 @@
+using Farm360.Api.Authorization;
 using Farm360.Application.Analytics.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -14,7 +15,8 @@ public static class AnalyticsEndpoints
     public static void MapAnalyticsEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/farms/{farmId:guid}/analytics")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePermission(Farm360.Persistence.Seed.PermissionConstants.AnalyticsModule.View);
 
         group.MapGet("/breeding", GetBreedingAnalytics)
             .WithName("GetBreedingAnalytics")

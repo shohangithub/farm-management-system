@@ -227,7 +227,7 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var period = context.Range("period");
         var statusFilter = context.Text("status", "all");
         var animalId = context.IdOrNull("animalId");
@@ -351,16 +351,5 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
             .OrderBy(r => r.AnimalTag)
             .ThenBy(r => r.Date)
             .ToList();
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

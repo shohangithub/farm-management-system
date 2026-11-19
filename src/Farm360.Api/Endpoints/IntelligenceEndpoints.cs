@@ -1,3 +1,4 @@
+using Farm360.Api.Authorization;
 using Farm360.Application.Features.Intelligence.Queries.GetAnimalFinancialSnapshot;
 using Farm360.Application.Intelligence.Queries;
 using MediatR;
@@ -15,7 +16,8 @@ public static class IntelligenceEndpoints
     public static void MapIntelligenceEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/intelligence")
-            .RequireAuthorization(); // Requires standard authenticated user
+            .RequireAuthorization()
+            .RequirePermission(Farm360.Persistence.Seed.PermissionConstants.IntelligenceModule.View);
 
         group.MapGet("/animals/{animalId:guid}/financial-snapshot", GetAnimalFinancialSnapshot)
             .WithName("GetAnimalFinancialSnapshot")
@@ -32,7 +34,8 @@ public static class IntelligenceEndpoints
             .WithSummary("Projects weight and costs to a future target date.")
             .WithTags("Intelligence");
         var projectionGroup = app.MapGroup("/api/v1/intelligence/projections")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePermission(Farm360.Persistence.Seed.PermissionConstants.IntelligenceModule.View);
 
         projectionGroup.MapPost("/calculate", CalculateProfitProjection)
             .WithName("CalculateProfitProjection")

@@ -99,6 +99,16 @@ internal sealed class OnboardTenantCommandHandler : IRequestHandler<OnboardTenan
             throw new UnauthorizedAccessException("User must be authenticated to onboard a tenant.");
         }
 
+        // Self-service onboarding is only for a user who has no organisation yet, and each user gets
+        // a single trial tenant: otherwise one account could mint unlimited free trials.
+        var currentTenantId = _currentUserService.TenantId;
+        if ((currentTenantId.HasValue && currentTenantId.Value != Guid.Empty)
+            || await _tenantUserRepository.UserHasAnyMembershipAsync(userId.Value, cancellationToken))
+        {
+            throw new Farm360.Application.Common.Exceptions.ConflictException(
+                "Your account already belongs to an organisation. Additional organisations must be created by support.");
+        }
+
         // 1. Generate slug from Name
         var slug = GenerateSlug(request.Name);
 

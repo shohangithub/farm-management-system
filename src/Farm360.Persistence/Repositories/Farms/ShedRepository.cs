@@ -7,6 +7,10 @@ namespace Farm360.Persistence.Repositories.Farms;
 
 public sealed class ShedRepository : IShedRepository
 {
+    // Occupancy = open movements of animals on the farm (Active + Quarantined, AnimalStatusGroups).
+    // Sale/death close the open movement at the exit date (Animal.Sell / RecordDeath), and the
+    // status filter also excludes any legacy sold/dead animal whose movement was never closed, so
+    // capacity checks for transfers never count animals that have left.
     private readonly ApplicationDbContext _context;
 
     public ShedRepository(ApplicationDbContext context)
@@ -43,7 +47,7 @@ public sealed class ShedRepository : IShedRepository
     public async Task<IReadOnlyDictionary<Guid, int>> GetOccupancyByFarmAsync(Guid tenantId, Guid farmId, CancellationToken cancellationToken = default)
     {
         var animalQuery = _context.Set<Farm360.Domain.Livestock.Animal>()
-            .Where(a => a.TenantId == tenantId && a.FarmId == farmId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .Where(a => a.TenantId == tenantId && a.FarmId == farmId && Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status))
             .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null));
 
         var grouped = await animalQuery
@@ -58,7 +62,7 @@ public sealed class ShedRepository : IShedRepository
     public async Task<int> GetOccupancyByShedAsync(Guid tenantId, Guid shedId, CancellationToken cancellationToken = default)
     {
         return await _context.Set<Farm360.Domain.Livestock.Animal>()
-            .Where(a => a.TenantId == tenantId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .Where(a => a.TenantId == tenantId && Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status))
             .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null))
             .CountAsync(m => m.ShedId == shedId, cancellationToken);
     }

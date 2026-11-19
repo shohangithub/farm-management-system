@@ -37,7 +37,8 @@ public sealed class ReportColumn<TRow>
         float width,
         bool isRelativeWidth,
         ReportAggregate aggregate,
-        bool mergeRepeating = false)
+        bool mergeRepeating = false,
+        Func<TRow, string?>? unitOf = null)
     {
         Field = field;
         Header = header;
@@ -49,6 +50,7 @@ public sealed class ReportColumn<TRow>
         IsRelativeWidth = isRelativeWidth;
         Aggregate = aggregate;
         MergeRepeating = mergeRepeating;
+        UnitOf = unitOf;
     }
 
     public string Field { get; }
@@ -61,6 +63,12 @@ public sealed class ReportColumn<TRow>
     public bool IsRelativeWidth { get; }
     public ReportAggregate Aggregate { get; }
     public bool MergeRepeating { get; }
+
+    /// <summary>
+    /// The unit a quantity is measured in, per row. When set, a footer total is printed only if
+    /// every row it covers shares one unit — 12 kg + 3 litres + 40 doses is not "55" of anything.
+    /// </summary>
+    public Func<TRow, string?>? UnitOf { get; }
 
     public ReportColumn ToDescriptor() =>
         new(Field, Header, Type, Align, Decimals, Width, IsRelativeWidth, Aggregate, MergeRepeating);
@@ -88,12 +96,18 @@ public sealed class ReportColumn<TRow>
 
     public static ReportColumn<TRow> Number(
         string field, LocalizedText header, Func<TRow, object?> value,
-        int decimals = 2, float widthMm = 20f, ReportAggregate aggregate = ReportAggregate.None) =>
-        new(field, header, ReportColumnType.Number, value, ReportAlign.Right, decimals, widthMm, false, aggregate);
+        int decimals = 2, float widthMm = 20f, ReportAggregate aggregate = ReportAggregate.None,
+        Func<TRow, string?>? unitOf = null) =>
+        new(field, header, ReportColumnType.Number, value, ReportAlign.Right, decimals, widthMm, false, aggregate, unitOf: unitOf);
 
+    /// <summary>
+    /// A money column. Not totalled unless the definition asks for it: a rate (BDT/kg), a cost per
+    /// day or a price is money too, and summing those down a page prints a number that means
+    /// nothing. Every total in a report is therefore a deliberate choice, never a default.
+    /// </summary>
     public static ReportColumn<TRow> Money(
         string field, LocalizedText header, Func<TRow, object?> value,
-        int decimals = 2, float widthMm = 24f, ReportAggregate aggregate = ReportAggregate.Sum) =>
+        int decimals = 2, float widthMm = 24f, ReportAggregate aggregate = ReportAggregate.None) =>
         new(field, header, ReportColumnType.Money, value, ReportAlign.Right, decimals, widthMm, false, aggregate);
 
     public static ReportColumn<TRow> Percent(

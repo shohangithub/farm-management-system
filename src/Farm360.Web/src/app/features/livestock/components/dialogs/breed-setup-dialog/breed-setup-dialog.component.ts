@@ -30,7 +30,7 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
             </button>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button aria-label="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -51,6 +51,7 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Breed Name <span class="text-red-500">*</span></label>
               <input type="text" formControlName="name" placeholder="e.g. Shahiwal"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+<p *ngIf="form.get('name')?.invalid && form.get('name')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'name') }}</p>
             </div>
             
             <div class="space-y-1.5">
@@ -93,10 +94,10 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Standard ADG (Min - Max kg)</label>
                 <div class="flex items-center gap-2">
-                  <input type="number" formControlName="standardAdgMin"
+                  <input type="number" min="0" step="0.01" formControlName="standardAdgMin"
                          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
                   <span class="text-gray-400 font-bold">-</span>
-                  <input type="number" formControlName="standardAdgMax"
+                  <input type="number" min="0" step="0.01" formControlName="standardAdgMax"
                          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
                 </div>
               </div>
@@ -104,10 +105,10 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Feed Conv. Ratio (FCR) (Min - Max)</label>
                 <div class="flex items-center gap-2">
-                  <input type="number" formControlName="fcrMin"
+                  <input type="number" min="0" step="0.01" formControlName="fcrMin"
                          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
                   <span class="text-gray-400 font-bold">-</span>
-                  <input type="number" formControlName="fcrMax"
+                  <input type="number" min="0" step="0.01" formControlName="fcrMax"
                          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
                 </div>
               </div>
@@ -115,23 +116,23 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
             
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                <div class="space-y-1.5">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">ADG (Poor)</label>
-                <input type="number" formControlName="adgPoorManagement"
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Poor)</label>
+                <input type="number" min="0" step="0.01" formControlName="adgPoorManagement"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
               <div class="space-y-1.5">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">ADG (Average)</label>
-                <input type="number" formControlName="adgAverageFarm"
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Average)</label>
+                <input type="number" min="0" step="0.01" formControlName="adgAverageFarm"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
               <div class="space-y-1.5">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">ADG (Good)</label>
-                <input type="number" formControlName="adgGoodCommercialFarm"
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Good)</label>
+                <input type="number" min="0" step="0.01" formControlName="adgGoodCommercialFarm"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
               <div class="space-y-1.5">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">ADG (Intensive)</label>
-                <input type="number" formControlName="adgIntensiveFattening"
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Intensive)</label>
+                <input type="number" min="0" step="0.01" formControlName="adgIntensiveFattening"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
             </div>
@@ -187,14 +188,14 @@ export class BreedSetupDialogComponent implements OnInit {
     origin: [this.data?.breed?.origin || ''],
     mainPurpose: [this.data?.breed?.mainPurpose || 'Beef', Validators.required],
     bestFor: [this.data?.breed?.bestFor || ''],
-    adgPoorManagement: [this.data?.breed?.adgPoorManagement ?? 0.2],
-    adgAverageFarm: [this.data?.breed?.adgAverageFarm ?? 0.4],
-    adgGoodCommercialFarm: [this.data?.breed?.adgGoodCommercialFarm ?? 0.6],
-    adgIntensiveFattening: [this.data?.breed?.adgIntensiveFattening ?? 0.8],
-    standardAdgMin: [this.data?.breed?.standardAdgMin ?? 0.4],
-    standardAdgMax: [this.data?.breed?.standardAdgMax ?? 0.8],
-    fcrMin: [this.data?.breed?.fcrMin ?? 5],
-    fcrMax: [this.data?.breed?.fcrMax ?? 8],
+    adgPoorManagement: [this.data?.breed?.adgPoorManagement ?? 0.2, Validators.min(0)],
+    adgAverageFarm: [this.data?.breed?.adgAverageFarm ?? 0.4, Validators.min(0)],
+    adgGoodCommercialFarm: [this.data?.breed?.adgGoodCommercialFarm ?? 0.6, Validators.min(0)],
+    adgIntensiveFattening: [this.data?.breed?.adgIntensiveFattening ?? 0.8, Validators.min(0)],
+    standardAdgMin: [this.data?.breed?.standardAdgMin ?? 0.4, Validators.min(0)],
+    standardAdgMax: [this.data?.breed?.standardAdgMax ?? 0.8, Validators.min(0)],
+    fcrMin: [this.data?.breed?.fcrMin ?? 5, Validators.min(0)],
+    fcrMax: [this.data?.breed?.fcrMax ?? 8, Validators.min(0)],
     milkYieldMinLiters: [this.data?.breed?.milkYieldMinLiters ?? 0],
     milkYieldMaxLiters: [this.data?.breed?.milkYieldMaxLiters ?? 0],
     fatPercentageMin: [this.data?.breed?.fatPercentageMin ?? 0],
@@ -244,5 +245,19 @@ export class BreedSetupDialogComponent implements OnInit {
       maxWidth: '95vw',
       panelClass: ['!rounded-2xl', '!bg-transparent']
     });
+  }
+
+  /** Human-readable message for the first validation error on a control. */
+  fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
+    const e = group.get(name)?.errors;
+    if (!e) return '';
+    if (e['required']) return 'This field is required.';
+    if (e['min']) return `Must be at least ${e['min'].min}.`;
+    if (e['max']) return `Must be at most ${e['max'].max}.`;
+    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
+    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
+    if (e['email']) return 'Enter a valid email address.';
+    if (e['pattern']) return 'Invalid format.';
+    return 'Invalid value.';
   }
 }

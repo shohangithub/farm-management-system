@@ -37,7 +37,7 @@ public sealed class TrialBalanceReportDefinition : ReportDefinition<TrialBalance
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.Date("asOfDate", new LocalizedText("As of Date", "তারিখ অনুযায়ী"), required: false, @default: "today"),
     ];
 
@@ -68,7 +68,7 @@ public sealed class TrialBalanceReportDefinition : ReportDefinition<TrialBalance
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var asOfDate = context.Date("asOfDate").ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
 
         var data = await context
@@ -88,16 +88,5 @@ public sealed class TrialBalanceReportDefinition : ReportDefinition<TrialBalance
                 DebitBdt: l.DebitBdt,
                 CreditBdt: l.CreditBdt))
             .ToList();
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

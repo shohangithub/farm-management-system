@@ -14,10 +14,13 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
+
 @Component({
   selector: 'app-organization-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatTabsModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, DatePipe],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatTabsModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, DatePipe],
   templateUrl: './organization-detail.html',
   styleUrls: ['./organization-detail.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -56,17 +59,17 @@ export class OrganizationDetailComponent {
       filter(params => !!params.orgId),
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
       switchMap(({ orgId }) => forkJoin({
-        organization: this.organizationService.getOrganizationById(orgId).pipe(catchError(() => of(null))),
+        organization: this.organizationService.getOrganizationById(orgId).pipe(catchError(err => { this.error.set(parseApiError(err, 'Failed to load organization details.')); return of(null); })),
         branches: this.branchService.getBranchesByOrganization(orgId, '', undefined, 1, 10).pipe(
           map(res => res.items),
           catchError(() => of([]))
         )
       }).pipe(
         tap(res => {
-          if (!res.organization) this.error.set('Failed to load organization details.');
+          if (!res.organization && !this.error()) this.error.set('Failed to load organization details.');
         }),
         catchError(err => {
-          this.error.set('Failed to load organization details.');
+          this.error.set(parseApiError(err, 'Failed to load organization details.'));
           return of({ organization: null, branches: [] });
         })
       )),

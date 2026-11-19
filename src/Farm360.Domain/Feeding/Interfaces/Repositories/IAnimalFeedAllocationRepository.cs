@@ -8,6 +8,9 @@ namespace Farm360.Domain.Feeding.Interfaces.Repositories;
 /// <summary>One animal's feed totals over a period, for cost ledgers and summary reports.</summary>
 public readonly record struct AnimalFeedTotals(Guid AnimalId, decimal TotalKg, decimal TotalCostBdt, int Days);
 
+/// <summary>Feed one animal ate on one day (confirmed/adjusted entries only).</summary>
+public readonly record struct AnimalFeedDay(Guid AnimalId, DateOnly Date, decimal Kg, decimal CostBdt);
+
 public interface IAnimalFeedAllocationRepository
 {
     void Add(AnimalFeedAllocation allocation);
@@ -49,6 +52,17 @@ public interface IAnimalFeedAllocationRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Feed actually eaten per animal per day across a farm (same rules as
+    /// <see cref="GetTotalsForAnimalAsync"/>: confirmed/adjusted entries only, non-kg quantities left
+    /// out of the kg but kept in the cost). Read-only; lets a report measure feed between two weigh-ins.
+    /// </summary>
+    Task<IReadOnlyList<AnimalFeedDay>> GetDailyEatenByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Entry ids already allocated on a date, so a re-run of the daily job cannot double-post.
     /// Crosses tenants because the job runs for the whole platform.
     /// </summary>
@@ -58,12 +72,15 @@ public interface IAnimalFeedAllocationRepository
 
     /// <summary>
     /// Feeding entries in a date range that have no allocation rows yet, oldest first.
-    /// Drives the historical backfill; crosses tenants because the backfill is an admin operation.
+    /// Drives the historical backfill. With <paramref name="tenantId"/> null it crosses tenants
+    /// (background job / startup only); user-initiated runs must pass the caller's tenant and farm.
     /// </summary>
     Task<IReadOnlyList<DailyFeedingEntry>> GetUnallocatedEntriesAcrossTenantsAsync(
         DateOnly from,
         DateOnly to,
         int take,
+        Guid? tenantId = null,
+        Guid? farmId = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<AnimalFeedAllocation>> GetByEntryIdAcrossTenantsAsync(

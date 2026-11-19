@@ -10,6 +10,8 @@ namespace Farm360.Application.Feeding.EventHandlers;
 
 public sealed class WeightRecordedEventHandler : INotificationHandler<WeightRecordedEvent>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IAnimalFeedingPlanRepository _planRepository;
     private readonly IFeedingRuleSetRepository _ruleSetRepository;
     private readonly IDailyFeedingEntryRepository _entryRepository;
@@ -21,8 +23,10 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
         IFeedingRuleSetRepository ruleSetRepository,
         IDailyFeedingEntryRepository entryRepository,
         IUnitOfWork unitOfWork,
-        ILogger<WeightRecordedEventHandler> logger)
+        ILogger<WeightRecordedEventHandler> logger,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _planRepository = planRepository;
         _ruleSetRepository = ruleSetRepository;
         _entryRepository = entryRepository;
@@ -35,7 +39,7 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
         var plans = await _planRepository.GetActivePlansForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
         if (plans.Count == 0) return;
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
 
         foreach (var plan in plans)
         {

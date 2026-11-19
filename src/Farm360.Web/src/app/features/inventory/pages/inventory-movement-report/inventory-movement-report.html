@@ -43,8 +43,10 @@
     
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
     
+    <app-error-state *ngIf="loadError() as err" [message]="err" (retry)="onGenerate()"></app-error-state>
+
     <app-empty-state 
-      *ngIf="!isLoading() && items().length === 0"
+      *ngIf="!isLoading() && !loadError() && items().length === 0"
       icon="receipt_long"
       title="No Movement Data"
       description="Select a different date range to view inventory movements.">

@@ -31,6 +31,8 @@ public sealed record AnimalFeedingPlanDto(
 
 internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPlansQuery, IReadOnlyList<AnimalFeedingPlanDto>>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IAnimalFeedingPlanRepository _repository;
     private readonly IFeedingRuleSetRepository _ruleSetRepository;
     private readonly IFeedFormulaRepository _formulaRepository;
@@ -48,8 +50,10 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
         IFeedIngredientRepository? ingredientRepository = null,
         Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository? inventoryRepository = null,
         IFarmBusinessRulesProvider? rules = null,
-        Farm360.Application.Inventory.Units.IUnitService? units = null)
+        Farm360.Application.Inventory.Units.IUnitService? units = null,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _calculator = ingredientRepository is not null && inventoryRepository is not null
             ? new Farm360.Application.Feeding.Services.FeedCostCalculator(ingredientRepository, inventoryRepository, units)
             : null;
@@ -82,7 +86,7 @@ internal sealed class GetFeedingPlansQueryHandler : IRequestHandler<GetFeedingPl
         var animalDict = animals.ToDictionary(a => a.Id);
 
         var basis = _rules?.Current.GroupPlanQuantityBasis ?? Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead;
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
         var result = new List<AnimalFeedingPlanDto>(plans.Count);
         foreach (var p in plans)
         {

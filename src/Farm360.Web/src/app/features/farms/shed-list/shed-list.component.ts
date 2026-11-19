@@ -12,10 +12,13 @@ import { of } from 'rxjs';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
+
 @Component({
   selector: 'app-shed-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent, LoadingComponent, EmptyStateComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent, LoadingComponent, EmptyStateComponent],
   templateUrl: './shed-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -25,6 +28,7 @@ export class ShedListComponent {
   private readonly router = inject(Router);
 
   isLoading = signal<boolean>(true);
+  readonly loadError = signal<string | null>(null);
   Math = Math;
 
   searchTerm = signal<string>('');
@@ -51,12 +55,12 @@ export class ShedListComponent {
 
   readonly shedsResult = toSignal(
     toObservable(this.fetchParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ farmId }) => {
         if (!farmId) return of([] as ShedList[]);
         return this.shedService.getShedsByFarm(farmId).pipe(
           catchError(err => {
-            console.error('Failed to load sheds', err);
+            this.loadError.set(parseApiError(err, 'Could not load sheds.'));
             return of([] as ShedList[]);
           })
         );

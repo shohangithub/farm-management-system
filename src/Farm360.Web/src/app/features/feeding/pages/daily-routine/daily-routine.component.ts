@@ -13,6 +13,8 @@ import { FeedingService } from '../../services/feeding.service';
 import { DailyFeedingRoutine, FeedingRuleSet, RoutineAnimal } from '../../models/feeding.models';
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
 
 /**
@@ -23,7 +25,7 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
 @Component({
   selector: 'app-daily-routine',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
   template: `
     <app-page-header title="Daily Feeding Routine · দৈনিক খাবার রুটিন"
       description="From your feed charts and recipes: what to mix, what to carry at each feeding time, and what each animal gets."
@@ -40,9 +42,9 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
       <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 flex flex-wrap items-end gap-4 print:hidden">
         <label class="text-xs font-bold text-gray-600 dark:text-gray-300 flex flex-col gap-1.5">Day
           <div class="flex items-center gap-1">
-            <button type="button" (click)="shift(-1)" class="p-1.5 rounded-lg border border-gray-300 dark:border-gray-600"><mat-icon class="!text-[16px] !w-4 !h-4">chevron_left</mat-icon></button>
+            <button type="button" (click)="shift(-1)" class="p-1.5 rounded-lg border border-gray-300 dark:border-gray-600" aria-label="Previous"><mat-icon class="!text-[16px] !w-4 !h-4">chevron_left</mat-icon></button>
             <input type="date" [(ngModel)]="date" (change)="run()" class="field" />
-            <button type="button" (click)="shift(1)" class="p-1.5 rounded-lg border border-gray-300 dark:border-gray-600"><mat-icon class="!text-[16px] !w-4 !h-4">chevron_right</mat-icon></button>
+            <button type="button" (click)="shift(1)" class="p-1.5 rounded-lg border border-gray-300 dark:border-gray-600" aria-label="Next"><mat-icon class="!text-[16px] !w-4 !h-4">chevron_right</mat-icon></button>
           </div>
         </label>
         <label class="text-xs font-bold text-gray-600 dark:text-gray-300 flex flex-col gap-1.5">Shed
@@ -78,7 +80,7 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
           <div class="tile"><p class="tile-label">Animals fed</p><h3 class="tile-value">{{ r.animals }}</h3>
             <p *ngIf="r.animalsWithoutRation" class="text-[11px] text-rose-600 m-0">+{{ r.animalsWithoutRation }} without a ration</p></div>
           <div class="tile"><p class="tile-label">Total feed</p><h3 class="tile-value">{{ r.totalKg | number:'1.0-2' }} kg</h3></div>
-          <div class="tile"><p class="tile-label">Feed cost</p><h3 class="tile-value">৳{{ r.totalCostBdt | number:'1.0-0' }}</h3></div>
+          <div class="tile"><p class="tile-label">Feed cost</p><h3 class="tile-value">{{ r.totalCostBdt | money }}</h3></div>
         </div>
         <div *ngFor="let n of r.notes" class="mt-2 text-[11px] text-gray-500 flex items-start gap-1"><mat-icon class="!text-[14px] !w-4 !h-4">info</mat-icon>{{ n }}</div>
 
@@ -116,7 +118,7 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
               <div *ngFor="let x of r.recipes" class="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden break-inside-avoid">
                 <div class="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-between">
-                  <span class="font-bold text-sm">{{ x.recipe }}<span *ngIf="x.directItem" class="ml-1 text-[10px] font-normal text-gray-500">(fed as it is)</span></span>
+                  <span class="font-bold text-sm">{{ x.recipe }}<span *ngIf="x.directItem" class="ml-1 text-[11px] font-normal text-gray-500">(fed as it is)</span></span>
                   <span class="font-mono font-black text-emerald-700 dark:text-emerald-300">{{ x.totalKg | number:'1.0-2' }} {{ x.unit }}</span>
                 </div>
                 <table class="w-full text-xs">
@@ -136,7 +138,7 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
                     <tr *ngIf="!x.ingredients.length"><td colspan="4" class="px-3 py-2 text-gray-400">No ingredients in this recipe.</td></tr>
                   </tbody>
                 </table>
-                <div class="px-3 py-1.5 text-[11px] text-gray-500 border-t border-gray-100 dark:border-gray-700">৳{{ x.costBdt | number:'1.0-0' }} · {{ x.animals }} animal(s)</div>
+                <div class="px-3 py-1.5 text-[11px] text-gray-500 border-t border-gray-100 dark:border-gray-700">{{ x.costBdt | money }} · {{ x.animals }} animal(s)</div>
               </div>
             </div>
           </section>
@@ -170,13 +172,13 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
                       </td>
                       <td class="px-3 py-1.5">
                         {{ l.chart }} <span class="text-[11px] text-gray-500">· {{ l.band }}</span>
-                        <span *ngIf="l.fit === 'BelowRange' || l.fit === 'AboveRange'" class="ml-1 text-[10px] text-amber-600">outside chart</span>
-                        <span *ngIf="l.kind === 'Not assigned'" class="ml-1 text-[10px] font-bold text-sky-600">not assigned yet</span>
-                        <span *ngIf="l.kind === 'Extra' || l.kind === 'Group'" class="ml-1 text-[10px] text-gray-400">{{ l.kind === 'Extra' ? 'extra' : 'shed ration' }}</span>
+                        <span *ngIf="l.fit === 'BelowRange' || l.fit === 'AboveRange'" class="ml-1 text-[11px] text-amber-600">outside chart</span>
+                        <span *ngIf="l.kind === 'Not assigned'" class="ml-1 text-[11px] font-bold text-sky-600">not assigned yet</span>
+                        <span *ngIf="l.kind === 'Extra' || l.kind === 'Group'" class="ml-1 text-[11px] text-gray-400">{{ l.kind === 'Extra' ? 'extra' : 'shed ration' }}</span>
                       </td>
                       <td class="px-3 py-1.5">{{ l.recipe }}</td>
                       <td class="px-3 py-1.5 text-right font-mono text-xs">{{ l.sessions > 1 ? l.sessions + ' × ' + (l.kgPerSession | number:'1.0-3') : (l.kgPerSession | number:'1.0-3') }} {{ l.unit }}</td>
-                      <td class="px-3 py-1.5 text-right font-mono font-bold">{{ l.kgPerDay | number:'1.0-3' }}<span *ngIf="l.unit !== 'kg'" class="text-[10px] font-normal"> {{ l.unit }}</span></td>
+                      <td class="px-3 py-1.5 text-right font-mono font-bold">{{ l.kgPerDay | number:'1.0-3' }}<span *ngIf="l.unit !== 'kg'" class="text-[11px] font-normal"> {{ l.unit }}</span></td>
                       <td class="px-4 py-1.5 text-right font-mono text-gray-500">{{ l.costBdt | number:'1.0-0' }}</td>
                     </tr>
                   </ng-container>
@@ -214,7 +216,7 @@ export class DailyRoutineComponent {
   private readonly context = inject(WorkingContextService);
   private readonly shedService = inject(ShedService);
 
-  date = new Date().toISOString().split('T')[0];
+  date = toLocalIsoDate();
   shedId: string | null = null;
   ruleSetId: string | null = null;
   applyToUnassigned = false;

@@ -44,7 +44,7 @@ public sealed class BalanceSheetReportDefinition : ReportDefinition<BalanceSheet
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.Date("asOfDate", new LocalizedText("As of Date", "তারিখ অনুযায়ী"), required: false, @default: "today"),
         ReportParameter.Bool("comparative", new LocalizedText("Compare with previous year end", "পূর্ববর্তী বছর শেষের সাথে তুলনা"), @default: true),
     ];
@@ -101,24 +101,17 @@ public sealed class BalanceSheetReportDefinition : ReportDefinition<BalanceSheet
         return rows;
     }
 
-    private static async Task<BalanceSheetDto> LoadAsync(ReportContext context, CancellationToken cancellationToken)
+    // The subject line and the body both need the statement; load it once per run.
+    private static Task<BalanceSheetDto> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>
+        context.MemoAsync("balance-sheet", () => LoadCoreAsync(context, cancellationToken));
+
+    private static async Task<BalanceSheetDto> LoadCoreAsync(ReportContext context, CancellationToken cancellationToken)
     {
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var asOfDate = context.Date("asOfDate").ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var compare = context.Bool("comparative", true) ? (DateTime?)null : DateTime.MinValue;
         return await context
             .Send(new GetBalanceSheetQuery(farmId, asOfDate, compare), cancellationToken)
             .ConfigureAwait(false);
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

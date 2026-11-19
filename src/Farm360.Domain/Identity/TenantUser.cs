@@ -70,6 +70,29 @@ public sealed class TenantUser : AuditableEntity
         };
     }
 
+    /// <summary>
+    /// Creates an active membership for a user who accepted an invitation.
+    /// A member joining with the Owner role is a co-owner.
+    /// </summary>
+    public static TenantUser Join(Guid tenantId, Guid userId, Guid roleId, Guid? branchId)
+    {
+        if (userId == Guid.Empty) throw new ArgumentException("UserId is required.", nameof(userId));
+        if (roleId == Guid.Empty) throw new ArgumentException("RoleId is required.", nameof(roleId));
+
+        var now = DateTime.UtcNow;
+        return new TenantUser(Guid.NewGuid(), tenantId, userId, roleId)
+        {
+            BranchId = branchId,
+            IsOwner = roleId == SystemRoleIds.Owner,
+            InvitedAt = now,
+            JoinedAt = now,
+            Status = TenantUserStatus.Active
+        };
+    }
+
+    /// <summary>True for the tenant creator and for any member holding the Owner role.</summary>
+    public bool IsOwnerMember => IsOwner || RoleId == SystemRoleIds.Owner;
+
     // ── Business methods ─────────────────────────────────────────────────────
     public void Accept()
     {
@@ -79,24 +102,48 @@ public sealed class TenantUser : AuditableEntity
         JoinedAt = DateTime.UtcNow;
     }
 
-    public void ChangeRole(Guid newRoleId)
+    /// <summary>
+    /// Changes the member's role. An owner can only be demoted while another active owner remains
+    /// (<paramref name="anotherActiveOwnerExists"/>), so a tenant never loses its last owner.
+    /// </summary>
+    public void ChangeRole(Guid newRoleId, bool anotherActiveOwnerExists = false)
     {
-        if (IsOwner)
-            throw new InvalidOperationException("Owner role cannot be changed directly. Use TransferOwnership.");
         if (newRoleId == Guid.Empty) throw new ArgumentException("RoleId is required.", nameof(newRoleId));
+
+        var demotingOwner = IsOwnerMember && newRoleId != SystemRoleIds.Owner;
+        if (demotingOwner && !anotherActiveOwnerExists)
+            throw new InvalidOperationException("The last owner cannot be demoted. Make another member an owner first.");
+
         RoleId = newRoleId;
+        IsOwner = newRoleId == SystemRoleIds.Owner;
     }
 
     public void AssignBranch(Guid? branchId) => BranchId = branchId;
 
-    public void Deactivate()
+    /// <summary>Deactivates the membership. The last active owner cannot be deactivated.</summary>
+    public void Deactivate(bool anotherActiveOwnerExists = false)
     {
-        if (IsOwner)
-            throw new InvalidOperationException("Cannot deactivate the tenant owner.");
+        if (IsOwnerMember && !anotherActiveOwnerExists)
+            throw new InvalidOperationException("Cannot deactivate the last tenant owner.");
+        if (Status == TenantUserStatus.Deactivated)
+            throw new InvalidOperationException("This member is already deactivated.");
         Status = TenantUserStatus.Deactivated;
     }
 
-    public void Reactivate() => Status = TenantUserStatus.Active;
+    public void Reactivate()
+    {
+        if (Status != TenantUserStatus.Deactivated)
+            throw new InvalidOperationException("Only deactivated members can be reactivated.");
+        Status = TenantUserStatus.Active;
+    }
+
+    /// <summary>Removes the member from the tenant (soft delete). The last active owner cannot be removed.</summary>
+    public void Remove(Guid removedBy, bool anotherActiveOwnerExists = false)
+    {
+        if (IsOwnerMember && !anotherActiveOwnerExists)
+            throw new InvalidOperationException("Cannot remove the last tenant owner.");
+        SoftDelete(removedBy);
+    }
 }
 
 /// <summary>Lifecycle state of a TenantUser's membership.</summary>

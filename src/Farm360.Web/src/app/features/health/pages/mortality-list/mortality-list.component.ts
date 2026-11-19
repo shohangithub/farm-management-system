@@ -18,11 +18,16 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-mortality-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule, 
     RouterModule, 
     MatButtonModule, 
@@ -35,10 +40,10 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
     LoadingComponent
   ],
   templateUrl: './mortality-list.html',
-  styleUrls: ['./mortality-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MortalityListComponent {
+  private readonly notify = inject(NotificationService);
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
@@ -56,6 +61,12 @@ export class MortalityListComponent {
   pageSize = signal(10);
   refreshTrigger = signal(0);
   isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
 
   private currentFarm = toSignal(this.contextService.currentFarm$);
 
@@ -68,11 +79,11 @@ export class MortalityListComponent {
 
   private mortalitiesResult = toSignal(
     toObservable(this.paginationParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ pageIndex, pageSize, farmId }) => 
         this.healthService.getMortalityRecords({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
-          catchError((err) => {
-            console.error('Error loading mortality records', err);
+          catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load mortality records.'));
             return of({ items: [], totalCount: 0 });
           })
         )
@@ -95,7 +106,7 @@ export class MortalityListComponent {
   }
 
   openRecordMortalityDialog(): void {
-    const dialogRef = this.dialog.open(RecordMortalityDialog, { disableClose: true,
+    const dialogRef = this.dialog.open(RecordMortalityDialog, { maxWidth: '95vw', disableClose: true,
       width: '560px'
     });
     dialogRef.afterClosed().subscribe(result => {
@@ -104,7 +115,7 @@ export class MortalityListComponent {
   }
 
   viewDetails(element: any): void {
-    this.dialog.open(MortalityDetailDialog, { disableClose: true,
+    this.dialog.open(MortalityDetailDialog, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: element
     });
@@ -133,7 +144,7 @@ export class MortalityListComponent {
     this.isExporting.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Mortality_Report_${new Date().toISOString().split('T')[0]}`,
+        filename: `Farm360_Mortality_Report_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Mortality & Loss Audit Report',
@@ -149,7 +160,7 @@ export class MortalityListComponent {
         showSignatures: true
       });
     } catch (err) {
-      console.error('Failed to export Mortality PDF:', err);
+      this.notify.error(parseApiError(err, 'Could not export the PDF. Please try again.'));
     } finally {
       this.isExporting.set(false);
     }

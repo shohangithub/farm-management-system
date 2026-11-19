@@ -20,13 +20,16 @@ import { StockOutDialogComponent } from '../../components/dialogs/stock-out-dial
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ExportService } from '../../../../shared/services/export.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-inventory-item-list',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -35,6 +38,7 @@ import { ExportService } from '../../../../shared/services/export.service';
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent
   ],
   template: `
@@ -52,6 +56,7 @@ import { ExportService } from '../../../../shared/services/export.service';
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters & Sorting Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
@@ -96,7 +101,7 @@ import { ExportService } from '../../../../shared/services/export.service';
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!loading() && (!result()?.items || result()?.items?.length === 0)"
+        *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="inventory_2"
         title="No inventory items found"
         description="Add your first stock item to start monitoring farm inventory."
@@ -124,7 +129,7 @@ import { ExportService } from '../../../../shared/services/export.service';
                 </div>
               </div>
 
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="{
                   'bg-emerald-50 text-emerald-700 border border-emerald-200': item.status === InventoryStatus.Sufficient,
                   'bg-amber-50 text-amber-700 border border-amber-200': item.status === InventoryStatus.LowStock,
@@ -139,22 +144,22 @@ import { ExportService } from '../../../../shared/services/export.service';
             <div class="p-5 flex-1 relative z-10">
               <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 mb-4">
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Current Stock</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Current Stock</div>
                   <div class="font-extrabold text-gray-900 dark:text-white text-base mt-0.5">{{ item.currentStock }} {{ item.unitOfMeasure }}</div>
                 </div>
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Reorder Level</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Reorder Level</div>
                   <div class="font-bold text-gray-600 dark:text-gray-400 text-sm mt-0.5">{{ item.reorderThreshold }} {{ item.unitOfMeasure }}</div>
                 </div>
               </div>
 
               <div class="flex items-center justify-between text-xs mb-1 text-gray-400">
                 <span>Weighted Avg Cost</span>
-                <span class="font-bold text-emerald-600 dark:text-emerald-400">৳ {{ item.weightedAverageCostBdt }} / {{ item.unitOfMeasure }}</span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ item.weightedAverageCostBdt | money:2 }} / {{ item.unitOfMeasure }}</span>
               </div>
               <div class="flex items-center justify-between text-xs text-gray-400">
                 <span>Total Value</span>
-                <span class="font-extrabold text-gray-900 dark:text-white">৳ {{ item.totalValueBdt | number:'1.0-0' }}</span>
+                <span class="font-extrabold text-gray-900 dark:text-white">{{ item.totalValueBdt | money }}</span>
               </div>
             </div>
 
@@ -170,7 +175,7 @@ import { ExportService } from '../../../../shared/services/export.service';
                 <button (click)="openEditDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors inline-flex items-center gap-1">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Edit
                 </button>
-                <button (click)="onDelete(item, $event)" class="px-2 py-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg border border-transparent transition-colors">
+                <button aria-label="Delete" (click)="onDelete(item, $event)" class="px-2 py-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg border border-transparent transition-colors">
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">delete</mat-icon>
                 </button>
               </div>
@@ -198,11 +203,11 @@ import { ExportService } from '../../../../shared/services/export.service';
           </div>
           
           <div class="flex items-center gap-2">
-            <button (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -223,6 +228,11 @@ export class InventoryItemListComponent {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.error.set(null);
+    this.refreshTrigger.update(n => n + 1);
+  }
   readonly searchTerm = signal('');
   readonly params = signal<InventoryItemParams>({ pageNumber: 1, pageSize: 20 });
   private readonly refreshTrigger = signal(0);
@@ -314,7 +324,7 @@ export class InventoryItemListComponent {
         }
         return this.inventoryService.getItems(params).pipe(
           catchError(e => {
-            this.error.set(e?.error?.detail ?? 'Failed to load inventory items');
+            this.error.set(parseApiError(e, 'Could not load inventory items.'));
             return of(null);
           })
         );
@@ -422,7 +432,7 @@ export class InventoryItemListComponent {
   }
 
   openStockInDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(StockInDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '560px',
       data: { item, farmId: item.farmId }
     });
@@ -432,7 +442,7 @@ export class InventoryItemListComponent {
   }
 
   openStockOutDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockOutDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(StockOutDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '560px',
       data: { item, farmId: item.farmId }
     });
@@ -444,7 +454,7 @@ export class InventoryItemListComponent {
   onDelete(item: InventoryItem, event: Event): void {
     event.stopPropagation();
     
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {

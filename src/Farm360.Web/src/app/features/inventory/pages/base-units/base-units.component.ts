@@ -8,6 +8,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { InventoryService } from '../../services/inventory.service';
 import { MeasureUnit } from '../../models/inventory.models';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
 
 interface BaseUnitForm { id: string | null; name: string; description: string; isActive: boolean; }
 
@@ -36,20 +37,20 @@ interface BaseUnitForm { id: string | null; name: string; description: string; i
             <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 !text-[18px] !w-[18px] !h-[18px] leading-none text-gray-400 pointer-events-none">search</mat-icon>
             <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Search" class="field search w-64" />
           </div>
-          <button (click)="add()" title="Add" class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm hover:bg-emerald-700">
+          <button aria-label="Add" (click)="add()" title="Add" class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm hover:bg-emerald-700">
             <mat-icon class="!text-[20px]">add</mat-icon>
           </button>
-          <button *ngIf="selected().length" (click)="removeSelected()" title="Delete selected" class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-sm hover:bg-rose-700">
+          <button aria-label="Delete selected" *ngIf="selected().length" (click)="removeSelected()" title="Delete selected" class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-sm hover:bg-rose-700">
             <mat-icon class="!text-[20px]">delete</mat-icon>
           </button>
-          <button (click)="load()" title="Refresh" class="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 flex items-center justify-center hover:bg-gray-50">
+          <button aria-label="Refresh" (click)="load()" title="Refresh" class="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 flex items-center justify-center hover:bg-gray-50">
             <mat-icon class="!text-[20px]">refresh</mat-icon>
           </button>
           <span class="ml-auto text-xs text-gray-500">{{ rows().length }} unit(s){{ selected().length ? ' · ' + selected().length + ' selected' : '' }}</span>
         </div>
 
         <div *ngIf="error()" class="m-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 text-sm text-rose-700 flex justify-between">
-          <span>{{ error() }}</span><button (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
+          <span>{{ error() }}</span><button aria-label="Close" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
         </div>
 
         <div class="overflow-x-auto">
@@ -77,8 +78,8 @@ interface BaseUnitForm { id: string | null; name: string; description: string; i
                   </span>
                 </td>
                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                  <button (click)="edit(u)" title="Edit" class="p-1 text-gray-400 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
-                  <button (click)="remove(u)" title="Delete" class="p-1 text-gray-400 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+                  <button aria-label="Edit" (click)="edit(u)" title="Edit" class="p-1 text-gray-400 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
+                  <button aria-label="Delete" (click)="remove(u)" title="Delete" class="p-1 text-gray-400 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
                 </td>
               </tr>
             </tbody>
@@ -92,7 +93,7 @@ interface BaseUnitForm { id: string | null; name: string; description: string; i
       <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden" (click)="$event.stopPropagation()">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
           <h3 class="text-base font-black m-0">{{ f.id ? 'Edit' : 'Add' }} Base Unit</h3>
-          <button (click)="form.set(null)" class="text-gray-400"><mat-icon>close</mat-icon></button>
+          <button aria-label="Close" (click)="form.set(null)" class="text-gray-400"><mat-icon>close</mat-icon></button>
         </div>
         <div class="p-5 space-y-3 text-sm">
           <label class="flex flex-col gap-1 font-semibold text-xs">Unit Name <span class="text-rose-500 -mt-1">*</span>
@@ -124,6 +125,7 @@ interface BaseUnitForm { id: string | null; name: string; description: string; i
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BaseUnitsComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly inventory = inject(InventoryService);
 
   readonly units = signal<MeasureUnit[]>([]);
@@ -184,13 +186,13 @@ export class BaseUnitsComponent {
     });
   }
 
-  remove(u: MeasureUnit): void {
-    if (!confirm(`Delete base unit "${u.name}" and its conversions?`)) return;
+  async remove(u: MeasureUnit): Promise<void> {
+    if (!(await this.confirmService.confirmAsync({ message: `Delete base unit "${u.name}" and its conversions?`, confirmText: 'Delete', destructive: true }))) return;
     this.delete([u.id]);
   }
 
-  removeSelected(): void {
-    if (!confirm(`Delete ${this.selected().length} base unit(s) and their conversions?`)) return;
+  async removeSelected(): Promise<void> {
+    if (!(await this.confirmService.confirmAsync({ message: `Delete ${this.selected().length} base unit(s) and their conversions?`, confirmText: 'Delete', destructive: true }))) return;
     this.delete(this.selected());
   }
 

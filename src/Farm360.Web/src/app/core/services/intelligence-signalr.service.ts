@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { ActionableInsight } from '../../features/livestock/components/intelligence-panel/intelligence-panel.component';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +12,7 @@ export class IntelligenceSignalRService {
   public readonly notifications = signal<ActionableInsight[]>([]);
   public readonly unreadCount = signal<number>(0);
 
-  constructor(private snackBar: MatSnackBar) {}
+  constructor(private notify: NotificationService) {}
 
   public startConnection(): void {
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
@@ -29,7 +29,6 @@ export class IntelligenceSignalRService {
 
     this.hubConnection
       .start()
-      .then(() => console.log('Intelligence SignalR Connection started'))
       .catch(err => console.error('Error while starting SignalR connection: ' + err));
 
     this.addIntelligenceInsightListener();
@@ -51,17 +50,13 @@ export class IntelligenceSignalRService {
   }
 
   private showToast(insight: ActionableInsight): void {
-    let panelClass = 'bg-blue-500';
-    if (insight.severity === 'Warning') panelClass = 'bg-amber-500';
-    if (insight.severity === 'Critical') panelClass = 'bg-red-500';
-    if (insight.severity === 'Success') panelClass = 'bg-emerald-500';
-
-    this.snackBar.open(`💡 ${insight.title}: ${insight.message}`, 'View', {
-      duration: 10000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-      panelClass: [panelClass, 'text-white']
-    });
+    const text = `${insight.title}: ${insight.message}`;
+    switch (insight.severity) {
+      case 'Critical': this.notify.error(text); break;
+      case 'Warning': this.notify.warning(text); break;
+      case 'Success': this.notify.success(text); break;
+      default: this.notify.info(text);
+    }
   }
 
   public stopConnection(): void {

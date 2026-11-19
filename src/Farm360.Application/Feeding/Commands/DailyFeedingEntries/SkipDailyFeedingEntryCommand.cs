@@ -44,20 +44,7 @@ public class SkipDailyFeedingEntryCommandHandler : IRequestHandler<SkipDailyFeed
         var entry = await _repository.GetByIdAsync(request.EntryId, cancellationToken)
             ?? throw new NotFoundException(nameof(Farm360.Domain.Feeding.DailyFeedingEntry), request.EntryId);
 
-        entry.Skip(request.Reason);
-        _repository.Update(entry);
-
-        IReadOnlyList<Farm360.Domain.Feeding.AnimalFeedAllocation> allocations = [];
-        if (_allocationRepository is not null)
-        {
-            allocations = await _allocationRepository.GetByEntryIdAcrossTenantsAsync(entry.Id, cancellationToken);
-            if (allocations.Count > 0)
-            {
-                foreach (var allocation in allocations)
-                    allocation.UpdateConsumption(0m, 0m, allocation.UnitCostBdtPerKg);
-                _allocationRepository.UpdateRange(allocations);
-            }
-        }
+        var allocations = await FeedingEntrySkip.SkipAsync(entry, request.Reason, _repository, _allocationRepository, cancellationToken);
 
         if (_unitOfWork is not null)
         {

@@ -41,8 +41,10 @@
   </div>
 
   <!-- Empty State (No Sheds at all) -->
+  <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load sheds" [message]="err" (retry)="loadSheds()"></app-error-state>
+
   <app-empty-state 
-    *ngIf="!isLoading() && shedsResult().length === 0 && !searchTerm()"
+    *ngIf="!isLoading() && !loadError() && shedsResult().length === 0 && !searchTerm()"
     icon="house_siding"
     title="No Sheds Found"
     description="This farm doesn't have any housing units yet. Create your first shed to start managing animals."
@@ -75,16 +77,16 @@
               <a [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shed.id]">{{ shed.shedName }}</a>
             </h3>
             <div class="flex items-center gap-2 mt-1">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
                 {{ shed.shedNumber }}
               </span>
-              <span class="text-[10px] font-bold tracking-wider uppercase flex items-center gap-1 text-gray-500 dark:text-gray-400">
+              <span class="text-[11px] font-bold tracking-wider uppercase flex items-center gap-1 text-gray-500 dark:text-gray-400">
                 <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">pets</mat-icon> {{ shed.animalType || 'Mixed' }}
               </span>
             </div>
           </div>
         </div>
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" 
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider" 
               [ngClass]="getStatusClass(shed.status)">
           {{ getStatusName(shed.status) }}
         </span>
@@ -92,8 +94,8 @@
       
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="flex justify-between items-end mb-1">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Occupancy</span>
-          <span class="text-sm font-bold text-gray-900 dark:text-white">{{ shed.currentOccupancy | number }} <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">/ {{ shed.capacity ? (shed.capacity | number) : '∞' }}</span></span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Occupancy</span>
+          <span class="text-sm font-bold text-gray-900 dark:text-white">{{ shed.currentOccupancy | number }} <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">/ {{ shed.capacity ? (shed.capacity | number) : '∞' }}</span></span>
         </div>
         <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
           <div class="h-1.5 rounded-full transition-all duration-500" 
@@ -107,7 +109,7 @@
            class="flex-1 px-4 py-2 text-sm font-semibold text-amber-700 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1.5">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> View
         </a>
-        <a [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shed.id, 'edit']" 
+        <a aria-label="Edit Shed" [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shed.id, 'edit']" 
            class="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors border border-transparent hover:border-amber-200 dark:hover:border-amber-800 bg-white dark:bg-gray-800 shadow-sm"
            title="Edit Shed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>

@@ -14,12 +14,15 @@ import { PurchaseOrder, PurchaseOrderStatus, PurchaseOrderParams } from '../../m
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-purchase-order-list',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -27,6 +30,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     MatIconModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent
   ],
   template: `
@@ -44,6 +48,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
@@ -67,7 +72,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!loading() && (!result()?.items || result()?.items?.length === 0)"
+        *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="request_quote"
         title="No Purchase Orders found"
         description="Create your first purchase order to restock your inventory."
@@ -79,7 +84,9 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       <div *ngIf="!loading() && result()?.items?.length" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @for (po of result()?.items; track po.id) {
           <div class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer"
-               (click)="router.navigate(['/inventory/purchase-orders', po.id])">
+               role="link" tabindex="0" [attr.aria-label]="'Open purchase order ' + (po.poNumber ?? '')"
+               (click)="router.navigate(['/inventory/purchase-orders', po.id])"
+               (keydown.enter)="router.navigate(['/inventory/purchase-orders', po.id])">
             <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">request_quote</mat-icon>
 
             <!-- Card Header -->
@@ -96,7 +103,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                 </div>
               </div>
 
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="{
                   'bg-gray-100 text-gray-700 border border-gray-200': po.status === PurchaseOrderStatus.Draft,
                   'bg-blue-50 text-blue-700 border border-blue-200': po.status === PurchaseOrderStatus.PendingApproval,
@@ -116,7 +123,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
               </div>
               <div class="flex items-center justify-between text-xs text-gray-400">
                 <span>Total Amount</span>
-                <span class="font-extrabold text-emerald-600 dark:text-emerald-400 text-base">৳ {{ po.totalAmountBdt | number:'1.2-2' }}</span>
+                <span class="font-extrabold text-emerald-600 dark:text-emerald-400 text-base">{{ po.totalAmountBdt | money:2 }}</span>
               </div>
             </div>
             
@@ -137,11 +144,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         </div>
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
-            <button (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -160,6 +167,11 @@ export class PurchaseOrderList {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.error.set(null);
+    this.refreshTrigger.update(n => n + 1);
+  }
   readonly searchTerm = signal('');
   readonly params = signal<PurchaseOrderParams>({ pageNumber: 1, pageSize: 20 });
   private readonly refreshTrigger = signal(0);
@@ -218,7 +230,7 @@ export class PurchaseOrderList {
         }
         return this.inventoryService.getPurchaseOrders(params).pipe(
           catchError(e => {
-            this.error.set(e?.error?.detail ?? 'Failed to load purchase orders');
+            this.error.set(parseApiError(e, 'Could not load purchase orders.'));
             return of(null);
           })
         );

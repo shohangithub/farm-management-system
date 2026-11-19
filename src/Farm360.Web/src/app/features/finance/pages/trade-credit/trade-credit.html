@@ -28,7 +28,7 @@
   @if (notice()) {
     <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-sm flex items-center gap-2">
       <mat-icon class="text-base">task_alt</mat-icon> <span class="flex-1">{{ notice() }}</span>
-      <button type="button" (click)="notice.set(null)" class="text-emerald-700 dark:text-emerald-300"><mat-icon class="text-base">close</mat-icon></button>
+      <button type="button" (click)="notice.set(null)" aria-label="Dismiss" class="text-emerald-700 dark:text-emerald-300"><mat-icon class="text-base">close</mat-icon></button>
     </div>
   }
 
@@ -46,9 +46,9 @@
           </div>
           <span class="text-[11px] text-gray-500">{{ o.receivables.openBills }} open</span>
         </div>
-        <div class="text-2xl font-black text-gray-900 dark:text-white mt-1">৳ {{ o.receivables.outstandingBdt | number: '1.0-2' }}</div>
+        <div class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ o.receivables.outstandingBdt | money:2 }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Customers owe the farm
-          @if (o.receivables.overdueBdt > 0) { · <b class="text-rose-600">৳ {{ o.receivables.overdueBdt | number: '1.0-2' }} overdue</b> }
+          @if (o.receivables.overdueBdt > 0) { · <b class="text-rose-600">{{ o.receivables.overdueBdt | money:2 }} overdue</b> }
         </div>
       </button>
       <button type="button" (click)="setTab('Payable')"
@@ -62,9 +62,9 @@
           </div>
           <span class="text-[11px] text-gray-500">{{ o.payables.openBills }} open</span>
         </div>
-        <div class="text-2xl font-black text-gray-900 dark:text-white mt-1">৳ {{ o.payables.outstandingBdt | number: '1.0-2' }}</div>
+        <div class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ o.payables.outstandingBdt | money:2 }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">The farm owes suppliers
-          @if (o.payables.overdueBdt > 0) { · <b class="text-rose-600">৳ {{ o.payables.overdueBdt | number: '1.0-2' }} overdue</b> }
+          @if (o.payables.overdueBdt > 0) { · <b class="text-rose-600">{{ o.payables.overdueBdt | money:2 }} overdue</b> }
         </div>
       </button>
     </div>
@@ -73,21 +73,21 @@
       <!-- Key figures for the selected side -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="p-4 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/60">
-          <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Outstanding</div>
-          <div class="text-lg font-black text-gray-900 dark:text-white">৳ {{ s.outstandingBdt | number: '1.0-2' }}</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Outstanding</div>
+          <div class="text-lg font-black text-gray-900 dark:text-white">{{ s.outstandingBdt | money:2 }}</div>
         </div>
         <div class="p-4 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/60">
-          <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Overdue</div>
-          <div class="text-lg font-black" [ngClass]="s.overdueBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'">৳ {{ s.overdueBdt | number: '1.0-2' }}</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Overdue</div>
+          <div class="text-lg font-black" [ngClass]="s.overdueBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'">{{ s.overdueBdt | money:2 }}</div>
         </div>
         <div class="p-4 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/60">
-          <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Due in next 7 days</div>
-          <div class="text-lg font-black text-amber-600 dark:text-amber-400">৳ {{ s.dueThisWeekBdt | number: '1.0-2' }}</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Due in next 7 days</div>
+          <div class="text-lg font-black text-amber-600 dark:text-amber-400">{{ s.dueThisWeekBdt | money:2 }}</div>
         </div>
         <div class="p-4 rounded-2xl border"
           [ngClass]="s.isReconciled ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60'">
-          <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">{{ s.kind === 'Payable' ? 'Accounts Payable (2100)' : 'Accounts Receivable (1100)' }}</div>
-          <div class="text-lg font-black text-gray-900 dark:text-white">৳ {{ s.ledgerBalanceBdt | number: '1.0-2' }}</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ s.kind === 'Payable' ? 'Accounts Payable (2100)' : 'Accounts Receivable (1100)' }}</div>
+          <div class="text-lg font-black text-gray-900 dark:text-white">{{ s.ledgerBalanceBdt | money:2 }}</div>
           <div class="text-[11px] flex items-center gap-1" [ngClass]="s.isReconciled ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'">
             <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">{{ s.isReconciled ? 'verified' : 'warning' }}</mat-icon>
             {{ s.isReconciled ? 'Ledger agrees with the bills' : 'Ledger differs — see Accounting Health' }}
@@ -105,7 +105,7 @@
               <div>
                 <div class="flex justify-between text-xs">
                   <span class="text-gray-700 dark:text-gray-300">{{ a.label }} <span class="text-gray-400">({{ a.count }})</span></span>
-                  <span class="font-mono font-bold text-gray-900 dark:text-white">৳ {{ a.amountBdt | number: '1.0-0' }}</span>
+                  <span class="font-mono font-bold text-gray-900 dark:text-white">{{ a.amountBdt | money }}</span>
                 </div>
                 <div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden mt-1">
                   <div class="h-full rounded-full" [ngClass]="agingClass(a.key)" [style.width.%]="a.amountBdt / agingMax() * 100"></div>
@@ -135,7 +135,7 @@
               </thead>
               <tbody>
                 @for (p of s.parties; track p.partyName) {
-                  <tr (click)="filterParty(p.partyName)" class="border-t border-gray-100 dark:border-gray-700/60 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                  <tr (click)="filterParty(p.partyName)" role="button" tabindex="0" (keydown.enter)="filterParty(p.partyName)" (keydown.space)="$event.preventDefault(); filterParty(p.partyName)" class="border-t border-gray-100 dark:border-gray-700/60 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30"
                     [class.bg-sky-50]="party() === p.partyName">
                     <td class="px-5 py-2">
                       <div class="font-bold text-gray-900 dark:text-white">{{ p.partyName }}</div>
@@ -216,7 +216,7 @@
                   <td class="px-3 py-3 text-right font-mono">{{ b.amountBdt | number: '1.2-2' }}</td>
                   <td class="px-3 py-3 text-right font-mono text-gray-600 dark:text-gray-300">
                     {{ b.paidBdt + b.adjustedBdt | number: '1.2-2' }}
-                    @if (b.adjustedBdt > 0) { <div class="text-[10px] text-amber-600">incl. ৳ {{ b.adjustedBdt | number: '1.0-2' }} returned / written off</div> }
+                    @if (b.adjustedBdt > 0) { <div class="text-[11px] text-amber-600">incl. {{ b.adjustedBdt | money:2 }} returned / written off</div> }
                   </td>
                   <td class="px-3 py-3 text-right font-mono font-black" [ngClass]="b.outstandingBdt < 0 ? 'text-violet-600' : 'text-gray-900 dark:text-white'">
                     {{ b.outstandingBdt | number: '1.2-2' }}
@@ -255,7 +255,7 @@
                                 <td class="py-1.5 w-32">{{ p.paymentDate | date: 'dd MMM yyyy' }}</td>
                                 <td class="py-1.5 w-24">{{ p.method }}</td>
                                 <td class="py-1.5 text-gray-500">{{ p.reference }} {{ p.notes }}</td>
-                                <td class="py-1.5 text-right font-mono font-bold w-32">৳ {{ p.amountBdt | number: '1.2-2' }}</td>
+                                <td class="py-1.5 text-right font-mono font-bold w-32">{{ p.amountBdt | money:2 }}</td>
                                 <td class="py-1.5 text-right w-16">
                                   <button type="button" (click)="voidPayment(b, p)" class="text-rose-500 hover:underline">Void</button>
                                 </td>

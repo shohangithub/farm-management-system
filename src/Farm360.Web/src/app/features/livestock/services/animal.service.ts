@@ -46,6 +46,7 @@ export class AnimalService {
     if (params.species != null) httpParams = httpParams.set('species', params.species);
     if (params.sex != null)     httpParams = httpParams.set('sex', params.sex);
     if (params.status != null)  httpParams = httpParams.set('status', params.status);
+    if (params.presence)   httpParams = httpParams.set('presence', params.presence);
     if (params.search)     httpParams = httpParams.set('search', params.search);
     if (params.sortBy)     httpParams = httpParams.set('sortBy', params.sortBy);
     if (params.sortDesc)   httpParams = httpParams.set('sortDesc', params.sortDesc);

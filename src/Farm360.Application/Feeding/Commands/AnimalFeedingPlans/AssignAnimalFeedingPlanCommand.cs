@@ -46,6 +46,8 @@ public sealed class AssignAnimalFeedingPlanCommandValidator : AbstractValidator<
 
 public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<AssignAnimalFeedingPlanCommand, IReadOnlyList<Guid>>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IAnimalFeedingPlanRepository _repository;
     private readonly IFeedingRuleSetRepository _ruleSetRepository;
     private readonly IAnimalRepository _animalRepository;
@@ -69,8 +71,10 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         IUnitOfWork unitOfWork,
         ITenantService tenantService,
         IDirectFeedService directFeed,
-        Farm360.Application.Inventory.Units.IUnitService? units = null)
+        Farm360.Application.Inventory.Units.IUnitService? units = null,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _units = units;
         _directFeed = directFeed;
         _repository = repository;
@@ -129,6 +133,29 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                 distinctRuleSetIds.Add(direct.Id);
         }
 
+        // Farm rule: only animals on the farm are fed. A sold, dead or otherwise departed animal
+        // can't be given a feeding plan (or a direct feed) -- say which one and why.
+        if (targetAnimalIds.Count > 0)
+        {
+            var gone = new List<ValidationFailure>();
+            foreach (var animalId in targetAnimalIds)
+            {
+                var animal = await _animalRepository.GetByIdAsync(animalId, cancellationToken);
+                if (animal is null
+                    || animal.Status is Farm360.Domain.Livestock.Enums.AnimalStatus.Active or Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined)
+                    continue;
+
+                var exit = AnimalFeedingPresence.ExitDate(animal);
+                var day = exit is { } e && e > request.StartDate ? e : request.StartDate;
+                var reason = AnimalFeedingPresence.NotFedReason(animal, day)
+                             ?? $"{animal.Tag.TagId} is {animal.Status} and no longer on the farm.";
+                gone.Add(new ValidationFailure("AnimalIds", reason));
+            }
+
+            if (gone.Count > 0)
+                throw new Farm360.Application.Common.Exceptions.ValidationException(gone);
+        }
+
         // Already on a chosen rule set: an error, unless switching -- then it is simply kept.
         var keep = new HashSet<(Guid AnimalId, Guid RuleSetId)>();
         if (targetAnimalIds.Count > 0 && request.ReplaceExistingCharts)
@@ -148,7 +175,7 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                 var choosingChart = ruleSetMap.Values.Any(r => !r.Name.StartsWith(DirectFeedService.DirectRuleSetPrefix, StringComparison.Ordinal));
                 if (!isExtra && choosingChart)
                 {
-                    plan.Cancel();
+                    plan.Cancel(_clock.Today);
                     _repository.Update(plan);
                 }
             }
@@ -192,6 +219,14 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
         // Live cost per kg of feed (stock items priced per kg, % normalised) — shared with the daily job.
         var calculator = new FeedCostCalculator(_feedIngredientRepository, _inventoryRepository, _units);
 
+        // Today's entry is created only for an animal on the farm today (not yet arrived: none).
+        async Task<bool> AnimalOnFarmTodayAsync(Guid? id, DateOnly day)
+        {
+            if (id is null) return true;
+            var a = await _animalRepository.GetByIdAsync(id.Value, cancellationToken);
+            return a is null || AnimalFeedingPresence.IsFedOn(a, day);
+        }
+
         async Task<decimal> ResolveUnitCostAsync(Guid formulaId)
         {
             var formula = await _formulaRepository.GetByIdAsync(formulaId, cancellationToken);
@@ -223,7 +258,7 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
 
                 decimal currentWeight = 0;
                 int? ageDays = null;
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var today = _clock.Today;
 
                 if (animalId.HasValue)
                 {
@@ -252,7 +287,8 @@ public sealed class AssignAnimalFeedingPlanCommandHandler : IRequestHandler<Assi
                 createdPlanIds.Add(plan.Id);
 
                 // If plan is active today, immediately generate daily feeding entries for today
-                if (request.StartDate <= today && (!request.EndDate.HasValue || request.EndDate.Value >= today))
+                if (request.StartDate <= today && (!request.EndDate.HasValue || request.EndDate.Value >= today)
+                    && await AnimalOnFarmTodayAsync(animalId, today))
                 {
                     foreach (var ruleLine in matchingRules)
                     {

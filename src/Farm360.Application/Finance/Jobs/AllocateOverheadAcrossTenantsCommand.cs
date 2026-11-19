@@ -29,14 +29,17 @@ public sealed class AllocateOverheadAcrossTenantsCommandHandler : IRequestHandle
     private readonly ITenantService _tenantService;
     private readonly IOverheadAllocationService _allocationService;
     private readonly ILogger<AllocateOverheadAcrossTenantsCommandHandler> _logger;
+    private readonly IFarmClock _clock;
 
     public AllocateOverheadAcrossTenantsCommandHandler(
         ITenantRepository tenantRepository,
         IFarmRepository farmRepository,
         ITenantService tenantService,
         IOverheadAllocationService allocationService,
-        ILogger<AllocateOverheadAcrossTenantsCommandHandler> logger)
+        ILogger<AllocateOverheadAcrossTenantsCommandHandler> logger,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _tenantRepository = tenantRepository;
         _farmRepository = farmRepository;
         _tenantService = tenantService;
@@ -46,7 +49,9 @@ public sealed class AllocateOverheadAcrossTenantsCommandHandler : IRequestHandle
 
     public async Task Handle(AllocateOverheadAcrossTenantsCommand request, CancellationToken cancellationToken)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // The previous calendar month as the farms see it (Asia/Dhaka unless configured otherwise);
+        // per-tenant zones only matter on the 1st, and this job runs on the 3rd.
+        var today = _clock.Today;
         var firstOfThisMonth = new DateOnly(today.Year, today.Month, 1);
         var from = firstOfThisMonth.AddMonths(-1);
         var to = firstOfThisMonth.AddDays(-1);

@@ -13,11 +13,13 @@ import { ReportIncidentDialog } from '../../components/dialogs/report-incident-d
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-incident-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
   template: `
 <app-page-header 
   title="Disease Incidents" 
@@ -33,6 +35,7 @@ import { of } from 'rxjs';
 
 <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
   <div class="relative overflow-x-auto">
     <table class="w-full text-sm text-left" *ngIf="incidents().length > 0">
@@ -77,7 +80,7 @@ import { of } from 'rxjs';
     </table>
     
     <app-empty-state 
-      *ngIf="!isLoading() && incidents().length === 0"
+      *ngIf="!isLoading() && incidents().length === 0 && !loadError()"
       icon="health_and_safety"
       title="No Incidents"
       description="No disease incidents have been reported."
@@ -95,6 +98,12 @@ export class IncidentListComponent {
   private dialog = inject(MatDialog);
 
   isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
   private refreshTrigger = signal(0);
   private currentFarm = toSignal(this.contextService.currentFarm$);
   
@@ -105,9 +114,12 @@ export class IncidentListComponent {
 
   private incidentsResult = toSignal(
     toObservable(this.fetchParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ farmId }) => this.healthService.getIncidents({ pageNumber: 1, pageSize: 50, farmId }).pipe(
-        catchError(() => of({ items: [], totalCount: 0 }))
+        catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load incidents.'));
+            return of({ items: [], totalCount: 0 });
+          })
       )),
       tap(() => this.isLoading.set(false))
     ),
@@ -118,7 +130,7 @@ export class IncidentListComponent {
   totalCount = computed(() => this.incidentsResult().totalCount);
 
   reportIncident() {
-    const dialogRef = this.dialog.open(ReportIncidentDialog, { disableClose: true, width: '720px' });
+    const dialogRef = this.dialog.open(ReportIncidentDialog, { maxWidth: '95vw', disableClose: true, width: '720px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadIncidents();
     });

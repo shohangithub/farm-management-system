@@ -20,7 +20,7 @@ public sealed record LogFeedConsumptionCommand(
     Guid? PenId = null,
     Guid? BatchId = null,
     string? Notes = null,
-    IReadOnlyList<ConsumptionIngredientDetailRequest>? Details = null) : IRequest<Guid>;
+    IReadOnlyList<ConsumptionIngredientDetailRequest>? Details = null) : IRequest<Guid>, Farm360.Application.Common.Behaviors.ITransactionalCommand; // log + stock deduction (published handler) are atomic
 
 public sealed class LogFeedConsumptionCommandValidator : AbstractValidator<LogFeedConsumptionCommand>
 {

@@ -48,12 +48,65 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
                 ve => ve.AnimalId,
                 a => a.Id,
                 (ve, a) => new { Event = ve, Animal = a })
-            .Where(x => x.Animal.FarmId == farmId && 
-                        x.Event.ScheduledDate <= beforeDate && 
+            // Upcoming work only for animals still on the farm (AnimalStatusGroups.OnFarm).
+            .Where(x => x.Animal.FarmId == farmId &&
+                        Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(x.Animal.Status) &&
+                        x.Event.ScheduledDate <= beforeDate &&
                         x.Event.Status == Domain.Health.Enums.VaccinationStatus.Scheduled)
             .Select(x => x.Event)
             .OrderBy(e => e.ScheduledDate)
             .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<(VaccinationEvent Event, string AnimalTag)>> GetAdministeredByFarmAsync(
+        Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        var rows = await context.VaccinationEvents
+            .AsNoTracking()
+            .Join(context.Animals,
+                ve => ve.AnimalId,
+                a => a.Id,
+                (ve, a) => new { Event = ve, Animal = a })
+            .Where(x => x.Animal.FarmId == farmId &&
+                        x.Event.AdministeredDate != null &&
+                        x.Event.AdministeredDate >= from &&
+                        x.Event.AdministeredDate <= to)
+            .OrderBy(x => x.Event.AdministeredDate)
+            .Select(x => new { x.Event, Tag = x.Animal.Tag.TagId })
+            .ToListAsync(ct);
+
+        return rows.Select(r => (r.Event, r.Tag)).ToList();
+    }
+
+    public async Task<IReadOnlyList<(VaccinationEvent Event, string AnimalTag, string? ProtocolTitle)>> GetComplianceEventsAsync(
+        Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        // Report query only: unlike GetUpcomingEventsAsync this returns every status (given,
+        // pending, overdue, cancelled) so compliance can be measured, still limited to animals on
+        // the farm — a sold animal's missed booster is not this farm's compliance problem.
+        var rows = await context.VaccinationEvents
+            .AsNoTracking()
+            .Join(context.Animals,
+                ve => ve.AnimalId,
+                a => a.Id,
+                (ve, a) => new { Event = ve, Animal = a })
+            .Where(x => x.Animal.FarmId == farmId &&
+                        Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(x.Animal.Status) &&
+                        ((x.Event.ScheduledDate >= from && x.Event.ScheduledDate <= to) ||
+                         (x.Event.AdministeredDate != null && x.Event.AdministeredDate >= from && x.Event.AdministeredDate <= to)))
+            .OrderBy(x => x.Event.ScheduledDate)
+            .Select(x => new
+            {
+                x.Event,
+                Tag = x.Animal.Tag.TagId,
+                Protocol = context.VaccinationProtocols
+                    .Where(p => x.Event.ProtocolStepId != null && p.Steps.Any(s => s.Id == x.Event.ProtocolStepId))
+                    .Select(p => p.Title)
+                    .FirstOrDefault(),
+            })
+            .ToListAsync(ct);
+
+        return rows.Select(r => (r.Event, r.Tag, (string?)r.Protocol)).ToList();
     }
 
     public async Task<(IReadOnlyList<(VaccinationEvent Event, string AnimalTag)> Items, int TotalCount)> GetDewormingEventsAsync(Guid farmId, int pageNumber, int pageSize, CancellationToken ct = default)
@@ -68,9 +121,13 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
                 ve => ve.AnimalId,
                 a => a.Id,
                 (ve, a) => new { Event = ve, Animal = a })
-            .Where(x => x.Animal.FarmId == farmId && 
-                        x.Event.ProtocolStepId != null && 
-                        dewormingStepIds.Contains(x.Event.ProtocolStepId.Value));
+            .Where(x => x.Animal.FarmId == farmId &&
+                        x.Event.ProtocolStepId != null &&
+                        dewormingStepIds.Contains(x.Event.ProtocolStepId.Value) &&
+                        // History stays (given/cancelled doses); pending doses only for animals on the farm.
+                        (Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(x.Animal.Status) ||
+                         (x.Event.Status != Domain.Health.Enums.VaccinationStatus.Scheduled &&
+                          x.Event.Status != Domain.Health.Enums.VaccinationStatus.Overdue)));
 
         var totalCount = await query.CountAsync(ct);
 

@@ -12,11 +12,13 @@ import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-farm-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, FarmCardComponent, PageHeaderComponent, LoadingComponent, EmptyStateComponent],
+  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, FarmCardComponent, PageHeaderComponent, LoadingComponent, EmptyStateComponent, ErrorStateComponent],
   templateUrl: './farm-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -26,6 +28,7 @@ export class FarmListComponent {
   private readonly router = inject(Router);
 
   isLoading = signal<boolean>(true);
+  readonly loadError = signal<string | null>(null);
 
   // Using a custom observable chain to pick up changes from the route automatically
   readonly branchId = toSignal(
@@ -45,10 +48,10 @@ export class FarmListComponent {
   readonly farmsResult = toSignal(
     toObservable(this.fetchParams).pipe(
       filter(params => !!params.branchId),
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ branchId }) => this.farmService.getFarmsByBranch(branchId).pipe(
         catchError(err => {
-          console.error('Failed to load farms', err);
+          this.loadError.set(parseApiError(err, 'Could not load farms.'));
           return of([] as FarmList[]);
         })
       )),

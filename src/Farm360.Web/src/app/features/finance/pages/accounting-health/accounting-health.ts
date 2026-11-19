@@ -11,6 +11,8 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinanceService } from '../../services/finance.service';
 import { AccountingHealth, LedgerRepairResult } from '../../models/finance.model';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 /**
  * Accounting Health — proves the books. Each balance-sheet account is reconciled against the
@@ -20,11 +22,12 @@ import { AccountingHealth, LedgerRepairResult } from '../../models/finance.model
 @Component({
   selector: 'app-accounting-health',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './accounting-health.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountingHealthComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
@@ -72,12 +75,11 @@ export class AccountingHealthComponent {
     this.refresh$.next();
   }
 
-  runRepair(): void {
+  async runRepair(): Promise<void> {
     const farmId = this.context.currentFarmValue?.id;
     if (!farmId) return;
 
-    if (this.adjustInventory() && !confirm(
-      'Adjust the books to the stock on hand?\n\nDo this only after a physical stock count. Any difference is posted as opening stock (if you have more than the books) or as shrinkage (if you have less).')) {
+    if (this.adjustInventory() && !(await this.confirmService.confirmAsync({ message: 'Adjust the books to the stock on hand?\n\nDo this only after a physical stock count. Any difference is posted as opening stock (if you have more than the books) or as shrinkage (if you have less).', confirmText: 'Adjust' }))) {
       return;
     }
 

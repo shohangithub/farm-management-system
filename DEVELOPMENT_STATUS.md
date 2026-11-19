@@ -1,112 +1,37 @@
-# Farm360 AI — Development Status & Task Roadmap
+# Farm360 AI — Development Status
 
-**Last Updated:** July 22, 2026  
-**Governing Documents:** `/docs/*` (Single Source of Truth)  
-**Architecture:** Clean Architecture · DDD · CQRS · MediatR · Angular 22  
+**Last updated:** November 2026
+**Architecture:** Clean Architecture · DDD · CQRS (MediatR) · EF Core 10 / SQL Server · Hangfire · Redis · Angular 22
+**Detailed plans:** `docs/*` · **Open work:** [TODO.md](TODO.md) · **Deploy:** [docs/deployment.md](docs/deployment.md)
 
----
+## Module status
 
-## 📊 Overall Progress Summary
+| Module | Backend (domain → API) | Angular UI | Notes |
+|---|---|---|---|
+| Identity, auth & multi-tenancy | ✅ | ✅ | JWT + refresh tokens, OTP, tenant query filters, tenant resolution, per-farm access, rate limiting, security headers |
+| Subscriptions & billing | ✅ | ✅ | Plans, trials, SSLCommerz checkout + IPN, daily status refresh job |
+| User management | 🔄 | 🔄 | Members, roles/permissions, invitations, password reset (in progress) |
+| Master data & locations | ✅ | ✅ | Typed master-data lists, BD location hierarchy |
+| Organisation, branch, farm, shed, pen | ✅ | ✅ | |
+| Livestock | ✅ | ✅ | Animals, batches, weights/BCS, breeding, photos, sale/death exits |
+| Health & veterinary | ✅ | ✅ | Vaccination protocols & events, treatments, incidents, mortality, vet visits, withdrawal |
+| Smart feeding & nutrition | ✅ | ✅ | Ingredients, formulas, plans (animal/batch/shed/pen), daily entries job, per-animal feed allocation & cost, FCR |
+| Inventory | ✅ | ✅ | Items, suppliers, stock movements, daily consumables job, feed/medicine stock integration |
+| Finance & accounting | ✅ | ✅ | Transactions, per-animal cost ledgers, overhead allocation (monthly job), trade credit, investors & profit sharing, consolidated reports |
+| Dashboard & analytics | ✅ | ✅ | Farm dashboard, breeding/growth analytics |
+| Intelligence | ✅ | ✅ | P&L projections, simulation engine, background intelligence events |
+| Reporting | ✅ | ✅ | PDF (QuestPDF, Bengali shaping), Excel, CSV renderers; more reports being added |
+| Configurable business rules | 🔄 | 🔄 | Config defaults (docs/33) → per-tenant overrides in progress |
 
-| Module / Component | Domain | Persistence | CQRS Application | API Layer | Angular UI | Unit & Integration Tests | Status |
-|---|---|---|---|---|---|---|---|
-| **1. Identity & Multi-Tenant Core** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (79/79) | **COMPLETED** ✅ Multi-Tenant Refactored & Hardened |
-| **1.1 Master Data Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (0/0) | **COMPLETED** |
-| **1.5 Organization Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (1/1) | **COMPLETED** ✅ CRUD Fixed |
-| **1.6 Branch Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
-| **1.7 Farm Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
-| **1.8 Shed Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
-| **1.9 Pen Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (3/3) | **COMPLETED** |
-| **2. Livestock Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (76/76) | **PRODUCTION READY** ✅ |
-| **3. Health & Veterinary Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (63/63) | **PRODUCTION READY** ✅ |
-| **4. Enterprise Architecture & Security** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (150/150) | **COMPLETED** ✅ Enterprise Architecture Hardened |
-| **5. Smart Feeding Module** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (4/4) | **COMPLETED** ✅ Smart Ration & FCR Engine |
-| **6. Inventory Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
-| **7. Finance Module** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
-| **8. Executive Dashboard** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | Pending |
+## Platform & operations
 
----
+- ✅ Health probes `/health/live` and `/health/ready` (SQL + pending migrations, Hangfire storage, Redis)
+- ✅ Production startup: migrations as a separate step (EF bundle), fail-fast when enabled; demo data Development-only; maintenance backfill opt-in
+- ✅ Scale-out: Redis cache + shared Data Protection key ring, optional Hangfire server per instance, forwarded headers
+- ✅ Observability: Serilog JSON with correlation/tenant/user ids, optional OpenTelemetry OTLP export
+- ✅ Docker images (API, migrator, SPA on nginx), dev and production compose, GitHub Actions CI
+- ✅ Tests: Domain, Application, Architecture and API functional suites run in CI; Application integration tests (Testcontainers) run in CI as informational
 
-## 🔍 Detailed Completed Feature Log
+## Known gaps
 
-### 1. Identity & Multi-Tenant Foundation (Completed & Hardened)
-- **Entities:** Tenant, Organization, Branch, TenantUser, Role, Permission, RolePermission, RefreshToken, AuditLog, Notification.
-- **Services:** `JwtTokenService`, `RefreshTokenService`, `OtpService`, `PermissionService`, `CurrentUserService`, `CurrentTenantService`, `AuthService`.
-- **Multi-Tenant Architecture:** Combined EF Core `TenantId` & `IsDeleted` query filters into unified expressions in `ApplicationDbContext`; `AuditSaveChangesInterceptor` automatic `TenantId` & audit column population; multi-channel tenant resolution (JWT claim, `X-Tenant-Id` header, subdomain) in `TenantResolutionMiddleware`.
-- **Session Persistence & Auto-Login:** `provideAppInitializer` executing `AuthService.initializeSession()` on bootstrap; silent refresh with request queuing in `authInterceptor`; permissions array exposed in `UserProfileDto`; reactive `authGuard` initialization lock; zero-flash splash UI in `AppComponent`.
-- **Authorization:** Declarative permission handler (`[RequirePermission]`), dynamic policy provider, dynamic tenant EF Core query filter.
-- **Seed Data:** 42 permissions across system roles (`PlatformAdmin`, `TenantOwner`, `FarmManager`, `Veterinarian`, `Worker`, `Accountant`).
-- **Tests:** 150 passing tests across solution test suites (79 Domain + 62 Application + 7 Architecture + 1 Integration + 1 Functional).
-
-### 1.1 Master Data Module (Completed)
-- **Domain Layer:** Generic `MasterDataEntry` Aggregate Root with 14 Types (Breed, Animal Type, etc.) and Explicit Hierarchical Locations (Country -> Division -> District -> Upazila -> Union -> Village).
-- **Persistence Layer:** Configurations and Repositories (`MasterDataRepository`, `LocationRepository`). EF Migration `AddMasterDataModule`.
-- **Application Layer:** Reusable Generic CQRS Commands (Create/Update/Delete) and Queries.
-- **API Layer:** MasterData and Location REST endpoints.
-- **Angular UI:** `MasterDataService` and `LocationService` with `BehaviorSubject` caching. Standalone UI components `<app-master-data-dropdown>` and `<app-location-selector>`. Master Data Management Settings Page.
-
-### 1.5 Organization Management (Completed)
-- **Domain Layer:** Refactored `Organization` entity into its own bounded context (`Farm360.Domain.Organizations`). Added properties for business information, logo, contact, BIN, tax info, currency, timezone, language, address, and business type.
-- **Persistence Layer:** EF Core configuration with `RowVersion` concurrency token and unique constraint on TenantId/Name. EF Core Migration `AddOrganizationModule` applied.
-- **Application Layer:** CQRS setup with MediatR. `CreateOrganizationCommand`, `UpdateOrganizationCommand`, `DeactivateOrganizationCommand`, and Queries. Handled DTO mappings and validations using FluentValidation.
-- **API Layer:** REST API endpoints via `OrganizationEndpoints.cs` mapped to `/api/v1/organizations` with role-based access control.
-- **Angular UI:** Standalone components for listing and form creation/editing. Service layer for HTTP interactions. Styled with existing Tailwind CSS definitions.
-- **Tests:** Command handlers unit tested using Moq and xUnit.
-
-### 1.6 Branch Management (Completed)
-- **Domain Layer:** Moved `Branch` into `Farm360.Domain.Organizations`. Added Branch Code, Contacts, Address, Coordinates, Business Hours, and Holiday Calendar properties.
-- **Persistence Layer:** `BranchConfiguration` updated. `BranchRepository` implemented. EF Core Migration `AddBranchManagementFeatures` applied.
-- **Application Layer:** `CreateBranchCommand`, `UpdateBranchCommand`, `DeleteBranchCommand`, `GetBranchesByOrganizationQuery`, `GetBranchByIdQuery` implemented and validated.
-- **API Layer:** REST API endpoints mapped under `/api/v1/organizations/{orgId}/branches` and `/api/v1/branches`.
-- **Angular UI:** Standalone components (List, Form, Details). Dashboard Widget created. Routing configured as children of organization routes.
-- **Tests:** `CreateBranchCommandHandler` unit tests added.
-
-### 1.7 Farm Management (Completed)
-- **Domain Layer:** Created new bounded context `Farm360.Domain.Farms`. Added `Farm` Aggregate Root with properties for Farm Code, Name, Type, Dimensions (Size, LandArea), Geographic Location (Lat/Long, GeoJSON Map Polygon), Capacity, Animal Count, Owner, Manager, Status, and Description.
-- **Persistence Layer:** Created `FarmConfiguration` and `FarmRepository`. Applied EF Core migration `AddFarmManagementModule`.
-- **Application Layer:** Implemented `CreateFarmCommand`, `UpdateFarmCommand`, `DeleteFarmCommand`, `GetFarmsByBranchQuery`, `GetFarmByIdQuery` using MediatR and FluentValidation.
-- **API Layer:** REST API endpoints under `/api/v1/branches/{branchId}/farms` and `/api/v1/farms`. Protected via `farms.read`, `farms.write`, `farms.delete` permissions.
-- **Angular UI:** Developed standalone components for Farm List, Form, Detail, and Card. Added a high-level Farm Dashboard widget. Mapped nested routes under Branches.
-- **Tests:** Added unit tests for `CreateFarmCommandHandler` which pass successfully.
-
-### 1.8 Shed Management (Completed)
-- **Domain Layer:** Added `Shed` Aggregate Root into `Farm360.Domain.Farms` context. Features parameters for Capacity, Animal Type, Construction details (Floor, Roof), Systems (Ventilation, Water, Feed), and Occupancy.
-- **Persistence Layer:** Created `ShedConfiguration` with unique index (`TenantId + FarmId + ShedNumber`). Applied EF Core migration `AddShedManagementModule`.
-- **Application Layer:** Implemented `CreateShedCommand`, `UpdateShedCommand`, `DeleteShedCommand`, `GetShedsByFarmQuery`, `GetShedByIdQuery` using MediatR and FluentValidation.
-- **API Layer:** REST API endpoints mapped under `/api/v1/farms/{farmId}/sheds` and `/api/v1/sheds`. Added `sheds.read`, `sheds.write`, `sheds.delete` permissions.
-- **Angular UI:** Created standalone components for Shed List, Form, and Detail. Built a dynamic Occupancy Dashboard with dynamic SVG capacity indicators. Configured nested routing under Farms.
-- **Tests:** Added unit tests for `CreateShedCommandHandler`.
-
-### 2. Livestock Management Module (Completed)
-- **Domain Layer:** `Animal` Aggregate Root, `WeightRecord`, `BreedingRecord`, `AnimalPhoto` owned children; `AnimalTag` & `Weight` Value Objects; domain events & exceptions.
-- **Persistence Layer:** EF Core Fluent API configurations (`app.Animals`, `app.WeightRecords`, etc.), `AnimalRepository`, EF Core Migration with raw SQL filter patch for owned types unique index.
-- **Application Layer:** 9 CQRS Commands, 3 Queries, FluentValidation validators for all commands (e.g., `RecordBcsCommandValidator`, `CreateBatchCommandValidator`), explicit mapping extensions.
-- **API Layer:** 12 Minimal API endpoints (`/api/v1/livestock/...`) with `RequireAuthorization` permission policies (`animals.read`, `animals.write`, `animals.sell`, `animals.quarantine`, `animals.delete`) and batch filtering support.
-- **Angular UI:** Standalone Angular 22 components (`AnimalListComponent`, `AnimalDetailComponent`, `AnimalRegisterComponent`), dark enterprise design system (`styles.scss`), `AnimalService` API client (with strict typing for `recordMating`), lazy-loaded routing.
-- **Tests:** 76 passing unit tests (38 Domain unit tests + 38 Application command/query/validator unit tests).
-
-### Enterprise Application Shell
-- [x] Responsive layout with sidebar & header
-- [x] Shared UI Components (Data Table, Page Header, Breadcrumb, Confirmation Dialog, etc.)
-- [x] Light / Dark mode
-- [x] Tenant & Branch Switchers
-
-### Module Implementations
-- [x] Foundation: Multi-tenancy, JWT Auth, Domain Events
-- [x] Master Data Module (CRUD, Caching, Lookup APIs)
-- [x] Farm Operations Module (Org, Branch, Farm, Shed, Pen)
-- [x] Livestock Module
-  - [x] Domain & Persistence logic
-  - [x] Enterprise UI Migration (Shared Components, Angular Material)
-
----
-
-## 🎯 Active Task: 3. Health & Veterinary Module (Completed & Hardened ✅)
-
-- [x] **Layer 1: Domain Layer** (Enums, Entities, Value Objects, Events, Exceptions, Repository Interfaces)
-- [x] **Layer 2: Persistence Layer** (EF Configurations, DbContext registration, Repository implementation, EF Migration)
-- [x] **Layer 3: Application Layer** (DTOs, CQRS Commands/Queries, Validators, Mappings)
-- [x] **Layer 4: API Layer** (Minimal API endpoints under `/api/v1/health/...`, Permission Filter wiring, `JsonStringEnumConverter`)
-- [x] **Layer 5: Angular UI** (Health Service, Models, Pages, Routing, Navigation integration, Material UI components)
-- [x] **Layer 6: Unit & Integration Tests** (Domain rules, Command/Query handlers, Validators)
-- [x] **Layer 7: Production-Readiness & Cross-Module Hardening** (Mortality status connection to Livestock, FarmId scoping, Enum synchronization)
+See [TODO.md](TODO.md).

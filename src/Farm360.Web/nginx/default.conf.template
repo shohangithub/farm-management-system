@@ -1,0 +1,117 @@
+# Farm360 SPA — nginx server block (rendered by envsubst: ${API_UPSTREAM}, ${NGINX_RESOLVER})
+
+# Keep the scheme the outermost proxy saw (TLS is usually terminated in front of this container).
+map $http_x_forwarded_proto $farm360_forwarded_proto {
+    default $http_x_forwarded_proto;
+    ""      $scheme;
+}
+
+map $http_upgrade $farm360_connection_upgrade {
+    default upgrade;
+    ""      close;
+}
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    server_tokens off;
+    client_max_body_size 10m;
+
+    # ── Compression ─────────────────────────────────────────────────────────
+    gzip on;
+    gzip_vary on;
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_types text/plain text/css text/xml application/json application/javascript
+               application/xml image/svg+xml font/ttf font/otf;
+
+    # ── Security headers ────────────────────────────────────────────────────
+    # nginx drops server-level add_header in any location that declares its own, so the static
+    # locations below repeat the essential ones (keep them in sync by hand).
+    # 'unsafe-inline' scripts: index.html's theme bootstrap + Angular's critical-CSS onload handler.
+    # connect-src allows https/wss so a separate API origin (API_BASE_URL) also works.
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(self)" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+
+    # Container probe (does not depend on the API).
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # ── API reverse proxy (same-origin mode) ────────────────────────────────
+    # A variable in proxy_pass makes nginx resolve the upstream per request, so the SPA container
+    # starts even while the API is still coming up. The original URI is passed through unchanged.
+    resolver ${NGINX_RESOLVER} valid=30s ipv6=off;
+    set $farm360_api ${API_UPSTREAM};
+
+    location /api/ {
+        proxy_pass $farm360_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $farm360_forwarded_proto;
+        proxy_read_timeout 300s;   # report exports can take a while
+    }
+
+    location /hubs/ {
+        proxy_pass $farm360_api;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $farm360_connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $farm360_forwarded_proto;
+        proxy_read_timeout 3600s;
+        proxy_buffering off;
+    }
+
+    location /uploads/ {
+        proxy_pass $farm360_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $farm360_forwarded_proto;
+    }
+
+    # ── Static assets ───────────────────────────────────────────────────────
+    # Hashed bundles (main-AB12cd34.js, chunk--_BpMPAH.js, styles-....css; 8-char base64url hash): immutable for a year.
+    location ~* "^/[^/]*-[A-Za-z0-9_-]{8}\.(?:js|mjs|css)$" {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    }
+
+    # Other static files (fonts, images, favicon): one day.
+    location ~* \.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|otf|txt)$ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=86400" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    }
+
+    # ── SPA history fallback ────────────────────────────────────────────────
+    # index.html must never be cached, or clients keep requesting bundles that no longer exist.
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=(self)" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+    }
+}

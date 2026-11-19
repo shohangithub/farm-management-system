@@ -124,6 +124,35 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
         if (!string.IsNullOrWhiteSpace(summaryNotes)) Notes = summaryNotes;
     }
 
+    /// <summary>
+    /// The animal left the farm (sold/died) on <paramref name="exitDate"/>: an ongoing course has
+    /// no future doses any more. It is closed as Completed with its end date capped at the exit
+    /// date (never before its start) and a note saying why. Finished treatments are untouched;
+    /// the record and its cost stay (history). Returns true when it changed.
+    /// </summary>
+    public bool CloseForAnimalExit(DateOnly exitDate, string reason)
+    {
+        if (Status != TreatmentStatus.Ongoing)
+            return false;
+
+        var end = exitDate < StartDate ? StartDate : exitDate;
+        if (EndDate is null || EndDate.Value > end)
+            EndDate = end;
+
+        Status = TreatmentStatus.Completed;
+        Notes = AppendExitNote(Notes, reason);
+        return true;
+    }
+
+    // Notes column is 1000 chars: keep the exit reason, trim the older text if needed.
+    private static string AppendExitNote(string? notes, string reason)
+    {
+        const int max = 1000;
+        if (string.IsNullOrWhiteSpace(notes)) return reason.Length <= max ? reason : reason[..max];
+        var combined = $"{notes} | {reason}";
+        return combined.Length <= max ? combined : combined[^max..];
+    }
+
     public void MarkFailed(string reason)
     {
         Status = TreatmentStatus.Failed;

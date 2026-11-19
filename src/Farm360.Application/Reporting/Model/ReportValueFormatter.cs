@@ -18,7 +18,12 @@ public static class ReportValueFormatter
     /// <summary>Bengali digits, indexed 0-9. Used only when the farm opts into Bengali numerals.</summary>
     private static readonly string[] BengaliDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
 
-    public static string Format(object? value, ReportColumnType type, int decimals, bool bengaliNumerals = false)
+    public static string Format(
+        object? value,
+        ReportColumnType type,
+        int decimals,
+        bool bengaliNumerals = false,
+        ReportLanguage language = ReportLanguage.En)
     {
         if (value is null)
         {
@@ -38,12 +43,24 @@ public static class ReportValueFormatter
             // the column header, not in every cell, so the column stays narrow and scannable.
             ReportColumnType.Percent => (ToDecimal(value) * 100m).ToString(NumericFormat(decimals), Invariant),
 
-            ReportColumnType.Boolean => ToBool(value) ? "Yes" : "No",
+            ReportColumnType.Boolean => (ToBool(value) ? ReportStrings.Yes : ReportStrings.No).For(language),
             _ => value.ToString() ?? string.Empty,
         };
 
-        return bengaliNumerals ? ToBengaliNumerals(text) : text;
+        // Only figures get Bengali digits. A text cell — a tag "BD-0042", a voucher "JV-2026-17",
+        // a batch name — is an identifier, and rewriting its digits makes it unsearchable and
+        // no longer matches the ear tag on the animal.
+        return bengaliNumerals && UsesNumerals(type) ? ToBengaliNumerals(text) : text;
     }
+
+    /// <summary>True for the column types whose printed form is a figure or a date.</summary>
+    public static bool UsesNumerals(ReportColumnType type) => type is
+        ReportColumnType.WholeNumber or ReportColumnType.Number or ReportColumnType.Money
+        or ReportColumnType.Percent or ReportColumnType.Date or ReportColumnType.DateTime;
+
+    /// <summary>True for the column types that can be meaningfully added down a column.</summary>
+    public static bool IsAdditive(ReportColumnType type) => type is
+        ReportColumnType.WholeNumber or ReportColumnType.Number or ReportColumnType.Money;
 
     private static string NumericFormat(int decimals) => decimals <= 0 ? "N0" : "N" + decimals.ToString(Invariant);
 

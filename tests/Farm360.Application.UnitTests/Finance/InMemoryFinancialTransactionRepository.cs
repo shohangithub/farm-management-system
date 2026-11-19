@@ -66,4 +66,10 @@ internal sealed class InMemoryFinancialTransactionRepository : IFinancialTransac
 
     public Task<IReadOnlyList<FinancialTransaction>> GetUnattributedIndirectCostsAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<FinancialTransaction>>([]);
+
+    public Task<IReadOnlyList<FinancialTransaction>> GetManualVetPostingsAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<FinancialTransaction>>(Rows
+            .Where(r => r.FarmId == farmId && r.LedgerVetPostedAnimalId != null
+                        && DateOnly.FromDateTime(r.TransactionDate) >= from && DateOnly.FromDateTime(r.TransactionDate) <= to)
+            .ToList());
 }

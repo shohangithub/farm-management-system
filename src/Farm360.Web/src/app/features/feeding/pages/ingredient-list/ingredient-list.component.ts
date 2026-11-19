@@ -15,11 +15,14 @@ import { CreateIngredientDialogComponent } from '../../components/dialogs/create
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-ingredient-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -49,6 +52,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadIngredients()"></app-error-state>
 
       <!-- Filters Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
@@ -70,7 +74,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!isLoading() && filteredIngredients().length === 0"
+        *ngIf="!isLoading() && filteredIngredients().length === 0 && !loadError()"
         icon="restaurant_menu"
         title="No ingredients found"
         description="Add a raw ingredient to build custom feed formulas."
@@ -98,7 +102,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                 </div>
               </div>
 
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="ing.isPreloaded ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
                 {{ ing.isPreloaded ? 'Preloaded' : 'Custom' }}
               </span>
@@ -108,22 +112,22 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
             <div class="p-5 flex-1 relative z-10">
               <div class="grid grid-cols-3 gap-2 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl text-center border border-gray-100 dark:border-gray-800">
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">DM %</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">DM %</div>
                   <div class="font-bold text-gray-900 dark:text-white text-sm mt-0.5">{{ ing.dryMatterPct }}%</div>
                 </div>
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">CP %</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">CP %</div>
                   <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">{{ ing.crudeProteinPct }}%</div>
                 </div>
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">ME (MJ)</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">ME (MJ)</div>
                   <div class="font-bold text-gray-900 dark:text-white text-sm mt-0.5">{{ ing.metabolizableEnergyMjPerKg }}</div>
                 </div>
               </div>
 
               <div class="mt-4 flex items-center justify-between">
                 <span class="text-xs text-gray-400">Unit Cost</span>
-                <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">৳ {{ ing.unitCostBdt }} / {{ ing.unit }}</span>
+                <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">{{ ing.unitCostBdt | money:2 }} / {{ ing.unit }}</span>
               </div>
             </div>
 
@@ -145,6 +149,7 @@ export class IngredientListComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly allIngredients = signal<FeedIngredient[]>([]);
   readonly filteredIngredients = signal<FeedIngredient[]>([]);
 
@@ -166,13 +171,17 @@ export class IngredientListComponent implements OnInit {
 
   loadIngredients(): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
     this.feedingService.getIngredients(true).subscribe({
       next: (res) => {
         this.allIngredients.set(res);
         this.applyFilter();
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.loadError.set(parseApiError(err, 'Could not load feed ingredients.'));
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -191,14 +200,14 @@ export class IngredientListComponent implements OnInit {
   }
 
   openCreateIngredientDialog(): void {
-    const dialogRef = this.dialog.open(CreateIngredientDialogComponent, { disableClose: true, width: '720px' });
+    const dialogRef = this.dialog.open(CreateIngredientDialogComponent, { maxWidth: '95vw', disableClose: true, width: '720px' });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadIngredients();
     });
   }
 
   openEditDialog(ingredient: FeedIngredient): void {
-    const dialogRef = this.dialog.open(CreateIngredientDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(CreateIngredientDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: ingredient
     });

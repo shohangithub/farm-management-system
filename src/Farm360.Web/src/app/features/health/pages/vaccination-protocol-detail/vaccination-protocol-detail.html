@@ -17,12 +17,7 @@
 <div class="animate-fade-in relative max-w-5xl mx-auto">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-  <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
-    <div class="flex">
-      <mat-icon class="text-red-500 mr-2">error</mat-icon>
-      <p class="text-sm text-red-700 font-medium">{{ error() }}</p>
-    </div>
-  </div>
+  <app-error-state *ngIf="error()" class="block mb-6" [message]="error()" (retry)="loadProtocol()"></app-error-state>
 
   <ng-container *ngIf="!isLoading() && protocol()">
     <div class="flex items-start justify-between mb-8">

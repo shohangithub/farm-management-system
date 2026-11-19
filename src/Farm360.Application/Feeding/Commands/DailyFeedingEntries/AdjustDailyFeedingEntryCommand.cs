@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Exceptions;
@@ -11,10 +12,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Feeding.Commands.DailyFeedingEntries;
 
+/// <summary>Confirms an entry with a different quantity. Transactional, like <see cref="ConfirmDailyFeedingEntryCommand"/>.</summary>
 public record AdjustDailyFeedingEntryCommand(
     Guid EntryId,
     decimal ActualKg,
-    string? Notes) : IRequest;
+    string? Notes) : IRequest, ITransactionalCommand;
 
 public class AdjustDailyFeedingEntryCommandHandler : IRequestHandler<AdjustDailyFeedingEntryCommand>
 {
@@ -29,6 +31,7 @@ public class AdjustDailyFeedingEntryCommandHandler : IRequestHandler<AdjustDaily
     private readonly IAnimalFeedAllocationRepository? _allocationRepository;
     private readonly IFarmBusinessRulesProvider? _rules;
     private readonly Farm360.Application.Inventory.Units.IUnitService? _units;
+    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository? _animals;
 
     public AdjustDailyFeedingEntryCommandHandler(
         IDailyFeedingEntryRepository repository,
@@ -41,8 +44,10 @@ public class AdjustDailyFeedingEntryCommandHandler : IRequestHandler<AdjustDaily
         IAnimalFeedingPlanRepository? planRepository = null,
         IAnimalFeedAllocationRepository? allocationRepository = null,
         IFarmBusinessRulesProvider? rules = null,
-        Farm360.Application.Inventory.Units.IUnitService? units = null)
+        Farm360.Application.Inventory.Units.IUnitService? units = null,
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null)
     {
+        _animals = animals;
         _planRepository = planRepository;
         _allocationRepository = allocationRepository;
         _rules = rules;
@@ -64,7 +69,12 @@ public class AdjustDailyFeedingEntryCommandHandler : IRequestHandler<AdjustDaily
         // Confirm() silently ignores an entry that is already confirmed, so an adjustment would have
         // returned success while changing nothing (stock and cost already posted). Say so instead.
         if (entry.Status is DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted)
-            throw new DomainException("This feeding entry is already confirmed; its stock and cost have been posted and it can no longer be adjusted.");
+            throw new ConflictException("This feeding entry is already confirmed; its stock and cost have been posted and it can no longer be adjusted.");
+
+        // Farm rule: an animal is fed only while on the farm (acquired, not yet sold or dead on the
+        // entry's date). An individual entry for a day it was gone is refused, with the reason.
+        if (entry.Status is not (DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted))
+            await FeedingPresenceGuard.EnsureAnimalOnFarmAsync(entry, _planRepository, _animals, cancellationToken);
 
         // The same requirement the confirmation handler deducts: quantity x heads fed (honouring the
         // group-plan quantity basis), split by normalised recipe %, converted to each item's base unit.

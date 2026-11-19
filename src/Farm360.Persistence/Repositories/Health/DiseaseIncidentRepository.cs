@@ -24,6 +24,15 @@ internal sealed class DiseaseIncidentRepository(ApplicationDbContext context) : 
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<DiseaseIncident>> GetByFarmBetweenAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        return await context.DiseaseIncidents
+            .AsNoTracking()
+            .Where(di => di.FarmId == farmId && di.IncidentDate >= from && di.IncidentDate <= to)
+            .OrderBy(di => di.IncidentDate)
+            .ToListAsync(ct);
+    }
+
     public async Task<IReadOnlyList<DiseaseIncident>> GetIncidentsByAnimalIdAsync(Guid animalId, CancellationToken ct = default)
     {
         return await context.DiseaseIncidents

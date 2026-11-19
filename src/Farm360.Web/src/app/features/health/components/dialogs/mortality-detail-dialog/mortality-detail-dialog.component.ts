@@ -6,11 +6,12 @@ import { MortalityRecordDto, CauseOfDeath } from '../../../models/health.models'
 import { AnimalService } from '../../../../livestock/services/animal.service';
 import { AnimalDto } from '../../../../livestock/models/animal.models';
 import { signal, inject } from '@angular/core';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-mortality-detail-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatIconModule],
+  imports: [MoneyPipe, CommonModule, MatDialogModule, MatIconModule],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col">
       <!-- Header -->
@@ -22,7 +23,7 @@ import { signal, inject } from '@angular/core';
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Review details of the animal loss record</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -39,24 +40,24 @@ import { signal, inject } from '@angular/core';
           
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Animal Tag</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Animal Tag</span>
               <span class="text-sm font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md inline-flex items-center gap-1.5">
                 <mat-icon *ngIf="isLoadingAnimal()" class="!w-[14px] !h-[14px] !text-[14px] animate-spin text-gray-400">autorenew</mat-icon>
                 {{ isLoadingAnimal() ? 'Loading...' : (animal()?.tagId || data.animalId) }}
               </span>
             </div>
             <div>
-              <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Date of Death</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Date of Death</span>
               <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ data.deathDate | date:'fullDate' }}</span>
             </div>
             <div>
-              <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Cause of Death</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Cause of Death</span>
               <span class="text-sm font-semibold text-gray-900 dark:text-white inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-100 dark:border-red-500/20">
                 {{ getCauseName(data.causeOfDeath) }}
               </span>
             </div>
             <div *ngIf="data.diseaseName">
-              <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Disease Name</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Disease Name</span>
               <span class="text-sm font-bold text-red-600 dark:text-red-400">{{ data.diseaseName }}</span>
             </div>
           </div>
@@ -68,9 +69,9 @@ import { signal, inject } from '@angular/core';
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">payments</mat-icon>
             </div>
             <div>
-              <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Economic Loss (BDT)</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Economic Loss (BDT)</span>
               <div class="text-lg font-bold text-gray-900 dark:text-white">
-                <span *ngIf="data.estimatedEconomicLossBdt">৳ {{ data.estimatedEconomicLossBdt | number:'1.0-0' }}</span>
+                <span *ngIf="data.estimatedEconomicLossBdt">{{ data.estimatedEconomicLossBdt | money }}</span>
                 <span *ngIf="!data.estimatedEconomicLossBdt" class="text-gray-400 text-sm">Not Specified</span>
               </div>
             </div>
@@ -81,7 +82,7 @@ import { signal, inject } from '@angular/core';
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">person</mat-icon>
             </div>
             <div>
-              <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Recorded By</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Recorded By</span>
               <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 break-all flex items-center gap-2">
                 System Administrator
               </div>

@@ -1,12 +1,23 @@
+using Farm360.Application.Common.Files;
 using Farm360.Application.Common.Interfaces;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Farm360.Infrastructure.Storage;
 
-public class LocalFileStorageService : IFileStorageService
+/// <summary>
+/// Stores uploads under wwwroot/uploads/{directory}. Files there are served anonymously, so this is
+/// the single choke point that guarantees only validated images are ever written: the stored name
+/// is a server-generated GUID plus an extension derived from the file's magic bytes; the client
+/// file name never contributes a path segment.
+/// </summary>
+public partial class LocalFileStorageService : IFileStorageService
 {
+    [GeneratedRegex("^[a-z0-9-]{1,40}$")]
+    private static partial Regex DirectoryNamePattern();
+
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<LocalFileStorageService> _logger;
 
@@ -18,11 +29,15 @@ public class LocalFileStorageService : IFileStorageService
 
     public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string directory, CancellationToken cancellationToken = default)
     {
-        if (fileStream == null || fileStream.Length == 0)
-            throw new ArgumentException("File stream is empty.", nameof(fileStream));
+        ArgumentNullException.ThrowIfNull(fileStream);
 
-        // Generate a unique filename to prevent collisions
-        var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
+        if (string.IsNullOrWhiteSpace(directory) || !DirectoryNamePattern().IsMatch(directory))
+            throw new ArgumentException("Invalid upload directory.", nameof(directory));
+
+        // Content-based validation (size, extension whitelist, magic bytes). The extension of the
+        // stored file comes from the detected format, never from the client.
+        var extension = ImageUploadValidator.Validate(fileStream, fileName);
+        var uniqueFileName = $"{Guid.NewGuid():N}{extension}";
         var relativePath = Path.Combine("uploads", directory, uniqueFileName).Replace("\\", "/");
         
         var targetDirectory = Path.Combine(_env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"), "uploads", directory);
@@ -34,7 +49,7 @@ public class LocalFileStorageService : IFileStorageService
 
         var fullPath = Path.Combine(targetDirectory, uniqueFileName);
 
-        using (var stream = new FileStream(fullPath, FileMode.Create))
+        using (var stream = new FileStream(fullPath, FileMode.CreateNew))
         {
             await fileStream.CopyToAsync(stream, cancellationToken);
         }
@@ -53,9 +68,15 @@ public class LocalFileStorageService : IFileStorageService
         if (string.IsNullOrWhiteSpace(filePath))
             return Task.CompletedTask;
 
-        // Ensure we only delete from our wwwroot
+        // Ensure we only delete from wwwroot/uploads (no traversal outside it)
+        var uploadsRoot = Path.GetFullPath(Path.Combine(_env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"), "uploads"));
         var relativePath = filePath.TrimStart('/');
-        var fullPath = Path.Combine(_env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"), relativePath);
+        var fullPath = Path.GetFullPath(Path.Combine(_env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"), relativePath));
+        if (!fullPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Refused to delete file outside the uploads folder: {Path}", filePath);
+            return Task.CompletedTask;
+        }
 
         if (File.Exists(fullPath))
         {

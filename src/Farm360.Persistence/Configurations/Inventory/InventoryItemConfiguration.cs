@@ -12,6 +12,11 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
 
         builder.HasKey(x => x.Id);
 
+        // Optimistic concurrency on stock: two simultaneous deductions from the same item must not
+        // both read the same balance and overwrite each other. The loser gets a
+        // DbUpdateConcurrencyException (HTTP 409, "reload and try again").
+        builder.Property(x => x.RowVersion).IsRowVersion();
+
         builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(200);

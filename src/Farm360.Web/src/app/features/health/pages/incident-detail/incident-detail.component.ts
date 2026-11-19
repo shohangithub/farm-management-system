@@ -11,11 +11,13 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap, map } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-incident-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule, PageHeaderComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule, PageHeaderComponent, LoadingComponent],
   template: `
 <app-page-header 
   title="Incident Details" 
@@ -32,12 +34,7 @@ import { of } from 'rxjs';
 <div class="animate-fade-in relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-  <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
-    <div class="flex">
-      <mat-icon class="text-red-500 mr-2">error</mat-icon>
-      <p class="text-sm text-red-700 font-medium">{{ error() }}</p>
-    </div>
-  </div>
+  <app-error-state *ngIf="error()" class="block mb-6" [message]="error()" (retry)="loadIncident()"></app-error-state>
 
   <div *ngIf="incident() && !isLoading()" class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Left column -->
@@ -107,7 +104,7 @@ import { of } from 'rxjs';
                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ animal.species }} - {{ animal.breedName }}</div>
               </div>
             </div>
-            <button mat-icon-button color="primary" [routerLink]="['/livestock/animal', animal.animalId]" matTooltip="View Animal">
+            <button mat-icon-button color="primary" [routerLink]="['/livestock/animal', animal.animalId]" matTooltip="View Animal" aria-label="View Animal">
               <mat-icon>chevron_right</mat-icon>
             </button>
           </li>
@@ -151,8 +148,8 @@ export class IncidentDetailComponent {
           return of(null);
         }
         return this.healthService.getIncidentDetails(id).pipe(
-          catchError(() => {
-            this.error.set('Failed to load incident details.');
+          catchError((err) => {
+            this.error.set(parseApiError(err, 'Failed to load incident details.'));
             return of(null);
           }),
           tap(() => this.isLoading.set(false))

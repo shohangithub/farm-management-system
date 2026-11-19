@@ -12,13 +12,7 @@
 </div>
 
 <!-- Error State -->
-<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-xl mb-6 shadow-sm flex items-start gap-3">
-  <mat-icon class="!text-red-500 mt-0.5 flex-shrink-0">error_outline</mat-icon>
-  <div>
-    <h3 class="text-sm font-semibold">Error</h3>
-    <p class="text-xs mt-1">{{ error() }}</p>
-  </div>
-</div>
+<app-error-state *ngIf="error() as err" class="block mb-6 no-print" title="Couldn't load batch" [message]="err" (retry)="load()"></app-error-state>
 
 <div *ngIf="!loading() && batch()" class="space-y-6">
 
@@ -50,7 +44,7 @@
 
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
         <div>
-          <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">On farm</dt>
+          <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">On farm</dt>
           <dd class="text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
             {{ batch()!.animalCount }}
             <span class="text-sm font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">Head</span>
@@ -58,7 +52,7 @@
           <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ batch()!.totalEverInBatch }} ever assigned (incl. sold / dead)</dd>
         </div>
         <div>
-          <dt class="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Description</dt>
+          <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Description</dt>
           <dd class="text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {{ batch()!.notes || 'No description provided for this batch.' }}
           </dd>
@@ -97,7 +91,7 @@
           <mat-icon>auto_fix_high</mat-icon>
         </div>
         <div>
-          <h3 class="font-bold text-gray-900 dark:text-white">Bulk Actions <span class="ml-2 text-[9px] font-bold uppercase bg-gray-200 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded">Soon</span></h3>
+          <h3 class="font-bold text-gray-900 dark:text-white">Bulk Actions <span class="ml-2 text-[11px] font-bold uppercase bg-gray-200 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded">Soon</span></h3>
           <p class="text-xs text-gray-500 mt-0.5">Streamline record keeping</p>
         </div>
       </div>

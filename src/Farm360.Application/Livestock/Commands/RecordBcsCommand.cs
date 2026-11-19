@@ -16,15 +16,16 @@ public sealed record RecordBcsCommand(
 
 public sealed class RecordBcsCommandValidator : AbstractValidator<RecordBcsCommand>
 {
-    public RecordBcsCommandValidator()
+    public RecordBcsCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
         
         RuleFor(x => x.Score)
             .InclusiveBetween(1.0m, 5.0m).WithMessage("BCS score must be between 1.0 and 5.0.");
             
         RuleFor(x => x.RecordedDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Recorded date cannot be in the future.");
             
         RuleFor(x => x.Notes)

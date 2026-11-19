@@ -1,3 +1,5 @@
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import {
   Component, inject, signal, ChangeDetectionStrategy, computed,
   ViewChild
@@ -17,7 +19,7 @@ import { AnimalCostLedger } from '../../../finance/models/finance.model';
 import { AnimalHealthHistoryDto, VaccinationStatus, TreatmentStatus } from '../../../health/models/health.models';
 import {
   AnimalDto, AnimalStatus, AnimalSex, AnimalSpecies, TagType,
-  SPECIES_LABELS, STATUS_LABELS, SEX_LABELS,
+  SPECIES_LABELS, STATUS_LABELS, SEX_LABELS, DisposalReason, isOnFarm,
 } from '../../models/animal.models';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -27,7 +29,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { FarmService } from '../../../farms/services/farm.service';
@@ -61,11 +63,15 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { ReportService } from '../../../reports/services/report.service';
 import { formatAnimalAge } from '../../utils/animal-age';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { APP_DATE_LOCALE } from '../../../../shared/utils/locale';
 @Component({
   selector: 'app-animal-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule,
@@ -86,7 +92,7 @@ export class AnimalDetailComponent {
   private readonly batchSvc = inject(BatchService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly recentSvc = inject(RecentlyViewedService);
   private readonly pdfService = inject(PdfExportService);
   private readonly contextService = inject(WorkingContextService);
@@ -195,7 +201,7 @@ export class AnimalDetailComponent {
             );
           }),
           catchError(err => {
-            this.error.set(err?.error?.detail ?? 'Not found');
+            this.error.set(parseApiError(err, 'Could not load this animal.'));
             return of(null);
           })
         )
@@ -319,13 +325,48 @@ export class AnimalDetailComponent {
   });
 
   readonly isSold = computed(() => this.animal()?.status === AnimalStatus.Sold);
+  readonly isDead = computed(() => this.animal()?.status === AnimalStatus.Dead);
+
+  /**
+   * Farm rule: an animal is "on farm" only while Active or Quarantined. Sold / Dead
+   * (and Slaughtered / Transferred) have left the farm: history stays readable, but
+   * actions that record new facts are hidden and profit is final, not projected.
+   */
+  readonly isOnFarm = computed(() => isOnFarm(this.animal()?.status));
+  readonly isExited = computed(() => !!this.animal() && !this.isOnFarm());
+
+  /** Exit date: saleDate (Sold) or deathDate (Dead); backend also supplies exitDate. */
+  readonly exitDate = computed(() => {
+    const a = this.animal();
+    if (!a) return null;
+    return a.exitDate ?? (a.status === AnimalStatus.Sold ? a.saleDate : a.status === AnimalStatus.Dead ? a.deathDate : null) ?? null;
+  });
+
+  readonly disposalReasonLabel = computed(() => {
+    const r = this.animal()?.disposalReason;
+    switch (r) {
+      case DisposalReason.NaturalDeath: return 'Natural death';
+      case DisposalReason.Disease: return 'Disease';
+      case DisposalReason.Accident: return 'Accident';
+      case DisposalReason.Slaughter: return 'Slaughter';
+      case DisposalReason.Sale: return 'Sale';
+      case DisposalReason.Unknown: return 'Unknown cause';
+      default: return r ? String(r) : null;
+    }
+  });
+
+  /** Realised revenue for an exited animal (a dead animal earns nothing). */
+  readonly realisedRevenue = computed(() => this.isDead() ? 0 : this.totalRevenue());
 
   readonly netProfit = computed(() => {
-    if (this.isSold()) {
-      return this.totalRevenue() - this.totalCost();
-    } else {
-      return this.currentEstimatedValue() - this.totalCost();
+    if (this.isDead()) {
+      // Died: no revenue — the whole investment is the loss.
+      return -this.totalCost();
     }
+    if (this.isExited()) {
+      return this.realisedRevenue() - this.totalCost();
+    }
+    return this.currentEstimatedValue() - this.totalCost();
   });
 
   /** Live-weight price at which selling today exactly recovers the cost to date. */
@@ -410,7 +451,7 @@ export class AnimalDetailComponent {
     };
   });
 
-  private datePipe = new DatePipe('en-US');
+  private datePipe = new DatePipe(APP_DATE_LOCALE);
 
   readonly availableBatches = computed(() => this.animalDataResult()?.availableBatches || []);
   readonly sheds = computed(() => this.animalDataResult()?.sheds || []);
@@ -447,6 +488,7 @@ export class AnimalDetailComponent {
   }
   /** Set, change (switch chart) or add an extra to this animal's ration. */
   openSetRation(mode?: 'extra' | 'switch'): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const animal = this.animal();
     if (!animal) return;
     this.dialog.open(AssignFeedingPlanDialogComponent, {
@@ -502,9 +544,10 @@ export class AnimalDetailComponent {
   }
 
   onQuarantine(): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(QuarantineDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(QuarantineDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -539,7 +582,7 @@ export class AnimalDetailComponent {
   onEdit(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(AnimalEditDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(AnimalEditDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '600px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -549,9 +592,10 @@ export class AnimalDetailComponent {
   }
 
   onSell(): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordSaleDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(RecordSaleDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -561,9 +605,10 @@ export class AnimalDetailComponent {
   }
 
   onTransfer(): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(TransferAnimalDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(TransferAnimalDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -577,33 +622,35 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('Location assigned successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.notify.success('Location assigned successfully!');
         this.load();
       }
     });
   }
 
   onRecordMating(): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(MatingDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(MatingDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
-      data: { animalId: a.id, animalTag: a.tagId }
+      data: { animalId: a.id, animalTag: a.tagId, farmId: a.farmId }
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('Mating recorded successfully!', 'Close', { duration: 3000 });
+        this.notify.success('Mating recorded successfully!');
         this.load();
       }
     });
   }
 
   onConfirmPregnancy(recordId: string): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(ConfirmPregnancyDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmPregnancyDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -611,16 +658,17 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('Pregnancy confirmed successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.notify.success('Pregnancy confirmed successfully!');
         this.load();
       }
     });
   }
 
   onRecordCalving(recordId: string): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordCalvingDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(RecordCalvingDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -628,16 +676,17 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('Calving recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.notify.success('Calving recorded successfully!');
         this.load();
       }
     });
   }
 
   onRecordBcs(): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordBcsDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(RecordBcsDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -645,16 +694,17 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('BCS recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.notify.success('BCS recorded successfully!');
         this.load();
       }
     });
   }
 
   onAssignBatch(): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(AssignBatchDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(AssignBatchDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -667,16 +717,17 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('Animal assigned to batch successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.notify.success('Animal assigned to batch successfully!');
         this.load();
       }
     });
   }
 
   onRecordWeight(): void {
+    if (!this.isOnFarm()) return; // left the farm — no new facts
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(RecordWeightDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(RecordWeightDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -684,7 +735,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('Weight recorded successfully!', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.notify.success('Weight recorded successfully!');
         this.load();
       }
     });
@@ -693,7 +744,7 @@ export class AnimalDetailComponent {
   onUploadPhoto(): void {
     const a = this.animal();
     if (!a) return;
-    const dialogRef = this.dialog.open(UploadPhotoDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(UploadPhotoDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       autoFocus: false,
       panelClass: 'bg-transparent',
@@ -701,7 +752,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.snackBar.open('Photo uploaded successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
+        this.notify.success('Photo uploaded successfully!');
         this.load();
       }
     });
@@ -735,7 +786,7 @@ export class AnimalDetailComponent {
       const tag = a.tagId || 'Animal';
       const farmName = this.farmName() || this.contextService.currentFarmValue?.name || 'Primary Farm';
       await this.pdfService.exportElement(element, {
-        filename: `Animal_Dossier_${tag}_${new Date().toISOString().slice(0, 10)}`,
+        filename: `Animal_Dossier_${tag}_${toLocalIsoDate()}`,
         orientation: 'portrait',
         format: 'a4',
         scale: 2,
@@ -753,10 +804,10 @@ export class AnimalDetailComponent {
         },
         showSignatures: true
       });
-      this.snackBar.open('Animal Dossier exported successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
+      this.notify.success('Animal Dossier exported successfully!');
     } catch (err) {
       console.error('Failed to export dossier', err);
-      this.snackBar.open('Failed to generate Dossier PDF.', 'Close', { duration: 4000, panelClass: ['snack-error'] });
+      this.notify.error('Failed to generate Dossier PDF.');
     } finally {
       element.style.display = 'none';
       this.isExporting.set(false);
@@ -778,18 +829,18 @@ export class AnimalDetailComponent {
         this.isExporting.set(false);
         if (res.body) {
           const tag = (a.tagId || 'Animal').replace(/[\s\W]+/g, '_');
-          const dateStr = new Date().toISOString().slice(0, 10);
+          const dateStr = toLocalIsoDate();
           const keyShort = reportKey.split('.').pop() || 'report';
           const defaultName = `Farm360_${tag}_${keyShort}_${dateStr}.${format}`;
           const fn = this.reportService.fileNameFrom(res.headers, defaultName);
           this.reportService.saveBlob(res.body, fn);
-          this.snackBar.open('Report exported successfully!', 'Close', { duration: 3000, panelClass: ['snack-success'] });
+          this.notify.success('Report exported successfully!');
         }
       },
       error: (err) => {
         this.isExporting.set(false);
         console.error('Failed to export report', err);
-        this.snackBar.open('Failed to export report. Please try again.', 'Close', { duration: 4000, panelClass: ['snack-error'] });
+        this.notify.error('Failed to export report. Please try again.');
       }
     });
   }
@@ -812,6 +863,6 @@ export class AnimalDetailComponent {
     } else if (err?.error?.title) {
       msg = err.error.title;
     }
-    this.snackBar.open(msg, 'Close', { duration: 5000, panelClass: ['snack-error'] });
+    this.notify.error(msg);
   }
 }

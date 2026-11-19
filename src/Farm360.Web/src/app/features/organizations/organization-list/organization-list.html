@@ -8,13 +8,7 @@
 
 <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
   
-  <div *ngIf="error()" class="m-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md shadow-sm flex items-start gap-3 animate-fade-in-up">
-    <mat-icon class="!text-red-500 mt-0.5">error_outline</mat-icon>
-    <div>
-      <h3 class="text-sm font-semibold">Error</h3>
-      <p class="text-xs mt-1">{{ error() }}</p>
-    </div>
-  </div>
+  <app-error-state *ngIf="!isLoading() && error() as err" title="Couldn't load organizations" [message]="err" (retry)="loadOrganizations()"></app-error-state>
 
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 

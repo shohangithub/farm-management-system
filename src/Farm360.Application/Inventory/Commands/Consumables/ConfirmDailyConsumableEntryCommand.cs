@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Exceptions;
@@ -11,11 +12,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Inventory.Commands.Consumables;
 
+/// <summary>
+/// Confirms a day's consumable use. Transactional: the entry, the stock deduction and the ledger
+/// posting (published event, handled inside this transaction) commit together or not at all.
+/// </summary>
 public sealed record ConfirmDailyConsumableEntryCommand(
     Guid EntryId,
     decimal ActualQuantity,
     string? AdjustmentReason = null,
-    Guid? UnitId = null) : IRequest;
+    Guid? UnitId = null) : IRequest, ITransactionalCommand;
 
 public sealed class ConfirmDailyConsumableEntryCommandValidator : AbstractValidator<ConfirmDailyConsumableEntryCommand>
 {
@@ -61,7 +66,8 @@ public sealed class ConfirmDailyConsumableEntryCommandHandler : IRequestHandler<
 
         if (entry.Status == DailyConsumableEntryStatus.Confirmed || entry.Status == DailyConsumableEntryStatus.Adjusted)
         {
-            return; // Already confirmed
+            // Double submit: the stock was already deducted once. Say so; never deduct twice.
+            throw new ConflictException("This consumable entry is already confirmed; its stock and cost have already been posted.");
         }
 
         var inventoryItem = await _inventoryItemRepository.GetByIdAsync(entry.InventoryItemId, cancellationToken)

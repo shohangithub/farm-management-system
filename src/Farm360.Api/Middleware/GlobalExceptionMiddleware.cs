@@ -218,6 +218,19 @@ public sealed class GlobalExceptionMiddleware(
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 
+            // Cross-tenant write guard (Persistence layer). Details (entity, tenant ids) are logged
+            // server-side only; the client gets a generic 403 that never echoes another tenant's id.
+            Farm360.Persistence.Interceptors.CrossTenantWriteException => (
+                HttpStatusCode.Forbidden,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/forbidden",
+                    Title = "Forbidden",
+                    Status = (int)HttpStatusCode.Forbidden,
+                    Detail = "You are not authorized to perform this action.",
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
             // Argument exception (often thrown by domain guards) → 400
             ArgumentException argEx => (
                 HttpStatusCode.BadRequest,
@@ -251,6 +264,18 @@ public sealed class GlobalExceptionMiddleware(
                     Title = "Bad Request",
                     Status = (int)HttpStatusCode.BadRequest,
                     Detail = badReqEx.Message,
+                    Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
+                }),
+
+            // Optimistic concurrency (RowVersion) → 409. Must precede DbUpdateException (its base type).
+            Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => (
+                HttpStatusCode.Conflict,
+                new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/concurrency-conflict",
+                    Title = "Concurrent Update",
+                    Status = (int)HttpStatusCode.Conflict,
+                    Detail = "This record was changed by someone else — reload and try again",
                     Extensions = new Dictionary<string, object?> { ["correlationId"] = correlationId },
                 }),
 

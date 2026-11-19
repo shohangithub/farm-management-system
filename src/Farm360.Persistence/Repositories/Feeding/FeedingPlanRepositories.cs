@@ -211,6 +211,33 @@ public sealed class DailyFeedingEntryRepository : IDailyFeedingEntryRepository
 
         return new HashSet<(Guid PlanId, Guid? RuleLineId)>(entries.Select(x => (x.FeedingPlanId, x.RuleLineId)));
     }
+
+    public async Task<HashSet<(Guid PlanId, Guid? RuleLineId)>> GetEntryKeysAsync(Guid tenantId, Guid farmId, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        // Query filters off on purpose (as the job always did): a soft-deleted entry was removed
+        // deliberately, and a re-run must not bring it back.
+        var entries = await _dbContext.DailyFeedingEntries
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.FarmId == farmId && x.EntryDate == date)
+            .Select(x => new { x.FeedingPlanId, x.RuleLineId })
+            .ToListAsync(cancellationToken);
+
+        return new HashSet<(Guid PlanId, Guid? RuleLineId)>(entries.Select(x => (x.FeedingPlanId, x.RuleLineId)));
+    }
+
+    public async Task<DateOnly?> GetLastGeneratedEntryDateAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        // A manual feed is held by a one-day plan closed straight away; it says nothing about
+        // whether the nightly job ran, so it is left out.
+        return await (
+                from e in _dbContext.DailyFeedingEntries.AsNoTracking()
+                join p in _dbContext.AnimalFeedingPlans.AsNoTracking() on e.FeedingPlanId equals p.Id
+                where e.TenantId == tenantId
+                      && !(p.Status == Farm360.Domain.Feeding.Enums.FeedingPlanStatus.Completed && p.StartDate == p.EndDate)
+                select (DateOnly?)e.EntryDate)
+            .MaxAsync(cancellationToken);
+    }
 }
 
 public sealed class FeedingReconciliationRepository : IFeedingReconciliationRepository

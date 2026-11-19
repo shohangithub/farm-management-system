@@ -35,6 +35,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
     private readonly IAnimalCostLedgerRepository _ledgers;
     private readonly IAnimalFeedAllocationRepository _feed;
     private readonly IAnimalValuationService _valuation;
+    private readonly IAnimalBatchRepository _batches;
 
     public AnimalSummaryReportDefinition(
         IAnimalRepository animals,
@@ -43,8 +44,10 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         IPenRepository pens,
         IAnimalCostLedgerRepository ledgers,
         IAnimalFeedAllocationRepository feed,
-        IAnimalValuationService valuation)
+        IAnimalValuationService valuation,
+        IAnimalBatchRepository batches)
     {
+        _batches = batches;
         _animals = animals;
         _breeds = breeds;
         _sheds = sheds;
@@ -134,6 +137,10 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             pen = await _pens.GetByIdAsync(context.TenantId, penId.Value, cancellationToken).ConfigureAwait(false);
         }
 
+        var batch = animal.BatchId is { } batchId
+            ? await _batches.GetByIdAsync(batchId, cancellationToken).ConfigureAwait(false)
+            : null;
+
         var breedName = breed?.Name ?? "Native / Cross";
         var shedName = shed?.ShedNumber ?? (shedId.HasValue ? "Assigned" : "Unassigned");
         var penName = pen?.PenNumber ?? (penId.HasValue ? "Assigned" : "Unassigned");
@@ -178,16 +185,16 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         {
             // ── Section 1: Demographics ───────────────────────────────────────
             new("1. Identification & Demographics", "Tag Identification", animal.Tag.TagId, $"Type: {animal.Tag.TagType}"),
-            new("1. Identification & Demographics", "Species & Breed", $"{animal.Species} · {breedName}", $"Breed ID: {animal.BreedId.ToString()[..8]}"),
+            new("1. Identification & Demographics", "Species & Breed", $"{animal.Species} · {breedName}", breed is null ? "Breed not recorded" : "Registered breed"),
             new("1. Identification & Demographics", "Sex & Gender", animal.Sex.ToString(), "Biological sex classification"),
             new("1. Identification & Demographics", "Date of Birth & Age", $"{animal.DateOfBirth:dd-MMM-yyyy} ({ageFormatted})", $"Born: {animal.DateOfBirth:yyyy-MM-dd}"),
             new("1. Identification & Demographics", "Acquisition Info", $"{animal.AcquisitionType} on {animal.AcquisitionDate:dd-MMM-yyyy}", $"Initial Cost: ৳ {purchaseCost:N0}"),
             new("1. Identification & Demographics", "Current Status", animal.Status.ToString().ToUpperInvariant(), string.IsNullOrWhiteSpace(animal.QuarantineReason) ? "Normal herd condition" : $"Quarantine: {animal.QuarantineReason}"),
 
             // ── Section 2: Housing & Location ─────────────────────────────────
-            new("2. Housing & Location", "Shed Allocation", shedName, shedId.HasValue ? $"Shed ID: {shedId.Value.ToString()[..8]}" : "No active shed assigned"),
-            new("2. Housing & Location", "Pen / Stall", penName, penId.HasValue ? $"Pen ID: {penId.Value.ToString()[..8]}" : "No active pen assigned"),
-            new("2. Housing & Location", "Batch Assignment", animal.BatchId.HasValue ? animal.BatchId.Value.ToString()[..8] : "Individual (No Batch)", "Herd management grouping"),
+            new("2. Housing & Location", "Shed Allocation", shedName, shedId.HasValue ? "Current housing" : "No active shed assigned"),
+            new("2. Housing & Location", "Pen / Stall", penName, penId.HasValue ? $"In {shedName}" : "No active pen assigned"),
+            new("2. Housing & Location", "Batch Assignment", batch?.Name ?? (animal.BatchId.HasValue ? "Batch not found" : "Individual (No Batch)"), "Herd management grouping"),
 
             // ── Section 3: Growth & Performance ───────────────────────────────
             new("3. Growth & Weight KPIs", "Current / Latest Weight", $"{latestWeight:N1} kg", animal.LatestWeightDate.HasValue ? $"Recorded on {animal.LatestWeightDate.Value:dd-MMM-yyyy}" : "No weighing record"),

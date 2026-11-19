@@ -43,7 +43,7 @@ public sealed class FullAccountsReportDefinition : ReportDefinition<FullAccounts
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.DateRange("period", @default: "current-month"),
     ];
 
@@ -70,7 +70,7 @@ public sealed class FullAccountsReportDefinition : ReportDefinition<FullAccounts
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = await FinanceReportFarm.ResolveAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var range = context.Range("period");
         var d = await context.Send(
             new GetFullAccountsReportQuery(

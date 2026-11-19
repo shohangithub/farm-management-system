@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Feeding.Services;
 using Farm360.Domain.Exceptions;
 using Farm360.Domain.Feeding;
 using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
-using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 using FluentValidation;
 using MediatR;
@@ -35,18 +35,19 @@ public sealed record RecordManualFeedingCommand(
     Guid? InventoryItemId,
     decimal QuantityPerHead,
     string? Notes = null,
-    Guid? UnitId = null) : IRequest<ManualFeedingResult>;
+    Guid? UnitId = null) : IRequest<ManualFeedingResult>, ITransactionalCommand;
 
 public sealed class RecordManualFeedingCommandValidator : AbstractValidator<RecordManualFeedingCommand>
 {
-    public RecordManualFeedingCommandValidator()
+    public RecordManualFeedingCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.FarmId).NotEmpty();
         RuleFor(x => x.AnimalIds).NotEmpty().WithMessage("Choose at least one animal.");
         RuleFor(x => x.QuantityPerHead).GreaterThan(0).WithMessage("Enter how much each animal was fed.");
         RuleFor(x => x).Must(x => x.FormulaId.HasValue || x.InventoryItemId.HasValue)
             .WithMessage("Choose a recipe or a stock item.");
-        RuleFor(x => x.Date).Must(d => d <= DateOnly.FromDateTime(DateTime.UtcNow))
+        RuleFor(x => x.Date).Must(d => d <= clock.Today)
             .WithMessage("Feed can't be recorded for a future day.");
         RuleFor(x => x.Notes).MaximumLength(300);
     }
@@ -86,9 +87,13 @@ public sealed class RecordManualFeedingCommandHandler(
                 notes.Add($"Animal {animalId} was not found on this farm — skipped.");
                 continue;
             }
-            if (animal.Status is not (AnimalStatus.Active or AnimalStatus.Quarantined))
+            // Farm rule: fed only while on the farm on that day — acquired, not yet sold or dead
+            // (AnimalFeedingPresence). A backdated feed before a sale is fine; on or after it, not.
+            if (AnimalFeedingPresence.NotFedReason(animal, request.Date) is { } notOnFarm)
             {
-                notes.Add($"{animal.Tag.TagId} is {animal.Status} — skipped.");
+                if (request.AnimalIds.Count == 1)
+                    throw new DomainException(notOnFarm);
+                notes.Add($"{notOnFarm} Skipped.");
                 continue;
             }
 
@@ -123,8 +128,11 @@ public sealed class RecordManualFeedingCommandHandler(
                 await sender.Send(new ConfirmDailyFeedingEntryCommand(entry.Id, perHead, null, reason), cancellationToken);
                 confirmed++;
             }
-            catch (DomainException ex)
+            catch (DomainException ex) when (entry.Status == DailyFeedingEntryStatus.Pending)
             {
+                // Refused up front (short of stock, animal not on the farm): nothing was written for
+                // it, so it stays pending. A failure after the entry was confirmed (stock or ledger
+                // posting) is not caught here: it rolls the whole manual feed back.
                 notes.Add($"Saved as pending, not confirmed: {ex.Message}");
             }
         }

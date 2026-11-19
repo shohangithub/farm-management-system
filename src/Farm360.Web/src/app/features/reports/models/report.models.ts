@@ -86,6 +86,10 @@ export interface ReportMetaHeader {
   generatedAtUtc: string;
   parameters: ReportMetaField[];
   subject?: string | null;
+  /** Farm-local stamp with its zone, e.g. "16-Nov-2026 14:05 BST (UTC+6)". */
+  generatedAtLocal?: string | null;
+  generatedAtDisplay?: string | null;
+  timeZoneLabel?: string | null;
 }
 
 export interface PageSetup {
@@ -108,6 +112,10 @@ export interface ReportDataSet {
   grandTotals: ReportCell[];
   hasGrandTotals: boolean;
   totalRowCount: number;
+  language?: string;
+  bengaliNumerals?: boolean;
+  grandTotalLabel?: string | null;
+  grandTotalCaption?: string | null;
 }
 
 export interface ReportCatalogItem {
@@ -117,6 +125,28 @@ export interface ReportCatalogItem {
   description: string;
   category: ReportCategory;
   parameters: ReportParameter[];
+  descriptionBn?: string;
+  permission?: string | null;
+  /** Whether the user holds the export permission; export buttons are hidden otherwise. */
+  canExport?: boolean;
+}
+
+/** One audited execution, as returned by GET /reports/runs. */
+export interface ReportRunHistoryItem {
+  id: string;
+  reportKey: string;
+  reportTitle: string;
+  requestedByName: string;
+  requestedAtUtc: string;
+  format: string;
+  outcome: string;
+  rowCount: number;
+  durationMs: number;
+  outputHash?: string | null;
+  failureReason?: string | null;
+  parameters?: Record<string, string | null> | null;
+  language?: string | null;
+  bengaliNumerals?: boolean;
 }
 
 export type ReportLanguage = 'en' | 'bn';
@@ -129,22 +159,32 @@ export interface RunReportRequest {
 
 export type ReportExportFormat = 'pdf' | 'xlsx' | 'csv';
 
-function getTodayRange(): string {
-  const today = new Date().toISOString().split('T')[0];
-  return `${today}..${today}`;
-}
-
-/** Presets the server's ReportContext.Range understands. */
-export const DATE_RANGE_PRESETS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: getTodayRange(), label: 'Today' },
-  { value: 'current-month', label: 'This month' },
-  { value: 'last-month', label: 'Last month' },
-  { value: 'last-7-days', label: 'Last 7 days' },
-  { value: 'last-30-days', label: 'Last 30 days' },
-  { value: 'last-90-days', label: 'Last 90 days' },
-  { value: 'current-year', label: 'This year' },
-  { value: 'all-time', label: 'All time' },
+/**
+ * Presets the server's ReportContext.Range understands. They are sent as keywords, not dates:
+ * the server resolves them in the farm's own time zone (Asia/Dhaka) and financial year, so
+ * "today" is never the browser's UTC date and "this financial year" follows the farm's settings.
+ */
+export const DATE_RANGE_PRESETS: ReadonlyArray<{ value: string; label: LocalizedText }> = [
+  { value: 'today', label: { en: 'Today', bn: 'আজ' } },
+  { value: 'current-month', label: { en: 'This month', bn: 'এই মাস' } },
+  { value: 'last-month', label: { en: 'Last month', bn: 'গত মাস' } },
+  { value: 'last-7-days', label: { en: 'Last 7 days', bn: 'গত ৭ দিন' } },
+  { value: 'last-30-days', label: { en: 'Last 30 days', bn: 'গত ৩০ দিন' } },
+  { value: 'last-90-days', label: { en: 'Last 90 days', bn: 'গত ৯০ দিন' } },
+  { value: 'fiscal-year-to-date', label: { en: 'Financial year to date', bn: 'অর্থবছরের শুরু থেকে আজ' } },
+  { value: 'current-fiscal-year', label: { en: 'This financial year', bn: 'চলতি অর্থবছর' } },
+  { value: 'last-fiscal-year', label: { en: 'Last financial year', bn: 'গত অর্থবছর' } },
+  { value: 'current-year', label: { en: 'This calendar year', bn: 'চলতি পঞ্জিকা বছর' } },
+  { value: 'all-time', label: { en: 'All time', bn: 'সব সময়' } },
 ];
+
+/** Picks the label for the report language, falling back to English when no translation exists. */
+export function localized(text: LocalizedText | null | undefined, language: ReportLanguage): string {
+  if (!text) {
+    return '';
+  }
+  return language === 'bn' && text.bn ? text.bn : text.en;
+}
 
 export const CATEGORY_ICONS: Readonly<Record<ReportCategory, string>> = {
   Livestock: 'pets',

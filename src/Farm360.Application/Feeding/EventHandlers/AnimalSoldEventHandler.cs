@@ -1,37 +1,21 @@
-using Farm360.Domain.Feeding.Interfaces.Repositories;
+using Farm360.Application.Feeding.Services;
 using Farm360.Domain.Livestock.Events;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Feeding.EventHandlers;
 
-public sealed class AnimalSoldEventHandler : INotificationHandler<AnimalSoldEvent>
+/// <summary>
+/// A sold animal stops being fed from its sale date: its plans end, pending entries from that day
+/// are skipped, confirmed ones after it reversed, and group entries re-split without it
+/// (<see cref="IAnimalExitService"/>, idempotent). The sell command calls the service directly;
+/// this handler covers anything else that publishes the event.
+/// </summary>
+public sealed class AnimalSoldEventHandler(IAnimalExitService exitService) : INotificationHandler<AnimalSoldEvent>
 {
-    private readonly IAnimalFeedingPlanRepository _planRepository;
-    private readonly ILogger<AnimalSoldEventHandler> _logger;
-
-    public AnimalSoldEventHandler(IAnimalFeedingPlanRepository planRepository, ILogger<AnimalSoldEventHandler> logger)
-    {
-        _planRepository = planRepository;
-        _logger = logger;
-    }
-
     public async Task Handle(AnimalSoldEvent notification, CancellationToken cancellationToken)
     {
-        if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Processing AnimalSoldEvent for AnimalId: {AnimalId}. Cancelling any active feeding plans.", notification.AnimalId);
-
-        var activePlans = await _planRepository.GetActivePlansForAnimalAsync(notification.TenantId, notification.AnimalId, cancellationToken);
-        if (activePlans.Count > 0)
-        {
-            foreach (var activePlan in activePlans)
-            {
-                activePlan.Cancel();
-                _planRepository.Update(activePlan);
-                
-                if (_logger.IsEnabled(LogLevel.Information))
-                    _logger.LogInformation("Cancelled active feeding plan {PlanId} for sold animal {AnimalId}", activePlan.Id, notification.AnimalId);
-            }
-        }
+        ArgumentNullException.ThrowIfNull(notification);
+        await exitService.ProcessExitAsync(notification.AnimalId, notification.SaleDate,
+            AnimalExitService.SoldReason(notification.SaleDate), cancellationToken);
     }
 }

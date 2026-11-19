@@ -13,16 +13,10 @@
 </div>
 
 <!-- Error State -->
-<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-xl mb-6 shadow-sm flex items-start gap-3">
-  <mat-icon class="!text-red-500 mt-0.5 flex-shrink-0">error_outline</mat-icon>
-  <div>
-    <h3 class="text-sm font-semibold">Error</h3>
-    <p class="text-xs mt-1">{{ error() }}</p>
-  </div>
-</div>
+<app-error-state *ngIf="error() as err" class="block mb-6 no-print" title="Couldn't load batches" [message]="err" (retry)="refresh()"></app-error-state>
 
 <!-- Empty State -->
-<div *ngIf="!loading() && batches().length === 0" class="py-24 text-center">
+<div *ngIf="!loading() && !error() && batches().length === 0" class="py-24 text-center">
   <div class="w-20 h-20 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center mb-6 mx-auto shadow-sm">
     <mat-icon class="!text-primary-500 !text-[40px] !w-[40px] !h-[40px]">group_work</mat-icon>
   </div>
@@ -46,7 +40,7 @@
       <div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ batch.name }}</h3>
       </div>
-      <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border shadow-sm"
+      <span class="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider uppercase border shadow-sm"
         [ngClass]="batch.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'">
         {{ batch.status }}
       </span>
@@ -84,7 +78,7 @@
         </h2>
         <p class="text-xs text-gray-500 mt-0.5">Group animals together for simplified management</p>
       </div>
-      <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
@@ -107,9 +101,9 @@
       <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
         Cancel
       </button>
-      <button (click)="submitCreateBatch()" [disabled]="!createForm.name"
+      <button (click)="submitCreateBatch()" [disabled]="!createForm.name.trim() || creating()"
         class="px-5 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm">
-        Create Batch
+        {{ creating() ? 'Creating...' : 'Create Batch' }}
       </button>
     </div>
   </div>

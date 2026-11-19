@@ -192,8 +192,17 @@ export class AuthService {
 
   hasPermission(permissionCode: string): boolean {
     const user = this.currentUserSubject.value;
-    if (!user || !user.permissions) return false;
-    return user.permissions.includes(permissionCode);
+    if (!user) return false;
+    // Platform administrators bypass permission checks (mirrors the backend PermissionHandler).
+    if (user.isSystemUser) return true;
+    if (!user.permissions) return false;
+    const code = permissionCode.toLowerCase();
+    return user.permissions.some(p => p.toLowerCase() === code);
+  }
+
+  /** True when the user holds ANY of the given permission codes. */
+  hasAnyPermission(permissionCodes: readonly string[]): boolean {
+    return permissionCodes.some(code => this.hasPermission(code));
   }
 
   // ── Session management ────────────────────────────────────────────────────

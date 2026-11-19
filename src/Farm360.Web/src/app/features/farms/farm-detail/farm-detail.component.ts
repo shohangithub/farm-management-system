@@ -14,11 +14,15 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
+import { ConfirmService } from '../../../shared/services/confirm.service';
+
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-farm-detail',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -34,6 +38,7 @@ import { forkJoin, of } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FarmDetailComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly farmService = inject(FarmService);
   private readonly shedService = inject(ShedService);
   private readonly route = inject(ActivatedRoute);
@@ -57,14 +62,14 @@ export class FarmDetailComponent {
       switchMap(({ farmId }) => {
         if (!farmId) return of({ farm: null, sheds: [] });
         return forkJoin({
-          farm: this.farmService.getFarmById(farmId!).pipe(catchError(() => of(null))),
+          farm: this.farmService.getFarmById(farmId!).pipe(catchError(err => { this.error.set(parseApiError(err, 'Failed to load farm details.')); return of(null); })),
           sheds: this.shedService.getShedsByFarm(farmId!).pipe(catchError(() => of([])))
         }).pipe(
           tap(res => {
-            if (!res.farm) this.error.set('Failed to load farm details.');
+            if (!res.farm && !this.error()) this.error.set('Failed to load farm details.');
           }),
           catchError(err => {
-            this.error.set('Failed to load farm details.');
+            this.error.set(parseApiError(err, 'Failed to load farm details.'));
             return of({ farm: null, sheds: [] });
           })
         );
@@ -125,11 +130,11 @@ export class FarmDetailComponent {
     }
   }
 
-  deleteFarm(): void {
+  async deleteFarm(): Promise<void> {
     const fId = this.farmId();
     if (!fId) return;
     
-    if (confirm('Are you sure you want to delete this farm? This action cannot be undone.')) {
+    if ((await this.confirmService.confirmAsync({ message: 'Are you sure you want to delete this farm? This action cannot be undone.', confirmText: 'Delete', destructive: true }))) {
       this.farmService.deleteFarm(fId).subscribe({
         next: () => {
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);

@@ -30,6 +30,7 @@ public sealed class ApprovePendingSubscriptionCommandValidator : AbstractValidat
 internal sealed class ApprovePendingSubscriptionCommandHandler
     : IRequestHandler<ApprovePendingSubscriptionCommand, TenantSubscriptionStatusDto>
 {
+    private readonly Farm360.Application.Common.Interfaces.ICurrentUserService _currentUser;
     private readonly ITenantSubscriptionRepository _subscriptionRepository;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICacheService _cacheService;
@@ -39,8 +40,10 @@ internal sealed class ApprovePendingSubscriptionCommandHandler
         ITenantSubscriptionRepository subscriptionRepository,
         ITenantRepository tenantRepository,
         ICacheService cacheService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Application.Common.Interfaces.ICurrentUserService currentUser)
     {
+        _currentUser = currentUser;
         _subscriptionRepository = subscriptionRepository;
         _tenantRepository = tenantRepository;
         _cacheService = cacheService;
@@ -49,6 +52,12 @@ internal sealed class ApprovePendingSubscriptionCommandHandler
 
     public async Task<TenantSubscriptionStatusDto> Handle(ApprovePendingSubscriptionCommand request, CancellationToken cancellationToken)
     {
+        // Defence in depth: the route already requires the PlatformAdmin policy.
+        if (!_currentUser.IsSystemUser)
+        {
+            throw new Farm360.Application.Common.Exceptions.ForbiddenAccessException("Platform administrator access is required.");
+        }
+
         var record = await _subscriptionRepository.GetByIdAsync(request.SubscriptionRecordId, cancellationToken)
             ?? throw new NotFoundException("TenantSubscriptionRecord", request.SubscriptionRecordId);
 
@@ -116,19 +125,28 @@ public sealed class RejectPendingSubscriptionCommandValidator : AbstractValidato
 internal sealed class RejectPendingSubscriptionCommandHandler
     : IRequestHandler<RejectPendingSubscriptionCommand, TenantSubscriptionRecordDto>
 {
+    private readonly Farm360.Application.Common.Interfaces.ICurrentUserService _currentUser;
     private readonly ITenantSubscriptionRepository _subscriptionRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public RejectPendingSubscriptionCommandHandler(
         ITenantSubscriptionRepository subscriptionRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Application.Common.Interfaces.ICurrentUserService currentUser)
     {
+        _currentUser = currentUser;
         _subscriptionRepository = subscriptionRepository;
         _unitOfWork = unitOfWork;
     }
 
     public async Task<TenantSubscriptionRecordDto> Handle(RejectPendingSubscriptionCommand request, CancellationToken cancellationToken)
     {
+        // Defence in depth: the route already requires the PlatformAdmin policy.
+        if (!_currentUser.IsSystemUser)
+        {
+            throw new Farm360.Application.Common.Exceptions.ForbiddenAccessException("Platform administrator access is required.");
+        }
+
         var record = await _subscriptionRepository.GetByIdAsync(request.SubscriptionRecordId, cancellationToken)
             ?? throw new NotFoundException("TenantSubscriptionRecord", request.SubscriptionRecordId);
 

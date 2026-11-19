@@ -11,14 +11,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
-public sealed record AnimalAcquisitionPriceUpdatedNotification(AnimalAcquisitionPriceUpdatedEvent DomainEvent) : INotification;
-
 /// <summary>
 /// Keeps the purchase posting, the cost ledger and — for animals already sold or dead — the cost
 /// released from the livestock asset in step with a corrected price or acquisition date.
 /// </summary>
 public sealed class AnimalAcquisitionPriceUpdatedEventHandler :
-    INotificationHandler<AnimalAcquisitionPriceUpdatedNotification>,
     INotificationHandler<AnimalAcquisitionPriceUpdatedEvent>
 {
     private readonly IAnimalCostLedgerRepository _ledgerRepository;
@@ -40,9 +37,6 @@ public sealed class AnimalAcquisitionPriceUpdatedEventHandler :
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
-
-    public Task Handle(AnimalAcquisitionPriceUpdatedNotification notification, CancellationToken cancellationToken) =>
-        ProcessEventAsync(notification.DomainEvent, cancellationToken);
 
     public Task Handle(AnimalAcquisitionPriceUpdatedEvent notification, CancellationToken cancellationToken) =>
         ProcessEventAsync(notification, cancellationToken);

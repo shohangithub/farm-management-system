@@ -15,12 +15,16 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
 import { TrialBalance, TrialBalanceLine } from '../../models/finance.model';
-
+
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 @Component({
   selector: 'app-trial-balance',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterLink,
@@ -83,8 +87,10 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
       <app-finance-subnav></app-finance-subnav>
 
-      <app-empty-state 
-        *ngIf="!tbData() || !tbData()?.lines?.length"
+      <app-error-state *ngIf="loadError() as err" title="Couldn't load the trial balance" [message]="err" (retry)="retryLoad()"></app-error-state>
+
+      <app-empty-state
+        *ngIf="!loadError() && (!tbData() || !tbData()?.lines?.length)"
         icon="account_balance_wallet"
         title="No Ledger Records Found"
         description="There are no transaction lines recorded as of the selected date. Start by recording revenue or expenses.">
@@ -100,7 +106,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
               <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Debits</p>
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
-                  {{ data.totalDebitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ data.totalDebitBdt | money }}
                 </h3>
                 <p class="text-[11px] text-gray-400 mt-0.5">Assets, Expenses, Drawings</p>
               </div>
@@ -117,7 +123,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
               <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Credits</p>
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
-                  {{ data.totalCreditBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ data.totalCreditBdt | money }}
                 </h3>
                 <p class="text-[11px] text-gray-400 mt-0.5">Revenue, Liabilities, Capital</p>
               </div>
@@ -143,7 +149,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
                   </span>
                 </div>
                 <p class="text-[11px] mt-1 font-semibold" [ngClass]="data.isBalanced ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                  {{ data.isBalanced ? 'Debits equal Credits (100% in sync)' : 'Difference: ' + (data.differenceBdt | currency:'BDT ':'symbol':'1.2-2') }}
+                  {{ data.isBalanced ? 'Debits equal Credits (100% in sync)' : 'Difference: ' + (data.differenceBdt | money:2) }}
                 </p>
               </div>
               <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white"
@@ -270,10 +276,10 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
                     <span *ngIf="data.isBalanced" class="text-xs font-bold text-emerald-600 dark:text-emerald-400">✓ In Equilibrium</span>
                   </td>
                   <td class="py-4 px-5 text-right font-mono text-base font-black text-blue-700 dark:text-blue-400">
-                    {{ data.totalDebitBdt | currency:'BDT ':'symbol':'1.2-2' }}
+                    {{ data.totalDebitBdt | money:2 }}
                   </td>
                   <td class="py-4 px-5 text-right font-mono text-base font-black text-emerald-700 dark:text-emerald-400">
-                    {{ data.totalCreditBdt | currency:'BDT ':'symbol':'1.2-2' }}
+                    {{ data.totalCreditBdt | money:2 }}
                   </td>
                 </tr>
               </tfoot>
@@ -325,15 +331,22 @@ export class TrialBalanceComponent {
     this.workingContextService.currentFarm$
   ]).pipe(
     switchMap(([filter, farm]) => {
+      this.loadError.set(null);
       if (!farm) return of(null);
       return this.financeService.getTrialBalance(farm.id, filter.asOfDate).pipe(
         catchError(err => {
-          console.error('Error loading trial balance:', err);
+          this.loadError.set(parseApiError(err, 'Could not load the trial balance.'));
           return of(null);
         })
       );
     })
   );
+
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.filterChanges$.next(this.filterChanges$.value);
+  }
 
   readonly tbData = toSignal(this.tbData$);
   readonly isLoading = computed(() => this.tbData() === undefined);
@@ -401,9 +414,9 @@ export class TrialBalanceComponent {
                 dateRange: `As of ${asOf}`,
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Debits', value: `৳ ${(data?.totalDebitBdt || 0).toLocaleString()}` },
-                  { label: 'Total Credits', value: `৳ ${(data?.totalCreditBdt || 0).toLocaleString()}` },
-                  { label: 'Integrity', value: data?.isBalanced ? 'Balanced (100% in sync)' : `Variance: ৳ ${(data?.differenceBdt || 0).toLocaleString()}` }
+                  { label: 'Total Debits', value: `${formatMoney((data?.totalDebitBdt || 0))}` },
+                  { label: 'Total Credits', value: `${formatMoney((data?.totalCreditBdt || 0))}` },
+                  { label: 'Integrity', value: data?.isBalanced ? 'Balanced (100% in sync)' : `Variance: ${formatMoney((data?.differenceBdt || 0))}` }
                 ]
               },
               showSignatures: true

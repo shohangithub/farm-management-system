@@ -72,6 +72,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               <span class="text-xs text-gray-500 flex gap-2 mt-0.5">
                 <span>{{ getSexLabel(animal.sex) }}</span>
                 <span *ngIf="animal.shedId"> • Shed ID: {{ animal.shedId | slice:0:8 }}</span>
+                <span *ngIf="animal.status !== 'Active'" class="font-semibold text-amber-600"> • {{ animal.status }}</span>
               </span>
             </div>
           </mat-option>
@@ -103,7 +104,13 @@ export class AnimalPickerComponent implements OnInit, ControlValueAccessor {
   private contextService = inject(WorkingContextService);
   private destroyRef = inject(DestroyRef);
 
-  @Input() requiredStatus?: AnimalStatus = AnimalStatus.Active;
+  /** Optional exact status filter (overrides the on-farm presence filter when set). */
+  @Input() requiredStatus?: AnimalStatus;
+  /**
+   * Farm rule: pickers for NEW actions list only on-farm animals (Active/Quarantined).
+   * History filters may opt in to Sold/Dead/etc. by setting this to true.
+   */
+  @Input() includeExited = false;
   @Input() multiSelect = false;
   
   shedControl = new FormControl<string | null>({ value: null, disabled: true });
@@ -140,6 +147,7 @@ export class AnimalPickerComponent implements OnInit, ControlValueAccessor {
           shedId: this.shedControl.value || undefined,
           search: value as string,
           status: this.requiredStatus,
+          presence: this.requiredStatus || this.includeExited ? undefined : 'OnFarm',
           pageSize: 20
         }).pipe(
           map(res => res.items),

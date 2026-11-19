@@ -8,11 +8,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { FeedingService } from '../../../services/feeding.service';
 import { FeedFormula, FeedIngredient, TargetAnimalType, TargetAnimalTypeNames } from '../../../models/feeding.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-create-formula-dialog',
@@ -38,7 +38,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
           <span>{{ isEdit ? 'Edit Feed Formula' : 'New Feed Formula' }}</span>
         </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Close">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -108,7 +108,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                     <input matInput type="number" formControlName="percentage" min="0.01" max="100" step="0.01" required />
                   </mat-form-field>
 
-                  <button mat-icon-button type="button" color="warn" class="shrink-0" (click)="removeIngredientRow($index)" [disabled]="ingredientsArray.length <= 1">
+                  <button mat-icon-button type="button" color="warn" class="shrink-0" (click)="removeIngredientRow($index)" [disabled]="ingredientsArray.length <= 1" aria-label="Delete">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -140,7 +140,7 @@ export class CreateFormulaDialogComponent implements OnInit {
   readonly data = inject<FeedFormula | null>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly feedingService = inject(FeedingService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -233,7 +233,7 @@ export class CreateFormulaDialogComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open(`Feed formula ${this.isEdit ? 'updated' : 'created'} successfully.`, 'OK', { duration: 4000 });
+        this.notify.success(`Feed formula ${this.isEdit ? 'updated' : 'created'} successfully.`);
         this.dialogRef.close(true);
       },
       error: (err: any) => {

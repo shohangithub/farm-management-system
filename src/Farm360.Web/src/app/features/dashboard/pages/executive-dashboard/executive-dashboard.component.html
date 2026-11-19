@@ -8,10 +8,10 @@
       <mat-icon>menu_book</mat-icon>
       SOP & Guidelines
     </button>
-    <button mat-flat-button color="primary" class="!rounded-xl">
+    <a mat-flat-button color="primary" class="!rounded-xl" routerLink="/reports">
       <mat-icon>assessment</mat-icon>
       Generate Report
-    </button>
+    </a>
   </div>
 </app-page-header>
 
@@ -20,13 +20,12 @@
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <!-- Error State -->
-  <app-empty-state
+  <app-error-state
     *ngIf="hasError()"
-    icon="error_outline"
     title="Failed to load dashboard"
-    description="There was an error communicating with the intelligence service. Please try again later."
-    buttonText="Retry"
-  ></app-empty-state>
+    [message]="main.error() ?? ''"
+    (retry)="main.retry()"
+  ></app-error-state>
 
   <!-- Main Content -->
   <div *ngIf="data() as dashboard" class="space-y-8 max-w-7xl mx-auto pb-12">
@@ -96,12 +95,12 @@
           </div>
           <div>
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Net Profit (MTD)</p>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ getNetProfit() | currency:'BDT ' }}</h3>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ getNetProfit() | money }}</h3>
           </div>
         </div>
         <div class="flex items-center text-sm gap-3">
-          <span class="text-emerald-500 font-medium flex items-center" title="Income"><mat-icon class="text-[16px] w-[16px] h-[16px]">arrow_upward</mat-icon> {{ dashboard.currentMonthIncome | currency:'BDT ' }}</span>
-          <span class="text-rose-500 font-medium flex items-center" title="Expense"><mat-icon class="text-[16px] w-[16px] h-[16px]">arrow_downward</mat-icon> {{ dashboard.currentMonthExpense | currency:'BDT ' }}</span>
+          <span class="text-emerald-500 font-medium flex items-center" title="Income"><mat-icon class="text-[16px] w-[16px] h-[16px]">arrow_upward</mat-icon> {{ dashboard.currentMonthIncome | money }}</span>
+          <span class="text-rose-500 font-medium flex items-center" title="Expense"><mat-icon class="text-[16px] w-[16px] h-[16px]">arrow_downward</mat-icon> {{ dashboard.currentMonthExpense | money }}</span>
         </div>
       </div>
 
@@ -274,7 +273,8 @@
             </div>
           </div>
           <div class="p-5">
-            <app-recent-activity-feed [data]="recentActivityFeed() ?? null"></app-recent-activity-feed>
+            <app-error-state *ngIf="activity.error() as err" [compact]="true" [message]="err" (retry)="activity.retry()"></app-error-state>
+            <app-recent-activity-feed *ngIf="!activity.error()" [data]="recentActivityFeed() ?? null"></app-recent-activity-feed>
           </div>
         </div>
 
@@ -316,7 +316,8 @@
             </div>
           </div>
           <div class="flex-1 mt-2">
-            <app-herd-composition-chart [data]="herdComposition() ?? null"></app-herd-composition-chart>
+            <app-error-state *ngIf="herd.error() as err" [compact]="true" [message]="err" (retry)="herd.retry()"></app-error-state>
+            <app-herd-composition-chart *ngIf="!herd.error()" [data]="herdComposition() ?? null"></app-herd-composition-chart>
           </div>
         </div>
 
@@ -335,7 +336,8 @@
             </div>
           </div>
           <div class="flex-1 mt-2">
-            <app-vaccination-compliance-chart [data]="vaccinationCompliance() ?? null"></app-vaccination-compliance-chart>
+            <app-error-state *ngIf="vaccination.error() as err" [compact]="true" [message]="err" (retry)="vaccination.retry()"></app-error-state>
+            <app-vaccination-compliance-chart *ngIf="!vaccination.error()" [data]="vaccinationCompliance() ?? null"></app-vaccination-compliance-chart>
           </div>
         </div>
 
@@ -354,7 +356,8 @@
             </div>
           </div>
           <div class="flex-1 mt-2">
-            <app-adg-trend-chart [data]="adgTrends() ?? null"></app-adg-trend-chart>
+            <app-error-state *ngIf="adg.error() as err" [compact]="true" [message]="err" (retry)="adg.retry()"></app-error-state>
+            <app-adg-trend-chart *ngIf="!adg.error()" [data]="adgTrends() ?? null"></app-adg-trend-chart>
           </div>
         </div>
 
@@ -373,7 +376,8 @@
             </div>
           </div>
           <div class="flex-1 mt-2">
-            <app-feed-cost-trend-chart [data]="feedCostTrends() ?? null"></app-feed-cost-trend-chart>
+            <app-error-state *ngIf="feedCost.error() as err" [compact]="true" [message]="err" (retry)="feedCost.retry()"></app-error-state>
+            <app-feed-cost-trend-chart *ngIf="!feedCost.error()" [data]="feedCostTrends() ?? null"></app-feed-cost-trend-chart>
           </div>
         </div>
 

@@ -33,6 +33,13 @@ public sealed record AnimalHealthReportRow(
 /// </remarks>
 public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealthReportRow>
 {
+    private readonly Farm360.Application.Finance.Repositories.IFinancialTransactionRepository _transactions;
+
+    public AnimalHealthReportDefinition(Farm360.Application.Finance.Repositories.IFinancialTransactionRepository transactions)
+    {
+        _transactions = transactions;
+    }
+
     public override string Key => "livestock.animal-health";
 
     public override LocalizedText Title => new("Animal Medical & Health Report", "পশুর চিকিৎসা ও স্বাস্থ্য প্রতিবেদন");
@@ -57,7 +64,7 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
         ReportColumn<AnimalHealthReportRow>.Text("detail", new LocalizedText("Medication / Detail", "ঔষধ / বিবরণ"), r => r.Detail, width: 2.4f),
         ReportColumn<AnimalHealthReportRow>.Text("provider", new LocalizedText("Veterinarian", "পশুচিকিৎসক"), r => r.Provider, width: 1.6f),
         ReportColumn<AnimalHealthReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, width: 20f, relative: false),
-        ReportColumn<AnimalHealthReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt),
+        ReportColumn<AnimalHealthReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<AnimalHealthReportRow>? Group =>
@@ -94,6 +101,10 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
         var data = await context
             .Send(new GetAnimalHealthReportQuery(animalId), cancellationToken)
             .ConfigureAwait(false);
+
+        // What each vaccination actually cost: the medicine posting the stock deduction (or the
+        // direct cash booking when stock ran out) made against that vaccination event.
+        var vaccinationCosts = await LoadVaccinationCostsAsync(animalId, cancellationToken).ConfigureAwait(false);
 
         var rows = new List<AnimalHealthReportRow>(
             data.Treatments.Count + data.Vaccinations.Count + data.DiseaseIncidents.Count);
@@ -140,10 +151,7 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
                 v.VaccineName,
                 v.AdministeredDate is null ? $"{detail} (scheduled {v.ScheduledDate:dd-MMM-yyyy})" : detail,
                 "—",
-
-                // Vaccination cost is not modelled per event yet; showing 0 keeps the column
-                // honest and the month sub-total equal to the treatment spend.
-                0m,
+                vaccinationCosts.GetValueOrDefault(v.Id),
                 v.Status.ToString()));
         }
 
@@ -170,5 +178,29 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
             .OrderBy(r => r.Date)
             .ThenBy(r => r.EventType, StringComparer.Ordinal)
             .ToList();
+    }
+
+    private async Task<Dictionary<Guid, decimal>> LoadVaccinationCostsAsync(Guid animalId, CancellationToken cancellationToken)
+    {
+        var transactions = await _transactions.GetByAnimalIdAsync(animalId, cancellationToken).ConfigureAwait(false);
+        var costs = new Dictionary<Guid, decimal>();
+
+        foreach (var t in transactions)
+        {
+            if (t.Category != Farm360.Domain.Finance.Enums.TransactionCategory.MedicineCost)
+            {
+                continue;
+            }
+
+            var eventId = t.SourceDocumentId
+                ?? (Guid.TryParse(t.ReferenceId, out var parsed) ? parsed : (Guid?)null);
+
+            if (eventId is { } id)
+            {
+                costs[id] = costs.GetValueOrDefault(id) + t.AmountBdt;
+            }
+        }
+
+        return costs;
     }
 }

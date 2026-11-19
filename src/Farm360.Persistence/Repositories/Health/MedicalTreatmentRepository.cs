@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Health;
 using Farm360.Domain.Health.Enums;
 using Farm360.Domain.Health.Interfaces.Repositories;
@@ -7,8 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Farm360.Persistence.Repositories.Health;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by DI")]
-internal sealed class MedicalTreatmentRepository(ApplicationDbContext context) : IMedicalTreatmentRepository
+internal sealed class MedicalTreatmentRepository(ApplicationDbContext context,
+    IFarmClock? clock = null) : IMedicalTreatmentRepository
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<MedicalTreatment?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return await context.MedicalTreatments
@@ -92,11 +96,13 @@ internal sealed class MedicalTreatmentRepository(ApplicationDbContext context) :
 
     public async Task<IReadOnlyList<(MedicalTreatment Treatment, string AnimalTag)>> GetActiveMilkWithdrawalsAsync(Guid farmId, CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
 
         var query = from mt in context.MedicalTreatments
                     join a in context.Animals on mt.AnimalId equals a.Id
+                    // A sold/dead animal produces no milk on this farm: withdrawal alerts are for on-farm animals only.
                     where a.FarmId == farmId && mt.WithdrawalPeriod.MilkDays > 0
+                          && Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status)
                     let safeDate = mt.StartDate.AddDays(mt.WithdrawalPeriod.MilkDays)
                     where safeDate > today
                     orderby safeDate
@@ -105,6 +111,16 @@ internal sealed class MedicalTreatmentRepository(ApplicationDbContext context) :
         var results = await query.ToListAsync(ct);
 
         return results.Select(x => (x.Treatment, x.TagNumber)).ToList();
+    }
+
+    public async Task<IReadOnlyList<MedicalTreatment>> GetByFarmStartedBetweenAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        var animalIdsInFarm = context.Animals.Where(a => a.FarmId == farmId).Select(a => a.Id);
+        return await context.MedicalTreatments
+            .AsNoTracking()
+            .Where(mt => animalIdsInFarm.Contains(mt.AnimalId) && mt.StartDate >= from && mt.StartDate <= to)
+            .OrderBy(mt => mt.StartDate)
+            .ToListAsync(ct);
     }
 
     public void Add(MedicalTreatment treatment) => context.MedicalTreatments.Add(treatment);

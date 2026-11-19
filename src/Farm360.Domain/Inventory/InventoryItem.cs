@@ -162,6 +162,25 @@ public class InventoryItem : AuditableEntity, IAggregateRoot
         }
     }
 
+    /// <summary>
+    /// Puts back stock that was issued for consumption and then reversed (a feeding entry voided
+    /// because its animal had already left the farm). It comes back at the cost it was issued at,
+    /// so the average cost moves exactly as if the issue had never happened: current value plus the
+    /// value returned, over the new quantity. No purchase event is raised: nothing was bought.
+    /// </summary>
+    public void ReturnConsumedStock(decimal quantity, decimal issuedUnitCostBdt)
+    {
+        if (quantity <= 0)
+            throw new InventoryDomainException("Returned stock quantity must be greater than zero.");
+        if (issuedUnitCostBdt < 0)
+            throw new InventoryDomainException("Unit cost cannot be negative.");
+
+        var newStock = CurrentStock + quantity;
+        var value = Math.Max(0, CurrentStock) * WeightedAverageCostBdt + quantity * issuedUnitCostBdt;
+        WeightedAverageCostBdt = newStock > 0 ? Math.Round(value / newStock, CostDecimals) : issuedUnitCostBdt;
+        CurrentStock = newStock;
+    }
+
     public void AdjustStock(decimal newQuantity, string reason)
     {
         if (newQuantity < 0)

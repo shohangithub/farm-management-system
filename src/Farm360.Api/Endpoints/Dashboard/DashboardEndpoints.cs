@@ -1,3 +1,4 @@
+using Farm360.Api.Authorization;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Dashboard.Queries;
 using MediatR;
@@ -16,7 +17,8 @@ public static class DashboardEndpoints
     public static void MapDashboardEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/farms/{farmId:guid}/dashboard")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePermission(Farm360.Persistence.Seed.PermissionConstants.DashboardModule.View);
 
         group.MapGet("/", GetExecutiveDashboard)
             .WithName("GetExecutiveDashboard")

@@ -56,7 +56,7 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
 ///   - Tenant Suspended                            → 402
 ///   - Anonymous endpoints                          → Skip
 /// </summary>
-public sealed class TenantResolutionMiddleware(RequestDelegate next, ILogger<TenantResolutionMiddleware> logger)
+public sealed partial class TenantResolutionMiddleware(RequestDelegate next, ILogger<TenantResolutionMiddleware> logger)
 {
     public async Task InvokeAsync(
         HttpContext context,
@@ -105,11 +105,29 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next, ILogger<Ten
             return;
         }
 
-        // System/Admin user shortcut
+        // Guid.Empty tenant: issued to users with no active tenant membership.
         if (resolvedTenantId == Guid.Empty)
         {
-            tenantService.SetTenant(Guid.Empty, "system", "System", "Enterprise", "Active");
-            await next(context);
+            // Platform administrators (sys=true) operate cross-tenant.
+            if (currentUserService.IsSystemUser)
+            {
+                tenantService.SetTenant(Guid.Empty, "system", "System", "Enterprise", "Active");
+                await next(context);
+                return;
+            }
+
+            // A normal user without an organisation may only reach the routes needed to sign in,
+            // see their profile, browse plans and create (onboard) their first organisation.
+            // They never receive a tier or access to tenant-scoped modules.
+            if (IsAllowedWithoutTenant(context.Request.Path))
+            {
+                tenantService.SetTenant(Guid.Empty, string.Empty, string.Empty, "None", "NoTenant");
+                await next(context);
+                return;
+            }
+
+            await WriteProblemAsync(context, StatusCodes.Status403Forbidden, "No organisation",
+                "Your account is not a member of any organisation. Create or join an organisation to continue.");
             return;
         }
 
@@ -145,18 +163,21 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next, ILogger<Ten
                 }
             }
 
-            // Fallback for MVP dev environment if tenant seed is missing
-            if (tenantEntry is null && resolvedTenantId.HasValue)
-            {
-                logger.LogWarning("Tenant {TenantId} not found in DB — using fallback active entry for development.", resolvedTenantId);
-                tenantEntry = new TenantCacheEntry(resolvedTenantId.Value, resolvedTenantId.Value.ToString("N"), "Tenant", "Standard", "Active");
-            }
+            // No fallback: an unknown or deleted (cancelled) tenant must never be treated as Active.
         }
 
         if (tenantEntry is null)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new { error = "Tenant not found or inactive." });
+            logger.LogWarning("Tenant {TenantId}/{TenantSlug} not found or deleted -- request rejected.", resolvedTenantId, resolvedTenantSlug);
+            await WriteProblemAsync(context, StatusCodes.Status403Forbidden, "Tenant unavailable",
+                "Your organisation was not found or is no longer active.");
+            return;
+        }
+
+        if (tenantEntry.Status == "Cancelled")
+        {
+            await WriteProblemAsync(context, StatusCodes.Status403Forbidden, "Tenant unavailable",
+                "Your organisation was not found or is no longer active.");
             return;
         }
 
@@ -196,6 +217,37 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next, ILogger<Ten
 }
 
 /// <summary>Cached tenant context entry.</summary>
+public sealed partial class TenantResolutionMiddleware
+{
+    private static readonly string[] NoTenantAllowedPrefixes =
+    [
+        "/api/v1/auth",
+        "/api/v1/users/profile",
+        "/api/v1/tenants/onboard",
+        "/api/v1/subscriptions/plans",
+        "/api/v1/subscriptions/current",
+        "/health",
+    ];
+
+    internal static bool IsAllowedWithoutTenant(PathString path) =>
+        NoTenantAllowedPrefixes.Any(p => path.StartsWithSegments(p, StringComparison.OrdinalIgnoreCase));
+
+    private static async Task WriteProblemAsync(HttpContext context, int status, string title, string detail)
+    {
+        context.Response.StatusCode = status;
+        await context.Response.WriteAsJsonAsync(
+            new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Type = "https://farm360.ai/errors/tenant",
+                Title = title,
+                Status = status,
+                Detail = detail,
+            },
+            options: (System.Text.Json.JsonSerializerOptions?)null,
+            contentType: "application/problem+json");
+    }
+}
+
 internal sealed record TenantCacheEntry(
     Guid Id,
     string Slug,

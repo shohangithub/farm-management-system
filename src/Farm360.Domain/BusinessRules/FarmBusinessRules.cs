@@ -175,4 +175,10 @@ public sealed class FarmBusinessRules
 
     /// <summary>Optional licence key, required when <see cref="PdfLicence"/> is not Community.</summary>
     public string? PdfLicenceKey { get; set; }
+
+    /// <summary>
+    /// A shallow copy (every member is a value type or an immutable string), so per-tenant
+    /// resolution can layer overrides without mutating the shared configuration instance.
+    /// </summary>
+    public FarmBusinessRules Clone() => (FarmBusinessRules)MemberwiseClone();
 }

@@ -11,6 +11,8 @@ import { FeedingReportPdfService } from '../../../services/feeding-report-pdf.se
 import { ExportService } from '../../../../../shared/services/export.service';
 import { ReportService } from '../../../../reports/services/report.service';
 
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 export interface FeedsCostReportDialogData {
   plans: AnimalFeedingPlan[];
   farmName: string;
@@ -20,7 +22,7 @@ export interface FeedsCostReportDialogData {
 @Component({
   selector: 'app-animal-feeds-cost-report-dialog',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     FormsModule,
     MatDialogModule,
@@ -110,7 +112,7 @@ export interface FeedsCostReportDialogData {
             <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">open_in_new</mat-icon> SAP Report
           </button>
 
-          <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors">
+          <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors" aria-label="Close">
             <mat-icon>close</mat-icon>
           </button>
         </div>
@@ -137,19 +139,19 @@ export interface FeedsCostReportDialogData {
 
           <div class="p-3.5 rounded-xl bg-white dark:bg-gray-800 border border-amber-100 dark:border-amber-900/40 shadow-xs">
             <div class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Avg. Feed Cost</div>
-            <div class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">৳ {{ totals().averageCostPerKgBdt | number:'1.2-2' }}</div>
+            <div class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ totals().averageCostPerKgBdt | money:2 }}</div>
             <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Per kg weighted</div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-white dark:bg-gray-800 border border-indigo-100 dark:border-indigo-900/40 shadow-xs">
             <div class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Daily Expenditure</div>
-            <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">৳ {{ totals().totalDailyCostBdt | number:'1.0-0' }}</div>
+            <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ totals().totalDailyCostBdt | money }}</div>
             <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Daily total feed</div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-white dark:bg-gray-800 border border-rose-100 dark:border-rose-900/40 shadow-xs col-span-2 sm:col-span-1">
             <div class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">30-Day Projection</div>
-            <div class="text-xl font-bold text-rose-600 dark:text-rose-400 mt-1">৳ {{ totals().totalMonthlyCostBdt | number:'1.0-0' }}</div>
+            <div class="text-xl font-bold text-rose-600 dark:text-rose-400 mt-1">{{ totals().totalMonthlyCostBdt | money }}</div>
             <div class="text-[11px] text-rose-500 dark:text-rose-400 font-medium mt-0.5">Monthly forecast</div>
           </div>
         </div>
@@ -233,14 +235,14 @@ export interface FeedsCostReportDialogData {
                       {{ (plan.expectedDailyFeedKg || 0) | number:'1.2-2' }} kg
                     </td>
                     <td class="px-3 py-2 text-right text-gray-600 dark:text-gray-300">
-                      ৳ {{ (plan.estimatedCostPerKgBdt || 0) | number:'1.2-2' }}
+                      {{ (plan.estimatedCostPerKgBdt || 0) | money:2 }}
                     </td>
                     <td class="px-4 py-2 text-right font-bold text-gray-900 dark:text-white" [attr.title]="plan.costBasis || 'Concentrate ration only'">
-                      ৳ {{ (plan.estimatedDailyCostBdt || 0) | number:'1.2-2' }}
+                      {{ (plan.estimatedDailyCostBdt || 0) | money:2 }}
                       <span class="block text-[10px] font-normal text-gray-400">{{ plan.costBasis || 'Concentrate ration only' }}</span>
                     </td>
                     <td class="px-4 py-2 text-right font-bold text-rose-600 dark:text-rose-400">
-                      ৳ {{ ((plan.estimatedDailyCostBdt || 0) * 30) | number:'1.0-0' }}
+                      {{ ((plan.estimatedDailyCostBdt || 0) * 30) | money }}
                     </td>
                   </tr>
                 }
@@ -270,13 +272,13 @@ export interface FeedsCostReportDialogData {
                     {{ filteredTotals().totalDailyFeedKg | number:'1.2-2' }} kg
                   </td>
                   <td class="px-3 py-2.5 text-right text-gray-700 dark:text-gray-300">
-                    ৳ {{ filteredTotals().averageCostPerKgBdt | number:'1.2-2' }}
+                    {{ filteredTotals().averageCostPerKgBdt | money:2 }}
                   </td>
                   <td class="px-4 py-2.5 text-right text-emerald-700 dark:text-emerald-300 font-black">
-                    ৳ {{ filteredTotals().totalDailyCostBdt | number:'1.2-2' }}
+                    {{ filteredTotals().totalDailyCostBdt | money:2 }}
                   </td>
                   <td class="px-4 py-2.5 text-right text-rose-700 dark:text-rose-300 font-black">
-                    ৳ {{ filteredTotals().totalMonthlyCostBdt | number:'1.0-0' }}
+                    {{ filteredTotals().totalMonthlyCostBdt | money }}
                   </td>
                 </tr>
               </tfoot>
@@ -317,15 +319,15 @@ export interface FeedsCostReportDialogData {
               </div>
               <div class="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200">
                 <div class="text-[9px] uppercase font-bold text-amber-800">Avg Cost / kg</div>
-                <div class="text-base font-black text-amber-700 mt-0.5">৳ {{ filteredTotals().averageCostPerKgBdt | number:'1.2-2' }}</div>
+                <div class="text-base font-black text-amber-700 mt-0.5">{{ filteredTotals().averageCostPerKgBdt | money:2 }}</div>
               </div>
               <div class="p-2.5 rounded-lg bg-indigo-50/70 border border-indigo-200">
                 <div class="text-[9px] uppercase font-bold text-indigo-800">Daily Total Cost</div>
-                <div class="text-base font-black text-indigo-700 mt-0.5">৳ {{ filteredTotals().totalDailyCostBdt | number:'1.0-0' }}</div>
+                <div class="text-base font-black text-indigo-700 mt-0.5">{{ filteredTotals().totalDailyCostBdt | money }}</div>
               </div>
               <div class="p-2.5 rounded-lg bg-rose-50/70 border border-rose-200">
                 <div class="text-[9px] uppercase font-bold text-rose-800">Projected 30-Day</div>
-                <div class="text-base font-black text-rose-700 mt-0.5">৳ {{ filteredTotals().totalMonthlyCostBdt | number:'1.0-0' }}</div>
+                <div class="text-base font-black text-rose-700 mt-0.5">{{ filteredTotals().totalMonthlyCostBdt | money }}</div>
               </div>
             </div>
 
@@ -359,9 +361,9 @@ export interface FeedsCostReportDialogData {
                     <td class="p-2 text-right">{{ (plan.concentrateKgPerDay || 0) | number:'1.2-2' }} kg</td>
                     <td class="p-2 text-right">{{ (plan.roughageKgPerDay || 0) | number:'1.2-2' }} kg</td>
                     <td class="p-2 text-right font-bold text-emerald-700">{{ (plan.expectedDailyFeedKg || 0) | number:'1.2-2' }} kg</td>
-                    <td class="p-2 text-right">৳ {{ (plan.estimatedCostPerKgBdt || 0) | number:'1.2-2' }}</td>
-                    <td class="p-2 text-right font-bold text-slate-900">৳ {{ (plan.estimatedDailyCostBdt || 0) | number:'1.2-2' }}</td>
-                    <td class="p-2 text-right font-bold text-rose-700">৳ {{ ((plan.estimatedDailyCostBdt || 0) * 30) | number:'1.0-0' }}</td>
+                    <td class="p-2 text-right">{{ (plan.estimatedCostPerKgBdt || 0) | money:2 }}</td>
+                    <td class="p-2 text-right font-bold text-slate-900">{{ (plan.estimatedDailyCostBdt || 0) | money:2 }}</td>
+                    <td class="p-2 text-right font-bold text-rose-700">{{ ((plan.estimatedDailyCostBdt || 0) * 30) | money }}</td>
                   </tr>
                 }
               </tbody>
@@ -372,9 +374,9 @@ export interface FeedsCostReportDialogData {
                   <td class="p-2 text-right">{{ filteredTotals().totalConcentrateKg | number:'1.2-2' }} kg</td>
                   <td class="p-2 text-right">{{ filteredTotals().totalRoughageKg | number:'1.2-2' }} kg</td>
                   <td class="p-2 text-right text-emerald-800 font-extrabold">{{ filteredTotals().totalDailyFeedKg | number:'1.2-2' }} kg</td>
-                  <td class="p-2 text-right">৳ {{ filteredTotals().averageCostPerKgBdt | number:'1.2-2' }}</td>
-                  <td class="p-2 text-right text-emerald-800 font-extrabold">৳ {{ filteredTotals().totalDailyCostBdt | number:'1.2-2' }}</td>
-                  <td class="p-2 text-right text-rose-800 font-extrabold">৳ {{ filteredTotals().totalMonthlyCostBdt | number:'1.0-0' }}</td>
+                  <td class="p-2 text-right">{{ filteredTotals().averageCostPerKgBdt | money:2 }}</td>
+                  <td class="p-2 text-right text-emerald-800 font-extrabold">{{ filteredTotals().totalDailyCostBdt | money:2 }}</td>
+                  <td class="p-2 text-right text-rose-800 font-extrabold">{{ filteredTotals().totalMonthlyCostBdt | money }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -403,8 +405,8 @@ export interface FeedsCostReportDialogData {
                       <td class="p-1.5 text-right">{{ rs.totalDailyConcentrateKg | number:'1.2-2' }}</td>
                       <td class="p-1.5 text-right">{{ rs.totalDailyRoughageKg | number:'1.2-2' }}</td>
                       <td class="p-1.5 text-right font-bold text-teal-800">{{ rs.totalDailyFeedKg | number:'1.2-2' }}</td>
-                      <td class="p-1.5 text-right">৳ {{ rs.totalDailyCostBdt | number:'1.2-2' }}</td>
-                      <td class="p-1.5 text-right font-bold">৳ {{ rs.totalMonthlyCostBdt | number:'1.0-0' }}</td>
+                      <td class="p-1.5 text-right">{{ rs.totalDailyCostBdt | money:2 }}</td>
+                      <td class="p-1.5 text-right font-bold">{{ rs.totalMonthlyCostBdt | money }}</td>
                       <td class="p-1.5 text-center font-bold text-slate-600">{{ rs.percentageOfCost | number:'1.1-1' }}%</td>
                     </tr>
                   }
@@ -576,7 +578,7 @@ export class AnimalFeedsCostReportDialogComponent {
       error: async err => {
         console.warn('Server-side PDF export fallback to HTML renderer:', err);
         if (this.reportSheetRef) {
-          const dateStr = new Date().toISOString().split('T')[0];
+          const dateStr = toLocalIsoDate();
           const safeFarmName = (this.data.farmName || 'Farm').replace(/[^a-zA-Z0-9_-]/g, '_');
           const filename = `Farm360_Feeds_Cost_Report_${safeFarmName}_${dateStr}.pdf`;
           try {
@@ -623,7 +625,7 @@ export class AnimalFeedsCostReportDialogComponent {
       '30-Day Cost (BDT)': ((p.estimatedDailyCostBdt || 0) * 30).toFixed(2)
     }));
 
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = toLocalIsoDate();
     this.exportService.exportToCsv(csvData, `Farm360_Feeds_Cost_Report_${dateStr}`);
   }
 

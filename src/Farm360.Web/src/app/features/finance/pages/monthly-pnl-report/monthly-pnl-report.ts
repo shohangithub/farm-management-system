@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, DestroyRef, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,11 +13,15 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-monthly-pnl-report',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
@@ -25,8 +29,7 @@ import { ReportService } from '../../../reports/services/report.service';
     MatButtonModule,
     PageHeaderComponent,
     LoadingComponent,
-    EmptyStateComponent,
-    CurrencyPipe
+    EmptyStateComponent
   ],
   template: `
     <app-page-header 
@@ -70,8 +73,10 @@ import { ReportService } from '../../../reports/services/report.service';
 
     <div *ngIf="!isLoading()" class="p-6 max-w-6xl mx-auto space-y-6">
       
-      <app-empty-state 
-        *ngIf="!reportData()"
+      <app-error-state *ngIf="loadError() as err" title="Couldn't load the report" [message]="err" (retry)="retryLoad()"></app-error-state>
+
+      <app-empty-state
+        *ngIf="!reportData() && !loadError()"
         icon="event_note"
         title="No Data Available"
         description="There are no financial records for the selected month.">
@@ -86,7 +91,7 @@ import { ReportService } from '../../../reports/services/report.service';
             <div>
               <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Total Income</p>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {{ report.totalIncomeBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                {{ report.totalIncomeBdt | money }}
               </h2>
             </div>
             <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -98,7 +103,7 @@ import { ReportService } from '../../../reports/services/report.service';
             <div>
               <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Total Expense</p>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {{ report.totalExpenseBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                {{ report.totalExpenseBdt | money }}
               </h2>
             </div>
             <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center">
@@ -111,7 +116,7 @@ import { ReportService } from '../../../reports/services/report.service';
             <div class="relative z-10">
               <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Net Profit</p>
               <h2 class="text-2xl font-bold mt-1" [ngClass]="report.netProfitBdt >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
-                {{ Math.abs(report.netProfitBdt) | currency:'BDT ':'symbol':'1.0-0' }}
+                {{ Math.abs(report.netProfitBdt) | money }}
                 <span *ngIf="report.netProfitBdt < 0" class="text-sm font-normal">Loss</span>
               </h2>
             </div>
@@ -138,7 +143,7 @@ import { ReportService } from '../../../reports/services/report.service';
               <div *ngIf="getCategoryKeys(report.incomeByCategory).length === 0" class="text-sm text-gray-500 italic">No income recorded.</div>
               <div *ngFor="let key of getCategoryKeys(report.incomeByCategory)" class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ formatCategory(key) }}</span>
-                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ report.incomeByCategory[key] | currency:'BDT ':'symbol':'1.0-0' }}</span>
+                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ report.incomeByCategory[key] | money }}</span>
               </div>
             </div>
           </div>
@@ -156,7 +161,7 @@ import { ReportService } from '../../../reports/services/report.service';
               <div *ngIf="getCategoryKeys(report.expenseByCategory).length === 0" class="text-sm text-gray-500 italic">No expenses recorded.</div>
               <div *ngFor="let key of getCategoryKeys(report.expenseByCategory)" class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ formatCategory(key) }}</span>
-                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ report.expenseByCategory[key] | currency:'BDT ':'symbol':'1.0-0' }}</span>
+                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ report.expenseByCategory[key] | money }}</span>
               </div>
             </div>
           </div>
@@ -210,14 +215,24 @@ export class MonthlyPnlReportComponent implements OnInit {
     this.workingContextService.currentFarm$
   ]).pipe(
     switchMap(([filters, farm]) => {
+      this.loadError.set(null);
       if (!farm) {
         return of(null);
       }
       return this.financeService.getMonthlyPnL(farm.id, filters.year, filters.month).pipe(
-        catchError(() => of(null))
+        catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load the monthly P&L report.'));
+          return of(null);
+        })
       );
     })
   );
+
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.filterChanges$.next(this.filterChanges$.value);
+  }
 
   readonly reportData = toSignal(this.reportData$);
   readonly isLoading = computed(() => this.reportData() === undefined);
@@ -290,9 +305,9 @@ export class MonthlyPnlReportComponent implements OnInit {
                 dateRange: `Period: ${monthLabel} ${year}`,
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Income', value: `৳ ${(report?.totalIncomeBdt || 0).toLocaleString()}` },
-                  { label: 'Total Expense', value: `৳ ${(report?.totalExpenseBdt || 0).toLocaleString()}` },
-                  { label: 'Net Profit', value: `৳ ${(report?.netProfitBdt || 0).toLocaleString()}` }
+                  { label: 'Total Income', value: `${formatMoney((report?.totalIncomeBdt || 0))}` },
+                  { label: 'Total Expense', value: `${formatMoney((report?.totalExpenseBdt || 0))}` },
+                  { label: 'Net Profit', value: `${formatMoney((report?.netProfitBdt || 0))}` }
                 ]
               },
               showSignatures: true

@@ -9,7 +9,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { InventoryService } from '../../../services/inventory.service';
 import {
   ConsumableUsagePlan,
@@ -21,6 +20,8 @@ import {
 } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 @Component({
   selector: 'app-consumable-plan-dialog',
   standalone: true,
@@ -53,7 +54,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             </p>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button aria-label="Close" mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
         </button>
       </div>
@@ -147,7 +148,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
                     <!-- Remove Action (col 1) -->
                     <div class="sm:col-span-1 flex items-end justify-center pt-2 sm:pt-4">
-                      <button type="button" (click)="removeItemRow(idx)" [disabled]="itemsFormArray.length <= 1"
+                      <button aria-label="Delete" type="button" (click)="removeItemRow(idx)" [disabled]="itemsFormArray.length <= 1"
                         class="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                       </button>
@@ -198,7 +199,7 @@ export class ConsumablePlanDialogComponent implements OnInit {
   readonly data = inject<{ plan?: ConsumableUsagePlan; farmId: string }>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -207,7 +208,7 @@ export class ConsumablePlanDialogComponent implements OnInit {
 
   readonly form = this.fb.group({
     name: [this.data?.plan?.name || '', [Validators.required, Validators.maxLength(200)]],
-    startDate: [this.data?.plan?.startDate || new Date().toISOString().substring(0, 10), [Validators.required]],
+    startDate: [this.data?.plan?.startDate || toLocalIsoDate(), [Validators.required]],
     endDate: [this.data?.plan?.endDate || ''],
     description: [this.data?.plan?.description || ''],
     items: this.fb.array([])
@@ -287,7 +288,7 @@ export class ConsumablePlanDialogComponent implements OnInit {
 
       this.inventoryService.updateConsumablePlan(this.data.plan.id, updateReq).subscribe({
         next: () => {
-          this.snackBar.open('Consumable plan updated successfully.', 'Close', { duration: 3000 });
+          this.notify.success('Consumable plan updated successfully.');
           this.dialogRef.close(true);
         },
         error: (err: unknown) => {
@@ -307,7 +308,7 @@ export class ConsumablePlanDialogComponent implements OnInit {
 
       this.inventoryService.createConsumablePlan(createReq).subscribe({
         next: () => {
-          this.snackBar.open('Consumable plan created successfully.', 'Close', { duration: 3000 });
+          this.notify.success('Consumable plan created successfully.');
           this.dialogRef.close(true);
         },
         error: (err: unknown) => {

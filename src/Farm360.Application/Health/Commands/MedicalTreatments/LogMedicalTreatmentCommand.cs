@@ -60,8 +60,9 @@ internal sealed class LogMedicalTreatmentCommandHandler(
         var animal = await animalRepository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new KeyNotFoundException($"Animal with ID '{request.AnimalId}' was not found.");
 
-        if (animal.Status == AnimalStatus.Dead || animal.Status == AnimalStatus.Sold || animal.Status == AnimalStatus.Slaughtered)
-            throw new DeceasedAnimalHealthRecordException(animal.Tag.TagId);
+        // Farm rule: nothing new on/after the exit (sale/death) date; a treatment that started
+        // before it may still be entered late (PRD BRU-HV-04).
+        animal.EnsureCanRecordOn(request.StartDate, "a treatment");
 
         // Check for active treatment of same drug (PRD BRU-HV-03)
         var hasActiveTreatment = await medicalTreatmentRepository.HasActiveTreatmentForMedicationAsync(

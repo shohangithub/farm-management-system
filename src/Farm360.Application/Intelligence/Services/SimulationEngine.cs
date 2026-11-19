@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Intelligence.Interfaces;
 using Farm360.Domain.Livestock.Repositories;
 using Farm360.Domain.Intelligence.Projections;
@@ -10,6 +11,8 @@ namespace Farm360.Application.Intelligence.Services;
 
 public class SimulationEngine : ISimulationEngine
 {
+    private readonly IFarmClock _clock;
+
     private readonly IAnimalRepository _animalRepository;
     private readonly IProjectionDefaultsResolver _defaultsResolver;
     private readonly IAnimalValuationService _valuation;
@@ -17,8 +20,10 @@ public class SimulationEngine : ISimulationEngine
     public SimulationEngine(
         IAnimalRepository animalRepository,
         IProjectionDefaultsResolver defaultsResolver,
-        IAnimalValuationService valuation)
+        IAnimalValuationService valuation,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _animalRepository = animalRepository;
         _defaultsResolver = defaultsResolver;
         _valuation = valuation;
@@ -29,7 +34,10 @@ public class SimulationEngine : ISimulationEngine
         var animal = await _animalRepository.GetByIdAsync(animalId, cancellationToken);
         if (animal == null) return null;
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // A sold/dead animal has a realised result, not a future sale: no simulation.
+        if (animal.HasLeftFarm) return null;
+
+        var today = _clock.Today;
         var daysFromNow = (targetDate.ToDateTime(TimeOnly.MinValue) - today.ToDateTime(TimeOnly.MinValue)).Days;
         
         if (daysFromNow <= 0) return null;

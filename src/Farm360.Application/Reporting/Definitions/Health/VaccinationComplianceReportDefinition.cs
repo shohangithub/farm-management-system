@@ -3,32 +3,73 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Farm360.Application.Farms.Queries;
-using Farm360.Application.Health.Queries.VaccinationEvents;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
-using Farm360.Domain.Livestock.Repositories;
+using Farm360.Domain.Health.Enums;
+using Farm360.Domain.Health.Interfaces.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Health;
 
+/// <summary>Where one dose stands, from the farm's point of view.</summary>
+public enum VaccinationComplianceStatus
+{
+    GivenOnTime = 0,
+    GivenLate = 1,
+    Due = 2,
+    Overdue = 3,
+    Cancelled = 4,
+}
+
 public sealed record VaccinationComplianceReportRow(
+    string Protocol,
     string VaccineName,
     string AnimalTag,
-    DateOnly ScheduledDate,
-    DateOnly? AdministeredDate,
-    string Status,
-    string Notes);
+    DateOnly DueDate,
+    DateOnly? GivenDate,
+    VaccinationComplianceStatus Status,
+    string StatusLabel,
+    int? DaysLate,
+    string Notes)
+{
+    public int Given => Status is VaccinationComplianceStatus.GivenOnTime or VaccinationComplianceStatus.GivenLate ? 1 : 0;
+    public int OnTime => Status == VaccinationComplianceStatus.GivenOnTime ? 1 : 0;
+    public int Pending => Status == VaccinationComplianceStatus.Due ? 1 : 0;
+    public int Overdue => Status == VaccinationComplianceStatus.Overdue ? 1 : 0;
+    public int Cancelled => Status == VaccinationComplianceStatus.Cancelled ? 1 : 0;
+}
+
+/// <summary>Doses given on time ÷ doses that fell due in the period (cancelled doses excluded).</summary>
+public sealed record VaccinationComplianceSummary(int DueInPeriod, int GivenOnTime, int Overdue, int Upcoming)
+{
+    public decimal? CompliancePercent => DueInPeriod == 0 ? null : decimal.Round(GivenOnTime * 100m / DueInPeriod, 1);
+}
 
 /// <summary>
-/// Report H4 — Vaccination schedule, upcoming doses, overdue interventions, and herd compliance rate.
+/// Report H4 — vaccination compliance per protocol for animals on the farm: given (on time or
+/// late), due, overdue and cancelled doses in an explicit period, with a compliance percentage.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The earlier version listed only still-scheduled doses (so nothing given ever appeared), printed
+/// "01-Jan-0001" as the administered date of every row, and silently pushed the horizon three
+/// months past the date the user chose. This one reads every status, leaves the given date blank
+/// when there is none, and reports exactly the period asked for.
+/// </para>
+/// <para>
+/// A dose is "on time" when given no later than its due date plus the grace period. Compliance is
+/// measured only over doses whose due date has already arrived — a booster due next week is not
+/// a failure today.
+/// </para>
+/// </remarks>
 public sealed class VaccinationComplianceReportDefinition : ReportDefinition<VaccinationComplianceReportRow>
 {
-    private readonly IAnimalRepository _animals;
+    private const int DefaultGraceDays = 7;
 
-    public VaccinationComplianceReportDefinition(IAnimalRepository animals)
+    private readonly IVaccinationRepository _vaccinations;
+
+    public VaccinationComplianceReportDefinition(IVaccinationRepository vaccinations)
     {
-        _animals = animals;
+        _vaccinations = vaccinations;
     }
 
     public override string Key => "health.vaccination-compliance";
@@ -36,87 +77,211 @@ public sealed class VaccinationComplianceReportDefinition : ReportDefinition<Vac
     public override LocalizedText Title => new("Vaccination Due & Compliance Report", "টিকা প্রদান ও মান্যতা প্রতিবেদন");
 
     public override LocalizedText Description => new(
-        "Overdue, upcoming, and administered herd vaccinations with schedules, vaccine names, and compliance tracking.",
-        "খামারের গবাদিপশুর বকেয়া, আসন্ন ও সম্পন্নকৃত টিকার সময়সূচী এবং স্বাস্থ্য মান্যতা ট্র্যাকিং প্রতিবেদন।");
+        "Given, due, overdue and cancelled vaccinations per protocol for animals on the farm, with the on-time compliance rate for the period.",
+        "খামারে থাকা পশুর প্রোটোকলভিত্তিক প্রদত্ত, নির্ধারিত, বকেয়া ও বাতিল টিকা এবং সময়মতো টিকা প্রদানের হার।");
 
     public override ReportCategory Category => ReportCategory.Health;
 
-    public override PageSetup Page => PageSetup.A4PortraitSigned;
+    public override PageSetup Page => PageSetup.A4LandscapeSigned;
+
+    public override LocalizedText? GrandTotalLabel => new("Herd total", "পালের মোট");
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
-        ReportParameter.Date("beforeDate", new LocalizedText("Schedule Horizon", "সময়সীমা"), required: false, @default: "today"),
+        ReportParameter.Farm(required: true),
+        ReportParameter.DateRange("period", @default: "current-month", required: true),
+        ReportParameter.Number(
+            "graceDays",
+            new LocalizedText("Grace period (days) for 'on time'", "সময়মতো ধরার অতিরিক্ত দিন"),
+            @default: DefaultGraceDays),
     ];
 
     public override IReadOnlyList<ReportColumn<VaccinationComplianceReportRow>> Columns =>
     [
-        ReportColumn<VaccinationComplianceReportRow>.Text("vaccine", new LocalizedText("Vaccine / Medicine", "টিকা / প্রতিষেধক"), r => r.VaccineName, width: 2.8f),
-        ReportColumn<VaccinationComplianceReportRow>.Text("tag", new LocalizedText("Animal Tag", "পশুর ট্যাগ"), r => r.AnimalTag, width: 2.0f),
-        ReportColumn<VaccinationComplianceReportRow>.Date("scheduled", new LocalizedText("Due Date", "নির্ধারিত তারিখ"), r => r.ScheduledDate),
-        ReportColumn<VaccinationComplianceReportRow>.Date("administered", new LocalizedText("Administered", "প্রদানের তারিখ"), r => r.AdministeredDate ?? DateOnly.MinValue),
-        ReportColumn<VaccinationComplianceReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, width: 20f, relative: false),
-        ReportColumn<VaccinationComplianceReportRow>.Text("notes", new LocalizedText("Notes / Batch", "মন্তব্য / ব্যাচ"), r => r.Notes, width: 2.5f),
+        ReportColumn<VaccinationComplianceReportRow>.Text("vaccine", new LocalizedText("Vaccine", "টিকা"), r => r.VaccineName, width: 2.4f),
+        ReportColumn<VaccinationComplianceReportRow>.Text("tag", new LocalizedText("Animal Tag", "পশুর ট্যাগ"), r => r.AnimalTag, width: 1.6f),
+        ReportColumn<VaccinationComplianceReportRow>.Date("due", new LocalizedText("Due Date", "নির্ধারিত তারিখ"), r => r.DueDate),
+        ReportColumn<VaccinationComplianceReportRow>.Date("given", new LocalizedText("Given On", "প্রদানের তারিখ"), r => r.GivenDate),
+        ReportColumn<VaccinationComplianceReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.StatusLabel, width: 24f, relative: false),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("daysLate", new LocalizedText("Days late", "দেরি (দিন)"), r => r.DaysLate, widthMm: 16f),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("givenCount", new LocalizedText("Given", "প্রদত্ত"), r => r.Given, widthMm: 14f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("onTimeCount", new LocalizedText("On time", "সময়মতো"), r => r.OnTime, widthMm: 14f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("dueCount", new LocalizedText("Due", "নির্ধারিত"), r => r.Pending, widthMm: 14f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("overdueCount", new LocalizedText("Overdue", "বকেয়া"), r => r.Overdue, widthMm: 16f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("cancelledCount", new LocalizedText("Cancelled", "বাতিল"), r => r.Cancelled, widthMm: 16f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.Text("notes", new LocalizedText("Notes / Batch", "মন্তব্য / ব্যাচ"), r => r.Notes, width: 2.0f),
     ];
 
     public override ReportGroup<VaccinationComplianceReportRow>? Group =>
-        ReportGroup<VaccinationComplianceReportRow>.By(
-            r => r.Status,
-            r => $"Status: {r.Status}");
+        ReportGroup<VaccinationComplianceReportRow>.ByLocalized(
+            r => r.Protocol,
+            r => new LocalizedText($"Protocol: {r.Protocol}", $"প্রোটোকল: {r.Protocol}"));
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        return "Herd Immunization & Preventive Health Compliance";
+
+        var period = context.Range("period");
+        var rows = await LoadAsync(context, cancellationToken).ConfigureAwait(false);
+        var s = Summarise(rows, period, context.Today);
+        var bn = context.Language == ReportLanguage.Bn;
+
+        string N(decimal value, int decimals = 0) => ReportValueFormatter.Format(
+            value, decimals == 0 ? ReportColumnType.WholeNumber : ReportColumnType.Number, decimals, context.BengaliNumerals);
+
+        if (s.CompliancePercent is not { } pct)
+        {
+            return bn
+                ? $"এই সময়ে কোনো টিকা নির্ধারিত ছিল না · আসন্ন {N(s.Upcoming)}"
+                : $"No doses fell due in the period · {N(s.Upcoming)} upcoming";
+        }
+
+        return bn
+            ? $"সময়মতো টিকা প্রদানের হার {N(pct, 1)}% ({N(s.DueInPeriod)} টির মধ্যে {N(s.GivenOnTime)} টি) · বকেয়া {N(s.Overdue)} · আসন্ন {N(s.Upcoming)}"
+            : $"Compliance {N(pct, 1)}% ({N(s.GivenOnTime)} of {N(s.DueInPeriod)} doses due were given on time) · {N(s.Overdue)} overdue · {N(s.Upcoming)} upcoming";
     }
 
-    protected override async Task<IReadOnlyList<VaccinationComplianceReportRow>> FetchAsync(
+    protected override Task<IReadOnlyList<VaccinationComplianceReportRow>> FetchAsync(
         ReportContext context,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
-        var beforeDate = context.Date("beforeDate").AddMonths(3);
-
-        var events = await context
-            .Send(new GetUpcomingVaccinationsQuery(farmId, beforeDate), cancellationToken)
-            .ConfigureAwait(false);
-
-        if (events == null || events.Count == 0)
-        {
-            return [];
-        }
-
-        var animalIds = events.Select(e => e.AnimalId).Distinct().ToList();
-        var animals = await _animals.GetByIdsAsync(animalIds, cancellationToken).ConfigureAwait(false);
-        var animalDict = animals.ToDictionary(a => a.Id);
-
-        return events
-            .Select(e =>
-            {
-                var tag = animalDict.TryGetValue(e.AnimalId, out var a) ? a.Tag.TagId : e.AnimalId.ToString()[..8];
-                return new VaccinationComplianceReportRow(
-                    VaccineName: e.VaccineName,
-                    AnimalTag: tag,
-                    ScheduledDate: e.ScheduledDate,
-                    AdministeredDate: e.AdministeredDate,
-                    Status: e.Status.ToString(),
-                    Notes: string.IsNullOrWhiteSpace(e.Notes) ? (e.BatchNumber ?? "—") : e.Notes);
-            })
-            .OrderBy(r => r.Status)
-            .ThenBy(r => r.ScheduledDate)
-            .ToList();
+        return LoadAsync(context, cancellationToken);
     }
 
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
+    /// <summary>Classifies one dose. Public so the rule is tested, not just described.</summary>
+    public static VaccinationComplianceStatus Classify(
+        VaccinationStatus status,
+        DateOnly dueDate,
+        DateOnly? givenDate,
+        DateOnly today,
+        int graceDays)
     {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
+        if (status == VaccinationStatus.Cancelled)
+        {
+            return VaccinationComplianceStatus.Cancelled;
+        }
 
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
+        if (givenDate is { } given)
+        {
+            return given <= dueDate.AddDays(Math.Max(0, graceDays))
+                ? VaccinationComplianceStatus.GivenOnTime
+                : VaccinationComplianceStatus.GivenLate;
+        }
+
+        if (status == VaccinationStatus.Completed)
+        {
+            // Completed without a recorded date: given, but its timeliness cannot be shown.
+            return VaccinationComplianceStatus.GivenLate;
+        }
+
+        return dueDate < today ? VaccinationComplianceStatus.Overdue : VaccinationComplianceStatus.Due;
+    }
+
+    /// <summary>Compliance over doses whose due date is inside the period and not in the future.</summary>
+    public static VaccinationComplianceSummary Summarise(
+        IEnumerable<VaccinationComplianceReportRow> rows,
+        DateRange period,
+        DateOnly today)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+
+        var dueInPeriod = 0;
+        var onTime = 0;
+        var overdue = 0;
+        var upcoming = 0;
+
+        foreach (var r in rows)
+        {
+            if (r.Status == VaccinationComplianceStatus.Cancelled)
+            {
+                continue;
+            }
+
+            if (r.Status == VaccinationComplianceStatus.Overdue)
+            {
+                overdue++;
+            }
+
+            if (r.Status == VaccinationComplianceStatus.Due)
+            {
+                upcoming++;
+            }
+
+            if (!period.Contains(r.DueDate) || r.DueDate > today)
+            {
+                continue;
+            }
+
+            dueInPeriod++;
+            if (r.Status == VaccinationComplianceStatus.GivenOnTime)
+            {
+                onTime++;
+            }
+        }
+
+        return new VaccinationComplianceSummary(dueInPeriod, onTime, overdue, upcoming);
+    }
+
+    private Task<IReadOnlyList<VaccinationComplianceReportRow>> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>
+        context.MemoAsync("vaccination-compliance", async () =>
+        {
+            var period = context.Range("period");
+            var grace = context.WholeNumber("graceDays", DefaultGraceDays);
+            if (grace is < 0 or > 90)
+            {
+                throw new ReportParameterException("graceDays", "Grace period must be between 0 and 90 days.");
+            }
+
+            var events = await _vaccinations
+                .GetComplianceEventsAsync(context.FarmId(), period.From, period.To, cancellationToken)
+                .ConfigureAwait(false);
+
+            var noProtocol = context.Language == ReportLanguage.Bn ? "প্রোটোকল ছাড়া" : "No protocol (ad-hoc)";
+
+            IReadOnlyList<VaccinationComplianceReportRow> rows = events
+                .Select(x =>
+                {
+                    var e = x.Event;
+                    var status = Classify(e.Status, e.ScheduledDate, e.AdministeredDate, context.Today, grace);
+                    int? daysLate = e.AdministeredDate is { } given
+                        ? Math.Max(0, given.DayNumber - e.ScheduledDate.DayNumber)
+                        : status == VaccinationComplianceStatus.Overdue
+                            ? context.Today.DayNumber - e.ScheduledDate.DayNumber
+                            : null;
+
+                    return new VaccinationComplianceReportRow(
+                        string.IsNullOrWhiteSpace(x.ProtocolTitle) ? noProtocol : x.ProtocolTitle!,
+                        e.VaccineName,
+                        x.AnimalTag,
+                        e.ScheduledDate,
+                        e.AdministeredDate,
+                        status,
+                        Label(status, context.Language),
+                        daysLate,
+                        string.IsNullOrWhiteSpace(e.Notes)
+                            ? (string.IsNullOrWhiteSpace(e.BatchNumber) ? "—" : e.BatchNumber)
+                            : e.Notes!);
+                })
+                .OrderBy(r => r.Protocol, StringComparer.Ordinal)
+                .ThenBy(r => r.DueDate)
+                .ThenBy(r => r.AnimalTag, StringComparer.Ordinal)
+                .ToList();
+
+            return rows;
+        });
+
+    private static string Label(VaccinationComplianceStatus status, ReportLanguage language)
+    {
+        var bn = language == ReportLanguage.Bn;
+        return status switch
+        {
+            VaccinationComplianceStatus.GivenOnTime => bn ? "সময়মতো প্রদত্ত" : "Given on time",
+            VaccinationComplianceStatus.GivenLate => bn ? "দেরিতে প্রদত্ত" : "Given late",
+            VaccinationComplianceStatus.Due => bn ? "নির্ধারিত" : "Due",
+            VaccinationComplianceStatus.Overdue => bn ? "বকেয়া" : "Overdue",
+            VaccinationComplianceStatus.Cancelled => bn ? "বাতিল" : "Cancelled",
+            _ => status.ToString(),
+        };
     }
 }

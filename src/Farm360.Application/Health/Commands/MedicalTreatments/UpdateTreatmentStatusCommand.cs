@@ -23,6 +23,8 @@ public sealed class UpdateTreatmentStatusCommandValidator : AbstractValidator<Up
 
 internal sealed class UpdateTreatmentStatusCommandHandler : IRequestHandler<UpdateTreatmentStatusCommand>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IMedicalTreatmentRepository _repository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
@@ -30,8 +32,10 @@ internal sealed class UpdateTreatmentStatusCommandHandler : IRequestHandler<Upda
     public UpdateTreatmentStatusCommandHandler(
         IMedicalTreatmentRepository repository,
         ITenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _repository = repository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
@@ -46,7 +50,7 @@ internal sealed class UpdateTreatmentStatusCommandHandler : IRequestHandler<Upda
 
         if (request.Status == TreatmentStatus.Completed)
         {
-            treatment.CompleteTreatment(DateOnly.FromDateTime(DateTime.UtcNow), request.Notes);
+            treatment.CompleteTreatment(_clock.Today, request.Notes);
         }
         else if (request.Status == TreatmentStatus.Failed)
         {

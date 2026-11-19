@@ -118,4 +118,15 @@ public sealed class AnimalOverheadAllocationRepository : IAnimalOverheadAllocati
             .OrderBy(a => a.PeriodStart)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<AnimalOverheadAllocation>> GetByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default) =>
+        await _context.AnimalOverheadAllocations
+            .AsNoTracking()
+            .Where(a => a.FarmId == farmId && a.PeriodEnd >= from && a.PeriodStart <= to)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

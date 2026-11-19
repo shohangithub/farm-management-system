@@ -21,6 +21,9 @@ public sealed class HangfireBackgroundJobService(
     public void AddOrUpdateRecurring<T>(string jobId, System.Linq.Expressions.Expression<Action<T>> job, string cronExpression) =>
         recurringJobManager.AddOrUpdate(jobId, job, cronExpression);
 
+    public void AddOrUpdateRecurring<T>(string jobId, System.Linq.Expressions.Expression<Action<T>> job, string cronExpression, TimeZoneInfo timeZone) =>
+        recurringJobManager.AddOrUpdate(jobId, job, cronExpression, new RecurringJobOptions { TimeZone = timeZone });
+
     public void Delete(string jobId) =>
         backgroundJobClient.Delete(jobId);
 }

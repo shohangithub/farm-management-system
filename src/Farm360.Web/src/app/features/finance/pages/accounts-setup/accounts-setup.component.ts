@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,8 +12,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinanceService } from '../../services/finance.service';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { AccountingSettings, AccountingSetupOptions, BalanceSheetEntry, SaveBalanceSheetEntryRequest } from '../../models/finance.model';
-
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+
 /**
  * Accounts setup: the financial year, the date the books start from, the opening position on that
  * date, and year-end adjustments (accruals, prepayments, provisions). Opening balances are not
@@ -22,7 +24,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-accounts-setup',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, CurrencyPipe, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe],
   template: `
     <app-page-header
       title="Accounts Setup"
@@ -34,7 +36,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
       <app-finance-subnav></app-finance-subnav>
 
       <div *ngIf="error()" class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300 flex justify-between">
-        <span>{{ error() }}</span><button (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
+        <span>{{ error() }}</span><button type="button" aria-label="Dismiss error" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
       </div>
       <div *ngIf="notice()" class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-line">{{ notice() }}</div>
 
@@ -84,11 +86,11 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">Assets <span class="block font-mono font-bold text-sm">{{ openingTotals().assets | currency:'BDT ':'symbol':'1.2-2' }}</span></div>
-          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">Liabilities + equity <span class="block font-mono font-bold text-sm">{{ openingTotals().claims | currency:'BDT ':'symbol':'1.2-2' }}</span></div>
+          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">Assets <span class="block font-mono font-bold text-sm">{{ openingTotals().assets | money:2 }}</span></div>
+          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">Liabilities + equity <span class="block font-mono font-bold text-sm">{{ openingTotals().claims | money:2 }}</span></div>
           <div class="p-3 rounded-xl" [ngClass]="openingTotals().difference === 0 ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700' : 'bg-rose-50 dark:bg-rose-950/30 text-rose-700'">
             Difference (excl. opening fixed assets)
-            <span class="block font-mono font-bold text-sm">{{ openingTotals().difference | currency:'BDT ':'symbol':'1.2-2' }}</span>
+            <span class="block font-mono font-bold text-sm">{{ openingTotals().difference | money:2 }}</span>
           </div>
         </div>
 
@@ -137,8 +139,8 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
               <input type="date" [(ngModel)]="e.reversalDate" class="field" />
             </label>
             <label class="flex flex-col gap-1">Amount (BDT)
-              <input type="number" [(ngModel)]="e.amountBdt" class="field" />
-              <span class="text-[10px] text-gray-400">Positive increases the line; negative reduces it.</span>
+              <input type="number" step="0.01" [(ngModel)]="e.amountBdt" class="field" />
+              <span class="text-[11px] text-gray-400">Positive increases the line; negative reduces it.</span>
             </label>
           </div>
           <label class="flex flex-col gap-1">Description
@@ -176,10 +178,10 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
                   <span *ngIf="r.profitAccountName" class="block text-[11px] text-gray-500">against {{ r.profitAccountCode }} {{ r.profitAccountName }}</span>
                 </td>
                 <td class="px-3 py-2 text-xs">{{ r.description }}</td>
-                <td class="px-3 py-2 text-right font-mono" [class.text-rose-600]="r.amountBdt < 0">{{ r.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}</td>
+                <td class="px-3 py-2 text-right font-mono" [class.text-rose-600]="r.amountBdt < 0">{{ r.amountBdt | money:2 }}</td>
                 <td class="px-3 py-2 text-right whitespace-nowrap">
-                  <button (click)="editEntry(r)" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
-                  <button (click)="deleteEntry(r)" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+                  <button type="button" (click)="editEntry(r)" aria-label="Edit entry" title="Edit entry" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
+                  <button type="button" (click)="deleteEntry(r)" aria-label="Delete entry" title="Delete entry" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
                 </td>
               </tr>
             </tbody>
@@ -201,6 +203,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountsSetupComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
@@ -266,9 +269,9 @@ export class AccountsSetupComponent {
     });
   }
 
-  generate(): void {
+  async generate(): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !confirm('Create opening balances from every ledger entry up to the books start date?')) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: 'Create opening balances from every ledger entry up to the books start date?', confirmText: 'Create' }))) return;
     this.busy.set(true);
     this.finance.generateOpeningEntries(farmId).subscribe({
       next: r => this.done([`${r.created} opening balance(s) created from the ledger.`, ...r.warnings].join('\n')),
@@ -317,9 +320,9 @@ export class AccountsSetupComponent {
     });
   }
 
-  deleteEntry(r: BalanceSheetEntry): void {
+  async deleteEntry(r: BalanceSheetEntry): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !confirm(`Delete ${r.code} (${r.description})?`)) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: `Delete ${r.code} (${r.description})?`, confirmText: 'Delete', destructive: true }))) return;
     this.busy.set(true);
     this.finance.deleteBalanceSheetEntry(farmId, r.id).subscribe({
       next: () => this.done(`${r.code} deleted.`),

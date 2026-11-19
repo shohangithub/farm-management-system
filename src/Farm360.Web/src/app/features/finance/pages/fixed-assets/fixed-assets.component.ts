@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,8 +12,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinanceService } from '../../services/finance.service';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { AccountingSettings, FixedAsset, FixedAssetSchedule, SaveFixedAssetRequest } from '../../models/finance.model';
-
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+
 interface AssetForm extends SaveFixedAssetRequest {
   supplierName: string;
   supplierPhone: string;
@@ -29,7 +31,7 @@ interface AssetForm extends SaveFixedAssetRequest {
 @Component({
   selector: 'app-fixed-assets',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, CurrencyPipe, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe],
   template: `
     <app-page-header
       title="Fixed Assets"
@@ -46,7 +48,7 @@ interface AssetForm extends SaveFixedAssetRequest {
       <app-finance-subnav></app-finance-subnav>
 
       <div *ngIf="error()" class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300 flex justify-between">
-        <span>{{ error() }}</span><button (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
+        <span>{{ error() }}</span><button type="button" aria-label="Dismiss error" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
       </div>
       <div *ngIf="notice()" class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300">{{ notice() }}</div>
       <div *ngIf="settings() && !settings()!.booksStartDate" class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
@@ -62,15 +64,15 @@ interface AssetForm extends SaveFixedAssetRequest {
         </div>
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-4">
           <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Cost</p>
-          <h3 class="text-xl font-black mt-1">{{ totals().cost | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+          <h3 class="text-xl font-black mt-1">{{ totals().cost | money }}</h3>
         </div>
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-4">
           <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Accumulated depreciation</p>
-          <h3 class="text-xl font-black mt-1 text-amber-600">{{ totals().depreciation | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+          <h3 class="text-xl font-black mt-1 text-amber-600">{{ totals().depreciation | money }}</h3>
         </div>
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-4">
           <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Written-down value</p>
-          <h3 class="text-xl font-black mt-1 text-emerald-600">{{ totals().wdv | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+          <h3 class="text-xl font-black mt-1 text-emerald-600">{{ totals().wdv | money }}</h3>
         </div>
       </div>
 
@@ -192,12 +194,12 @@ interface AssetForm extends SaveFixedAssetRequest {
               <td class="px-3 py-2 text-xs">
                 {{ a.acquisitionDate | date:'d MMM yyyy' }}
                 <span class="block text-[11px] text-gray-500">{{ acquisitionLabel(a.acquisition) }}</span>
-                <span *ngIf="a.disposalDate" class="block text-[11px] text-amber-600">Disposed {{ a.disposalDate | date:'d MMM yyyy' }} for {{ a.disposalProceedsBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+                <span *ngIf="a.disposalDate" class="block text-[11px] text-amber-600">Disposed {{ a.disposalDate | date:'d MMM yyyy' }} for {{ a.disposalProceedsBdt | money }}</span>
               </td>
               <td class="px-3 py-2 text-xs">{{ a.category === 'Land' ? '—' : (a.method === 'StraightLine' ? a.usefulLifeYears + ' yrs straight line' : a.ratePercent + '% reducing') }}</td>
-              <td class="px-3 py-2 text-right font-mono">{{ a.costBdt | currency:'BDT ':'symbol':'1.0-0' }}</td>
-              <td class="px-3 py-2 text-right font-mono text-amber-600">{{ a.accumulatedDepreciationBdt | currency:'BDT ':'symbol':'1.0-0' }}</td>
-              <td class="px-3 py-2 text-right font-mono font-bold">{{ a.writtenDownValueBdt | currency:'BDT ':'symbol':'1.0-0' }}</td>
+              <td class="px-3 py-2 text-right font-mono">{{ a.costBdt | money }}</td>
+              <td class="px-3 py-2 text-right font-mono text-amber-600">{{ a.accumulatedDepreciationBdt | money }}</td>
+              <td class="px-3 py-2 text-right font-mono font-bold">{{ a.writtenDownValueBdt | money }}</td>
               <td class="px-3 py-2 text-right whitespace-nowrap">
                 <button *ngIf="!a.disposalDate" (click)="edit(a)" title="Edit" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
                 <button *ngIf="!a.disposalDate" (click)="startDispose(a)" title="Sell / scrap" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">sell</mat-icon></button>
@@ -272,6 +274,7 @@ interface AssetForm extends SaveFixedAssetRequest {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FixedAssetsComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
@@ -396,9 +399,9 @@ export class FixedAssetsComponent {
     });
   }
 
-  cancelDisposal(a: FixedAsset): void {
+  async cancelDisposal(a: FixedAsset): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !confirm(`Undo the disposal of ${a.name}? The sale posting is removed.`)) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: `Undo the disposal of ${a.name}? The sale posting is removed.`, confirmText: 'Undo', destructive: true }))) return;
     this.busy.set(true);
     this.finance.cancelFixedAssetDisposal(farmId, a.id).subscribe({
       next: () => this.done('Disposal undone.'),
@@ -406,9 +409,9 @@ export class FixedAssetsComponent {
     });
   }
 
-  remove(a: FixedAsset): void {
+  async remove(a: FixedAsset): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !confirm(`Delete ${a.code} ${a.name}? Its purchase and sale postings are removed from the ledger.`)) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: `Delete ${a.code} ${a.name}? Its purchase and sale postings are removed from the ledger.`, confirmText: 'Delete', destructive: true }))) return;
     this.busy.set(true);
     this.finance.deleteFixedAsset(farmId, a.id).subscribe({
       next: () => this.done('Asset deleted.'),

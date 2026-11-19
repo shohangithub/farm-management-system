@@ -39,6 +39,8 @@ public sealed class UpdateConsumableUsagePlanCommandValidator : AbstractValidato
 
 public sealed class UpdateConsumableUsagePlanCommandHandler : IRequestHandler<UpdateConsumableUsagePlanCommand>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IConsumableUsagePlanRepository _planRepository;
     private readonly IInventoryItemRepository _inventoryItemRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -48,8 +50,10 @@ public sealed class UpdateConsumableUsagePlanCommandHandler : IRequestHandler<Up
         IConsumableUsagePlanRepository planRepository,
         IInventoryItemRepository inventoryItemRepository,
         IUnitOfWork unitOfWork,
-        Farm360.Application.Inventory.Units.IUnitService? units = null)
+        Farm360.Application.Inventory.Units.IUnitService? units = null,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _units = units;
         _planRepository = planRepository;
         _inventoryItemRepository = inventoryItemRepository;
@@ -74,7 +78,7 @@ public sealed class UpdateConsumableUsagePlanCommandHandler : IRequestHandler<Up
                     plan.Pause();
                     break;
                 case ConsumableUsagePlanStatus.Completed:
-                    plan.Complete();
+                    plan.Complete(_clock.Today);
                     break;
             }
         }

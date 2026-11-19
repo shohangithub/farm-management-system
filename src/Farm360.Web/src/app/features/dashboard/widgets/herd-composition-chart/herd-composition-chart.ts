@@ -94,7 +94,7 @@ interface LegendItem {
             <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.backgroundColor]="item.color"></span>
             <span class="font-medium text-gray-700 dark:text-gray-300">{{ item.label }}</span>
             <span class="font-bold text-gray-900 dark:text-white">{{ item.count }}</span>
-            <span class="text-gray-400 text-[10px]">({{ item.percentage }}%)</span>
+            <span class="text-gray-400 text-[11px]">({{ item.percentage }}%)</span>
           </div>
         </div>
       </div>

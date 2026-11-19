@@ -12,11 +12,14 @@ import { CreateFormulaDialogComponent } from '../../components/dialogs/create-fo
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-formula-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -43,6 +46,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadFormulas()"></app-error-state>
 
       <!-- Search Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30">
@@ -56,7 +60,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!isLoading() && formulas().length === 0"
+        *ngIf="!isLoading() && formulas().length === 0 && !loadError()"
         icon="science"
         title="No formulas configured"
         description="Build your first custom feed formula to start assigning rations."
@@ -84,7 +88,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                 </div>
               </div>
 
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                 {{ formula.statusName }}
               </span>
             </div>
@@ -93,16 +97,16 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
             <div class="p-5 flex-1 relative z-10">
               <div class="grid grid-cols-3 gap-2 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl text-center border border-gray-100 dark:border-gray-800 mb-4">
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">DM %</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">DM %</div>
                   <div class="font-bold text-gray-900 dark:text-white text-sm mt-0.5">{{ formula.dryMatterPct }}%</div>
                 </div>
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">CP %</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">CP %</div>
                   <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">{{ formula.crudeProteinPct }}%</div>
                 </div>
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Cost / kg</div>
-                  <div class="font-bold text-gray-900 dark:text-white text-sm mt-0.5">৳ {{ formula.totalCostPerKgBdt }}</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Cost / kg</div>
+                  <div class="font-bold text-gray-900 dark:text-white text-sm mt-0.5">{{ formula.totalCostPerKgBdt | money:2 }}</div>
                 </div>
               </div>
 
@@ -136,6 +140,7 @@ export class FormulaListComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly formulas = signal<FeedFormula[]>([]);
 
   searchTerm = '';
@@ -146,12 +151,16 @@ export class FormulaListComponent implements OnInit {
 
   loadFormulas(): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
     this.feedingService.getFormulas(1, 50, this.searchTerm).subscribe({
       next: (res) => {
         this.formulas.set(res.items);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.loadError.set(parseApiError(err, 'Could not load feed formulas.'));
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -160,14 +169,14 @@ export class FormulaListComponent implements OnInit {
   }
 
   openCreateFormulaDialog(): void {
-    const dialogRef = this.dialog.open(CreateFormulaDialogComponent, { disableClose: true, width: '700px' });
+    const dialogRef = this.dialog.open(CreateFormulaDialogComponent, { maxWidth: '95vw', disableClose: true, width: '700px' });
     dialogRef.afterClosed().subscribe((res) => {
       if (res) this.loadFormulas();
     });
   }
 
   openEditDialog(formula: FeedFormula): void {
-    const dialogRef = this.dialog.open(CreateFormulaDialogComponent, {
+    const dialogRef = this.dialog.open(CreateFormulaDialogComponent, { maxWidth: '95vw',
       disableClose: true,
       width: '700px',
       data: formula

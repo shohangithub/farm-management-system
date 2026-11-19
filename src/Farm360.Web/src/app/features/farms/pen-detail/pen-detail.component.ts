@@ -11,11 +11,15 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
+import { ConfirmService } from '../../../shared/services/confirm.service';
+
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-pen-detail',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -30,6 +34,7 @@ import { forkJoin, of } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PenDetailComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly penService = inject(PenService);
   private readonly animalService = inject(AnimalService);
   private readonly route = inject(ActivatedRoute);
@@ -76,17 +81,18 @@ export class PenDetailComponent {
       filter(params => !!params.penId),
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
       switchMap(({ penId }) => forkJoin({
-        pen: this.penService.getPenById(penId).pipe(catchError(() => of(null))),
-        animals: this.animalService.getList({ penId, pageSize: 50 }).pipe(
+        pen: this.penService.getPenById(penId).pipe(catchError(err => { this.error.set(parseApiError(err, 'Failed to load pen details.')); return of(null); })),
+        // Pen occupancy = on-farm animals only (Active/Quarantined); Sold/Dead have left the farm.
+        animals: this.animalService.getList({ penId, presence: 'OnFarm', pageSize: 50 }).pipe(
           map(res => res.items),
           catchError(() => of([]))
         )
       }).pipe(
         tap(res => {
-          if (!res.pen) this.error.set('Failed to load pen details.');
+          if (!res.pen && !this.error()) this.error.set('Failed to load pen details.');
         }),
         catchError(err => {
-          this.error.set('Failed to load pen details.');
+          this.error.set(parseApiError(err, 'Failed to load pen details.'));
           return of({ pen: null, animals: [] });
         })
       )),
@@ -128,11 +134,11 @@ export class PenDetailComponent {
     this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
   }
 
-  deletePen(): void {
+  async deletePen(): Promise<void> {
     const pId = this.penId();
     if (!pId) return;
 
-    if (confirm('Are you sure you want to delete this pen? This action cannot be undone.')) {
+    if ((await this.confirmService.confirmAsync({ message: 'Are you sure you want to delete this pen? This action cannot be undone.', confirmText: 'Delete', destructive: true }))) {
       this.penService.deletePen(pId).subscribe({
         next: () => {
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);

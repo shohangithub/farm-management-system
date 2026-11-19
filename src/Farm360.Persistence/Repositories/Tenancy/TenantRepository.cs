@@ -57,4 +57,18 @@ public sealed class TenantRepository : ITenantRepository
 
         return (usersCount, farmsCount, animalsCount);
     }
+
+    public async Task AcquireQuotaLockAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        // Only meaningful inside a transaction (TransactionBehavior): the UPDLOCK is held until
+        // commit, serialising concurrent quota checks for this tenant.
+        if (!_context.Database.IsRelational() || _context.Database.CurrentTransaction is null)
+        {
+            return;
+        }
+
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT TOP(1) [Id] FROM [app].[Tenants] WITH (UPDLOCK, ROWLOCK) WHERE [Id] = {tenantId}",
+            cancellationToken);
+    }
 }

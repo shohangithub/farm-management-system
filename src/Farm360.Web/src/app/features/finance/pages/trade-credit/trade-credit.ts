@@ -13,6 +13,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinanceService } from '../../services/finance.service';
 import { TradeBill, TradeBillKind, TradeBillPayment, TradeCreditOverview, TradeCreditSide } from '../../models/finance.model';
 import { TradeBillDialogComponent, TradeBillDialogMode } from '../../components/trade-bill-dialog/trade-bill-dialog.component';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
 
 /**
  * Payables & Receivables — the credit book. Who owes the farm (customers), whom the farm owes
@@ -22,11 +25,12 @@ import { TradeBillDialogComponent, TradeBillDialogMode } from '../../components/
 @Component({
   selector: 'app-trade-credit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './trade-credit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TradeCreditComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
@@ -129,10 +133,10 @@ export class TradeCreditComponent {
       });
   }
 
-  voidPayment(bill: TradeBill, payment: TradeBillPayment): void {
+  async voidPayment(bill: TradeBill, payment: TradeBillPayment): Promise<void> {
     const farmId = this.context.currentFarmValue?.id;
     if (!farmId) return;
-    if (!confirm(`Void the ৳ ${payment.amountBdt.toLocaleString()} ${bill.kind === 'Payable' ? 'payment to' : 'collection from'} ${bill.partyName} on ${payment.paymentDate}?\n\nIts cash-book entry is removed and the bill balance goes back up.`)) {
+    if (!(await this.confirmService.confirmAsync({ message: `Void the ${formatMoney(payment.amountBdt)} ${bill.kind === 'Payable' ? 'payment to' : 'collection from'} ${bill.partyName} on ${payment.paymentDate}?\n\nIts cash-book entry is removed and the bill balance goes back up.`, confirmText: 'Void', destructive: true }))) {
       return;
     }
     this.finance.voidBillPayment(farmId, bill.id, payment.id).subscribe({
@@ -144,10 +148,10 @@ export class TradeCreditComponent {
     });
   }
 
-  cancel(bill: TradeBill): void {
+  async cancel(bill: TradeBill): Promise<void> {
     const farmId = this.context.currentFarmValue?.id;
     if (!farmId) return;
-    if (!confirm(`Cancel the credit bill for ${bill.partyName}?\n\nThe ${bill.kind === 'Payable' ? 'purchase' : 'sale'} stays in the books, but as ${bill.kind === 'Payable' ? 'paid' : 'received'} in cash on ${bill.billDate}.`)) {
+    if (!(await this.confirmService.confirmAsync({ message: `Cancel the credit bill for ${bill.partyName}?\n\nThe ${bill.kind === 'Payable' ? 'purchase' : 'sale'} stays in the books, but as ${bill.kind === 'Payable' ? 'paid' : 'received'} in cash on ${bill.billDate}.`, confirmText: 'Cancel bill', cancelText: 'Keep', destructive: true }))) {
       return;
     }
     this.finance.cancelTradeBill(farmId, bill.id).subscribe({

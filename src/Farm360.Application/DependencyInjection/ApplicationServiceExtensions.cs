@@ -29,12 +29,18 @@ public static class ApplicationServiceExtensions
             cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
             cfg.AddOpenBehavior(typeof(PerformanceBehavior<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            cfg.AddOpenBehavior(typeof(FarmAccessBehavior<,>)); // per-farm access for requests carrying a FarmId
             cfg.AddOpenBehavior(typeof(TransactionBehavior<,>));
             cfg.AddOpenBehavior(typeof(CachingBehavior<,>));
         });
 
         // ── FluentValidation (auto-discover all validators in assembly) ───────
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
+
+        // Tenant-local business calendar ("today" in the farm's zone, not UTC).
+        services.AddSingleton<Farm360.Application.Common.Time.FarmTimeZoneCache>();
+        services.AddScoped<Farm360.Application.Common.Interfaces.IFarmClock, Farm360.Application.Common.Time.FarmClock>();
+        services.AddScoped<Farm360.Application.Common.Jobs.ITenantJobRunner, Farm360.Application.Common.Jobs.TenantJobRunner>();
 
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.IGrowthPredictionEngine, Farm360.Application.Intelligence.Services.GrowthPredictionEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.IRuleEngine, Farm360.Application.Intelligence.Services.RuleEngine>();
@@ -53,7 +59,12 @@ public static class ApplicationServiceExtensions
         // ── Feeding: per-animal feed allocation (docs/32 GAP-1) ──────────────
         services.AddScoped<Farm360.Application.Feeding.Services.IFeedAllocationService, Farm360.Application.Feeding.Services.FeedAllocationService>();
         services.AddScoped<Farm360.Application.Feeding.Services.IDirectFeedService, Farm360.Application.Feeding.Services.DirectFeedService>();
+        services.AddScoped<Farm360.Application.Feeding.Services.IAnimalExitService, Farm360.Application.Feeding.Services.AnimalExitService>();
         services.AddScoped<Farm360.Application.Inventory.Units.IUnitService, Farm360.Application.Inventory.Units.UnitService>();
+
+        // ── Users / team management: shared guards for member commands ───────
+        services.AddScoped<Farm360.Application.Users.Commands.MemberCommandContext>();
+        services.AddScoped<Farm360.Application.Users.Commands.InvitationSender>();
 
         // ── Reporting platform (docs/32): registry + execution service ────────
         services.AddReportingServices();

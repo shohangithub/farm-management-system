@@ -38,4 +38,21 @@ public sealed record ReportDataSet(
     IReadOnlyList<ReportGroupTotals> Groups,
     IReadOnlyList<ReportCell> GrandTotals,
     bool HasGrandTotals,
-    int TotalRowCount);
+    int TotalRowCount,
+    ReportLanguage Language = ReportLanguage.En,
+    bool BengaliNumerals = false,
+    string? GrandTotalLabel = null)
+{
+    /// <summary>
+    /// The label printed on the grand-total band. Statements override it ("Net profit / (loss)")
+    /// so the bottom line says what it is instead of a generic "Grand total".
+    /// </summary>
+    public string GrandTotalCaption => GrandTotalLabel ?? ReportStrings.GrandTotal.For(Language);
+
+    /// <summary>A platform string in this report's language.</summary>
+    public string Text(LocalizedText text) => text.For(Language);
+
+    /// <summary>A whole number in this report's numeral system.</summary>
+    public string Count(int value) =>
+        ReportValueFormatter.Format(value, ReportColumnType.WholeNumber, 0, BengaliNumerals, Language);
+}

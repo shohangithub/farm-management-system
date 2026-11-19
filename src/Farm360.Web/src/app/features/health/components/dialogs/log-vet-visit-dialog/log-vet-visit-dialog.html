@@ -16,7 +16,7 @@
       </div>
     </div>
     <button mat-icon-button (click)="cancel()"
-      class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10">
+      class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" aria-label="Close">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -41,6 +41,7 @@
               {{ farm.name }}
             </option>
           </select>
+          <p *ngIf="form.get('farmId')?.touched && form.get('farmId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -49,6 +50,7 @@
                 class="text-red-500">*</span></label>
             <input type="text" formControlName="vetName" placeholder="Dr. John Doe" [matAutocomplete]="autoVet"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <p *ngIf="form.get('vetName')?.touched && form.get('vetName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             <mat-autocomplete #autoVet="matAutocomplete">
               <mat-option *ngFor="let option of filteredVetNames$ | async" [value]="option">
                 {{ option }}
@@ -61,6 +63,7 @@
                 class="text-red-500">*</span></label>
             <input type="date" formControlName="visitDate"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <p *ngIf="form.get('visitDate')?.touched && form.get('visitDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
           </div>
         </div>
 
@@ -135,6 +138,7 @@
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-medium">৳</span>
               <input type="number" formControlName="costBdt" min="0" placeholder="0"
                 class="block w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p *ngIf="form.get('costBdt')?.touched && form.get('costBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
             </div>
           </div>
 

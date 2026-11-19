@@ -14,13 +14,16 @@ import { StockOutDialogComponent } from '../../components/dialogs/stock-out-dial
 import { CreateItemDialogComponent } from '../../components/dialogs/create-item-dialog/create-item-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiring-items-panel';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-inventory-dashboard',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -28,6 +31,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent,
     ExpiringItemsPanel
   ],
@@ -49,6 +53,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
     </app-page-header>
 
     <div class="space-y-6">
+      <app-error-state *ngIf="loadError() as err" [message]="err" (retry)="reload()"></app-error-state>
       <!-- KPI Summary Cards Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-5 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center gap-4 relative overflow-hidden group">
@@ -59,7 +64,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
           <div>
             <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Stock Value</div>
             <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
-              ৳ {{ report()?.totalValuationBdt || 0 | number:'1.0-0' }}
+              {{ report()?.totalValuationBdt || 0 | money }}
             </div>
           </div>
         </div>
@@ -198,7 +203,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
           </div>
 
           <app-empty-state
-            *ngIf="!isLoading() && lowStockItems().length === 0"
+            *ngIf="!isLoading() && !loadError() && lowStockItems().length === 0"
             icon="task_alt"
             title="All stock levels healthy"
             description="No items are currently below their reorder threshold."
@@ -218,7 +223,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
                 <div class="text-right flex items-center gap-3">
                   <div>
                     <div class="font-extrabold text-amber-600 dark:text-amber-400 text-sm">{{ item.currentStock }} {{ item.unitOfMeasure }}</div>
-                    <div class="text-[10px] uppercase font-bold text-gray-400">Current</div>
+                    <div class="text-[11px] uppercase font-bold text-gray-400">Current</div>
                   </div>
                   <button (click)="openStockInDialogForItem(item)" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
                     Reorder
@@ -246,7 +251,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
           </div>
 
           <app-empty-state
-            *ngIf="!isLoading() && recentTransactions().length === 0"
+            *ngIf="!isLoading() && !loadError() && recentTransactions().length === 0"
             icon="history_toggle_off"
             title="No transactions recorded"
             description="Record a stock-in receipt to start logging inventory movements."
@@ -260,7 +265,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
                 <div>
                   <div class="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
                     <span>{{ tx.itemName }}</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px]"
+                    <span class="text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[11px]"
                       [ngClass]="isStockIn(tx.transactionType) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800'">
                       {{ tx.transactionTypeName }}
                     </span>
@@ -273,7 +278,7 @@ import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiri
                   <div class="font-bold text-gray-900 dark:text-white text-sm">
                     {{ isStockIn(tx.transactionType) ? '+' : '-' }}{{ getAbsQuantity(tx.quantity) }}
                   </div>
-                  <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">৳ {{ tx.totalCostBdt | number:'1.0-0' }}</div>
+                  <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{{ tx.totalCostBdt | money }}</div>
                 </div>
               </div>
             }
@@ -290,6 +295,7 @@ export class InventoryDashboardComponent {
   private readonly dialog = inject(MatDialog);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly report = signal<InventoryValuationReport | null>(null);
   readonly lowStockItems = signal<InventoryItem[]>([]);
   readonly recentTransactions = signal<StockTransaction[]>([]);
@@ -307,15 +313,21 @@ export class InventoryDashboardComponent {
     });
   }
 
+  reload(): void {
+    const farmId = this.activeFarmId();
+    if (farmId) this.loadDashboard(farmId);
+  }
+
   loadDashboard(farmId: string): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
 
     this.inventoryService.getValuationReport(farmId).subscribe({
       next: (res) => {
         this.report.set(res);
         this.lowStockItems.set(res.items.filter(i => i.status === InventoryStatus.LowStock || i.status === InventoryStatus.OutOfStock));
       },
-      error: () => {}
+      error: (err) => this.loadError.set(parseApiError(err, 'Could not load the inventory dashboard.'))
     });
 
     this.inventoryService.getTransactions({ farmId, pageSize: 5 }).subscribe({
@@ -323,7 +335,10 @@ export class InventoryDashboardComponent {
         this.recentTransactions.set(res?.items || []);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.isLoading.set(false);
+        this.loadError.set(parseApiError(err, 'Could not load the inventory dashboard.'));
+      }
     });
   }
 
@@ -345,7 +360,7 @@ export class InventoryDashboardComponent {
   openStockInDialog(): void {
     const farmId = this.activeFarmId();
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(StockInDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -355,7 +370,7 @@ export class InventoryDashboardComponent {
   }
 
   openStockInDialogForItem(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(StockInDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { item, farmId: item.farmId }
     });
@@ -367,7 +382,7 @@ export class InventoryDashboardComponent {
   openStockOutDialog(): void {
     const farmId = this.activeFarmId();
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockOutDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(StockOutDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { farmId }
     });

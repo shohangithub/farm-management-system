@@ -32,12 +32,13 @@ public sealed record RegisterAnimalCommand(
     decimal? AcquisitionPriceBdt,
     string? Notes,
     Guid? ShedId,
-    Guid? PenId) : IRequest<AnimalDto>;
+    Guid? PenId) : IRequest<AnimalDto>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterAnimalCommand>
 {
-    public RegisterAnimalCommandValidator(IAnimalRepository repository)
+    public RegisterAnimalCommandValidator(IAnimalRepository repository, IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.FarmId)
             .NotEmpty().WithMessage("Farm is required.");
 
@@ -54,11 +55,11 @@ public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterA
             .NotEmpty().WithMessage("Breed is required.");
 
         RuleFor(x => x.DateOfBirth)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Date of birth cannot be in the future.");
 
         RuleFor(x => x.AcquisitionDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Acquisition date cannot be in the future.")
             .GreaterThanOrEqualTo(x => x.DateOfBirth)
             .WithMessage("Acquisition date cannot be before date of birth.");
@@ -79,13 +80,18 @@ public sealed class RegisterAnimalCommandHandler(
     IUnitOfWork unitOfWork,
     ITenantService tenantService,
     ICurrentUserService currentUser,
-    IPublisher publisher) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
+    IPublisher publisher,
+    IFarmClock? clock = null) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<AnimalDto> Handle(RegisterAnimalCommand request, CancellationToken cancellationToken)
     {
         var tenant = await tenantRepository.GetByIdAsync(tenantService.TenantId, cancellationToken)
             ?? throw new Farm360.Application.Common.Exceptions.ValidationException(new[] { new FluentValidation.Results.ValidationFailure("TenantId", "Tenant not found.") });
 
+        // Lock the tenant row first so two registrations at once cannot both take the last slot.
+        await tenantRepository.AcquireQuotaLockAsync(tenantService.TenantId, cancellationToken);
         var (_, _, animalsCount) = await tenantRepository.GetTenantUsageCountsAsync(tenantService.TenantId, cancellationToken);
         if (animalsCount >= tenant.MaxAnimals)
         {
@@ -115,7 +121,7 @@ public sealed class RegisterAnimalCommandHandler(
             animal.TransferToShed(
                 request.ShedId.Value, 
                 request.PenId, 
-                DateOnly.FromDateTime(DateTime.UtcNow), 
+                _clock.Today, 
                 userId, 
                 "Initial Placement");
         }
@@ -157,8 +163,9 @@ public sealed record UpdateAnimalCommand(
 
 public sealed class UpdateAnimalCommandValidator : AbstractValidator<UpdateAnimalCommand>
 {
-    public UpdateAnimalCommandValidator(IAnimalRepository repository)
+    public UpdateAnimalCommandValidator(IAnimalRepository repository, IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.Id)
             .NotEmpty().WithMessage("Animal ID is required.");
 
@@ -175,11 +182,11 @@ public sealed class UpdateAnimalCommandValidator : AbstractValidator<UpdateAnima
             .NotEmpty().WithMessage("Breed is required.");
 
         RuleFor(x => x.DateOfBirth)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Date of birth cannot be in the future.");
 
         RuleFor(x => x.AcquisitionDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Acquisition date cannot be in the future.")
             .GreaterThanOrEqualTo(x => x.DateOfBirth)
             .WithMessage("Acquisition date cannot be before date of birth.");
@@ -248,8 +255,9 @@ public sealed record RecordWeightCommand(
 
 public sealed class RecordWeightCommandValidator : AbstractValidator<RecordWeightCommand>
 {
-    public RecordWeightCommandValidator()
+    public RecordWeightCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
 
         RuleFor(x => x.WeightKg)
@@ -257,7 +265,7 @@ public sealed class RecordWeightCommandValidator : AbstractValidator<RecordWeigh
             .LessThanOrEqualTo(2000).WithMessage("Weight cannot exceed 2000 kg.");
 
         RuleFor(x => x.RecordedDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Recorded date cannot be in the future.");
 
         RuleFor(x => x.Notes)
@@ -311,15 +319,16 @@ public sealed record SellAnimalCommand(
 
 public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCommand>
 {
-    public SellAnimalCommandValidator()
+    public SellAnimalCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
 
         RuleFor(x => x.SalePriceBdt)
             .GreaterThan(0).WithMessage("Sale price must be greater than zero.");
 
         RuleFor(x => x.SaleDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Sale date cannot be in the future.");
 
         RuleFor(x => x.SaleWeightKg)
@@ -348,7 +357,8 @@ public sealed class SellAnimalCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     MediatR.IPublisher publisher,
-    Farm360.Application.Finance.Services.ITradeCreditService? credit = null) : IRequestHandler<SellAnimalCommand>
+    Farm360.Application.Finance.Services.ITradeCreditService? credit = null,
+    Farm360.Application.Feeding.Services.IAnimalExitService? exitService = null) : IRequestHandler<SellAnimalCommand>
 {
     public async Task Handle(SellAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -373,6 +383,16 @@ public sealed class SellAnimalCommandHandler(
                 new Farm360.Application.Finance.Services.CreditTerms(buyer, terms.PartyPhone, terms.DueDate, terms.PaidNowBdt, terms.PaymentMethod, terms.Notes),
                 cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        // Feeding stops from the sale date: plans end, pending entries are skipped, entries
+        // confirmed after the sale are reversed, group entries re-split without the animal.
+        // Called directly (not via AnimalSoldEvent) because Finance also listens to that event and
+        // has already booked the sale above; this runs exactly once, inside the sale's transaction.
+        if (exitService is not null)
+        {
+            await exitService.ProcessExitAsync(animal.Id, request.SaleDate,
+                Farm360.Application.Feeding.Services.AnimalExitService.SoldReason(request.SaleDate), cancellationToken);
         }
     }
 }
@@ -445,11 +465,12 @@ public sealed record RecordAnimalDeathCommand(
 
 public sealed class RecordAnimalDeathCommandValidator : AbstractValidator<RecordAnimalDeathCommand>
 {
-    public RecordAnimalDeathCommandValidator()
+    public RecordAnimalDeathCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
         RuleFor(x => x.DeathDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Death date cannot be in the future.");
     }
 }
@@ -489,12 +510,13 @@ public sealed record TransferAnimalCommand(
 
 public sealed class TransferAnimalCommandValidator : AbstractValidator<TransferAnimalCommand>
 {
-    public TransferAnimalCommandValidator()
+    public TransferAnimalCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
         
         RuleFor(x => x.TransferDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Transfer date cannot be in the future.");
             
         RuleFor(x => x.Reason)
@@ -506,12 +528,30 @@ public sealed class TransferAnimalCommandValidator : AbstractValidator<TransferA
 public sealed class TransferAnimalCommandHandler(
     IAnimalRepository repository,
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser) : IRequestHandler<TransferAnimalCommand>
+    ICurrentUserService currentUser,
+    Farm360.Domain.Farms.Repositories.IPenRepository? pens = null) : IRequestHandler<TransferAnimalCommand>
 {
     public async Task Handle(TransferAnimalCommand request, CancellationToken cancellationToken)
     {
         var animal = await repository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
+
+        // Only animals on the farm can be moved (the domain refuses sold/dead animals).
+        animal.EnsureOnFarm("a pen/shed transfer");
+
+        // Capacity: a pen is full when its on-farm occupancy reaches capacity (0 = no limit).
+        // Occupancy counts only Active/Quarantined animals with an open movement, so animals that
+        // were sold or died never block a transfer.
+        if (request.ToPenId is { } penId && pens is not null && animal.CurrentMovement?.PenId != penId)
+        {
+            var pen = await pens.GetByIdAsync(animal.TenantId, penId, cancellationToken);
+            if (pen is not null && pen.Capacity > 0)
+            {
+                var occupancy = await pens.GetOccupancyByPenAsync(animal.TenantId, penId, cancellationToken);
+                if (occupancy >= pen.Capacity)
+                    throw new Farm360.Domain.Livestock.Exceptions.PenFullException(pen.PenName, pen.Capacity);
+            }
+        }
 
         animal.TransferToShed(request.ToShedId, request.ToPenId, request.TransferDate, currentUser.UserId ?? Guid.Empty, request.Reason);
         await unitOfWork.SaveChangesAsync(cancellationToken);

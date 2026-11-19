@@ -13,10 +13,13 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
+
 @Component({
   selector: 'app-branch-detail',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -27,7 +30,6 @@ import { forkJoin, of } from 'rxjs';
     DatePipe
   ],
   templateUrl: './branch-detail.html',
-  styleUrls: ['./branch-detail.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BranchDetailComponent {
@@ -63,14 +65,14 @@ export class BranchDetailComponent {
       filter(params => !!params.branchId),
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
       switchMap(({ branchId }) => forkJoin({
-        branch: this.branchService.getBranchById(branchId).pipe(catchError(() => of(null))),
+        branch: this.branchService.getBranchById(branchId).pipe(catchError(err => { this.error.set(parseApiError(err, 'Failed to load branch details.')); return of(null); })),
         farms: this.farmService.getFarmsByBranch(branchId).pipe(catchError(() => of([])))
       }).pipe(
         tap(res => {
-          if (!res.branch) this.error.set('Failed to load branch details.');
+          if (!res.branch && !this.error()) this.error.set('Failed to load branch details.');
         }),
         catchError(err => {
-          this.error.set('Failed to load branch details.');
+          this.error.set(parseApiError(err, 'Failed to load branch details.'));
           return of({ branch: null, farms: [] });
         })
       )),

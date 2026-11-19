@@ -1,4 +1,5 @@
-import { Component, HostListener, ViewChild, ElementRef, inject, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, HostListener, ViewChild, ElementRef, inject, signal, computed, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -34,7 +35,7 @@ interface SearchResultGroup {
         <span *ngIf="isLoading()" class="mr-2">
           <mat-icon class="animate-spin text-primary-500 !text-[16px] !w-[16px] !h-[16px]">autorenew</mat-icon>
         </span>
-        <span *ngIf="!isLoading()" class="text-gray-400 dark:text-gray-500 text-[10px] font-semibold border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 pointer-events-none">⌘K</span>
+        <span *ngIf="!isLoading()" class="text-gray-400 dark:text-gray-500 text-[11px] font-semibold border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 pointer-events-none">⌘K</span>
       </div>
 
       <!-- Dropdown Results -->
@@ -108,6 +109,8 @@ export class GlobalSearchComponent implements OnInit {
     }
   }
 
+  private readonly destroyRef = inject(DestroyRef);
+
   ngOnInit() {
     this.searchControl.valueChanges.pipe(
       debounceTime(300),
@@ -121,10 +124,7 @@ export class GlobalSearchComponent implements OnInit {
       }),
       filter(val => !!val),
       switchMap(term => {
-        let currentFarmId = '';
-        this.contextService.currentFarm$.subscribe((f: any) => {
-          if (f && f.id) currentFarmId = f.id as string;
-        }).unsubscribe();
+        const currentFarmId = this.contextService.currentFarmValue?.id ?? '';
 
         if (!currentFarmId) return of([]);
 
@@ -139,7 +139,8 @@ export class GlobalSearchComponent implements OnInit {
         );
 
         return forkJoin({ animals: animals$, inventory: inventory$ });
-      })
+      }),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((data: any) => {
       if (!data) return;
       
@@ -151,7 +152,8 @@ export class GlobalSearchComponent implements OnInit {
           items: data.animals.map((a: AnimalListItemDto) => ({
             id: a.id,
             title: `Tag: ${a.tagId}`,
-            subtitle: `${a.species} - ${a.breedName}`,
+            // Global search keeps all animals (incl. Sold/Dead) but always shows the status.
+            subtitle: `${a.species} - ${a.breedName} · ${a.status}`,
             icon: 'pets',
             route: `/livestock/animals/${a.id}`
           }))

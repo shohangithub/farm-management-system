@@ -19,9 +19,10 @@
 
   <div #reportSheet id="treatmentListContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
   <!-- Empty State -->
   <app-empty-state 
-    *ngIf="!isLoading() && (!dataSource() || dataSource().length === 0)"
+    *ngIf="!isLoading() && (!dataSource() || dataSource().length === 0) && !loadError()"
     icon="medical_services"
     title="No treatments found"
     description="Log a new treatment to start tracking animal health."
@@ -54,11 +55,11 @@
           <button type="button" 
                   (click)="openEditTreatmentDialog(element)"
                   class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
-                  title="Edit Treatment Details">
+                  title="Edit Treatment Details" aria-label="Edit">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
           </button>
           
-          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="{
                   'bg-blue-50 text-blue-700 border-blue-200': element.status === treatmentStatus.Ongoing,
                   'bg-emerald-50 text-emerald-700 border-emerald-200': element.status === treatmentStatus.Completed,
@@ -74,19 +75,19 @@
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="grid grid-cols-2 gap-y-4 gap-x-2">
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Medication</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Medication</div>
             <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ element.medicationName }}</div>
             <div class="text-xs text-gray-500">{{ element.dosageAmount }} {{ element.dosageUnit }}</div>
           </div>
           
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Start Date</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Start Date</div>
             <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ element.startDate | date:'mediumDate' }}</div>
           </div>
 
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Cost</div>
-            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">৳ {{ element.costBdt | number:'1.2-2' }}</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Cost</div>
+            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ element.costBdt | money:2 }}</div>
           </div>
         </div>
       </div>

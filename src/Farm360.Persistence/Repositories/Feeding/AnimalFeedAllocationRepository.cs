@@ -174,6 +174,32 @@ public sealed class AnimalFeedAllocationRepository : IAnimalFeedAllocationReposi
             .ToList();
     }
 
+    public async Task<IReadOnlyList<AnimalFeedDay>> GetDailyEatenByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+    {
+        var nonKg = await NonKgFormulaIdsAsync(cancellationToken).ConfigureAwait(false);
+
+        var rows = await Eaten()
+            .Where(a => a.FarmId == farmId && a.EntryDate >= from && a.EntryDate <= to)
+            .GroupBy(a => new { a.AnimalId, a.EntryDate })
+            .Select(g => new
+            {
+                g.Key.AnimalId,
+                g.Key.EntryDate,
+                Kg = g.Sum(x => nonKg.Contains(x.FormulaId) ? 0m : x.AllocatedKg),
+                Cost = g.Sum(x => x.AllocatedCostBdt),
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows
+            .Select(r => new AnimalFeedDay(r.AnimalId, r.EntryDate, r.Kg, r.Cost))
+            .ToList();
+    }
+
     public async Task<IReadOnlyList<AnimalFeedAllocation>> GetNonZeroForSkippedEntriesAsync(
         Guid farmId,
         CancellationToken cancellationToken = default) =>
@@ -205,7 +231,7 @@ public sealed class AnimalFeedAllocationRepository : IAnimalFeedAllocationReposi
         var ids = await _context.AnimalFeedAllocations
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(a => a.EntryDate == date)
+            .Where(a => a.EntryDate == date && !a.IsDeleted)
             .Select(a => a.DailyFeedingEntryId)
             .Distinct()
             .ToListAsync(cancellationToken)
@@ -218,17 +244,33 @@ public sealed class AnimalFeedAllocationRepository : IAnimalFeedAllocationReposi
         DateOnly from,
         DateOnly to,
         int take,
+        Guid? tenantId = null,
+        Guid? farmId = null,
         CancellationToken cancellationToken = default)
     {
         // Anti-join against the allocation table so a resumed or re-run backfill picks up only
         // what is still missing — the operation has to be safely repeatable.
         var allocatedIds = _context.AnimalFeedAllocations
             .IgnoreQueryFilters()
+            .Where(a => !a.IsDeleted)
             .Select(a => a.DailyFeedingEntryId);
 
-        return await _context.DailyFeedingEntries
+        var query = _context.DailyFeedingEntries
             .IgnoreQueryFilters()
-            .Where(e => e.EntryDate >= from && e.EntryDate <= to && !allocatedIds.Contains(e.Id))
+            .Where(e => e.EntryDate >= from && e.EntryDate <= to && !allocatedIds.Contains(e.Id));
+
+        // Explicit scope for user-initiated runs (the query filters are bypassed above).
+        if (tenantId.HasValue)
+        {
+            query = query.Where(e => e.TenantId == tenantId.Value);
+        }
+
+        if (farmId.HasValue)
+        {
+            query = query.Where(e => e.FarmId == farmId.Value);
+        }
+
+        return await query
             .OrderBy(e => e.EntryDate)
             .Take(Math.Clamp(take, 1, 10_000))
             .ToListAsync(cancellationToken)
@@ -240,7 +282,8 @@ public sealed class AnimalFeedAllocationRepository : IAnimalFeedAllocationReposi
         CancellationToken cancellationToken = default) =>
         await _context.AnimalFeedAllocations
             .IgnoreQueryFilters()
-            .Where(a => a.DailyFeedingEntryId == entryId)
+            // Rows of an animal re-split out of a group entry (it had left the farm) are soft-deleted.
+            .Where(a => a.DailyFeedingEntryId == entryId && !a.IsDeleted)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

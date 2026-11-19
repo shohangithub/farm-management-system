@@ -32,7 +32,10 @@ public sealed record ReportCatalogItemResponse(
     string TitleBn,
     string Description,
     string Category,
-    IReadOnlyList<ReportParameter> Parameters);
+    IReadOnlyList<ReportParameter> Parameters,
+    string DescriptionBn = "",
+    string? Permission = null,
+    bool CanExport = false);
 
 public sealed record ReportRunHistoryResponse(
     Guid Id,
@@ -45,7 +48,10 @@ public sealed record ReportRunHistoryResponse(
     int RowCount,
     int DurationMs,
     string? OutputHash,
-    string? FailureReason);
+    string? FailureReason,
+    IReadOnlyDictionary<string, string?>? Parameters = null,
+    string? Language = null,
+    bool BengaliNumerals = false);
 
 public static class ReportEndpoints
 {
@@ -81,16 +87,28 @@ public static class ReportEndpoints
             .WithSummary("Audit history of report executions.");
     }
 
-    private static IResult GetCatalog([FromServices] IReportExecutionService reports)
+    /// <summary>
+    /// Only the reports the caller may run: a catalog entry that always answers 403 is a broken
+    /// promise, and listing finance reports to a stockman tells him what he is not allowed to see.
+    /// </summary>
+    private static async Task<IResult> GetCatalog(
+        [FromServices] IReportExecutionService reports,
+        CancellationToken cancellationToken)
     {
-        var items = reports.GetCatalog()
+        var catalog = await reports.GetCatalogAsync(cancellationToken);
+        var canExport = await reports.HasPermissionAsync(PermissionConstants.ReportsModule.Export, cancellationToken);
+
+        var items = catalog
             .Select(d => new ReportCatalogItemResponse(
                 d.Key,
                 d.Title.En,
                 d.Title.Bn,
                 d.Description.En,
                 d.Category.ToString(),
-                d.Parameters))
+                d.Parameters,
+                d.Description.Bn,
+                d.Permission,
+                canExport))
             .ToList();
 
         return Results.Ok(items);
@@ -176,22 +194,74 @@ public static class ReportEndpoints
         [FromQuery] string? reportKey,
         [FromQuery] int take,
         [FromServices] IReportRunRepository runs,
+        [FromServices] IReportExecutionService reports,
         CancellationToken cancellationToken)
     {
         var history = await runs.GetRecentAsync(reportKey, take <= 0 ? 50 : take, cancellationToken);
 
-        return Results.Ok(history.Select(r => new ReportRunHistoryResponse(
-            r.Id,
-            r.ReportKey,
-            r.ReportTitle,
-            r.RequestedByName,
-            r.RequestedAtUtc,
-            r.Format.ToString(),
-            r.Outcome.ToString(),
-            r.RowCount,
-            r.DurationMs,
-            r.OutputHash,
-            r.FailureReason)));
+        // Only runs of reports the caller can still run: the parameters of a finance report are
+        // finance data too.
+        var permitted = (await reports.GetCatalogAsync(cancellationToken))
+            .Select(d => d.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return Results.Ok(history
+            .Where(r => permitted.Contains(r.ReportKey))
+            .Select(r =>
+            {
+                var snapshot = ReadJson(r.RatesSnapshotJson);
+                return new ReportRunHistoryResponse(
+                    r.Id,
+                    r.ReportKey,
+                    r.ReportTitle,
+                    r.RequestedByName,
+                    r.RequestedAtUtc,
+                    r.Format.ToString(),
+                    r.Outcome.ToString(),
+                    r.RowCount,
+                    r.DurationMs,
+                    r.OutputHash,
+                    r.FailureReason,
+                    ReadParameters(r.ParametersJson),
+                    snapshot is not null && snapshot.TryGetValue("language", out var lang) ? lang?.ToString() : null,
+                    snapshot is not null && snapshot.TryGetValue("bengaliNumerals", out var bn)
+                        && bn is System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.True });
+            }));
+    }
+
+    /// <summary>The bound parameters of a past run — the recipe "run again" replays.</summary>
+    private static Dictionary<string, string?>? ReadParameters(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string?>>(json);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static Dictionary<string, object?>? ReadJson(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(json);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
     }
 
     private static ReportRequest BuildRequest(string key, RunReportRequest? request)

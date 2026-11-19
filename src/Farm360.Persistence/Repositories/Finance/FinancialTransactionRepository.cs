@@ -232,4 +232,20 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<FinancialTransaction>> GetManualVetPostingsAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+    {
+        var start = from.ToDateTime(TimeOnly.MinValue);
+        var endExclusive = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+        return await _context.FinancialTransactions
+            .AsNoTracking()
+            .Where(t => t.FarmId == farmId
+                        && t.LedgerVetPostedAnimalId != null
+                        && t.TransactionDate >= start
+                        && t.TransactionDate < endExclusive)
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -1,15 +1,18 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
 import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-schedule-vaccination-dialog',
@@ -35,7 +38,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Plan upcoming animal vaccinations</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -54,6 +57,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animal <span class="text-red-500">*</span></label>
             <app-animal-picker formControlName="animalId"></app-animal-picker>
+            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -72,12 +76,14 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Vaccine Name <span class="text-red-500">*</span></label>
               <input type="text" formControlName="vaccineName" placeholder="e.g. FMD Vaccine"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p *ngIf="form.get('vaccineName')?.touched && form.get('vaccineName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
             
             <div class="space-y-1.5 md:col-span-1">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Dosage Qty</label>
               <input type="number" formControlName="dosageQuantity" min="0" step="0.1" placeholder="Qty"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p *ngIf="form.get('dosageQuantity')?.touched && form.get('dosageQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
             </div>
 
             <div class="grid grid-cols-2 gap-2 md:col-span-2">
@@ -91,6 +97,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Scheduled Date <span class="text-red-500">*</span></label>
               <input type="date" formControlName="scheduledDate"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p *ngIf="form.get('scheduledDate')?.touched && form.get('scheduledDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
           </div>
           </div>
@@ -134,11 +141,12 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
   `]
 })
 export class ScheduleVaccinationDialog {
+  private readonly destroyRef = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private healthService = inject(HealthService);
   private inventoryService = inject(InventoryService);
   private dialogRef = inject(MatDialogRef<ScheduleVaccinationDialog>);
-  private snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   form: FormGroup;
   isSubmitting = signal(false);
@@ -162,7 +170,7 @@ export class ScheduleVaccinationDialog {
       next: (res) => this.inventoryItems.set(res.items)
     });
 
-    this.form.get('inventoryItemId')?.valueChanges.subscribe(id => {
+    this.form.get('inventoryItemId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
       if (id) {
         const item = this.inventoryItems().find(i => i.id === id);
         if (item) {
@@ -175,10 +183,7 @@ export class ScheduleVaccinationDialog {
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.snackBar.open('Please select an animal and enter the vaccine name.', 'Close', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please select an animal and enter the vaccine name.');
       return;
     }
 
@@ -186,7 +191,7 @@ export class ScheduleVaccinationDialog {
     this.error.set('');
 
     const val = this.form.value;
-    const formattedDate = new Date(val.scheduledDate).toISOString().split('T')[0];
+    const formattedDate = toLocalIsoDate(new Date(val.scheduledDate));
 
     this.healthService.scheduleVaccination(
       val.animalId, 
@@ -199,19 +204,13 @@ export class ScheduleVaccinationDialog {
     ).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open('Vaccination scheduled successfully!', 'Close', {
-          duration: 3000,
-          panelClass: ['snack-success']
-        });
+        this.notify.success('Vaccination scheduled successfully!');
         this.dialogRef.close(true);
       },
       error: (err) => {
         const parsedMsg = parseApiError(err, 'Failed to schedule vaccination.');
         this.error.set(parsedMsg);
-        this.snackBar.open(parsedMsg, 'Close', {
-          duration: 5000,
-          panelClass: ['snack-error']
-        });
+        this.notify.error(parsedMsg);
         this.isSubmitting.set(false);
       }
     });

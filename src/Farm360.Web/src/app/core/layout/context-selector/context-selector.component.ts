@@ -1,20 +1,20 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { WorkingContextService } from '../../services/working-context.service';
-import { Subject, takeUntil, combineLatest } from 'rxjs';
+import { Subject, takeUntil, combineLatest, take } from 'rxjs';
 
 @Component({
   selector: 'app-context-selector',
   standalone: true,
   imports: [CommonModule, MatSelectModule, MatFormFieldModule, MatIconModule, ReactiveFormsModule],
   template: `
-    <div class="flex items-center gap-2 mr-4">
+    <div [class]="stacked ? 'flex flex-col gap-3 w-full' : 'flex items-center gap-2 mr-4'">
       <!-- Organization Selector (multi-org dropdown) -->
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-36 text-sm" *ngIf="(organizations$ | async)?.length! > 1">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" [class]="stacked ? 'w-full text-sm' : 'w-28 lg:w-36 text-sm'" *ngIf="(organizations$ | async)?.length! > 1">
         <mat-select [formControl]="orgControl" placeholder="Organization">
           <mat-option *ngFor="let org of organizations$ | async" [value]="org.id">
             {{ org.name }}
@@ -23,15 +23,15 @@ import { Subject, takeUntil, combineLatest } from 'rxjs';
       </mat-form-field>
 
       <!-- Organization Display (single-org) -->
-      <div *ngIf="(organizations$ | async)?.length === 1" class="hidden lg:flex flex-col mr-2">
-        <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold leading-tight">Org</span>
+      <div *ngIf="(organizations$ | async)?.length === 1" [class]="stacked ? 'flex flex-col' : 'hidden lg:flex flex-col mr-2'">
+        <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">Org</span>
         <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight max-w-[120px]">
           {{ (currentOrg$ | async)?.name }}
         </span>
       </div>
 
       <!-- Branch Selector (multi-branch dropdown) -->
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-36 text-sm" *ngIf="(branches$ | async)?.length! > 1">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" [class]="stacked ? 'w-full text-sm' : 'w-28 lg:w-36 text-sm'" *ngIf="(branches$ | async)?.length! > 1">
         <mat-select [formControl]="branchControl" placeholder="Branch">
           <mat-option *ngFor="let branch of branches$ | async" [value]="branch.id">
             {{ branch.name }}
@@ -40,15 +40,15 @@ import { Subject, takeUntil, combineLatest } from 'rxjs';
       </mat-form-field>
 
       <!-- Branch Display (single-branch) -->
-      <div *ngIf="(branches$ | async)?.length === 1" class="hidden lg:flex flex-col mr-2">
-        <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold leading-tight">Branch</span>
+      <div *ngIf="(branches$ | async)?.length === 1" [class]="stacked ? 'flex flex-col' : 'hidden lg:flex flex-col mr-2'">
+        <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">Branch</span>
         <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight w-full">
           {{ (currentBranch$ | async)?.name }}
         </span>
       </div>
 
       <!-- Farm Selector (multi-farm dropdown) -->
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-36 text-sm" *ngIf="(farms$ | async)?.length! > 1">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" [class]="stacked ? 'w-full text-sm' : 'w-28 lg:w-36 text-sm'" *ngIf="(farms$ | async)?.length! > 1">
         <mat-select [formControl]="farmControl" placeholder="Farm">
           <mat-option [value]="null">All Farms</mat-option>
           <mat-option *ngFor="let farm of farms$ | async" [value]="farm.id">
@@ -59,14 +59,14 @@ import { Subject, takeUntil, combineLatest } from 'rxjs';
 
       <!-- Farm Display (single-farm — prominent "Active Farm" badge) -->
       <div *ngIf="(farms$ | async)?.length === 1"
-           class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-900/20 transition-all duration-300"
+           [class.hidden]="!stacked" class="lg:flex flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-900/20 transition-all duration-300"
            [class.context-flash]="farmChanged">
         <!-- Farm Icon Badge -->
         <div class="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm shadow-emerald-500/20">
           <mat-icon class="!text-[13px] !w-[13px] !h-[13px] text-white">agriculture</mat-icon>
         </div>
         <div class="flex flex-col min-w-0">
-          <span class="text-[9px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold leading-tight">Active Farm</span>
+          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold leading-tight">Active Farm</span>
           <span class="text-[13px] font-bold text-emerald-800 dark:text-emerald-200 truncate leading-tight max-w-[110px]">
             {{ (currentFarm$ | async)?.name }}
           </span>
@@ -93,6 +93,8 @@ import { Subject, takeUntil, combineLatest } from 'rxjs';
   `]
 })
 export class ContextSelectorComponent implements OnInit, OnDestroy {
+  /** Vertical full-width layout (used in the mobile context dialog). */
+  @Input() stacked = false;
   private contextService = inject(WorkingContextService);
   private destroy$ = new Subject<void>();
 
@@ -136,7 +138,7 @@ export class ContextSelectorComponent implements OnInit, OnDestroy {
     // Handle user changing org
     this.orgControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
       if (!this.isInitializing) {
-        this.contextService.organizations$.pipe(takeUntil(this.destroy$)).subscribe(orgs => {
+        this.contextService.organizations$.pipe(take(1)).subscribe(orgs => {
           const org = orgs.find(o => o.id === val) || null;
           this.contextService.setOrganization(org);
         });
@@ -146,7 +148,7 @@ export class ContextSelectorComponent implements OnInit, OnDestroy {
     // Handle user changing branch
     this.branchControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
       if (!this.isInitializing) {
-        this.contextService.branches$.pipe(takeUntil(this.destroy$)).subscribe(branches => {
+        this.contextService.branches$.pipe(take(1)).subscribe(branches => {
           const branch = branches.find(b => b.id === val) || null;
           this.contextService.setBranch(branch);
         });
@@ -156,7 +158,7 @@ export class ContextSelectorComponent implements OnInit, OnDestroy {
     // Handle user changing farm
     this.farmControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
       if (!this.isInitializing) {
-        this.contextService.farms$.pipe(takeUntil(this.destroy$)).subscribe(farms => {
+        this.contextService.farms$.pipe(take(1)).subscribe(farms => {
           const farm = farms.find(f => f.id === val) || null;
           this.contextService.setFarm(farm);
           this.triggerFarmFlash();

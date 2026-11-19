@@ -11,11 +11,15 @@ import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-milk-withdrawal',
   standalone: true,
-  imports: [CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
   template: `
 <app-page-header 
   title="Milk Withdrawal Tracking" 
@@ -45,6 +49,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 
 <div #reportSheet id="milkWithdrawalContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
   <div class="relative overflow-x-auto">
     <table class="w-full text-sm text-left" *ngIf="withdrawals().length > 0">
@@ -81,7 +86,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
     </table>
     
     <app-empty-state 
-      *ngIf="!isLoading() && withdrawals().length === 0"
+      *ngIf="!isLoading() && withdrawals().length === 0 && !loadError()"
       icon="check_circle"
       title="No Active Withdrawals"
       description="There are currently no animals under a milk withdrawal period."
@@ -94,6 +99,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MilkWithdrawalComponent {
+  private readonly notify = inject(NotificationService);
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
@@ -102,6 +108,12 @@ export class MilkWithdrawalComponent {
   readonly isExporting = signal(false);
   
   isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
   private refreshTrigger = signal(0);
   private currentFarmId = toSignal(this.contextService.currentFarm$, { initialValue: null });
 
@@ -112,9 +124,12 @@ export class MilkWithdrawalComponent {
 
   withdrawals = toSignal(
     toObservable(this.fetchParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ farmId }) => this.healthService.getMilkWithdrawals(farmId).pipe(
-        catchError(() => of([]))
+        catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load milk withdrawals.'));
+            return of([] as MilkWithdrawalDto[]);
+          })
       )),
       tap(() => this.isLoading.set(false))
     ),
@@ -136,7 +151,7 @@ export class MilkWithdrawalComponent {
     this.isExporting.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Milk_Withdrawals_${new Date().toISOString().split('T')[0]}`,
+        filename: `Farm360_Milk_Withdrawals_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Milk Withdrawal Compliance Report',
@@ -152,7 +167,7 @@ export class MilkWithdrawalComponent {
         showSignatures: true
       });
     } catch (err) {
-      console.error('Failed to export Milk Withdrawal PDF:', err);
+      this.notify.error(parseApiError(err, 'Could not export the PDF. Please try again.'));
     } finally {
       this.isExporting.set(false);
     }

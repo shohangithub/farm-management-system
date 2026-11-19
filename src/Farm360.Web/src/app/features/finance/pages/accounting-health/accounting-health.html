@@ -44,7 +44,7 @@
         </h2>
         <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 mb-0">
           Checked {{ h.checkedAtUtc | date: 'dd MMM yyyy, hh:mm a' }} · Cash balance
-          <b [class.text-rose-600]="h.cashBalanceBdt < 0">৳ {{ h.cashBalanceBdt | number: '1.2-2' }}</b>
+          <b [class.text-rose-600]="h.cashBalanceBdt < 0">{{ h.cashBalanceBdt | money:2 }}</b>
           · {{ h.issues.length }} issue(s){{ errors() > 0 ? ', ' + errors() + ' serious' : '' }}
         </p>
       </div>
@@ -115,14 +115,14 @@
             <div class="flex-1">
               <div class="text-sm font-bold text-gray-900 dark:text-white">{{ i.title }}
                 @if (i.canAutoFix) {
-                  <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">Auto-fixable</span>
+                  <span class="ml-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">Auto-fixable</span>
                 }
               </div>
               <div class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{{ i.detail }}</div>
             </div>
             <div class="text-right text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
               <div>{{ i.count }} item(s)</div>
-              @if (i.amountBdt) { <div class="font-mono font-bold text-gray-800 dark:text-gray-200">৳ {{ i.amountBdt | number: '1.2-2' }}</div> }
+              @if (i.amountBdt) { <div class="font-mono font-bold text-gray-800 dark:text-gray-200">{{ i.amountBdt | money:2 }}</div> }
             </div>
           </div>
         } @empty {
@@ -147,7 +147,7 @@
         <label class="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50">
           <input type="checkbox" class="mt-0.5 accent-amber-600" [ngModel]="adjustInventory()" (ngModelChange)="adjustInventory.set($event)" />
           <span>
-            Also adjust the books to the stock on hand (difference <b>৳ {{ abs(inv.differenceBdt) | number: '1.2-2' }}</b>).
+            Also adjust the books to the stock on hand (difference <b>{{ abs(inv.differenceBdt) | money:2 }}</b>).
             Tick this only after you have counted the stock — more stock than the books is posted as opening stock, less is posted as shrinkage.
           </span>
         </label>

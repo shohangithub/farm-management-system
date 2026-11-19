@@ -1,0 +1,176 @@
+# =============================================================================
+# Farm360 AI — Production Compose (single host)
+#
+#   cp deploy/.env.example deploy/.env      # fill in every value, keep it out of git
+#   docker compose --env-file deploy/.env -f docker-compose.prod.yml build
+#   docker compose --env-file deploy/.env -f docker-compose.prod.yml run --rm migrate   # apply migrations
+#   docker compose --env-file deploy/.env -f docker-compose.prod.yml up -d
+#
+# Bundled SQL Server is opt-in:  add  --profile bundled-db  to the commands above (otherwise point
+# FARM360_DB_CONNECTION at a managed/external SQL Server).
+# No secret has a default here: compose refuses to start until each ${VAR:?} is set.
+# TLS: terminate HTTPS in front of `web` (load balancer, Caddy, Traefik, nginx) — see docs/deployment.md.
+# =============================================================================
+
+name: farm360
+
+x-restart: &restart
+  restart: unless-stopped
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+
+  # ── SQL Server (optional; profile: bundled-db) ─────────────────────────────
+  sqlserver:
+    <<: [*restart, *logging]
+    profiles: ["bundled-db"]
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD}"
+      # Express is free (10 GB per database). Standard/Enterprise need a licence (or a licence key here).
+      MSSQL_PID: "${MSSQL_PID:-Express}"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - sqlserver_backups:/var/opt/mssql/backup
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -C || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [backend]
+
+  # ── Redis (cache, Data Protection key ring) ─────────────────────────────────
+  redis:
+    <<: [*restart, *logging]
+    image: redis:7.4-alpine
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru"]
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD:?set REDIS_PASSWORD}"
+      REDISCLI_AUTH: "${REDIS_PASSWORD}"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [backend]
+
+  # ── One-shot migration runner (EF Core bundle) ──────────────────────────────
+  migrate:
+    profiles: ["migrate"]
+    image: "${FARM360_MIGRATOR_IMAGE:-farm360-migrator:latest}"
+    build:
+      context: .
+      dockerfile: src/Farm360.Api/Dockerfile
+      target: migrator
+    environment:
+      ConnectionStrings__DefaultConnection: "${FARM360_DB_CONNECTION:?set FARM360_DB_CONNECTION}"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+        required: false
+    networks: [backend]
+    restart: "no"
+
+  # ── API ─────────────────────────────────────────────────────────────────────
+  api:
+    <<: [*restart, *logging]
+    image: "${FARM360_API_IMAGE:-farm360-api:latest}"
+    build:
+      context: .
+      dockerfile: src/Farm360.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: "http://+:8080"
+
+      # Secrets — all required
+      ConnectionStrings__DefaultConnection: "${FARM360_DB_CONNECTION:?set FARM360_DB_CONNECTION}"
+      ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD:?set REDIS_PASSWORD},abortConnect=false"
+      Jwt__Secret: "${JWT_SECRET:?set JWT_SECRET (>= 32 random chars)}"
+      SslCommerz__StoreId: "${SSLCOMMERZ_STORE_ID:?set SSLCOMMERZ_STORE_ID}"
+      SslCommerz__StorePassword: "${SSLCOMMERZ_STORE_PASSWORD:?set SSLCOMMERZ_STORE_PASSWORD}"
+      Seed__SystemAdmin__Phone: "${SEED_ADMIN_PHONE:-}"
+      Seed__SystemAdmin__Password: "${SEED_ADMIN_PASSWORD:-}"
+
+      # Public URLs
+      Jwt__Issuer: "${JWT_ISSUER:-https://auth.farm360.ai}"
+      Jwt__Audience: "${JWT_AUDIENCE:-https://api.farm360.ai}"
+      Cors__AllowedOrigins__0: "${PUBLIC_WEB_ORIGIN:?set PUBLIC_WEB_ORIGIN, e.g. https://app.example.com}"
+      SslCommerz__IsSandbox: "${SSLCOMMERZ_SANDBOX:-false}"
+      SslCommerz__FrontendBaseUrl: "${PUBLIC_WEB_ORIGIN}"
+      SslCommerz__ApiBaseUrl: "${PUBLIC_API_BASE_URL:-${PUBLIC_WEB_ORIGIN}}"
+      App__PublicBaseUrl: "${PUBLIC_WEB_ORIGIN}"
+
+      # Messaging (OTP, password reset, invitations). "Log" sends nothing.
+      Sms__Provider: "${SMS_PROVIDER:-Log}"
+      Sms__BulkSmsBd__ApiKey: "${BULKSMSBD_API_KEY:-}"
+      Sms__BulkSmsBd__SenderId: "${BULKSMSBD_SENDER_ID:-}"
+      Email__Provider: "${EMAIL_PROVIDER:-Log}"
+      Email__Smtp__Host: "${SMTP_HOST:-}"
+      Email__Smtp__Port: "${SMTP_PORT:-587}"
+      Email__Smtp__EnableSsl: "${SMTP_ENABLE_SSL:-true}"
+      Email__Smtp__Username: "${SMTP_USERNAME:-}"
+      Email__Smtp__Password: "${SMTP_PASSWORD:-}"
+      Email__Smtp__FromAddress: "${SMTP_FROM_ADDRESS:-}"
+      Email__Smtp__FromName: "${SMTP_FROM_NAME:-Farm360}"
+
+      # Startup behaviour (see README → Configuration)
+      Database__MigrateOnStartup: "false"
+      Seed__DemoData: "false"
+      Maintenance__RunFeedAllocationBackfillOnStartup: "false"
+
+      # Scale-out
+      Cache__Provider: Redis
+      Hangfire__RunServer: "${HANGFIRE_RUN_SERVER:-true}"
+      Hangfire__WorkerCount: "${HANGFIRE_WORKER_COUNT:-4}"
+      ForwardedHeaders__KnownNetworks__0: "${TRUSTED_PROXY_NETWORK:-172.16.0.0/12}"
+
+      # Observability
+      Serilog__Console__Json: "true"
+      Serilog__File__Enabled: "false"
+      Serilog__Seq__ServerUrl: "${SEQ_SERVER_URL:-}"
+      OpenTelemetry__Endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+    volumes:
+      # Local upload storage. Every API instance must see the same volume (or move to object storage).
+      - api_uploads:/app/wwwroot/uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+        required: false
+    networks: [backend, frontend]
+
+  # ── SPA + reverse proxy for /api, /hubs, /uploads ───────────────────────────
+  web:
+    <<: [*restart, *logging]
+    image: "${FARM360_WEB_IMAGE:-farm360-web:latest}"
+    build:
+      context: src/Farm360.Web
+    environment:
+      API_UPSTREAM: "http://api:8080"
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [frontend]
+
+volumes:
+  sqlserver_data:
+  sqlserver_backups:
+  redis_data:
+  api_uploads:
+
+networks:
+  backend:
+  frontend:

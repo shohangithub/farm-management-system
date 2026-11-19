@@ -22,6 +22,101 @@ namespace Farm360.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Farm360.Domain.BusinessRules.TenantBusinessSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("BengaliNumeralsByDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("DefaultDressingPercentage")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<decimal?>("DefaultLiveWeightPricePerKgBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("DefaultMeatPricePerKgBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("DefaultReportLanguage")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("FallbackAnimalWeightKg")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid?>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FeedAllocation")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("GroupPlanQuantityBasis")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<double?>("MetabolicWeightExponent")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("OverheadAllocation")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("OverheadCostPeriod")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Valuation")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "FarmId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TenantBusinessSettings_TenantId_FarmId")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("TenantBusinessSettings", "app");
+                });
+
             modelBuilder.Entity("Farm360.Domain.Farms.Farm", b =>
                 {
                     b.Property<Guid>("Id")
@@ -584,8 +679,10 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
                         .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<Guid?>("RuleLineId")
                         .HasColumnType("uniqueidentifier");
@@ -612,6 +709,11 @@ namespace Farm360.Persistence.Migrations
                     b.HasIndex("FeedingPlanId");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("FeedingPlanId", "RuleLineId", "EntryDate")
+                        .IsUnique()
+                        .HasDatabaseName("UX_DailyFeedingEntries_Plan_RuleLine_Date")
+                        .HasFilter("[RuleLineId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("TenantId", "FarmId", "EntryDate");
 
@@ -2795,8 +2897,17 @@ namespace Farm360.Persistence.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FarmId")
                         .HasColumnType("uniqueidentifier");
@@ -2804,6 +2915,15 @@ namespace Farm360.Persistence.Migrations
                     b.Property<string>("Findings")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateOnly?>("NextVisitDate")
                         .HasColumnType("date");
@@ -2815,6 +2935,12 @@ namespace Farm360.Persistence.Migrations
                     b.Property<string>("Recommendations")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -2839,6 +2965,101 @@ namespace Farm360.Persistence.Migrations
                         .HasDatabaseName("IX_VetVisits_TenantId_Date");
 
                     b.ToTable("VetVisits", "app");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Identity.Invitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("AcceptedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AcceptedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("InvitedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastSentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SendCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Invitations_TokenHash");
+
+                    b.HasIndex("TenantId", "Status")
+                        .HasDatabaseName("IX_Invitations_TenantId_Status");
+
+                    b.ToTable("Invitations", "app");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Identity.Permission", b =>
@@ -2998,7 +3219,8 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasIndex("TenantId", "UserId")
                         .IsUnique()
-                        .HasDatabaseName("IX_TenantUsers_TenantId_UserId");
+                        .HasDatabaseName("IX_TenantUsers_TenantId_UserId")
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("TenantUsers", "app");
                 });
@@ -3351,7 +3573,9 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasIndex("InventoryItemId");
 
-                    b.HasIndex("ConsumableUsagePlanId", "ConsumableUsagePlanItemId", "EntryDate");
+                    b.HasIndex("ConsumableUsagePlanId", "ConsumableUsagePlanItemId", "EntryDate")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("TenantId", "FarmId", "EntryDate");
 
@@ -3412,8 +3636,10 @@ namespace Farm360.Persistence.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
                         .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("Sku")
                         .IsRequired()
@@ -5801,6 +6027,20 @@ namespace Farm360.Persistence.Migrations
                         });
 
                     b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Identity.Invitation", b =>
+                {
+                    b.HasOne("Farm360.Domain.Organizations.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Farm360.Domain.Identity.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Farm360.Domain.Identity.RolePermission", b =>

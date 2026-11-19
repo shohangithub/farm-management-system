@@ -7,6 +7,10 @@ namespace Farm360.Persistence.Repositories.Farms;
 
 public class PenRepository : IPenRepository
 {
+    // Occupancy = open movements of animals on the farm (Active + Quarantined, AnimalStatusGroups).
+    // Sale/death close the open movement at the exit date (Animal.Sell / RecordDeath), and the
+    // status filter also excludes any legacy sold/dead animal whose movement was never closed, so
+    // capacity checks for transfers never count animals that have left.
     private readonly ApplicationDbContext _context;
 
     public PenRepository(ApplicationDbContext context)
@@ -43,7 +47,7 @@ public class PenRepository : IPenRepository
     public async Task<IReadOnlyDictionary<Guid, int>> GetOccupancyByShedAsync(Guid tenantId, Guid shedId, CancellationToken cancellationToken = default)
     {
         var animalQuery = _context.Set<Farm360.Domain.Livestock.Animal>()
-            .Where(a => a.TenantId == tenantId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .Where(a => a.TenantId == tenantId && Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status))
             .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null && m.ShedId == shedId));
 
         var grouped = await animalQuery
@@ -58,7 +62,7 @@ public class PenRepository : IPenRepository
     public async Task<int> GetOccupancyByPenAsync(Guid tenantId, Guid penId, CancellationToken cancellationToken = default)
     {
         return await _context.Set<Farm360.Domain.Livestock.Animal>()
-            .Where(a => a.TenantId == tenantId && (a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Active || a.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Quarantined))
+            .Where(a => a.TenantId == tenantId && Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status))
             .SelectMany(a => a.Movements.Where(m => m.RemovedAtUtc == null))
             .CountAsync(m => m.PenId == penId, cancellationToken);
     }

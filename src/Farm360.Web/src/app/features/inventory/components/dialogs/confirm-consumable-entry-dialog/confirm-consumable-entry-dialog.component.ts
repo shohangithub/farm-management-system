@@ -7,11 +7,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { InventoryService } from '../../../services/inventory.service';
 import { DailyConsumableEntry } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-confirm-consumable-entry-dialog',
@@ -43,7 +43,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             </p>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button aria-label="Close" mat-dialog-close type="button" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
         </button>
       </div>
@@ -61,13 +61,13 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           <!-- Item Summary Badge -->
           <div class="p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs">
             <div>
-              <span class="text-gray-400 block text-[10px] uppercase font-bold">Planned Qty</span>
+              <span class="text-gray-400 block text-[11px] uppercase font-bold">Planned Qty</span>
               <span class="font-bold text-gray-900 dark:text-white text-sm">
                 {{ data.entry.expectedQuantity }} {{ data.entry.unitOfMeasure }}
               </span>
             </div>
             <div class="text-right">
-              <span class="text-gray-400 block text-[10px] uppercase font-bold">Available Stock</span>
+              <span class="text-gray-400 block text-[11px] uppercase font-bold">Available Stock</span>
               <span class="font-bold" [ngClass]="data.entry.currentStock < data.entry.expectedQuantity ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'">
                 {{ data.entry.currentStock }} {{ data.entry.unitOfMeasure }}
               </span>
@@ -106,7 +106,7 @@ export class ConfirmConsumableEntryDialogComponent {
   readonly data = inject<{ entry: DailyConsumableEntry }>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -129,7 +129,7 @@ export class ConfirmConsumableEntryDialogComponent {
       adjustmentReason: val.adjustmentReason?.trim() || undefined
     }).subscribe({
       next: () => {
-        this.snackBar.open('Consumable usage confirmed & stock deducted.', 'Close', { duration: 3000 });
+        this.notify.success('Consumable usage confirmed & stock deducted.');
         this.dialogRef.close(true);
       },
       error: (err: unknown) => {

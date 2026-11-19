@@ -21,8 +21,9 @@ public sealed record ScheduleVaccinationCommand(
 
 public sealed class ScheduleVaccinationCommandValidator : AbstractValidator<ScheduleVaccinationCommand>
 {
-    public ScheduleVaccinationCommandValidator()
+    public ScheduleVaccinationCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(v => v.AnimalId).NotEmpty();
         RuleFor(v => v.VaccineName).NotEmpty().MaximumLength(100);
         RuleFor(v => v.BatchNumber).MaximumLength(50);
@@ -31,7 +32,7 @@ public sealed class ScheduleVaccinationCommandValidator : AbstractValidator<Sche
         // Cannot schedule vaccination for a date older than today. 
         // We only schedule forward.
         RuleFor(v => v.ScheduledDate)
-            .GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .GreaterThanOrEqualTo(_ => clock.Today)
             .WithMessage("Scheduled date must be today or in the future.");
     }
 }
@@ -47,6 +48,9 @@ internal sealed class ScheduleVaccinationCommandHandler(
         // Validate animal exists and belongs to tenant
         var animal = await animalRepository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new KeyNotFoundException($"Animal with ID '{request.AnimalId}' was not found.");
+
+        // Scheduling is future work: only for an animal on the farm, and never on/after its exit.
+        animal.EnsureOnFarm("a vaccination schedule");
 
         var @event = VaccinationEvent.Schedule(
             tenantService.TenantId,

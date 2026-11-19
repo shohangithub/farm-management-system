@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,11 +16,14 @@ import { IncomeFormDialogComponent } from '../../components/income-form-dialog/i
 import { ExpenseFormDialogComponent } from '../../components/expense-form-dialog/expense-form-dialog';
 import { AllocateOverheadDialogComponent } from '../../components/allocate-overhead-dialog/allocate-overhead-dialog';
 import { MonthlyCashFlowPoint } from '../../models/finance.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-finance-dashboard',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterLink,
@@ -30,11 +33,9 @@ import { MonthlyCashFlowPoint } from '../../models/finance.model';
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    CurrencyPipe,
     DecimalPipe
   ],
   templateUrl: './finance-dashboard.html',
-  styleUrls: ['./finance-dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FinanceDashboardComponent implements OnInit {
@@ -46,14 +47,20 @@ export class FinanceDashboardComponent implements OnInit {
   readonly Math = Math;
   private readonly refreshTrigger$ = new BehaviorSubject<void>(undefined);
 
+  readonly loadError = signal<string | null>(null);
+
   private readonly dashboardData$ = this.refreshTrigger$.pipe(
     switchMap(() => {
+      this.loadError.set(null);
       const currentFarmId = this.workingContextService.currentFarmValue?.id;
       if (!currentFarmId) {
         return of(null);
       }
       return this.financeService.getDashboard(currentFarmId).pipe(
-        catchError(() => of(null))
+        catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load the finance dashboard.'));
+          return of(null);
+        })
       );
     })
   );
@@ -78,7 +85,7 @@ export class FinanceDashboardComponent implements OnInit {
   }
 
   openIncomeDialog(): void {
-    const dialogRef = this.dialog.open(IncomeFormDialogComponent, {
+    const dialogRef = this.dialog.open(IncomeFormDialogComponent, { maxWidth: '95vw',
       width: '550px',
       panelClass: 'dialog-responsive'
     });
@@ -91,7 +98,7 @@ export class FinanceDashboardComponent implements OnInit {
   }
 
   openExpenseDialog(): void {
-    const dialogRef = this.dialog.open(ExpenseFormDialogComponent, {
+    const dialogRef = this.dialog.open(ExpenseFormDialogComponent, { maxWidth: '95vw',
       width: '550px',
       panelClass: 'dialog-responsive'
     });
@@ -104,7 +111,7 @@ export class FinanceDashboardComponent implements OnInit {
   }
 
   openAllocateOverheadDialog(): void {
-    const dialogRef = this.dialog.open(AllocateOverheadDialogComponent, {
+    const dialogRef = this.dialog.open(AllocateOverheadDialogComponent, { maxWidth: '95vw',
       width: '560px',
       panelClass: 'dialog-responsive'
     });

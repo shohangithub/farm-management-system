@@ -11,14 +11,11 @@ using MediatR;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
-public sealed record AnimalRegisteredNotification(AnimalRegisteredEvent DomainEvent) : INotification;
-
 /// <summary>
 /// Opens the animal's cost ledger and books its purchase as a Livestock asset (Dr Livestock,
 /// Cr Cash) dated on the acquisition date. Born-on-farm animals carry no purchase cost.
 /// </summary>
 public sealed class AnimalRegisteredEventHandler :
-    INotificationHandler<AnimalRegisteredNotification>,
     INotificationHandler<AnimalRegisteredEvent>
 {
     private readonly IAnimalCostLedgerRepository _ledgerRepository;
@@ -37,9 +34,6 @@ public sealed class AnimalRegisteredEventHandler :
         _livestockAccounting = livestockAccounting;
         _unitOfWork = unitOfWork;
     }
-
-    public Task Handle(AnimalRegisteredNotification notification, CancellationToken cancellationToken) =>
-        ProcessEventAsync(notification.DomainEvent, cancellationToken);
 
     public Task Handle(AnimalRegisteredEvent notification, CancellationToken cancellationToken) =>
         ProcessEventAsync(notification, cancellationToken);

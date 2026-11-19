@@ -9,6 +9,8 @@ public sealed record PurchaseOrderFulfilledNotification(PurchaseOrderFulfilledEv
 
 public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseOrderFulfilledNotification>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IPurchaseOrderRepository _purchaseOrderRepository;
     private readonly IInventoryItemRepository _inventoryItemRepository;
     private readonly IStockTransactionRepository _stockTransactionRepository;
@@ -18,8 +20,10 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
         IPurchaseOrderRepository purchaseOrderRepository,
         IInventoryItemRepository inventoryItemRepository,
         IStockTransactionRepository stockTransactionRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _purchaseOrderRepository = purchaseOrderRepository;
         _inventoryItemRepository = inventoryItemRepository;
         _stockTransactionRepository = stockTransactionRepository;
@@ -53,7 +57,7 @@ public class PurchaseOrderFulfilledEventHandler : INotificationHandler<PurchaseO
                     quantity: item.Quantity,
                     unitCostBdt: item.UnitCostBdt,
                     balanceAfter: inventoryItem.CurrentStock,
-                    transactionDate: DateOnly.FromDateTime(DateTime.UtcNow),
+                    transactionDate: _clock.Today,
                     supplierId: purchaseOrder.SupplierId,
                     invoiceNumber: purchaseOrder.PoNumber,
                     reason: $"Received from Purchase Order {purchaseOrder.PoNumber}",

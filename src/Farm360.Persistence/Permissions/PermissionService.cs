@@ -53,7 +53,9 @@ public sealed class PermissionService(
         var permissions = await context.TenantUsers
             .AsNoTracking()
             .IgnoreQueryFilters()  // We apply explicit tenant filter below
-            .Where(tu => tu.UserId == userId && tu.TenantId == tenantId && !tu.IsDeleted)
+            // Deactivated (or pending) memberships grant nothing.
+            .Where(tu => tu.UserId == userId && tu.TenantId == tenantId && !tu.IsDeleted
+                         && tu.Status == Farm360.Domain.Identity.TenantUserStatus.Active)
             .Join(
                 context.RolePermissions.AsNoTracking(),
                 tu => tu.RoleId,

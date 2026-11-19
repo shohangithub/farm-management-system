@@ -1,4 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { BatchService } from '../../services/batch.service';
@@ -13,7 +15,7 @@ import { of } from 'rxjs';
 @Component({
   selector: 'app-batch-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeaderComponent, MatButtonModule, MatIconModule, DatePipe],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, PageHeaderComponent, MatButtonModule, MatIconModule, DatePipe],
   templateUrl: './batch-detail.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -39,7 +41,7 @@ export class BatchDetail {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ id }) => this.svc.getBatchDetails(id!).pipe(
         catchError(err => {
-          this.error.set(err.message || 'Error loading batch');
+          this.error.set(parseApiError(err, 'Could not load this batch.'));
           return of(null);
         })
       )),

@@ -2,10 +2,10 @@
   {{ data.title }}
 </h2>
 <mat-dialog-content class="!text-gray-600 dark:!text-gray-300">
-  <p>{{ data.message }}</p>
+  <p class="whitespace-pre-line">{{ data.message }}</p>
 </mat-dialog-content>
 <mat-dialog-actions align="end" class="!pb-4 !pr-4">
-  <button mat-button (click)="onCancel()" class="!text-gray-600 dark:!text-gray-400 hover:!bg-gray-100 dark:hover:!bg-gray-800">
+  <button mat-button *ngIf="!data.hideCancel" (click)="onCancel()" class="!text-gray-600 dark:!text-gray-400 hover:!bg-gray-100 dark:hover:!bg-gray-800">
     {{ data.cancelButtonText || 'Cancel' }}
   </button>
   <button mat-flat-button 

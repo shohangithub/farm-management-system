@@ -103,10 +103,11 @@ public class ConsumableUsagePlan : AuditableEntity, IAggregateRoot
         Status = ConsumableUsagePlanStatus.Paused;
     }
 
-    public void Complete()
+    /// <param name="today">The farm's local date (IFarmClock); UTC date when omitted.</param>
+    public void Complete(DateOnly? today = null)
     {
         Status = ConsumableUsagePlanStatus.Completed;
-        EndDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        EndDate = today ?? DateOnly.FromDateTime(DateTime.UtcNow);
     }
 }
 

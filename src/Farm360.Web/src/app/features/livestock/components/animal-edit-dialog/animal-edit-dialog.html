@@ -10,7 +10,7 @@
         <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ animal.tagId }}</p>
       </div>
     </div>
-    <button type="button" mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+    <button aria-label="Close" type="button" mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -30,6 +30,7 @@
         <div class="flex flex-col">
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Tag ID</label>
           <input type="text" formControlName="tagId" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all uppercase" placeholder="e.g. TAG-123" />
+<p *ngIf="form.get('tagId')?.invalid && form.get('tagId')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'tagId') }}</p>
           <span class="text-xs text-red-500 mt-1" *ngIf="getError('tagId')">{{ getError('tagId') }}</span>
         </div>
         <div class="flex flex-col">
@@ -39,6 +40,7 @@
             <option [value]="TagType.EarTag">Ear Tag</option>
             <option [value]="TagType.Rfid">RFID</option>
           </select>
+<p *ngIf="form.get('tagType')?.invalid && form.get('tagType')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'tagType') }}</p>
         </div>
       </div>
     </div>
@@ -52,6 +54,7 @@
           <select formControlName="species" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
             <option *ngFor="let s of speciesOptions" [value]="s.value">{{ s.label }}</option>
           </select>
+<p *ngIf="form.get('species')?.invalid && form.get('species')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'species') }}</p>
         </div>
         <div class="flex flex-col">
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Breed</label>
@@ -59,6 +62,7 @@
             <option value="" disabled>Select Breed</option>
             <option *ngFor="let b of breeds()" [value]="b.id">{{ b.name }}</option>
           </select>
+<p *ngIf="form.get('breedId')?.invalid && form.get('breedId')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'breedId') }}</p>
         </div>
         <div class="flex flex-col">
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Sex</label>
@@ -66,10 +70,12 @@
             <option [value]="AnimalSex.Male">Male</option>
             <option [value]="AnimalSex.Female">Female</option>
           </select>
+<p *ngIf="form.get('sex')?.invalid && form.get('sex')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'sex') }}</p>
         </div>
         <div class="flex flex-col">
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Date of Birth</label>
           <input type="date" formControlName="dateOfBirth" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+<p *ngIf="form.get('dateOfBirth')?.invalid && form.get('dateOfBirth')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'dateOfBirth') }}</p>
         </div>
       </div>
     </div>
@@ -84,14 +90,17 @@
             <option [value]="AcquisitionType.Purchased">Purchased</option>
             <option [value]="AcquisitionType.BornOnFarm">Born on Farm</option>
           </select>
+<p *ngIf="form.get('acquisitionType')?.invalid && form.get('acquisitionType')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'acquisitionType') }}</p>
         </div>
         <div class="flex flex-col">
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Acquisition Date</label>
           <input type="date" formControlName="acquisitionDate" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+<p *ngIf="form.get('acquisitionDate')?.invalid && form.get('acquisitionDate')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'acquisitionDate') }}</p>
         </div>
         <div class="flex flex-col md:col-span-2">
           <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Price (BDT) - Optional</label>
-          <input type="number" formControlName="acquisitionPriceBdt" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" placeholder="0.00" />
+          <input type="number" min="0" step="0.01" formControlName="acquisitionPriceBdt" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" placeholder="0.00" />
+<p *ngIf="form.get('acquisitionPriceBdt')?.invalid && form.get('acquisitionPriceBdt')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'acquisitionPriceBdt') }}</p>
         </div>
       </div>
     </div>
@@ -101,6 +110,7 @@
       <div class="flex flex-col">
         <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes (Optional)</label>
         <textarea formControlName="notes" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"></textarea>
+<p *ngIf="form.get('notes')?.invalid && form.get('notes')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'notes') }}</p>
       </div>
     </div>
   </div>

@@ -44,16 +44,13 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
 {
     private readonly IAnimalRepository _animals;
     private readonly IAnimalFeedAllocationRepository _allocations;
-    private readonly IDailyFeedingEntryRepository _dailyEntries;
 
     public AnimalGrowthReportDefinition(
         IAnimalRepository animals,
-        IAnimalFeedAllocationRepository allocations,
-        IDailyFeedingEntryRepository dailyEntries)
+        IAnimalFeedAllocationRepository allocations)
     {
         _animals = animals;
         _allocations = allocations;
-        _dailyEntries = dailyEntries;
     }
 
     public override string Key => "livestock.animal-growth";
@@ -84,7 +81,7 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
         // legitimately disagree with this one for any animal weighed more than twice.
         ReportColumn<AnimalGrowthReportRow>.Number("adg", new LocalizedText("Period ADG (kg/d)", "নির্দিষ্ট সময়ের দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 20f),
         ReportColumn<AnimalGrowthReportRow>.Number("feed", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, 2, 20f, ReportAggregate.Sum),
-        ReportColumn<AnimalGrowthReportRow>.Money("feedCost", new LocalizedText("Feed cost", "খাদ্য খরচ"), r => r.FeedCostBdt, 2, 22f),
+        ReportColumn<AnimalGrowthReportRow>.Money("feedCost", new LocalizedText("Feed cost", "খাদ্য খরচ"), r => r.FeedCostBdt, 2, 22f, ReportAggregate.Sum),
         ReportColumn<AnimalGrowthReportRow>.Number("fcr", new LocalizedText("FCR", "এফসিআর"), r => r.Fcr, 2, 16f),
         ReportColumn<AnimalGrowthReportRow>.Money("costPerKg", new LocalizedText("Cost / kg gain", "প্রতি কেজি খরচ"), r => r.CostPerKgGainBdt, 2, 24f, ReportAggregate.None),
     ];
@@ -128,31 +125,13 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
             .GetByAnimalAsync(animalId, period.From, period.To, cancellationToken)
             .ConfigureAwait(false);
 
-        List<(DateOnly EntryDate, decimal AllocatedKg, decimal AllocatedCostBdt)> feedRecords;
-
-        if (allocations.Count > 0)
-        {
-            feedRecords = allocations
-                .Select(a => (a.EntryDate, a.AllocatedKg, a.AllocatedCostBdt))
-                .ToList();
-        }
-        else
-        {
-            // Resilient fallback: If allocations are not yet populated, read individual plan entries directly
-            var fallbackEntries = await _dailyEntries
-                .GetEntriesByAnimalIdAsync(animal.TenantId, animalId, cancellationToken)
-                .ConfigureAwait(false);
-
-            feedRecords = fallbackEntries
-                .Where(e => e.EntryDate >= period.From && e.EntryDate <= period.To)
-                .Select(e =>
-                {
-                    var kg = e.ActualKg ?? e.ExpectedKg;
-                    var cost = e.TotalCostBdt ?? Math.Round(kg * (e.UnitCostAtConsumptionBdt ?? 0m), 2);
-                    return (e.EntryDate, kg, cost);
-                })
-                .ToList();
-        }
+        // Confirmed allocations only. There is deliberately no fallback to the plan's expected
+        // kilograms: a planned ration is not feed eaten, and an FCR computed from it flatters the
+        // animal by exactly the feed that was never confirmed. An interval with no confirmed feed
+        // shows 0 kg and no FCR — "not recorded" — rather than a number that looks measured.
+        var feedRecords = allocations
+            .Select(a => (a.EntryDate, a.AllocatedKg, a.AllocatedCostBdt))
+            .ToList();
 
         var rows = new List<AnimalGrowthReportRow>(weighings.Count);
         DateOnly? previousDate = null;

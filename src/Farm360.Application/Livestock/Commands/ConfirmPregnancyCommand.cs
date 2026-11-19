@@ -15,13 +15,14 @@ public sealed record ConfirmPregnancyCommand(
 
 public sealed class ConfirmPregnancyCommandValidator : AbstractValidator<ConfirmPregnancyCommand>
 {
-    public ConfirmPregnancyCommandValidator()
+    public ConfirmPregnancyCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
         RuleFor(x => x.BreedingRecordId).NotEmpty();
         
         RuleFor(x => x.ConfirmDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Pregnancy confirmation date cannot be in the future.");
             
         RuleFor(x => x.ExpectedCalvingDate)

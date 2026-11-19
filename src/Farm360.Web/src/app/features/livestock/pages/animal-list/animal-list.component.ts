@@ -8,7 +8,7 @@ import { AnimalService } from '../../services/animal.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import {
   AnimalListItemDto, AnimalListParams, AnimalSpecies, AnimalStatus, AnimalSex,
-  SPECIES_LABELS, STATUS_LABELS, SEX_LABELS, PagedAnimalListDto
+  SPECIES_LABELS, STATUS_LABELS, SEX_LABELS, PagedAnimalListDto, AnimalPresence, isOnFarm
 } from '../../models/animal.models';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -30,6 +30,9 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 import { ReportService } from '../../../reports/services/report.service';
 import { formatAnimalAge } from '../../utils/animal-age';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { parseApiError } from '../../../../core/utils/error-parser';
 @Component({
   selector: 'app-animal-list',
   standalone: true,
@@ -41,6 +44,7 @@ import { formatAnimalAge } from '../../utils/animal-age';
   templateUrl: './animal-list.component.html'
 })
 export class AnimalListComponent {
+  private readonly notify = inject(NotificationService);
   private readonly svc = inject(AnimalService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -56,7 +60,8 @@ export class AnimalListComponent {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly searchTerm = signal('');
-  readonly params = signal<AnimalListParams>({ pageNumber: 1, pageSize: 20 });
+  // Default view = animals on the farm (Active/Quarantined). Sold/Dead have left the farm.
+  readonly params = signal<AnimalListParams>({ pageNumber: 1, pageSize: 20, presence: 'OnFarm' });
   readonly selectedAnimals = signal<Set<AnimalListItemDto>>(new Set());
 
   readonly Math = Math;
@@ -69,8 +74,16 @@ export class AnimalListComponent {
 
   readonly hasActiveFilters = computed(() => {
     const p = this.params();
-    return !!(p.species != null || p.status != null || p.sex != null || p.search);
+    return !!(p.species != null || p.status != null || p.sex != null || p.search || p.presence !== 'OnFarm');
   });
+
+  readonly presenceOptions: { value: AnimalPresence | ''; label: string }[] = [
+    { value: 'OnFarm', label: 'On farm' },
+    { value: 'LeftFarm', label: 'Sold / Dead' },
+    { value: '', label: 'All animals' },
+  ];
+
+  readonly isOnFarm = isOnFarm;
 
   constructor() {
     // Listen to farm context changes
@@ -108,9 +121,11 @@ export class AnimalListComponent {
         if (!params.farmId) {
           return of({ items: [], totalCount: 0, pageNumber: params.pageNumber ?? 1, pageSize: params.pageSize ?? 20, totalPages: 0, hasPreviousPage: false, hasNextPage: false } as PagedAnimalListDto);
         }
-        return this.svc.getList(params).pipe(
+        // A specific status filter overrides the on-farm / left-farm presence filter.
+        const query: AnimalListParams = params.status ? { ...params, presence: undefined } : params;
+        return this.svc.getList(query).pipe(
           catchError(e => {
-            this.error.set(e?.error?.detail ?? 'An error occurred');
+            this.error.set(parseApiError(e, 'Could not load animals.'));
             return of(null);
           })
         );
@@ -142,7 +157,7 @@ export class AnimalListComponent {
         this.isExporting.set(false);
         if (res.body) {
           const farmName = (this.contextService.currentFarmValue?.name || 'All_Units').replace(/[\s\W]+/g, '_');
-          const dateStr = new Date().toISOString().slice(0, 10);
+          const dateStr = toLocalIsoDate();
           const keyShort = reportKey.split('.').pop() || 'report';
           const defaultName = `Farm360_${keyShort}_${farmName}_${dateStr}.${format}`;
           const fn = this.reportService.fileNameFrom(res.headers, defaultName);
@@ -176,6 +191,12 @@ export class AnimalListComponent {
     this.searchTerm.set(term);
   }
 
+  setPresence(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value as AnimalPresence | '';
+    // Choosing a presence view clears any specific status (status would override it).
+    this.params.update(p => ({ ...p, presence: val || undefined, status: undefined, pageNumber: 1 }));
+  }
+
   setFilter(key: keyof AnimalListParams, event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
     this.params.update(p => ({ ...p, [key]: val || undefined, pageNumber: 1 }));
@@ -187,7 +208,7 @@ export class AnimalListComponent {
     // However, we want to clear everything else as well.
     // So we manually set params, taking care to preserve the farmId
     const currentFarmId = this.params().farmId;
-    this.params.set({ pageNumber: 1, pageSize: 20, farmId: currentFarmId });
+    this.params.set({ pageNumber: 1, pageSize: 20, farmId: currentFarmId, presence: 'OnFarm' });
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
@@ -234,6 +255,8 @@ export class AnimalListComponent {
 
   toggleSelection(animal: AnimalListItemDto, event: Event): void {
     event.stopPropagation();
+    // Bulk actions record new facts — only on-farm animals can be selected.
+    if (!isOnFarm(animal.status)) return;
     const set = new Set(this.selectedAnimals());
     if (set.has(animal)) {
       set.delete(animal);
@@ -248,10 +271,10 @@ export class AnimalListComponent {
   }
 
   openBatchWeightDialog(): void {
-    const animals = Array.from(this.selectedAnimals());
+    const animals = Array.from(this.selectedAnimals()).filter(a => isOnFarm(a.status));
     if (animals.length === 0) return;
 
-    const dialogRef = this.dialog.open(BatchWeightDialogComponent, {
+    const dialogRef = this.dialog.open(BatchWeightDialogComponent, { maxWidth: '95vw',
       disableClose: true,
       width: '720px',
       data: { animals } as BatchWeightDialogData
@@ -266,10 +289,10 @@ export class AnimalListComponent {
   }
 
   openBatchVaccinationDialog(): void {
-    const animals = Array.from(this.selectedAnimals());
+    const animals = Array.from(this.selectedAnimals()).filter(a => isOnFarm(a.status));
     if (animals.length === 0) return;
 
-    const dialogRef = this.dialog.open(BatchVaccinationDialogComponent, {
+    const dialogRef = this.dialog.open(BatchVaccinationDialogComponent, { maxWidth: '95vw',
       disableClose: true,
       width: '560px',
       data: { animals } as BatchVaccinationDialogData
@@ -298,7 +321,7 @@ export class AnimalListComponent {
       if (res) {
         this.svc.delete(animal.id).subscribe({
           next: () => this.refresh(),
-          error: e => alert(e?.error?.detail ?? 'Delete failed'),
+          error: e => this.notify.error(parseApiError(e, 'Delete failed.')),
         });
       }
     });

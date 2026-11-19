@@ -2,25 +2,34 @@ import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { BranchService } from '../services/branch.service';
 import { CreateBranchCommand, UpdateBranchCommand } from '../models/branch.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NotificationService } from '../../../shared/services/notification.service';
+
+import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-branch-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
-  templateUrl: './branch-form.html',
-  styleUrls: ['./branch-form.scss']
+  templateUrl: './branch-form.html'
 })
-export class BranchFormComponent implements OnInit {
+export class BranchFormComponent implements OnInit, HasUnsavedChanges {
+  /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
+  private saved = false;
+
+  hasUnsavedChanges(): boolean {
+    return !!this.branchForm?.dirty && !this.saved;
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly branchService = inject(BranchService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   branchForm!: FormGroup;
@@ -121,10 +130,7 @@ export class BranchFormComponent implements OnInit {
   onSubmit(): void {
     if (this.branchForm.invalid) {
       this.branchForm.markAllAsTouched();
-      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please fix the validation errors before submitting.');
       return;
     }
 
@@ -149,10 +155,8 @@ export class BranchFormComponent implements OnInit {
       this.branchService.updateBranch(this.branchId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Branch updated successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Branch updated successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations', this.orgId(), 'branches']);
         },
         error: (err) => {
@@ -170,10 +174,8 @@ export class BranchFormComponent implements OnInit {
       this.branchService.createBranch(this.orgId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Branch created successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Branch created successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations', this.orgId(), 'branches']);
         },
         error: (err) => {

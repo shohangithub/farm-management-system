@@ -50,23 +50,34 @@ public static class SerilogConfiguration
             // SensitiveDataAttribute properties are masked in log output.
             // OTP values, passwords, phone numbers never appear in structured logs.
             .Destructure.ByTransforming<string>(s =>
-                s.Length > 200 ? s[..200] + "...(truncated)" : s)
+                s.Length > 200 ? s[..200] + "...(truncated)" : s);
 
-            // ── Sinks ────────────────────────────────────────────────────────
-            .WriteTo.Console(
-                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{TenantId}] {Message:lj}{NewLine}{Exception}",
-                restrictedToMinimumLevel: environment.IsDevelopment()
-                    ? LogEventLevel.Debug
-                    : LogEventLevel.Information)
+        // ── Sinks ────────────────────────────────────────────────────────────
+        // Serilog:Console:Json=true → one compact JSON object per line (container log collectors).
+        // Serilog:File:Enabled=false → no rolling files (containers: stdout is the log stream).
+        var consoleLevel = environment.IsDevelopment() ? LogEventLevel.Debug : LogEventLevel.Information;
+        if (configuration.GetValue("Serilog:Console:Json", defaultValue: false))
+        {
+            loggerConfig.WriteTo.Console(new CompactJsonFormatter(), restrictedToMinimumLevel: consoleLevel);
+        }
+        else
+        {
+            loggerConfig.WriteTo.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] [{TenantId}] {Message:lj}{NewLine}{Exception}",
+                restrictedToMinimumLevel: consoleLevel);
+        }
 
-            .WriteTo.File(
+        if (configuration.GetValue("Serilog:File:Enabled", defaultValue: true))
+        {
+            loggerConfig.WriteTo.File(
                 new CompactJsonFormatter(),
-                path: Path.Combine("logs", "farm360-.jsonl"),
+                path: Path.Combine(configuration["Serilog:File:Directory"] is { Length: > 0 } dir ? dir : "logs", "farm360-.jsonl"),
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 30,
                 restrictedToMinimumLevel: LogEventLevel.Information,
                 shared: false,
                 flushToDiskInterval: TimeSpan.FromSeconds(1));
+        }
 
         // Seq sink — structured log UI for local dev
         if (!string.IsNullOrWhiteSpace(seqServerUrl))

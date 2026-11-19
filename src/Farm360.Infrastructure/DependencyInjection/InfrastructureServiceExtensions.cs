@@ -28,21 +28,20 @@ public static class InfrastructureServiceExtensions
             SerilogConfiguration.Configure(loggerConfig, configuration, environment));
 
         // ── Distributed Cache ──────────────────────────────────────────────
-        if (environment.IsProduction())
+        // Redis whenever it is configured (required to run more than one API instance);
+        // in-process memory otherwise (single instance / shared hosting). See CacheConfiguration.
+        if (CacheConfiguration.UsesRedis(configuration))
         {
-            // Fallback for Shared Hosting without Redis
-            services.AddDistributedMemoryCache();
-        }
-        else
-        {
-            var redisConnectionString = configuration.GetConnectionString("Redis")
-                ?? throw new InvalidOperationException("'Redis' connection string is not configured.");
-
+            var redisConnectionString = CacheConfiguration.RedisConnectionString(configuration);
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = redisConnectionString;
                 options.InstanceName = "Farm360:";
             });
+        }
+        else
+        {
+            services.AddDistributedMemoryCache();
         }
 
         services.AddScoped<ICacheService, RedisCacheService>();
@@ -64,11 +63,19 @@ public static class InfrastructureServiceExtensions
                 DisableGlobalLocks = true,
             }));
 
-        services.AddHangfireServer(options =>
+        // Hangfire:RunServer (default true) — set false on API replicas when a dedicated worker
+        // instance processes jobs. Jobs can still be enqueued/scheduled from any instance.
+        // Hangfire:WorkerCount (default ProcessorCount * 2, capped at 20).
+        if (configuration.GetValue("Hangfire:RunServer", defaultValue: true))
         {
-            options.WorkerCount = Environment.ProcessorCount * 2;
-            options.Queues = ["critical", "default", "low"];
-        });
+            var workerCount = configuration.GetValue("Hangfire:WorkerCount", 0);
+            services.AddHangfireServer(options =>
+            {
+                options.WorkerCount = workerCount > 0 ? workerCount : Math.Min(Environment.ProcessorCount * 2, 20);
+                options.Queues = ["critical", "default", "low"];
+                options.ServerName = $"{Environment.MachineName}:{Environment.ProcessId}";
+            });
+        }
 
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
 
@@ -91,13 +98,22 @@ public static class InfrastructureServiceExtensions
             Farm360.Infrastructure.Payments.SslCommerzGatewayService>();
 
         // ── Messaging services ────────────────────────────────────────────────
-        // DEV/STAGING: Log-only stubs — no real messages are sent.
-        // PRODUCTION:  Replace with real gateway implementations:
-        //   services.AddScoped<ISmsService, TwilioSmsService>();
-        //   services.AddScoped<IEmailService, SendGridEmailService>();
-        // References: docs/7_Farm360_Solution_Structure.md §Messaging
-        services.AddScoped<ISmsService, LoggingSmsService>();
-        services.AddScoped<IEmailService, LoggingEmailService>();
+        // Sms:Provider = Log | BulkSmsBd, Email:Provider = Log | Smtp. "Log" sends nothing (development).
+        services.Configure<SmsOptions>(configuration.GetSection(SmsOptions.SectionName));
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.AddHttpClient(BulkSmsBdSmsService.HttpClientName, c => c.Timeout = TimeSpan.FromSeconds(15));
+
+        var smsProvider = configuration[$"{SmsOptions.SectionName}:Provider"] ?? "Log";
+        if (smsProvider.Equals("BulkSmsBd", StringComparison.OrdinalIgnoreCase))
+            services.AddScoped<ISmsService, BulkSmsBdSmsService>();
+        else
+            services.AddScoped<ISmsService, LoggingSmsService>();
+
+        var emailProvider = configuration[$"{EmailOptions.SectionName}:Provider"] ?? "Log";
+        if (emailProvider.Equals("Smtp", StringComparison.OrdinalIgnoreCase))
+            services.AddScoped<IEmailService, SmtpEmailService>();
+        else
+            services.AddScoped<IEmailService, LoggingEmailService>();
 
         // ── Storage Services ──────────────────────────────────────────────────
         services.AddScoped<IFileStorageService, Farm360.Infrastructure.Storage.LocalFileStorageService>();
@@ -109,7 +125,11 @@ public static class InfrastructureServiceExtensions
         // ── Business rules (docs/33): the farm's configurable assumptions ─────
         services.Configure<Farm360.Domain.BusinessRules.FarmBusinessRules>(
             configuration.GetSection(Farm360.Domain.BusinessRules.FarmBusinessRules.SectionName));
-        services.AddSingleton<Farm360.Application.Common.Interfaces.IFarmBusinessRulesProvider,
+        // Per tenant (Settings → Farm rules) over the config defaults. The cache is a singleton holding
+        // no scoped state; the provider is scoped because it reads the request tenant (ITenantService).
+        services.AddMemoryCache();
+        services.AddSingleton<Farm360.Infrastructure.BusinessRules.FarmBusinessRulesCache>();
+        services.AddScoped<Farm360.Application.Common.Interfaces.IFarmBusinessRulesProvider,
             Farm360.Infrastructure.BusinessRules.FarmBusinessRulesProvider>();
 
         // ── Reporting renderers (docs/32) ─────────────────────────────────────

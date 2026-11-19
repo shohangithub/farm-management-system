@@ -18,11 +18,13 @@ import { CreateProtocolDialogComponent } from '../../components/dialogs/create-p
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-vaccination-protocol-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -35,7 +37,6 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     LoadingComponent
   ],
   templateUrl: './vaccination-protocol-list.html',
-  styleUrls: ['./vaccination-protocol-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VaccinationProtocolListComponent {
@@ -52,6 +53,12 @@ export class VaccinationProtocolListComponent {
   pageSize = signal(10);
   refreshTrigger = signal(0);
   isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
 
   private currentFarm = toSignal(this.contextService.currentFarm$);
 
@@ -66,11 +73,11 @@ export class VaccinationProtocolListComponent {
   // Reactive Data Stream handling the HTTP request
   private protocolsResult = toSignal(
     toObservable(this.paginationParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ pageIndex, pageSize, farmId }) => 
         this.healthService.getVaccinationProtocols({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
-          catchError((err) => {
-            console.error('Error loading protocols', err);
+          catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load vaccination protocols.'));
             return of({ items: [], totalCount: 0 });
           })
         )
@@ -116,7 +123,7 @@ export class VaccinationProtocolListComponent {
   }
 
   openAssignDialog(protocol: VaccinationProtocolDto): void {
-    this.dialog.open(AssignProtocolDialog, { disableClose: true,
+    this.dialog.open(AssignProtocolDialog, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { protocol }
     });

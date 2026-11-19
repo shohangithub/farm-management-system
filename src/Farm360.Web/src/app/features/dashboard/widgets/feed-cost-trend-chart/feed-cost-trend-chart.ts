@@ -4,11 +4,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { FeedCostTrend } from '../../models/dashboard.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-feed-cost-trend-chart',
   standalone: true,
-  imports: [CommonModule, MatIconModule, BaseChartDirective],
+  imports: [MoneyPipe, CommonModule, MatIconModule, BaseChartDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-full">
@@ -21,7 +23,7 @@ import { FeedCostTrend } from '../../models/dashboard.model';
 
         <div *ngIf="hasData()" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-400 border border-violet-200/50">
           <mat-icon class="text-[14px] w-[14px] h-[14px]">account_balance_wallet</mat-icon>
-          Latest: ৳ {{ latestCost() }}
+          Latest: {{ latestCost() | money:2 }}
         </div>
       </div>
 
@@ -62,14 +64,14 @@ export class FeedCostTrendChartComponent implements OnChanges {
     return !!list && list.length > 0 && list.some(g => g.dataPoints?.some(p => p.costPerAnimal !== null));
   });
 
-  public latestCost = computed(() => {
+  public latestCost = computed((): number | null => {
     const list = this.rawData();
-    if (!list || list.length === 0) return '0';
+    if (!list || list.length === 0) return 0;
     const firstGroup = list[0];
-    if (!firstGroup || firstGroup.dataPoints.length === 0) return '0';
+    if (!firstGroup || firstGroup.dataPoints.length === 0) return 0;
     // Latest month that actually has data.
     const lastPoint = [...firstGroup.dataPoints].reverse().find(p => p.costPerAnimal !== null);
-    return lastPoint && lastPoint.costPerAnimal !== null ? lastPoint.costPerAnimal.toLocaleString() : '—';
+    return lastPoint && lastPoint.costPerAnimal !== null ? lastPoint.costPerAnimal : null;
   });
 
   public chartData: ChartData<'bar'> = {
@@ -106,7 +108,7 @@ export class FeedCostTrendChartComponent implements OnChanges {
             if (context.parsed.y === null || context.parsed.y === undefined) {
               return ` ${label}: no data`;
             }
-            return ` ${label}: ৳ ${context.parsed.y.toLocaleString()} / head`;
+            return ` ${label}: ${formatMoney(context.parsed.y)} / head`;
           }
         }
       }
@@ -127,7 +129,7 @@ export class FeedCostTrendChartComponent implements OnChanges {
         },
         ticks: {
           font: { family: 'Inter, sans-serif', size: 11 },
-          callback: (value) => `৳ ${Number(value).toLocaleString()}`
+          callback: (value) => `${formatMoney(Number(value))}`
         }
       }
     }

@@ -15,11 +15,14 @@ import { CreateScheduleDialogComponent } from '../../components/dialogs/create-s
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-feeding-dashboard',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
@@ -74,7 +77,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           <div>
             <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">FCR Ratio</div>
             <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
-              {{ fcrAnalytics()?.fcrValue || 0 }} <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">(Target &lt; 7.0)</span>
+              {{ fcrAnalytics()?.fcrValue || 0 }} <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">(Target &lt; 7.0)</span>
             </div>
           </div>
         </div>
@@ -87,7 +90,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           <div>
             <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Feed Expenditure</div>
             <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
-              ৳ {{ fcrAnalytics()?.totalFeedCostBdt || 0 | number:'1.0-0' }}
+              {{ fcrAnalytics()?.totalFeedCostBdt || 0 | money }}
             </div>
           </div>
         </div>
@@ -100,7 +103,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           <div>
             <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Cost / kg Gain</div>
             <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
-              ৳ {{ fcrAnalytics()?.costPerKgGainBdt || 0 | number:'1.0-1' }}
+              {{ fcrAnalytics()?.costPerKgGainBdt || 0 | money:1 }}
             </div>
           </div>
         </div>
@@ -198,6 +201,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         <!-- Active Schedules -->
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6 shadow-sm relative overflow-hidden">
           <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+          <app-error-state *ngIf="!isLoading() && loadError()" [compact]="true" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
@@ -207,7 +211,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           </div>
 
           <app-empty-state
-            *ngIf="!isLoading() && activeSchedules().length === 0"
+            *ngIf="!isLoading() && !loadError() && activeSchedules().length === 0"
             icon="event_busy"
             title="No active schedules"
             description="Assign a ration formula to establish daily feeding routines."
@@ -224,7 +228,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                     Formula: <strong class="text-gray-700 dark:text-gray-300">{{ schedule.formulaTitle }}</strong> • {{ schedule.targetQuantityKgPerHead }} kg/head
                   </div>
                 </div>
-                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                   {{ schedule.frequencyName }}
                 </span>
               </div>
@@ -235,6 +239,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         <!-- Recent Logs -->
         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6 shadow-sm relative overflow-hidden">
           <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+          <app-error-state *ngIf="!isLoading() && loadError()" [compact]="true" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
@@ -244,7 +249,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           </div>
 
           <app-empty-state
-            *ngIf="!isLoading() && recentLogs().length === 0"
+            *ngIf="!isLoading() && !loadError() && recentLogs().length === 0"
             icon="history_toggle_off"
             title="No daily logs"
             description="Start logging daily feed distribution to track consumption and costs."
@@ -265,7 +270,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                   </div>
                 </div>
                 <div class="text-right">
-                  <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm">৳ {{ log.totalCostBdt | number:'1.0-0' }}</div>
+                  <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{{ log.totalCostBdt | money }}</div>
                   <div class="text-[11px] text-gray-400 font-medium">{{ log.netConsumptionKg }} kg net</div>
                 </div>
               </div>
@@ -283,6 +288,7 @@ export class FeedingDashboardComponent {
   private readonly contextService = inject(WorkingContextService);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly fcrAnalytics = signal<FcrAnalytics | null>(null);
   readonly activeSchedules = signal<FeedingSchedule[]>([]);
   readonly recentLogs = signal<FeedConsumptionLog[]>([]);
@@ -308,6 +314,7 @@ export class FeedingDashboardComponent {
 
   loadDashboardData(farmId: string): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
 
     this.feedingService.getFcrAnalytics(farmId).subscribe({
       next: (res) => this.fcrAnalytics.set(res),
@@ -316,7 +323,7 @@ export class FeedingDashboardComponent {
 
     this.feedingService.getSchedules(farmId).subscribe({
       next: (res) => this.activeSchedules.set(res.slice(0, 5)),
-      error: () => {}
+      error: (err) => this.loadError.set(parseApiError(err, 'Could not load feeding data.'))
     });
 
     this.feedingService.getConsumptionLogs(farmId).subscribe({
@@ -324,15 +331,23 @@ export class FeedingDashboardComponent {
         this.recentLogs.set(res.slice(0, 5));
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.loadError.set(parseApiError(err, 'Could not load feeding data.'));
+        this.isLoading.set(false);
+      }
     });
+  }
+
+  retryLoad(): void {
+    const farmId = this.activeFarmId();
+    if (farmId) this.loadDashboardData(farmId);
   }
 
   openLogConsumptionDialog(): void {
     const farmId = this.activeFarmId();
     if (!farmId) return;
 
-    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -346,7 +361,7 @@ export class FeedingDashboardComponent {
     const farmId = this.activeFarmId();
     if (!farmId) return;
     
-    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(CreateScheduleDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { farmId }
     });

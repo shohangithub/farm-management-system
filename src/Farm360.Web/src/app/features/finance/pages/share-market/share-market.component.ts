@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,12 +25,15 @@ import {
 } from '../../models/finance.model';
 import { ConfigureSharesDialogComponent } from '../../components/configure-shares-dialog/configure-shares-dialog';
 import { BuySellSharesDialogComponent, ShareActionType } from '../../components/buy-sell-shares-dialog/buy-sell-shares-dialog';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-share-market',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -41,7 +44,6 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
     BaseChartDirective,
     PageHeaderComponent,
     LoadingComponent,
-    CurrencyPipe,
     DatePipe,
     DecimalPipe
   ],
@@ -77,6 +79,8 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
 
       <!-- Loading State -->
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+
+      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load the share market" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- UNCONFIGURED STATE -->
       <div *ngIf="!isLoading() && overview() && !overview()?.isConfigured"
@@ -118,7 +122,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
             </div>
             <div class="mt-3">
               <span class="text-2xl font-extrabold text-gray-900 dark:text-white">
-                {{ config.totalValuationBdt | currency:'BDT':'symbol':'1.0-0' }}
+                {{ config.totalValuationBdt | money }}
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
                 {{ config.totalShares | number }} total shares
@@ -138,7 +142,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
             </div>
             <div class="mt-3">
               <span class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                {{ config.sharePriceBdt | currency:'BDT':'symbol':'1.0-0' }}
+                {{ config.sharePriceBdt | money }}
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
                 Valued: {{ config.lastValuationDate | date:'mediumDate' }}
@@ -160,7 +164,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                 {{ config.ownerOwnershipPercentage | number:'1.1-1' }}%
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                {{ config.ownerShareCount | number }} shares ({{ config.ownerEquityValueBdt | currency:'BDT':'symbol':'1.0-0' }})
+                {{ config.ownerShareCount | number }} shares ({{ config.ownerEquityValueBdt | money }})
               </p>
             </div>
             <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">shield</mat-icon>
@@ -181,7 +185,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                 {{ config.availableShareCount | number }}
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                Pool Value: {{ config.availableValuationBdt | currency:'BDT':'symbol':'1.0-0' }}
+                Pool Value: {{ config.availableValuationBdt | money }}
               </p>
             </div>
             <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-amber-500/5 rotate-[-10deg] pointer-events-none">inventory_2</mat-icon>
@@ -252,7 +256,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                 <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/60">
                   <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">Outside Capital Raised</span>
                   <span class="text-lg font-extrabold text-teal-700 dark:text-teal-300 mt-1 block">
-                    {{ overview()?.totalCapitalRaisedBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ overview()?.totalCapitalRaisedBdt | money }}
                   </span>
                   <span class="text-[11px] text-gray-400 block mt-0.5">{{ overview()?.totalAllocatedShares | number }} shares issued</span>
                 </div>
@@ -268,7 +272,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                 <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/60 col-span-2 sm:col-span-1">
                   <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">Issued Shares Value</span>
                   <span class="text-lg font-extrabold text-indigo-700 dark:text-indigo-300 mt-1 block">
-                    {{ (overview()?.totalAllocatedShares || 0) * config.sharePriceBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ (overview()?.totalAllocatedShares || 0) * config.sharePriceBdt | money }}
                   </span>
                   <span class="text-[11px] text-gray-400 block mt-0.5">At current valuation</span>
                 </div>
@@ -370,7 +374,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                   <td class="py-3.5 px-4 text-right text-gray-500">—</td>
                   <td class="py-3.5 px-4 text-right text-gray-500">—</td>
                   <td class="py-3.5 px-4 text-right font-extrabold text-teal-700 dark:text-teal-300">
-                    {{ config.ownerEquityValueBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ config.ownerEquityValueBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right text-gray-400">—</td>
                   <td class="py-3.5 px-4 text-center">
@@ -406,18 +410,18 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                     </span>
                   </td>
                   <td class="py-3.5 px-4 text-right text-gray-600 dark:text-gray-400">
-                    {{ s.averagePurchasePriceBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ s.averagePurchasePriceBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right font-medium text-gray-900 dark:text-white">
-                    {{ s.totalInvestedBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ s.totalInvestedBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right font-extrabold text-teal-700 dark:text-teal-300">
-                    {{ s.currentValueBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ s.currentValueBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right">
                     <span [class]="s.unrealizedGainLossBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'">
-                      {{ s.unrealizedGainLossBdt >= 0 ? '+' : '' }}{{ s.unrealizedGainLossBdt | currency:'BDT':'symbol':'1.0-0' }}
-                      <span class="text-[10px] font-normal">({{ s.returnOnInvestmentPercent >= 0 ? '+' : '' }}{{ s.returnOnInvestmentPercent | number:'1.1-1' }}%)</span>
+                      {{ s.unrealizedGainLossBdt >= 0 ? '+' : '' }}{{ s.unrealizedGainLossBdt | money }}
+                      <span class="text-[11px] font-normal">({{ s.returnOnInvestmentPercent >= 0 ? '+' : '' }}{{ s.returnOnInvestmentPercent | number:'1.1-1' }}%)</span>
                     </span>
                   </td>
                   <td class="py-3.5 px-4 text-center">
@@ -463,7 +467,7 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                   <td class="py-3.5 px-4 text-right text-gray-500">—</td>
                   <td class="py-3.5 px-4 text-right text-gray-500">—</td>
                   <td class="py-3.5 px-4 text-right font-bold text-gray-700 dark:text-gray-300">
-                    {{ config.availableValuationBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ config.availableValuationBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right text-gray-400">—</td>
                   <td class="py-3.5 px-4 text-center">
@@ -537,13 +541,13 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
                     {{ tx.shareCount | number }}
                   </td>
                   <td class="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
-                    {{ tx.pricePerShareBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ tx.pricePerShareBdt | money }}
                   </td>
                   <td class="py-3 px-4 text-right font-extrabold text-teal-700 dark:text-teal-300">
-                    {{ tx.totalAmountBdt | currency:'BDT':'symbol':'1.0-0' }}
+                    {{ tx.totalAmountBdt | money }}
                   </td>
                   <td class="py-3 px-4 text-gray-500 max-w-xs truncate">
-                    <span *ngIf="tx.referenceId" class="font-mono text-[10px] text-gray-400 mr-1.5">[{{ tx.referenceId }}]</span>
+                    <span *ngIf="tx.referenceId" class="font-mono text-[11px] text-gray-400 mr-1.5">[{{ tx.referenceId }}]</span>
                     {{ tx.notes || '—' }}
                   </td>
                 </tr>
@@ -608,12 +612,23 @@ export class ShareMarketDashboardComponent implements OnInit {
       });
   }
 
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    const farmId = this.workingContext.currentFarmValue?.id;
+    if (farmId) this.loadData(farmId);
+  }
+
   loadData(farmId: string): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
 
     forkJoin({
       overview: this.financeService.getShareOverview(farmId).pipe(
-        catchError(() => of(null))
+        catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load the share market.'));
+          return of(null);
+        })
       ),
       investors: this.financeService.getInvestors(farmId).pipe(
         catchError(() => of([] as Investor[]))
@@ -659,7 +674,7 @@ export class ShareMarketDashboardComponent implements OnInit {
     const currentFarm = this.workingContext.currentFarmValue;
     if (!currentFarm) return;
 
-    const dialogRef = this.dialog.open(ConfigureSharesDialogComponent, {
+    const dialogRef = this.dialog.open(ConfigureSharesDialogComponent, { maxWidth: '95vw',
       width: '580px',
       panelClass: 'rounded-2xl',
       data: {
@@ -680,7 +695,7 @@ export class ShareMarketDashboardComponent implements OnInit {
     const config = this.overview()?.config;
     if (!currentFarm || !config) return;
 
-    const dialogRef = this.dialog.open(BuySellSharesDialogComponent, {
+    const dialogRef = this.dialog.open(BuySellSharesDialogComponent, { maxWidth: '95vw',
       width: '600px',
       panelClass: 'rounded-2xl',
       data: {
@@ -704,7 +719,7 @@ export class ShareMarketDashboardComponent implements OnInit {
     const config = this.overview()?.config;
     if (!currentFarm || !config) return;
 
-    const dialogRef = this.dialog.open(BuySellSharesDialogComponent, {
+    const dialogRef = this.dialog.open(BuySellSharesDialogComponent, { maxWidth: '95vw',
       width: '600px',
       panelClass: 'rounded-2xl',
       data: {

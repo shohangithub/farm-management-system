@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { switchMap, of, filter, catchError, map } from 'rxjs';
+import { switchMap, of, catchError, map, startWith, combineLatest, BehaviorSubject, Observable } from 'rxjs';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { Router, RouterModule } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ExecutiveDashboardData, InsightSeverity, InsightType, ActionableInsight } from '../../models/dashboard.model';
 import { FarmGuidelinesDialogComponent } from '../../../../shared/components/farm-guidelines-dialog/farm-guidelines-dialog';
 import { HerdCompositionChartComponent } from '../../widgets/herd-composition-chart/herd-composition-chart';
@@ -21,18 +21,18 @@ import { FeedCostTrendChartComponent } from '../../widgets/feed-cost-trend-chart
 import { VaccinationComplianceChartComponent } from '../../widgets/vaccination-compliance-chart/vaccination-compliance-chart';
 import { FarmSummaryCardsComponent } from '../../widgets/farm-summary-cards/farm-summary-cards';
 import { RecentActivityFeedComponent } from '../../widgets/recent-activity-feed/recent-activity-feed';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-executive-dashboard',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     MatIconModule,
     MatButtonModule,
     PageHeaderComponent,
     LoadingComponent,
-    EmptyStateComponent,
-    CurrencyPipe,
+    ErrorStateComponent,
     RouterModule,
     HerdCompositionChartComponent,
     AdgTrendChartComponent,
@@ -51,75 +51,71 @@ export class ExecutiveDashboardComponent {
   private readonly contextService = inject(WorkingContextService);
   private readonly dashboardService = inject(DashboardService);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
 
   private readonly farmId$ = this.contextService.currentFarm$.pipe(
     map(farm => farm?.id)
   );
 
-  // Fetch Dashboard data reactively when the farm changes
-  private readonly dashboardData$ = this.farmId$.pipe(
-    switchMap(farmId => {
-      if (!farmId) {
-        return of({
-          totalAnimals: 0,
-          sickAnimals: 0,
-          feedLowStockCount: 0,
-          currentMonthIncome: 0,
-          currentMonthExpense: 0,
-          birthsThisMonth: 0,
-          deathsThisMonth: 0,
-          dueVaccinations: 0,
-          pregnantAnimals: 0,
-          actionableInsights: []
-        } as ExecutiveDashboardData);
-      }
-      return this.dashboardService.getExecutiveDashboard(farmId).pipe(
-        catchError(err => {
-          console.error('Failed to load dashboard data', err);
-          return of(null);
-        })
-      );
-    })
-  );
+  private static readonly EMPTY_DASHBOARD: ExecutiveDashboardData = {
+    totalAnimals: 0,
+    sickAnimals: 0,
+    feedLowStockCount: 0,
+    currentMonthIncome: 0,
+    currentMonthExpense: 0,
+    birthsThisMonth: 0,
+    deathsThisMonth: 0,
+    dueVaccinations: 0,
+    pregnantAnimals: 0,
+    actionableInsights: []
+  } as ExecutiveDashboardData;
 
-  private readonly herdComposition$ = this.farmId$.pipe(
-    switchMap(farmId => farmId ? this.dashboardService.getHerdComposition(farmId).pipe(catchError(() => of(null))) : of(null))
-  );
+  /**
+   * Loads one dashboard section for the active farm with its own error + retry, so a failing
+   * widget shows an error card instead of silently looking empty.
+   */
+  private loadSection<T>(load: (farmId: string) => Observable<T>, fallbackMessage: string, noFarmValue: T | null = null) {
+    type State = { data: T | null | undefined; error: string | null };
+    const retry$ = new BehaviorSubject<void>(undefined);
+    const state = toSignal(
+      combineLatest([this.farmId$, retry$]).pipe(
+        switchMap(([farmId]) => farmId
+          ? load(farmId).pipe(
+              map((data): State => ({ data, error: null })),
+              catchError(err => of<State>({ data: null, error: parseApiError(err, fallbackMessage) })),
+              startWith<State>({ data: undefined, error: null })
+            )
+          : of<State>({ data: noFarmValue, error: null }))
+      ),
+      { initialValue: { data: undefined, error: null } as State }
+    );
+    return {
+      data: computed(() => state().data),
+      error: computed(() => state().error),
+      retry: () => retry$.next()
+    };
+  }
 
-  private readonly adgTrends$ = this.farmId$.pipe(
-    switchMap(farmId => farmId ? this.dashboardService.getAdgTrends(farmId).pipe(catchError(() => of(null))) : of(null))
-  );
-
-  private readonly feedCostTrends$ = this.farmId$.pipe(
-    switchMap(farmId => farmId ? this.dashboardService.getFeedCostTrends(farmId).pipe(catchError(() => of(null))) : of(null))
-  );
-
-  private readonly vaccinationCompliance$ = this.farmId$.pipe(
-    switchMap(farmId => farmId ? this.dashboardService.getVaccinationCompliance(farmId).pipe(catchError(() => of(null))) : of(null))
-  );
-
-  private readonly farmSummaryCards$ = this.farmId$.pipe(
-    switchMap(farmId => farmId ? this.dashboardService.getFarmSummaryCards(farmId).pipe(catchError(() => of(null))) : of(null))
-  );
-
-  private readonly recentActivityFeed$ = this.farmId$.pipe(
-    switchMap(farmId => farmId ? this.dashboardService.getRecentActivityFeed(farmId).pipe(catchError(() => of(null))) : of(null))
-  );
+  public readonly main = this.loadSection(id => this.dashboardService.getExecutiveDashboard(id), 'Could not load the dashboard.', ExecutiveDashboardComponent.EMPTY_DASHBOARD);
+  public readonly herd = this.loadSection(id => this.dashboardService.getHerdComposition(id), 'Could not load herd composition.');
+  public readonly adg = this.loadSection(id => this.dashboardService.getAdgTrends(id), 'Could not load growth trends.');
+  public readonly feedCost = this.loadSection(id => this.dashboardService.getFeedCostTrends(id), 'Could not load feed cost trends.');
+  public readonly vaccination = this.loadSection(id => this.dashboardService.getVaccinationCompliance(id), 'Could not load vaccination compliance.');
+  public readonly summaryCards = this.loadSection(id => this.dashboardService.getFarmSummaryCards(id), 'Could not load the farm summary.');
+  public readonly activity = this.loadSection(id => this.dashboardService.getRecentActivityFeed(id), 'Could not load recent activity.');
 
   private readonly dismissedInsightIds = signal<Set<string>>(new Set());
 
-  public readonly dashboardData = toSignal(this.dashboardData$, { initialValue: undefined });
-  public readonly herdComposition = toSignal(this.herdComposition$, { initialValue: undefined });
-  public readonly adgTrends = toSignal(this.adgTrends$, { initialValue: undefined });
-  public readonly feedCostTrends = toSignal(this.feedCostTrends$, { initialValue: undefined });
-  public readonly vaccinationCompliance = toSignal(this.vaccinationCompliance$, { initialValue: undefined });
-  public readonly farmSummaryCards = toSignal(this.farmSummaryCards$, { initialValue: undefined });
-  public readonly recentActivityFeed = toSignal(this.recentActivityFeed$, { initialValue: undefined });
+  public readonly dashboardData = this.main.data;
+  public readonly herdComposition = this.herd.data;
+  public readonly adgTrends = this.adg.data;
+  public readonly feedCostTrends = this.feedCost.data;
+  public readonly vaccinationCompliance = this.vaccination.data;
+  public readonly farmSummaryCards = this.summaryCards.data;
+  public readonly recentActivityFeed = this.activity.data;
 
   public readonly isLoading = computed(() => this.dashboardData() === undefined);
-  public readonly hasError = computed(() => this.dashboardData() === null);
+  public readonly hasError = computed(() => this.main.error() !== null);
   public readonly data = computed(() => {
     const d = this.dashboardData() as ExecutiveDashboardData | undefined;
     if (!d) return d;
@@ -175,10 +171,27 @@ export class ExecutiveDashboardComponent {
   public reviewInsight(insight: ActionableInsight): void {
     if (insight.animalId) {
       this.router.navigate(['/livestock', insight.animalId]);
-    } else if (insight.batchId) {
-      this.router.navigate(['/livestock/batches', insight.batchId]);
-    } else {
-      this.snackBar.open('Module specific navigation not implemented yet.', 'OK', { duration: 2000 });
+      return;
     }
+    if (insight.batchId) {
+      this.router.navigate(['/livestock/batches', insight.batchId]);
+      return;
+    }
+    // actionData may carry an in-app route; otherwise route by the insight's subject.
+    if (insight.actionData?.startsWith('/')) {
+      this.router.navigateByUrl(insight.actionData);
+      return;
+    }
+    this.router.navigateByUrl(this.routeForInsight(insight));
+  }
+
+  private routeForInsight(insight: ActionableInsight): string {
+    const text = `${insight.title} ${insight.message}`.toLowerCase();
+    if (/vaccin|deworm|treat|sick|health|disease|mortality|withdrawal/.test(text)) return '/health';
+    if (/feed|ration|nutrition|fodder|silage/.test(text)) return '/feeding';
+    if (/stock|inventory|reorder|supplier|purchase/.test(text)) return '/inventory';
+    if (/profit|cost|expense|income|revenue|cash|loan|finance|margin/.test(text)) return '/finance';
+    if (/weight|adg|growth|pregnan|calving|breeding|heat|animal|herd/.test(text)) return '/livestock';
+    return '/reports';
   }
 }

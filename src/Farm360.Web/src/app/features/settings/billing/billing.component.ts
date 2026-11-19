@@ -6,7 +6,7 @@ import { forkJoin } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -21,11 +21,13 @@ import {
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { SubscribeDialogComponent, SubscribeDialogData } from './subscribe-dialog.component';
 import { parseApiError } from '../../../core/utils/error-parser';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-billing',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -70,7 +72,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
           <mat-icon class="text-red-500">error</mat-icon>
           <span>{{ errorMessage() }}</span>
         </div>
-        <button (click)="errorMessage.set(null)" class="text-red-400 hover:text-red-600 dark:hover:text-red-200">
+        <button aria-label="Close" matTooltip="Close" (click)="errorMessage.set(null)" class="text-red-400 hover:text-red-600 dark:hover:text-red-200">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon>
         </button>
       </div>
@@ -240,7 +242,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div *ngFor="let trial of trialOptions()"
             class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all flex flex-col justify-between relative overflow-hidden">
-            <div *ngIf="trial.days === 7" class="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
+            <div *ngIf="trial.days === 7" class="absolute top-2 right-2 text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
               Recommended
             </div>
             <div>
@@ -295,7 +297,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
               [class.shadow-sm]="selectedCycle() === 'Yearly'"
               class="px-4 py-2 text-xs font-bold rounded-xl transition-all text-gray-500 dark:text-gray-400 cursor-pointer flex items-center gap-1.5">
               <span>Yearly</span>
-              <span class="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">Save ~17%</span>
+              <span class="text-[11px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">Save ~17%</span>
             </button>
             <button
               type="button"
@@ -307,7 +309,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
               [class.shadow-sm]="selectedCycle() === 'OneTime'"
               class="px-4 py-2 text-xs font-bold rounded-xl transition-all text-gray-500 dark:text-gray-400 cursor-pointer flex items-center gap-1.5">
               <span>One-Time</span>
-              <span class="text-[9px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">Lifetime</span>
+              <span class="text-[11px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">Lifetime</span>
             </button>
           </div>
         </div>
@@ -322,14 +324,14 @@ import { parseApiError } from '../../../core/utils/error-parser';
             class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-sm p-6 flex flex-col justify-between relative transition-all duration-300 hover:shadow-xl hover:border-emerald-500/30">
             
             <!-- Popular Badge -->
-            <div *ngIf="plan.isPopular" class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-md">
+            <div *ngIf="plan.isPopular" class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[11px] font-extrabold uppercase tracking-wider rounded-full shadow-md">
               Most Popular
             </div>
 
             <div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ plan.name }}</span>
-                <span *ngIf="isCurrentPlan(plan.tier)" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                <span *ngIf="isCurrentPlan(plan.tier)" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                   Current
                 </span>
               </div>
@@ -338,7 +340,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
               <div class="mt-4 mb-3">
                 <div class="flex items-baseline gap-1">
                   <span class="text-3xl font-extrabold text-gray-900 dark:text-white">
-                    ৳{{ getPlanPrice(plan) | number }}
+                    {{ getPlanPrice(plan) | money:2 }}
                   </span>
                   <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
                     <ng-container *ngIf="selectedCycle() === 'Monthly'">/ mo</ng-container>
@@ -407,7 +409,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
         <div class="overflow-x-auto" *ngIf="history().length > 0">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
-              <tr class="bg-gray-50/50 dark:bg-gray-700/30 border-b border-gray-100 dark:border-gray-700 text-gray-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr class="bg-gray-50/50 dark:bg-gray-700/30 border-b border-gray-100 dark:border-gray-700 text-gray-400 font-bold uppercase tracking-wider text-[11px]">
                 <th class="py-3.5 px-6">Invoice #</th>
                 <th class="py-3.5 px-6">Plan Tier</th>
                 <th class="py-3.5 px-6">Billing Cycle</th>
@@ -429,7 +431,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
                   {{ item.billingCycle }}
                 </td>
                 <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">
-                  ৳{{ item.amount | number }} <span class="text-[10px] text-gray-400 font-normal">{{ item.currency }}</span>
+                  {{ item.amount | money:2 }} <span class="text-[11px] text-gray-400 font-normal">{{ item.currency }}</span>
                 </td>
                 <td class="py-4 px-6 text-gray-600 dark:text-gray-300">
                   <div class="font-medium">{{ item.paymentMethod }}</div>
@@ -467,7 +469,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
 export class BillingComponent implements OnInit {
   private subscriptionService = inject(SubscriptionService);
   private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -520,11 +522,7 @@ export class BillingComponent implements OnInit {
       cancel: 'Checkout was cancelled. No charge was made.'
     };
 
-    this.snackBar.open(messages[checkout] ?? 'Checkout finished.', 'Dismiss', {
-      duration: 7000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top'
-    });
+    this.notify.info(messages[checkout] ?? 'Checkout finished.');
 
     // A successful online checkout activates via the gateway's IPN, which can land slightly after
     // this redirect -- reload shortly after so the status card reflects it.
@@ -587,20 +585,12 @@ export class BillingComponent implements OnInit {
         next: (updatedStatus) => {
           this.status.set(updatedStatus);
           this.isActivatingTrial.set(false);
-          this.snackBar.open(`🎉 ${days}-Day Free Trial activated successfully!`, 'Dismiss', {
-            duration: 5000,
-            horizontalPosition: 'right',
-            verticalPosition: 'top'
-          });
+          this.notify.success(`🎉 ${days}-Day Free Trial activated successfully!`);
         },
         error: (err) => {
           this.isActivatingTrial.set(false);
           const msg = parseApiError(err, 'Failed to activate free trial.');
-          this.snackBar.open(`Error: ${msg}`, 'Dismiss', {
-            duration: 6000,
-            horizontalPosition: 'right',
-            verticalPosition: 'top'
-          });
+          this.notify.error(`Error: ${msg}`);
         }
       });
   }
@@ -623,11 +613,7 @@ export class BillingComponent implements OnInit {
       if (result) {
         // The subscription is NOT active yet -- it's recorded as Pending until an admin verifies
         // the payment reference, so `status` (the tenant's actual tier/access) is left untouched.
-        this.snackBar.open(
-          `Payment reference submitted (${result.invoiceNumber}). We'll verify it and activate your ${result.tier} plan shortly.`,
-          'Dismiss',
-          { duration: 7000, horizontalPosition: 'right', verticalPosition: 'top' }
-        );
+        this.notify.info(`Payment reference submitted (${result.invoiceNumber}). We'll verify it and activate your ${result.tier} plan shortly.`);
         // Reload history to show the new pending invoice
         this.subscriptionService.getHistory().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (hist) => this.history.set(hist)

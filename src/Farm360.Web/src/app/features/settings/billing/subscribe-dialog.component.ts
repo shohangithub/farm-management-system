@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { SubscriptionPlan, SubscribeRequest, TenantSubscriptionRecord } from '../../../core/models/subscription.model';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { parseApiError } from '../../../core/utils/error-parser';
+import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 
 export interface SubscribeDialogData {
   plan: SubscriptionPlan;
@@ -15,7 +16,7 @@ export interface SubscribeDialogData {
 @Component({
   selector: 'app-subscribe-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -38,7 +39,7 @@ export interface SubscribeDialogData {
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Select your billing cycle and preferred payment method</p>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button aria-label="Close" matTooltip="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -70,9 +71,9 @@ export interface SubscribeDialogData {
                 class="p-3 border rounded-xl text-left transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 flex flex-col justify-between">
                 <div>
                   <span class="text-xs font-semibold block">Monthly</span>
-                  <span class="text-sm font-bold block mt-1">৳{{ data.plan.monthlyPrice | number }}</span>
+                  <span class="text-sm font-bold block mt-1">{{ data.plan.monthlyPrice | money:2 }}</span>
                 </div>
-                <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 block">Billed monthly</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Billed monthly</span>
               </button>
 
               <!-- Yearly -->
@@ -83,12 +84,12 @@ export interface SubscribeDialogData {
                 [class.text-emerald-700]="selectedCycle() === 'Yearly'"
                 [class.dark:text-emerald-300]="selectedCycle() === 'Yearly'"
                 class="p-3 border rounded-xl text-left transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 flex flex-col justify-between relative overflow-hidden">
-                <span class="absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">Save ~17%</span>
+                <span class="absolute top-1 right-1 text-[11px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">Save ~17%</span>
                 <div>
                   <span class="text-xs font-semibold block">Yearly</span>
-                  <span class="text-sm font-bold block mt-1">৳{{ data.plan.yearlyPrice | number }}</span>
+                  <span class="text-sm font-bold block mt-1">{{ data.plan.yearlyPrice | money:2 }}</span>
                 </div>
-                <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 block">Billed annually</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Billed annually</span>
               </button>
 
               <!-- One-Time / Lifetime -->
@@ -99,12 +100,12 @@ export interface SubscribeDialogData {
                 [class.text-emerald-700]="selectedCycle() === 'OneTime'"
                 [class.dark:text-emerald-300]="selectedCycle() === 'OneTime'"
                 class="p-3 border rounded-xl text-left transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 flex flex-col justify-between relative overflow-hidden">
-                <span class="absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">Lifetime</span>
+                <span class="absolute top-1 right-1 text-[11px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">Lifetime</span>
                 <div>
                   <span class="text-xs font-semibold block">One-Time</span>
-                  <span class="text-sm font-bold block mt-1">৳{{ data.plan.oneTimePrice | number }}</span>
+                  <span class="text-sm font-bold block mt-1">{{ data.plan.oneTimePrice | money:2 }}</span>
                 </div>
-                <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 block">Never expires</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Never expires</span>
               </button>
             </div>
           </div>
@@ -113,7 +114,7 @@ export interface SubscribeDialogData {
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
               <span class="text-xs text-gray-500 dark:text-gray-400 block">Total Amount Due</span>
-              <span class="text-xl font-extrabold text-gray-900 dark:text-white">৳{{ currentPrice() | number }} <span class="text-xs font-medium text-gray-400">BDT</span></span>
+              <span class="text-xl font-extrabold text-gray-900 dark:text-white">{{ currentPrice() | money:2 }} <span class="text-xs font-medium text-gray-400">BDT</span></span>
             </div>
             <div class="text-right">
               <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 block">Access: {{ data.plan.name }}</span>
@@ -130,7 +131,7 @@ export interface SubscribeDialogData {
           </button>
           <div class="flex items-center gap-3">
             <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Or report a payment manually</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Or report a payment manually</span>
             <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
           </div>
 
@@ -164,7 +165,7 @@ export interface SubscribeDialogData {
               <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Bank'">Bank Transfer</p>
 
               <p class="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400" *ngIf="selectedMethod() === 'bKash' || selectedMethod() === 'Nagad'">
-                Send <strong>৳{{ currentPrice() | number }}</strong> via Make Payment to <strong>01700-FARM360</strong>. Then enter the 8-10 character Transaction ID (TrxID) below to instantly activate your plan.
+                Send <strong>{{ currentPrice() | money:2 }}</strong> via Make Payment to <strong>01700-FARM360</strong>. Then enter the 8-10 character Transaction ID (TrxID) below to instantly activate your plan.
               </p>
               <p class="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400" *ngIf="selectedMethod() === 'Card'">
                 Instant card payment verification via SSLCommerz / VISA / Mastercard. Enter transaction approval code or reference below.

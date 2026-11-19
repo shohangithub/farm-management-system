@@ -7,7 +7,7 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angula
 import { AnimalService }          from '../../services/animal.service';
 import { WorkingContextService }  from '../../../../core/services/working-context.service';
 import { AnimalSpecies, AnimalSex, AcquisitionType, TagType, SPECIES_LABELS } from '../../models/animal.models';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,6 +20,10 @@ import { PenService } from '../../../farms/services/pen.service';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { HasUnsavedChanges } from '../../../../shared/utils/unsaved-changes.guard';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-animal-register',
@@ -31,18 +35,24 @@ import { MatIconModule } from '@angular/material/icon';
   ],
   templateUrl: './animal-register.component.html'
 })
-export class AnimalRegisterComponent implements OnInit {
+export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
+  private saved = false;
+
+  hasUnsavedChanges(): boolean {
+    return !this.saved && [this.idForm, this.acquisitionForm, this.notesForm, this.placementForm].some(f => f?.dirty);
+  }
+
   private readonly svc      = inject(AnimalService);
   private readonly contextSvc = inject(WorkingContextService);
   private readonly router   = inject(Router);
   private readonly fb       = inject(FormBuilder);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly breedSvc = inject(BreedService);
   
   readonly submitting  = signal(false);
   readonly error       = signal<string | null>(null);
-  readonly today       = new Date().toISOString().split('T')[0];
+  readonly today       = toLocalIsoDate();
   readonly breeds      = signal<BreedDto[]>([]);
   
   private readonly shedSvc = inject(ShedService);
@@ -148,10 +158,7 @@ export class AnimalRegisterComponent implements OnInit {
       this.idForm.markAllAsTouched(); 
       this.acquisitionForm.markAllAsTouched();
       this.notesForm.markAllAsTouched();
-      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please fix the validation errors before submitting.');
       return; 
     }
     
@@ -165,10 +172,7 @@ export class AnimalRegisterComponent implements OnInit {
     const farmId = this.contextSvc.currentFarmValue?.id;
     
     if (!farmId) {
-      this.snackBar.open('Please select a farm context from the top navigation before registering an animal.', 'OK', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please select a farm context from the top navigation before registering an animal.');
       return;
     }
 
@@ -188,14 +192,12 @@ export class AnimalRegisterComponent implements OnInit {
       penId:               placementVals.penId ?? undefined,
     }).subscribe({
       next:  a => {
-        this.snackBar.open('Animal registered successfully!', 'Close', {
-          duration: 3000,
-          panelClass: ['snack-success']
-        });
+        this.saved = true;
+        this.notify.success('Animal registered successfully!');
         this.router.navigate(['/livestock', a.id]);
       },
       error: e => {
-        this.error.set(e?.error?.detail ?? e?.error?.title ?? 'Registration failed. Please try again.');
+        this.error.set(parseApiError(e, 'Registration failed. Please try again.'));
         this.submitting.set(false);
       }
     });

@@ -4,12 +4,13 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { CauseOfDeath } from '../../../models/health.models';
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 
 @Component({
   selector: 'app-record-mortality-dialog',
@@ -35,7 +36,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Log and track animal mortality</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -54,6 +55,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animal <span class="text-red-500">*</span></label>
             <app-animal-picker formControlName="animalId"></app-animal-picker>
+            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -61,6 +63,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Date of Death <span class="text-red-500">*</span></label>
               <input type="date" formControlName="deathDate"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p *ngIf="form.get('deathDate')?.touched && form.get('deathDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
 
             <div class="space-y-1.5">
@@ -82,6 +85,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Estimated Economic Loss (BDT)</label>
             <input type="number" formControlName="estimatedEconomicLossBdt" min="0" placeholder="0"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <p *ngIf="form.get('estimatedEconomicLossBdt')?.touched && form.get('estimatedEconomicLossBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
           </div>
 
           <div class="space-y-1.5">
@@ -172,7 +176,7 @@ export class RecordMortalityDialog {
     const request = {
       farmId: farmId,
       animalId: val.animalId,
-      deathDate: new Date(val.deathDate).toISOString().split('T')[0],
+      deathDate: toLocalIsoDate(new Date(val.deathDate)),
       causeOfDeath: Number(val.causeOfDeath),
       diseaseName: val.causeOfDeath === CauseOfDeath.Disease ? val.diseaseName : null,
       postMortemNotes: val.postMortemNotes,

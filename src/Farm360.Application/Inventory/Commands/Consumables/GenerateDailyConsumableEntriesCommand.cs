@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Inventory;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
@@ -6,7 +7,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Inventory.Commands.Consumables;
 
-public sealed record GenerateDailyConsumableEntriesCommand(Guid FarmId, DateOnly? TargetDate = null) : IRequest<int>;
+/// <summary>
+/// One farm's consumable entries for one day (today in the farm's zone when none is given), in one
+/// transaction. Idempotent: plan items already generated for the day are skipped, and a unique
+/// index on (plan, plan item, day) stops a concurrent duplicate.
+/// </summary>
+public sealed record GenerateDailyConsumableEntriesCommand(Guid FarmId, DateOnly? TargetDate = null) : IRequest<int>, ITransactionalCommand;
 
 public sealed class GenerateDailyConsumableEntriesCommandHandler : IRequestHandler<GenerateDailyConsumableEntriesCommand, int>
 {
@@ -15,14 +21,17 @@ public sealed class GenerateDailyConsumableEntriesCommandHandler : IRequestHandl
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<GenerateDailyConsumableEntriesCommandHandler> _logger;
+    private readonly IFarmClock _clock;
 
     public GenerateDailyConsumableEntriesCommandHandler(
         IConsumableUsagePlanRepository planRepository,
         IDailyConsumableEntryRepository entryRepository,
         ITenantService tenantService,
         IUnitOfWork unitOfWork,
-        ILogger<GenerateDailyConsumableEntriesCommandHandler> logger)
+        ILogger<GenerateDailyConsumableEntriesCommandHandler> logger,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _planRepository = planRepository;
         _entryRepository = entryRepository;
         _tenantService = tenantService;
@@ -32,7 +41,7 @@ public sealed class GenerateDailyConsumableEntriesCommandHandler : IRequestHandl
 
     public async Task<int> Handle(GenerateDailyConsumableEntriesCommand request, CancellationToken cancellationToken)
     {
-        var targetDate = request.TargetDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var targetDate = request.TargetDate ?? _clock.TodayForFarm(_tenantService.TenantId, request.FarmId);
         var activePlans = await _planRepository.GetActivePlansAsync(request.FarmId, targetDate, cancellationToken);
 
         if (activePlans.Count == 0)

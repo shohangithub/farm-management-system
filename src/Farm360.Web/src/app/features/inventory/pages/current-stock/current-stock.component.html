@@ -33,6 +33,8 @@
   
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
+  <app-error-state *ngIf="loadError() as err" class="block print:hidden" [message]="err" (retry)="loadData()"></app-error-state>
+
   <!-- KPI Summary Cards Grid (Screen) / Text Summary (Print) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 print:hidden" *ngIf="summary() as data">
     <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl p-5 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center gap-4 relative overflow-hidden">
@@ -56,7 +58,7 @@
       <div>
         <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Valuation</div>
         <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
-          ৳ {{ data.totalValueBdt | number:'1.0-0' }}
+          {{ data.totalValueBdt | money }}
         </div>
       </div>
     </div>
@@ -112,7 +114,7 @@
   <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative print:shadow-none print:border-none print:!rounded-none print:bg-transparent">
     
     <app-empty-state
-      *ngIf="!isLoading() && items().length === 0"
+      *ngIf="!isLoading() && !loadError() && items().length === 0"
       icon="inventory_2"
       title="No inventory items found"
       description="Start by adding items to your stock catalog."
@@ -165,8 +167,8 @@
         <ng-container matColumnDef="valuation">
           <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Valuation (WAC)</th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 text-right print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
-            <div class="font-bold text-emerald-600 dark:text-emerald-400 print:text-black">৳ {{ item.totalValueBdt | number:'1.2-2' }}</div>
-            <div class="text-[11px] text-gray-500">@ ৳{{ item.weightedAverageCostBdt | number:'1.2-2' }}/{{ item.unitOfMeasure }}</div>
+            <div class="font-bold text-emerald-600 dark:text-emerald-400 print:text-black">{{ item.totalValueBdt | money:2 }}</div>
+            <div class="text-[11px] text-gray-500">@ {{ item.weightedAverageCostBdt | money:2 }}/{{ item.unitOfMeasure }}</div>
           </td>
         </ng-container>
 
@@ -182,7 +184,7 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="w-16 !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 print:hidden no-print"></th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 text-right print:hidden no-print">
-            <button mat-icon-button class="text-gray-400 hover:text-rose-600 dark:hover:text-rose-400" (click)="openStockWriteOffDialog(item)" matTooltip="Write Off Stock">
+            <button mat-icon-button class="text-gray-400 hover:text-rose-600 dark:hover:text-rose-400" (click)="openStockWriteOffDialog(item)" matTooltip="Write Off Stock" aria-label="Write off stock">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">delete_sweep</mat-icon>
             </button>
           </td>

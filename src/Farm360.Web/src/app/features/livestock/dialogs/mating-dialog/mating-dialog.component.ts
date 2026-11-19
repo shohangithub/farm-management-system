@@ -6,10 +6,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
+import { AnimalListItemDto, AnimalSex } from '../../models/animal.models';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
 export interface MatingDialogData {
   animalId: string;
   animalTag: string;
+  /** Farm of the dam — used to list candidate on-farm sires. */
+  farmId?: string;
 }
 
 @Component({
@@ -27,13 +31,27 @@ export class MatingDialogComponent {
   private readonly destroy$ = new Subject<void>();
 
   readonly form = this.fb.group({
-    date: [new Date().toISOString().split('T')[0], Validators.required],
+    date: [toLocalIsoDate(), Validators.required],
     isAI: [false],
     sireAnimalId: [''],
     sireExternalId: ['']
   });
 
   readonly submitting = signal(false);
+  /** Candidate sires: on-farm (Active/Quarantined) males only — sold/dead bulls cannot sire. */
+  readonly sires = signal<AnimalListItemDto[]>([]);
+
+  constructor() {
+    this.animalSvc.getList({
+      farmId: this.data.farmId,
+      sex: AnimalSex.Male,
+      presence: 'OnFarm',
+      pageSize: 200
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: res => this.sires.set(res.items.filter(a => a.id !== this.data.animalId)),
+      error: () => this.sires.set([])
+    });
+  }
   readonly error = signal<string | null>(null);
 
   ngOnDestroy(): void {

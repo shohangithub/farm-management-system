@@ -21,14 +21,15 @@ public sealed record ReportDiseaseIncidentCommand(
 
 public sealed class ReportDiseaseIncidentCommandValidator : AbstractValidator<ReportDiseaseIncidentCommand>
 {
-    public ReportDiseaseIncidentCommandValidator()
+    public ReportDiseaseIncidentCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(v => v.FarmId).NotEmpty();
         RuleFor(v => v.DiseaseName).NotEmpty().MaximumLength(150);
         RuleFor(v => v.Symptoms).NotEmpty().MaximumLength(1000);
         RuleFor(v => v.AffectedAnimalCount).GreaterThan(0);
         RuleFor(v => v.Notes).MaximumLength(1000);
-        RuleFor(v => v.IncidentDate).LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+        RuleFor(v => v.IncidentDate).LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Incident date cannot be in the future.");
     }
 }

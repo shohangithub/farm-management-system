@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { toLocalIsoDate } from '../utils/local-date';
 
 export interface ReportMetaHeader {
   title: string;
@@ -135,7 +136,7 @@ export class PdfExportService {
       doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
     }
 
-    const defaultName = `Farm360_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+    const defaultName = `Farm360_Report_${toLocalIsoDate()}.pdf`;
     let filename = options?.filename || defaultName;
     if (!filename.toLowerCase().endsWith('.pdf')) {
       filename += '.pdf';

@@ -16,6 +16,7 @@ namespace Farm360.Identity.Services;
 /// </summary>
 public sealed class RefreshTokenService(
     IdentityDbContext identityContext,
+    ITokenVersionValidator tokenVersionValidator,
     ILogger<RefreshTokenService> logger)
     : IRefreshTokenService
 {
@@ -69,11 +70,27 @@ public sealed class RefreshTokenService(
         var now = DateTime.UtcNow;
 
         var session = await identityContext.UserSessions
-            .FirstOrDefaultAsync(s => s.TokenHash == tokenHash && !s.IsRevoked, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TokenHash == tokenHash, cancellationToken);
 
         if (session is null)
         {
-            logger.LogWarning("Farm360 RefreshToken: Rotation attempted with unknown/revoked token. Hash={Hash}", tokenHash[..8]);
+            logger.LogWarning("Farm360 RefreshToken: Rotation attempted with unknown token. Hash={Hash}", tokenHash[..8]);
+            throw new UnauthorizedAccessException("Invalid or expired refresh token.");
+        }
+
+        if (session.IsRevoked)
+        {
+            // Reuse detection: a token that was already rotated is being presented again. Either the
+            // legitimate client or an attacker holds a stolen copy -- revoke the whole family.
+            if (session.ReplacedBySessionId.HasValue)
+            {
+                await RevokeFamilyAsync(session, now, cancellationToken);
+            }
+            else
+            {
+                logger.LogWarning("Farm360 RefreshToken: Rotation attempted with revoked token. Hash={Hash}", tokenHash[..8]);
+            }
+
             throw new UnauthorizedAccessException("Invalid or expired refresh token.");
         }
 
@@ -124,10 +141,27 @@ public sealed class RefreshTokenService(
         string refreshToken,
         SessionRevokeReason reason,
         CancellationToken cancellationToken = default)
+        => await RevokeSessionCoreAsync(refreshToken, reason, ownerUserId: null, cancellationToken);
+
+    public async Task RevokeOwnSessionAsync(
+        Guid userId,
+        string refreshToken,
+        SessionRevokeReason reason,
+        CancellationToken cancellationToken = default)
+        => await RevokeSessionCoreAsync(refreshToken, reason, userId, cancellationToken);
+
+    private async Task RevokeSessionCoreAsync(
+        string refreshToken,
+        SessionRevokeReason reason,
+        Guid? ownerUserId,
+        CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(refreshToken)) return;
+
         var tokenHash = HashToken(refreshToken);
         var session = await identityContext.UserSessions
-            .FirstOrDefaultAsync(s => s.TokenHash == tokenHash && !s.IsRevoked, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TokenHash == tokenHash && !s.IsRevoked
+                                      && (ownerUserId == null || s.UserId == ownerUserId), cancellationToken);
 
         if (session is null) return;
 
@@ -154,13 +188,54 @@ public sealed class RefreshTokenService(
             session.RevokedReason = (byte)reason;
         }
 
+        // Also invalidate every access token already issued (checked via the "tv" claim).
+        var user = await identityContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user is not null)
+        {
+            user.TokenVersion++;
+        }
+
         await identityContext.SaveChangesAsync(cancellationToken);
+        tokenVersionValidator.Invalidate(userId);
 
         logger.LogInformation("Farm360 RefreshToken: Revoked {Count} sessions for User={UserId} Reason={Reason}",
             activeSessions.Count, userId, reason);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Revokes every session descended from <paramref name="reused"/> (following the rotation
+    /// chain), i.e. the currently live token of that login, after a rotated token was replayed.
+    /// </summary>
+    private async Task RevokeFamilyAsync(UserSession reused, DateTime now, CancellationToken cancellationToken)
+    {
+        var revoked = 0;
+        var nextId = reused.ReplacedBySessionId;
+        var guard = 0;
+        while (nextId.HasValue && guard++ < 1000)
+        {
+            var currentId = nextId.Value;
+            var next = await identityContext.UserSessions.FirstOrDefaultAsync(s => s.Id == currentId, cancellationToken);
+            if (next is null) break;
+
+            if (!next.IsRevoked)
+            {
+                next.IsRevoked = true;
+                next.RevokedAt = now;
+                next.RevokedReason = (byte)SessionRevokeReason.Suspicious;
+                revoked++;
+            }
+
+            nextId = next.ReplacedBySessionId;
+        }
+
+        await identityContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogWarning(
+            "Farm360 RefreshToken: REUSE DETECTED for User={UserId} Session={SessionId}; revoked {Count} descendant session(s).",
+            reused.UserId, reused.Id, revoked);
+    }
     private static string GenerateRawToken()
     {
         var bytes = new byte[32]; // 256 bits

@@ -18,8 +18,9 @@ public sealed record BatchRecordVaccinationCommand(
 
 public sealed class BatchRecordVaccinationCommandValidator : AbstractValidator<BatchRecordVaccinationCommand>
 {
-    public BatchRecordVaccinationCommandValidator()
+    public BatchRecordVaccinationCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(v => v.AnimalIds)
             .NotEmpty().WithMessage("At least one animal must be selected.")
             .Must(ids => ids.Count <= 500).WithMessage("Cannot batch vaccinate more than 500 animals at once.");
@@ -29,7 +30,7 @@ public sealed class BatchRecordVaccinationCommandValidator : AbstractValidator<B
         RuleFor(v => v.Notes).MaximumLength(1000);
         
         RuleFor(v => v.AdministeredDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Administered date cannot be in the future.");
     }
 }
@@ -40,8 +41,11 @@ internal sealed class BatchRecordVaccinationCommandHandler(
     ITenantService tenantService,
     ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork,
-    IPublisher publisher) : IRequestHandler<BatchRecordVaccinationCommand>
+    IPublisher publisher,
+    IFarmClock? clock = null) : IRequestHandler<BatchRecordVaccinationCommand>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task Handle(BatchRecordVaccinationCommand request, CancellationToken cancellationToken)
     {
         var tenantId = tenantService.TenantId;
@@ -50,6 +54,13 @@ internal sealed class BatchRecordVaccinationCommandHandler(
         // Fetch all requested animals
         var animals = await animalRepository.GetByIdsAsync(request.AnimalIds, cancellationToken);
         var validAnimalIds = animals.Select(a => a.Id).ToHashSet();
+
+        // Farm rule: a dose dated on/after an animal's sale/death date cannot be recorded. Refuse
+        // the whole batch (naming the animal) rather than silently vaccinating only part of it.
+        foreach (var animal in animals)
+        {
+            animal.EnsureCanRecordOn(request.AdministeredDate, "a vaccination");
+        }
 
         var recorded = new List<VaccinationEvent>();
 
@@ -72,7 +83,7 @@ internal sealed class BatchRecordVaccinationCommandHandler(
                 request.Notes);
 
             // Immediately mark it as administered
-            @event.RecordAdministration(request.AdministeredDate, userId, request.Notes);
+            @event.RecordAdministration(request.AdministeredDate, userId, request.Notes, _clock.Today);
 
             vaccinationRepository.AddEvent(@event);
             recorded.Add(@event);

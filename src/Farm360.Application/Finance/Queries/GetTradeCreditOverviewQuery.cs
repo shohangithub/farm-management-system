@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,11 +23,14 @@ public sealed record GetTradeCreditOverviewQuery(Guid FarmId, bool IncludeSettle
 
 public sealed class GetTradeCreditOverviewQueryHandler(
     ITradeBillRepository bills,
-    IFinancialTransactionRepository transactions) : IRequestHandler<GetTradeCreditOverviewQuery, TradeCreditOverviewDto>
+    IFinancialTransactionRepository transactions,
+    IFarmClock? clock = null) : IRequestHandler<GetTradeCreditOverviewQuery, TradeCreditOverviewDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<TradeCreditOverviewDto> Handle(GetTradeCreditOverviewQuery request, CancellationToken cancellationToken)
     {
-        var asOf = DateOnly.FromDateTime(DateTime.Today);
+        var asOf = _clock.Today;
         var all = await bills.GetByFarmIdAsync(request.FarmId, cancellationToken: cancellationToken);
         var payments = (await bills.GetPaymentsByFarmIdAsync(request.FarmId, cancellationToken)).ToLookup(p => p.BillId);
 
@@ -94,14 +98,17 @@ public sealed class GetTradeCreditOverviewQueryHandler(
 
 public sealed record GetTradeBillQuery(Guid FarmId, Guid BillId) : IRequest<TradeBillDto>;
 
-public sealed class GetTradeBillQueryHandler(ITradeBillRepository bills) : IRequestHandler<GetTradeBillQuery, TradeBillDto>
+public sealed class GetTradeBillQueryHandler(ITradeBillRepository bills,
+    IFarmClock? clock = null) : IRequestHandler<GetTradeBillQuery, TradeBillDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<TradeBillDto> Handle(GetTradeBillQuery request, CancellationToken cancellationToken)
     {
         var bill = await bills.GetByIdAsync(request.BillId, cancellationToken);
         if (bill is null || bill.FarmId != request.FarmId)
             throw new NotFoundException(nameof(TradeBill), request.BillId);
 
-        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), DateOnly.FromDateTime(DateTime.Today));
+        return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), _clock.Today);
     }
 }

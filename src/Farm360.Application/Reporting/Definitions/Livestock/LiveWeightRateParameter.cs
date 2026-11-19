@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Globalization;
 using Farm360.Application.Intelligence.Services;
 using Farm360.Application.Reporting.Abstractions;
@@ -11,40 +10,31 @@ namespace Farm360.Application.Reporting.Definitions.Livestock;
 /// </summary>
 /// <remarks>
 /// Defaults to the farm's own valuation rate (<see cref="IAnimalValuationService"/>), so the
-/// reports agree with the projections and the animal screen out of the box. The fixed rates are
-/// what-if overrides for a particular market, not a benchmark.
+/// reports agree with the projections and the animal screen out of the box. An entered rate is a
+/// what-if override for a particular market, not a benchmark.
 /// </remarks>
 internal static class LiveWeightRateParameter
 {
     public const string Name = "pricePerKg";
     public const string FarmRateValue = "farm";
 
-    private static readonly int[] OverrideRates = [350, 380, 400, 420, 450, 500];
-
+    /// <summary>
+    /// A free numeric override rather than a fixed list: market prices move every week and differ
+    /// by district, so any list baked into the code is wrong somewhere. Blank means "use the farm's
+    /// own valuation rate", which is the default.
+    /// </summary>
     public static ReportParameter Create(IAnimalValuationService valuation)
     {
         var rate = valuation.LiveWeightRatePerKgBdt.ToString("N0", CultureInfo.InvariantCulture);
-        var options = new List<ReportSelectOption>
-        {
-            new(FarmRateValue, new LocalizedText(
-                $"Farm valuation rate (৳ {rate} / live kg — {valuation.RateBasisDescription})",
-                $"খামারের মূল্যায়ন দর (৳ {rate} / জীবন্ত কেজি)")),
-        };
-
-        foreach (var r in OverrideRates)
-        {
-            var text = r.ToString(CultureInfo.InvariantCulture);
-            options.Add(new ReportSelectOption(text, new LocalizedText(
-                $"Override: ৳ {text} / live kg",
-                $"বিকল্প দর: ৳ {text} / জীবন্ত কেজি")));
-        }
-
-        return ReportParameter.Select(
+        return new ReportParameter(
             Name,
-            new LocalizedText("Live-weight valuation rate", "জীবন্ত ওজনের মূল্যায়ন দর"),
-            options,
-            @default: FarmRateValue,
-            required: false);
+            new LocalizedText(
+                $"Live-weight rate override, ৳/kg (blank = farm rate ৳ {rate})",
+                $"জীবন্ত ওজনের দর, ৳/কেজি (খালি = খামারের দর ৳ {rate})"),
+            ReportParameterType.Number,
+            Required: false,
+            DefaultValue: null,
+            HelpText: $"Leave blank to use the farm valuation rate (৳ {rate} / live kg — {valuation.RateBasisDescription}). Enter a rate to see a what-if valuation.");
     }
 
     /// <summary>The user's override rate, or null to use the farm's valuation policy.</summary>

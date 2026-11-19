@@ -7,11 +7,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { InventoryService } from '../../../services/inventory.service';
 import { Supplier } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-create-supplier-dialog',
@@ -36,7 +36,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
           <span>{{ isEdit ? 'Edit Supplier' : 'Add New Supplier' }}</span>
         </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button aria-label="Close" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -104,7 +104,7 @@ export class CreateSupplierDialogComponent {
   readonly data = inject<Supplier | null>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -142,7 +142,7 @@ export class CreateSupplierDialogComponent {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open(`Supplier ${this.isEdit ? 'updated' : 'created'} successfully.`, 'OK', { duration: 4000 });
+        this.notify.success(`Supplier ${this.isEdit ? 'updated' : 'created'} successfully.`);
         this.dialogRef.close(true);
       },
       error: (err: any) => {

@@ -14,8 +14,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Finance.EventHandlers.Integration;
 
-public sealed record TreatmentLoggedNotification(TreatmentLoggedEvent DomainEvent, Guid FarmId) : INotification;
-
 /// <summary>
 /// Books the cash side of a treatment and the animal's cost ledger.
 /// </summary>
@@ -26,7 +24,6 @@ public sealed record TreatmentLoggedNotification(TreatmentLoggedEvent DomainEven
 /// cash cost here. With no stock link, the entered cost is the medicine bought for cash.
 /// </remarks>
 public sealed class TreatmentLoggedEventHandler :
-    INotificationHandler<TreatmentLoggedNotification>,
     INotificationHandler<TreatmentLoggedEvent>
 {
     private readonly ILedgerPostingService _ledgerPosting;
@@ -51,9 +48,6 @@ public sealed class TreatmentLoggedEventHandler :
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
-
-    public Task Handle(TreatmentLoggedNotification notification, CancellationToken cancellationToken) =>
-        ProcessEventAsync(notification.DomainEvent, notification.FarmId, cancellationToken);
 
     public Task Handle(TreatmentLoggedEvent notification, CancellationToken cancellationToken) =>
         ProcessEventAsync(notification, Guid.Empty, cancellationToken);

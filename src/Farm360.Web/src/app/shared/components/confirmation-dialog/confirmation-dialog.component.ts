@@ -9,6 +9,8 @@ export interface ConfirmationDialogData {
   confirmButtonText?: string;
   cancelButtonText?: string;
   isDestructive?: boolean;
+  /** Show only the confirm button (alert-style). */
+  hideCancel?: boolean;
 }
 
 @Component({

@@ -25,6 +25,7 @@ public sealed class AdminExtendTrialCommandValidator : AbstractValidator<AdminEx
 
 internal sealed class AdminExtendTrialCommandHandler : IRequestHandler<AdminExtendTrialCommand, TenantSubscriptionStatusDto>
 {
+    private readonly Farm360.Application.Common.Interfaces.ICurrentUserService _currentUser;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICacheService _cacheService;
     private readonly IUnitOfWork _unitOfWork;
@@ -32,8 +33,10 @@ internal sealed class AdminExtendTrialCommandHandler : IRequestHandler<AdminExte
     public AdminExtendTrialCommandHandler(
         ITenantRepository tenantRepository,
         ICacheService cacheService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Application.Common.Interfaces.ICurrentUserService currentUser)
     {
+        _currentUser = currentUser;
         _tenantRepository = tenantRepository;
         _cacheService = cacheService;
         _unitOfWork = unitOfWork;
@@ -41,6 +44,12 @@ internal sealed class AdminExtendTrialCommandHandler : IRequestHandler<AdminExte
 
     public async Task<TenantSubscriptionStatusDto> Handle(AdminExtendTrialCommand request, CancellationToken cancellationToken)
     {
+        // Defence in depth: the route already requires the PlatformAdmin policy.
+        if (!_currentUser.IsSystemUser)
+        {
+            throw new Farm360.Application.Common.Exceptions.ForbiddenAccessException("Platform administrator access is required.");
+        }
+
         var tenant = await _tenantRepository.GetByIdAsync(request.TenantId, cancellationToken)
             ?? throw new NotFoundException("Tenant", request.TenantId);
 

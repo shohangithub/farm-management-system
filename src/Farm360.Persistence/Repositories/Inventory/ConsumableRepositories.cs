@@ -9,11 +9,15 @@ namespace Farm360.Persistence.Repositories.Inventory;
 
 public sealed class ConsumableUsagePlanRepository : IConsumableUsagePlanRepository
 {
+    private readonly IFarmClock _clock;
+
     private readonly ApplicationDbContext _dbContext;
     private readonly ITenantService _tenantService;
 
-    public ConsumableUsagePlanRepository(ApplicationDbContext dbContext, ITenantService tenantService)
+    public ConsumableUsagePlanRepository(ApplicationDbContext dbContext, ITenantService tenantService,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _dbContext = dbContext;
         _tenantService = tenantService;
     }
@@ -46,7 +50,7 @@ public sealed class ConsumableUsagePlanRepository : IConsumableUsagePlanReposito
 
     public async Task<IReadOnlyList<ConsumableUsagePlan>> GetActivePlansAsync(Guid farmId, DateOnly? onDate = null, CancellationToken cancellationToken = default)
     {
-        var targetDate = onDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var targetDate = onDate ?? _clock.Today;
 
         return await _dbContext.ConsumableUsagePlans
             .Include(x => x.Items)
@@ -177,6 +181,14 @@ public sealed class DailyConsumableEntryRepository : IDailyConsumableEntryReposi
             .ToListAsync(cancellationToken);
 
         return entries.Select(x => (x.ConsumableUsagePlanId, x.ConsumableUsagePlanItemId)).ToHashSet();
+    }
+
+    public async Task<DateOnly?> GetLastEntryDateAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.DailyConsumableEntries
+            .AsNoTracking()
+            .Where(x => x.TenantId == _tenantService.TenantId)
+            .MaxAsync(x => (DateOnly?)x.EntryDate, cancellationToken);
     }
 
     public async Task AddAsync(DailyConsumableEntry entry, CancellationToken cancellationToken = default)

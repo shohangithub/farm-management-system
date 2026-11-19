@@ -104,7 +104,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
     ];
 
     public override ReportGroup<HerdSummaryReportRow>? Group =>
-        ReportGroup<HerdSummaryReportRow>.By(r => r.Status, r => $"Status: {r.Status}");
+        ReportGroup<HerdSummaryReportRow>.ByLocalized(r => r.Status, r => new LocalizedText($"Status: {r.Status}", $"অবস্থা: {r.Status}"));
 
     public override bool ShowGrandTotals => true;
 
@@ -120,7 +120,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var batchId = context.IdOrNull("batchId");
         var rateOverride = LiveWeightRateParameter.ReadOverride(context);
 
@@ -138,10 +138,13 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
                 .GetPagedAsync(
                     pageNumber: pageNumber,
                     pageSize: pageSize,
-                    farmId: farmId == Guid.Empty ? null : farmId,
+                    farmId: farmId,
                     batchId: batchId,
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
+
+            // The count arrives with the first page: refuse an oversized register before loading the rest.
+            context.EnsureWithinRowLimit(totalCount, Key);
 
             animals.AddRange(page);
             if (animals.Count >= totalCount || page.Count == 0)
@@ -224,16 +227,5 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
             .OrderBy(r => r.Status)
             .ThenBy(r => r.TagId)
             .ToList();
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

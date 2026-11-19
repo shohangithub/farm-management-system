@@ -20,7 +20,6 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
     EmptyStateComponent
   ],
   templateUrl: './expiring-items-panel.html',
-  styleUrl: './expiring-items-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ExpiringItemsPanel implements OnInit {

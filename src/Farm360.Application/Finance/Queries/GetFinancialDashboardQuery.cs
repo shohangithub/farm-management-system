@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,16 +22,20 @@ public record GetFinancialDashboardQuery(Guid FarmId) : IRequest<FinancialDashbo
 /// </remarks>
 public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDashboardQuery, FinancialDashboardDto>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IFinancialStatementEngine _engine;
 
-    public GetFinancialDashboardQueryHandler(IFinancialStatementEngine engine)
+    public GetFinancialDashboardQueryHandler(IFinancialStatementEngine engine,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _engine = engine;
     }
 
     public async Task<FinancialDashboardDto> Handle(GetFinancialDashboardQuery request, CancellationToken cancellationToken)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
         var ledger = await _engine.LoadAsync(request.FarmId, today, cancellationToken);
 
         var currentMonthStart = new DateOnly(today.Year, today.Month, 1);

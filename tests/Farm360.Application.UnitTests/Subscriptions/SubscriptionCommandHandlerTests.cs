@@ -129,11 +129,14 @@ public sealed class SubscriptionCommandHandlerTests
         _tenantRepoMock.Setup(r => r.GetTenantUsageCountsAsync(tenant.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((2, 2, 80));
 
+        _currentUserServiceMock.Setup(s => s.IsSystemUser).Returns(true);
+
         var handler = new ApprovePendingSubscriptionCommandHandler(
             _subscriptionRepoMock.Object,
             _tenantRepoMock.Object,
             _cacheServiceMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _currentUserServiceMock.Object);
 
         // Act
         var result = await handler.Handle(new ApprovePendingSubscriptionCommand(record.Id), CancellationToken.None);
@@ -147,5 +150,40 @@ public sealed class SubscriptionCommandHandlerTests
         _tenantRepoMock.Verify(r => r.Update(tenant), Times.Once);
         _subscriptionRepoMock.Verify(r => r.Update(record), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ApprovePendingSubscription_NonSystemUser_ShouldBeForbidden()
+    {
+        _currentUserServiceMock.Setup(s => s.IsSystemUser).Returns(false);
+
+        var handler = new ApprovePendingSubscriptionCommandHandler(
+            _subscriptionRepoMock.Object,
+            _tenantRepoMock.Object,
+            _cacheServiceMock.Object,
+            _unitOfWorkMock.Object,
+            _currentUserServiceMock.Object);
+
+        var act = () => handler.Handle(new ApprovePendingSubscriptionCommand(Guid.NewGuid()), CancellationToken.None);
+
+        await act.Should().ThrowAsync<Farm360.Application.Common.Exceptions.ForbiddenAccessException>();
+        _subscriptionRepoMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AdminExtendTrial_NonSystemUser_ShouldBeForbidden()
+    {
+        _currentUserServiceMock.Setup(s => s.IsSystemUser).Returns(false);
+
+        var handler = new AdminExtendTrialCommandHandler(
+            _tenantRepoMock.Object,
+            _cacheServiceMock.Object,
+            _unitOfWorkMock.Object,
+            _currentUserServiceMock.Object);
+
+        var act = () => handler.Handle(new AdminExtendTrialCommand(Guid.NewGuid(), 5), CancellationToken.None);
+
+        await act.Should().ThrowAsync<Farm360.Application.Common.Exceptions.ForbiddenAccessException>();
+        _tenantRepoMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

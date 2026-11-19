@@ -18,6 +18,7 @@
 
 <div #reportSheet id="mortalityListContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
   <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" *ngIf="!isLoading() && dataSource().length > 0">
     <div *ngFor="let element of dataSource()" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col">
@@ -43,21 +44,21 @@
       <!-- Card Body -->
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="mb-4" *ngIf="element.diseaseName">
-          <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Disease</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-1">Disease</div>
           <p class="text-sm font-semibold text-red-600 dark:text-red-400">{{ element.diseaseName }}</p>
         </div>
 
         <div class="grid grid-cols-2 gap-y-4 gap-x-2 border-t border-gray-100 dark:border-gray-700/50 pt-4 mt-auto">
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Economic Loss</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Economic Loss</div>
             <div class="text-sm font-bold text-red-600 dark:text-red-400">
-              <span *ngIf="element.estimatedEconomicLossBdt">৳ {{ element.estimatedEconomicLossBdt | number:'1.0-0' }}</span>
+              <span *ngIf="element.estimatedEconomicLossBdt">{{ element.estimatedEconomicLossBdt | money }}</span>
               <span *ngIf="!element.estimatedEconomicLossBdt" class="text-gray-400 font-medium">—</span>
             </div>
           </div>
           
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Date</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Date</div>
             <div class="text-sm font-semibold text-gray-900 dark:text-white">
               {{ element.deathDate | date:'mediumDate' }}
             </div>
@@ -75,7 +76,7 @@
   </div>
 
     <app-empty-state 
-      *ngIf="!isLoading() && dataSource().length === 0"
+      *ngIf="!isLoading() && dataSource().length === 0 && !loadError()"
       icon="sentiment_very_dissatisfied"
       title="No mortality records"
       description="Log animal losses for your records and analysis."

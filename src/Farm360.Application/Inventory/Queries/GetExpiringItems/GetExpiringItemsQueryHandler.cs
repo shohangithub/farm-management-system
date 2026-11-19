@@ -8,13 +8,17 @@ namespace Farm360.Application.Inventory.Queries.GetExpiringItems;
 
 public class GetExpiringItemsQueryHandler : IRequestHandler<GetExpiringItemsQuery, List<ExpiringItemDto>>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IInventoryItemRepository _itemRepository;
     private readonly IStockTransactionRepository _transactionRepository;
 
     public GetExpiringItemsQueryHandler(
         IInventoryItemRepository itemRepository,
-        IStockTransactionRepository transactionRepository)
+        IStockTransactionRepository transactionRepository,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _itemRepository = itemRepository;
         _transactionRepository = transactionRepository;
     }
@@ -22,7 +26,7 @@ public class GetExpiringItemsQueryHandler : IRequestHandler<GetExpiringItemsQuer
     public async Task<List<ExpiringItemDto>> Handle(GetExpiringItemsQuery request, CancellationToken cancellationToken)
     {
         var targetDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(request.DaysThreshold));
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
 
         var transactions = await _transactionRepository.GetByFarmIdAsync(request.FarmId, cancellationToken: cancellationToken);
         var items = await _itemRepository.GetByFarmIdAsync(request.FarmId, cancellationToken: cancellationToken);

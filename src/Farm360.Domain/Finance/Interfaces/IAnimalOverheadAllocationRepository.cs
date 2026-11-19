@@ -48,4 +48,11 @@ public interface IAnimalOverheadAllocationRepository
         DateOnly from,
         DateOnly to,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Every live allocation row on a farm whose period overlaps the range (daily cost reports).</summary>
+    Task<IReadOnlyList<AnimalOverheadAllocation>> GetByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default);
 }

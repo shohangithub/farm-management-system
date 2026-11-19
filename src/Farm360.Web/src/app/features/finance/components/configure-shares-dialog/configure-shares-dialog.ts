@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { FinanceService } from '../../services/finance.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { FarmShareConfig, ConfigureFarmSharesRequest } from '../../models/finance.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 export interface ConfigureSharesDialogData {
   farmId: string;
@@ -16,12 +17,11 @@ export interface ConfigureSharesDialogData {
   selector: 'app-configure-shares-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
-    CurrencyPipe,
     DecimalPipe
   ],
   template: `
@@ -41,7 +41,7 @@ export interface ConfigureSharesDialogData {
             </p>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -63,13 +63,13 @@ export interface ConfigureSharesDialogData {
             <div>
               <span class="text-gray-500 dark:text-gray-400 block font-medium">Estimated Total Valuation</span>
               <span class="text-base font-extrabold text-teal-700 dark:text-teal-300">
-                {{ computedTotalValuation() | currency:'BDT':'symbol':'1.0-0' }}
+                {{ computedTotalValuation() | money }}
               </span>
             </div>
             <div>
               <span class="text-gray-500 dark:text-gray-400 block font-medium">Available Pool Valuation</span>
               <span class="text-base font-extrabold text-emerald-700 dark:text-emerald-300">
-                {{ computedAvailableValuation() | currency:'BDT':'symbol':'1.0-0' }}
+                {{ computedAvailableValuation() | money }}
               </span>
             </div>
             <div class="border-t border-teal-200/40 dark:border-teal-800/40 pt-2">

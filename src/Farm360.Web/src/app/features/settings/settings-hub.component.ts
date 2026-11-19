@@ -2,11 +2,12 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 
 @Component({
   selector: 'app-settings-hub',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule],
+  imports: [CommonModule, RouterModule, MatIconModule, HasPermissionDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="space-y-6 animate-fade-in-up p-6">
@@ -71,6 +72,34 @@ import { MatIconModule } from '@angular/material/icon';
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">General Master Data</h3>
           </div>
           <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Configure geographic locations, user permissions and global attributes.</p>
+        </a>
+
+        <!-- Farm rules (per-organisation business rules) -->
+        <a routerLink="/settings/farm-rules" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
+            <mat-icon class="!w-24 !h-24 !text-[96px]">rule</mat-icon>
+          </div>
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+              <mat-icon>rule</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Farm rules</h3>
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Meat and live-weight prices, how animals are valued, and how feed and overhead costs are shared.</p>
+        </a>
+
+        <!-- Team -->
+        <a *hasPermission="'users.view'" routerLink="/settings/team" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
+            <mat-icon class="!w-24 !h-24 !text-[96px]">groups</mat-icon>
+          </div>
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+              <mat-icon>groups</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Team</h3>
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Invite people, set roles and branches, and deactivate or remove members.</p>
         </a>
 
         <!-- Subscription & Billing -->

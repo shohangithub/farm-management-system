@@ -16,6 +16,8 @@ import { FeedingService } from '../../services/feeding.service';
 import { FeedRequirement } from '../../models/feeding.models';
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 type Scope = 'all' | 'shed' | 'batch' | 'animals';
 
 /**
@@ -25,7 +27,7 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
 @Component({
   selector: 'app-feed-planner',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, AnimalPickerComponent, FeedingSubnavComponent],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, AnimalPickerComponent, FeedingSubnavComponent],
   template: `
     <app-page-header title="Feed Purchase Plan · খাদ্য ক্রয় পরিকল্পনা"
       description="What to buy for the next days — for one animal, several, a shed, a batch or the whole farm."
@@ -102,11 +104,11 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
           </div>
           <div class="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500 m-0">Feed value</p>
-            <h3 class="text-lg font-black m-0 mt-1">৳{{ r.totalCostOfNeedBdt | number:'1.0-0' }}</h3>
+            <h3 class="text-lg font-black m-0 mt-1">{{ r.totalCostOfNeedBdt | money }}</h3>
           </div>
           <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
             <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 m-0">To buy</p>
-            <h3 class="text-lg font-black m-0 mt-1 text-emerald-700 dark:text-emerald-300">৳{{ r.totalCostToBuyBdt | number:'1.0-0' }}</h3>
+            <h3 class="text-lg font-black m-0 mt-1 text-emerald-700 dark:text-emerald-300">{{ r.totalCostToBuyBdt | money }}</h3>
             <p class="text-[11px] text-emerald-700/80 m-0">after what is in stock</p>
           </div>
         </div>
@@ -136,7 +138,7 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
               <tr *ngFor="let i of r.items" class="border-t border-gray-100 dark:border-gray-700/60 align-top">
                 <td class="px-4 py-2">
                   <span class="font-semibold">{{ i.name }}</span>
-                  <span *ngIf="!i.linkedToStock" class="ml-1 text-[10px] text-amber-600">not linked to stock</span>
+                  <span *ngIf="!i.linkedToStock" class="ml-1 text-[11px] text-amber-600">not linked to stock</span>
                   <span class="block text-[11px] text-gray-500">{{ i.usedIn.join(', ') }}</span>
                 </td>
                 <td class="px-3 py-2 text-right font-mono">{{ i.perDay | number:'1.0-3' }} {{ i.baseUnit }}</td>
@@ -165,7 +167,7 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
                   <td class="px-5 py-2 font-semibold">{{ x.recipe }}</td>
                   <td class="px-3 py-2 text-right font-mono text-gray-500">{{ x.perDayKg | number:'1.0-2' }} {{ x.unit || 'kg' }}/day</td>
                   <td class="px-3 py-2 text-right font-mono font-bold">{{ x.totalKg | number:'1.0-1' }} {{ x.unit || 'kg' }}</td>
-                  <td class="px-5 py-2 text-right font-mono">৳{{ x.costBdt | number:'1.0-0' }}</td>
+                  <td class="px-5 py-2 text-right font-mono">{{ x.costBdt | money }}</td>
                 </tr>
               </tbody>
             </table>
@@ -180,7 +182,7 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
                   <td class="px-5 py-2"><span class="font-semibold">{{ a.tag }}</span><span class="text-[11px] text-gray-500"> {{ a.shed || '' }} {{ a.weightKg ? '· ' + (a.weightKg | number:'1.0-0') + ' kg' : '' }}</span></td>
                   <td class="px-3 py-2 text-right font-mono text-gray-500">{{ a.perDayKg | number:'1.0-2' }} kg/day</td>
                   <td class="px-3 py-2 text-right font-mono font-bold">{{ a.totalKg | number:'1.0-1' }} kg</td>
-                  <td class="px-5 py-2 text-right font-mono">৳{{ a.costBdt | number:'1.0-0' }}</td>
+                  <td class="px-5 py-2 text-right font-mono">{{ a.costBdt | money }}</td>
                 </tr>
               </tbody>
             </table>
@@ -212,7 +214,7 @@ export class FeedPlannerComponent {
   ];
 
   days = 15;
-  fromDate = new Date().toISOString().split('T')[0];
+  fromDate = toLocalIsoDate();
   projectGrowth = true;
   shedId: string | null = null;
   batchId: string | null = null;

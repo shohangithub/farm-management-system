@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FeedingService } from '../../services/feeding.service';
 import { FeedingCycleReconciliation, ReconciliationStatus } from '../../models/feeding.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -13,10 +12,15 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 @Component({
   selector: 'app-reconciliation-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
@@ -48,10 +52,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
 
     <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadReconciliations()"></app-error-state>
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!isLoading() && reconciliations().length === 0"
+        *ngIf="!isLoading() && reconciliations().length === 0 && !loadError()"
         icon="fact_check"
         title="No Reconciliations Found"
         description="There are no pending or past feeding reconciliations to review."
@@ -79,7 +84,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
                   {{ rec.cycleDate | date:'mediumDate' }}
                 </td>
                 <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                     [ngClass]="{
                       'bg-orange-50 text-orange-700 border border-orange-200': rec.status === 'Pending',
                       'bg-blue-50 text-blue-700 border border-blue-200': rec.status === 'Reviewed',
@@ -124,12 +129,14 @@ import { WorkingContextService } from '../../../../core/services/working-context
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReconciliationListComponent implements OnInit {
+  private readonly confirmService = inject(ConfirmService);
   private readonly feedingService = inject(FeedingService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly pdfService = inject(PdfExportService);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly isExporting = signal(false);
   readonly reconciliations = signal<FeedingCycleReconciliation[]>([]);
 
@@ -142,6 +149,7 @@ export class ReconciliationListComponent implements OnInit {
 
   loadReconciliations(): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
     this.feedingService.getReconciliations(this.farmId).subscribe({
       next: (res) => {
         // Sort pending ones first, then by date descending
@@ -153,7 +161,10 @@ export class ReconciliationListComponent implements OnInit {
         this.reconciliations.set(sorted);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.loadError.set(parseApiError(err, 'Could not load reconciliations.'));
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -164,18 +175,18 @@ export class ReconciliationListComponent implements OnInit {
     return variance > 0 ? 'text-red-500' : 'text-emerald-500';
   }
 
-  approve(rec: FeedingCycleReconciliation): void {
-    if (!confirm(`Are you sure you want to approve the reconciliation for ${rec.cycleDate}? This will deduct ${rec.totalActualKg} kg from inventory.`)) {
+  async approve(rec: FeedingCycleReconciliation): Promise<void> {
+    if (!(await this.confirmService.confirmAsync({ message: `Are you sure you want to approve the reconciliation for ${rec.cycleDate}? This will deduct ${rec.totalActualKg} kg from inventory.`, confirmText: 'Approve' }))) {
       return;
     }
 
     this.feedingService.approveReconciliation(rec.id).subscribe({
       next: () => {
-        this.snackBar.open('Reconciliation approved', 'Close', { duration: 3000 });
+        this.notify.success('Reconciliation approved');
         this.loadReconciliations();
       },
       error: (err) => {
-        this.snackBar.open(err.error?.detail || 'Failed to approve', 'Close', { duration: 5000 });
+        this.notify.error(err.error?.detail || 'Failed to approve');
       }
     });
   }
@@ -184,17 +195,17 @@ export class ReconciliationListComponent implements OnInit {
     const reason = prompt('Please enter a reason for rejection:');
     if (reason === null) return;
     if (reason.trim() === '') {
-      this.snackBar.open('A reason is required to reject a reconciliation', 'Close', { duration: 5000 });
+      this.notify.warning('A reason is required to reject a reconciliation');
       return;
     }
 
     this.feedingService.rejectReconciliation(rec.id, reason).subscribe({
       next: () => {
-        this.snackBar.open('Reconciliation rejected', 'Close', { duration: 3000 });
+        this.notify.info('Reconciliation rejected');
         this.loadReconciliations();
       },
       error: (err) => {
-        this.snackBar.open(err.error?.detail || 'Failed to reject', 'Close', { duration: 5000 });
+        this.notify.error(err.error?.detail || 'Failed to reject');
       }
     });
   }
@@ -207,7 +218,7 @@ export class ReconciliationListComponent implements OnInit {
     try {
       const farmName = this.contextService.currentFarmValue?.name || 'All Units';
       await this.pdfService.exportElement(element, {
-        filename: `Feeding_Reconciliations_${new Date().toISOString().slice(0, 10)}`,
+        filename: `Feeding_Reconciliations_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Daily Feeding Reconciliations Audit',

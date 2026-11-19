@@ -31,9 +31,17 @@ public sealed class ReportContext
         IReadOnlyList<Guid>? assignedFarmIds,
         DateOnly today,
         ReportLanguage language,
-        bool bengaliNumerals)
+        bool bengaliNumerals,
+        TimeZoneInfo? timeZone = null,
+        int fiscalYearStartMonth = Domain.Finance.Accounting.FiscalYear.DefaultStartMonth,
+        int maxRows = int.MaxValue)
     {
         _parameters = parameters;
+        TimeZone = timeZone ?? Services.ReportTimeZone.Default;
+        FiscalYearStartMonth = fiscalYearStartMonth is >= 1 and <= 12
+            ? fiscalYearStartMonth
+            : Domain.Finance.Accounting.FiscalYear.DefaultStartMonth;
+        MaxRows = maxRows;
         _sender = sender;
         TenantId = tenantId;
         UserId = userId;
@@ -51,9 +59,52 @@ public sealed class ReportContext
     /// <summary>Null means "every farm in the tenant" — the same convention as ICurrentUserService.</summary>
     public IReadOnlyList<Guid>? AssignedFarmIds { get; }
 
+    /// <summary>Today in the farm's time zone — not UTC, which is yesterday until 06:00 in Dhaka.</summary>
     public DateOnly Today { get; }
     public ReportLanguage Language { get; }
     public bool BengaliNumerals { get; }
+
+    /// <summary>The farm's (or tenant's) time zone; Asia/Dhaka unless configured otherwise.</summary>
+    public TimeZoneInfo TimeZone { get; }
+
+    /// <summary>First month of the farm's financial year (Bangladesh: July).</summary>
+    public int FiscalYearStartMonth { get; }
+
+    /// <summary>Row ceiling; definitions that page through data check it before loading everything.</summary>
+    public int MaxRows { get; }
+
+    /// <summary>
+    /// Throws as soon as a report is known to exceed the row ceiling — ideally from a count,
+    /// before the rows are materialised, rather than after the whole set is in memory.
+    /// </summary>
+    public void EnsureWithinRowLimit(int count, string reportKey)
+    {
+        if (count > MaxRows)
+        {
+            throw new Services.ReportTooLargeException(reportKey, count, MaxRows);
+        }
+    }
+
+    private readonly Dictionary<string, object?> _memo = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Runs <paramref name="factory"/> once per run and key. A statement that prints its totals in
+    /// the subject line and its lines in the body needs the same data twice; this stops that from
+    /// costing two identical round trips to the database.
+    /// </summary>
+    public async Task<T> MemoAsync<T>(string key, Func<Task<T>> factory)
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+
+        if (_memo.TryGetValue(key, out var cached))
+        {
+            return (T)cached!;
+        }
+
+        var value = await factory().ConfigureAwait(false);
+        _memo[key] = value;
+        return value;
+    }
 
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
         _sender.Send(request, cancellationToken);
@@ -76,6 +127,13 @@ public sealed class ReportContext
 
         throw new ReportParameterException(name, $"'{name}' must be a valid identifier.");
     }
+
+    /// <summary>
+    /// The farm this run is scoped to. The execution service has already resolved a blank farm
+    /// (auto-selected when only one farm is accessible, rejected otherwise), so this never guesses.
+    /// </summary>
+    public Guid FarmId(string name = "farmId") =>
+        IdOrNull(name) ?? throw new ReportParameterException(name, "Select a farm for this report.");
 
     public Guid? IdOrNull(string name) =>
         System.Guid.TryParse(Raw(name), out var id) && id != System.Guid.Empty ? id : null;
@@ -145,6 +203,9 @@ public sealed class ReportContext
         "last-30-days" => DateRange.LastDays(Today, 30),
         "last-90-days" => DateRange.LastDays(Today, 90),
         "current-year" => DateRange.CurrentYear(Today),
+        "current-fiscal-year" or "fiscal-year" => DateRange.FiscalYear(Today, FiscalYearStartMonth),
+        "fiscal-year-to-date" => DateRange.FiscalYearToDate(Today, FiscalYearStartMonth),
+        "last-fiscal-year" => DateRange.PreviousFiscalYear(Today, FiscalYearStartMonth),
         "all-time" => new DateRange(new DateOnly(2000, 1, 1), Today),
         _ => null,
     };

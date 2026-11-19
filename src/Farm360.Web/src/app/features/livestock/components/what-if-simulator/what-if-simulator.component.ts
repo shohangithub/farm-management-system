@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 export interface SaleSimulationResult {
   animalId: string;
   targetDate: string;
@@ -19,7 +21,7 @@ export interface SaleSimulationResult {
   selector: 'app-what-if-simulator',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DecimalPipe, MatIconModule, FormsModule],
+  imports: [MoneyPipe, CommonModule, DecimalPipe, MatIconModule, FormsModule],
   template: `
     <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl shadow-lg border border-purple-700/50 p-6 text-white relative overflow-hidden animate-fade-in-up mt-6">
       <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-purple-500/10 rotate-[-15deg] pointer-events-none">science</mat-icon>
@@ -28,7 +30,7 @@ export interface SaleSimulationResult {
         <div class="flex items-center justify-between">
           <div>
             <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-400/30">
+              <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-400/30">
                 Decision Support
               </span>
             </div>
@@ -58,23 +60,23 @@ export interface SaleSimulationResult {
 
         <div *ngIf="simulationResult() as result" class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 animate-fade-in-up">
           <div class="bg-black/20 rounded-xl p-4 border border-white/5">
-             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Time Horizon</p>
+             <p class="text-[11px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Time Horizon</p>
              <p class="text-xl font-bold">+{{ result.daysFromNow }} Days</p>
           </div>
           <div class="bg-black/20 rounded-xl p-4 border border-white/5">
-             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Proj. Weight</p>
+             <p class="text-[11px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Proj. Weight</p>
              <p class="text-xl font-bold">{{ result.projectedWeightKg | number:'1.1-1' }} kg</p>
           </div>
           <div class="bg-black/20 rounded-xl p-4 border border-white/5">
-             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Projected running cost</p>
-             <p class="text-xl font-bold text-amber-300">৳ {{ result.projectedAdditionalCostBdt | number:'1.0-0' }}</p>
-             <p class="text-[10px] text-purple-200/70 mt-0.5">feed + grass + other + labour</p>
+             <p class="text-[11px] text-purple-200 uppercase tracking-wider font-semibold mb-1">Projected running cost</p>
+             <p class="text-xl font-bold text-amber-300">{{ result.projectedAdditionalCostBdt | money }}</p>
+             <p class="text-[11px] text-purple-200/70 mt-0.5">feed + grass + other + labour</p>
           </div>
           <div class="bg-purple-500/20 rounded-xl p-4 border border-purple-400/50">
-             <p class="text-[10px] text-purple-200 uppercase tracking-wider font-semibold mb-1" title="Projected value minus (cost to date + projected running cost)">Proj. Net Profit</p>
+             <p class="text-[11px] text-purple-200 uppercase tracking-wider font-semibold mb-1" title="Projected value minus (cost to date + projected running cost)">Proj. Net Profit</p>
              <p class="text-xl font-bold text-emerald-300 flex items-center gap-1">
                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">account_balance_wallet</mat-icon>
-               ৳ {{ result.projectedProfitMarginBdt | number:'1.0-0' }}
+               {{ result.projectedProfitMarginBdt | money }}
              </p>
           </div>
         </div>
@@ -127,6 +129,6 @@ export class WhatIfSimulatorComponent {
   private getTodayPlus30Days(): string {
     const d = new Date();
     d.setDate(d.getDate() + 30);
-    return d.toISOString().split('T')[0];
+    return toLocalIsoDate(d);
   }
 }

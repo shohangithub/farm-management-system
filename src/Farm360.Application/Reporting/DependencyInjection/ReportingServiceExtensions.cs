@@ -36,8 +36,15 @@ public static class ReportingServiceExtensions
         // is far cheaper than the leak it avoids.
         services.AddScoped<IReportRegistry, ReportRegistry>();
 
+        // Shared by the daily cost reports (one animal, herd per day, every animal per day).
+        services.AddScoped<Definitions.Finance.DailyAnimalCostCalculator>();
+        services.AddScoped<Definitions.Finance.DailyAnimalCostScope>();
+
         // Execution is per-request: it resolves tenant, user and DbContext-scoped services.
-        services.AddScoped<IReportExecutionService, ReportExecutionService>();
+        services.AddScoped<IReportEnvironment, ReportEnvironment>();
+        services.AddScoped<ReportExecutionService>();
+        // Decorator: Farm/Animal/Batch parameters must be inside the caller's tenant and allowed farms.
+        services.AddScoped<IReportExecutionService, FarmScopedReportExecutionService>();
 
         return services;
     }

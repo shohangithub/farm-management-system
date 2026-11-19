@@ -1,6 +1,4 @@
 using Farm360.Application.Intelligence.Interfaces;
-using Farm360.Application.Inventory.EventHandlers;
-using Farm360.Domain.Feeding.Events;
 using Farm360.Domain.Livestock.Events;
 using MediatR;
 using System.Threading;
@@ -8,14 +6,25 @@ using System.Threading.Tasks;
 
 namespace Farm360.Application.Intelligence.EventHandlers;
 
-public sealed record AnimalRegisteredNotification(AnimalRegisteredEvent DomainEvent) : INotification;
-public sealed record WeightRecordedNotification(WeightRecordedEvent DomainEvent) : INotification;
-// FeedConsumptionLoggedNotification is already defined in Inventory module. We can listen to it.
+/// <summary>
+/// The background-intelligence message for a new weight record. It is NOT published in the request:
+/// <see cref="IntelligenceEventDispatcher"/> enqueues it, and the intelligence background service
+/// publishes it in its own scope (tenant set from <see cref="TenantId"/>), where
+/// <see cref="IntelligenceEventHandlers"/> evaluates the rules — keeping the request fast.
+/// </summary>
+public sealed record WeightRecordedNotification(WeightRecordedEvent DomainEvent) : ITenantScopedNotification
+{
+    public System.Guid TenantId => DomainEvent.TenantId;
+}
 
-public sealed class IntelligenceEventDispatcher :
-    INotificationHandler<AnimalRegisteredNotification>,
-    INotificationHandler<WeightRecordedNotification>,
-    INotificationHandler<FeedConsumptionLoggedNotification>
+/// <summary>
+/// Bridges published domain events to the intelligence pipeline. Listens to the real
+/// <see cref="WeightRecordedEvent"/> (published by RecordWeightCommandHandler) and queues the
+/// background message. Only events with a background handler are queued: queueing a notification
+/// that request handlers also listen to (as FeedConsumptionLoggedNotification once was) would run
+/// those handlers a second time in the background and re-queue itself forever.
+/// </summary>
+public sealed class IntelligenceEventDispatcher : INotificationHandler<WeightRecordedEvent>
 {
     private readonly IIntelligenceEventChannel _channel;
 
@@ -24,18 +33,8 @@ public sealed class IntelligenceEventDispatcher :
         _channel = channel;
     }
 
-    public async Task Handle(AnimalRegisteredNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(WeightRecordedEvent notification, CancellationToken cancellationToken)
     {
-        await _channel.EnqueueEventAsync(notification, cancellationToken);
-    }
-
-    public async Task Handle(WeightRecordedNotification notification, CancellationToken cancellationToken)
-    {
-        await _channel.EnqueueEventAsync(notification, cancellationToken);
-    }
-
-    public async Task Handle(FeedConsumptionLoggedNotification notification, CancellationToken cancellationToken)
-    {
-        await _channel.EnqueueEventAsync(notification, cancellationToken);
+        await _channel.EnqueueEventAsync(new WeightRecordedNotification(notification), cancellationToken);
     }
 }

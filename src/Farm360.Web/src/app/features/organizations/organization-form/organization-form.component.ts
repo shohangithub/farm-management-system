@@ -8,14 +8,22 @@ import { CreateOrganizationCommand, UpdateOrganizationCommand } from '../models/
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { AuthService } from '../../../core/services/auth.service';
 
+import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
+
 @Component({
   selector: 'app-organization-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, PageHeaderComponent],
-  templateUrl: './organization-form.html',
-  styleUrls: ['./organization-form.scss']
+  templateUrl: './organization-form.html'
 })
-export class OrganizationFormComponent implements OnInit {
+export class OrganizationFormComponent implements OnInit, HasUnsavedChanges {
+  /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
+  private saved = false;
+
+  hasUnsavedChanges(): boolean {
+    return !!this.orgForm?.dirty && !this.saved;
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly organizationService = inject(OrganizationService);
   private readonly route = inject(ActivatedRoute);
@@ -147,6 +155,7 @@ export class OrganizationFormComponent implements OnInit {
           handleLogoUpload(this.orgId()!, () => {
             this.isSubmitting.set(false);
             this.successMessage.set('Organization updated successfully.');
+            this.saved = true;
             setTimeout(() => this.router.navigate(['/organizations']), 500);
           });
         },
@@ -168,9 +177,11 @@ export class OrganizationFormComponent implements OnInit {
             const isNewTenant = this.authService.currentUserSignal()?.tenantId === '00000000-0000-0000-0000-000000000000';
             if (isNewTenant) {
               this.authService.refreshSession().subscribe(() => {
+                this.saved = true;
                 setTimeout(() => this.router.navigate(['/organizations']), 500);
               });
             } else {
+              this.saved = true;
               setTimeout(() => this.router.navigate(['/organizations']), 500);
             }
           });

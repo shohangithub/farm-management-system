@@ -16,6 +16,7 @@ import { ReportExportFormat } from '../../../reports/models/report.models';
 import { FinanceService } from '../../services/finance.service';
 import { FullAccountsReport } from '../../models/finance.model';
 import { ACCOUNTS_PAPER_CSS, RANGE_PRESETS, printPaper, toIsoDate } from '../../utils/accounts-report-print';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 /** Sections the user can include or leave out of the statement (and therefore the print-out). */
 type SectionKey =
@@ -30,7 +31,7 @@ type SectionKey =
 @Component({
   selector: 'app-full-accounts-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './full-accounts-report.html',
   styles: [ACCOUNTS_PAPER_CSS],
   encapsulation: ViewEncapsulation.None,

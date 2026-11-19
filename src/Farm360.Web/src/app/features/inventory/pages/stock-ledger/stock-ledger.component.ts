@@ -16,13 +16,17 @@ import { StockInDialogComponent } from '../../components/dialogs/stock-in-dialog
 import { StockOutDialogComponent } from '../../components/dialogs/stock-out-dialog/stock-out-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 @Component({
   selector: 'app-stock-ledger',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -31,6 +35,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent
   ],
   template: `
@@ -57,6 +62,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 
     <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters & Search Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30 no-print">
@@ -88,7 +94,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!loading() && (!result()?.items || result()?.items?.length === 0)"
+        *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="receipt_long"
         title="No transactions logged"
         description="Transactions are created when stock is received or issued."
@@ -121,7 +127,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
                   {{ tx.itemName }}
                 </td>
                 <td class="py-3.5 px-4">
-                  <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                  <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
                     [ngClass]="{
                       'bg-emerald-50 text-emerald-700 border border-emerald-200': isStockIn(tx.transactionType),
                       'bg-amber-50 text-amber-700 border border-amber-200': !isStockIn(tx.transactionType)
@@ -132,10 +138,10 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
                 <td class="py-3.5 px-4 text-right font-extrabold"
                   [ngClass]="isStockIn(tx.transactionType) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'">
                   {{ isStockIn(tx.transactionType) ? '+' : '-' }}{{ getAbsQuantity(tx.quantity) }}
-                  <span *ngIf="tx.enteredUnitName" class="block text-[10px] font-normal text-gray-500">{{ tx.enteredQuantity | number:'1.0-4' }} × {{ tx.enteredUnitName }}</span>
+                  <span *ngIf="tx.enteredUnitName" class="block text-[11px] font-normal text-gray-500">{{ tx.enteredQuantity | number:'1.0-4' }} × {{ tx.enteredUnitName }}</span>
                 </td>
-                <td class="py-3.5 px-4 text-right">৳ {{ tx.unitCostBdt }}</td>
-                <td class="py-3.5 px-4 text-right font-bold text-gray-900 dark:text-white">৳ {{ tx.totalCostBdt | number:'1.0-0' }}</td>
+                <td class="py-3.5 px-4 text-right">{{ tx.unitCostBdt | money:2 }}</td>
+                <td class="py-3.5 px-4 text-right font-bold text-gray-900 dark:text-white">{{ tx.totalCostBdt | money }}</td>
                 <td class="py-3.5 px-4 text-right font-bold text-gray-500">{{ tx.balanceAfter }}</td>
                 <td class="py-3.5 px-4 text-xs text-gray-400">
                   {{ tx.supplierName || tx.invoiceNumber || tx.reason || '—' }}
@@ -165,11 +171,11 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
           </div>
           
           <div class="flex items-center gap-2">
-            <button (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -191,6 +197,11 @@ export class StockLedgerComponent {
   readonly loading = signal(true);
   readonly isExporting = signal(false);
   readonly error = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.error.set(null);
+    this.refreshTrigger.update(n => n + 1);
+  }
   readonly searchTerm = signal('');
   readonly params = signal<StockTransactionParams>({ pageNumber: 1, pageSize: 20 });
   private readonly refreshTrigger = signal(0);
@@ -267,7 +278,7 @@ export class StockLedgerComponent {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ params }) => this.inventoryService.getTransactions(params).pipe(
         catchError(e => {
-          this.error.set(e?.error?.detail ?? 'Failed to load stock transactions');
+          this.error.set(parseApiError(e, 'Could not load stock transactions.'));
           return of(null);
         })
       )),
@@ -348,7 +359,7 @@ export class StockLedgerComponent {
     try {
       const farmName = this.contextService.currentFarmValue?.name || 'All Units';
       await this.pdfService.exportElement(element, {
-        filename: `Stock_Transaction_Ledger_${new Date().toISOString().slice(0, 10)}`,
+        filename: `Stock_Transaction_Ledger_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Stock Transaction Audit Ledger',
@@ -367,7 +378,7 @@ export class StockLedgerComponent {
   openStockInDialog(): void {
     const farmId = this.params().farmId;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockInDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(StockInDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -379,7 +390,7 @@ export class StockLedgerComponent {
   openStockOutDialog(): void {
     const farmId = this.params().farmId;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(StockOutDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(StockOutDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { farmId }
     });

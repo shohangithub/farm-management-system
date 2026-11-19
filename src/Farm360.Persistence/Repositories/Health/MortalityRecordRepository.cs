@@ -69,5 +69,15 @@ internal sealed class MortalityRecordRepository(ApplicationDbContext context) : 
         return (items, totalCount);
     }
 
+    public async Task<IReadOnlyList<MortalityRecord>> GetByFarmBetweenAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        var animalIdsInFarm = context.Animals.Where(a => a.FarmId == farmId).Select(a => a.Id);
+        return await context.MortalityRecords
+            .AsNoTracking()
+            .Where(m => animalIdsInFarm.Contains(m.AnimalId) && m.DeathDate >= from && m.DeathDate <= to)
+            .OrderBy(m => m.DeathDate)
+            .ToListAsync(ct);
+    }
+
     public void Add(MortalityRecord record) => context.MortalityRecords.Add(record);
 }

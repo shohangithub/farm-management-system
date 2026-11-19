@@ -13,6 +13,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { InventoryItem } from '../../models/inventory.models';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 export interface StockWriteOffDialogData {
   item: InventoryItem;
 }
@@ -32,7 +33,6 @@ export interface StockWriteOffDialogData {
     MatNativeDateModule
   ],
   templateUrl: './stock-write-off-dialog.html',
-  styleUrl: './stock-write-off-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StockWriteOffDialog implements OnInit {
@@ -78,7 +78,7 @@ export class StockWriteOffDialog implements OnInit {
       inventoryItemId: this.item.id,
       quantity: val.quantity,
       reason: val.reason === '' ? null : val.reason,
-      transactionDate: val.transactionDate.toISOString().split('T')[0],
+      transactionDate: toLocalIsoDate(val.transactionDate),
       notes: val.notes === '' ? null : val.notes
     };
 

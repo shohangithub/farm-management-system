@@ -16,10 +16,14 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 @Component({
   selector: 'app-consumption-log',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
@@ -58,10 +62,11 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 
     <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadLogs()"></app-error-state>
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!isLoading() && logs().length === 0"
+        *ngIf="!isLoading() && logs().length === 0 && !loadError()"
         icon="history"
         title="No feeding records yet"
         description="Log daily feed distribution to track consumption and costs over time."
@@ -93,7 +98,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
                 <td class="py-3.5 px-4 text-gray-600 dark:text-gray-400">{{ log.totalFeedOfferedKg }} kg</td>
                 <td class="py-3.5 px-4 font-medium text-amber-600 dark:text-amber-400">{{ log.totalRefusalKg }} kg</td>
                 <td class="py-3.5 px-4 font-bold text-gray-900 dark:text-white">{{ log.netConsumptionKg }} kg</td>
-                <td class="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">৳ {{ log.totalCostBdt | number:'1.0-0' }}</td>
+                <td class="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">{{ log.totalCostBdt | money }}</td>
                 <td class="py-3.5 px-4 text-xs text-gray-400 max-w-xs truncate">{{ log.notes || '-' }}</td>
               </tr>
             }
@@ -125,6 +130,7 @@ export class ConsumptionLogComponent implements OnInit {
   private readonly pdfService = inject(PdfExportService);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly isExporting = signal(false);
   readonly logs = signal<FeedConsumptionLog[]>([]);
   readonly totalItems = signal(0);
@@ -149,13 +155,17 @@ export class ConsumptionLogComponent implements OnInit {
       return;
     }
     this.isLoading.set(true);
+    this.loadError.set(null);
     this.feedingService.getConsumptionLogs(farmId).subscribe({
       next: (res) => {
         this.logs.set(res);
         this.totalItems.set(res.length);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.loadError.set(parseApiError(err, 'Could not load the consumption log.'));
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -168,7 +178,7 @@ export class ConsumptionLogComponent implements OnInit {
   openLogDialog(): void {
     const farmId = this.contextService.currentFarmValue?.id;
     if (!farmId) return;
-    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(LogConsumptionDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { farmId }
     });
@@ -185,7 +195,7 @@ export class ConsumptionLogComponent implements OnInit {
     try {
       const farmName = this.contextService.currentFarmValue?.name || 'All Units';
       await this.pdfService.exportElement(element, {
-        filename: `Daily_Feed_Consumption_Log_${new Date().toISOString().slice(0, 10)}`,
+        filename: `Daily_Feed_Consumption_Log_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Daily Feed Consumption & Cost Audit',

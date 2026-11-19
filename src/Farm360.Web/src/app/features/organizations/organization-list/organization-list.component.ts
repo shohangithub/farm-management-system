@@ -15,15 +15,19 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
+import { NotificationService } from '../../../shared/services/notification.service';
+
 @Component({
   selector: 'app-organization-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, LoadingComponent],
   templateUrl: './organization-list.html',
-  styleUrls: ['./organization-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrganizationListComponent {
+  private readonly notify = inject(NotificationService);
   private readonly organizationService = inject(OrganizationService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -60,8 +64,7 @@ export class OrganizationListComponent {
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
       switchMap(params => this.organizationService.getOrganizations(params.search, params.status !== null ? params.status : undefined, params.pageNumber, params.pageSize).pipe(
         catchError(err => {
-          this.error.set('Failed to load organizations.');
-          console.error(err);
+          this.error.set(parseApiError(err, 'Failed to load organizations.'));
           return of({ items: [] as Organization[], totalCount: 0 });
         })
       )),
@@ -137,7 +140,7 @@ export class OrganizationListComponent {
   }
 
   deactivate(id: string): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       data: {
         title: 'Deactivate Organization',
@@ -152,7 +155,7 @@ export class OrganizationListComponent {
       if (result) {
         this.organizationService.deactivateOrganization(id).subscribe({
           next: () => this.loadOrganizations(),
-          error: (err) => console.error(err)
+          error: (err) => this.notify.error(parseApiError(err, 'The action could not be completed.'))
         });
       }
     });
@@ -175,7 +178,7 @@ export class OrganizationListComponent {
   }
 
   onRestore(org: Organization): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       data: {
         title: 'Restore Organization',
@@ -190,7 +193,7 @@ export class OrganizationListComponent {
       if (result) {
         this.organizationService.activateOrganization(org.id).subscribe({
           next: () => this.loadOrganizations(),
-          error: (err) => console.error(err)
+          error: (err) => this.notify.error(parseApiError(err, 'The action could not be completed.'))
         });
       }
     });

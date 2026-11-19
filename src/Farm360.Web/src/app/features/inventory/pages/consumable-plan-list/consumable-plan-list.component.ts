@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of } from 'rxjs';
 
@@ -20,12 +19,16 @@ import { ConsumablePlanDialogComponent } from '../../components/dialogs/consumab
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-consumable-plan-list',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -34,6 +37,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent
   ],
   template: `
@@ -78,7 +82,9 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
       <!-- Plans Cards Grid -->
       <div class="p-4 sm:p-6">
-        @if (!loading() && plans().length === 0) {
+        @if (loadError(); as err) {
+          <app-error-state [message]="err" (retry)="retryLoad()"></app-error-state>
+        } @else if (!loading() && plans().length === 0) {
           <app-empty-state
             icon="cleaning_services"
             title="No Consumable Plans Found"
@@ -105,12 +111,12 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                         {{ plan.name }}
                       </h3>
                       <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 mb-0">
-                        {{ plan.itemsCount }} item{{ plan.itemsCount !== 1 ? 's' : '' }} • Est. ৳{{ plan.totalDailyEstimatedCostBdt | number:'1.2-2' }} / day
+                        {{ plan.itemsCount }} item{{ plan.itemsCount !== 1 ? 's' : '' }} • Est. {{ plan.totalDailyEstimatedCostBdt | money:2 }} / day
                       </p>
                     </div>
                   </div>
 
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
                     [ngClass]="{
                       'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800': plan.status === ConsumableUsagePlanStatus.Active,
                       'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800': plan.status === ConsumableUsagePlanStatus.Paused,
@@ -132,7 +138,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                         <span class="font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">{{ item.itemName }}</span>
                         <div class="flex items-center gap-1.5 shrink-0">
                           <span class="font-bold text-teal-600 dark:text-teal-400">{{ item.plannedQuantityPerDay }} {{ item.unitOfMeasure }}</span>
-                          <span class="text-[10px] text-gray-400">/day</span>
+                          <span class="text-[11px] text-gray-400">/day</span>
                         </div>
                       </div>
                     }
@@ -143,11 +149,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                 <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between relative z-10">
                   <span class="text-[11px] text-gray-400">From {{ plan.startDate }}</span>
                   <div class="flex items-center gap-1">
-                    <button (click)="openEditPlanDialog(plan)"
+                    <button aria-label="Edit Plan" (click)="openEditPlanDialog(plan)"
                       class="p-1.5 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Plan">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                     </button>
-                    <button (click)="deletePlan(plan)"
+                    <button aria-label="Delete Plan" (click)="deletePlan(plan)"
                       class="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Plan">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                     </button>
@@ -180,12 +186,17 @@ export class ConsumablePlanListComponent {
   private readonly inventoryService = inject(InventoryService);
   private readonly contextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly loading = signal(true);
   readonly searchTerm = signal('');
   readonly selectedStatus = signal<ConsumableUsagePlanStatus | ''>('');
   private readonly refreshTrigger = signal(0);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
   readonly ConsumableUsagePlanStatus = ConsumableUsagePlanStatus;
 
   readonly currentFarmId = toSignal(
@@ -209,6 +220,7 @@ export class ConsumablePlanListComponent {
           return of([]);
         }
         this.loading.set(true);
+        this.loadError.set(null);
         const statusVal = state.status ? state.status as ConsumableUsagePlanStatus : undefined;
         return this.inventoryService.getConsumablePlans(
           state.farmId,
@@ -217,7 +229,10 @@ export class ConsumablePlanListComponent {
           statusVal,
           state.search || undefined
         ).pipe(
-          catchError(() => of({ items: [] })),
+          catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load consumable plans.'));
+            return of({ items: [] });
+          }),
           switchMap(res => {
             this.loading.set(false);
             return of(res.items);
@@ -239,11 +254,11 @@ export class ConsumablePlanListComponent {
   openCreatePlanDialog(): void {
     const farmId = this.currentFarmId();
     if (!farmId) {
-      this.snackBar.open('Please select an active farm first.', 'Close', { duration: 3000 });
+      this.notify.warning('Please select an active farm first.');
       return;
     }
 
-    const ref = this.dialog.open(ConsumablePlanDialogComponent, {
+    const ref = this.dialog.open(ConsumablePlanDialogComponent, { maxWidth: '95vw',
       data: { farmId },
       width: '640px',
       panelClass: 'custom-dialog-container',
@@ -261,7 +276,7 @@ export class ConsumablePlanListComponent {
     const farmId = this.currentFarmId();
     if (!farmId) return;
 
-    const ref = this.dialog.open(ConsumablePlanDialogComponent, {
+    const ref = this.dialog.open(ConsumablePlanDialogComponent, { maxWidth: '95vw',
       data: { plan, farmId },
       width: '640px',
       panelClass: 'custom-dialog-container',
@@ -289,11 +304,11 @@ export class ConsumablePlanListComponent {
       if (confirmed) {
         this.inventoryService.deleteConsumablePlan(plan.id).subscribe({
           next: () => {
-            this.snackBar.open('Plan deleted successfully.', 'Close', { duration: 3000 });
+            this.notify.success('Plan deleted successfully.');
             this.refreshTrigger.update(v => v + 1);
           },
           error: () => {
-            this.snackBar.open('Failed to delete plan.', 'Close', { duration: 3000 });
+            this.notify.error('Failed to delete plan.');
           }
         });
       }

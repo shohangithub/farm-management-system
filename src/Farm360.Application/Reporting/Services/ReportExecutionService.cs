@@ -34,6 +34,12 @@ public interface IReportExecutionService
 {
     IReadOnlyList<ReportDescriptor> GetCatalog();
 
+    /// <summary>The catalog filtered to reports the current user is permitted to run.</summary>
+    Task<IReadOnlyList<ReportDescriptor>> GetCatalogAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>True when the current user holds <paramref name="permission"/> (or it is blank).</summary>
+    Task<bool> HasPermissionAsync(string? permission, CancellationToken cancellationToken = default);
+
     ReportDescriptor GetMetadata(string key);
 
     Task<ReportDataSet> RunAsync(ReportRequest request, CancellationToken cancellationToken = default);
@@ -69,6 +75,7 @@ public sealed class ReportExecutionService : IReportExecutionService
     private readonly IReportRunRepository _runRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEnumerable<IReportRenderer> _renderers;
+    private readonly IReportEnvironment _environment;
     private readonly ILogger<ReportExecutionService> _logger;
 
     public ReportExecutionService(
@@ -81,6 +88,7 @@ public sealed class ReportExecutionService : IReportExecutionService
         IReportRunRepository runRepository,
         IUnitOfWork unitOfWork,
         IEnumerable<IReportRenderer> renderers,
+        IReportEnvironment environment,
         ILogger<ReportExecutionService> logger)
     {
         _registry = registry;
@@ -92,10 +100,36 @@ public sealed class ReportExecutionService : IReportExecutionService
         _runRepository = runRepository;
         _unitOfWork = unitOfWork;
         _renderers = renderers;
+        _environment = environment;
         _logger = logger;
     }
 
     public IReadOnlyList<ReportDescriptor> GetCatalog() => _registry.All;
+
+    public async Task<IReadOnlyList<ReportDescriptor>> GetCatalogAsync(CancellationToken cancellationToken = default)
+    {
+        if (_currentUser.IsSystemUser)
+        {
+            return _registry.All;
+        }
+
+        if (_currentUser.UserId is not { } userId)
+        {
+            return _registry.All.Where(d => d.Permission is not { Length: > 0 }).ToList();
+        }
+
+        // One permission load for the whole catalog, not one check per report.
+        var granted = new HashSet<string>(
+            await _permissionService.GetPermissionsAsync(userId, _tenantService.TenantId, cancellationToken).ConfigureAwait(false),
+            StringComparer.OrdinalIgnoreCase);
+
+        return _registry.All
+            .Where(d => d.Permission is not { Length: > 0 } permission || granted.Contains(permission))
+            .ToList();
+    }
+
+    public Task<bool> HasPermissionAsync(string? permission, CancellationToken cancellationToken = default) =>
+        CanRunAsync(permission, cancellationToken);
 
     public ReportDescriptor GetMetadata(string key) => _registry.Describe(key);
 
@@ -165,18 +199,29 @@ public sealed class ReportExecutionService : IReportExecutionService
 
         await EnsurePermittedAsync(definition, cancellationToken).ConfigureAwait(false);
 
-        var parameters = BindAndValidate(definition, request.Parameters);
+        var parameters = await BindAndValidateAsync(definition, request.Parameters, request.Language, cancellationToken)
+            .ConfigureAwait(false);
+
+        // The farm decides the clock: "today", the date presets and the printed timestamp are all
+        // in the farm's zone, and the fiscal-year presets use the farm's financial-year start.
+        var farmId = FindFarmId(definition, parameters);
+        var locale = await _environment.GetLocaleAsync(farmId, cancellationToken).ConfigureAwait(false);
+        var nowUtc = _dateTime.UtcNow;
+        var userName = await _environment.GetUserDisplayNameAsync(cancellationToken).ConfigureAwait(false);
 
         var context = new ReportContext(
             parameters,
             _sender,
             _tenantService.TenantId,
             _currentUser.UserId,
-            ResolveUserName(),
+            userName,
             _currentUser.AssignedFarmIds,
-            DateOnly.FromDateTime(_dateTime.UtcNow),
+            ReportTimeZone.Today(nowUtc, locale.TimeZone),
             request.Language,
-            request.BengaliNumerals);
+            request.BengaliNumerals,
+            locale.TimeZone,
+            locale.FiscalYearStartMonth,
+            MaxRows);
 
         var run = ReportRun.Start(
             _tenantService.TenantId,
@@ -187,6 +232,17 @@ public sealed class ReportExecutionService : IReportExecutionService
             _currentUser.UserId,
             context.UserName);
 
+        // Not rates yet — but the settings that decide what "today" and "this financial year"
+        // meant for this run, which is what a re-run months later needs to explain a difference.
+        run.AttachRatesSnapshot(JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["timeZone"] = locale.TimeZone.Id,
+            ["fiscalYearStartMonth"] = locale.FiscalYearStartMonth,
+            ["today"] = context.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["language"] = request.Language == ReportLanguage.Bn ? "bn" : "en",
+            ["bengaliNumerals"] = request.BengaliNumerals,
+        }, ParameterJsonOptions));
+
         _runRepository.Add(run);
 
         var stopwatch = Stopwatch.StartNew();
@@ -195,26 +251,28 @@ public sealed class ReportExecutionService : IReportExecutionService
         {
             var subject = await definition.ResolveSubjectAsync(context, cancellationToken).ConfigureAwait(false);
 
+            var farmName = farmId is { } fid
+                ? await _environment.DescribeAsync(ReportParameterType.Farm, fid, cancellationToken).ConfigureAwait(false)
+                : null;
+
             var meta = new ReportMetaHeader(
                 _tenantService.TenantName,
-                null,
+                farmName,
                 definition.Title.For(request.Language),
                 definition.Key,
                 run.Id,
                 context.UserName,
-                _dateTime.UtcNow,
-                DescribeParameters(definition, parameters, request.Language))
+                nowUtc,
+                await DescribeParametersAsync(definition, parameters, context, cancellationToken).ConfigureAwait(false))
             {
                 Subject = subject,
+                GeneratedAtLocal = ReportTimeZone.FormatStamp(nowUtc, locale.TimeZone),
+                GeneratedAtLocalTime = ReportTimeZone.ToLocal(nowUtc, locale.TimeZone),
+                TimeZoneLabel = ReportTimeZone.Label(locale.TimeZone, nowUtc),
             };
 
             var dataSet = await definition.ExecuteAsync(context, meta, cancellationToken).ConfigureAwait(false);
             stopwatch.Stop();
-
-            if (dataSet.TotalRowCount > MaxRows)
-            {
-                throw new ReportTooLargeException(definition.Key, dataSet.TotalRowCount, MaxRows);
-            }
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
@@ -239,34 +297,39 @@ public sealed class ReportExecutionService : IReportExecutionService
 
     private async Task EnsurePermittedAsync(IReportDefinition definition, CancellationToken cancellationToken)
     {
-        if (definition.Permission is not { Length: > 0 } permission)
+        if (!await CanRunAsync(definition.Permission, cancellationToken).ConfigureAwait(false))
         {
-            return;
+            throw new ReportAccessDeniedException(definition.Key, definition.Permission ?? string.Empty);
         }
+    }
 
-        if (_currentUser.IsSystemUser)
+    private async Task<bool> CanRunAsync(string? permission, CancellationToken cancellationToken)
+    {
+        if (permission is not { Length: > 0 } || _currentUser.IsSystemUser)
         {
-            return;
+            return true;
         }
 
         if (_currentUser.UserId is not { } userId)
         {
-            throw new ReportAccessDeniedException(definition.Key, permission);
+            return false;
         }
 
-        var allowed = await _permissionService
+        return await _permissionService
             .HasPermissionAsync(userId, _tenantService.TenantId, permission, cancellationToken)
             .ConfigureAwait(false);
-
-        if (!allowed)
-        {
-            throw new ReportAccessDeniedException(definition.Key, permission);
-        }
     }
 
-    private static Dictionary<string, string?> BindAndValidate(
+    /// <summary>
+    /// Applies defaults, enforces required parameters, and settles the farm: a blank farm is
+    /// filled in only when the user can see exactly one, and rejected otherwise — never silently
+    /// replaced by whichever farm happens to sort first.
+    /// </summary>
+    private async Task<Dictionary<string, string?>> BindAndValidateAsync(
         IReportDefinition definition,
-        IReadOnlyDictionary<string, string?> supplied)
+        IReadOnlyDictionary<string, string?> supplied,
+        ReportLanguage language,
+        CancellationToken cancellationToken)
     {
         var bound = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
@@ -279,9 +342,30 @@ public sealed class ReportExecutionService : IReportExecutionService
                 value = parameter.DefaultValue;
             }
 
+            if (parameter.Type == ReportParameterType.Farm && string.IsNullOrWhiteSpace(value))
+            {
+                var farms = await _environment.GetAccessibleFarmsAsync(cancellationToken).ConfigureAwait(false);
+                if (farms.Count == 1)
+                {
+                    value = farms[0].Id.ToString();
+                }
+                else if (parameter.Required)
+                {
+                    throw new ReportParameterException(
+                        parameter.Name,
+                        farms.Count == 0
+                            ? "You do not have access to any farm, so this report cannot be run."
+                            : $"Select a farm: this report covers one farm and you have access to {farms.Count}.");
+                }
+            }
+
             if (parameter.Required && string.IsNullOrWhiteSpace(value))
             {
-                throw new ReportParameterException(parameter.Name, $"'{parameter.Label.En}' is required.");
+                throw new ReportParameterException(
+                    parameter.Name,
+                    language == ReportLanguage.Bn
+                        ? $"'{parameter.Label.For(language)}' আবশ্যক।"
+                        : $"'{parameter.Label.En}' is required.");
             }
 
             bound[parameter.Name] = value;
@@ -290,57 +374,112 @@ public sealed class ReportExecutionService : IReportExecutionService
         return bound;
     }
 
-    private static List<ReportMetaField> DescribeParameters(
+    private static Guid? FindFarmId(IReportDefinition definition, Dictionary<string, string?> bound)
+    {
+        foreach (var parameter in definition.Parameters)
+        {
+            if (parameter.Type == ReportParameterType.Farm
+                && bound.TryGetValue(parameter.Name, out var raw)
+                && Guid.TryParse(raw, out var id)
+                && id != Guid.Empty)
+            {
+                return id;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The parameter echo printed on every report. Entities are printed by name (the farm, the
+    /// batch, the animal's tag) and date presets as the actual dates they resolved to — a page
+    /// that says "Period: last-month" is not evidence of anything.
+    /// </summary>
+    private async Task<List<ReportMetaField>> DescribeParametersAsync(
         IReportDefinition definition,
         Dictionary<string, string?> bound,
-        ReportLanguage language)
+        ReportContext context,
+        CancellationToken cancellationToken)
     {
+        var language = context.Language;
+        var all = ReportStrings.All.For(language);
         var fields = new List<ReportMetaField>(definition.Parameters.Count);
 
         foreach (var parameter in definition.Parameters)
         {
             bound.TryGetValue(parameter.Name, out var raw);
+            string? display;
 
-            // Identifiers say nothing to a reader; the Subject line carries the real identity.
-            if (parameter.Type is ReportParameterType.Animal or ReportParameterType.Batch
-                or ReportParameterType.Farm or ReportParameterType.Shed or ReportParameterType.Breed
-                or ReportParameterType.InventoryItem)
+            switch (parameter.Type)
             {
-                continue;
+                case ReportParameterType.Animal or ReportParameterType.Batch or ReportParameterType.Farm
+                    or ReportParameterType.Shed or ReportParameterType.Breed or ReportParameterType.InventoryItem:
+                    display = Guid.TryParse(raw, out var id) && id != Guid.Empty
+                        ? await _environment.DescribeAsync(parameter.Type, id, cancellationToken).ConfigureAwait(false) ?? raw
+                        : null;
+                    break;
+
+                case ReportParameterType.Select or ReportParameterType.MultiSelect:
+                    display = parameter.Options?
+                        .FirstOrDefault(o => string.Equals(o.Value, raw, StringComparison.OrdinalIgnoreCase))
+                        ?.Label.For(language) ?? raw;
+                    break;
+
+                case ReportParameterType.DateRange:
+                    display = TryDescribe(() => FormatRange(context.Range(parameter.Name), context), raw);
+                    break;
+
+                case ReportParameterType.Date:
+                    display = string.IsNullOrWhiteSpace(raw)
+                        ? null
+                        : TryDescribe(() => FormatDate(context.Date(parameter.Name), context), raw);
+                    break;
+
+                case ReportParameterType.Boolean:
+                    display = bool.TryParse(raw, out var b)
+                        ? (b ? ReportStrings.Yes : ReportStrings.No).For(language)
+                        : raw;
+                    break;
+
+                default:
+                    display = raw;
+                    break;
             }
-
-            var display = parameter.Type switch
-            {
-                ReportParameterType.Select or ReportParameterType.MultiSelect =>
-                    parameter.Options?.FirstOrDefault(o => string.Equals(o.Value, raw, StringComparison.OrdinalIgnoreCase))
-                        ?.Label.For(language) ?? raw,
-                _ => raw,
-            };
 
             fields.Add(new ReportMetaField(
                 parameter.Label.For(language),
-                string.IsNullOrWhiteSpace(display) ? "All" : display));
+                string.IsNullOrWhiteSpace(display) ? all : display));
         }
 
         return fields;
     }
 
-    private string ResolveUserName()
-    {
-        if (_currentUser.IsSystemUser)
-        {
-            return "system";
-        }
+    private static string FormatDate(DateOnly date, ReportContext context) =>
+        ReportValueFormatter.Format(date, ReportColumnType.Date, 0, context.BengaliNumerals, context.Language);
 
-        return _currentUser.Role is { Length: > 0 } role
-            ? $"{_currentUser.UserId} ({role})"
-            : _currentUser.UserId?.ToString() ?? "anonymous";
+    private static string FormatRange(DateRange range, ReportContext context) =>
+        range.From == range.To
+            ? FormatDate(range.From, context)
+            : $"{FormatDate(range.From, context)} – {FormatDate(range.To, context)}";
+
+    private static string? TryDescribe(Func<string> describe, string? raw)
+    {
+        try
+        {
+            return describe();
+        }
+        catch (ReportParameterException)
+        {
+            // The definition will reject the value with a proper message; the echo just shows it.
+            return raw;
+        }
     }
 
     private static string BuildFileName(ReportDataSet dataSet, string extension)
     {
         var slug = dataSet.Key.Replace('.', '-');
-        var stamp = dataSet.Meta.GeneratedAtUtc.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture);
+        var stampTime = dataSet.Meta.GeneratedAtLocalTime ?? dataSet.Meta.GeneratedAtUtc;
+        var stamp = stampTime.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture);
         return $"{slug}_{stamp}.{extension}";
     }
 }

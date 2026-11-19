@@ -14,30 +14,39 @@ public sealed record RecordVaccinationAdministrationCommand(
 
 public sealed class RecordVaccinationAdministrationCommandValidator : AbstractValidator<RecordVaccinationAdministrationCommand>
 {
-    public RecordVaccinationAdministrationCommandValidator()
+    public RecordVaccinationAdministrationCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(v => v.VaccinationEventId).NotEmpty();
         RuleFor(v => v.Notes).MaximumLength(1000);
         RuleFor(v => v.AdministeredDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow))
+            .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Administered date cannot be in the future.");
     }
 }
 
 internal sealed class RecordVaccinationAdministrationCommandHandler(
     IVaccinationRepository vaccinationRepository,
+    Farm360.Domain.Livestock.Repositories.IAnimalRepository animalRepository,
     ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork,
-    IPublisher publisher) : IRequestHandler<RecordVaccinationAdministrationCommand>
+    IPublisher publisher,
+    IFarmClock? clock = null) : IRequestHandler<RecordVaccinationAdministrationCommand>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task Handle(RecordVaccinationAdministrationCommand request, CancellationToken cancellationToken)
     {
         var @event = await vaccinationRepository.GetEventByIdAsync(request.VaccinationEventId, cancellationToken)
             ?? throw new KeyNotFoundException($"Vaccination event with ID '{request.VaccinationEventId}' was not found.");
 
+        // A dose given before the animal left may be entered late; none on/after the exit date.
+        var animal = await animalRepository.GetByIdAsync(@event.AnimalId, cancellationToken);
+        animal?.EnsureCanRecordOn(request.AdministeredDate, "a vaccination");
+
         var userId = currentUserService.UserId ?? Guid.Empty;
 
-        @event.RecordAdministration(request.AdministeredDate, userId, request.Notes);
+        @event.RecordAdministration(request.AdministeredDate, userId, request.Notes, _clock.Today);
 
         vaccinationRepository.UpdateEvent(@event);
         await unitOfWork.SaveChangesAsync(cancellationToken);

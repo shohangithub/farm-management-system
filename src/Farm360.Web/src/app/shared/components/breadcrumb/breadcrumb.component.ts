@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -17,7 +18,8 @@ export class BreadcrumbComponent implements OnChanges {
 
   constructor(private router: Router, private activatedRoute: ActivatedRoute) {
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
+      filter(event => event instanceof NavigationEnd),
+      takeUntilDestroyed()
     ).subscribe(() => {
       this.breadcrumbs = this.buildBreadcrumb(this.activatedRoute.root);
     });
@@ -33,7 +35,9 @@ export class BreadcrumbComponent implements OnChanges {
 
   private buildBreadcrumb(route: ActivatedRoute, url: string = '', breadcrumbs: Array<{ label: string, url: string }> = []): Array<{ label: string, url: string }> {
     let label = route.routeConfig && route.routeConfig.data ? route.routeConfig.data['breadcrumb'] : '';
-    let path = route.routeConfig && route.routeConfig.data ? route.routeConfig.path : '';
+    // Always use the matched URL segments (with :params resolved) so every crumb links to the
+    // full path, whether or not the route declares breadcrumb data.
+    const path = route.snapshot?.url.map(segment => segment.path).join('/') ?? '';
 
     // Auto-generate label from the path if no explicit breadcrumb data exists
     if (!label && route.routeConfig && route.routeConfig.path) {

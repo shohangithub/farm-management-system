@@ -10,15 +10,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Inventory.EventHandlers;
 
-public sealed record VaccinationAdministeredNotification(VaccinationAdministeredEvent DomainEvent) : INotification;
-
 /// <summary>
 /// Deducts the vaccine dose from stock and books its cost against Inventory. If the dose was not in
 /// stock it must have been obtained directly, so its value is booked as a cash cost instead.
 /// Postings are keyed on the vaccination event, so a re-published event cannot double-book.
 /// </summary>
 public sealed class VaccinationAdministeredStockDeductionHandler :
-    INotificationHandler<VaccinationAdministeredNotification>,
     INotificationHandler<VaccinationAdministeredEvent>
 {
     private readonly IInventoryItemRepository _inventoryItemRepository;
@@ -40,9 +37,6 @@ public sealed class VaccinationAdministeredStockDeductionHandler :
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
-
-    public Task Handle(VaccinationAdministeredNotification wrapper, CancellationToken cancellationToken) =>
-        Handle(wrapper.DomainEvent, cancellationToken);
 
     public async Task Handle(VaccinationAdministeredEvent notification, CancellationToken cancellationToken)
     {

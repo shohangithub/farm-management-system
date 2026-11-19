@@ -40,7 +40,7 @@ public sealed class IncomeExpenseReportDefinition : ReportDefinition<IncomeExpen
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.DateRange("period", @default: "today"),
     ];
 
@@ -50,8 +50,8 @@ public sealed class IncomeExpenseReportDefinition : ReportDefinition<IncomeExpen
         ReportColumn<IncomeExpenseReportRow>.Text("voucher", new LocalizedText("Voucher", "রশিদ নং"), r => r.VoucherNo, width: 26f, relative: false),
         ReportColumn<IncomeExpenseReportRow>.Text("head", new LocalizedText("Account Head", "খাত"), r => r.Head, width: 1.6f),
         ReportColumn<IncomeExpenseReportRow>.Text("description", new LocalizedText("Description", "বিবরণ"), r => r.Description, width: 2.6f),
-        ReportColumn<IncomeExpenseReportRow>.Money("receipt", new LocalizedText("Income (BDT)", "আয় (টাকা)"), r => r.ReceiptBdt, widthMm: 26f),
-        ReportColumn<IncomeExpenseReportRow>.Money("payment", new LocalizedText("Expense (BDT)", "ব্যয় (টাকা)"), r => r.PaymentBdt, widthMm: 26f),
+        ReportColumn<IncomeExpenseReportRow>.Money("receipt", new LocalizedText("Income (BDT)", "আয় (টাকা)"), r => r.ReceiptBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<IncomeExpenseReportRow>.Money("payment", new LocalizedText("Expense (BDT)", "ব্যয় (টাকা)"), r => r.PaymentBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<IncomeExpenseReportRow>? Group =>
@@ -98,9 +98,16 @@ public sealed class IncomeExpenseReportDefinition : ReportDefinition<IncomeExpen
         return rows;
     }
 
-    private static async Task<IncomeExpenseReportDto> LoadAsync(ReportContext context, CancellationToken cancellationToken)
+    /// <summary>Opening + receipts equals payments + closing, so both column totals agree.</summary>
+    public override LocalizedText? GrandTotalLabel => new("Totals (opening + income = expense + closing)", "মোট (প্রারম্ভিক + আয় = ব্যয় + সমাপনী)");
+
+    // The subject line and the body both need the cash book; load it once per run.
+    private static Task<IncomeExpenseReportDto> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>
+        context.MemoAsync("income-expense", () => LoadCoreAsync(context, cancellationToken));
+
+    private static async Task<IncomeExpenseReportDto> LoadCoreAsync(ReportContext context, CancellationToken cancellationToken)
     {
-        var farmId = await FinanceReportFarm.ResolveAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var range = context.Range("period");
         return await context.Send(
             new GetIncomeExpenseReportQuery(
@@ -111,17 +118,3 @@ public sealed class IncomeExpenseReportDefinition : ReportDefinition<IncomeExpen
     }
 }
 
-/// <summary>Farm resolution shared by the cash-book style finance reports.</summary>
-internal static class FinanceReportFarm
-{
-    public static async Task<Guid> ResolveAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
-    }
-}

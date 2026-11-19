@@ -21,11 +21,16 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-treatment-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule, 
     RouterModule, 
     MatCardModule, 
@@ -42,10 +47,10 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
     LoadingComponent
   ],
   templateUrl: './treatment-list.html',
-  styleUrls: ['./treatment-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TreatmentListComponent {
+  private readonly notify = inject(NotificationService);
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
@@ -64,6 +69,12 @@ export class TreatmentListComponent {
   pageSize = signal(10);
   refreshTrigger = signal(0);
   isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
 
   private currentFarm = toSignal(this.contextService.currentFarm$);
 
@@ -76,11 +87,11 @@ export class TreatmentListComponent {
 
   private treatmentsResult = toSignal(
     toObservable(this.paginationParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ pageIndex, pageSize, farmId }) => 
         this.healthService.getTreatments({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
-          catchError((err) => {
-            console.error('Error loading treatments', err);
+          catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load treatments.'));
             return of({ items: [], totalCount: 0 });
           })
         )
@@ -103,7 +114,7 @@ export class TreatmentListComponent {
   }
 
   openLogTreatmentDialog(): void {
-    const dialogRef = this.dialog.open(LogTreatmentDialog, { 
+    const dialogRef = this.dialog.open(LogTreatmentDialog, { maxWidth: '95vw', 
       disableClose: true,
       width: '720px'
     });
@@ -113,7 +124,7 @@ export class TreatmentListComponent {
   }
 
   openEditTreatmentDialog(treatment: MedicalTreatmentDto): void {
-    const dialogRef = this.dialog.open(LogTreatmentDialog, {
+    const dialogRef = this.dialog.open(LogTreatmentDialog, { maxWidth: '95vw',
       disableClose: true,
       width: '720px',
       data: { treatment }
@@ -126,7 +137,7 @@ export class TreatmentListComponent {
   updateStatus(treatment: MedicalTreatmentDto, status: TreatmentStatus): void {
     this.healthService.updateTreatmentStatus(treatment.id, status, 'Status updated via list view').subscribe({
       next: () => this.loadTreatments(),
-      error: (err) => console.error('Error updating status', err)
+      error: (err) => this.notify.error(parseApiError(err, 'Could not update the treatment status.'))
     });
   }
 
@@ -142,7 +153,7 @@ export class TreatmentListComponent {
     this.isExporting.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Medical_Treatments_${new Date().toISOString().split('T')[0]}`,
+        filename: `Farm360_Medical_Treatments_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Medical Treatments Log',
@@ -158,7 +169,7 @@ export class TreatmentListComponent {
         showSignatures: true
       });
     } catch (err) {
-      console.error('Failed to export Treatments PDF:', err);
+      this.notify.error(parseApiError(err, 'Could not export the PDF. Please try again.'));
     } finally {
       this.isExporting.set(false);
     }

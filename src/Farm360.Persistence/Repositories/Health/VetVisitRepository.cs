@@ -42,7 +42,7 @@ internal sealed class VetVisitRepository(ApplicationDbContext context) : IVetVis
             ("vetname", true)       => query.OrderByDescending(v => v.VetName),
             ("costbdt", false)      => query.OrderBy(v => v.CostBdt),
             ("costbdt", true)       => query.OrderByDescending(v => v.CostBdt),
-            ("createdat", false)    => query.OrderBy(v => v.CreatedAt),
+            ("createdat", false)    => query.OrderBy(v => v.CreatedAtUtc),
             _                       => query.OrderByDescending(v => v.VisitDate)
         };
 

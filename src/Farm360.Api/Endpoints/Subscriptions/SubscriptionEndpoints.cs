@@ -1,3 +1,4 @@
+using Farm360.Api.Authorization;
 using Farm360.Application.Subscriptions.Commands;
 using Farm360.Application.Subscriptions.DTOs;
 using Farm360.Application.Subscriptions.Queries;
@@ -47,7 +48,7 @@ public static class SubscriptionEndpoints
             var result = await sender.Send(command, ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(EndpointPermissionExtensions.Policy(Farm360.Persistence.Seed.PermissionConstants.Billing.Manage))
         .WithName("StartTenantTrial")
         .WithSummary("Activate a free trial period (3, 7, or 10 days) for the current tenant")
         .Produces<TenantSubscriptionStatusDto>(StatusCodes.Status200OK)
@@ -60,7 +61,7 @@ public static class SubscriptionEndpoints
             var result = await sender.Send(command, ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(EndpointPermissionExtensions.Policy(Farm360.Persistence.Seed.PermissionConstants.Billing.Manage))
         .WithName("SubscribeTenant")
         .WithSummary("Submit a payment reference for a Monthly, Yearly, or One-Time plan, pending verification")
         .Produces<TenantSubscriptionRecordDto>(StatusCodes.Status200OK)
@@ -72,7 +73,7 @@ public static class SubscriptionEndpoints
             var result = await sender.Send(new GetSubscriptionHistoryQuery(), ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(EndpointPermissionExtensions.Policy(Farm360.Persistence.Seed.PermissionConstants.Billing.View))
         .WithName("GetSubscriptionHistory")
         .WithSummary("Get list of past subscription transactions and invoices for the current tenant")
         .Produces<IReadOnlyList<TenantSubscriptionRecordDto>>(StatusCodes.Status200OK);
@@ -83,21 +84,19 @@ public static class SubscriptionEndpoints
             var result = await sender.Send(command, ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(AuthorizationPolicies.PlatformAdmin)
         .WithName("AdminExtendTrial")
         .WithSummary("Admin endpoint to extend a tenant's trial period by additional days")
         .Produces<TenantSubscriptionStatusDto>(StatusCodes.Status200OK);
 
         // 7. Admin: list self-reported payments awaiting verification, across every tenant.
-        // NOTE: like /admin/extend-trial above, this only requires an authenticated user, not a
-        // platform-admin role -- this codebase has no cross-tenant admin permission/policy yet.
-        // Scoping this to a real platform-admin policy is a follow-up, not introduced here.
+        // All /admin/* routes require the PlatformAdmin policy (sys=true claim); handlers re-check.
         group.MapGet("/admin/subscriptions/pending", async (ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new Farm360.Application.Subscriptions.Queries.GetPendingSubscriptionsQuery(), ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(AuthorizationPolicies.PlatformAdmin)
         .WithName("GetPendingSubscriptions")
         .WithSummary("List self-reported subscription payments awaiting verification, across all tenants")
         .Produces<IReadOnlyList<Farm360.Application.Subscriptions.Queries.PendingSubscriptionDto>>(StatusCodes.Status200OK);
@@ -113,7 +112,7 @@ public static class SubscriptionEndpoints
                 new ApprovePendingSubscriptionCommand(id, request?.VerifiedReference), ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(AuthorizationPolicies.PlatformAdmin)
         .WithName("ApprovePendingSubscription")
         .WithSummary("Verify a self-reported payment and activate the subscription it describes")
         .Produces<TenantSubscriptionStatusDto>(StatusCodes.Status200OK);
@@ -128,7 +127,7 @@ public static class SubscriptionEndpoints
             var result = await sender.Send(command, ct);
             return result.Success ? Results.Ok(result) : Results.BadRequest(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(EndpointPermissionExtensions.Policy(Farm360.Persistence.Seed.PermissionConstants.Billing.Manage))
         .WithName("InitiateSubscriptionCheckout")
         .WithSummary("Starts an SSLCommerz hosted checkout session for a subscription plan")
         .Produces<Farm360.Application.Subscriptions.Commands.CheckoutSessionDto>(StatusCodes.Status200OK)
@@ -203,7 +202,7 @@ public static class SubscriptionEndpoints
                 new RejectPendingSubscriptionCommand(id, request?.Reason), ct);
             return Results.Ok(result);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(AuthorizationPolicies.PlatformAdmin)
         .WithName("RejectPendingSubscription")
         .WithSummary("Reject a self-reported payment that could not be verified")
         .Produces<TenantSubscriptionRecordDto>(StatusCodes.Status200OK);

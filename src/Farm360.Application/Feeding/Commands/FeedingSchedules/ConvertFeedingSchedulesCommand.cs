@@ -28,11 +28,14 @@ public sealed class ConvertFeedingSchedulesCommandHandler(
     IAnimalFeedingPlanRepository plans,
     IDirectFeedService directFeed,
     ITenantService tenant,
-    IUnitOfWork unitOfWork) : IRequestHandler<ConvertFeedingSchedulesCommand, ConvertFeedingSchedulesResult>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<ConvertFeedingSchedulesCommand, ConvertFeedingSchedulesResult>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<ConvertFeedingSchedulesResult> Handle(ConvertFeedingSchedulesCommand request, CancellationToken cancellationToken)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
         var notes = new List<string>();
         int converted = 0, skipped = 0;
 

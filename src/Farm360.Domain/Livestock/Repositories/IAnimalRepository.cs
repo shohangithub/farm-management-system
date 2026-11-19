@@ -110,6 +110,24 @@ public interface IAnimalRepository
         CancellationToken cancellationToken = default);
 
 
+    /// <summary>
+    /// Every weigh-in of a farm's animals dated inside [<paramref name="from"/>, <paramref name="to"/>],
+    /// oldest first. Read-only; used by the batch performance (FCR) report.
+    /// </summary>
+    Task<IReadOnlyList<(Guid AnimalId, DateOnly Date, decimal WeightKg)>> GetWeighInsByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Every shed placement (open and closed) of a farm's animals, for reconstructing which shed an
+    /// animal was in on a given day. Read-only; used by the mortality report.
+    /// </summary>
+    Task<IReadOnlyList<(Guid AnimalId, Guid? ShedId, DateTime PlacedAtUtc, DateTime? RemovedAtUtc)>> GetMovementsByFarmAsync(
+        Guid farmId,
+        CancellationToken cancellationToken = default);
+
     // ── Commands ──────────────────────────────────────────────────────────────
 
     void Add(Animal animal);

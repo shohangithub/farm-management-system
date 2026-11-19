@@ -1,36 +1,22 @@
-# Farm360 AI — Task & Architecture Roadmap (TODO)
+# Farm360 AI — Roadmap (TODO)
 
-**Last Updated:** July 22, 2026
+**Last updated:** November 2026 · Built modules: see [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md)
 
----
+## Production hardening (before go-live)
 
-## Completed Tasks (Architecture & Production Hardening Sprint)
+- [ ] Rotate the SQL Server password, JWT signing key and Redis password currently present in `appsettings.json`; move them to environment/secret store and remove them from the file (and git history). See `docs/deployment.md` §1.
+- [ ] Switch SSLCommerz to the live store (`SslCommerz__IsSandbox=false`) and register the IPN URL.
+- [ ] Set up scheduled SQL Server backups + monthly restore test (`docs/deployment.md` §4).
+- [ ] Decide on an authenticated Hangfire dashboard (currently Development-only).
+- [ ] Make the Application integration test suite (Testcontainers) green in CI, then make it blocking.
+- [ ] Reduce the two finance report component stylesheets below the 6 kB `anyComponentStyle` budget.
 
-- [x] **Multi-Tenant Global Query Filters** — Combined `TenantId == CurrentTenantId` AND `IsDeleted == false` into single expression in `ApplicationDbContext` to prevent filter overwriting.
-- [x] **Audit SaveChanges Interceptor** — Auto-populates `TenantId` when `Guid.Empty` on entity addition, along with `CreatedBy`, `CreatedAtUtc`, `ModifiedBy`, `ModifiedAtUtc`, `DeletedBy`, `DeletedAtUtc`.
-- [x] **Multi-Channel Tenant Resolution** — Refactored `TenantResolutionMiddleware` to support JWT claim, `X-Tenant-Id` header, and subdomain resolution with cache/DB verification against `Tenant` aggregate root.
-- [x] **Security Headers** — Integrated production HTTP security response headers in `Program.cs`.
-- [x] **Regression & Architecture Testing** — Verified 150 tests across solution test projects (79 Domain + 62 Application + 7 Architecture + 1 Integration + 1 Functional).
-- [x] **Livestock Module Production-Readiness Certification** — Verified domain rules, weight/BCS tracking, photo limits, batch filtering, permissions, Signal reactivity, OnPush detection, and unit tests (76/76 passing). Marked as **Production Ready** ✅.
-- [x] **Health & Veterinary Module Production-Readiness Certification** — Verified domain rules, mortality status propagation (`AnimalStatus.Dead`), pre-validation & SQL duplicate index handling (`409 Conflict`), ProblemDetails parsing (`error-parser.ts`), deworming, withdrawal tracking, Signal reactivity, and unit tests (63/63 passing). Marked as **Production Ready** ✅.
+## Product roadmap
 
----
-
-## Remaining Module Roadmap
-
-- [x] **5. Smart Feeding Module** *(COMPLETED ✅)*
-  - [x] Feed ingredient catalog & pre-loaded South Asian / BD ingredients
-  - [x] Feed formula builder & nutritional profile calculator (DM%, CP%, ME)
-  - [x] Feeding schedule assignment to sheds, pens, and animal batches
-  - [x] Daily feed consumption & wastage logger
-  - [x] Feed Conversion Ratio (FCR = Feed / Weight Gain) trend analytics & chart UI
-- [~] **6. Inventory Control Module** (In Progress)
-  - [x] Basic Inventory items & supplier list with full CRUD
-  - [ ] Feed & medicine stock management workflows
-  - [ ] Purchase order workflows
-- [ ] **7. Finance & Accounting Module**
-  - Expense tracking & financial period closing
-  - Profitability analytics per animal batch
-- [ ] **8. Executive Dashboard & AI Engine Integration**
-  - Operational KPIs & farm health metrics
-  - Predictive health alert triggers
+- [ ] **Bengali (বাংলা) UI localisation** — Angular i18n for the SPA (reports already render Bengali).
+- [ ] **Messaging providers** — real SMS gateway (OTP, alerts) and email provider; today `LoggingSmsService` / `LoggingEmailService` only log.
+- [ ] **Object storage** — S3-compatible `IFileStorageService` (uploads are on local disk; scale-out needs a shared volume until then).
+- [ ] **Brand palette** — apply the final Farm360 colour palette / design tokens across the SPA.
+- [ ] **Reports** — remaining catalogue items from `docs/32_Farm360_Reporting_Module_Implementation_Plan.md` beyond those currently being added.
+- [ ] **User management** — complete invitations, member roles and password reset (in progress).
+- [ ] **Per-tenant business rules** — finish tenant overrides of `Farm360:BusinessRules` (in progress).

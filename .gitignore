@@ -34,6 +34,8 @@ NuGet.Config
 appsettings.*.json
 !appsettings.json
 !appsettings.Development.json
+# Non-secret production defaults (feature flags, startup behaviour). Secrets come from env vars.
+!appsettings.Production.json
 
 # Secrets — NEVER commit secrets
 appsettings.Secrets.json
@@ -45,8 +47,15 @@ appsettings.Secrets.json
 
 # Docker
 *.override.env
+.env
 .env.local
 .env.production
+!.env.example
+!deploy/.env.example
+
+# EF Core migration bundles (built by CI)
+efbundle
+efbundle.exe
 
 # Logs
 logs/

@@ -3,6 +3,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import { AnimalFeedingPlan } from '../models/feeding.models';
+import { toLocalIsoDate } from '../../../shared/utils/local-date';
+import { formatMoney } from '../../../shared/pipes/money.pipe';
 
 export interface FeedsCostReportMetadata {
   farmName: string;
@@ -211,7 +213,7 @@ export class FeedingReportPdfService {
       },
       {
         label: 'DAILY EXPENDITURE',
-        value: `BDT ${Math.round(totals.totalDailyCostBdt).toLocaleString()}`,
+        value: `${formatMoney(Math.round(totals.totalDailyCostBdt))}`,
         sub: 'Per Day Feed Budget',
         bg: [245, 243, 255], // Indigo 50
         border: [221, 214, 254], // Indigo 200
@@ -219,7 +221,7 @@ export class FeedingReportPdfService {
       },
       {
         label: 'PROJECTED 30-DAY',
-        value: `BDT ${Math.round(totals.totalMonthlyCostBdt).toLocaleString()}`,
+        value: `${formatMoney(Math.round(totals.totalMonthlyCostBdt))}`,
         sub: 'Monthly Forecast',
         bg: [255, 241, 242], // Rose 50
         border: [254, 205, 211], // Rose 200
@@ -495,7 +497,7 @@ export class FeedingReportPdfService {
    */
   downloadPdf(plans: AnimalFeedingPlan[], metadata: FeedsCostReportMetadata, filename?: string): void {
     const doc = this.generatePdf(plans, metadata);
-    const dateStr = (metadata.generatedAt || new Date()).toISOString().split('T')[0];
+    const dateStr = toLocalIsoDate(metadata.generatedAt || new Date());
     const safeFarmName = (metadata.farmName || 'Farm').replace(/[^a-zA-Z0-9_-]/g, '_');
     const finalName = filename || `Farm360_Feeds_Cost_Report_${safeFarmName}_${dateStr}.pdf`;
     doc.save(finalName);
@@ -571,7 +573,7 @@ export class FeedingReportPdfService {
       doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
     }
 
-    const safeFilename = filename || `Farm360_Feeds_Cost_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+    const safeFilename = filename || `Farm360_Feeds_Cost_Report_${toLocalIsoDate()}.pdf`;
     doc.save(safeFilename);
   }
 }

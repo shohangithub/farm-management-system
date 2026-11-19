@@ -13,11 +13,13 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-rule-set-dialog/feeding-rule-set-dialog.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-rule-set-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
@@ -46,10 +48,11 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadRuleSets()"></app-error-state>
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!isLoading() && ruleSets().length === 0"
+        *ngIf="!isLoading() && ruleSets().length === 0 && !loadError()"
         icon="rule"
         title="No Feed Charts Yet"
         description="Create a feed chart: how many kg a day for each weight or age range."
@@ -77,7 +80,7 @@ import { FeedingRuleSetDialogComponent } from '../../components/dialogs/feeding-
                 </div>
               </div>
 
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="ruleSet.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-50 text-gray-700 border border-gray-200'">
                 {{ ruleSet.isActive ? 'Active' : 'Inactive' }}
               </span>
@@ -132,6 +135,7 @@ export class RuleSetListComponent implements OnInit {
   private readonly context = inject(WorkingContextService);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly ruleSets = signal<FeedingRuleSet[]>([]);
   readonly formulaNames = signal(new Map<string, string>());
 
@@ -144,12 +148,16 @@ export class RuleSetListComponent implements OnInit {
 
   loadRuleSets(): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
     this.feedingService.getRuleSets().subscribe({
       next: (res) => {
         this.ruleSets.set(res);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.loadError.set(parseApiError(err, 'Could not load feed charts.'));
+        this.isLoading.set(false);
+      }
     });
   }
 

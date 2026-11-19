@@ -8,11 +8,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { FeedingService } from '../../../services/feeding.service';
 import { FeedFormula, FeedingSchedule, ScheduleFrequency, ScheduleFrequencyNames } from '../../../models/feeding.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-create-schedule-dialog',
@@ -38,7 +39,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
           <span>{{ isEdit ? 'Edit Feeding Schedule' : 'Assign Feeding Schedule' }}</span>
         </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Close">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -71,7 +72,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Target Qty (kg / head / day)</mat-label>
-              <input matInput type="number" formControlName="targetQuantityKgPerHead" step="0.5" required />
+              <input matInput type="number" min="0.1" formControlName="targetQuantityKgPerHead" step="0.5" required />
               <mat-error>Target quantity is required</mat-error>
             </mat-form-field>
 
@@ -123,7 +124,7 @@ export class CreateScheduleDialogComponent implements OnInit {
   readonly data = inject<{ schedule?: FeedingSchedule; farmId: string }>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly feedingService = inject(FeedingService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -142,7 +143,7 @@ export class CreateScheduleDialogComponent implements OnInit {
     formulaId: [this.data.schedule?.formulaId || '', [Validators.required]],
     targetQuantityKgPerHead: [this.data.schedule?.targetQuantityKgPerHead ?? 12.0, [Validators.required, Validators.min(0.1)]],
     frequency: [this.data.schedule?.frequency || ScheduleFrequency.TwiceDaily, [Validators.required]],
-    startDate: [this.data.schedule?.startDate || new Date().toISOString().split('T')[0], [Validators.required]],
+    startDate: [this.data.schedule?.startDate || toLocalIsoDate(), [Validators.required]],
     endDate: [this.data.schedule?.endDate || ''],
     notes: [this.data.schedule?.notes || '']
   });
@@ -175,7 +176,7 @@ export class CreateScheduleDialogComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open(`Feeding schedule ${this.isEdit ? 'updated' : 'assigned'} successfully.`, 'OK', { duration: 4000 });
+        this.notify.success(`Feeding schedule ${this.isEdit ? 'updated' : 'assigned'} successfully.`);
         this.dialogRef.close(true);
       },
       error: (err: any) => {

@@ -1,3 +1,4 @@
+using Farm360.Api.Authorization;
 using Farm360.Application.Inventory.Commands.InventoryItems;
 using Farm360.Application.Inventory.Commands.PurchaseOrders;
 using Farm360.Application.Inventory.Commands.PurchaseReturns;
@@ -22,7 +23,14 @@ public static class InventoryEndpoints
     {
         var group = app.MapGroup("/api/v1/inventory")
             .WithTags("Inventory Module")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            // Fallback for routes without an explicit permission (e.g. unit look-ups):
+            // GET → view, POST → create, PUT/PATCH → edit, DELETE → delete.
+            .RequirePermissionsByMethod(
+                PermissionConstants.InventoryModule.View,
+                PermissionConstants.InventoryModule.Create,
+                PermissionConstants.InventoryModule.Edit,
+                PermissionConstants.InventoryModule.Delete);
 
         // ── Units: base units (kg, ml, piece…) and the packs they are bought in ──
         group.MapGet("/units", async (ISender sender, CancellationToken ct) =>
@@ -507,10 +515,11 @@ public static class InventoryEndpoints
             [FromQuery] Guid farmId,
             [FromQuery] string? date = null,
             ISender sender = null!,
+            Farm360.Application.Common.Interfaces.IFarmClock clock = null!,
             CancellationToken ct = default) =>
         {
             var targetDate = string.IsNullOrWhiteSpace(date)
-                ? DateOnly.FromDateTime(DateTime.UtcNow)
+                ? clock.Today
                 : DateOnly.Parse(date);
 
             var query = new Farm360.Application.Inventory.Queries.Consumables.GetDailyConsumableEntriesQuery(farmId, targetDate);
@@ -524,10 +533,11 @@ public static class InventoryEndpoints
             [FromQuery] Guid farmId,
             [FromQuery] string? date = null,
             ISender sender = null!,
+            Farm360.Application.Common.Interfaces.IFarmClock clock = null!,
             CancellationToken ct = default) =>
         {
             var targetDate = string.IsNullOrWhiteSpace(date)
-                ? DateOnly.FromDateTime(DateTime.UtcNow)
+                ? clock.Today
                 : DateOnly.Parse(date);
 
             var query = new Farm360.Application.Inventory.Queries.Consumables.GetDailyConsumableSummaryQuery(farmId, targetDate);

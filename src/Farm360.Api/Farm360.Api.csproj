@@ -30,6 +30,13 @@
     <PackageReference Include="Serilog.AspNetCore" />
   </ItemGroup>
 
+  <ItemGroup Label="Production hosting — optional OpenTelemetry export">
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+  </ItemGroup>
+
   <ItemGroup Label="EF Core tooling (design-time only — not published)">
     <!--
       Required by: dotnet ef migrations add / dotnet ef database update

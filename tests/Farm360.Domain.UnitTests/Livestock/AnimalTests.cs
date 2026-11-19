@@ -143,14 +143,14 @@ public sealed class AnimalTests
     }
 
     [Fact]
-    public void RecordWeight_OnSoldAnimal_ThrowsInvalidOperationException()
+    public void RecordWeight_OnSoldAnimal_AfterSaleDate_Throws()
     {
         var animal = CreateActiveAnimal();
         animal.Sell(80_000m, new DateOnly(2025, 3, 1), Guid.NewGuid(), null, null);
 
         var act = () => animal.RecordWeight(Weight.Create(300m), new DateOnly(2025, 3, 2), Guid.NewGuid(), null);
 
-        act.Should().Throw<InvalidAnimalStateTransitionException>();
+        act.Should().Throw<AnimalHasLeftFarmException>().WithMessage("*sold on 01 Mar 2025*");
     }
 
     // ══════════════════════════════════════════════════════════════════════════

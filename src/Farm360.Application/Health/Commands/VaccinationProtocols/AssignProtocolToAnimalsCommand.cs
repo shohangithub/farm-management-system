@@ -1,6 +1,7 @@
 using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.Health;
 using Farm360.Domain.Health.Interfaces.Repositories;
+using Farm360.Domain.Livestock.Repositories;
 using FluentValidation;
 using MediatR;
 
@@ -27,15 +28,18 @@ internal sealed class AssignProtocolToAnimalsCommandHandler : IRequestHandler<As
     private readonly IVaccinationRepository _repository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAnimalRepository? _animalRepository;
 
     public AssignProtocolToAnimalsCommandHandler(
         IVaccinationRepository repository,
         ITenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IAnimalRepository? animalRepository = null)
     {
         _repository = repository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _animalRepository = animalRepository;
     }
 
     public async Task Handle(AssignProtocolToAnimalsCommand request, CancellationToken cancellationToken)
@@ -44,6 +48,16 @@ internal sealed class AssignProtocolToAnimalsCommandHandler : IRequestHandler<As
 
         if (protocol == null || protocol.TenantId != _tenantService.TenantId)
             throw new KeyNotFoundException("Protocol not found.");
+
+        // A protocol schedules future doses: only animals still on the farm can be enrolled.
+        if (_animalRepository is not null)
+        {
+            var animals = await _animalRepository.GetByIdsAsync(request.AnimalIds, cancellationToken);
+            foreach (var animal in animals)
+            {
+                animal.EnsureOnFarm("a vaccination protocol");
+            }
+        }
 
         var events = new List<VaccinationEvent>();
 

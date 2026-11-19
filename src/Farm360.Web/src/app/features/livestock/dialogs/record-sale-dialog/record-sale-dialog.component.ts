@@ -8,6 +8,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
 import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../../../finance/components/credit-terms-fields/credit-terms-fields.component';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 export interface RecordSaleDialogData {
   animalId: string;
   animalTag: string;
@@ -30,7 +31,7 @@ export class RecordSaleDialogComponent {
 
   readonly form = this.fb.group({
     price: [null as number | null, [Validators.required, Validators.min(0.01)]],
-    date: [new Date().toISOString().split('T')[0], Validators.required],
+    date: [toLocalIsoDate(), Validators.required],
     buyer: ['', Validators.maxLength(100)],
     weight: [this.data.latestWeightKg || null, Validators.min(0)]
   });

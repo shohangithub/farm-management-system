@@ -12,4 +12,11 @@ public interface ITenantRepository
     void Update(Tenant entity);
     Task<IReadOnlyList<Tenant>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<(int UsersCount, int FarmsCount, int AnimalsCount)> GetTenantUsageCountsAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Takes an update lock on the tenant row for the rest of the current transaction, so plan-quota
+    /// checks (count, then insert) for the same tenant run one at a time. No-op outside a relational
+    /// transaction. Call it before counting.
+    /// </summary>
+    Task AcquireQuotaLockAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }

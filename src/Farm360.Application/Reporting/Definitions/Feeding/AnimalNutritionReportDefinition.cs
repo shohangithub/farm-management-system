@@ -80,9 +80,11 @@ public sealed class AnimalNutritionReportDefinition : ReportDefinition<Nutrition
         return (await LoadAsync(context, cancellationToken).ConfigureAwait(false)).Days;
     }
 
-    private static Task<AnimalNutritionDto> LoadAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        var range = context.Range("period");
-        return context.Send(new GetAnimalNutritionQuery(context.Id("animalId"), range.From, range.To), cancellationToken);
-    }
+    // The subject line and the body both need the analysis; compute it once per run.
+    private static Task<AnimalNutritionDto> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>
+        context.MemoAsync("nutrition", () =>
+        {
+            var range = context.Range("period");
+            return context.Send(new GetAnimalNutritionQuery(context.Id("animalId"), range.From, range.To), cancellationToken);
+        });
 }

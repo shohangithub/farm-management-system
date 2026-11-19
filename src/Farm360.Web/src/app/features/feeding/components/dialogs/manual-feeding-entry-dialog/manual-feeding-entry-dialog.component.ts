@@ -4,7 +4,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FeedingService } from '../../../services/feeding.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
@@ -14,6 +13,8 @@ import { UnitPickerComponent, UnitSelection } from '../../../../inventory/compon
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 export interface ManualFeedingDialogData {
   farmId: string;
   date: string;
@@ -43,7 +44,7 @@ export interface ManualFeedingDialogData {
             <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Feed given outside the plan — saved as confirmed</p>
           </div>
         </div>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400"><mat-icon>close</mat-icon></button>
+        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400" aria-label="Close"><mat-icon>close</mat-icon></button>
       </div>
 
       <form [formGroup]="form" class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
@@ -113,9 +114,9 @@ export class ManualFeedingEntryDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly feedingService = inject(FeedingService);
   private readonly inventoryService = inject(InventoryService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
-  readonly today = new Date().toISOString().split('T')[0];
+  readonly today = toLocalIsoDate();
   readonly formulas = signal<FeedFormula[]>([]);
   readonly stockItems = signal<InventoryItem[]>([]);
   readonly feedItems = computed(() => this.stockItems().filter(i => i.category !== InventoryCategory.Medicine));
@@ -164,7 +165,7 @@ export class ManualFeedingEntryDialogComponent implements OnInit {
       next: res => this.dialogRef.close(res),
       error: err => {
         this.saving.set(false);
-        this.snackBar.open(parseApiError(err, 'Could not record the feed.'), 'Close', { duration: 6000 });
+        this.notify.error(parseApiError(err, 'Could not record the feed.'));
       }
     });
   }

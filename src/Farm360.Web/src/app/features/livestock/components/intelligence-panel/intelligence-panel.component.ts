@@ -3,6 +3,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { IntelligenceSignalRService } from '../../../../core/services/intelligence-signalr.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 export interface AnimalFinancialSnapshot {
   animalId: string;
@@ -40,7 +41,7 @@ export interface GrowthCurve {
   selector: 'app-intelligence-panel',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DecimalPipe, MatIconModule],
+  imports: [MoneyPipe, CommonModule, DecimalPipe, MatIconModule],
   template: `
     <div class="space-y-6 animate-fade-in-up">
       <!-- Financial Projection Card -->
@@ -50,7 +51,7 @@ export interface GrowthCurve {
         <div class="relative z-10 flex flex-col lg:flex-row gap-6 items-center justify-between">
           <div class="flex-1 w-full">
             <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                 Smart Financials
               </span>
             </div>
@@ -60,22 +61,22 @@ export interface GrowthCurve {
 
           <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4">
-              <p class="text-[10px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">Total Invested</p>
-              <p class="text-xl font-bold text-white">৳ {{ snapshot()?.totalInvestmentBdt | number:'1.0-0' }}</p>
+              <p class="text-[11px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">Total Invested</p>
+              <p class="text-xl font-bold text-white">{{ snapshot()?.totalInvestmentBdt | money }}</p>
             </div>
             <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4">
-              <p class="text-[10px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">Estimated Value</p>
-              <p class="text-xl font-bold text-white">৳ {{ snapshot()?.estimatedMarketValueBdt | number:'1.0-0' }}</p>
+              <p class="text-[11px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">Estimated Value</p>
+              <p class="text-xl font-bold text-white">{{ snapshot()?.estimatedMarketValueBdt | money }}</p>
             </div>
             <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4"
                  [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'border-emerald-400/50 bg-emerald-500/20' : 'border-red-400/50 bg-red-500/20'">
-              <p class="text-[10px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">Net Profit Margin</p>
+              <p class="text-[11px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">Net Profit Margin</p>
               <div class="flex items-center gap-1">
                 <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-300' : 'text-red-300'">
                   {{ (snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'arrow_upward' : 'arrow_downward' }}
                 </mat-icon>
                 <p class="text-xl font-bold" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-100' : 'text-red-100'">
-                  ৳ {{ Math.abs(snapshot()?.currentProfitMarginBdt ?? 0) | number:'1.0-0' }}
+                  {{ Math.abs(snapshot()?.currentProfitMarginBdt ?? 0) | money }}
                 </p>
               </div>
             </div>
@@ -91,7 +92,7 @@ export interface GrowthCurve {
           <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-indigo-500/10 rotate-[-15deg] pointer-events-none">trending_up</mat-icon>
           <div class="relative z-10">
             <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+              <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
                 AI Growth Engine
               </span>
             </div>
@@ -99,19 +100,19 @@ export interface GrowthCurve {
             
             <div class="grid grid-cols-2 gap-4 mb-2">
                <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">Current ADG</p>
+                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">Current ADG</p>
                  <p class="text-2xl font-bold mt-1">{{ curve.currentAdgKg | number:'1.2-2' }} <span class="text-xs font-normal text-indigo-300">kg/day</span></p>
                </div>
                <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">30-Day Projection</p>
+                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">30-Day Projection</p>
                  <p class="text-2xl font-bold mt-1">{{ curve.projected30DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">kg</span></p>
                </div>
                <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">60-Day Projection</p>
+                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">60-Day Projection</p>
                  <p class="text-xl font-bold mt-1">{{ curve.projected60DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">kg</span></p>
                </div>
                <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-semibold">90-Day Projection</p>
+                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">90-Day Projection</p>
                  <p class="text-xl font-bold mt-1">{{ curve.projected90DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">kg</span></p>
                </div>
             </div>

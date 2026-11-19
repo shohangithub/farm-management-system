@@ -28,19 +28,28 @@ public sealed record GetPendingSubscriptionsQuery : IRequest<IReadOnlyList<Pendi
 internal sealed class GetPendingSubscriptionsQueryHandler
     : IRequestHandler<GetPendingSubscriptionsQuery, IReadOnlyList<PendingSubscriptionDto>>
 {
+    private readonly Farm360.Application.Common.Interfaces.ICurrentUserService _currentUser;
     private readonly ITenantSubscriptionRepository _subscriptionRepository;
     private readonly ITenantRepository _tenantRepository;
 
     public GetPendingSubscriptionsQueryHandler(
         ITenantSubscriptionRepository subscriptionRepository,
-        ITenantRepository tenantRepository)
+        ITenantRepository tenantRepository,
+        Farm360.Application.Common.Interfaces.ICurrentUserService currentUser)
     {
+        _currentUser = currentUser;
         _subscriptionRepository = subscriptionRepository;
         _tenantRepository = tenantRepository;
     }
 
     public async Task<IReadOnlyList<PendingSubscriptionDto>> Handle(GetPendingSubscriptionsQuery request, CancellationToken cancellationToken)
     {
+        // Defence in depth: the route already requires the PlatformAdmin policy.
+        if (!_currentUser.IsSystemUser)
+        {
+            throw new Farm360.Application.Common.Exceptions.ForbiddenAccessException("Platform administrator access is required.");
+        }
+
         var pending = await _subscriptionRepository.GetPendingAsync(cancellationToken);
         if (pending.Count == 0)
         {

@@ -9,6 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { formatAnimalAge } from '../../utils/animal-age';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 export interface BatchVaccinationDialogData {
   animals: AnimalListItemDto[];
 }
@@ -37,7 +38,7 @@ export interface BatchVaccinationDialogData {
             <p class="text-xs text-gray-500 font-medium">Administer vaccine to {{ data.animals.length }} animals</p>
           </div>
         </div>
-        <button type="button" mat-dialog-close class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors">
+        <button aria-label="Close" type="button" mat-dialog-close class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon>
         </button>
       </div>
@@ -94,7 +95,7 @@ export interface BatchVaccinationDialogData {
         <!-- Selected Animals List -->
         <div class="mt-8">
           <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            Selected Animals <span class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-0.5 px-2 rounded-full text-[10px]">{{ data.animals.length }}</span>
+            Selected Animals <span class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-0.5 px-2 rounded-full text-[11px]">{{ data.animals.length }}</span>
           </h3>
           <div class="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-gray-900/50 max-h-48 overflow-y-auto">
             <table class="w-full text-left text-sm whitespace-nowrap">
@@ -143,7 +144,7 @@ export class BatchVaccinationDialogComponent implements OnInit {
   readonly form = this.fb.group({
     vaccineName: ['', Validators.required],
     batchNumber: [''],
-    administeredDate: [new Date().toISOString().substring(0, 10), Validators.required],
+    administeredDate: [toLocalIsoDate(), Validators.required],
     notes: ['']
   });
 

@@ -1,82 +1,90 @@
 using Farm360.Application.Common.Interfaces;
-using Farm360.Domain.Inventory;
+using Farm360.Application.Common.Jobs;
+using Farm360.Application.Inventory.Commands.Consumables;
+using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Farm360.Application.Inventory.Jobs;
 
-public sealed record CreateDailyConsumableEntriesAcrossTenantsCommand : IRequest;
-
-public sealed class CreateDailyConsumableEntriesAcrossTenantsCommandHandler : IRequestHandler<CreateDailyConsumableEntriesAcrossTenantsCommand>
+/// <summary>
+/// The nightly consumables job. Fans out per tenant (<see cref="ITenantJobRunner"/>, each tenant in
+/// its own scope); within a tenant each farm-day is generated in its own transaction
+/// (<see cref="GenerateDailyConsumableEntriesCommand"/>), so one bad plan fails only its own farm-day.
+/// Missed days since the tenant's last generated day are caught up (at most the last
+/// <see cref="MaxCatchUpDays"/> days), "today" being the farm's local date.
+/// </summary>
+public sealed record CreateDailyConsumableEntriesAcrossTenantsCommand : IRequest
 {
-    private readonly IConsumableUsagePlanRepository _planRepository;
-    private readonly IDailyConsumableEntryRepository _entryRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<CreateDailyConsumableEntriesAcrossTenantsCommandHandler> _logger;
+    public const int MaxCatchUpDays = 7;
+}
 
-    public CreateDailyConsumableEntriesAcrossTenantsCommandHandler(
-        IConsumableUsagePlanRepository planRepository,
-        IDailyConsumableEntryRepository entryRepository,
-        IUnitOfWork unitOfWork,
-        ILogger<CreateDailyConsumableEntriesAcrossTenantsCommandHandler> logger)
-    {
-        _planRepository = planRepository;
-        _entryRepository = entryRepository;
-        _unitOfWork = unitOfWork;
-        _logger = logger;
-    }
+public sealed class CreateDailyConsumableEntriesAcrossTenantsCommandHandler(
+    ITenantJobRunner runner,
+    ILogger<CreateDailyConsumableEntriesAcrossTenantsCommandHandler> logger)
+    : IRequestHandler<CreateDailyConsumableEntriesAcrossTenantsCommand>
+{
+    public const string JobName = "daily-consumable-entries";
 
     public async Task Handle(CreateDailyConsumableEntriesAcrossTenantsCommand request, CancellationToken cancellationToken)
     {
-        if (_logger.IsEnabled(LogLevel.Information))
+        if (logger.IsEnabled(LogLevel.Information))
         {
-            _logger.LogInformation("Running recurring background job: CreateDailyConsumableEntriesAcrossTenants");
+            logger.LogInformation("Running recurring background job: CreateDailyConsumableEntriesAcrossTenants");
         }
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var activePlans = await _planRepository.GetAllActivePlansAcrossTenantsAsync(today, cancellationToken);
+        await runner.ForEachTenantAsync(JobName, (scope, ct) => GenerateForTenantAsync(scope, ct), cancellationToken);
+    }
 
-        if (activePlans.Count == 0)
+    private async Task GenerateForTenantAsync(TenantJobScope scope, CancellationToken cancellationToken)
+    {
+        var services = scope.Services;
+        var farms = await services.GetRequiredService<IFarmRepository>().GetAllByTenantAsync(scope.TenantId, cancellationToken);
+        var entries = services.GetRequiredService<IDailyConsumableEntryRepository>();
+        var clock = services.GetRequiredService<IFarmClock>();
+        var last = await entries.GetLastEntryDateAsync(cancellationToken);
+
+        var created = 0;
+        foreach (var farm in farms)
         {
-            return;
-        }
-
-        var existingPlanItemIds = await _entryRepository.GetExistingEntryPlanItemIdsAcrossTenantsByDateAsync(today, cancellationToken);
-        var entriesToCreate = new List<DailyConsumableEntry>();
-
-        foreach (var plan in activePlans)
-        {
-            foreach (var item in plan.Items)
+            var today = clock.TodayForFarm(scope.TenantId, farm.Id);
+            var earliest = today.AddDays(1 - CreateDailyConsumableEntriesAcrossTenantsCommand.MaxCatchUpDays);
+            var from = last is { } l && l >= earliest ? l.AddDays(1) : earliest;
+            if (last is null || from > today)
             {
-                if (existingPlanItemIds.Contains((plan.Id, item.Id)))
+                from = today;
+            }
+
+            for (var day = from; day <= today; day = day.AddDays(1))
+            {
+                try
                 {
-                    continue; // Already exists for today
+                    created += await scope.Sender.Send(new GenerateDailyConsumableEntriesCommand(farm.Id, day), cancellationToken);
                 }
-
-                var entry = new DailyConsumableEntry(
-                    id: Guid.NewGuid(),
-                    tenantId: plan.TenantId,
-                    farmId: plan.FarmId,
-                    consumableUsagePlanId: plan.Id,
-                    consumableUsagePlanItemId: item.Id,
-                    inventoryItemId: item.InventoryItemId,
-                    entryDate: today,
-                    expectedQuantity: item.PlannedQuantityPerDay);
-
-                entriesToCreate.Add(entry);
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (DatabaseErrors.IsUniqueViolation(ex))
+                {
+                    if (logger.IsEnabled(LogLevel.Information))
+                        logger.LogInformation("Consumable entries for farm {FarmId} on {Date} were already generated by a concurrent run.", farm.Id, day);
+                }
+#pragma warning disable CA1031 // One farm-day's failure must not stop the tenant's other farms.
+                catch (Exception ex)
+#pragma warning restore CA1031
+                {
+                    logger.LogError(ex, "Generating consumable entries failed for tenant {TenantId}, farm {FarmId}, {Date}; other farms continue.",
+                        scope.TenantId, farm.Id, day);
+                }
             }
         }
 
-        if (entriesToCreate.Count > 0)
+        if (logger.IsEnabled(LogLevel.Information))
         {
-            await _entryRepository.AddRangeAsync(entriesToCreate, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("Auto-generated {Count} daily consumable entries across all tenants for {Date}", entriesToCreate.Count, today);
-            }
+            logger.LogInformation("Tenant {TenantId}: {Count} daily consumable entries generated.", scope.TenantId, created);
         }
     }
 }

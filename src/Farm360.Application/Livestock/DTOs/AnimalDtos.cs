@@ -42,7 +42,10 @@ public sealed record AnimalDto(
     IReadOnlyList<BcsRecordDto> BcsRecords,
     DateTime CreatedAtUtc,
     Guid CreatedBy,
-    DateTime? ModifiedAtUtc);
+    DateTime? ModifiedAtUtc,
+    // Death date (Dead) and exit date = SaleDate (Sold) or DeathDate (Dead); null while on farm.
+    DateOnly? DeathDate = null,
+    DateOnly? ExitDate = null);
 
 /// <summary>
 /// Lightweight list item DTO — returned by GetAnimalListQuery.

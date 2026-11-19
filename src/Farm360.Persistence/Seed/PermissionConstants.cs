@@ -58,6 +58,7 @@ public static class PermissionConstants
     }
 
     // ── Users / Team Management ───────────────────────────────────────────────
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724", Justification = "Nested permission group; name matches the users.* permission codes.")]
     public static class Users
     {
         public const string View   = "users.view";
@@ -137,6 +138,36 @@ public static class PermissionConstants
         public const string Manage = "notifications.manage";
     }
 
+    // ── Finance & Accounting ─────────────────────────────────────────────────
+    public static class FinanceModule
+    {
+        public const string View   = "finance.view";
+        public const string Create = "finance.create";
+        public const string Edit   = "finance.edit";
+        public const string Delete = "finance.delete";
+        /// <summary>Administrative finance operations: accounting repair, overhead allocation,
+        /// ledger backfill, share-market and investor capital operations.</summary>
+        public const string Admin  = "finance.admin";
+    }
+
+    // ── Intelligence (simulations, projections, insights) ───────────────────
+    public static class IntelligenceModule
+    {
+        public const string View = "intelligence.view";
+    }
+
+    // ── Dashboard ────────────────────────────────────────────────────────────
+    public static class DashboardModule
+    {
+        public const string View = "dashboard.view";
+    }
+
+    // ── Analytics ────────────────────────────────────────────────────────────
+    public static class AnalyticsModule
+    {
+        public const string View = "analytics.view";
+    }
+
     /// <summary>All permissions in the system — used for seeding.</summary>
     public static IReadOnlyList<(string Code, string Module, string Description)> All =>
     [
@@ -211,6 +242,16 @@ public static class PermissionConstants
 
         (Notifications.View,   "Notifications", "View notifications"),
         (Notifications.Manage, "Notifications", "Manage notification settings"),
+
+        (FinanceModule.View,   "Finance", "View finance transactions, ledgers and financial reports"),
+        (FinanceModule.Create, "Finance", "Record finance transactions, loans, bills and assets"),
+        (FinanceModule.Edit,   "Finance", "Edit finance records and accounting settings"),
+        (FinanceModule.Delete, "Finance", "Delete finance records"),
+        (FinanceModule.Admin,  "Finance", "Run finance admin operations (repair, allocation, backfill, share market, investors)"),
+
+        (IntelligenceModule.View, "Intelligence", "View insights, projections and simulations"),
+        (DashboardModule.View,    "Dashboard",    "View dashboards"),
+        (AnalyticsModule.View,    "Analytics",    "View analytics"),
     ];
 }
 

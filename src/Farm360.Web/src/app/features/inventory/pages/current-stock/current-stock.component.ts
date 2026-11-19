@@ -16,11 +16,16 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { StockWriteOffDialog } from '../../components/stock-write-off-dialog/stock-write-off-dialog';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-current-stock',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -30,7 +35,9 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    ErrorStateComponent,
+    MatTooltipModule
   ],
   templateUrl: './current-stock.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -42,6 +49,7 @@ export class CurrentStockComponent implements OnInit {
   private readonly pdfService = inject(PdfExportService);
 
   readonly isLoading = signal(false);
+  readonly loadError = signal<string | null>(null);
   readonly isExporting = signal(false);
   readonly summary = signal<CurrentStockSummary | null>(null);
   readonly items = signal<InventoryItem[]>([]);
@@ -74,11 +82,12 @@ export class CurrentStockComponent implements OnInit {
     if (!farmId) return;
 
     this.isLoading.set(true);
+    this.loadError.set(null);
 
     // Fetch Summary
     this.inventoryService.getCurrentStockSummary(farmId).subscribe({
       next: (data) => this.summary.set(data),
-      error: () => this.isLoading.set(false)
+      error: () => this.summary.set(null)
     });
 
     // Fetch Table Data
@@ -92,7 +101,11 @@ export class CurrentStockComponent implements OnInit {
         this.totalItemsCount.set(response.totalCount);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.items.set([]);
+        this.isLoading.set(false);
+        this.loadError.set(parseApiError(err, 'Could not load current stock.'));
+      }
     });
   }
 
@@ -124,7 +137,7 @@ export class CurrentStockComponent implements OnInit {
     try {
       const farmName = this.contextService.currentFarmValue?.name || 'All Units';
       await this.pdfService.exportElement(element, {
-        filename: `Current_Stock_Report_${new Date().toISOString().slice(0, 10)}`,
+        filename: `Current_Stock_Report_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Current Stock Balance & Valuation Report',
@@ -141,7 +154,7 @@ export class CurrentStockComponent implements OnInit {
   }
 
   openStockWriteOffDialog(item: InventoryItem): void {
-    const dialogRef = this.dialog.open(StockWriteOffDialog, { disableClose: true,
+    const dialogRef = this.dialog.open(StockWriteOffDialog, { maxWidth: '95vw', disableClose: true,
       width: '600px',
       data: { item }
     });

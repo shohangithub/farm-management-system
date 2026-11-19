@@ -42,6 +42,9 @@ public sealed class DailyConsumableEntryConfiguration : IEntityTypeConfiguration
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => new { x.TenantId, x.FarmId, x.EntryDate });
-        builder.HasIndex(x => new { x.ConsumableUsagePlanId, x.ConsumableUsagePlanItemId, x.EntryDate });
+        // The daily job's idempotency key: one entry per plan item and day (soft-deleted rows excluded).
+        builder.HasIndex(x => new { x.ConsumableUsagePlanId, x.ConsumableUsagePlanItemId, x.EntryDate })
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
     }
 }

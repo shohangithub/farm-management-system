@@ -109,6 +109,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<TenantUser> TenantUsers => Set<TenantUser>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
 
     // ── Livestock Module ───────────────────────────────────────────────────────
     public DbSet<Breed> Breeds => Set<Breed>();
@@ -167,6 +168,9 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<Farm360.Domain.Finance.TradeBill> TradeBills => Set<Farm360.Domain.Finance.TradeBill>();
     public DbSet<Farm360.Domain.Finance.TradeBillPayment> TradeBillPayments => Set<Farm360.Domain.Finance.TradeBillPayment>();
     public DbSet<Farm360.Domain.Finance.Accounting.FarmAccountingSettings> FarmAccountingSettings => Set<Farm360.Domain.Finance.Accounting.FarmAccountingSettings>();
+
+    /// <summary>Per-tenant (and optional per-farm) overrides of the configured business rules.</summary>
+    public DbSet<Farm360.Domain.BusinessRules.TenantBusinessSettings> TenantBusinessSettings => Set<Farm360.Domain.BusinessRules.TenantBusinessSettings>();
     public DbSet<Farm360.Domain.Finance.Accounting.BalanceSheetEntry> BalanceSheetEntries => Set<Farm360.Domain.Finance.Accounting.BalanceSheetEntry>();
     public DbSet<Farm360.Domain.Finance.Accounting.FixedAsset> FixedAssets => Set<Farm360.Domain.Finance.Accounting.FixedAsset>();
     public DbSet<Investor> Investors => Set<Investor>();
@@ -178,6 +182,17 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     // ── Intelligence & Analytics Module ───────────────────────────────────────
     public DbSet<Farm360.Domain.Intelligence.ActionableInsight> ActionableInsights => Set<Farm360.Domain.Intelligence.ActionableInsight>();
     public DbSet<Farm360.Domain.Intelligence.Projections.ProjectionScenario> ProjectionScenarios => Set<Farm360.Domain.Intelligence.Projections.ProjectionScenario>();
+
+    /// <summary>
+    /// Tenant entities whose Guid.Empty-tenant rows are shared, read-only platform reference data
+    /// (system master-data entries, pre-loaded breeds). Writes to those rows are still blocked by
+    /// the AuditSaveChangesInterceptor cross-tenant guard.
+    /// </summary>
+    internal static readonly IReadOnlySet<Type> SharedReferenceEntityTypes = new HashSet<Type>
+    {
+        typeof(Farm360.Domain.MasterData.MasterDataEntry),
+        typeof(Farm360.Domain.Livestock.Breed),
+    };
 
     // ── Current tenant accessor (evaluated at query time — NOT at startup) ───
     private Guid CurrentTenantId => _tenantService.TenantId;
@@ -208,10 +223,17 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
                 var contextRef = Expression.Constant(this);
                 var currentTenantIdProp = Expression.Property(contextRef, nameof(CurrentTenantId));
                 var tenantIdProp = Expression.Property(param, nameof(ITenantEntity.TenantId));
-                var tenantFilterExpr = Expression.OrElse(
-                    Expression.Equal(tenantIdProp, currentTenantIdProp),
-                    Expression.Equal(tenantIdProp, Expression.Constant(Guid.Empty))
-                );
+                Expression tenantFilterExpr = Expression.Equal(tenantIdProp, currentTenantIdProp);
+
+                // Rows with TenantId == Guid.Empty are platform-wide reference data. Only the entity
+                // types that genuinely hold shared rows may expose them; for every other type a
+                // Guid.Empty row is an unscoped record and must not be visible to every tenant.
+                if (SharedReferenceEntityTypes.Contains(entityType.ClrType))
+                {
+                    tenantFilterExpr = Expression.OrElse(
+                        tenantFilterExpr,
+                        Expression.Equal(tenantIdProp, Expression.Constant(Guid.Empty)));
+                }
 
                 combinedExpression = tenantFilterExpr;
             }
@@ -342,7 +364,15 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public async Task RollbackTransactionAsync(ITransaction transaction, CancellationToken cancellationToken = default)
     {
         await transaction.RollbackAsync(cancellationToken);
+
+        // The database is back where it started, so the in-memory changes of the failed unit of work
+        // (stock deducted, entries confirmed…) are now lies. Drop them so a later SaveChanges in the
+        // same scope (a bulk loop that carries on after one failure) cannot persist half of them.
+        ChangeTracker.Clear();
+        _queryLoadedEntities.Clear();
     }
+
+    public bool HasActiveTransaction => Database.CurrentTransaction is not null;
 
     public new ValueTask DisposeAsync()
     {

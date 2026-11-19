@@ -76,6 +76,13 @@ public interface IUnitOfWork : IAsyncDisposable
     Task<ITransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(ITransaction transaction, CancellationToken cancellationToken = default);
     Task RollbackTransactionAsync(ITransaction transaction, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// True while a database transaction is open on this unit of work. A transactional command sent
+    /// from inside another one (or from an event handler running inside one) joins the outer
+    /// transaction instead of opening a second one.
+    /// </summary>
+    bool HasActiveTransaction => false;
 }
 
 /// <summary>
@@ -131,6 +138,13 @@ public interface IBackgroundJobService
     string Enqueue<T>(System.Linq.Expressions.Expression<Action<T>> job);
     string Schedule<T>(System.Linq.Expressions.Expression<Action<T>> job, TimeSpan delay);
     void AddOrUpdateRecurring<T>(string jobId, System.Linq.Expressions.Expression<Action<T>> job, string cronExpression);
+
+    /// <summary>
+    /// Recurring job whose cron is read in <paramref name="timeZone"/> ("daily at 00:00" = local
+    /// midnight, not UTC midnight, which is 06:00 in Bangladesh).
+    /// </summary>
+    void AddOrUpdateRecurring<T>(string jobId, System.Linq.Expressions.Expression<Action<T>> job, string cronExpression, TimeZoneInfo timeZone) =>
+        AddOrUpdateRecurring(jobId, job, cronExpression);
     void Delete(string jobId);
 }
 
@@ -253,6 +267,9 @@ public interface IRefreshTokenService
     /// <summary>Revokes a specific session (logout).</summary>
     Task RevokeSessionAsync(string refreshToken, SessionRevokeReason reason, CancellationToken cancellationToken = default);
 
+    /// <summary>Revokes the refresh token only if it belongs to <paramref name="userId"/> (logout).</summary>
+    Task RevokeOwnSessionAsync(Guid userId, string refreshToken, SessionRevokeReason reason, CancellationToken cancellationToken = default);
+
     /// <summary>Revokes all active sessions for a user (e.g. password change, account compromise).</summary>
     Task RevokeAllSessionsAsync(Guid userId, SessionRevokeReason reason, CancellationToken cancellationToken = default);
 }
@@ -293,9 +310,14 @@ public interface IAuditLogService
 /// Used by AuthService during login and token refresh to embed the correct
 /// tenant ID and role into the JWT without a Persistence → Identity dependency.
 /// </summary>
+/// <param name="AllowedFarmIds">
+/// Farms the user is restricted to (from their branch assignment); null = every farm in the tenant.
+/// An empty list means the user may access no farm.
+/// </param>
 public sealed record TenantMembership(
     Guid TenantId,
-    string RoleName);
+    string RoleName,
+    IReadOnlyList<Guid>? AllowedFarmIds = null);
 
 /// <summary>
 /// Cross-cutting service: resolves a user's active tenant memberships from the

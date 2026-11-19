@@ -17,11 +17,16 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-vet-visit-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -34,10 +39,10 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
     LoadingComponent
   ],
   templateUrl: './vet-visit-list.html',
-  styleUrls: ['./vet-visit-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VetVisitListComponent {
+  private readonly notify = inject(NotificationService);
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
@@ -55,6 +60,12 @@ export class VetVisitListComponent {
   pageSize = signal(10);
   refreshTrigger = signal(0);
   isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
 
   private currentFarm = toSignal(this.contextService.currentFarm$);
 
@@ -67,11 +78,11 @@ export class VetVisitListComponent {
 
   private vetVisitsResult = toSignal(
     toObservable(this.paginationParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ pageIndex, pageSize, farmId }) =>
         this.healthService.getVetVisits({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
-          catchError((err) => {
-            console.error('Error loading vet visits', err);
+          catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load vet visits.'));
             return of({ items: [], totalCount: 0 });
           })
         )
@@ -94,7 +105,7 @@ export class VetVisitListComponent {
   }
 
   openScheduleVisitDialog(): void {
-    const dialogRef = this.dialog.open(LogVetVisitDialog, {
+    const dialogRef = this.dialog.open(LogVetVisitDialog, { maxWidth: '95vw',
       width: '720px',
       panelClass: 'custom-dialog-container',
       disableClose: true
@@ -108,7 +119,7 @@ export class VetVisitListComponent {
   }
 
   viewVisitDetails(visit: any): void {
-    const dialogRef = this.dialog.open(VetVisitDetailDialogComponent, {
+    const dialogRef = this.dialog.open(VetVisitDetailDialogComponent, { maxWidth: '95vw',
       width: '700px',
       panelClass: 'custom-dialog-container',
       data: { visitId: visit.id }
@@ -133,7 +144,7 @@ export class VetVisitListComponent {
     this.isExporting.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Vet_Visits_${new Date().toISOString().split('T')[0]}`,
+        filename: `Farm360_Vet_Visits_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Veterinary Visits & Health Log',
@@ -149,7 +160,7 @@ export class VetVisitListComponent {
         showSignatures: true
       });
     } catch (err) {
-      console.error('Failed to export Vet Visits PDF:', err);
+      this.notify.error(parseApiError(err, 'Could not export the PDF. Please try again.'));
     } finally {
       this.isExporting.set(false);
     }

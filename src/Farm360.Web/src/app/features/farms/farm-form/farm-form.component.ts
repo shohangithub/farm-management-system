@@ -2,11 +2,14 @@ import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { FarmService } from '../services/farm.service';
 import { CreateFarmCommand, UpdateFarmCommand } from '../models/farm.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NotificationService } from '../../../shared/services/notification.service';
+
+import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-farm-form',
@@ -14,12 +17,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './farm-form.component.html'
 })
-export class FarmFormComponent implements OnInit {
+export class FarmFormComponent implements OnInit, HasUnsavedChanges {
+  /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
+  private saved = false;
+
+  hasUnsavedChanges(): boolean {
+    return !!this.farmForm?.dirty && !this.saved;
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly farmService = inject(FarmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   farmForm!: FormGroup;
@@ -60,10 +70,10 @@ export class FarmFormComponent implements OnInit {
       farmCode: ['', [Validators.required, Validators.maxLength(50)]],
       farmName: ['', [Validators.required, Validators.maxLength(200)]],
       type: ['Dairy', Validators.required],
-      farmSize: [null],
-      landArea: [null],
-      latitude: [null],
-      longitude: [null],
+      farmSize: [null, Validators.min(0)],
+      landArea: [null, Validators.min(0)],
+      latitude: [null, [Validators.min(-90), Validators.max(90)]],
+      longitude: [null, [Validators.min(-180), Validators.max(180)]],
       mapPolygon: [''],
       capacity: [null, Validators.min(0)],
       status: ['Active'],
@@ -106,7 +116,10 @@ export class FarmFormComponent implements OnInit {
       return `Maximum ${max} characters allowed.`;
     }
     if (control.hasError('min')) {
-      return 'Value must be zero or greater.';
+      return `Value must be at least ${control.getError('min').min}.`;
+    }
+    if (control.hasError('max')) {
+      return `Value must be at most ${control.getError('max').max}.`;
     }
     return 'Invalid value.';
   }
@@ -114,10 +127,7 @@ export class FarmFormComponent implements OnInit {
   onSubmit(): void {
     if (this.farmForm.invalid) {
       this.farmForm.markAllAsTouched();
-      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please fix the validation errors before submitting.');
       return;
     }
 
@@ -142,10 +152,8 @@ export class FarmFormComponent implements OnInit {
       this.farmService.updateFarm(this.farmId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Farm updated successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Farm updated successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
         },
         error: (err) => {
@@ -163,10 +171,8 @@ export class FarmFormComponent implements OnInit {
       this.farmService.createFarm(this.branchId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Farm created successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Farm created successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
         },
         error: (err) => {

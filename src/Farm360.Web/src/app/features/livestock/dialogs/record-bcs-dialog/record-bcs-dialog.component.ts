@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
 export interface RecordBcsDialogData {
   animalId: string;
@@ -28,7 +29,7 @@ export class RecordBcsDialogComponent {
 
   readonly form = this.fb.group({
     score: [null as number | null, [Validators.required, Validators.min(1), Validators.max(5)]],
-    recordedDate: [new Date().toISOString().split('T')[0], Validators.required],
+    recordedDate: [toLocalIsoDate(), Validators.required],
     notes: ['', Validators.maxLength(500)]
   });
 

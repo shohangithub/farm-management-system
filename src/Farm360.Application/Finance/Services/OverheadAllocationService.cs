@@ -103,8 +103,6 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
             throw new ArgumentException("The period end cannot precede its start.", nameof(to));
         }
 
-        var rules = _rules.Current;
-
         var candidates = await _transactions
             .GetUnattributedIndirectCostsAsync(farmId, from, to, cancellationToken)
             .ConfigureAwait(false);
@@ -142,6 +140,8 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
                 continue;
             }
 
+            // The expense's own tenant: the monthly job runs this across every tenant.
+            var rules = _rules.For(transaction.TenantId, farmId);
             var rows = BuildRows(transaction, herd, rules, isBackfill);
             if (rows.Count == 0)
             {
@@ -218,7 +218,7 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
         }
         else if (transaction is not null && !transaction.IsDeleted && IsSharedCost(transaction))
         {
-            var rules = _rules.Current;
+            var rules = _rules.For(transaction.TenantId, transaction.FarmId);
             var (periodStart, periodEnd) = CostPeriodFor(transaction, rules.OverheadCostPeriod);
             var herd = await _animals
                 .GetPresentDuringPeriodAsync(transaction.FarmId, periodStart, periodEnd, cancellationToken)

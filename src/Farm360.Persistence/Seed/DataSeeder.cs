@@ -22,21 +22,39 @@ public sealed class DataSeeder(
     ApplicationDbContext context,
     ILogger<DataSeeder> logger)
 {
-    public async Task SeedAsync(CancellationToken cancellationToken = default)
-    {
-        logger.LogInformation("Farm360 DataSeeder: Starting idempotent seed...");
+    /// <summary>Seeds reference data AND the demo tenant (kept for backwards compatibility).</summary>
+    public Task SeedAsync(CancellationToken cancellationToken = default) =>
+        SeedAsync(includeDemoData: true, cancellationToken);
 
-        await SeedPermissionsAsync(cancellationToken);
+    /// <summary>
+    /// Seeds permissions, system roles, role grants and default breeds (always — permission grants
+    /// depend on them) and, when <paramref name="includeDemoData"/> is true, the "demo" tenant with its
+    /// organisation, HQ branch and owner membership. Program.cs passes
+    /// <c>Seed:DemoData</c> (default: true only in Development).
+    /// </summary>
+    public async Task SeedAsync(bool includeDemoData, CancellationToken cancellationToken = default)
+    {
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Farm360 DataSeeder: Starting idempotent seed (demo tenant: {IncludeDemoData})...", includeDemoData);
+        }
+
+        var newPermissionCodes = await SeedPermissionsAsync(cancellationToken);
         await SeedSystemRolesAsync(cancellationToken);
         await SeedRolePermissionsAsync(cancellationToken);
-        await SeedOrganizationsAndTenantsAsync(cancellationToken);
+        await GrantNewBaselinePermissionsToCustomRolesAsync(newPermissionCodes, cancellationToken);
+        if (includeDemoData)
+        {
+            await SeedOrganizationsAndTenantsAsync(cancellationToken);
+        }
+
         await SeedBreedsAsync(cancellationToken);
 
         logger.LogInformation("Farm360 DataSeeder: Completed.");
     }
 
     // ── 1. Permissions ────────────────────────────────────────────────────────
-    private async Task SeedPermissionsAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyCollection<string>> SeedPermissionsAsync(CancellationToken cancellationToken)
     {
         var existingCodes = await context.Permissions
             .AsNoTracking()
@@ -56,6 +74,63 @@ public sealed class DataSeeder(
             await context.SaveChangesAsync(cancellationToken);
             if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
                 logger.LogInformation("Farm360 DataSeeder: Seeded {Count} permissions", toAdd.Count);
+        }
+
+        return toAdd.Select(p => p.Code).ToList();
+    }
+
+    /// <summary>
+    /// Permissions every pre-existing role implicitly had before the module was put behind a
+    /// permission check (the routes were authenticated-only). When such a permission is first
+    /// seeded, it is granted once to every existing tenant-defined (custom) role so no tenant
+    /// loses access. System roles (shared by all tenants) get theirs from
+    /// <see cref="BuildRolePermissionMappings"/>. Runs only for codes inserted in this run, so a
+    /// later manual revoke by a tenant admin is never undone.
+    /// </summary>
+    internal static readonly string[] BaselineViewPermissions =
+    [
+        PermissionConstants.DashboardModule.View,
+        PermissionConstants.AnalyticsModule.View,
+        PermissionConstants.IntelligenceModule.View,
+    ];
+
+    private async Task GrantNewBaselinePermissionsToCustomRolesAsync(
+        IReadOnlyCollection<string> newPermissionCodes,
+        CancellationToken cancellationToken)
+    {
+        var codes = BaselineViewPermissions.Where(newPermissionCodes.Contains).ToList();
+        if (codes.Count == 0) return;
+
+        var permIds = await context.Permissions.AsNoTracking()
+            .Where(p => codes.Contains(p.Code))
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+
+        var customRoleIds = await context.Roles.AsNoTracking().IgnoreQueryFilters()
+            .Where(r => !r.IsSystemRole)
+            .Select(r => r.Id)
+            .ToListAsync(cancellationToken);
+
+        if (customRoleIds.Count == 0 || permIds.Count == 0) return;
+
+        var existing = (await context.RolePermissions.AsNoTracking()
+                .Where(rp => customRoleIds.Contains(rp.RoleId) && permIds.Contains(rp.PermissionId))
+                .Select(rp => new { rp.RoleId, rp.PermissionId })
+                .ToListAsync(cancellationToken))
+            .Select(e => (e.RoleId, e.PermissionId))
+            .ToHashSet();
+
+        var toAdd = (from roleId in customRoleIds
+                     from permId in permIds
+                     where !existing.Contains((roleId, permId))
+                     select new RolePermission(roleId, permId)).ToList();
+
+        if (toAdd.Count > 0)
+        {
+            context.RolePermissions.AddRange(toAdd);
+            await context.SaveChangesAsync(cancellationToken);
+            if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
+                logger.LogInformation("Farm360 DataSeeder: Granted {Count} baseline permissions to custom roles", toAdd.Count);
         }
     }
 
@@ -115,6 +190,27 @@ public sealed class DataSeeder(
             if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
                 logger.LogInformation("Farm360 DataSeeder: Seeded {Count} role-permission mappings", toAdd.Count);
         }
+
+        // System roles are platform-defined and locked for editing, so the matrix is the source of
+        // truth: a permission taken away from a system role (e.g. finance.delete from FarmManager)
+        // must also be removed from databases seeded by an older matrix.
+        var wanted = mappings.ToHashSet();
+        var systemRoleIds = new HashSet<Guid>
+        {
+            SystemRoleIds.Owner, SystemRoleIds.FarmManager, SystemRoleIds.Veterinarian,
+            SystemRoleIds.Worker, SystemRoleIds.Viewer,
+        };
+        var stale = await context.RolePermissions
+            .Where(rp => systemRoleIds.Contains(rp.RoleId))
+            .ToListAsync(cancellationToken);
+        stale = stale.Where(rp => !wanted.Contains((rp.RoleId, rp.PermissionId))).ToList();
+        if (stale.Count > 0)
+        {
+            context.RolePermissions.RemoveRange(stale);
+            await context.SaveChangesAsync(cancellationToken);
+            if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
+                logger.LogInformation("Farm360 DataSeeder: Removed {Count} outdated system role-permission mappings", stale.Count);
+        }
     }
 
     // ── Role → Permission Matrix ──────────────────────────────────────────────
@@ -126,9 +222,11 @@ public sealed class DataSeeder(
         foreach (var (_, permId) in perms)
             result.Add((SystemRoleIds.Owner, permId));
 
-        // FarmManager — everything except billing management
+        // FarmManager — everything except billing management, role assignment and finance
+        // delete/admin operations (finance: view/create/edit only).
         var farmManagerPerms = perms.Keys
-            .Where(c => c != PermissionConstants.Billing.Manage && c != PermissionConstants.Users.AssignRole)
+            .Where(c => c != PermissionConstants.Billing.Manage && c != PermissionConstants.Users.AssignRole
+                        && c != PermissionConstants.FinanceModule.Delete && c != PermissionConstants.FinanceModule.Admin)
             .ToList();
         foreach (var code in farmManagerPerms)
             result.Add((SystemRoleIds.FarmManager, perms[code]));
@@ -145,6 +243,9 @@ public sealed class DataSeeder(
             PermissionConstants.FeedingModule.View,
             PermissionConstants.ReportsModule.View,
             PermissionConstants.Notifications.View,
+            PermissionConstants.DashboardModule.View,
+            PermissionConstants.AnalyticsModule.View,
+            PermissionConstants.IntelligenceModule.View,
         };
         foreach (var code in vetPerms)
             if (perms.TryGetValue(code, out var permId))
@@ -157,6 +258,9 @@ public sealed class DataSeeder(
             PermissionConstants.FeedingModule.View, PermissionConstants.FeedingModule.Create, PermissionConstants.FeedingModule.Edit,
             PermissionConstants.InventoryModule.View,
             PermissionConstants.Notifications.View,
+            PermissionConstants.DashboardModule.View,
+            PermissionConstants.AnalyticsModule.View,
+            PermissionConstants.IntelligenceModule.View,
         };
         foreach (var code in workerPerms)
             if (perms.TryGetValue(code, out var permId))

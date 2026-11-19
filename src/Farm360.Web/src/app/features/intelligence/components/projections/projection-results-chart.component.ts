@@ -4,13 +4,15 @@ import { ProfitProjectionResponse } from '../../models/projection.model';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import Chart from 'chart.js/auto';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
 
-const bdt = (v: number) => '৳ ' + Math.round(v).toLocaleString('en-US');
+const bdt = (v: number) => formatMoney(v);
 
 @Component({
   selector: 'app-projection-results-chart',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatTooltipModule],
+  imports: [MoneyPipe, CommonModule, MatIconModule, MatTooltipModule],
   template: `
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden h-full flex flex-col">
       <div class="flex items-center gap-3 mb-6">
@@ -28,22 +30,22 @@ const bdt = (v: number) => '৳ ' + Math.round(v).toLocaleString('en-US');
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Total Investment</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white">৳ {{ summary.totalInvestmentBdt | number:'1.0-0' }}</p>
-            <p class="text-[11px] text-gray-400 mt-1">Start ৳{{ summary.purchaseCostBdt | number:'1.0-0' }} + running ৳{{ summary.totalFarmingCostBdt | number:'1.0-0' }}</p>
+            <p class="text-xl font-bold text-gray-900 dark:text-white">{{ summary.totalInvestmentBdt | money }}</p>
+            <p class="text-[11px] text-gray-400 mt-1">Start {{ summary.purchaseCostBdt | money }} + running {{ summary.totalFarmingCostBdt | money }}</p>
           </div>
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Expected Sale Value</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white">৳ {{ summary.expectedSaleValueBdt | number:'1.0-0' }}</p>
-            <p class="text-[11px] text-gray-400 mt-1">{{ summary.finalMeatWeightKg | number:'1.1-1' }} kg meat × ৳{{ summary.meatPriceUsedBdtPerKg | number:'1.0-2' }}</p>
+            <p class="text-xl font-bold text-gray-900 dark:text-white">{{ summary.expectedSaleValueBdt | money }}</p>
+            <p class="text-[11px] text-gray-400 mt-1">{{ summary.finalMeatWeightKg | number:'1.1-1' }} kg meat × {{ summary.meatPriceUsedBdtPerKg | money:2 }}</p>
           </div>
           <div class="p-4 rounded-xl" [ngClass]="isProfit(summary.profitLossBdt) ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'bg-rose-50 dark:bg-rose-500/10'">
             <p class="text-xs uppercase tracking-wider mb-1" [ngClass]="isProfit(summary.profitLossBdt) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
               Projected {{ isProfit(summary.profitLossBdt) ? 'Profit' : 'Loss' }}
             </p>
             <p class="text-xl font-bold" [ngClass]="isProfit(summary.profitLossBdt) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-              {{ summary.profitLossBdt > 0 ? '+' : '' }}৳ {{ summary.profitLossBdt | number:'1.0-0' }}
+              {{ summary.profitLossBdt > 0 ? '+' : '' }}{{ summary.profitLossBdt | money }}
             </p>
-            <p class="text-[11px] text-gray-400 mt-1">≈ ৳{{ summary.dailyProfitRateBdt | number:'1.0-0' }} per day</p>
+            <p class="text-[11px] text-gray-400 mt-1">≈ {{ summary.dailyProfitRateBdt | money }} per day</p>
           </div>
           <div class="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
             <p class="text-xs text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">ROI</p>
@@ -60,46 +62,46 @@ const bdt = (v: number) => '৳ ' + Math.round(v).toLocaleString('en-US');
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">Final Weight</p>
             <p class="font-semibold text-gray-900 dark:text-white">{{ summary.finalWeightKg | number:'1.1-1' }} kg</p>
-            <p class="text-[10px] text-gray-400">+{{ summary.totalGainKg | number:'1.1-1' }} kg gain</p>
+            <p class="text-[11px] text-gray-400">+{{ summary.totalGainKg | number:'1.1-1' }} kg gain</p>
           </div>
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">Break-even Day</p>
             <p class="font-semibold" [ngClass]="summary.breakEvenDay ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
               {{ summary.breakEvenDay ? 'Day ' + summary.breakEvenDay : 'Not reached' }}
             </p>
-            <p class="text-[10px] text-gray-400">First day value ≥ investment</p>
+            <p class="text-[11px] text-gray-400">First day value ≥ investment</p>
           </div>
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">Best Day to Sell</p>
             <p class="font-semibold text-gray-900 dark:text-white">Day {{ summary.optimalSaleDay }}</p>
-            <p class="text-[10px]" [ngClass]="isProfit(summary.optimalProfitBdt ?? 0) ? 'text-emerald-600' : 'text-rose-600'">
-              {{ (summary.optimalProfitBdt ?? 0) > 0 ? '+' : '' }}৳{{ summary.optimalProfitBdt | number:'1.0-0' }}
+            <p class="text-[11px]" [ngClass]="isProfit(summary.optimalProfitBdt ?? 0) ? 'text-emerald-600' : 'text-rose-600'">
+              {{ (summary.optimalProfitBdt ?? 0) > 0 ? '+' : '' }}{{ summary.optimalProfitBdt | money }}
             </p>
           </div>
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">Break-even Meat Price</p>
-            <p class="font-semibold text-gray-900 dark:text-white">৳ {{ summary.breakEvenPricePerMeatKgBdt | number:'1.0-2' }}/kg</p>
-            <p class="text-[10px] text-gray-400">to sell on day {{ lastDay() }}</p>
+            <p class="font-semibold text-gray-900 dark:text-white">{{ summary.breakEvenPricePerMeatKgBdt | money:2 }}/kg</p>
+            <p class="text-[11px] text-gray-400">to sell on day {{ lastDay() }}</p>
           </div>
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">Break-even Live Price</p>
-            <p class="font-semibold text-gray-900 dark:text-white">৳ {{ summary.breakEvenPricePerLiveKgBdt | number:'1.0-2' }}/kg</p>
-            <p class="text-[10px] text-gray-400">per kg live weight</p>
+            <p class="font-semibold text-gray-900 dark:text-white">{{ summary.breakEvenPricePerLiveKgBdt | money:2 }}/kg</p>
+            <p class="text-[11px] text-gray-400">per kg live weight</p>
           </div>
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">Cost per kg Gain</p>
-            <p class="font-semibold text-gray-900 dark:text-white">৳ {{ summary.costPerKgGainBdt | number:'1.0-2' }}</p>
-            <p class="text-[10px] text-gray-400">{{ summary.totalFeedQtyKg | number:'1.0-0' }} kg feed total</p>
+            <p class="font-semibold text-gray-900 dark:text-white">{{ summary.costPerKgGainBdt | money:2 }}</p>
+            <p class="text-[11px] text-gray-400">{{ summary.totalFeedQtyKg | number:'1.0-0' }} kg feed total</p>
           </div>
         </div>
 
         <!-- Cost breakdown over the period -->
         <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-4">
-          <span>Feed <b class="text-gray-800 dark:text-gray-200">৳{{ summary.totalFeedCostBdt | number:'1.0-0' }}</b></span>
-          <span>Grass <b class="text-gray-800 dark:text-gray-200">৳{{ summary.totalGrassCostBdt | number:'1.0-0' }}</b></span>
-          <span>Other <b class="text-gray-800 dark:text-gray-200">৳{{ summary.totalOtherCostBdt | number:'1.0-0' }}</b></span>
-          <span>Labour <b class="text-gray-800 dark:text-gray-200">৳{{ summary.totalLaborCostBdt | number:'1.0-0' }}</b></span>
-          <span>= Running cost <b class="text-gray-800 dark:text-gray-200">৳{{ summary.totalFarmingCostBdt | number:'1.0-0' }}</b></span>
+          <span>Feed <b class="text-gray-800 dark:text-gray-200">{{ summary.totalFeedCostBdt | money }}</b></span>
+          <span>Grass <b class="text-gray-800 dark:text-gray-200">{{ summary.totalGrassCostBdt | money }}</b></span>
+          <span>Other <b class="text-gray-800 dark:text-gray-200">{{ summary.totalOtherCostBdt | money }}</b></span>
+          <span>Labour <b class="text-gray-800 dark:text-gray-200">{{ summary.totalLaborCostBdt | money }}</b></span>
+          <span>= Running cost <b class="text-gray-800 dark:text-gray-200">{{ summary.totalFarmingCostBdt | money }}</b></span>
         </div>
       </ng-container>
 

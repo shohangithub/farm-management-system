@@ -98,6 +98,10 @@ public static class IdentityServiceExtensions
                         }
                         return Task.CompletedTask;
                     },
+
+                    // Token version (tv) check: logout-all / password change / admin revoke bump the
+                    // user's TokenVersion, which must invalidate already-issued access tokens too.
+                    OnTokenValidated = TokenVersionCheck.ValidateAsync,
                 };
             });
 
@@ -114,7 +118,12 @@ public static class IdentityServiceExtensions
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddMemoryCache();
+        services.AddScoped<ITokenVersionValidator, TokenVersionValidator>();
         services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<IUserAccountService, UserAccountService>();
+        services.AddScoped<IAccessTokenRevoker, AccessTokenRevoker>();
+        services.AddSingleton<IPublicLinkBuilder, PublicLinkBuilder>();
         
         services.AddTransient<Farm360.Identity.Seed.IdentitySeeder>();
 

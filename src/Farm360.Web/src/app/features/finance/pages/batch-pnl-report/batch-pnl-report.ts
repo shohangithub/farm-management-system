@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, PercentPipe } from '@angular/common';
+import { CommonModule, PercentPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { switchMap, catchError, of, combineLatest, map } from 'rxjs';
+import { switchMap, catchError, of, combineLatest, map, BehaviorSubject } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -13,6 +13,10 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
 import { BatchPnLReport } from '../../models/finance.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 /** Batch P&L with the unrealised-value fields the API now returns (ratios are 0–1 fractions). */
 interface BatchPnLReportView extends BatchPnLReport {
@@ -25,7 +29,7 @@ interface BatchPnLReportView extends BatchPnLReport {
 @Component({
   selector: 'app-batch-pnl-report',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     MatIconModule,
@@ -33,7 +37,6 @@ interface BatchPnLReportView extends BatchPnLReport {
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    CurrencyPipe,
     PercentPipe
   ],
   template: `
@@ -70,8 +73,10 @@ interface BatchPnLReportView extends BatchPnLReport {
 
     <div *ngIf="!isLoading()" class="p-6 max-w-5xl mx-auto space-y-6">
       
-      <app-empty-state 
-        *ngIf="!reportData()"
+      <app-error-state *ngIf="loadError() as err" title="Couldn't load the report" [message]="err" (retry)="retryLoad()"></app-error-state>
+
+      <app-empty-state
+        *ngIf="!reportData() && !loadError()"
         icon="trending_flat"
         title="No P&L Data"
         description="No financial transactions found for this batch.">
@@ -88,7 +93,7 @@ interface BatchPnLReportView extends BatchPnLReport {
           <div class="flex-1">
             <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Realised Income</p>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-              {{ report.totalIncomeBdt | currency:'BDT ':'symbol':'1.0-0' }}
+              {{ report.totalIncomeBdt | money }}
             </h2>
           </div>
 
@@ -96,7 +101,7 @@ interface BatchPnLReportView extends BatchPnLReport {
           <div class="flex-1 border-l-0 md:border-l border-gray-100 dark:border-gray-700/50 md:pl-6">
             <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Total Cost</p>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-              {{ report.totalCostBdt | currency:'BDT ':'symbol':'1.0-0' }}
+              {{ report.totalCostBdt | money }}
             </h2>
           </div>
         </div>
@@ -108,7 +113,7 @@ interface BatchPnLReportView extends BatchPnLReport {
             <div>
               <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Realised Profit / Loss</p>
               <h3 class="text-2xl font-bold" [ngClass]="report.grossProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
-                {{ Math.abs(report.grossProfitBdt) | currency:'BDT ':'symbol':'1.0-0' }}
+                {{ Math.abs(report.grossProfitBdt) | money }}
                 <span *ngIf="report.grossProfitBdt < 0" class="text-sm">Loss</span>
               </h3>
             </div>
@@ -137,13 +142,13 @@ interface BatchPnLReportView extends BatchPnLReport {
           <div class="bg-amber-50/50 dark:bg-amber-900/20 rounded-xl p-6 border border-amber-100 dark:border-amber-800/50">
             <p class="text-xs font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400 mb-1">Unrealised value ({{ report.onHandAnimals ?? 0 }} on hand)</p>
             <h3 class="text-2xl font-bold text-amber-900 dark:text-amber-100">
-              {{ (report.unrealisedValueBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}
+              {{ (report.unrealisedValueBdt ?? 0) | money }}
             </h3>
           </div>
           <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
             <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Estimated Total P&amp;L</p>
             <h3 class="text-2xl font-bold" [ngClass]="(report.estimatedTotalProfitBdt ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
-              {{ Math.abs(report.estimatedTotalProfitBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}
+              {{ Math.abs(report.estimatedTotalProfitBdt ?? 0) | money }}
               <span *ngIf="(report.estimatedTotalProfitBdt ?? 0) < 0" class="text-sm">Loss</span>
             </h3>
           </div>
@@ -184,19 +189,31 @@ export class BatchPnlReportComponent implements OnInit {
 
   readonly batchId = toSignal(this.routeParams$);
 
+  readonly loadError = signal<string | null>(null);
+  private readonly retry$ = new BehaviorSubject<void>(undefined);
+
   private readonly reportData$ = combineLatest([
     this.routeParams$,
-    this.workingContextService.currentFarm$
+    this.workingContextService.currentFarm$,
+    this.retry$
   ]).pipe(
     switchMap(([batchId, farm]) => {
+      this.loadError.set(null);
       if (!batchId || !farm) {
         return of(null);
       }
       return this.financeService.getBatchPnL(farm.id, batchId).pipe(
         map(r => r as BatchPnLReportView | null),
-        catchError(() => of(null as BatchPnLReportView | null)));
+        catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load the batch P&L report.'));
+          return of(null as BatchPnLReportView | null);
+        }));
     })
   );
+
+  retryLoad(): void {
+    this.retry$.next();
+  }
 
   readonly reportData = toSignal(this.reportData$);
   readonly isLoading = computed(() => this.reportData() === undefined);
@@ -241,9 +258,9 @@ export class BatchPnlReportComponent implements OnInit {
                 currency: 'BDT (৳)',
                 metaFields: [
                   { label: 'Total Animals', value: `${report?.totalAnimals || 0}` },
-                  { label: 'Realised P&L', value: `৳ ${(report?.grossProfitBdt || 0).toLocaleString()}` },
+                  { label: 'Realised P&L', value: `${formatMoney((report?.grossProfitBdt || 0))}` },
                   { label: 'Realised ROI', value: `${((report?.returnOnInvestmentPercent || 0) * 100).toFixed(2)}%` },
-                  { label: 'Estimated P&L', value: `৳ ${(report?.estimatedTotalProfitBdt || 0).toLocaleString()}` },
+                  { label: 'Estimated P&L', value: `${formatMoney((report?.estimatedTotalProfitBdt || 0))}` },
                   { label: 'Estimated ROI', value: `${((report?.estimatedRoiPercent || 0) * 100).toFixed(2)}%` }
                 ]
               },

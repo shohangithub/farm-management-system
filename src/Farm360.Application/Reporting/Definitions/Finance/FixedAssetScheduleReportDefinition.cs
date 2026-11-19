@@ -31,7 +31,7 @@ public sealed class FixedAssetScheduleReportDefinition : ReportDefinition<FixedA
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.Date("fromDate", new LocalizedText("From (blank = financial year start)", "শুরু (খালি = অর্থবছরের শুরু)"), required: false, @default: null),
         ReportParameter.Date("toDate", new LocalizedText("To", "পর্যন্ত"), required: false, @default: "today"),
     ];
@@ -41,15 +41,15 @@ public sealed class FixedAssetScheduleReportDefinition : ReportDefinition<FixedA
         ReportColumn<FixedAssetScheduleLineDto>.Text("code", new LocalizedText("Code", "কোড"), r => r.Code, width: 16f, relative: false),
         ReportColumn<FixedAssetScheduleLineDto>.Text("name", new LocalizedText("Asset", "সম্পদ"), r => r.Name, width: 3f),
         ReportColumn<FixedAssetScheduleLineDto>.Number("rate", new LocalizedText("Rate %", "হার %"), r => r.RatePercent, decimals: 2, widthMm: 14f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("costOpening", new LocalizedText("Cost b/f", "ক্রয়মূল্য প্রারম্ভিক"), r => r.CostOpeningBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("additions", new LocalizedText("Additions", "সংযোজন"), r => r.AdditionsBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("disposals", new LocalizedText("Disposals", "বিক্রয়/বাতিল"), r => r.DisposalsBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("costClosing", new LocalizedText("Cost c/f", "ক্রয়মূল্য সমাপনী"), r => r.CostClosingBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("depOpening", new LocalizedText("Dep. b/f", "অবচয় প্রারম্ভিক"), r => r.DepreciationOpeningBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("charge", new LocalizedText("Charge", "চলতি অবচয়"), r => r.DepreciationChargeBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("depDisposal", new LocalizedText("On disposal", "বিক্রয়ে সমন্বয়"), r => r.DepreciationOnDisposalBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("depClosing", new LocalizedText("Dep. c/f", "অবচয় সমাপনী"), r => r.DepreciationClosingBdt, widthMm: 22f),
-        ReportColumn<FixedAssetScheduleLineDto>.Money("wdv", new LocalizedText("WDV", "লিখিত মূল্য"), r => r.WrittenDownValueBdt, widthMm: 24f),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("costOpening", new LocalizedText("Cost b/f", "ক্রয়মূল্য প্রারম্ভিক"), r => r.CostOpeningBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("additions", new LocalizedText("Additions", "সংযোজন"), r => r.AdditionsBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("disposals", new LocalizedText("Disposals", "বিক্রয়/বাতিল"), r => r.DisposalsBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("costClosing", new LocalizedText("Cost c/f", "ক্রয়মূল্য সমাপনী"), r => r.CostClosingBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("depOpening", new LocalizedText("Dep. b/f", "অবচয় প্রারম্ভিক"), r => r.DepreciationOpeningBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("charge", new LocalizedText("Charge", "চলতি অবচয়"), r => r.DepreciationChargeBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("depDisposal", new LocalizedText("On disposal", "বিক্রয়ে সমন্বয়"), r => r.DepreciationOnDisposalBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("depClosing", new LocalizedText("Dep. c/f", "অবচয় সমাপনী"), r => r.DepreciationClosingBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<FixedAssetScheduleLineDto>.Money("wdv", new LocalizedText("WDV", "লিখিত মূল্য"), r => r.WrittenDownValueBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<FixedAssetScheduleLineDto>? Group =>
@@ -72,22 +72,15 @@ public sealed class FixedAssetScheduleReportDefinition : ReportDefinition<FixedA
             .ToList();
     }
 
-    private static async Task<FixedAssetScheduleDto> LoadAsync(ReportContext context, CancellationToken cancellationToken)
+    // The subject line and the body both need the schedule; load it once per run.
+    private static Task<FixedAssetScheduleDto> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>
+        context.MemoAsync("fixed-asset-schedule", () => LoadCoreAsync(context, cancellationToken));
+
+    private static async Task<FixedAssetScheduleDto> LoadCoreAsync(ReportContext context, CancellationToken cancellationToken)
     {
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         DateTime? from = context.Has("fromDate") ? context.Date("fromDate").ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc) : null;
         var to = context.Date("toDate").ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         return await context.Send(new GetFixedAssetScheduleQuery(farmId, from, to), cancellationToken).ConfigureAwait(false);
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

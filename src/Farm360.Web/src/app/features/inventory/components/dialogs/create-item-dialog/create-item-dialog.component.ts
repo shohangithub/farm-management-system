@@ -9,11 +9,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable, map } from 'rxjs';
 import { InventoryService } from '../../../services/inventory.service';
 import { InventoryCategory, InventoryCategoryNames, InventoryItem, MeasureUnit, UnitConversion } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-create-item-dialog',
@@ -46,7 +46,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             </p>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button aria-label="Close" mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
         </button>
       </div>
@@ -181,7 +181,7 @@ export class CreateItemDialogComponent {
   readonly data = inject<{ item?: InventoryItem; farmId: string }>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isSubmitting = signal(false);
@@ -270,7 +270,7 @@ export class CreateItemDialogComponent {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open(`Inventory item ${this.isEdit ? 'updated' : 'created'} successfully.`, 'OK', { duration: 4000 });
+        this.notify.success(`Inventory item ${this.isEdit ? 'updated' : 'created'} successfully.`);
         this.dialogRef.close(true);
       },
       error: (err: any) => {

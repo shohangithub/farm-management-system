@@ -60,9 +60,10 @@ public sealed class JwtTokenService(IOptions<JwtConfiguration> jwtOptions) : ITo
 
         if (farmIds != null)
         {
+            // Restricted user: list the allowed farms. A restricted user with no farms gets "none"
+            // (parsed as an empty list = no access); omitting the claim would mean "all farms".
             var farmList = string.Join(',', farmIds.Select(f => f.ToString()));
-            if (!string.IsNullOrEmpty(farmList))
-                claims.Add(new Claim("farms", farmList));
+            claims.Add(new Claim("farms", string.IsNullOrEmpty(farmList) ? "none" : farmList));
         }
 
         // Embed permission codes in JWT to avoid per-request DB lookups

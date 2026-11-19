@@ -93,7 +93,7 @@ export function toCreditTerms(value: Record<string, unknown> | null | undefined)
               <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Due date</label>
               <input type="date" formControlName="dueDate"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-              <p class="text-[10px] text-gray-500 m-0">Leave empty for 30 days.</p>
+              <p class="text-[11px] text-gray-500 m-0">Leave empty for 30 days.</p>
             </div>
             <div class="space-y-1">
               <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">
@@ -108,7 +108,7 @@ export function toCreditTerms(value: Record<string, unknown> | null | undefined)
                 </select>
               </div>
               @if (total && balance !== null) {
-                <p class="text-[10px] m-0" [ngClass]="balance <= 0 ? 'text-rose-600' : 'text-gray-500'">
+                <p class="text-[11px] m-0" [ngClass]="balance <= 0 ? 'text-rose-600' : 'text-gray-500'">
                   {{ balance <= 0 ? 'Paid in full — choose “' + (kind === 'Payable' ? 'Paid' : 'Received') + ' in full now” instead.' : 'Balance on credit: ৳ ' + (balance | number: '1.0-2') }}
                 </p>
               }

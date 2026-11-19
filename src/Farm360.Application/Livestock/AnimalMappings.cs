@@ -48,7 +48,9 @@ public static class AnimalMappings
             BcsRecords: animal.BcsRecords.OrderByDescending(b => b.RecordedDate).Select(b => b.ToDto()).ToList().AsReadOnly(),
             CreatedAtUtc: animal.CreatedAtUtc,
             CreatedBy: animal.CreatedBy,
-            ModifiedAtUtc: animal.ModifiedAtUtc);
+            ModifiedAtUtc: animal.ModifiedAtUtc,
+            DeathDate: animal.DeathDate,
+            ExitDate: animal.ExitDate);
 
     public static AnimalListItemDto ToListItemDto(this Animal animal) =>
         new(

@@ -36,7 +36,8 @@ public sealed class CloseFeedingCycleCommandHandler : IRequestHandler<CloseFeedi
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Closing feeding cycles across all tenants");
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // Placeholder job: when implemented, fan out with ITenantJobRunner and take each tenant's
+        // "today" from IFarmClock.TodayFor(tenantId), as CreateDailyFeedingEntriesCommand does.
 
         // Fetch plans that are active and need a reconciliation for the past cycle (e.g., past 7 or 15 days).
         // Since reconciliation involves aggregating entries, a real-world approach uses raw SQL / Dapper.

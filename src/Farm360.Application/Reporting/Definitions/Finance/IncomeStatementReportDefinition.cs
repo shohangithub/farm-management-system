@@ -39,7 +39,7 @@ public sealed class IncomeStatementReportDefinition : ReportDefinition<IncomeSta
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.Date("fromDate", new LocalizedText("From (blank = financial year start)", "শুরু (খালি = অর্থবছরের শুরু)"), required: false, @default: null),
         ReportParameter.Date("toDate", new LocalizedText("To", "পর্যন্ত"), required: false, @default: "today"),
     ];
@@ -86,22 +86,17 @@ public sealed class IncomeStatementReportDefinition : ReportDefinition<IncomeSta
         return rows;
     }
 
-    private static async Task<IncomeStatementDto> LoadAsync(ReportContext context, CancellationToken cancellationToken)
+    public override LocalizedText? GrandTotalLabel => new("Net profit / (loss)", "নিট লাভ / (ক্ষতি)");
+
+    // The subject line and the body both need the statement; load it once per run.
+    private static Task<IncomeStatementDto> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>
+        context.MemoAsync("income-statement", () => LoadCoreAsync(context, cancellationToken));
+
+    private static async Task<IncomeStatementDto> LoadCoreAsync(ReportContext context, CancellationToken cancellationToken)
     {
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         DateTime? from = context.Has("fromDate") ? context.Date("fromDate").ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc) : null;
         var to = context.Date("toDate").ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         return await context.Send(new GetIncomeStatementQuery(farmId, from, to), cancellationToken).ConfigureAwait(false);
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

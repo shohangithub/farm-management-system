@@ -10,6 +10,8 @@ public record CancelFeedingPlanCommand(Guid Id) : IRequest;
 
 public class CancelFeedingPlanCommandHandler : IRequestHandler<CancelFeedingPlanCommand>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IAnimalFeedingPlanRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CancelFeedingPlanCommandHandler> _logger;
@@ -17,8 +19,10 @@ public class CancelFeedingPlanCommandHandler : IRequestHandler<CancelFeedingPlan
     public CancelFeedingPlanCommandHandler(
         IAnimalFeedingPlanRepository repository,
         IUnitOfWork unitOfWork,
-        ILogger<CancelFeedingPlanCommandHandler> logger)
+        ILogger<CancelFeedingPlanCommandHandler> logger,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _repository = repository;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -29,7 +33,7 @@ public class CancelFeedingPlanCommandHandler : IRequestHandler<CancelFeedingPlan
         var plan = await _repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Farm360.Domain.Feeding.AnimalFeedingPlan), request.Id);
 
-        plan.Cancel();
+        plan.Cancel(_clock.Today);
         _repository.Update(plan);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         

@@ -7,7 +7,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
@@ -23,6 +22,10 @@ import { ManualFeedingResult } from '../../models/feeding.models';
 import { FeedingCostBreakdownDialogComponent } from '../../components/dialogs/feeding-cost-breakdown-dialog/feeding-cost-breakdown-dialog.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 interface PenGroup {
   penName: string;
   entries: DailyFeedingEntry[];
@@ -54,7 +57,7 @@ interface ShedGroup {
 @Component({
   selector: 'app-today-feeding-dashboard',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
@@ -77,7 +80,7 @@ interface ShedGroup {
         <!-- Date Stepper / Picker Controls -->
         <div class="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
           <button type="button" (click)="previousDay()" matTooltip="Previous Day"
-            class="p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            class="p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Previous Day">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_left</mat-icon>
           </button>
 
@@ -91,7 +94,7 @@ interface ShedGroup {
           </button>
 
           <button type="button" (click)="nextDay()" matTooltip="Next Day"
-            class="p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            class="p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Next Day">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
           </button>
 
@@ -232,6 +235,7 @@ interface ShedGroup {
     <!-- Main Content Container -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[500px]">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadEntries()"></app-error-state>
 
       <!-- Dashboard Header Stats -->
       <div class="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -250,10 +254,10 @@ interface ShedGroup {
         <div>
           <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Feed Cost</div>
           <div class="text-xl md:text-2xl font-extrabold text-teal-600 dark:text-teal-400 mt-1">
-            ৳{{ totalFeedCost() | number:'1.2-2' }}
+            {{ totalFeedCost() | money:2 }}
           </div>
-          <div class="text-[10px] text-gray-400 mt-0.5">
-            Avg ৳{{ averageBlendedCost() | number:'1.2-2' }}/kg
+          <div class="text-[11px] text-gray-400 mt-0.5">
+            Avg {{ averageBlendedCost() | money:2 }}/kg
           </div>
         </div>
         <div>
@@ -282,7 +286,7 @@ interface ShedGroup {
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!isLoading() && filteredEntries().length === 0"
+        *ngIf="!isLoading() && !loadError() && filteredEntries().length === 0"
         icon="restaurant_menu"
         [title]="allEntries().length === 0 ? 'No Feeding Entries for Selected Date' : 'No Matching Feeding Entries'"
         [description]="allEntries().length === 0 ? 'No daily feeding entries were found for ' + selectedDate() + '. Click \\'Generate Entries\\' to automatically create today\\'s feeding logs from active plans.' : 'No entries matched your current search or status filters.'"
@@ -306,7 +310,7 @@ interface ShedGroup {
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="text-base font-extrabold text-gray-900 dark:text-white leading-tight">{{ cow.animalTag }}</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
                     {{ cow.entries.length }} rations
                   </span>
                 </div>
@@ -329,7 +333,7 @@ interface ShedGroup {
               <div class="text-right hidden sm:block border-l border-gray-200 dark:border-gray-700 pl-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Est. Cost</div>
                 <div class="text-sm font-extrabold text-teal-600 dark:text-teal-400 font-mono">
-                  ৳{{ cow.totalCostBdt | number:'1.2-2' }}
+                  {{ cow.totalCostBdt | money:2 }}
                 </div>
               </div>
 
@@ -390,10 +394,10 @@ interface ShedGroup {
               </div>
 
               <!-- Entry Cost -->
-              <div *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-[10px] text-gray-500 flex justify-between items-center mb-2 pb-1 border-b border-gray-100 dark:border-gray-700/40">
+              <div *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-[11px] text-gray-500 flex justify-between items-center mb-2 pb-1 border-b border-gray-100 dark:border-gray-700/40">
                 <span>Ration Cost:</span>
                 <span class="font-bold text-teal-700 dark:text-teal-300 font-mono">
-                  ৳{{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | number:'1.2-2' }}
+                  {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
                 </span>
               </div>
 
@@ -403,7 +407,7 @@ interface ShedGroup {
                   class="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 px-2 py-0.5 rounded font-semibold text-xs flex items-center transition-colors">
                   <mat-icon class="!w-3.5 !h-3.5 !text-[14px] mr-1">check</mat-icon> Confirm
                 </button>
-                <button mat-icon-button [matMenuTriggerFor]="cowEntryMenu" class="!w-6 !h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                <button mat-icon-button [matMenuTriggerFor]="cowEntryMenu" class="!w-6 !h-6 flex items-center justify-center text-gray-400 hover:text-gray-600" aria-label="More actions">
                   <mat-icon class="!w-3.5 !h-3.5 !text-[16px]">more_vert</mat-icon>
                 </button>
                 <mat-menu #cowEntryMenu="matMenu" class="!rounded-xl shadow-xl">
@@ -460,7 +464,7 @@ interface ShedGroup {
                 <div class="flex items-center gap-2">
                   <mat-icon class="text-gray-400 !w-5 !h-5 !text-[20px]">fence</mat-icon>
                   <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ pen.penName }}</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                     {{ pen.entries.length }} entries
                   </span>
                 </div>
@@ -526,7 +530,7 @@ interface ShedGroup {
                   <div *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-[11px] font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between mb-2 pb-1 border-b border-gray-100 dark:border-gray-800">
                     <span>Entry Cost:</span>
                     <span class="font-bold text-teal-700 dark:text-teal-300 font-mono">
-                      ৳{{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | number:'1.2-2' }}
+                      {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
                     </span>
                   </div>
 
@@ -537,7 +541,7 @@ interface ShedGroup {
                       <mat-icon class="!w-4 !h-4 !text-[16px] mr-1">check</mat-icon> Confirm
                     </button>
                     
-                    <button mat-icon-button [matMenuTriggerFor]="menu" class="!w-6 !h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <button mat-icon-button [matMenuTriggerFor]="menu" class="!w-6 !h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="More actions">
                       <mat-icon class="!w-4 !h-4 !text-[18px]">more_vert</mat-icon>
                     </button>
                     <mat-menu #menu="matMenu" class="!rounded-xl shadow-xl">
@@ -624,7 +628,7 @@ interface ShedGroup {
               <!-- Unit Cost -->
               <td class="py-3.5 px-4 font-mono text-xs">
                 <span *ngIf="entry.unitCostBdt != null" class="font-semibold text-emerald-600 dark:text-emerald-400">
-                  ৳{{ entry.unitCostBdt | number:'1.2-2' }}/kg
+                  {{ entry.unitCostBdt | money:2 }}/kg
                 </span>
                 <span *ngIf="entry.unitCostBdt == null" class="text-gray-400">-</span>
               </td>
@@ -632,14 +636,14 @@ interface ShedGroup {
               <!-- Total Cost -->
               <td class="py-3.5 px-4 font-mono text-xs font-bold">
                 <span *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-teal-700 dark:text-teal-300">
-                  ৳{{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | number:'1.2-2' }}
+                  {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
                 </span>
                 <span *ngIf="entry.totalCostBdt == null && entry.unitCostBdt == null" class="text-gray-400">-</span>
               </td>
 
               <!-- Status Badge -->
               <td class="py-3.5 px-4">
-                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1"
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1"
                   [ngClass]="{
                     'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800': entry.status === 'Pending',
                     'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800': entry.status === 'Confirmed',
@@ -659,21 +663,21 @@ interface ShedGroup {
               <td class="py-3.5 px-4 text-right">
                 <div class="flex items-center justify-end gap-1.5">
                   <button (click)="openCostBreakdown(entry)" matTooltip="Cost Breakdown"
-                    class="p-1.5 text-xs font-semibold text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-colors">
+                    class="p-1.5 text-xs font-semibold text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-colors" aria-label="Cost Breakdown">
                     <mat-icon class="!w-4 !h-4 !text-[16px]">payments</mat-icon>
                   </button>
 
                   <ng-container *ngIf="entry.status === 'Pending'">
                     <button (click)="confirmEntry(entry)" matTooltip="Confirm Planned Amount"
-                      class="p-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors">
+                      class="p-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors" aria-label="Confirm Planned Amount">
                       <mat-icon class="!w-4 !h-4 !text-[16px]">check</mat-icon>
                     </button>
                     <button (click)="openAdjustDialog(entry, 'adjust')" matTooltip="Adjust Amount"
-                      class="p-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-lg transition-colors">
+                      class="p-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-lg transition-colors" aria-label="Adjust Amount">
                       <mat-icon class="!w-4 !h-4 !text-[16px]">tune</mat-icon>
                     </button>
                     <button (click)="openAdjustDialog(entry, 'skip')" matTooltip="Skip Entry"
-                      class="p-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors">
+                      class="p-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors" aria-label="Skip Entry">
                       <mat-icon class="!w-4 !h-4 !text-[16px]">block</mat-icon>
                     </button>
                   </ng-container>
@@ -691,15 +695,16 @@ interface ShedGroup {
 export class TodayFeedingDashboardComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
 
   // Signals
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly isGenerating = signal(false);
   readonly allEntries = signal<DailyFeedingEntry[]>([]);
-  readonly selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
+  readonly selectedDate = signal<string>(toLocalIsoDate());
   readonly searchTerm = signal<string>('');
   readonly statusFilter = signal<string>('all');
   readonly viewMode = signal<'cows' | 'grouped' | 'list'>('cows');
@@ -795,10 +800,10 @@ export class TodayFeedingDashboardComponent implements OnInit {
   });
 
   /** A past day: "Generate" then catches up the entries the job missed. */
-  readonly isPast = computed(() => this.selectedDate() < new Date().toISOString().split('T')[0]);
+  readonly isPast = computed(() => this.selectedDate() < toLocalIsoDate());
 
   readonly isToday = computed(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate();
     return this.selectedDate() === today;
   });
 
@@ -888,6 +893,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
 
   loadEntries(): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
     const farmId = this.currentFarmId || undefined;
     const date = this.selectedDate();
 
@@ -896,7 +902,11 @@ export class TodayFeedingDashboardComponent implements OnInit {
         this.allEntries.set(res);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.allEntries.set([]);
+        this.loadError.set(parseApiError(err, "Could not load today's feeding entries."));
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -904,12 +914,12 @@ export class TodayFeedingDashboardComponent implements OnInit {
     this.isGenerating.set(true);
     this.feedingService.generateEntries(this.selectedDate(), this.currentFarmId || undefined).subscribe({
       next: (res) => {
-        this.snackBar.open(res.message || 'Daily entries generated successfully.', 'Close', { duration: 3000 });
+        this.notify.success(res.message || 'Daily entries generated successfully.');
         this.isGenerating.set(false);
         this.loadEntries();
       },
       error: (err) => {
-        this.snackBar.open(err.error?.detail || 'Failed to generate entries.', 'Close', { duration: 5000 });
+        this.notify.error(err.error?.detail || 'Failed to generate entries.');
         this.isGenerating.set(false);
       }
     });
@@ -924,7 +934,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
       .afterClosed().subscribe(res => {
         if (!res) return;
         const msg = `Recorded feed for ${res.recorded} animal${res.recorded === 1 ? '' : 's'}.` + (res.notes.length ? ' ' + res.notes.join(' ') : '');
-        this.snackBar.open(msg, 'Close', { duration: res.notes.length ? 10000 : 4000 });
+        this.notify.success(msg);
         this.loadEntries();
       });
   }
@@ -932,17 +942,17 @@ export class TodayFeedingDashboardComponent implements OnInit {
   confirmEntry(entry: DailyFeedingEntry): void {
     this.feedingService.confirmEntry(entry.id, entry.expectedKg).subscribe({
       next: () => {
-        this.snackBar.open(`Confirmed feed for ${entry.animalTag}`, 'Close', { duration: 3000 });
+        this.notify.success(`Confirmed feed for ${entry.animalTag}`);
         this.loadEntries();
       },
       error: (err) => {
-        this.snackBar.open(parseApiError(err, 'Failed to confirm entry'), 'Close', { duration: 6000 });
+        this.notify.error(parseApiError(err, 'Failed to confirm entry'));
       }
     });
   }
 
   openAdjustDialog(entry: DailyFeedingEntry, action: 'adjust' | 'skip'): void {
-    const dialogRef = this.dialog.open(AdjustFeedingEntryDialogComponent, {
+    const dialogRef = this.dialog.open(AdjustFeedingEntryDialogComponent, { maxWidth: '95vw',
       disableClose: true,
       width: '500px',
       data: { entry, action }
@@ -966,7 +976,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
     const pendingEntries = pen.entries.filter(e => e.status === 'Pending');
 
     if (pendingEntries.length === 0) {
-      this.snackBar.open(`All entries in ${pen.penName} are already processed.`, 'Close', { duration: 3000 });
+      this.notify.warning(`All entries in ${pen.penName} are already processed.`);
       return;
     }
 
@@ -975,11 +985,11 @@ export class TodayFeedingDashboardComponent implements OnInit {
     this.isLoading.set(true);
     forkJoin(observables).subscribe({
       next: () => {
-        this.snackBar.open(`Confirmed ${pendingEntries.length} entries for ${pen.penName}`, 'Close', { duration: 3000 });
+        this.notify.success(`Confirmed ${pendingEntries.length} entries for ${pen.penName}`);
         this.loadEntries();
       },
       error: (err) => {
-        this.snackBar.open(parseApiError(err, 'Some confirmations failed'), 'Close', { duration: 6000 });
+        this.notify.error(parseApiError(err, 'Some confirmations failed'));
         this.loadEntries();
       }
     });
@@ -989,19 +999,19 @@ export class TodayFeedingDashboardComponent implements OnInit {
   previousDay(): void {
     const current = new Date(this.selectedDate());
     current.setDate(current.getDate() - 1);
-    this.selectedDate.set(current.toISOString().split('T')[0]);
+    this.selectedDate.set(toLocalIsoDate(current));
     this.loadEntries();
   }
 
   nextDay(): void {
     const current = new Date(this.selectedDate());
     current.setDate(current.getDate() + 1);
-    this.selectedDate.set(current.toISOString().split('T')[0]);
+    this.selectedDate.set(toLocalIsoDate(current));
     this.loadEntries();
   }
 
   setToday(): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalIsoDate();
     if (this.selectedDate() !== today) {
       this.selectedDate.set(today);
       this.loadEntries();
@@ -1041,7 +1051,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
     const pendingEntries = cow.entries.filter(e => e.status === 'Pending');
 
     if (pendingEntries.length === 0) {
-      this.snackBar.open(`All rations for ${cow.animalTag} are already processed.`, 'Close', { duration: 3000 });
+      this.notify.warning(`All rations for ${cow.animalTag} are already processed.`);
       return;
     }
 
@@ -1050,11 +1060,11 @@ export class TodayFeedingDashboardComponent implements OnInit {
     this.isLoading.set(true);
     forkJoin(observables).subscribe({
       next: () => {
-        this.snackBar.open(`Confirmed all rations for ${cow.animalTag}`, 'Close', { duration: 3000 });
+        this.notify.success(`Confirmed all rations for ${cow.animalTag}`);
         this.loadEntries();
       },
       error: (err) => {
-        this.snackBar.open(parseApiError(err, 'Some confirmations failed'), 'Close', { duration: 6000 });
+        this.notify.error(parseApiError(err, 'Some confirmations failed'));
         this.loadEntries();
       }
     });

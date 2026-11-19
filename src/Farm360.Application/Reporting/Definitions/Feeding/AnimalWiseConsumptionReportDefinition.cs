@@ -119,7 +119,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = context.Id("farmId");
+        var farmId = context.FarmId();
         var period = context.Range("period");
         var animalId = context.IdOrNull("animalId");
         var batchId = context.IdOrNull("batchId");
@@ -142,17 +142,9 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
 
         var animalsById = animals.ToDictionary(a => a.Id);
 
-        // Preload breeds
-        var breedIds = animals.Select(a => a.BreedId).Distinct().ToList();
-        var breedsById = new Dictionary<Guid, string>();
-        foreach (var bId in breedIds)
-        {
-            var breed = await _breeds.GetByIdAsync(bId, cancellationToken).ConfigureAwait(false);
-            if (breed is not null)
-            {
-                breedsById[bId] = breed.Name;
-            }
-        }
+        // Breeds are a small master list: one query, not one per animal.
+        var breedsById = (await _breeds.GetAllAsync(cancellationToken).ConfigureAwait(false))
+            .ToDictionary(b => b.Id, b => b.Name);
 
         // Preload batches
         var batchIds = animals.Where(a => a.BatchId.HasValue).Select(a => a.BatchId!.Value).Distinct().ToList();
@@ -166,6 +158,10 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             }
         }
 
+        // Treatment cost for every animal in the period from the farm's treatments, fetched in
+        // pages — previously one query per animal, which on a 400-head farm was 400 round trips.
+        var treatmentCostByAnimal = await LoadTreatmentCostsAsync(farmId, animalId, period, cancellationToken).ConfigureAwait(false);
+
         var rows = new List<AnimalWiseConsumptionReportRow>(animalGroups.Count);
 
         foreach (var group in animalGroups)
@@ -173,7 +169,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             var id = group.Key;
             animalsById.TryGetValue(id, out var animal);
 
-            var tagId = animal?.Tag.TagId ?? id.ToString()[..8];
+            var tagId = animal?.Tag.TagId ?? "(animal not found)";
             var breedName = animal != null && breedsById.TryGetValue(animal.BreedId, out var bName) ? bName : "Standard";
             var animalName = $"{breedName} ({animal?.Sex.ToString() ?? "—"})";
             var species = animal?.Species.ToString() ?? "Livestock";
@@ -190,15 +186,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             var dailyAvgFeedKg = daysFed > 0 ? decimal.Round(totalFeedKg / daysFed, 2, MidpointRounding.AwayFromZero) : 0m;
             var avgUnitCostBdt = totalFeedKg > 0 ? decimal.Round(feedCostBdt / totalFeedKg, 2, MidpointRounding.AwayFromZero) : 0m;
 
-            // Fetch medical treatments in that period for this animal
-            decimal treatmentCost = 0m;
-            var treatments = await _treatments.GetByAnimalIdAsync(id, cancellationToken).ConfigureAwait(false);
-            if (treatments.Count > 0)
-            {
-                treatmentCost = treatments
-                    .Where(t => t.StartDate >= period.From && t.StartDate <= period.To)
-                    .Sum(t => t.CostBdt);
-            }
+            var treatmentCost = treatmentCostByAnimal.GetValueOrDefault(id);
 
             var totalConsumptionCost = feedCostBdt + treatmentCost;
             var dailyAvgCost = daysFed > 0 ? decimal.Round(totalConsumptionCost / daysFed, 2, MidpointRounding.AwayFromZero) : 0m;
@@ -221,8 +209,42 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
         }
 
         return rows
-            .OrderByDescending(r => r.TotalConsumptionCostBdt)
-            .ThenBy(r => r.TagId)
+            .OrderBy(r => r.LocationOrBatch, StringComparer.Ordinal)
+            .ThenByDescending(r => r.TotalConsumptionCostBdt)
+            .ThenBy(r => r.TagId, StringComparer.Ordinal)
             .ToList();
+    }
+
+    private async Task<Dictionary<Guid, decimal>> LoadTreatmentCostsAsync(
+        Guid farmId,
+        Guid? animalId,
+        DateRange period,
+        CancellationToken cancellationToken)
+    {
+        const int pageSize = 2000;
+        var costs = new Dictionary<Guid, decimal>();
+        var page = 1;
+
+        while (true)
+        {
+            var (items, total) = await _treatments
+                .GetPagedAsync(page, pageSize, farmId: farmId, animalId: animalId, ct: cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var t in items)
+            {
+                if (period.Contains(t.StartDate))
+                {
+                    costs[t.AnimalId] = costs.GetValueOrDefault(t.AnimalId) + t.CostBdt;
+                }
+            }
+
+            if (items.Count == 0 || page * pageSize >= total)
+            {
+                return costs;
+            }
+
+            page++;
+        }
     }
 }

@@ -98,6 +98,28 @@ public sealed class AnimalFeedAllocation : AuditableEntity
         UnitCostBdtPerKg = unitCostBdtPerKg;
     }
 
+    /// <summary>
+    /// Re-splits a group entry's share after the group changed for that day (an animal sold or
+    /// died before the entry's date was recorded late): the new weight, share, head count and the
+    /// feed and cost that go with them.
+    /// </summary>
+    public void Reallocate(
+        decimal allocatedKg,
+        decimal allocatedCostBdt,
+        decimal unitCostBdtPerKg,
+        decimal weightAtAllocationKg,
+        decimal shareFactor,
+        int headCountAtAllocation,
+        FeedAllocationMethod method)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(headCountAtAllocation, 1);
+        UpdateConsumption(allocatedKg, allocatedCostBdt, unitCostBdtPerKg);
+        WeightAtAllocationKg = weightAtAllocationKg;
+        ShareFactor = shareFactor;
+        HeadCountAtAllocation = headCountAtAllocation;
+        Method = method;
+    }
+
     public static AnimalFeedAllocation Create(
         Guid tenantId,
         Guid animalId,

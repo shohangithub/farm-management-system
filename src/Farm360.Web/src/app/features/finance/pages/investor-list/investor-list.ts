@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,11 +16,14 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { InvestorFormDialogComponent } from '../../components/investor-form-dialog/investor-form-dialog';
 import { InvestorTransactionDialogComponent } from '../../components/investor-transaction-dialog/investor-transaction-dialog';
 import { Investor } from '../../models/finance.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-investor-list',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent, 
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -31,7 +34,6 @@ import { Investor } from '../../models/finance.model';
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    CurrencyPipe,
     DatePipe
   ],
   template: `
@@ -63,8 +65,10 @@ import { Investor } from '../../models/finance.model';
 
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
+      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load investors" [message]="err" (retry)="retryLoad()"></app-error-state>
+
       <!-- Content -->
-      <div *ngIf="!isLoading()" class="space-y-6">
+      <div *ngIf="!isLoading() && !loadError()" class="space-y-6">
 
         <!-- Top Stat Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -87,7 +91,7 @@ import { Investor } from '../../models/finance.model';
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Capital Pool</p>
                 <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                  {{ totalActiveCapital() | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ totalActiveCapital() | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
@@ -102,7 +106,7 @@ import { Investor } from '../../models/finance.model';
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Profit Distributed</p>
                 <h3 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
-                  {{ totalProfitPaid() | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ totalProfitPaid() | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
@@ -117,7 +121,7 @@ import { Investor } from '../../models/finance.model';
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Capital Withdrawn</p>
                 <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
-                  {{ totalCapitalWithdrawn() | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ totalCapitalWithdrawn() | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
@@ -214,7 +218,7 @@ import { Investor } from '../../models/finance.model';
                 <div class="flex justify-between items-center">
                   <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Current Capital</span>
                   <span class="text-base font-bold text-emerald-600 dark:text-emerald-400">
-                    {{ investor.currentCapitalBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                    {{ investor.currentCapitalBdt | money }}
                   </span>
                 </div>
 
@@ -224,7 +228,7 @@ import { Investor } from '../../models/finance.model';
                     <span class="text-sm font-bold text-teal-700 dark:text-teal-300">
                       {{ investor.effectiveSharePercentage }}%
                     </span>
-                    <span class="text-[10px] text-gray-400 block">
+                    <span class="text-[11px] text-gray-400 block">
                       {{ investor.agreedProfitSharePercentage ? 'Contract Agreed' : 'Proportional Capital' }}
                     </span>
                   </div>
@@ -233,15 +237,15 @@ import { Investor } from '../../models/finance.model';
                 <div class="flex justify-between items-center text-xs">
                   <span class="text-gray-400">Total Invested / Withdrawn</span>
                   <span class="text-gray-600 dark:text-gray-300">
-                    {{ investor.totalInvestedBdt | currency:'BDT ':'symbol':'1.0-0' }} / 
-                    <span class="text-amber-600">{{ investor.totalWithdrawnBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+                    {{ investor.totalInvestedBdt | money }} / 
+                    <span class="text-amber-600">{{ investor.totalWithdrawnBdt | money }}</span>
                   </span>
                 </div>
 
                 <div class="flex justify-between items-center text-xs">
                   <span class="text-gray-400">Total Profit Paid</span>
                   <span class="font-semibold text-indigo-600 dark:text-indigo-400">
-                    {{ investor.totalProfitPaidBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                    {{ investor.totalProfitPaidBdt | money }}
                   </span>
                 </div>
               </div>
@@ -276,11 +280,11 @@ import { Investor } from '../../models/finance.model';
                        class="flex items-center justify-between py-1.5 border-b border-gray-200/50 dark:border-gray-800 last:border-0">
                     <div>
                       <span class="font-bold block" [ngClass]="getTxColor(tx.type)">{{ formatTxType(tx.type) }}</span>
-                      <span class="text-[10px] text-gray-400">{{ tx.transactionDate | date:'mediumDate' }}</span>
-                      <span *ngIf="tx.referenceId" class="text-[10px] text-gray-400 ml-1">#{{ tx.referenceId }}</span>
+                      <span class="text-[11px] text-gray-400">{{ tx.transactionDate | date:'mediumDate' }}</span>
+                      <span *ngIf="tx.referenceId" class="text-[11px] text-gray-400 ml-1">#{{ tx.referenceId }}</span>
                     </div>
                     <span class="font-bold" [ngClass]="getTxColor(tx.type)">
-                      {{ tx.amountBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                      {{ tx.amountBdt | money }}
                     </span>
                   </div>
                 </div>
@@ -337,12 +341,22 @@ export class InvestorListComponent {
     this.showInactiveSubject$
   ]).pipe(
     switchMap(([_, farm, includeInactive]) => {
+      this.loadError.set(null);
       if (!farm) return of([] as Investor[]);
       return this.financeService.getInvestors(farm.id, includeInactive).pipe(
-        catchError(() => of([] as Investor[]))
+        catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load investors.'));
+          return of([] as Investor[]);
+        })
       );
     })
   );
+
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger$.next();
+  }
 
   readonly investors = toSignal(this.investors$);
   readonly isLoading = computed(() => this.investors() === undefined);
@@ -402,7 +416,7 @@ export class InvestorListComponent {
   }
 
   openInvestorDialog(): void {
-    const dialogRef = this.dialog.open(InvestorFormDialogComponent, {
+    const dialogRef = this.dialog.open(InvestorFormDialogComponent, { maxWidth: '95vw',
       width: '600px',
       disableClose: true,
       panelClass: ['premium-dialog-panel']
@@ -414,7 +428,7 @@ export class InvestorListComponent {
   }
 
   openEditInvestorDialog(investor: Investor): void {
-    const dialogRef = this.dialog.open(InvestorFormDialogComponent, {
+    const dialogRef = this.dialog.open(InvestorFormDialogComponent, { maxWidth: '95vw',
       width: '600px',
       disableClose: true,
       panelClass: ['premium-dialog-panel'],
@@ -427,7 +441,7 @@ export class InvestorListComponent {
   }
 
   openTransactionDialog(investor: Investor, defaultType?: 'CapitalContribution' | 'CapitalWithdrawal' | 'ProfitDistribution'): void {
-    const dialogRef = this.dialog.open(InvestorTransactionDialogComponent, {
+    const dialogRef = this.dialog.open(InvestorTransactionDialogComponent, { maxWidth: '95vw',
       width: '540px',
       disableClose: true,
       panelClass: ['premium-dialog-panel'],

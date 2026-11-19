@@ -16,7 +16,7 @@
         <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Discard expired or damaged inventory</p>
       </div>
     </div>
-    <button mat-icon-button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" (click)="onCancel()" [disabled]="isSubmitting()">
+    <button aria-label="Close" mat-icon-button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" (click)="onCancel()" [disabled]="isSubmitting()">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -41,7 +41,7 @@
 
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Write-off Quantity ({{ item.unitOfMeasure }})</mat-label>
-        <input matInput type="number" step="0.01" formControlName="quantity" placeholder="e.g. 5.5">
+        <input matInput type="number" min="0.01" step="0.01" formControlName="quantity" placeholder="e.g. 5.5">
         <mat-icon matPrefix class="text-gray-400 mr-2">balance</mat-icon>
         <mat-error *ngIf="form.get('quantity')?.hasError('required')">Quantity is required.</mat-error>
         <mat-error *ngIf="form.get('quantity')?.hasError('min')">Must be greater than 0.</mat-error>

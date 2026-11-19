@@ -63,6 +63,10 @@
         </span>
       </div>
 
+      <div style="text-align: right; margin-top: -8px; margin-bottom: 12px;">
+        <a routerLink="/auth/forgot-password" [queryParams]="{ phone: loginForm.get('phone')?.value || null }" style="font-size: 13px;">Forgot password?</a>
+      </div>
+
       <!-- Submit Button -->
       <button
         id="btn-login-submit"

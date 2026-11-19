@@ -16,6 +16,8 @@ import { CreateSupplierDialogComponent } from '../../components/dialogs/create-s
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
 @Component({
@@ -30,6 +32,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent
   ],
   template: `
@@ -47,6 +50,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters & Sorting Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
@@ -66,7 +70,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!loading() && (!result()?.items || result()?.items?.length === 0)"
+        *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="local_shipping"
         title="No suppliers registered"
         description="Add suppliers to associate them with incoming stock purchases and receipts."
@@ -89,7 +93,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                   <button (click)="openEditDialog(sup); $event.stopPropagation()" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-flex items-center gap-1">
                     <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Edit
                   </button>
-                  <button (click)="onDelete(sup, $event)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                  <button aria-label="Delete" (click)="onDelete(sup, $event)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
                     <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                   </button>
                 </div>
@@ -139,11 +143,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           </div>
           
           <div class="flex items-center gap-2">
-            <button (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -163,6 +167,11 @@ export class SupplierListComponent {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.error.set(null);
+    this.refreshTrigger.update(n => n + 1);
+  }
   readonly searchTerm = signal('');
   readonly params = signal<SupplierParams>({ pageNumber: 1, pageSize: 20 });
   private readonly refreshTrigger = signal(0);
@@ -233,7 +242,7 @@ export class SupplierListComponent {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ params }) => this.inventoryService.getSuppliers(params).pipe(
         catchError(e => {
-          this.error.set(e?.error?.detail ?? 'Failed to load suppliers');
+          this.error.set(parseApiError(e, 'Could not load suppliers.'));
           return of(null);
         })
       )),
@@ -299,7 +308,7 @@ export class SupplierListComponent {
   }
 
   openCreateSupplierDialog(): void {
-    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '560px'
     });
     dialogRef.afterClosed().subscribe((res) => {
@@ -308,7 +317,7 @@ export class SupplierListComponent {
   }
 
   openEditDialog(supplier: Supplier): void {
-    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(CreateSupplierDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '560px',
       data: supplier
     });
@@ -320,7 +329,7 @@ export class SupplierListComponent {
   onDelete(supplier: Supplier, event: Event): void {
     event.stopPropagation();
     
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {

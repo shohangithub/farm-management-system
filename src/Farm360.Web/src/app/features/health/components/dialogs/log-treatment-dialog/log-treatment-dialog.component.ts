@@ -8,7 +8,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { MatIconModule } from "@angular/material/icon";
 import { MatAutocompleteModule } from "@angular/material/autocomplete";
-import { MatSnackBar, MatSnackBarModule } from "@angular/material/snack-bar";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { Observable } from "rxjs";
 import { map, startWith } from "rxjs/operators";
 import { HealthService } from "../../../services/health.service";
@@ -20,11 +20,14 @@ import { parseApiError } from "../../../../../core/utils/error-parser";
 import { UnitPickerComponent, UnitSelection } from "../../../../inventory/components/unit-picker/unit-picker.component";
 import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.models";
 
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 @Component({
   selector: "app-log-treatment-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -59,8 +62,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
         <button
           mat-dialog-close
           type="button"
-          class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
+          class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -83,6 +85,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
               Selected Animal <span class="text-red-500">*</span>
             </label>
             <app-animal-picker formControlName="animalId"></app-animal-picker>
+            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
           </div>
 
           <!-- Status & End Date (Visible in Edit Mode) -->
@@ -127,6 +130,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
               placeholder="e.g. Mastitis, Foot Rot..."
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
             />
+            <p *ngIf="form.get('diagnosis')?.touched && form.get('diagnosis')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -153,6 +157,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                 placeholder="e.g. Oxytet 20%"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
+              <p *ngIf="form.get('medicationName')?.touched && form.get('medicationName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
 
             <div class="space-y-1.5 md:col-span-1">
@@ -165,6 +170,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                 placeholder="Stock to deduct"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
+              <p *ngIf="form.get('consumptionQuantity')?.touched && form.get('consumptionQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
               <!-- e.g. 1 "Bottle (10 ml)", or the base unit; stock is deducted in the base unit -->
               <app-unit-picker
                 *ngIf="form.value.inventoryItemId"
@@ -187,6 +193,8 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                   step="0.1"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
                 />
+                <p *ngIf="form.get('dosageAmount')?.touched && form.get('dosageAmount')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+                <p *ngIf="form.get('dosageAmount')?.touched && form.get('dosageAmount')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.1.</p>
               </div>
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
@@ -204,6 +212,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                   <option value="bolus">bolus</option>
                   <option value="tablets">tablets</option>
                 </select>
+                <p *ngIf="form.get('dosageUnit')?.touched && form.get('dosageUnit')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
               </div>
             </div>
           </div>
@@ -220,6 +229,8 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                 placeholder="0"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
+              <p *ngIf="form.get('milkWithdrawalDays')?.touched && form.get('milkWithdrawalDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('milkWithdrawalDays')?.touched && form.get('milkWithdrawalDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
             </div>
 
             <div class="space-y-1.5">
@@ -233,6 +244,8 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                 placeholder="0"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
+              <p *ngIf="form.get('meatWithdrawalDays')?.touched && form.get('meatWithdrawalDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('meatWithdrawalDays')?.touched && form.get('meatWithdrawalDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
             </div>
           </div>
 
@@ -246,6 +259,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                 formControlName="startDate"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
+              <p *ngIf="form.get('startDate')?.touched && form.get('startDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
 
             <div class="space-y-1.5">
@@ -259,8 +273,8 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
               <p *ngIf="stockCost() as sc" class="text-[11px] text-gray-500 dark:text-gray-400 m-0">
-                Medicine from stock: {{ sc.qty }} {{ sc.unit }} × ৳{{ sc.unitCost | number: "1.2-2" }} =
-                <b>৳{{ sc.total | number: "1.2-2" }}</b
+                Medicine from stock: {{ sc.qty }} {{ sc.unit }} × {{ sc.unitCost | money:2 }} =
+                <b>{{ sc.total | money:2 }}</b
                 >. Add any vet fee on top.
                 <button
                   type="button"
@@ -268,7 +282,7 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
                   (click)="resetCost()"
                   class="text-primary-600 font-semibold underline ml-1"
                 >
-                  Use ৳{{ sc.total | number: "1.2-2" }}
+                  Use {{ sc.total | money:2 }}
                 </button>
               </p>
             </div>
@@ -351,7 +365,7 @@ export class LogTreatmentDialog implements OnInit {
   private inventoryService = inject(InventoryService);
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<LogTreatmentDialog>);
-  private snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
   public data: { treatment?: MedicalTreatmentDto } = inject(MAT_DIALOG_DATA, { optional: true }) ?? {};
 
@@ -381,7 +395,7 @@ export class LogTreatmentDialog implements OnInit {
       dosageUnit: ["ml", Validators.required],
       milkWithdrawalDays: [0, [Validators.required, Validators.min(0)]],
       meatWithdrawalDays: [0, [Validators.required, Validators.min(0)]],
-      startDate: [new Date().toISOString().split("T")[0], Validators.required],
+      startDate: [toLocalIsoDate(), Validators.required],
       endDate: [null],
       costBdt: [0, [Validators.required, Validators.min(0)]],
       veterinarianName: [""],
@@ -472,8 +486,8 @@ export class LogTreatmentDialog implements OnInit {
         dosageUnit: t.dosageUnit,
         milkWithdrawalDays: t.milkWithdrawalDays,
         meatWithdrawalDays: t.meatWithdrawalDays,
-        startDate: t.startDate ? new Date(t.startDate).toISOString().split("T")[0] : "",
-        endDate: t.endDate ? new Date(t.endDate).toISOString().split("T")[0] : null,
+        startDate: t.startDate ? toLocalIsoDate(new Date(t.startDate)) : "",
+        endDate: t.endDate ? toLocalIsoDate(new Date(t.endDate)) : null,
         costBdt: t.costBdt,
         veterinarianName: t.veterinarianName || "",
         status: t.status || TreatmentStatus.Ongoing,
@@ -536,10 +550,7 @@ export class LogTreatmentDialog implements OnInit {
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.snackBar.open("Please fill in all required fields correctly.", "Close", {
-        duration: 4000,
-        panelClass: ["snack-error"],
-      });
+      this.notify.error("Please fill in all required fields correctly.");
       return;
     }
 
@@ -570,19 +581,13 @@ export class LogTreatmentDialog implements OnInit {
       this.healthService.updateTreatment(this.data.treatment!.id, updateRequest).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open("Treatment updated successfully!", "Close", {
-            duration: 3000,
-            panelClass: ["snack-success"],
-          });
+          this.notify.success("Treatment updated successfully!");
           this.dialogRef.close(true);
         },
         error: (err) => {
           const parsedMsg = parseApiError(err, "Failed to update treatment. Please try again.");
           this.error.set(parsedMsg);
-          this.snackBar.open(parsedMsg, "Close", {
-            duration: 5000,
-            panelClass: ["snack-error"],
-          });
+          this.notify.error(parsedMsg);
           this.isSubmitting.set(false);
         },
       });
@@ -593,7 +598,7 @@ export class LogTreatmentDialog implements OnInit {
     if (!farmId) {
       const msg = "No farm context available.";
       this.error.set(msg);
-      this.snackBar.open(msg, "Close", { duration: 4000, panelClass: ["snack-error"] });
+      this.notify.error(msg);
       this.isSubmitting.set(false);
       return;
     }
@@ -607,7 +612,7 @@ export class LogTreatmentDialog implements OnInit {
       dosageUnit: val.dosageUnit,
       milkWithdrawalDays: val.milkWithdrawalDays,
       meatWithdrawalDays: val.meatWithdrawalDays,
-      startDate: new Date(val.startDate).toISOString().split("T")[0],
+      startDate: toLocalIsoDate(new Date(val.startDate)),
       costBdt: val.costBdt,
       veterinarianName: val.veterinarianName?.trim() || null,
       notes: val.notes?.trim() || null,
@@ -619,19 +624,13 @@ export class LogTreatmentDialog implements OnInit {
     this.healthService.logTreatment(createRequest).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open("Treatment logged successfully!", "Close", {
-          duration: 3000,
-          panelClass: ["snack-success"],
-        });
+        this.notify.success("Treatment logged successfully!");
         this.dialogRef.close(true);
       },
       error: (err) => {
         const parsedMsg = parseApiError(err, "Failed to log treatment. Please try again.");
         this.error.set(parsedMsg);
-        this.snackBar.open(parsedMsg, "Close", {
-          duration: 5000,
-          panelClass: ["snack-error"],
-        });
+        this.notify.error(parsedMsg);
         this.isSubmitting.set(false);
       },
     });

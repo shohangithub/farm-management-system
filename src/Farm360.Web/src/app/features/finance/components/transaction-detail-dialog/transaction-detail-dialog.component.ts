@@ -1,19 +1,19 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FinancialTransaction } from '../../models/finance.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-transaction-detail-dialog',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     MatDialogModule,
     MatIconModule,
     MatButtonModule,
-    CurrencyPipe,
     DatePipe
   ],
   template: `
@@ -30,7 +30,7 @@ import { FinancialTransaction } from '../../models/finance.model';
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Ref: {{ data.referenceId || 'N/A' }}</p>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -43,7 +43,7 @@ import { FinancialTransaction } from '../../models/finance.model';
           <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Amount</span>
           <h3 class="text-3xl font-extrabold mt-1"
               [ngClass]="data.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-            {{ data.type === 'Income' ? '+' : '-' }}{{ data.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}
+            {{ data.type === 'Income' ? '+' : '-' }}{{ data.amountBdt | money:2 }}
           </h3>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mt-2"
                 [ngClass]="data.type === 'Income' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'">

@@ -7,6 +7,7 @@ using Farm360.Application.Common.Interfaces;
 using Farm360.Domain.BusinessRules;
 using Farm360.Domain.Feeding;
 using Farm360.Domain.Feeding.Allocation;
+using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Livestock;
 using Farm360.Domain.Livestock.Repositories;
 
@@ -23,6 +24,29 @@ public interface IFeedAllocationService
         AnimalFeedingPlan plan,
         bool isBackfill = false,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Re-splits a group entry over the animals actually fed on its date: the scope's members by
+    /// the "fed on day D" rule, plus any animal already holding a row that was still on the farm
+    /// that day. A pending entry is re-planned (per-head ration x the new head count); a confirmed
+    /// entry keeps its total feed and cost (it was given to the pen) and only the split changes.
+    /// Returns no shares when nobody was in the group that day.
+    /// </summary>
+    Task<GroupReallocation> RebuildGroupSharesAsync(
+        DailyFeedingEntry entry,
+        AnimalFeedingPlan plan,
+        IReadOnlyList<AnimalFeedAllocation> existingRows,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>The new split of a group entry (see <see cref="IFeedAllocationService.RebuildGroupSharesAsync"/>).</summary>
+public sealed record GroupReallocation(
+    IReadOnlyList<FeedAllocationShare> Shares,
+    int HeadCount,
+    decimal UnitCostBdtPerKg,
+    FeedAllocationMethod Method)
+{
+    public static GroupReallocation Empty(decimal unitCost, FeedAllocationMethod method) => new([], 0, unitCost, method);
 }
 
 /// <summary>
@@ -63,7 +87,8 @@ public sealed class FeedAllocationService : IFeedAllocationService
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentNullException.ThrowIfNull(plan);
 
-        var rules = _rules.Current;
+        // The entry's own tenant and farm: this also runs from jobs that have no request tenant.
+        var rules = _rules.For(entry.TenantId, entry.FarmId);
 
         var (animals, origin) = await ResolveSubjectsAsync(plan, entry.EntryDate, cancellationToken).ConfigureAwait(false);
         if (animals.Count == 0)
@@ -127,6 +152,65 @@ public sealed class FeedAllocationService : IFeedAllocationService
         return allocations;
     }
 
+    public async Task<GroupReallocation> RebuildGroupSharesAsync(
+        DailyFeedingEntry entry,
+        AnimalFeedingPlan plan,
+        IReadOnlyList<AnimalFeedAllocation> existingRows,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(existingRows);
+
+        // The entry's own tenant and farm: this also runs from jobs that have no request tenant.
+        var rules = _rules.For(entry.TenantId, entry.FarmId);
+        var method = rules.FeedAllocation;
+        var confirmed = entry.Status is DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted;
+        var unitCost = confirmed
+            ? existingRows.Select(r => r.UnitCostBdtPerKg).FirstOrDefault(c => c > 0, entry.UnitCostAtConsumptionBdt ?? 0m)
+            : entry.UnitCostAtConsumptionBdt ?? 0m;
+
+        var (scopeMembers, _) = await ResolveSubjectsAsync(plan, entry.EntryDate, cancellationToken).ConfigureAwait(false);
+        var members = scopeMembers.ToDictionary(a => a.Id);
+
+        // An animal already sharing this entry stays in it while it was on the farm that day, even
+        // if the scope lookup no longer places it there: only leaving the farm takes a share away.
+        foreach (var animalId in existingRows.Select(r => r.AnimalId).Distinct().Where(id => !members.ContainsKey(id)))
+        {
+            var animal = await _animalRepository.GetByIdAcrossTenantsAsync(animalId, cancellationToken).ConfigureAwait(false);
+            if (animal is not null && AnimalFeedingPresence.IsFedOn(animal, entry.EntryDate))
+                members[animal.Id] = animal;
+        }
+
+        if (members.Count == 0)
+            return GroupReallocation.Empty(unitCost, method);
+
+        decimal totalKg;
+        decimal totalCost;
+        if (confirmed)
+        {
+            // Given to the pen and taken from stock: the totals are facts, only the split changes.
+            totalKg = existingRows.Sum(r => r.AllocatedKg);
+            totalCost = existingRows.Sum(r => r.AllocatedCostBdt);
+        }
+        else
+        {
+            var perHeadKg = entry.ActualKg ?? entry.ExpectedKg;
+            totalKg = rules.GroupPlanQuantityBasis == GroupPlanQuantityBasis.PerHead ? perHeadKg * members.Count : perHeadKg;
+            totalCost = decimal.Round(totalKg * unitCost, FeedAllocationCalculator.MoneyDecimals, MidpointRounding.AwayFromZero);
+        }
+
+        var subjects = members.Values
+            .OrderBy(a => a.Id)
+            .Select(a => new FeedAllocationSubject(a.Id, a.LatestWeightKg ?? 0m))
+            .ToList();
+
+        var shares = FeedAllocationCalculator.Allocate(
+            subjects, totalKg, totalCost, method, rules.MetabolicWeightExponent, rules.FallbackAnimalWeightKg);
+
+        return new GroupReallocation(shares, members.Count, unitCost, method);
+    }
+
     private async Task<(IReadOnlyList<Animal> Animals, FeedAllocationOrigin Origin)> ResolveSubjectsAsync(
         AnimalFeedingPlan plan,
         DateOnly asOf,
@@ -138,7 +222,9 @@ public sealed class FeedAllocationService : IFeedAllocationService
                 .GetByIdAcrossTenantsAsync(animalId, cancellationToken)
                 .ConfigureAwait(false);
 
-            return animal is null
+            // Fed on the day only if on the farm that day (AnimalFeedingPresence): a sold or dead
+            // animal takes no share of an entry dated on or after its exit.
+            return animal is null || !AnimalFeedingPresence.IsFedOn(animal, asOf)
                 ? ([], FeedAllocationOrigin.IndividualPlan)
                 : ([animal], FeedAllocationOrigin.IndividualPlan);
         }

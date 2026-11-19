@@ -30,8 +30,19 @@ public sealed class DailyFeedingEntryConfiguration : IEntityTypeConfiguration<Da
         builder.Property(e => e.Status)
             .IsRequired();
 
+        // Optimistic concurrency: two people confirming the same entry at once — the second save
+        // fails (409) instead of deducting stock twice.
+        builder.Property(e => e.RowVersion).IsRowVersion();
+
         builder.HasIndex(e => new { e.TenantId, e.FarmId, e.EntryDate });
         builder.HasIndex(e => e.FeedingPlanId);
         builder.HasIndex(e => e.Status);
+
+        // The daily job's idempotency key: one entry per plan, rule line and day. Entries without a
+        // rule line (legacy rows) are outside the key; soft-deleted rows do not block a re-run.
+        builder.HasIndex(e => new { e.FeedingPlanId, e.RuleLineId, e.EntryDate })
+            .IsUnique()
+            .HasFilter("[RuleLineId] IS NOT NULL AND [IsDeleted] = 0")
+            .HasDatabaseName("UX_DailyFeedingEntries_Plan_RuleLine_Date");
     }
 }

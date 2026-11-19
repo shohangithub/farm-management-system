@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { unsavedChangesGuard } from '../../shared/utils/unsaved-changes.guard';
 
 export const livestockRoutes: Routes = [
   {
@@ -12,6 +13,7 @@ export const livestockRoutes: Routes = [
     path: 'register',
     loadComponent: () =>
       import('./pages/animal-register/animal-register.component').then(m => m.AnimalRegisterComponent),
+    canDeactivate: [unsavedChangesGuard],
     title: 'Register Animal — Farm360',
   },
   {

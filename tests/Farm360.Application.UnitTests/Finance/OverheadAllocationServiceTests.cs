@@ -112,6 +112,9 @@ public class OverheadAllocationServiceTests
             Task.FromResult<IReadOnlyList<AnimalOverheadAllocation>>(
                 Rows.Where(r => r.AnimalId == animalId).ToList());
 
+        public Task<IReadOnlyList<AnimalOverheadAllocation>> GetByFarmAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<AnimalOverheadAllocation>>(Rows.Where(r => r.FarmId == farmId && r.PeriodEnd >= from && r.PeriodStart <= to).ToList());
+
         private AnimalOverheadTotals Totals(Guid animalId) => new(
             animalId,
             Rows.Where(r => r.AnimalId == animalId && r.Bucket == OverheadBucket.Labour).Sum(r => r.AllocatedAmountBdt),

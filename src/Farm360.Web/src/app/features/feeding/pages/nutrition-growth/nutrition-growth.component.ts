@@ -11,6 +11,7 @@ import { ReportService } from '../../../reports/services/report.service';
 import { FeedingService } from '../../services/feeding.service';
 import { AnimalNutrition, NutritionDay } from '../../models/feeding.models';
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
 /**
  * Nutrition & Growth for one animal: protein, energy and dry matter it actually ate against what
@@ -113,7 +114,7 @@ import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-
         <div class="mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-x-auto">
           <h3 class="px-5 py-3 text-sm font-black m-0 border-b border-gray-100 dark:border-gray-700">Day by day</h3>
           <table class="w-full text-xs">
-            <thead class="bg-gray-50 dark:bg-gray-900/40 text-[10px] uppercase tracking-wider text-gray-500">
+            <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
               <tr>
                 <th class="text-left px-3 py-2">Date</th><th class="text-right px-2 py-2">Weight</th><th class="text-right px-2 py-2">Feed kg</th>
                 <th class="text-right px-2 py-2">DM kg</th><th class="text-right px-2 py-2">Protein g</th><th class="text-right px-2 py-2">Need</th>
@@ -189,7 +190,7 @@ export class NutritionGrowthComponent {
   }
 
   private isoDaysAgo(n: number): string {
-    return new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
+    return toLocalIsoDate(new Date(Date.now() - n * 86400000));
   }
 
   setDays(d: number): void {

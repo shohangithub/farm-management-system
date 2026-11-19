@@ -20,6 +20,10 @@ public interface ITransactionalCommand { }
 /// MediatR pipeline behavior: wraps ITransactionalCommand handlers in a DB transaction.
 /// Runs FOURTH in the pipeline (after validation, before caching).
 /// If the handler throws, the transaction is rolled back automatically.
+/// Notifications the handler publishes (IPublisher.Publish) run synchronously inside <c>next()</c>,
+/// on the same scoped DbContext, so their writes are part of this transaction too — a handler
+/// that throws rolls back the command's own writes as well. Nested transactional commands join
+/// the outer transaction.
 /// </summary>
 public sealed class TransactionBehavior<TRequest, TResponse>(
     IUnitOfWork unitOfWork,
@@ -39,6 +43,14 @@ public sealed class TransactionBehavior<TRequest, TResponse>(
         }
 
         var requestName = typeof(TRequest).Name;
+
+        // Already inside a transaction (a transactional command sent from another one, or from an
+        // event handler published inside one): join it. The outermost command commits or rolls back
+        // the whole unit — opening a second transaction on the same connection would throw.
+        if (unitOfWork.HasActiveTransaction)
+        {
+            return await next();
+        }
 
         if (logger.IsEnabled(LogLevel.Debug))
         {

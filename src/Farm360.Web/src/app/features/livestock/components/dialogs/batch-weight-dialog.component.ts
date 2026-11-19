@@ -8,6 +8,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin, finalize } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
 import { AnimalListItemDto, RecordWeightRequest } from '../../models/animal.models';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 export interface BatchWeightDialogData {
   animals: AnimalListItemDto[];
@@ -44,7 +46,7 @@ interface AnimalWeightInput {
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Record new weights for {{ inputs().length }} selected animals</p>
           </div>
         </div>
-        <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <button aria-label="Close" mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -68,7 +70,7 @@ interface AnimalWeightInput {
                 </div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
-                <input type="number" [(ngModel)]="inputs()[i].weightKg"
+                <input type="number" min="0" step="0.1" [(ngModel)]="inputs()[i].weightKg" [attr.aria-label]="'Weight (kg) for ' + item.animal.tagId"
                        class="block w-24 pl-3 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-inner"
                        placeholder="e.g. 50">
               </td>
@@ -110,6 +112,7 @@ interface AnimalWeightInput {
   `]
 })
 export class BatchWeightDialogComponent {
+  private readonly notify = inject(NotificationService);
   private dialogRef = inject(MatDialogRef<BatchWeightDialogComponent>);
   private data = inject<BatchWeightDialogData>(MAT_DIALOG_DATA);
   private svc = inject(AnimalService);
@@ -125,7 +128,7 @@ export class BatchWeightDialogComponent {
     }))
   );
   
-  recordedDate: string = new Date().toISOString().substring(0, 10);
+  recordedDate: string = toLocalIsoDate();
 
   isValid(): boolean {
     return this.inputs().every(i => i.weightKg != null && i.weightKg > 0);
@@ -156,7 +159,7 @@ export class BatchWeightDialogComponent {
         next: () => this.dialogRef.close(true),
         error: (err) => {
           console.error(err);
-          alert('Failed to save some weights. Please try again.');
+          this.notify.error('Failed to save some weights. Please try again.');
         }
       });
   }

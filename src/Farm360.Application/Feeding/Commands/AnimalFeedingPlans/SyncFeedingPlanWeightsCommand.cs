@@ -19,6 +19,8 @@ public sealed record SyncFeedingPlanWeightsResultDto(
 
 public sealed class SyncFeedingPlanWeightsCommandHandler : IRequestHandler<SyncFeedingPlanWeightsCommand, SyncFeedingPlanWeightsResultDto>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IAnimalFeedingPlanRepository _planRepository;
     private readonly IFeedingRuleSetRepository _ruleSetRepository;
     private readonly IDailyFeedingEntryRepository _entryRepository;
@@ -34,8 +36,10 @@ public sealed class SyncFeedingPlanWeightsCommandHandler : IRequestHandler<SyncF
         IAnimalRepository animalRepository,
         IUnitOfWork unitOfWork,
         ITenantService tenantService,
-        ILogger<SyncFeedingPlanWeightsCommandHandler> logger)
+        ILogger<SyncFeedingPlanWeightsCommandHandler> logger,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _planRepository = planRepository;
         _ruleSetRepository = ruleSetRepository;
         _entryRepository = entryRepository;
@@ -48,7 +52,7 @@ public sealed class SyncFeedingPlanWeightsCommandHandler : IRequestHandler<SyncF
     public async Task<SyncFeedingPlanWeightsResultDto> Handle(SyncFeedingPlanWeightsCommand request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantService.TenantId;
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
 
         IReadOnlyList<Domain.Feeding.AnimalFeedingPlan> plans;
         if (request.AnimalId.HasValue)
@@ -82,7 +86,7 @@ public sealed class SyncFeedingPlanWeightsCommandHandler : IRequestHandler<SyncF
             if (ruleSet == null || !ruleSet.IsActive || ruleSet.Lines.Count == 0)
                 continue;
 
-            var ageDays = FeedingRuleMatcher.AgeInDays(animal.DateOfBirth, DateOnly.FromDateTime(DateTime.UtcNow));
+            var ageDays = FeedingRuleMatcher.AgeInDays(animal.DateOfBirth, _clock.Today);
             var matchingRule = FeedingRuleMatcher.Match(ruleSet, latestWeight, ageDays).Primary;
 
             if (matchingRule == null)

@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of, forkJoin } from 'rxjs';
 
@@ -19,7 +18,12 @@ import {
 import { ConfirmConsumableEntryDialogComponent } from '../../components/dialogs/confirm-consumable-entry-dialog/confirm-consumable-entry-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 interface GroupedPlanEntries {
   planId: string;
@@ -33,7 +37,7 @@ interface GroupedPlanEntries {
 @Component({
   selector: 'app-daily-consumable-dashboard',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -42,6 +46,7 @@ interface GroupedPlanEntries {
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent
   ],
   template: `
@@ -53,12 +58,12 @@ interface GroupedPlanEntries {
         
         <!-- Date Stepper Controls -->
         <div class="flex items-center bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-1">
-          <button (click)="stepDate(-1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
+          <button aria-label="Previous" (click)="stepDate(-1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_left</mat-icon>
           </button>
           <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)"
                  class="bg-transparent border-0 text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none px-2 py-0.5" />
-          <button (click)="stepDate(1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
+          <button aria-label="Next" (click)="stepDate(1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
           </button>
         </div>
@@ -134,7 +139,7 @@ interface GroupedPlanEntries {
           <div>
             <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Recorded Cost</span>
             <div class="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
-              ৳ {{ summary()?.totalCostBdt ?? 0 | number:'1.2-2' }}
+              {{ summary()?.totalCostBdt ?? 0 | money:2 }}
             </div>
           </div>
           <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
@@ -150,7 +155,9 @@ interface GroupedPlanEntries {
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
       <div class="p-4 sm:p-6">
-        @if (!loading() && entries().length === 0) {
+        @if (loadError(); as err) {
+          <app-error-state [message]="err" (retry)="retryLoad()"></app-error-state>
+        } @else if (!loading() && entries().length === 0) {
           <app-empty-state
             icon="cleaning_services"
             title="No Consumable Entries For This Date"
@@ -191,7 +198,7 @@ interface GroupedPlanEntries {
                         <div class="flex items-start justify-between gap-2 mb-2">
                           <span class="font-bold text-gray-900 dark:text-white text-xs leading-snug">{{ entry.itemName }}</span>
                           
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0"
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shrink-0"
                             [ngClass]="{
                               'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400': entry.status === DailyConsumableEntryStatus.Confirmed || entry.status === DailyConsumableEntryStatus.Adjusted,
                               'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400': entry.status === DailyConsumableEntryStatus.Pending,
@@ -204,11 +211,11 @@ interface GroupedPlanEntries {
                         <!-- Quantities & Cost -->
                         <div class="grid grid-cols-2 gap-2 p-2 bg-gray-50/80 dark:bg-gray-900/40 rounded-lg text-xs mb-3">
                           <div>
-                            <span class="text-gray-400 text-[10px] block font-semibold">Planned</span>
+                            <span class="text-gray-400 text-[11px] block font-semibold">Planned</span>
                             <span class="font-bold text-gray-700 dark:text-gray-300">{{ entry.expectedQuantity }} {{ entry.unitOfMeasure }}</span>
                           </div>
                           <div>
-                            <span class="text-gray-400 text-[10px] block font-semibold">Actual</span>
+                            <span class="text-gray-400 text-[11px] block font-semibold">Actual</span>
                             <span class="font-bold" [ngClass]="entry.actualQuantity != null ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'">
                               {{ entry.actualQuantity != null ? entry.actualQuantity + ' ' + entry.unitOfMeasure : '—' }}
                             </span>
@@ -216,7 +223,7 @@ interface GroupedPlanEntries {
                           @if (entry.totalCostBdt) {
                             <div class="col-span-2 pt-1 border-t border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between text-[11px]">
                               <span class="text-gray-400">Total Expense:</span>
-                              <span class="font-bold text-gray-900 dark:text-white">৳ {{ entry.totalCostBdt | number:'1.2-2' }}</span>
+                              <span class="font-bold text-gray-900 dark:text-white">{{ entry.totalCostBdt | money:2 }}</span>
                             </div>
                           }
                         </div>
@@ -259,17 +266,22 @@ export class DailyConsumableDashboardComponent {
   private readonly inventoryService = inject(InventoryService);
   private readonly contextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly loading = signal(true);
   readonly generating = signal(false);
   readonly bulkConfirming = signal(false);
-  readonly selectedDate = signal<string>(new Date().toISOString().substring(0, 10));
+  readonly selectedDate = signal<string>(toLocalIsoDate());
   private readonly refreshTrigger = signal(0);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
   readonly DailyConsumableEntryStatus = DailyConsumableEntryStatus;
 
   readonly isToday = computed(() => {
-    const today = new Date().toISOString().substring(0, 10);
+    const today = toLocalIsoDate();
     return this.selectedDate() === today;
   });
 
@@ -293,9 +305,13 @@ export class DailyConsumableDashboardComponent {
           return of({ entries: [], summary: null });
         }
         this.loading.set(true);
+        this.loadError.set(null);
         return forkJoin({
           entries: this.inventoryService.getDailyConsumables(state.farmId, state.date).pipe(
-            catchError(() => of([]))
+            catchError(err => {
+              this.loadError.set(parseApiError(err, 'Could not load daily consumables.'));
+              return of([]);
+            })
           ),
           summary: this.inventoryService.getDailyConsumableSummary(state.farmId, state.date).pipe(
             catchError(() => of(null))
@@ -351,11 +367,11 @@ export class DailyConsumableDashboardComponent {
   stepDate(days: number): void {
     const current = new Date(this.selectedDate());
     current.setDate(current.getDate() + days);
-    this.selectedDate.set(current.toISOString().substring(0, 10));
+    this.selectedDate.set(toLocalIsoDate(current));
   }
 
   setToday(): void {
-    this.selectedDate.set(new Date().toISOString().substring(0, 10));
+    this.selectedDate.set(toLocalIsoDate());
   }
 
   onDateChange(date: string): void {
@@ -372,18 +388,18 @@ export class DailyConsumableDashboardComponent {
     this.inventoryService.generateDailyConsumables(farmId, this.selectedDate()).subscribe({
       next: res => {
         this.generating.set(false);
-        this.snackBar.open(`Generated ${res.generatedCount} entries for ${this.selectedDate()}`, 'Close', { duration: 3000 });
+        this.notify.success(`Generated ${res.generatedCount} entries for ${this.selectedDate()}`);
         this.refreshTrigger.update(v => v + 1);
       },
       error: () => {
         this.generating.set(false);
-        this.snackBar.open('Failed to generate entries.', 'Close', { duration: 3000 });
+        this.notify.error('Failed to generate entries.');
       }
     });
   }
 
   openConfirmDialog(entry: DailyConsumableEntry): void {
-    const ref = this.dialog.open(ConfirmConsumableEntryDialogComponent, {
+    const ref = this.dialog.open(ConfirmConsumableEntryDialogComponent, { maxWidth: '95vw',
       data: { entry },
       width: '420px',
       panelClass: 'custom-dialog-container',
@@ -408,12 +424,12 @@ export class DailyConsumableDashboardComponent {
     }).subscribe({
       next: res => {
         this.bulkConfirming.set(false);
-        this.snackBar.open(`Confirmed ${res.confirmedCount} daily consumable entries.`, 'Close', { duration: 3000 });
+        this.notify.success(`Confirmed ${res.confirmedCount} daily consumable entries.`);
         this.refreshTrigger.update(v => v + 1);
       },
       error: () => {
         this.bulkConfirming.set(false);
-        this.snackBar.open('Failed to bulk-confirm entries.', 'Close', { duration: 3000 });
+        this.notify.error('Failed to bulk-confirm entries.');
       }
     });
   }
@@ -424,11 +440,11 @@ export class DailyConsumableDashboardComponent {
       reason: 'Skipped by farm manager'
     }).subscribe({
       next: () => {
-        this.snackBar.open(`Skipped ${entry.itemName}.`, 'Close', { duration: 2500 });
+        this.notify.success(`Skipped ${entry.itemName}.`);
         this.refreshTrigger.update(v => v + 1);
       },
       error: () => {
-        this.snackBar.open('Failed to skip entry.', 'Close', { duration: 3000 });
+        this.notify.error('Failed to skip entry.');
       }
     });
   }

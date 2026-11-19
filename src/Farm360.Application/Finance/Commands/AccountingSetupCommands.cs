@@ -364,8 +364,11 @@ public class CreateFixedAssetCommandHandler(
     IFarmAccountingSettingsRepository settings,
     ILedgerPostingService ledger,
     ITradeCreditService credit,
-    IUnitOfWork unitOfWork) : IRequestHandler<CreateFixedAssetCommand, FixedAssetDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<CreateFixedAssetCommand, FixedAssetDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<FixedAssetDto> Handle(CreateFixedAssetCommand command, CancellationToken cancellationToken)
     {
         var r = command.Request;
@@ -390,7 +393,7 @@ public class CreateFixedAssetCommandHandler(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return asset.ToDto(DateOnly.FromDateTime(DateTime.UtcNow), await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
+        return asset.ToDto(_clock.Today, await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
     }
 }
 
@@ -398,8 +401,11 @@ public class UpdateFixedAssetCommandHandler(
     IFixedAssetRepository assets,
     IFarmAccountingSettingsRepository settings,
     ILedgerPostingService ledger,
-    IUnitOfWork unitOfWork) : IRequestHandler<UpdateFixedAssetCommand, FixedAssetDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<UpdateFixedAssetCommand, FixedAssetDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<FixedAssetDto> Handle(UpdateFixedAssetCommand command, CancellationToken cancellationToken)
     {
         var asset = await assets.GetByIdAsync(command.AssetId, cancellationToken);
@@ -415,7 +421,7 @@ public class UpdateFixedAssetCommandHandler(
         await FixedAssetPostings.PostAcquisitionAsync(ledger, asset, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return asset.ToDto(DateOnly.FromDateTime(DateTime.UtcNow), await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
+        return asset.ToDto(_clock.Today, await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
     }
 }
 
@@ -441,8 +447,11 @@ public class DisposeFixedAssetCommandHandler(
     IFixedAssetRepository assets,
     IFarmAccountingSettingsRepository settings,
     ILedgerPostingService ledger,
-    IUnitOfWork unitOfWork) : IRequestHandler<DisposeFixedAssetCommand, FixedAssetDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<DisposeFixedAssetCommand, FixedAssetDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<FixedAssetDto> Handle(DisposeFixedAssetCommand command, CancellationToken cancellationToken)
     {
         var asset = await assets.GetByIdAsync(command.AssetId, cancellationToken);
@@ -454,7 +463,7 @@ public class DisposeFixedAssetCommandHandler(
         await FixedAssetPostings.PostDisposalAsync(ledger, asset, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return asset.ToDto(DateOnly.FromDateTime(DateTime.UtcNow), await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
+        return asset.ToDto(_clock.Today, await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
     }
 }
 
@@ -462,8 +471,11 @@ public class CancelFixedAssetDisposalCommandHandler(
     IFixedAssetRepository assets,
     IFarmAccountingSettingsRepository settings,
     ILedgerPostingService ledger,
-    IUnitOfWork unitOfWork) : IRequestHandler<CancelFixedAssetDisposalCommand, FixedAssetDto>
+    IUnitOfWork unitOfWork,
+    IFarmClock? clock = null) : IRequestHandler<CancelFixedAssetDisposalCommand, FixedAssetDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<FixedAssetDto> Handle(CancelFixedAssetDisposalCommand command, CancellationToken cancellationToken)
     {
         var asset = await assets.GetByIdAsync(command.AssetId, cancellationToken);
@@ -475,6 +487,6 @@ public class CancelFixedAssetDisposalCommandHandler(
         await FixedAssetPostings.PostDisposalAsync(ledger, asset, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return asset.ToDto(DateOnly.FromDateTime(DateTime.UtcNow), await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
+        return asset.ToDto(_clock.Today, await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));
     }
 }

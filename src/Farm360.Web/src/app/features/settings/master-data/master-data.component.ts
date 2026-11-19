@@ -15,16 +15,22 @@ import { MatButtonModule } from '@angular/material/button';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
+
+import { NotificationService } from '../../../shared/services/notification.service';
 @Component({
   selector: 'app-master-data',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent, MatIconModule, MatButtonModule, PageHeaderComponent, LoadingComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, MatIconModule, MatButtonModule, PageHeaderComponent, LoadingComponent, ErrorStateComponent],
   templateUrl: './master-data.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MasterDataComponent {
   private masterDataService = inject(MasterDataService);
   private dialog = inject(MatDialog);
+  private notify = inject(NotificationService);
+  readonly isSaving = signal(false);
 
   types = [
     { id: MasterDataType.Breed, name: 'Breed' },
@@ -45,6 +51,7 @@ export class MasterDataComponent {
 
   readonly selectedType = signal<MasterDataType>(MasterDataType.AnimalType);
   readonly isLoading = signal<boolean>(false);
+  readonly loadError = signal<string | null>(null);
 
   private refreshTrigger = signal(0);
   private fetchParams = computed(() => ({
@@ -54,10 +61,10 @@ export class MasterDataComponent {
 
   readonly entriesResult = toSignal(
     toObservable(this.fetchParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ type }) => this.masterDataService.getByType(type, true).pipe(
         catchError(err => {
-          console.error(err);
+          this.loadError.set(parseApiError(err, 'Could not load master data.'));
           return of([] as MasterDataEntry[]);
         })
       )),
@@ -120,7 +127,11 @@ export class MasterDataComponent {
   }
 
   saveEntry(): void {
+    if (this.isSaving()) return;
     const data = this.formData();
+    this.isSaving.set(true);
+    const done = { next: () => { this.isSaving.set(false); this.closeModal(); this.loadEntries(); },
+                   error: (err: unknown) => { this.isSaving.set(false); this.notify.error(parseApiError(err, 'Could not save the entry.')); } };
     const id = this.editingId();
     
     if (id) {
@@ -131,12 +142,7 @@ export class MasterDataComponent {
         displayOrder: data.displayOrder,
         isActive: data.isActive
       };
-      this.masterDataService.update(id, command, this.selectedType()).subscribe({
-        next: () => {
-          this.closeModal();
-          this.loadEntries();
-        }
-      });
+      this.masterDataService.update(id, command, this.selectedType()).subscribe(done);
     } else {
       const command: CreateMasterDataCommand = {
         type: this.selectedType(),
@@ -145,17 +151,12 @@ export class MasterDataComponent {
         description: data.description,
         displayOrder: data.displayOrder
       };
-      this.masterDataService.create(command).subscribe({
-        next: () => {
-          this.closeModal();
-          this.loadEntries();
-        }
-      });
+      this.masterDataService.create(command).subscribe(done);
     }
   }
 
   deleteEntry(entry: MasterDataEntry): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       data: {
         title: 'Delete Master Data',
@@ -169,9 +170,8 @@ export class MasterDataComponent {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.masterDataService.delete(entry.id, this.selectedType()).subscribe({
-          next: () => {
-            this.loadEntries();
-          }
+          next: () => this.loadEntries(),
+          error: err => this.notify.error(parseApiError(err, 'Could not delete the entry.'))
         });
       }
     });

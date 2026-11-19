@@ -1,11 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FarmSummaryCard } from '../../models/dashboard.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-farm-summary-cards',
   standalone: true,
-  imports: [CommonModule],
+  imports: [MoneyPipe, CommonModule],
   template: `
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <div *ngFor="let card of data" class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
@@ -21,7 +22,7 @@ import { FarmSummaryCard } from '../../models/dashboard.model';
           </div>
           <div class="flex justify-between">
             <span class="text-sm text-gray-600">Revenue</span>
-            <span class="text-sm font-semibold text-emerald-600">৳{{card.monthlyRevenue | number}}</span>
+            <span class="text-sm font-semibold text-emerald-600">{{card.monthlyRevenue | money:2 }}</span>
           </div>
         </div>
       </div>

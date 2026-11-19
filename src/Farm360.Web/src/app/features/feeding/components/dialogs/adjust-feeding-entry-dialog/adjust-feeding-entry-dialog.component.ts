@@ -5,10 +5,10 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FeedingService } from '../../../services/feeding.service';
 import { DailyFeedingEntry } from '../../../models/feeding.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 export interface AdjustDialogData {
   entry: DailyFeedingEntry;
@@ -42,7 +42,7 @@ export interface AdjustDialogData {
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Animal: <span class="font-bold text-gray-800 dark:text-gray-200">{{ data.entry.animalTag }}</span></p>
           </div>
         </div>
-        <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors">
+        <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors" aria-label="Close">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -98,7 +98,7 @@ export class AdjustFeedingEntryDialogComponent {
   readonly data = inject<AdjustDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<AdjustFeedingEntryDialogComponent>);
   private readonly feedingService = inject(FeedingService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   actualKg = this.data.entry.expectedKg;
   notes = '';
@@ -124,22 +124,22 @@ export class AdjustFeedingEntryDialogComponent {
     if (this.data.action === 'adjust') {
       this.feedingService.adjustEntry(this.data.entry.id, this.actualKg, this.notes).subscribe({
         next: () => {
-          this.snackBar.open('Entry adjusted successfully', 'Close', { duration: 3000 });
+          this.notify.success('Entry adjusted successfully');
           this.dialogRef.close(true);
         },
         error: (err) => {
-          this.snackBar.open(parseApiError(err, 'Failed to adjust entry'), 'Close', { duration: 6000 });
+          this.notify.error(parseApiError(err, 'Failed to adjust entry'));
           this.isSubmitting.set(false);
         }
       });
     } else {
       this.feedingService.skipEntry(this.data.entry.id, this.notes).subscribe({
         next: () => {
-          this.snackBar.open('Entry skipped successfully', 'Close', { duration: 3000 });
+          this.notify.success('Entry skipped successfully');
           this.dialogRef.close(true);
         },
         error: (err) => {
-          this.snackBar.open(parseApiError(err, 'Failed to skip entry'), 'Close', { duration: 6000 });
+          this.notify.error(parseApiError(err, 'Failed to skip entry'));
           this.isSubmitting.set(false);
         }
       });

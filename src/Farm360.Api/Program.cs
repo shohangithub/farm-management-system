@@ -15,6 +15,7 @@ using Farm360.Api.Endpoints.Subscriptions;
 using Farm360.Api.Endpoints.Dashboard;
 using Farm360.Api.Middleware;
 using Farm360.Api.Authorization;
+using Farm360.Api.Configuration;
 using Farm360.Application.DependencyInjection;
 using Farm360.Identity.DependencyInjection;
 using Farm360.Infrastructure.DependencyInjection;
@@ -53,8 +54,17 @@ try
     builder.Configuration
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-        .AddEnvironmentVariables(prefix: "FARM360_")
-        .AddUserSecrets<Program>(optional: true); // Dev only
+        // Re-added AFTER the JSON files so container/orchestrator settings (ConnectionStrings__DefaultConnection,
+        // Jwt__Secret, ...) override appsettings*.json. FARM360_-prefixed variables win over unprefixed ones.
+        .AddEnvironmentVariables()
+        .AddEnvironmentVariables(prefix: "FARM360_");
+
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddUserSecrets<Program>(optional: true);
+    }
+
+    builder.Configuration.AddCommandLine(args);
 
     // ── Serilog (replaces default ILogger) ───────────────────────────────────
     builder.Host.UseSerilog((ctx, services, loggerConfig) =>
@@ -93,6 +103,7 @@ try
     // ── Permission-based Authorization ────────────────────────────────────
     builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, PermissionPolicyProvider>();
     builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionHandler>();
+    builder.Services.AddAuthorizationBuilder().AddFarm360Policies(); // PlatformAdmin (sys=true) policy
 
     // OpenAPI (replaces Swashbuckle in .NET 10 — using Scalar UI)
     builder.Services.AddOpenApi(options =>
@@ -109,6 +120,15 @@ try
             return Task.CompletedTask;
         });
     });
+
+    // Rate limiting: auth endpoints (per IP) + general per-user limit
+    builder.Services.AddFarm360RateLimiting(builder.Configuration);
+
+    // ── Production hosting: probes, proxy awareness, shared key ring, telemetry ──
+    builder.Services.AddFarm360HealthChecks(builder.Configuration);    // /health/live, /health/ready
+    builder.Services.AddFarm360ForwardedHeaders(builder.Configuration); // ForwardedHeaders:KnownProxies/KnownNetworks
+    builder.Services.AddFarm360DataProtection(builder.Configuration);   // DataProtection:KeysPath or Redis
+    builder.Services.AddFarm360OpenTelemetry(builder.Configuration, builder.Environment); // only if OpenTelemetry:Endpoint
 
     // CORS — Angular origin
     builder.Services.AddCors(options =>
@@ -133,6 +153,13 @@ try
     // Constitution §2.5: Middleware ordering per MediatR pipeline specification.
     // ══════════════════════════════════════════════════════════════════════════
 
+    // [0] Forwarded headers — first, so RemoteIpAddress/Scheme are the client's for everything below
+    // (rate limiting, logging, HTTPS redirection). Only trusts the configured proxies.
+    if (HostingSetup.ForwardedHeadersEnabled(app.Configuration))
+    {
+        app.UseForwardedHeaders();
+    }
+
     // [1] Exception handling — MUST be outermost (catches all downstream exceptions)
     app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -148,41 +175,51 @@ try
             diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value ?? "");
             diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
             diagnosticContext.Set("UserAgent", httpContext.Request.Headers.UserAgent.ToString());
+            diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString() ?? "");
+            // The completion event is written outside TenantResolutionMiddleware's log scope, so add
+            // tenant/user from the token here (empty for anonymous requests).
+            diagnosticContext.Set("TenantId", httpContext.User.FindFirst("tenant_id")?.Value ?? "");
+            diagnosticContext.Set("UserId", httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "");
         };
+        // Probes hit every few seconds: keep them out of the request log unless they fail.
+        options.GetLevel = (httpContext, _, ex) =>
+            ex is null && httpContext.Response.StatusCode < 500 && httpContext.Request.Path.StartsWithSegments("/health")
+                ? Serilog.Events.LogEventLevel.Verbose
+                : ex is not null || httpContext.Response.StatusCode >= 500
+                    ? Serilog.Events.LogEventLevel.Error
+                    : Serilog.Events.LogEventLevel.Information;
     });
 
-    // [4] Security headers
+    // [4] Security headers (nosniff, frame deny, referrer policy, CSP) — before anything that
+    // can write a response, static files included.
+    app.UseMiddleware<SecurityHeadersMiddleware>();
     app.UseHsts();
     app.UseHttpsRedirection();
-    
-    // Allow serving static files (e.g. uploads from wwwroot)
-    app.UseStaticFiles();
 
-    app.Use(async (context, next) =>
-    {
-        context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
-        context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
-        context.Response.Headers.TryAdd("X-XSS-Protection", "1; mode=block");
-        context.Response.Headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
-        await next();
-    });
+    // Uploaded files are served anonymously from wwwroot/uploads: only image extensions are
+    // served (everything else 404s), with the content type taken from the extension and nosniff.
+    app.UseMiddleware<UploadsGuardMiddleware>();
+    app.UseStaticFiles();
 
     // [5] CORS
     app.UseCors("AngularClient");
 
-    // [6] OpenAPI + Scalar UI (dev only)
-    //if (app.Environment.IsDevelopment())
-    //{
+    // [6] OpenAPI + Scalar UI (Development only — the full route map is not published elsewhere)
+    if (app.Environment.IsDevelopment())
+    {
         app.MapOpenApi();
         app.MapScalarApiReference(options =>
         {
             options.Title = "Farm360 AI API";
             options.Theme = ScalarTheme.DeepSpace;
         });
-   // }
+    }
 
     // [7] Authentication — MUST be before Authorization
     app.UseAuthentication();
+
+    // [7b] Rate limiting — after authentication so the general limit can partition per user
+    app.UseRateLimiter();
 
     // [8] Tenant Resolution — MUST be after Authentication (needs JWT claims)
     // F360-MTA-2026-001: Resolves tenant context from JWT → validates status → 402 if suspended
@@ -190,6 +227,9 @@ try
 
     // [9] Authorization
     app.UseAuthorization();
+
+    // [9b] Per-farm access: any {farmId} in the route/query must be in the caller's tenant and allowed farms
+    app.UseMiddleware<FarmAccessMiddleware>();
 
     // [10] Hangfire Dashboard (dev only, secured)
     if (app.Environment.IsDevelopment())
@@ -205,13 +245,8 @@ try
     app.MapHub<FarmNotificationHub>("/hubs/farm-notifications")
         .RequireAuthorization();
 
-    // Health check
-    app.MapGet("/health", () => Results.Ok(new
-    {
-        Status = "Healthy",
-        Timestamp = DateTime.UtcNow,
-        Version = "1.0.0",
-    })).AllowAnonymous().WithTags("Health");
+    // Health probes: /health/live (process), /health/ready (SQL, Redis, Hangfire storage), /health (= live)
+    app.MapFarm360HealthChecks();
 
     // ── Livestock module ────────────────────────────────────────────────────
     app.MapGroup("/api/v1/livestock").MapLivestockEndpoints();
@@ -235,8 +270,6 @@ try
     app.MapMasterDataEndpoints();
     app.MapLocationEndpoints();
 
-    // app.MapGroup("/api/v1/feeding").MapFeedingEndpoints();
-    // app.MapGroup("/api/v1/finance")
     app.MapInventoryEndpoints();
     app.MapGroup("/api/v1/auth").MapAuthEndpoints();
     app.MapGroup("/api/v1/users").MapUsersEndpoints();
@@ -247,68 +280,56 @@ try
 
     Log.Information("Farm360 API started. Environment: {Environment}", app.Environment.EnvironmentName);
 
+    // Startup security self-check: CRITICAL log (no crash) for dev-only secrets/sandbox outside Development.
+    StartupSecurityChecks.LogFindings(
+        app.Configuration,
+        app.Environment,
+        app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Farm360.SecurityChecks"));
+
     // ── Run Migrations & Data Seeders ────────────────────────────────────────
     using (var scope = app.Services.CreateScope())
     {
-        try
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<Farm360.Persistence.Context.ApplicationDbContext>();
-            await dbContext.Database.MigrateAsync();
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Automatic database migration failed or was bypassed.");
-        }
+        // Migrations (fail fast, Database:MigrateOnStartup), reference-data seeders, optional demo tenant
+        // (Seed:DemoData) and optional feed-allocation backfill (Maintenance:RunFeedAllocationBackfillOnStartup).
+        await StartupTasks.RunAsync(
+            scope.ServiceProvider,
+            app.Configuration,
+            app.Environment,
+            app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Farm360.Startup"));
 
-        var dataSeeder = scope.ServiceProvider.GetRequiredService<Farm360.Persistence.Seed.DataSeeder>();
-        await dataSeeder.SeedAsync();
-
-        var identitySeeder = scope.ServiceProvider.GetRequiredService<Farm360.Identity.Seed.IdentitySeeder>();
-        await identitySeeder.SeedAsync();
-
-        // Ensure historical or unallocated feed entries are populated across tenants (GAP-1)
-        try
-        {
-            var sender = scope.ServiceProvider.GetRequiredService<MediatR.ISender>();
-            await sender.Send(new Farm360.Application.Feeding.Jobs.BackfillAnimalFeedAllocationsCommand(
-                From: new DateOnly(2020, 1, 1),
-                To: new DateOnly(2035, 12, 31)
-            ));
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Startup automatic backfill of animal feed allocations encountered an issue.");
-        }
-        
         // Register Hangfire Recurring Jobs
         var jobService = scope.ServiceProvider.GetRequiredService<Farm360.Application.Common.Interfaces.IBackgroundJobService>();
+
+        // Cron times are farm-local (Asia/Dhaka, resolved on Windows and Linux; fixed UTC+6 fallback):
+        // without it "daily at 00:00" ran at 06:00 in Bangladesh.
+        var jobTimeZone = Farm360.Application.Common.Time.FarmTimeZones.Default;
 
        var dailyCron = app.Environment.IsDevelopment() ? Hangfire.Cron.Minutely() : Hangfire.Cron.Daily(0, 0);
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "daily-feeding-entries",
             sender => sender.Send(new Farm360.Application.Feeding.Jobs.CreateDailyFeedingEntriesCommand(), CancellationToken.None),
-            dailyCron); // Runs minutely in dev, at 12:00 AM otherwise
+            dailyCron, jobTimeZone); // Runs minutely in dev, at 12:00 AM otherwise
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "daily-consumable-entries",
             sender => sender.Send(new Farm360.Application.Inventory.Jobs.CreateDailyConsumableEntriesAcrossTenantsCommand(), CancellationToken.None),
-            dailyCron);
+            dailyCron, jobTimeZone);
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "close-feeding-cycles",
             sender => sender.Send(new Farm360.Application.Feeding.Jobs.CloseFeedingCycleCommand(), CancellationToken.None),
-            Hangfire.Cron.Daily(23, 59)); // Runs at 11:59 PM
+            Hangfire.Cron.Daily(23, 59), jobTimeZone); // Runs at 11:59 PM
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "allocate-overhead-monthly",
             sender => sender.Send(new Farm360.Application.Finance.Jobs.AllocateOverheadAcrossTenantsCommand(), CancellationToken.None),
-            Hangfire.Cron.Monthly(3, 2, 0)); // 3rd of each month at 2:00 AM, covers the previous calendar month
+            Hangfire.Cron.Monthly(3, 2, 0), jobTimeZone); // 3rd of each month at 2:00 AM, covers the previous calendar month
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "refresh-tenant-subscription-statuses",
             sender => sender.Send(new Farm360.Application.Tenants.Jobs.RefreshTenantSubscriptionStatusesCommand(), CancellationToken.None),
-            Hangfire.Cron.Daily(1, 0)); // 1:00 AM daily -- proactively suspends tenants whose trial/subscription lapsed
+            Hangfire.Cron.Daily(1, 0), jobTimeZone); // 1:00 AM daily -- proactively suspends tenants whose trial/subscription lapsed
     }
 
     await app.RunAsync();

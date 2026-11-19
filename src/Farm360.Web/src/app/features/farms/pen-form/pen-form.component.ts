@@ -2,11 +2,14 @@ import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { PenService } from '../services/pen.service';
 import { CreatePenCommand, UpdatePenCommand } from '../models/pen.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NotificationService } from '../../../shared/services/notification.service';
+
+import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-pen-form',
@@ -14,12 +17,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './pen-form.component.html'
 })
-export class PenFormComponent implements OnInit {
+export class PenFormComponent implements OnInit, HasUnsavedChanges {
+  /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
+  private saved = false;
+
+  hasUnsavedChanges(): boolean {
+    return !!this.penForm?.dirty && !this.saved;
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly penService = inject(PenService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   penForm!: FormGroup;
@@ -117,10 +127,7 @@ export class PenFormComponent implements OnInit {
   onSubmit(): void {
     if (this.penForm.invalid) {
       this.penForm.markAllAsTouched();
-      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please fix the validation errors before submitting.');
       return;
     }
 
@@ -144,10 +151,8 @@ export class PenFormComponent implements OnInit {
       this.penService.updatePen(this.penId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Pen updated successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Pen updated successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
         },
         error: (err) => {
@@ -165,10 +170,8 @@ export class PenFormComponent implements OnInit {
       this.penService.createPen(this.shedId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Pen created successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Pen created successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
         },
         error: (err) => {

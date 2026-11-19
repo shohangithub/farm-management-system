@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,8 +13,10 @@ import { toSignal, toObservable, takeUntilDestroyed } from '@angular/core/rxjs-i
 import { switchMap, catchError, of, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { FinanceService } from '../../services/finance.service';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { 
@@ -31,12 +33,17 @@ import { EditTransactionDialogComponent } from '../../components/edit-transactio
 import { TradeBillDialogComponent } from '../../components/trade-bill-dialog/trade-bill-dialog.component';
 import { canBeOnCredit } from '../../models/finance.model';
 import { parseApiError } from '../../../../core/utils/error-parser';
-
+
+
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
 @Component({
   selector: 'app-finance-ledger',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, HasPermissionDirective, 
     CommonModule,
     FormsModule,
     RouterLink,
@@ -49,14 +56,16 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
     MatProgressSpinnerModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent,
-    DatePipe,
-    CurrencyPipe
+    DatePipe
   ],
   templateUrl: './finance-ledger.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FinanceLedgerComponent {
+  private readonly confirmService = inject(ConfirmService);
+  private readonly notify = inject(NotificationService);
   private readonly financeService = inject(FinanceService);
   private readonly workingContextService = inject(WorkingContextService);
   private readonly pdfExportService = inject(PdfExportService);
@@ -83,6 +92,7 @@ export class FinanceLedgerComponent {
 
   readonly searchTerm = signal('');
   readonly refreshTrigger = signal(0);
+  readonly loadError = signal<string | null>(null);
   readonly isLoading = signal(true);
   readonly isExporting = signal(false);
 
@@ -114,7 +124,7 @@ export class FinanceLedgerComponent {
 
   readonly result = toSignal(
     toObservable(this.combinedParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ farmId, params }) => {
         if (!farmId) {
           this.isLoading.set(false);
@@ -132,8 +142,9 @@ export class FinanceLedgerComponent {
         }
         return this.financeService.getPagedTransactions(farmId, params).pipe(
           tap(() => this.isLoading.set(false)),
-          catchError(() => {
+          catchError(err => {
             this.isLoading.set(false);
+            this.loadError.set(parseApiError(err, 'Could not load transactions.'));
             return of<PagedFinancialTransactionsResult>({
               items: [],
               totalCount: 0,
@@ -251,7 +262,7 @@ export class FinanceLedgerComponent {
   }
 
   openIncomeDialog(): void {
-    const dialogRef = this.dialog.open(IncomeFormDialogComponent, {
+    const dialogRef = this.dialog.open(IncomeFormDialogComponent, { maxWidth: '95vw',
       width: '600px',
       disableClose: true,
       panelClass: ['premium-dialog-panel']
@@ -263,7 +274,7 @@ export class FinanceLedgerComponent {
   }
 
   openExpenseDialog(): void {
-    const dialogRef = this.dialog.open(ExpenseFormDialogComponent, {
+    const dialogRef = this.dialog.open(ExpenseFormDialogComponent, { maxWidth: '95vw',
       width: '600px',
       disableClose: true,
       panelClass: ['premium-dialog-panel']
@@ -275,7 +286,7 @@ export class FinanceLedgerComponent {
   }
 
   openTransactionDetails(txn: FinancialTransaction): void {
-    this.dialog.open(TransactionDetailDialogComponent, {
+    this.dialog.open(TransactionDetailDialogComponent, { maxWidth: '95vw',
       width: '540px',
       data: txn,
       panelClass: ['premium-dialog-panel']
@@ -302,7 +313,7 @@ export class FinanceLedgerComponent {
   }
 
   openEditDialog(txn: FinancialTransaction): void {
-    const dialogRef = this.dialog.open(EditTransactionDialogComponent, {
+    const dialogRef = this.dialog.open(EditTransactionDialogComponent, { maxWidth: '95vw',
       width: '540px',
       data: txn,
       disableClose: true,
@@ -314,8 +325,8 @@ export class FinanceLedgerComponent {
     });
   }
 
-  voidTransaction(txn: FinancialTransaction): void {
-    if (!confirm(`Are you sure you want to void this ${txn.type} transaction of ${txn.amountBdt} BDT? This action cannot be undone.`)) {
+  async voidTransaction(txn: FinancialTransaction): Promise<void> {
+    if (!(await this.confirmService.confirmAsync({ message: `Are you sure you want to void this ${txn.type} transaction of ${txn.amountBdt} BDT? This action cannot be undone.`, confirmText: 'Void', destructive: true }))) {
       return;
     }
 
@@ -324,7 +335,7 @@ export class FinanceLedgerComponent {
 
     this.financeService.deleteTransaction(farmId, txn.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.refresh(),
-      error: err => alert(parseApiError(err, 'Failed to void transaction. Please try again.'))
+      error: err => this.notify.error(parseApiError(err, 'Failed to void transaction. Please try again.'))
     });
   }
 
@@ -344,7 +355,7 @@ export class FinanceLedgerComponent {
         this.isExporting.set(false);
       },
       error: () => {
-        alert('Failed to export CSV.');
+        this.notify.error('Failed to export CSV.');
         this.isExporting.set(false);
       }
     });
@@ -373,8 +384,8 @@ export class FinanceLedgerComponent {
           currency: 'BDT (৳)',
           metaFields: [
             { label: 'Total Records', value: `${count}` },
-            { label: 'Total Income', value: `৳ ${income.toLocaleString()}` },
-            { label: 'Total Expense', value: `৳ ${expense.toLocaleString()}` }
+            { label: 'Total Income', value: `${formatMoney(income)}` },
+            { label: 'Total Expense', value: `${formatMoney(expense)}` }
           ]
         },
         showSignatures: true

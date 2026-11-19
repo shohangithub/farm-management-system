@@ -41,9 +41,12 @@
     </div>
   </div>
 
+  <!-- Error State -->
+  <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load farms" [message]="err" (retry)="loadFarms()"></app-error-state>
+
   <!-- Empty State (No Farms at all) -->
   <app-empty-state 
-    *ngIf="!isLoading() && farmsResult().length === 0 && !searchTerm()"
+    *ngIf="!isLoading() && !loadError() && farmsResult().length === 0 && !searchTerm()"
     icon="agriculture"
     title="No Farms Found"
     description="This branch doesn't have any farms yet. Create your first farm to start managing your agricultural operations."

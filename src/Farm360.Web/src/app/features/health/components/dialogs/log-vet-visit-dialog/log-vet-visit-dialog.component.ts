@@ -11,6 +11,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 
 @Component({
   selector: 'app-log-vet-visit-dialog',
@@ -36,7 +37,7 @@ export class LogVetVisitDialog {
   form = this.fb.group({
     farmId: [this.contextService.currentFarmValue?.id, [Validators.required]],
     vetName: ['', [Validators.required]],
-    visitDate: [new Date().toISOString().substring(0, 10), [Validators.required]],
+    visitDate: [toLocalIsoDate(), [Validators.required]],
     visitType: [1, [Validators.required]],
     purpose: [''],
     findings: [''],
@@ -100,7 +101,6 @@ export class LogVetVisitDialog {
     ).subscribe({
       next: () => this.dialogRef.close(true),
       error: (err) => {
-        console.error('Failed to log vet visit', err);
         this.error.set(parseApiError(err, 'Failed to log vet visit. Please try again.'));
       }
     });

@@ -1,8 +1,20 @@
-import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn, HttpContextToken } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotificationService } from '../../shared/services/notification.service';
+
+/**
+ * Set to true on a request (`new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true)`) when the caller
+ * shows its own message for offline / server errors.
+ */
+export const SKIP_GLOBAL_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
+
+/**
+ * Set to true on public (anonymous) calls that must not carry the signed-in user's bearer token,
+ * e.g. accepting an invitation to another organisation. 401s on such calls never trigger a refresh.
+ */
+export const SKIP_AUTH = new HttpContextToken<boolean>(() => false);
 
 // ── Module-level refresh lock ─────────────────────────────────────────────────
 // isRefreshing prevents concurrent refresh attempts when multiple 401s arrive.
@@ -26,7 +38,7 @@ import { environment } from '../../../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
-  const snackBar = inject(MatSnackBar);
+  const notify = inject(NotificationService);
   const token = authService.accessToken;
 
   // Prepend API URL from environment if configured (for production cross-domain hosting)
@@ -34,13 +46,16 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
     req = req.clone({ url: `${environment.apiUrl}${req.url}` });
   }
 
-  if (token && req.url.includes('/api/')) {
+  const skipAuth = req.context.get(SKIP_AUTH);
+  if (token && !skipAuth && req.url.includes('/api/')) {
     req = addTokenHeader(req, token);
   }
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !req.url.includes('/api/v1/auth/login') && !req.url.includes('/api/v1/auth/refresh')) {
+      if (skipAuth && error.status === 401) {
+        // Public call: never refresh or sign out the signed-in session; the caller shows the error.
+      } else if (error.status === 401 && !req.url.includes('/api/v1/auth/login') && !req.url.includes('/api/v1/auth/refresh')) {
         if (!isRefreshing) {
           isRefreshing = true;
           refreshTokenSubject.next(null);
@@ -71,10 +86,12 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
         resetRefreshState();
         authService.logout();
       } else if (error.status === 403) {
-        snackBar.open('Access Denied: You do not have permission to perform this action.', 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar']
-        });
+        notify.reportGlobalError('Access denied: you do not have permission to perform this action.');
+      } else if ((error.status === 0 || error.status >= 500) && !req.context.get(SKIP_GLOBAL_ERROR_TOAST)) {
+        const offline = error.status === 0 || (typeof navigator !== 'undefined' && navigator.onLine === false);
+        notify.reportGlobalError(offline
+          ? 'You appear to be offline. Check your internet connection and try again.'
+          : 'The server had a problem processing your request. Please try again in a moment.');
       }
       return throwError(() => error);
     })

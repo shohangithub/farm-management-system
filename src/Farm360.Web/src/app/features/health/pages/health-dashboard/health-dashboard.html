@@ -148,7 +148,7 @@
           </div>
           <div>
             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-emerald-500 transition-colors duration-300">Health Costs (30d)</p>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">৳ {{ dashboardData.monthlyHealthCostBdt | number:'1.0-0' }}</h3>
+            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ dashboardData.monthlyHealthCostBdt | money }}</h3>
           </div>
         </div>
         <div class="mt-4 flex items-center text-sm border-t border-gray-100 dark:border-gray-800/50 pt-4">

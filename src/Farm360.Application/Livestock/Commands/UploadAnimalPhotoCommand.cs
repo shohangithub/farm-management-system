@@ -30,9 +30,6 @@ public sealed class UploadAnimalPhotoCommandValidator : AbstractValidator<Upload
         RuleFor(x => x.FileName)
             .NotEmpty().WithMessage("File name is required.");
             
-        RuleFor(x => x.ContentType)
-            .NotEmpty().WithMessage("Content type is required.");
-            
         RuleFor(x => x.Caption)
             .MaximumLength(200).WithMessage("Caption cannot exceed 200 characters.")
             .When(x => x.Caption is not null);
@@ -60,23 +57,9 @@ public sealed class UploadAnimalPhotoCommandHandler : IRequestHandler<UploadAnim
         var animal = await _animalRepository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
-        if (request.FileStream == null || request.FileStream.Length == 0)
-        {
-            throw new ArgumentException("File stream is empty.");
-        }
-
-        // Validate size (e.g. max 5MB)
-        if (request.FileStream.Length > 5 * 1024 * 1024)
-        {
-            throw new ArgumentException("File size exceeds the 5MB limit.");
-        }
-
-        // Validate type
-        var contentType = request.ContentType.ToLowerInvariant();
-        if (contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/webp")
-        {
-            throw new ArgumentException("Only JPEG, PNG and WebP images are supported.");
-        }
+        // Validate by content (size, extension whitelist, magic bytes) -- the client-supplied
+        // ContentType is not trusted. The storage service re-validates before writing.
+        Farm360.Application.Common.Files.ImageUploadValidator.Validate(request.FileStream, request.FileName);
 
         string photoUrl = await _fileStorageService.UploadFileAsync(request.FileStream, request.FileName, "animals", cancellationToken);
 

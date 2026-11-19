@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject, ChangeDetectionStrategy, OnInit, signal } from '@angular/core';
+import { Component, EventEmitter, Output, inject, ChangeDetectionStrategy, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ContextSelectorComponent } from '../context-selector/context-selector.component';
 import { GlobalSearchComponent } from '../../../shared/components/global-search/global-search.component';
@@ -12,6 +12,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { WorkingContextService } from '../../services/working-context.service';
+import { ContextSelectorDialogComponent } from '../context-selector/context-selector-dialog.component';
 
 @Component({
   selector: 'app-header',
@@ -26,6 +29,7 @@ import { RouterModule } from '@angular/router';
     MatDividerModule,
     MatBadgeModule,
     MatTooltipModule,
+    MatDialogModule,
     ContextSelectorComponent,
     GlobalSearchComponent
   ],
@@ -72,7 +76,25 @@ export class HeaderComponent implements OnInit {
   }
 
   private authService = inject(AuthService);
+  private dialog = inject(MatDialog);
   readonly signalRService = inject(IntelligenceSignalRService);
+  readonly currentOrg$ = inject(WorkingContextService).currentOrg$;
+
+  readonly user = this.authService.currentUserSignal;
+  readonly displayName = computed(() => {
+    const u = this.user();
+    return u?.fullName?.trim() || u?.email || u?.phone || 'Account';
+  });
+  readonly initials = computed(() => {
+    const name = this.displayName();
+    const parts = name.split(/[\s@._-]+/).filter(Boolean);
+    const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2);
+    return letters.toUpperCase();
+  });
+
+  openContextDialog(): void {
+    this.dialog.open(ContextSelectorDialogComponent, { width: '420px', maxWidth: '95vw', autoFocus: false });
+  }
 
   logout(): void {
     this.authService.logout();

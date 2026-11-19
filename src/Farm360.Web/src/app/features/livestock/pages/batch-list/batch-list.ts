@@ -1,4 +1,6 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ViewChild, TemplateRef, computed } from '@angular/core';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,23 +11,24 @@ import { FarmService } from '../../../farms/services/farm.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-batch-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeaderComponent, FormsModule, MatButtonModule, MatIconModule, MatDialogModule, MatSnackBarModule],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, PageHeaderComponent, FormsModule, MatButtonModule, MatIconModule, MatDialogModule, MatSnackBarModule],
   templateUrl: './batch-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BatchList {
   private readonly svc = inject(BatchService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
 
   readonly loading = signal(false);
@@ -54,7 +57,7 @@ export class BatchList {
       switchMap(({ farmId }) => this.svc.getBatches(farmId!).pipe(
         map(res => res.items),
         catchError(err => {
-          this.error.set(err.message || 'Error loading batches');
+          this.error.set(parseApiError(err, 'Could not load batches.'));
           return of([]);
         })
       )),
@@ -63,29 +66,41 @@ export class BatchList {
     { initialValue: [] }
   );
 
+  refresh(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
   onCreateBatch() {
     this.createForm.name = '';
     this.createForm.notes = '';
     this.createForm.farmId = this.currentFarmId() || '';
     if (this.createForm.farmId) {
-      this.dialog.open(this.createBatchDialog, { disableClose: true, width: '560px' });
+      this.dialog.open(this.createBatchDialog, { maxWidth: '95vw', disableClose: true, width: '560px' });
     } else {
-      this.snackBar.open('Please select a farm context first', 'Close', { duration: 3000 });
+      this.notify.warning('Please select a farm context first');
     }
   }
 
-  submitCreateBatch() {
-    if (!this.createForm.name || !this.createForm.farmId) return;
+  readonly creating = signal(false);
 
+  submitCreateBatch() {
+    if (!this.createForm.name.trim() || !this.createForm.farmId || this.creating()) return;
+
+    this.creating.set(true);
     this.svc.createBatch({
       farmId: this.createForm.farmId,
       name: this.createForm.name,
       notes: this.createForm.notes
     }).subscribe({
       next: () => {
+        this.creating.set(false);
         this.dialog.closeAll();
-        this.snackBar.open('Batch created successfully', 'Close', { duration: 3000 });
+        this.notify.success('Batch created successfully');
         this.refreshTrigger.update(v => v + 1);
+      },
+      error: (err) => {
+        this.creating.set(false);
+        this.notify.error(parseApiError(err, 'Could not create the batch.'));
       }
     });
   }

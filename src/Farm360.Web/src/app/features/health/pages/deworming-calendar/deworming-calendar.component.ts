@@ -13,11 +13,15 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProtocolDialogComponent } from '../../components/dialogs/create-protocol-dialog/create-protocol-dialog.component';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-deworming-calendar',
   standalone: true,
-  imports: [CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
   template: `
 <app-page-header 
   title="Deworming Calendar" 
@@ -41,6 +45,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 
 <div #reportSheet id="dewormingCalendarContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
   <div class="relative overflow-x-auto">
     <table class="w-full text-sm text-left" *ngIf="events().length > 0">
@@ -78,7 +83,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
     </table>
     
     <app-empty-state 
-      *ngIf="!isLoading() && events().length === 0"
+      *ngIf="!isLoading() && events().length === 0 && !loadError()"
       icon="event_note"
       title="No Deworming Events"
       description="There are no deworming events scheduled for this farm."
@@ -91,6 +96,7 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DewormingCalendarComponent {
+  private readonly notify = inject(NotificationService);
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
@@ -100,6 +106,12 @@ export class DewormingCalendarComponent {
   readonly isExporting = signal(false);
 
   isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger.update(v => v + 1);
+  }
+
   private refreshTrigger = signal(0);
   private currentFarmId = toSignal(this.contextService.currentFarm$, { initialValue: null });
 
@@ -110,11 +122,14 @@ export class DewormingCalendarComponent {
 
   private eventsResult = toSignal(
     toObservable(this.fetchParams).pipe(
-      tap(() => this.isLoading.set(true)),
+      tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ farmId }) => {
         if (!farmId) return of({ items: [], totalCount: 0 });
         return this.healthService.getDewormingCalendar(farmId).pipe(
-          catchError(() => of({ items: [], totalCount: 0 }))
+          catchError(err => {
+            this.loadError.set(parseApiError(err, 'Could not load the deworming calendar.'));
+            return of({ items: [], totalCount: 0 });
+          })
         );
       }),
       tap(() => this.isLoading.set(false))
@@ -129,7 +144,7 @@ export class DewormingCalendarComponent {
   }
 
   openScheduleDialog() {
-    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(CreateProtocolDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '800px',
       data: {
         title: 'Deworming: ',
@@ -162,7 +177,7 @@ export class DewormingCalendarComponent {
     this.isExporting.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Deworming_Calendar_${new Date().toISOString().split('T')[0]}`,
+        filename: `Farm360_Deworming_Calendar_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
           title: 'Deworming & Parasite Control Schedule',
@@ -178,7 +193,7 @@ export class DewormingCalendarComponent {
         showSignatures: true
       });
     } catch (err) {
-      console.error('Failed to export Deworming Calendar PDF:', err);
+      this.notify.error(parseApiError(err, 'Could not export the PDF. Please try again.'));
     } finally {
       this.isExporting.set(false);
     }

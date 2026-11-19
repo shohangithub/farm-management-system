@@ -73,7 +73,7 @@
 
       @if (mode() === 'daily') {
         <div class="flex items-end gap-2">
-          <button mat-icon-button type="button" (click)="shiftDay(-1)" matTooltip="Previous day" class="!w-9 !h-9">
+          <button mat-icon-button type="button" (click)="shiftDay(-1)" matTooltip="Previous day" aria-label="Previous day" class="!w-9 !h-9">
             <mat-icon>chevron_left</mat-icon>
           </button>
           <label class="flex flex-col text-[11px] font-semibold text-gray-500 dark:text-gray-400">
@@ -81,7 +81,7 @@
             <input type="date" [max]="todayIso" [ngModel]="reportDate()" (ngModelChange)="reportDate.set($event)"
               class="mt-1 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
           </label>
-          <button mat-icon-button type="button" (click)="shiftDay(1)" [disabled]="reportDate() >= todayIso" matTooltip="Next day" class="!w-9 !h-9">
+          <button mat-icon-button type="button" (click)="shiftDay(1)" [disabled]="reportDate() >= todayIso" matTooltip="Next day" aria-label="Next day" class="!w-9 !h-9">
             <mat-icon>chevron_right</mat-icon>
           </button>
           <button type="button" (click)="goToday()" class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -170,24 +170,24 @@
       <table class="info">
         <tr>
           <td class="k">ওপেনিং ব্যালেন্স / Opening</td>
-          <td class="v num">৳ {{ d.openingBalanceBdt | number: '1.2-2' }}</td>
+          <td class="v num">{{ d.openingBalanceBdt | money:2 }}</td>
           <td class="k">ক্লোজিং ব্যালেন্স / Closing</td>
-          <td class="v num">৳ {{ d.closingBalanceBdt | number: '1.2-2' }}</td>
+          <td class="v num">{{ d.closingBalanceBdt | money:2 }}</td>
         </tr>
         <tr>
           <td class="k">মোট আয় / Total Income</td>
-          <td class="v num inc">৳ {{ d.totalIncomeBdt | number: '1.2-2' }}</td>
+          <td class="v num inc">{{ d.totalIncomeBdt | money:2 }}</td>
           <td class="k">মোট ব্যয় / Total Expense</td>
-          <td class="v num exp">৳ {{ d.totalExpenseBdt | number: '1.2-2' }}</td>
+          <td class="v num exp">{{ d.totalExpenseBdt | money:2 }}</td>
         </tr>
         <tr>
           <td class="k">{{ d.netBalanceBdt >= 0 ? 'নিট উদ্বৃত্ত / Net Surplus' : 'নিট ঘাটতি / Net Deficit' }}</td>
           <td class="v num" [class.inc]="d.netBalanceBdt >= 0" [class.exp]="d.netBalanceBdt < 0">
-            ৳ {{ (d.netBalanceBdt < 0 ? -d.netBalanceBdt : d.netBalanceBdt) | number: '1.2-2' }}
+            {{ (d.netBalanceBdt < 0 ? -d.netBalanceBdt : d.netBalanceBdt) | money:2 }}
           </td>
           <td class="k">পরিচালন নগদ ফলাফল / Operating Cash {{ d.netOperatingProfitBdt >= 0 ? 'Surplus' : 'Deficit' }}</td>
           <td class="v num" [class.inc]="d.netOperatingProfitBdt >= 0" [class.exp]="d.netOperatingProfitBdt < 0">
-            ৳ {{ d.netOperatingProfitBdt | number: '1.2-2' }}
+            {{ d.netOperatingProfitBdt | money:2 }}
           </td>
         </tr>
         @if (d.netProfitBdt !== undefined && d.netProfitBdt !== null) {
@@ -195,7 +195,7 @@
             <td class="k" colspan="3">নিট মুনাফা (আয় বিবরণী) / Net {{ d.netProfitBdt >= 0 ? 'Profit' : 'Loss' }} per income statement
               <span class="muted">(stock used, animals sold at cost, depreciation &amp; credit included)</span></td>
             <td class="v num" [class.inc]="d.netProfitBdt >= 0" [class.exp]="d.netProfitBdt < 0">
-              ৳ {{ d.netProfitBdt | number: '1.2-2' }}
+              {{ d.netProfitBdt | money:2 }}
             </td>
           </tr>
         }
@@ -261,7 +261,7 @@
         <div class="callout">
           Heads marked <b>Asset</b> (stock and animals bought), <b>Capital</b> or <b>Financing</b> (investor and owner money, loans) or <b>Trade</b> (paying supplier bills, collecting customer dues) move cash
           but are not income or expense — they are excluded from the operating cash result
-          (Operating cash received ৳ {{ d.operatingIncomeBdt | number: '1.2-2' }} − operating cash paid ৳ {{ d.operatingExpenseBdt | number: '1.2-2' }}).
+          (Operating cash received {{ d.operatingIncomeBdt | money:2 }} − operating cash paid {{ d.operatingExpenseBdt | money:2 }}).
           Stock bought becomes a cost when it is used; see the Full Accounts statement for profit &amp; loss.
         </div>
       }
@@ -372,7 +372,7 @@
               </tr>
               <tr class="grand">
                 <td [attr.colspan]="d.isSingleDay ? 4 : 5" class="num">ওপেনিং ব্যালেন্সসহ মোট / Total with Opening</td>
-                <td class="num">৳ {{ sideTotal() | number: '1.2-2' }}</td>
+                <td class="num">{{ sideTotal() | money:2 }}</td>
               </tr>
             </tfoot>
           </table>
@@ -421,7 +421,7 @@
               </tr>
               <tr class="grand">
                 <td [attr.colspan]="d.isSingleDay ? 4 : 5" class="num">ক্লোজিং ব্যালেন্স / Closing Balance</td>
-                <td class="num">৳ {{ d.closingBalanceBdt | number: '1.2-2' }}</td>
+                <td class="num">{{ d.closingBalanceBdt | money:2 }}</td>
               </tr>
             </tfoot>
           </table>
@@ -430,7 +430,7 @@
 
       <div class="result" [ngClass]="d.netBalanceBdt >= 0 ? 'profit' : 'loss'">
         <span>{{ d.netBalanceBdt >= 0 ? 'নিট উদ্বৃত্ত / Net Surplus' : 'নিট ঘাটতি / Net Deficit' }} for the period</span>
-        <span class="num">৳ {{ (d.netBalanceBdt < 0 ? -d.netBalanceBdt : d.netBalanceBdt) | number: '1.2-2' }}</span>
+        <span class="num">{{ (d.netBalanceBdt < 0 ? -d.netBalanceBdt : d.netBalanceBdt) | money:2 }}</span>
       </div>
 
       <!-- Signatures -->

@@ -128,44 +128,44 @@
       <div class="kpis">
         <div class="kpi bal">
           <div class="l">Opening Cash</div>
-          <div class="v">৳ {{ d.cash.openingBalanceBdt | number: '1.0-0' }}</div>
+          <div class="v">{{ d.cash.openingBalanceBdt | money }}</div>
           <div class="s">ওপেনিং ব্যালেন্স</div>
         </div>
         <div class="kpi inc">
           <div class="l">Total Inflow</div>
-          <div class="v inc">৳ {{ d.cash.totalInflowBdt | number: '1.0-0' }}</div>
+          <div class="v inc">{{ d.cash.totalInflowBdt | money }}</div>
           <div class="s">সকল আয় + মূলধন</div>
         </div>
         <div class="kpi exp">
           <div class="l">Total Outflow</div>
-          <div class="v exp">৳ {{ d.cash.totalOutflowBdt | number: '1.0-0' }}</div>
+          <div class="v exp">{{ d.cash.totalOutflowBdt | money }}</div>
           <div class="s">সকল ব্যয় + উত্তোলন</div>
         </div>
         <div class="kpi bal">
           <div class="l">Closing Cash</div>
-          <div class="v">৳ {{ d.cash.closingBalanceBdt | number: '1.0-0' }}</div>
+          <div class="v">{{ d.cash.closingBalanceBdt | money }}</div>
           <div class="s">ক্লোজিং ব্যালেন্স</div>
         </div>
         <div class="kpi inc">
           <div class="l">Operating Revenue</div>
-          <div class="v">৳ {{ d.operating.totalRevenueBdt | number: '1.0-0' }}</div>
+          <div class="v">{{ d.operating.totalRevenueBdt | money }}</div>
           <div class="s">বিক্রয় ও অন্যান্য আয়</div>
         </div>
         <div class="kpi exp">
           <div class="l">Total Operating Cost</div>
-          <div class="v">৳ {{ d.operating.totalExpenseBdt | number: '1.0-0' }}</div>
-          <div class="s">৳ {{ d.costs.averageDailyCostBdt | number: '1.0-0' }} / day</div>
+          <div class="v">{{ d.operating.totalExpenseBdt | money }}</div>
+          <div class="s">{{ d.costs.averageDailyCostBdt | money }} / day</div>
         </div>
         <div class="kpi" [ngClass]="d.operating.netOperatingProfitBdt >= 0 ? 'inc' : 'exp'">
           <div class="l">Net {{ d.operating.netOperatingProfitBdt >= 0 ? 'Profit' : 'Loss' }}</div>
           <div class="v" [class.inc]="d.operating.netOperatingProfitBdt >= 0" [class.exp]="d.operating.netOperatingProfitBdt < 0">
-            ৳ {{ abs(d.operating.netOperatingProfitBdt) | number: '1.0-0' }}
+            {{ abs(d.operating.netOperatingProfitBdt) | money }}
           </div>
           <div class="s">Margin {{ d.operating.profitMarginPercent | number: '1.0-1' }}%</div>
         </div>
         <div class="kpi cap">
           <div class="l">Labour Cost</div>
-          <div class="v cap">৳ {{ d.costs.labourCostBdt | number: '1.0-0' }}</div>
+          <div class="v cap">{{ d.costs.labourCostBdt | money }}</div>
           <div class="s">শ্রমিক মজুরি</div>
         </div>
       </div>
@@ -179,7 +179,7 @@
             <tr><td>(+) মোট প্রাপ্তি / Total receipts (operating + capital + loans)</td><td class="num inc">{{ d.cash.totalInflowBdt | number: '1.2-2' }}</td></tr>
             <tr><td>(−) মোট প্রদান / Total payments (operating + withdrawals + repayments)</td><td class="num exp">{{ d.cash.totalOutflowBdt | number: '1.2-2' }}</td></tr>
             <tr class="sub"><td>নিট নগদ প্রবাহ / Net cash flow</td><td class="num" [class.inc]="d.cash.netCashFlowBdt >= 0" [class.exp]="d.cash.netCashFlowBdt < 0">{{ d.cash.netCashFlowBdt | number: '1.2-2' }}</td></tr>
-            <tr class="grand"><td>ক্লোজিং ব্যালেন্স / Closing cash balance <span class="note">as of {{ d.toDate | date: 'dd MMM yyyy' }}</span></td><td class="num">৳ {{ d.cash.closingBalanceBdt | number: '1.2-2' }}</td></tr>
+            <tr class="grand"><td>ক্লোজিং ব্যালেন্স / Closing cash balance <span class="note">as of {{ d.toDate | date: 'dd MMM yyyy' }}</span></td><td class="num">{{ d.cash.closingBalanceBdt | money:2 }}</td></tr>
           </tbody>
         </table>
       }
@@ -224,7 +224,7 @@
         <div class="result" [ngClass]="d.operating.netOperatingProfitBdt >= 0 ? 'profit' : 'loss'">
           <span>{{ d.operating.netOperatingProfitBdt >= 0 ? 'নিট মুনাফা / NET OPERATING PROFIT' : 'নিট লোকসান / NET OPERATING LOSS' }}
             <span style="font-weight: 600; font-size: 11px;">· margin {{ d.operating.profitMarginPercent | number: '1.0-2' }}%</span></span>
-          <span class="num">৳ {{ abs(d.operating.netOperatingProfitBdt) | number: '1.2-2' }}</span>
+          <span class="num">{{ abs(d.operating.netOperatingProfitBdt) | money:2 }}</span>
         </div>
       }
 
@@ -252,13 +252,13 @@
         </table>
         <table class="info" style="margin-top: 8px;">
           <tr>
-            <td class="k">Average daily cost</td><td class="v num">৳ {{ d.costs.averageDailyCostBdt | number: '1.2-2' }}</td>
+            <td class="k">Average daily cost</td><td class="v num">{{ d.costs.averageDailyCostBdt | money:2 }}</td>
             <td class="k">Labour share of cost</td>
             <td class="v num cap">{{ (d.costs.totalOperatingCostBdt > 0 ? d.costs.labourCostBdt / d.costs.totalOperatingCostBdt * 100 : 0) | number: '1.0-1' }}%</td>
           </tr>
           <tr>
-            <td class="k">Automated postings</td><td class="v num">৳ {{ d.costs.automatedPostingsBdt | number: '1.2-2' }} <span class="note" style="display: inline;">(feeding, inventory, livestock)</span></td>
-            <td class="k">Manual postings</td><td class="v num">৳ {{ d.costs.manualPostingsBdt | number: '1.2-2' }}</td>
+            <td class="k">Automated postings</td><td class="v num">{{ d.costs.automatedPostingsBdt | money:2 }} <span class="note" style="display: inline;">(feeding, inventory, livestock)</span></td>
+            <td class="k">Manual postings</td><td class="v num">{{ d.costs.manualPostingsBdt | money:2 }}</td>
           </tr>
         </table>
       }
@@ -346,7 +346,7 @@
         </table>
         @if (unpostedLoanAmount() > 0) {
           <div class="callout">
-            ৳ {{ unpostedLoanAmount() | number: '1.2-2' }} of loans disbursed in this period are recorded in the loan register
+            {{ unpostedLoanAmount() | money:2 }} of loans disbursed in this period are recorded in the loan register
             but were not posted to the cash book. Run <b>Accounting Health → Repair ledger</b> to post them.
           </div>
         }
@@ -455,9 +455,9 @@
           <table class="info">
             <tr>
               <td class="k">Total shares × price</td>
-              <td class="v num">{{ d.shares.totalShares | number }} × ৳ {{ d.shares.sharePriceBdt | number: '1.2-2' }}</td>
+              <td class="v num">{{ d.shares.totalShares | number }} × {{ d.shares.sharePriceBdt | money:2 }}</td>
               <td class="k">Farm valuation</td>
-              <td class="v num">৳ {{ d.shares.totalValuationBdt | number: '1.2-2' }}</td>
+              <td class="v num">{{ d.shares.totalValuationBdt | money:2 }}</td>
             </tr>
             <tr>
               <td class="k">Owner retained</td>
@@ -467,9 +467,9 @@
             </tr>
             <tr>
               <td class="k">Sold in period</td>
-              <td class="v num inc">{{ d.shares.sharesIssuedInPeriod | number }} sh · ৳ {{ d.shares.shareSalesAmountBdt | number: '1.2-2' }}</td>
+              <td class="v num inc">{{ d.shares.sharesIssuedInPeriod | number }} sh · {{ d.shares.shareSalesAmountBdt | money:2 }}</td>
               <td class="k">Bought back / Transferred</td>
-              <td class="v num">{{ d.shares.sharesBoughtBackInPeriod | number }} sh · ৳ {{ d.shares.buybackAmountBdt | number: '1.2-2' }} / {{ d.shares.sharesTransferredInPeriod | number }} sh</td>
+              <td class="v num">{{ d.shares.sharesBoughtBackInPeriod | number }} sh · {{ d.shares.buybackAmountBdt | money:2 }} / {{ d.shares.sharesTransferredInPeriod | number }} sh</td>
             </tr>
           </table>
           @if (d.shares.transactions.length > 0) {

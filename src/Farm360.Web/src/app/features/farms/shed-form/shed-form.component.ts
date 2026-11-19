@@ -2,11 +2,14 @@ import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ShedService } from '../services/shed.service';
 import { CreateShedCommand, UpdateShedCommand } from '../models/shed.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NotificationService } from '../../../shared/services/notification.service';
+
+import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-shed-form',
@@ -14,12 +17,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './shed-form.component.html'
 })
-export class ShedFormComponent implements OnInit {
+export class ShedFormComponent implements OnInit, HasUnsavedChanges {
+  /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
+  private saved = false;
+
+  hasUnsavedChanges(): boolean {
+    return !!this.shedForm?.dirty && !this.saved;
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly shedService = inject(ShedService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   shedForm!: FormGroup;
@@ -113,10 +123,7 @@ export class ShedFormComponent implements OnInit {
   onSubmit(): void {
     if (this.shedForm.invalid) {
       this.shedForm.markAllAsTouched();
-      this.snackBar.open('Please fix the validation errors before submitting.', 'OK', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please fix the validation errors before submitting.');
       return;
     }
 
@@ -141,10 +148,8 @@ export class ShedFormComponent implements OnInit {
       this.shedService.updateShed(this.shedId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Shed updated successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Shed updated successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
         },
         error: (err) => {
@@ -162,10 +167,8 @@ export class ShedFormComponent implements OnInit {
       this.shedService.createShed(this.farmId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Shed created successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Shed created successfully!');
+          this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
         },
         error: (err) => {

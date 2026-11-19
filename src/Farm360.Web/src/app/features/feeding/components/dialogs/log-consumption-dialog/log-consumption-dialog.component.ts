@@ -8,10 +8,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FeedingService } from '../../../services/feeding.service';
 import { FeedFormula } from '../../../models/feeding.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-log-consumption-dialog',
@@ -37,7 +38,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
           <span>Log Daily Feed Consumption</span>
         </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Close">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -117,14 +118,14 @@ export class LogConsumptionDialogComponent implements OnInit {
   readonly data = inject<{ farmId: string }>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly feedingService = inject(FeedingService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
   readonly availableFormulas = signal<FeedFormula[]>([]);
 
   readonly form = this.fb.group({
-    logDate: [new Date().toISOString().split('T')[0], [Validators.required]],
+    logDate: [toLocalIsoDate(), [Validators.required]],
     headCount: [25, [Validators.required, Validators.min(1)]],
     formulaId: ['', [Validators.required]],
     totalFeedOfferedKg: [300, [Validators.required, Validators.min(0)]],
@@ -155,7 +156,7 @@ export class LogConsumptionDialogComponent implements OnInit {
     this.feedingService.logConsumption(request as any).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open('Daily feed consumption logged successfully.', 'OK', { duration: 4000 });
+        this.notify.success('Daily feed consumption logged successfully.');
         this.dialogRef.close(true);
       },
       error: (err: any) => {

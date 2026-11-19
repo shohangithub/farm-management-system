@@ -56,7 +56,7 @@ public sealed class ItemWiseConsumptionReportDefinition : ReportDefinition<ItemW
     public override IReadOnlyList<ReportColumn<ItemWiseConsumptionReportRow>> Columns =>
     [
         ReportColumn<ItemWiseConsumptionReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date, widthMm: 30f),
-        ReportColumn<ItemWiseConsumptionReportRow>.Number("quantity", new LocalizedText("Consumed Qty", "ব্যবহৃত পরিমাণ"), r => r.ConsumedQuantity, decimals: 2, widthMm: 35f, aggregate: ReportAggregate.Sum),
+        ReportColumn<ItemWiseConsumptionReportRow>.Number("quantity", new LocalizedText("Consumed Qty", "ব্যবহৃত পরিমাণ"), r => r.ConsumedQuantity, decimals: 2, widthMm: 35f, aggregate: ReportAggregate.Sum, unitOf: r => r.Unit),
         ReportColumn<ItemWiseConsumptionReportRow>.Text("unit", new LocalizedText("Unit", "একক"), r => r.Unit, width: 22f, relative: false),
         ReportColumn<ItemWiseConsumptionReportRow>.Money("rate", new LocalizedText("Avg Rate (BDT)", "গড় দর (টাকা)"), r => r.UnitCostBdt, decimals: 2, widthMm: 35f, aggregate: ReportAggregate.None),
         ReportColumn<ItemWiseConsumptionReportRow>.Money("totalCost", new LocalizedText("Total Cost (BDT)", "মোট খরচ (টাকা)"), r => r.TotalCostBdt, decimals: 2, widthMm: 40f, aggregate: ReportAggregate.Sum),
@@ -86,7 +86,7 @@ public sealed class ItemWiseConsumptionReportDefinition : ReportDefinition<ItemW
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = context.Id("farmId");
+        var farmId = context.FarmId();
         var period = context.Range("period");
         var selectedItemId = context.Id("inventoryItemId");
 

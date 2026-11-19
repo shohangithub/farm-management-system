@@ -28,6 +28,38 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
             .ToListAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<(Guid AnimalId, DateOnly Date, decimal WeightKg)>> GetWeighInsByFarmAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+    {
+        var animalIds = _animals.Where(a => a.FarmId == farmId).Select(a => a.Id);
+        var rows = await context.WeightRecords
+            .AsNoTracking()
+            .Where(w => animalIds.Contains(w.AnimalId) && w.RecordedDate >= from && w.RecordedDate <= to)
+            .OrderBy(w => w.RecordedDate)
+            .Select(w => new { w.AnimalId, w.RecordedDate, w.Weight.WeightKg })
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(r => (r.AnimalId, r.RecordedDate, r.WeightKg)).ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<(Guid AnimalId, Guid? ShedId, DateTime PlacedAtUtc, DateTime? RemovedAtUtc)>> GetMovementsByFarmAsync(
+        Guid farmId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _animals
+            .AsNoTracking()
+            .Where(a => a.FarmId == farmId)
+            .SelectMany(a => a.Movements.Select(m => new { AnimalId = a.Id, m.ShedId, m.PlacedAtUtc, m.RemovedAtUtc }))
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(r => (r.AnimalId, r.ShedId, r.PlacedAtUtc, r.RemovedAtUtc)).ToList();
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyDictionary<Guid, (Guid? ShedId, Guid? PenId)>> GetCurrentLocationsByFarmAsync(Guid farmId, CancellationToken cancellationToken = default)
     {
         var rows = await _animals
@@ -111,9 +143,14 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         var dayStart = asOf.ToDateTime(TimeOnly.MinValue);
         var dayEnd = asOf.ToDateTime(TimeOnly.MaxValue);
 
+        // Who is fed is decided by the day, not by today's status (AnimalFeedingPresence): acquired
+        // on or before the day and not yet sold or dead on it (the exit day itself is not fed).
+        // Quarantined animals are on the farm and eat; a sold or dead animal still counts for the
+        // days before its exit date, so a catch-up or a late-recorded sale splits correctly.
         var query = _animals
             .IgnoreQueryFilters()
-            .Where(a => a.TenantId == tenantId && !a.IsDeleted && a.Status == AnimalStatus.Active);
+            .Where(a => a.TenantId == tenantId && !a.IsDeleted)
+            .Where(Farm360.Domain.Feeding.AnimalFeedingPresence.FedOn(asOf));
 
         // Most specific scope wins: a pen plan feeds that pen, not the whole shed around it.
         if (penId is not null)

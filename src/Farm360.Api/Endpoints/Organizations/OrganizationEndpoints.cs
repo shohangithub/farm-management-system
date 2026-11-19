@@ -70,7 +70,15 @@ public static class OrganizationEndpoints
             if (file == null || file.Length == 0)
                 return Results.BadRequest("No file uploaded.");
 
+            if (file.Length > Farm360.Application.Common.Files.ImageUploadValidator.DefaultMaxBytes)
+                return Results.BadRequest("The logo exceeds the 5 MB limit.");
+
+            // Confirm the organisation exists in the caller's tenant BEFORE writing anything
+            // (tenant-filtered query; throws NotFound otherwise).
+            await sender.Send(new GetOrganizationByIdQuery(id));
+
             using var stream = file.OpenReadStream();
+            // Validates extension + magic bytes (JPEG/PNG/WebP only) and stores under a GUID name.
             var logoUrl = await storageService.UploadFileAsync(stream, file.FileName, "organizations");
 
             await sender.Send(new UpdateOrganizationLogoCommand(id, logoUrl));

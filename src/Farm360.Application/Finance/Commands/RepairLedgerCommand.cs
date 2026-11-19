@@ -57,6 +57,7 @@ namespace Farm360.Application.Finance.Commands
         private readonly ILivestockAccountingService _livestock;
         private readonly IAccountingReconciliationService _reconciliation;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IFarmClock _clock;
 
         public RepairLedgerCommandHandler(
             IFinancialTransactionRepository transactions,
@@ -65,8 +66,10 @@ namespace Farm360.Application.Finance.Commands
             ILedgerPostingService posting,
             ILivestockAccountingService livestock,
             IAccountingReconciliationService reconciliation,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IFarmClock? clock = null)
         {
+            _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
             _transactions = transactions;
             _loans = loans;
             _animals = animals;
@@ -206,7 +209,7 @@ namespace Farm360.Application.Finance.Commands
             if (Math.Abs(difference) <= AccountingReconciliationService.Tolerance)
                 return 0m;
 
-            var today = DateTime.UtcNow.Date;
+            var today = _clock.Now.Date;
             var gain = difference > 0;
             await _posting.PostAsync(new LedgerPosting(
                 request.TenantId, request.FarmId,

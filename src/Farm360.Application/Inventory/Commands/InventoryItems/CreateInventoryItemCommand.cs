@@ -38,6 +38,8 @@ public sealed class CreateInventoryItemCommandValidator : AbstractValidator<Crea
 
 public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateInventoryItemCommand, Guid>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IInventoryItemRepository _repository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
@@ -51,8 +53,10 @@ public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateIn
         IUnitOfWork unitOfWork,
         IStockTransactionRepository stockTransactions,
         ILedgerPostingService ledgerPosting,
-        Farm360.Application.Inventory.Units.IUnitService? units = null)
+        Farm360.Application.Inventory.Units.IUnitService? units = null,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _units = units;
         _repository = repository;
         _tenantService = tenantService;
@@ -86,7 +90,7 @@ public sealed class CreateInventoryItemCommandHandler : IRequestHandler<CreateIn
         // owner capital, otherwise stock exists physically but not in the accounts.
         if (request.InitialStock > 0)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = _clock.Today;
             var openingId = Guid.NewGuid();
             await _stockTransactions.AddAsync(new StockTransaction(
                 id: openingId,

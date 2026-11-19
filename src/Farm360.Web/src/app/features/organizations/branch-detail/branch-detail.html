@@ -11,13 +11,7 @@
 </app-page-header>
 
 <!-- Error State -->
-<div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3">
-  <mat-icon class="!text-red-500 mt-0.5 flex-shrink-0">error_outline</mat-icon>
-  <div>
-    <h3 class="text-sm font-semibold">Error</h3>
-    <p class="text-xs mt-1">{{ error() }}</p>
-  </div>
-</div>
+<app-error-state *ngIf="!isLoading() && error() as err" title="Couldn't load branch" [message]="err" (retry)="loadBranch()"></app-error-state>
 
 <!-- Loading State -->
 <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-24 space-y-4">
@@ -45,7 +39,7 @@
           <div class="flex items-center gap-2 flex-wrap">
             <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{{ branch()?.name }}</h2>
             <span *ngIf="branch()?.isHeadOffice"
-                  class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                  class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
               Head Office
             </span>
           </div>
@@ -224,7 +218,7 @@
                   <td class="px-6 py-4 text-sm font-mono text-gray-500">{{ f.farmCode }}</td>
                   <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-white">{{ f.farmName }}</td>
                   <td class="px-6 py-4 text-sm text-center">
-                    <span class="px-2 py-0.5 text-[10px] uppercase font-bold rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                    <span class="px-2 py-0.5 text-[11px] uppercase font-bold rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
                       {{ f.type }}
                     </span>
                   </td>
@@ -232,7 +226,7 @@
                     {{ f.currentAnimalCount }} <span class="text-xs text-gray-400 font-normal">/ {{ f.capacity || '∞' }}</span>
                   </td>
                   <td class="px-6 py-4 text-sm text-center">
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border"
                           [ngClass]="f.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
                       {{ f.status }}
                     </span>

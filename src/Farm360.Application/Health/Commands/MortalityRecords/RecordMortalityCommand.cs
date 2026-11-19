@@ -83,7 +83,8 @@ internal sealed class RecordMortalityCommandHandler : IRequestHandler<RecordMort
             _ => Farm360.Domain.Livestock.Enums.DisposalReason.Unknown
         };
 
-        animal.RecordDeath(disposalReason, request.DeathDate, request.PostMortemNotes);
+        // Closes the pen/shed movement at the death date; the mortality record below is kept as history.
+        animal.RecordDeath(disposalReason, request.DeathDate, request.PostMortemNotes, currentUserId);
 
         var record = MortalityRecord.Record(
             _tenantService.TenantId,

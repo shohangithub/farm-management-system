@@ -13,16 +13,16 @@
           <a [routerLink]="['/organizations/branches', branchId, 'farms', farm.id]">{{ farm.farmName }}</a>
         </h3>
         <div class="flex items-center gap-2 mt-1">
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
             {{ farm.farmCode }}
           </span>
-          <span class="text-[10px] font-bold tracking-wider uppercase flex items-center gap-1 text-gray-500 dark:text-gray-400">
+          <span class="text-[11px] font-bold tracking-wider uppercase flex items-center gap-1 text-gray-500 dark:text-gray-400">
             <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">eco</mat-icon> {{ getFarmTypeName(farm.type) }}
           </span>
         </div>
       </div>
     </div>
-    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" 
+    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider" 
           [ngClass]="getStatusClass(farm.status)">
       {{ getStatusName(farm.status) }}
     </span>
@@ -32,18 +32,18 @@
     <div class="grid grid-cols-2 gap-4">
       <div class="text-center">
         <div class="text-2xl font-black text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">{{ farm.currentAnimalCount | number }}</div>
-        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Animals</div>
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Animals</div>
       </div>
       <div class="text-center border-l border-gray-100 dark:border-gray-700">
         <div class="text-2xl font-black text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">{{ farm.capacity ? (farm.capacity | number) : 'N/A' }}</div>
-        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Capacity</div>
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Capacity</div>
       </div>
     </div>
     
     <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800/50">
       <div class="flex justify-between items-center mb-1.5">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Utilization</span>
-        <span class="text-[10px] font-bold uppercase tracking-wider" [ngClass]="(farm.capacity && (farm.currentAnimalCount / farm.capacity) > 0.9) ? 'text-red-500' : 'text-primary-600 dark:text-primary-400'">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Utilization</span>
+        <span class="text-[11px] font-bold uppercase tracking-wider" [ngClass]="(farm.capacity && (farm.currentAnimalCount / farm.capacity) > 0.9) ? 'text-red-500' : 'text-primary-600 dark:text-primary-400'">
           {{ farm.capacity ? ((farm.currentAnimalCount / farm.capacity) * 100 | number:'1.0-0') : 0 }}%
         </span>
       </div>
@@ -60,7 +60,7 @@
        class="flex-1 px-4 py-2 text-sm font-semibold text-primary-700 bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1.5">
       <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> View
     </a>
-    <a [routerLink]="['/organizations/branches', branchId, 'farms', farm.id, 'edit']" 
+    <a aria-label="Edit Farm" [routerLink]="['/organizations/branches', branchId, 'farms', farm.id, 'edit']" 
        class="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors border border-transparent hover:border-primary-200 dark:hover:border-primary-800 bg-white dark:bg-gray-800 shadow-sm"
        title="Edit Farm">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>

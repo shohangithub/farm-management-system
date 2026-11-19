@@ -22,7 +22,13 @@ public enum StockTransactionType
     PlannedFeedConsumption = 7,
     ReconciliationAdjustment = 8,
     AutoConsumableUsage = 9,
-    PurchaseReturn = 10
+    PurchaseReturn = 10,
+
+    /// <summary>
+    /// Feed deducted for a feeding entry put back into stock because the entry was reversed (its
+    /// animal had already been sold or died). ReferenceId is the feeding entry.
+    /// </summary>
+    FeedConsumptionReversal = 11
 }
 
 public enum ConsumableUsagePlanStatus

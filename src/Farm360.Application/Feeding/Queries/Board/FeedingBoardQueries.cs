@@ -177,12 +177,15 @@ public sealed class GetFeedingBoardQueryHandler(
     ITenantService tenant,
     IFeedIngredientRepository? ingredients = null,
     IInventoryItemRepository? inventory = null,
-    Farm360.Application.Inventory.Units.IUnitService? units = null) : IRequestHandler<GetFeedingBoardQuery, FeedingBoardDto>
+    Farm360.Application.Inventory.Units.IUnitService? units = null,
+    IFarmClock? clock = null) : IRequestHandler<GetFeedingBoardQuery, FeedingBoardDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<FeedingBoardDto> Handle(GetFeedingBoardQuery request, CancellationToken cancellationToken)
     {
         var tenantId = tenant.TenantId;
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
 
         var herd = (await animals.GetAllByFarmAsync(request.FarmId, cancellationToken))
             .Where(a => a.Status is AnimalStatus.Active or AnimalStatus.Quarantined)
@@ -290,12 +293,15 @@ public sealed class PreviewRationQueryHandler(
     ITenantService tenant,
     IDirectFeedService directFeed,
     IFeedIngredientRepository? ingredients = null,
-    Farm360.Application.Inventory.Units.IUnitService? units = null) : IRequestHandler<PreviewRationQuery, RationPreviewDto>
+    Farm360.Application.Inventory.Units.IUnitService? units = null,
+    IFarmClock? clock = null) : IRequestHandler<PreviewRationQuery, RationPreviewDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<RationPreviewDto> Handle(PreviewRationQuery request, CancellationToken cancellationToken)
     {
         var tenantId = tenant.TenantId;
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = _clock.Today;
         var sets = (await ruleSets.GetAllAsync(cancellationToken)).ToDictionary(r => r.Id);
         var formulaList = (await formulas.GetListAsync(tenantId, 1, 2000, null, cancellationToken)).ToList();
         var chosen = (request.RuleSetIds ?? []).Distinct().Where(sets.ContainsKey).Select(id => sets[id]).ToList();

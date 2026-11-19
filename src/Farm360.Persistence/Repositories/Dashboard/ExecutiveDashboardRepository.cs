@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using Farm360.Application.Finance.Services;
 using Farm360.Domain.Dashboard.Interfaces;
 using Farm360.Domain.Livestock.Enums;
@@ -14,10 +15,14 @@ namespace Farm360.Persistence.Repositories.Dashboard;
 
 public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
 {
+    private readonly IFarmClock _clock;
+
     private readonly ApplicationDbContext _context;
 
-    public ExecutiveDashboardRepository(ApplicationDbContext context)
+    public ExecutiveDashboardRepository(ApplicationDbContext context,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _context = context;
     }
 
@@ -95,7 +100,7 @@ public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
 
     public async Task<int> GetDueVaccinationsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
     {
-        var dueBy = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
+        var dueBy = _clock.Today.AddDays(7);
 
         // Due within the next 7 days or overdue — only for animals still on the farm (a sold or
         // dead animal's open schedule is not work anyone can do).

@@ -17,6 +17,7 @@ import { ReportExportFormat } from '../../../reports/models/report.models';
 import { FinanceService } from '../../services/finance.service';
 import { AccountHeadSummary, IncomeExpenseReport } from '../../models/finance.model';
 import { ACCOUNTS_PAPER_CSS, RANGE_PRESETS, addDays, printPaper, toIsoDate } from '../../utils/accounts-report-print';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 type ReportMode = 'daily' | 'range';
 
@@ -41,7 +42,7 @@ interface SummaryCell {
 @Component({
   selector: 'app-income-expense-report',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, MatTooltipModule,
     PageHeaderComponent, DecimalPipe, DatePipe,
   ],

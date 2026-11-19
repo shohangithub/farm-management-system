@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,15 +15,20 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 import { ReportService } from '../../../reports/services/report.service';
 import { BalanceSheet, BalanceSheetLine } from '../../models/finance.model';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
-
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { APP_NUMBER_LOCALE } from '../../../../shared/utils/locale';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
+
 interface StatementGroup { title: string | null; lines: BalanceSheetLine[]; total: number; priorTotal: number; }
 interface StatementBlock { title: string; totalLabel: string; total: number; priorTotal: number; color: string; groups: StatementGroup[]; }
 
 @Component({
   selector: 'app-balance-sheet',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
@@ -33,7 +38,6 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
     LoadingComponent,
     EmptyStateComponent,
     FinanceSubnavComponent,
-    CurrencyPipe,
     DatePipe
   ],
   template: `
@@ -90,8 +94,10 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
 
       <app-finance-subnav></app-finance-subnav>
 
+      <app-error-state *ngIf="loadError() as err" title="Couldn't load the balance sheet" [message]="err" (retry)="retryLoad()"></app-error-state>
+
       <app-empty-state
-        *ngIf="!bsData()"
+        *ngIf="!bsData() && !loadError()"
         icon="account_balance"
         title="No Financial Records Found"
         description="There is no balance sheet data available for this farm as of the selected date.">
@@ -112,29 +118,29 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Assets</p>
-            <h3 class="text-xl font-black text-gray-900 dark:text-white mt-1">{{ sheet.totalAssetsBdt | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+            <h3 class="text-xl font-black text-gray-900 dark:text-white mt-1">{{ sheet.totalAssetsBdt | money }}</h3>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Liabilities</p>
-            <h3 class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">{{ sheet.liabilities.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+            <h3 class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">{{ sheet.liabilities.totalBdt | money }}</h3>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Equity</p>
-            <h3 class="text-xl font-black text-purple-600 dark:text-purple-400 mt-1">{{ sheet.equity.totalBdt | currency:'BDT ':'symbol':'1.0-0' }}</h3>
+            <h3 class="text-xl font-black text-purple-600 dark:text-purple-400 mt-1">{{ sheet.equity.totalBdt | money }}</h3>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Profit for the year</p>
             <h3 class="text-xl font-black mt-1" [ngClass]="(sheet.currentYearProfitBdt || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-              {{ (sheet.currentYearProfitBdt || 0) | currency:'BDT ':'symbol':'1.0-0' }}
+              {{ (sheet.currentYearProfitBdt || 0) | money }}
             </h3>
-            <p class="text-[10px] text-gray-400 mt-0.5">since {{ sheet.fiscalYearStart | date:'d MMM yyyy' }}</p>
+            <p class="text-[11px] text-gray-400 mt-0.5">since {{ sheet.fiscalYearStart | date:'d MMM yyyy' }}</p>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Net Working Capital</p>
             <h3 class="text-xl font-black mt-1" [ngClass]="sheet.netWorkingCapitalBdt >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
-              {{ sheet.netWorkingCapitalBdt | currency:'BDT ':'symbol':'1.0-0' }}
+              {{ sheet.netWorkingCapitalBdt | money }}
             </h3>
-            <p class="text-[10px] text-gray-400 mt-0.5">Current assets − current liabilities</p>
+            <p class="text-[11px] text-gray-400 mt-0.5">Current assets − current liabilities</p>
           </div>
         </div>
 
@@ -244,10 +250,10 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
                   <span class="font-semibold text-gray-800 dark:text-gray-200">{{ r.account }}</span>
                   <span class="block text-[11px] text-gray-500">{{ r.registerSource }}</span>
                 </td>
-                <td class="px-4 py-2 text-right font-mono">{{ r.booksBdt | currency:'BDT ':'symbol':'1.2-2' }}</td>
-                <td class="px-4 py-2 text-right font-mono">{{ r.registerBdt | currency:'BDT ':'symbol':'1.2-2' }}</td>
+                <td class="px-4 py-2 text-right font-mono">{{ r.booksBdt | money:2 }}</td>
+                <td class="px-4 py-2 text-right font-mono">{{ r.registerBdt | money:2 }}</td>
                 <td class="px-4 py-2 text-right font-mono font-bold" [ngClass]="r.isReconciled ? 'text-emerald-600' : 'text-amber-600'">
-                  {{ r.isReconciled ? '✓' : (r.differenceBdt | currency:'BDT ':'symbol':'1.2-2') }}
+                  {{ r.isReconciled ? '✓' : (r.differenceBdt | money:2) }}
                 </td>
               </tr>
             </tbody>
@@ -298,15 +304,22 @@ export class BalanceSheetComponent {
     this.workingContextService.currentFarm$
   ]).pipe(
     switchMap(([filter, farm]) => {
+      this.loadError.set(null);
       if (!farm) return of(null);
       return this.financeService.getBalanceSheet(farm.id, filter.asOfDate, null, filter.comparative).pipe(
         catchError(err => {
-          console.error('Error loading balance sheet:', err);
+          this.loadError.set(parseApiError(err, 'Could not load the balance sheet.'));
           return of(null);
         })
       );
     })
   );
+
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.filterChanges$.next(this.filterChanges$.value);
+  }
 
   readonly bsData = toSignal(this.bsData$);
   readonly isLoading = computed(() => this.bsData() === undefined);
@@ -349,7 +362,7 @@ export class BalanceSheetComponent {
                 dateRange: `As of ${asOf}`,
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Assets', value: `৳ ${(sheet?.totalAssetsBdt || 0).toLocaleString()}` },
+                  { label: 'Total Assets', value: `${formatMoney((sheet?.totalAssetsBdt || 0))}` },
                   { label: 'Status', value: sheet?.isBalanced ? 'Balanced' : 'Unbalanced' }
                 ]
               },
@@ -395,7 +408,7 @@ export class BalanceSheetComponent {
   fmt(value: number | null | undefined): string {
     if (value === null || value === undefined) return '';
     if (Math.abs(value) < 0.005) return '–';
-    const text = Math.abs(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const text = Math.abs(value).toLocaleString(APP_NUMBER_LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return value < 0 ? `(${text})` : text;
   }
 

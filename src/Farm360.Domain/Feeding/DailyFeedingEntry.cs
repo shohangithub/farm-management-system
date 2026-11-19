@@ -104,6 +104,28 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
         ActualKg = 0;
     }
 
+    /// <summary>
+    /// A confirmed entry dated after its animal left the farm (sale or death recorded late): the
+    /// feed was never eaten. The entry becomes Skipped with nothing fed and no cost, and the reason
+    /// says why. The caller returns the stock and removes the ledger posting. Returns false when the
+    /// entry was not confirmed, so a second run changes nothing.
+    /// </summary>
+    public bool VoidAfterExit(string reason)
+    {
+        if (Status is not (DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted))
+            return false;
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("A reason is required to void a confirmed feeding entry.", nameof(reason));
+
+        var was = ActualKg ?? ExpectedKg;
+        Status = DailyFeedingEntryStatus.Skipped;
+        ActualKg = 0;
+        TotalCostBdt = 0;
+        var note = $"{reason.Trim()} (was confirmed at {was:0.###} kg; reversed)";
+        AdjustmentReason = note.Length <= 250 ? note : note[..250];
+        return true;
+    }
+
     public void UpdateExpectedQuantity(decimal expectedKg, Guid? ruleLineId = null)
     {
         if (Status != DailyFeedingEntryStatus.Pending)

@@ -77,7 +77,7 @@ public sealed class AnimalFeedingReportDefinition : ReportDefinition<AnimalFeedi
         ReportColumn<AnimalFeedingReportRow>.Text("recipe", new LocalizedText("Recipe", "রেসিপি"), r => r.Recipe, width: 2.2f),
         ReportColumn<AnimalFeedingReportRow>.Number("kg", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.AllocatedKg, decimals: 3, widthMm: 22f, aggregate: ReportAggregate.Sum),
         ReportColumn<AnimalFeedingReportRow>.Money("rate", new LocalizedText("Rate BDT/kg", "দর টাকা/কেজি"), r => r.UnitCostBdt, widthMm: 22f, aggregate: ReportAggregate.None),
-        ReportColumn<AnimalFeedingReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt, widthMm: 24f),
+        ReportColumn<AnimalFeedingReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
         ReportColumn<AnimalFeedingReportRow>.Text("basis", new LocalizedText("Basis", "ভিত্তি"), r => r.Basis, width: 26f, relative: false),
         ReportColumn<AnimalFeedingReportRow>.WholeNumber("head", new LocalizedText("Head", "সংখ্যা"), r => r.HeadCount, widthMm: 14f),
     ];

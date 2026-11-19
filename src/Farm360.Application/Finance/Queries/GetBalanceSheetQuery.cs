@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,11 +32,15 @@ public record GetBalanceSheetQuery(
 /// </remarks>
 public class GetBalanceSheetQueryHandler : IRequestHandler<GetBalanceSheetQuery, BalanceSheetDto>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IFinancialStatementEngine _engine;
     private readonly IAccountingReconciliationService _reconciliation;
 
-    public GetBalanceSheetQueryHandler(IFinancialStatementEngine engine, IAccountingReconciliationService reconciliation)
+    public GetBalanceSheetQueryHandler(IFinancialStatementEngine engine, IAccountingReconciliationService reconciliation,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _engine = engine;
         _reconciliation = reconciliation;
     }
@@ -67,7 +72,7 @@ public class GetBalanceSheetQueryHandler : IRequestHandler<GetBalanceSheetQuery,
 
         var difference = R(current.TotalAssets - current.TotalLiabilitiesAndEquity);
 
-        var reconciliations = asOfDateTime.Date >= DateTime.UtcNow.Date
+        var reconciliations = asOfDateTime.Date >= _clock.Now.Date
             // Registers are current snapshots, so the comparison is only meaningful for today. The
             // books side is the balance sheet's own basis: opening entries plus postings after the
             // books start, so a reconciled line means the figure on this statement is right.

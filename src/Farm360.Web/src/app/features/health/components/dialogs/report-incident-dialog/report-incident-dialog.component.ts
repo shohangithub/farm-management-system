@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { IncidentSeverity } from '../../../models/health.models';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-report-incident-dialog',
@@ -31,7 +33,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Record a new disease outbreak or incident</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -51,6 +53,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Disease Name <span class="text-red-500">*</span></label>
             <input type="text" formControlName="diseaseName" placeholder="e.g. FMD Outbreak"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <p *ngIf="form.get('diseaseName')?.touched && form.get('diseaseName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('diseaseName')?.touched && form.get('diseaseName')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 150 characters or fewer.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -60,12 +64,14 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
                 <option *ngFor="let sev of severities" [ngValue]="sev.value">{{ sev.label }}</option>
               </select>
+              <p *ngIf="form.get('severity')?.touched && form.get('severity')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Incident Date <span class="text-red-500">*</span></label>
               <input type="date" formControlName="incidentDate"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p *ngIf="form.get('incidentDate')?.touched && form.get('incidentDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
           </div>
 
@@ -73,18 +79,23 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Affected Animal Count <span class="text-red-500">*</span></label>
             <input type="number" formControlName="affectedAnimalCount" min="1" placeholder="1"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <p *ngIf="form.get('affectedAnimalCount')?.touched && form.get('affectedAnimalCount')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('affectedAnimalCount')?.touched && form.get('affectedAnimalCount')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 1.</p>
           </div>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Symptoms <span class="text-red-500">*</span></label>
             <textarea formControlName="symptoms" rows="3" placeholder="Describe symptoms..."
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
+            <p *ngIf="form.get('symptoms')?.touched && form.get('symptoms')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('symptoms')?.touched && form.get('symptoms')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 1000 characters or fewer.</p>
           </div>
           
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes / Action Plan</label>
             <textarea formControlName="notes" rows="2" placeholder="Quarantine details, notes..."
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
+            <p *ngIf="form.get('notes')?.touched && form.get('notes')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 1000 characters or fewer.</p>
           </div>
         </div>
 
@@ -124,7 +135,7 @@ export class ReportIncidentDialog {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<ReportIncidentDialog>);
-  private snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   form: FormGroup;
   isSubmitting = signal(false);
@@ -140,7 +151,7 @@ export class ReportIncidentDialog {
     this.form = this.fb.group({
       diseaseName: ['', [Validators.required, Validators.maxLength(150)]],
       severity: [IncidentSeverity.Moderate, Validators.required],
-      incidentDate: [new Date().toISOString().split('T')[0], Validators.required],
+      incidentDate: [toLocalIsoDate(), Validators.required],
       symptoms: ['', [Validators.required, Validators.maxLength(1000)]],
       affectedAnimalCount: [1, [Validators.required, Validators.min(1)]],
       notes: ['', Validators.maxLength(1000)]
@@ -150,10 +161,7 @@ export class ReportIncidentDialog {
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.snackBar.open('Please fill in all required fields correctly.', 'Close', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please fill in all required fields correctly.');
       return;
     }
 
@@ -166,7 +174,7 @@ export class ReportIncidentDialog {
     if (!farmId) {
       const msg = 'No farm context available.';
       this.error.set(msg);
-      this.snackBar.open(msg, 'Close', { duration: 4000, panelClass: ['snack-error'] });
+      this.notify.error(msg);
       this.isSubmitting.set(false);
       return;
     }
@@ -180,20 +188,13 @@ export class ReportIncidentDialog {
     this.healthService.reportIncident(request).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open('Incident reported successfully!', 'Close', {
-          duration: 3000,
-          panelClass: ['snack-success']
-        });
+        this.notify.success('Incident reported successfully!');
         this.dialogRef.close(true);
       },
       error: (err) => {
-        console.error(err);
         const parsedMsg = parseApiError(err, 'Failed to report incident. Please try again.');
         this.error.set(parsedMsg);
-        this.snackBar.open(parsedMsg, 'Close', {
-          duration: 5000,
-          panelClass: ['snack-error']
-        });
+        this.notify.error(parsedMsg);
         this.isSubmitting.set(false);
       }
     });

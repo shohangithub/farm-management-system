@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { permissionGuard } from '../../core/guards/permission.guard';
+import { Permissions } from '../../core/auth/permissions';
 
 export const FINANCE_ROUTES: Routes = [
   {
@@ -68,6 +70,9 @@ export const FINANCE_ROUTES: Routes = [
   },
   {
     path: 'accounting-health',
+    // Repair runs here (finance.admin); viewing the health report only needs finance.view.
+    canActivate: [permissionGuard],
+    data: { permission: Permissions.Finance.View },
     loadComponent: () => import('./pages/accounting-health/accounting-health').then(m => m.AccountingHealthComponent),
     title: 'Accounting Health - Farm360 AI'
   },
@@ -88,6 +93,8 @@ export const FINANCE_ROUTES: Routes = [
   },
   {
     path: 'accounts-setup',
+    canActivate: [permissionGuard],
+    data: { permission: [Permissions.Finance.Edit, Permissions.Finance.Admin] },
     loadComponent: () => import('./pages/accounts-setup/accounts-setup.component').then(m => m.AccountsSetupComponent),
     title: 'Accounts Setup - Farm360 AI'
   }

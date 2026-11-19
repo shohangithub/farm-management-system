@@ -18,11 +18,13 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { CreateProtocolDialogComponent } from '../../components/dialogs/create-protocol-dialog/create-protocol-dialog.component';
 import { AssignProtocolDialog } from '../../components/dialogs/assign-protocol-dialog/assign-protocol-dialog.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-vaccination-protocol-detail',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -32,7 +34,6 @@ import { AssignProtocolDialog } from '../../components/dialogs/assign-protocol-d
     MatDialogModule
   ],
   templateUrl: './vaccination-protocol-detail.html',
-  styleUrls: ['./vaccination-protocol-detail.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VaccinationProtocolDetailComponent {
@@ -72,8 +73,7 @@ export class VaccinationProtocolDetailComponent {
         }
         return this.healthService.getVaccinationProtocol(id).pipe(
           catchError((err) => {
-            console.error('Error loading protocol details', err);
-            this.error.set('Failed to load protocol details.');
+            this.error.set(parseApiError(err, 'Failed to load protocol details.'));
             return of(null);
           }),
           tap(() => this.isLoading.set(false))
@@ -113,7 +113,7 @@ export class VaccinationProtocolDetailComponent {
     const p = this.protocol();
     if (!p) return;
     
-    this.dialog.open(AssignProtocolDialog, { disableClose: true,
+    this.dialog.open(AssignProtocolDialog, { maxWidth: '95vw', disableClose: true,
       width: '720px',
       data: { protocol: p }
     });

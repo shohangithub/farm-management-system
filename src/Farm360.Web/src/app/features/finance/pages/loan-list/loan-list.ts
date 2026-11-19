@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,11 +15,14 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { LoanFormDialogComponent } from '../../components/loan-form-dialog/loan-form-dialog';
 import { LoanRepaymentDialogComponent } from '../../components/loan-repayment-dialog/loan-repayment-dialog';
 import { LoanRecord } from '../../models/finance.model';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-loan-list',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -29,7 +32,6 @@ import { LoanRecord } from '../../models/finance.model';
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    CurrencyPipe,
     DatePipe
   ],
   template: `
@@ -51,7 +53,9 @@ import { LoanRecord } from '../../models/finance.model';
 
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-      <div *ngIf="!isLoading()" class="space-y-6">
+      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load loans" [message]="err" (retry)="retryLoad()"></app-error-state>
+
+      <div *ngIf="!isLoading() && !loadError()" class="space-y-6">
       
       <app-empty-state 
         *ngIf="!loans() || loans()!.length === 0"
@@ -88,7 +92,7 @@ import { LoanRecord } from '../../models/finance.model';
           <div class="space-y-4">
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
               <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Principal Amount</span>
-              <span class="text-sm font-bold text-gray-900 dark:text-white">{{ loan.principalAmountBdt | currency:'BDT ':'symbol':'1.0-0' }}</span>
+              <span class="text-sm font-bold text-gray-900 dark:text-white">{{ loan.principalAmountBdt | money }}</span>
             </div>
             
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
@@ -99,7 +103,7 @@ import { LoanRecord } from '../../models/finance.model';
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
               <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding Balance</span>
               <span class="text-sm font-bold" [ngClass]="loan.outstandingBalanceBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
-                {{ loan.outstandingBalanceBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                {{ loan.outstandingBalanceBdt | money }}
               </span>
             </div>
           </div>
@@ -113,19 +117,19 @@ import { LoanRecord } from '../../models/finance.model';
             <div class="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
               <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500" [style.width.%]="loan.repaymentProgressPercent"></div>
             </div>
-            <p class="text-xs text-center text-gray-500 mt-2">Total Repaid: {{ loan.totalRepaidBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+            <p class="text-xs text-center text-gray-500 mt-2">Total Repaid: {{ loan.totalRepaidBdt | money }}</p>
             <div class="grid grid-cols-3 gap-2 mt-3 text-center">
               <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 px-2 py-1.5">
-                <p class="text-[10px] uppercase tracking-wider text-gray-400 m-0">Principal paid</p>
-                <p class="text-xs font-bold text-gray-800 dark:text-gray-100 m-0">{{ (loan.principalRepaidBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-[11px] uppercase tracking-wider text-gray-400 m-0">Principal paid</p>
+                <p class="text-xs font-bold text-gray-800 dark:text-gray-100 m-0">{{ (loan.principalRepaidBdt ?? 0) | money }}</p>
               </div>
               <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5" title="Interest is an expense in profit & loss">
-                <p class="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 m-0">Interest paid</p>
-                <p class="text-xs font-bold text-amber-700 dark:text-amber-300 m-0">{{ (loan.interestPaidBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-[11px] uppercase tracking-wider text-amber-600 dark:text-amber-400 m-0">Interest paid</p>
+                <p class="text-xs font-bold text-amber-700 dark:text-amber-300 m-0">{{ (loan.interestPaidBdt ?? 0) | money }}</p>
               </div>
               <div class="rounded-lg bg-rose-50 dark:bg-rose-900/20 px-2 py-1.5" title="Principal still owed — the liability on the balance sheet">
-                <p class="text-[10px] uppercase tracking-wider text-rose-500 m-0">Principal due</p>
-                <p class="text-xs font-bold text-rose-600 dark:text-rose-300 m-0">{{ (loan.outstandingPrincipalBdt ?? 0) | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-[11px] uppercase tracking-wider text-rose-500 m-0">Principal due</p>
+                <p class="text-xs font-bold text-rose-600 dark:text-rose-300 m-0">{{ (loan.outstandingPrincipalBdt ?? 0) | money }}</p>
               </div>
             </div>
           </div>
@@ -167,14 +171,24 @@ export class LoanListComponent implements OnInit {
     this.workingContextService.currentFarm$
   ]).pipe(
     switchMap(([_, farm]) => {
+      this.loadError.set(null);
       if (!farm) {
         return of([]);
       }
       return this.financeService.getLoans(farm.id).pipe(
-        catchError(() => of([]))
+        catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load loans.'));
+          return of([]);
+        })
       );
     })
   );
+
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger$.next();
+  }
 
   readonly loans = toSignal(this.loans$);
   readonly isLoading = computed(() => this.loans() === undefined);
@@ -182,7 +196,7 @@ export class LoanListComponent implements OnInit {
   ngOnInit(): void { }
 
   openLoanDialog(): void {
-    const dialogRef = this.dialog.open(LoanFormDialogComponent, {
+    const dialogRef = this.dialog.open(LoanFormDialogComponent, { maxWidth: '95vw',
       width: '600px',
       disableClose: true,
       panelClass: ['premium-dialog-panel']
@@ -196,7 +210,7 @@ export class LoanListComponent implements OnInit {
   }
 
   openRepaymentDialog(loan: LoanRecord): void {
-    const dialogRef = this.dialog.open(LoanRepaymentDialogComponent, {
+    const dialogRef = this.dialog.open(LoanRepaymentDialogComponent, { maxWidth: '95vw',
       width: '500px',
       disableClose: true,
       panelClass: ['premium-dialog-panel'],

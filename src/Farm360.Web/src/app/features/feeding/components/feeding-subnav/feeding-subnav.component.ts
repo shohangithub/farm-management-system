@@ -28,7 +28,7 @@ interface FeedingNavLink {
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ link.icon }}</mat-icon>
           <span class="flex flex-col leading-tight">
             <span>{{ link.label }}</span>
-            <span class="text-[10px] font-normal opacity-70">{{ link.labelBn }}</span>
+            <span class="text-[11px] font-normal opacity-70">{{ link.labelBn }}</span>
           </span>
         </a>
       </ng-container>

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,8 +13,10 @@ import { ReportService } from '../../../reports/services/report.service';
 import { FinanceService } from '../../services/finance.service';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { IncomeStatement, IncomeStatementTotals } from '../../models/finance.model';
-
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { APP_NUMBER_LOCALE } from '../../../../shared/utils/locale';
+
 interface Period { fromDate: string | null; toDate: string; comparative: boolean; }
 
 /**
@@ -26,7 +28,7 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
 @Component({
   selector: 'app-income-statement',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, CurrencyPipe, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe],
   template: `
     <app-page-header
       title="Profit & Loss Statement"
@@ -70,8 +72,8 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div *ngFor="let k of kpis(st.totals)" class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ k.label }}</p>
-            <h3 class="text-xl font-black mt-1" [ngClass]="k.value >= 0 ? k.color : 'text-rose-600 dark:text-rose-400'">{{ k.value | currency:'BDT ':'symbol':'1.0-0' }}</h3>
-            <p *ngIf="k.hint" class="text-[10px] text-gray-400 mt-0.5">{{ k.hint }}</p>
+            <h3 class="text-xl font-black mt-1" [ngClass]="k.value >= 0 ? k.color : 'text-rose-600 dark:text-rose-400'">{{ k.value | money }}</h3>
+            <p *ngIf="k.hint" class="text-[11px] text-gray-400 mt-0.5">{{ k.hint }}</p>
           </div>
         </div>
 
@@ -193,7 +195,7 @@ export class IncomeStatementComponent {
   fmt(value: number | null | undefined): string {
     if (value === null || value === undefined) return '';
     if (Math.abs(value) < 0.005) return '–';
-    const text = Math.abs(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const text = Math.abs(value).toLocaleString(APP_NUMBER_LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return value < 0 ? `(${text})` : text;
   }
 

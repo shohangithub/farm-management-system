@@ -53,7 +53,21 @@ public sealed class TenantMembershipService(ApplicationDbContext dbContext) : IT
             return null;
 
         var roleName = membership.Role?.Name ?? "Viewer";
-        return new TenantMembership(membership.TenantId, roleName);
+
+        // Farm restriction: a member assigned to a branch (and not the owner) may only access that
+        // branch's farms. No branch assignment = every farm in the tenant (claim omitted).
+        IReadOnlyList<Guid>? allowedFarmIds = null;
+        if (membership.BranchId is { } branchId && !membership.IsOwner)
+        {
+            allowedFarmIds = await dbContext.Farms
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(f => f.TenantId == membership.TenantId && f.BranchId == branchId && !f.IsDeleted)
+                .Select(f => f.Id)
+                .ToListAsync(cancellationToken);
+        }
+
+        return new TenantMembership(membership.TenantId, roleName, allowedFarmIds);
     }
 
     public async Task<Guid> CreateTenantForUserAsync(

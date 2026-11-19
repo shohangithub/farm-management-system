@@ -58,10 +58,12 @@ public static class PersistenceServiceExtensions
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
+        services.AddSingleton<IFarmTimeZoneSource, FarmTimeZoneSource>(); // zone ids for IFarmClock
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         
         // Register Queries
         services.AddScoped<Farm360.Application.Analytics.Queries.IAnalyticsQueryService, AnalyticsQueryService>();
+        services.AddScoped<Farm360.Application.Livestock.Queries.IAnimalListQueries, Farm360.Persistence.Queries.AnimalListQueries>();
 
         // ── Permission service (Redis-cached, DB-backed) ──────────────────────
         services.AddScoped<IPermissionService, PermissionService>();
@@ -115,6 +117,7 @@ public static class PersistenceServiceExtensions
         services.AddScoped<Farm360.Domain.Finance.Interfaces.ILoanRecordRepository, Farm360.Persistence.Repositories.Finance.LoanRecordRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.ITradeBillRepository, Farm360.Persistence.Repositories.Finance.TradeBillRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IFarmAccountingSettingsRepository, Farm360.Persistence.Repositories.Finance.FarmAccountingSettingsRepository>();
+        services.AddScoped<Farm360.Domain.BusinessRules.ITenantBusinessSettingsRepository, Farm360.Persistence.Repositories.BusinessRules.TenantBusinessSettingsRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IBalanceSheetEntryRepository, Farm360.Persistence.Repositories.Finance.BalanceSheetEntryRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IFixedAssetRepository, Farm360.Persistence.Repositories.Finance.FixedAssetRepository>();
         services.AddScoped<Farm360.Domain.Finance.Interfaces.IInvestorRepository, Farm360.Persistence.Repositories.Finance.InvestorRepository>();
@@ -135,9 +138,12 @@ public static class PersistenceServiceExtensions
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
         services.AddScoped<ITenantUserRepository, TenantUserRepository>();
+        services.AddScoped<Farm360.Domain.Identity.Repositories.IInvitationRepository, Farm360.Persistence.Repositories.Identity.InvitationRepository>();
+        services.AddScoped<Farm360.Domain.Identity.Repositories.IRoleRepository, Farm360.Persistence.Repositories.Identity.RoleRepository>();
 
         // ── Cross-cutting services ────────────────────────────────────────────
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
+        services.AddScoped<IFarmAccessService, FarmAccessService>();
 
         // ── Data Seeder (transient — runs once at startup) ────────────────────
         services.AddTransient<DataSeeder>();

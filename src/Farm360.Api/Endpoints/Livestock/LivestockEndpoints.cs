@@ -213,10 +213,16 @@ public static class LivestockEndpoints
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDesc = false,
+        [FromQuery] AnimalPresence? presence = null,
+        [FromQuery] bool onFarmOnly = false,
         CancellationToken cancellationToken = default)
     {
+        // presence=OnFarm|LeftFarm (omitted = all, the history default). onFarmOnly=true is an alias
+        // for presence=OnFarm used by pickers for new actions.
+        if (onFarmOnly && presence is null) presence = AnimalPresence.OnFarm;
+
         var result = await sender.Send(
-            new GetAnimalListQuery(pageNumber, pageSize, farmId, batchId, shedId, penId, species, sex, status, search, sortBy, sortDesc),
+            new GetAnimalListQuery(pageNumber, pageSize, farmId, batchId, shedId, penId, species, sex, status, search, sortBy, sortDesc, presence),
             cancellationToken);
         return Results.Ok(result);
     }

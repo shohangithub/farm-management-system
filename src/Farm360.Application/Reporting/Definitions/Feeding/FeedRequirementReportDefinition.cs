@@ -45,7 +45,7 @@ public sealed class FeedRequirementReportDefinition : ReportDefinition<FeedRequi
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.Select("days", new LocalizedText("Days", "দিন"),
         [
             new ReportSelectOption("7", new LocalizedText("7 days", "৭ দিন")),
@@ -70,7 +70,7 @@ public sealed class FeedRequirementReportDefinition : ReportDefinition<FeedRequi
         ReportColumn<FeedRequirementReportRow>.Number("stock", new LocalizedText("In stock", "মজুদ"), r => r.InStock, decimals: 2, widthMm: 22f),
         ReportColumn<FeedRequirementReportRow>.Number("buy", new LocalizedText("To buy", "কিনতে হবে"), r => r.ToBuy, decimals: 2, widthMm: 22f),
         ReportColumn<FeedRequirementReportRow>.Text("packs", new LocalizedText("Packs", "প্যাক"), r => r.Packs, width: 1.4f),
-        ReportColumn<FeedRequirementReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt, widthMm: 24f),
+        ReportColumn<FeedRequirementReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
         ReportColumn<FeedRequirementReportRow>.Text("usedIn", new LocalizedText("Used in", "ব্যবহার"), r => r.UsedIn, width: 2.2f),
     ];
 
@@ -110,9 +110,13 @@ public sealed class FeedRequirementReportDefinition : ReportDefinition<FeedRequi
         return rows;
     }
 
-    private static async Task<FeedRequirementDto> LoadAsync(ReportContext context, CancellationToken cancellationToken)
+    // The subject line and the body both need the plan; compute it once per run.
+    private static Task<FeedRequirementDto> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>
+        context.MemoAsync("feed-requirement", () => LoadCoreAsync(context, cancellationToken));
+
+    private static async Task<FeedRequirementDto> LoadCoreAsync(ReportContext context, CancellationToken cancellationToken)
     {
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var days = context.WholeNumber("days", 15);
         var animalId = context.IdOrNull("animalId");
         return await context.Send(new GetFeedRequirementQuery(
@@ -124,16 +128,5 @@ public sealed class FeedRequirementReportDefinition : ReportDefinition<FeedRequi
             null,
             context.IdOrNull("batchId"),
             context.Bool("projectGrowth", true)), cancellationToken).ConfigureAwait(false);
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

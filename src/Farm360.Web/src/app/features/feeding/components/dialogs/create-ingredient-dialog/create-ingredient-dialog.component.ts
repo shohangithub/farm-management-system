@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -8,13 +9,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { FeedingService } from '../../../services/feeding.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
 import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
 import { FeedCategory, FeedCategoryNames, FeedIngredient } from '../../../models/feeding.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-create-ingredient-dialog',
@@ -40,7 +41,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </div>
           <span>{{ isEdit ? 'Edit Feed Ingredient' : 'New Feed Ingredient' }}</span>
         </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Close">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -80,17 +81,17 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           <div class="grid grid-cols-3 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label title="Dry Matter %">DM %</mat-label>
-              <input matInput type="number" formControlName="dryMatterPct" step="0.1" />
+              <input matInput type="number" min="0" max="100" formControlName="dryMatterPct" step="0.1" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
               <mat-label title="Crude Protein %">CP %</mat-label>
-              <input matInput type="number" formControlName="crudeProteinPct" step="0.1" />
+              <input matInput type="number" min="0" max="100" formControlName="crudeProteinPct" step="0.1" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
               <mat-label title="Metabolizable Energy (MJ/kg)">ME (MJ/kg)</mat-label>
-              <input matInput type="number" formControlName="metabolizableEnergyMjPerKg" step="0.1" />
+              <input matInput type="number" min="0" formControlName="metabolizableEnergyMjPerKg" step="0.1" />
             </mat-form-field>
           </div>
 
@@ -110,7 +111,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Unit Cost</mat-label>
-              <input matInput type="number" formControlName="unitCostBdt" step="0.5" required />
+              <input matInput type="number" min="0" formControlName="unitCostBdt" step="0.5" required />
               <span matTextSuffix class="text-gray-500 px-2 font-medium">BDT</span>
               <mat-error>Unit cost is required</mat-error>
             </mat-form-field>
@@ -143,12 +144,13 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreateIngredientDialogComponent {
+  private readonly destroyRef = inject(DestroyRef);
   readonly dialogRef = inject(MatDialogRef<CreateIngredientDialogComponent>);
   readonly data = inject<FeedIngredient | null>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly feedingService = inject(FeedingService);
   private readonly inventoryService = inject(InventoryService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -185,7 +187,7 @@ export class CreateIngredientDialogComponent {
     });
 
     // Auto-sync unit cost if inventory item selected
-    this.form.get('inventoryItemId')?.valueChanges.subscribe(id => {
+    this.form.get('inventoryItemId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
       if (id) {
         const item = this.inventoryItems().find(i => i.id === id);
         if (item) {
@@ -214,7 +216,7 @@ export class CreateIngredientDialogComponent {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open(`Feed ingredient ${this.isEdit ? 'updated' : 'created'} successfully.`, 'OK', { duration: 4000 });
+        this.notify.success(`Feed ingredient ${this.isEdit ? 'updated' : 'created'} successfully.`);
         this.dialogRef.close(true);
       },
       error: (err: any) => {

@@ -60,7 +60,7 @@ public sealed class DailyInventoryConsumptionReportDefinition : ReportDefinition
         ReportColumn<DailyInventoryConsumptionReportRow>.Text("item", new LocalizedText("Item Name", "পণ্য / উপাদান"), r => r.ItemName, width: 3.0f),
         ReportColumn<DailyInventoryConsumptionReportRow>.Text("category", new LocalizedText("Category", "শ্রেণী"), r => r.Category, width: 1.8f),
         ReportColumn<DailyInventoryConsumptionReportRow>.Text("unit", new LocalizedText("Unit", "একক"), r => r.Unit, width: 14f, relative: false),
-        ReportColumn<DailyInventoryConsumptionReportRow>.Number("quantity", new LocalizedText("Consumed Qty", "ব্যবহৃত পরিমাণ"), r => r.ConsumedQuantity, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<DailyInventoryConsumptionReportRow>.Number("quantity", new LocalizedText("Consumed Qty", "ব্যবহৃত পরিমাণ"), r => r.ConsumedQuantity, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum, unitOf: r => r.Unit),
         ReportColumn<DailyInventoryConsumptionReportRow>.Money("rate", new LocalizedText("Avg Rate (BDT)", "গড় দর (টাকা)"), r => r.UnitCostBdt, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.None),
         ReportColumn<DailyInventoryConsumptionReportRow>.Money("totalCost", new LocalizedText("Total Cost (BDT)", "মোট খরচ (টাকা)"), r => r.TotalCostBdt, decimals: 2, widthMm: 26f, aggregate: ReportAggregate.Sum),
     ];
@@ -78,7 +78,7 @@ public sealed class DailyInventoryConsumptionReportDefinition : ReportDefinition
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = context.Id("farmId");
+        var farmId = context.FarmId();
         var period = context.Range("period");
 
         var transactions = await _transactionRepository
@@ -110,7 +110,7 @@ public sealed class DailyInventoryConsumptionReportDefinition : ReportDefinition
             .Select(g =>
             {
                 itemsById.TryGetValue(g.Key.ItemId, out var item);
-                var itemName = item?.Name ?? "Item #" + g.Key.ItemId.ToString()[..8];
+                var itemName = item?.Name ?? "(item not found)";
                 var category = item?.Category.ToString() ?? "General";
                 var unit = item?.UnitOfMeasure ?? "unit";
 

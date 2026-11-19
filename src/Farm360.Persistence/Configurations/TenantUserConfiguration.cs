@@ -15,6 +15,8 @@ public sealed class TenantUserConfiguration : IEntityTypeConfiguration<TenantUse
         // One user can belong to multiple tenants — unique per TenantId+UserId pair
         builder.HasIndex(tu => new { tu.TenantId, tu.UserId })
             .IsUnique()
+            // Removed (soft-deleted) memberships do not block the user from being invited again.
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("IX_TenantUsers_TenantId_UserId");
 
         builder.HasIndex(tu => new { tu.TenantId, tu.Status })

@@ -96,7 +96,7 @@
       <!-- Capacity -->
       <div class="sm:col-span-2 space-y-1.5">
         <label for="capacity" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Capacity (Headcount)</label>
-        <input type="number" formControlName="capacity" id="capacity" 
+        <input type="number" min="1" step="1" formControlName="capacity" id="capacity" 
                placeholder="e.g. 100"
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         <p *ngIf="getError('capacity')" class="text-xs text-red-500 mt-1">{{ getError('capacity') }}</p>

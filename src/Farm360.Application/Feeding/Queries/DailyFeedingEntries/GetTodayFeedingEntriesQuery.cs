@@ -31,6 +31,8 @@ public sealed record GetTodayFeedingEntriesQuery(Guid? FarmId = null, DateOnly? 
 
 public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetTodayFeedingEntriesQuery, IReadOnlyList<DailyFeedingEntryDto>>
 {
+    private readonly IFarmClock _clock;
+
     private readonly IDailyFeedingEntryRepository _repository;
     private readonly IAnimalFeedingPlanRepository _planRepository;
     private readonly IAnimalRepository _animalRepository;
@@ -52,8 +54,10 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
         ITenantService tenantService,
         IAnimalFeedAllocationRepository? allocationRepository = null,
         IFeedingRuleSetRepository? ruleSetRepository = null,
-        IFarmBusinessRulesProvider? rules = null)
+        IFarmBusinessRulesProvider? rules = null,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _allocationRepository = allocationRepository;
         _ruleSetRepository = ruleSetRepository;
         _rules = rules;
@@ -69,7 +73,7 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
     public async Task<IReadOnlyList<DailyFeedingEntryDto>> Handle(GetTodayFeedingEntriesQuery request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantService.TenantId;
-        var targetDate = request.TargetDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var targetDate = request.TargetDate ?? _clock.Today;
         var farmId = request.FarmId ?? Guid.Empty;
         var entries = await _repository.GetEntriesByDateAsync(tenantId, farmId, targetDate, cancellationToken);
 

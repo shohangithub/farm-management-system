@@ -8,6 +8,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { InventoryService } from '../../services/inventory.service';
 import { MeasureUnit, UnitConversion } from '../../models/inventory.models';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
 
 interface ConversionForm {
   id: string | null;
@@ -48,20 +49,20 @@ interface ConversionForm {
             <option [ngValue]="null">All base units</option>
             <option *ngFor="let b of bases()" [ngValue]="b.id">{{ b.name }}</option>
           </select>
-          <button (click)="add()" title="Add" class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm hover:bg-emerald-700">
+          <button aria-label="Add" (click)="add()" title="Add" class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm hover:bg-emerald-700">
             <mat-icon class="!text-[20px]">add</mat-icon>
           </button>
-          <button *ngIf="selected().length" (click)="removeSelected()" title="Delete selected" class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-sm hover:bg-rose-700">
+          <button aria-label="Delete selected" *ngIf="selected().length" (click)="removeSelected()" title="Delete selected" class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-sm hover:bg-rose-700">
             <mat-icon class="!text-[20px]">delete</mat-icon>
           </button>
-          <button (click)="load()" title="Refresh" class="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 flex items-center justify-center hover:bg-gray-50">
+          <button aria-label="Refresh" (click)="load()" title="Refresh" class="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 flex items-center justify-center hover:bg-gray-50">
             <mat-icon class="!text-[20px]">refresh</mat-icon>
           </button>
           <span class="ml-auto text-xs text-gray-500">{{ rows().length }} conversion(s){{ selected().length ? ' · ' + selected().length + ' selected' : '' }}</span>
         </div>
 
         <div *ngIf="error()" class="m-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 text-sm text-rose-700 flex justify-between">
-          <span>{{ error() }}</span><button (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
+          <span>{{ error() }}</span><button aria-label="Close" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
         </div>
 
         <div class="overflow-x-auto">
@@ -81,7 +82,7 @@ interface ConversionForm {
               <tr *ngIf="!rows().length"><td colspan="7" class="px-4 py-10 text-center text-gray-400">No unit conversions.</td></tr>
               <tr *ngFor="let c of rows()" class="border-t border-gray-100 dark:border-gray-700/60 hover:bg-gray-50/60 dark:hover:bg-gray-700/20">
                 <td class="px-4 py-2.5"><input type="checkbox" class="accent-emerald-600" [disabled]="c.isBase" [checked]="selected().includes(c.id)" (change)="toggle(c.id)" /></td>
-                <td class="px-3 py-2.5 font-semibold">{{ c.name }} <span *ngIf="c.isBase" class="text-[10px] font-normal text-emerald-600">(base)</span></td>
+                <td class="px-3 py-2.5 font-semibold">{{ c.name }} <span *ngIf="c.isBase" class="text-[11px] font-normal text-emerald-600">(base)</span></td>
                 <td class="px-3 py-2.5">{{ c.baseUnitName }}</td>
                 <td class="px-3 py-2.5 text-right font-mono">{{ c.factor | number:'1.0-6' }}</td>
                 <td class="px-3 py-2.5 text-gray-600 dark:text-gray-300">{{ c.description || ('1 ' + c.name + ' = ' + (c.factor | number:'1.0-6') + ' ' + c.baseUnitName) }}</td>
@@ -91,8 +92,8 @@ interface ConversionForm {
                   </span>
                 </td>
                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                  <button (click)="edit(c)" title="Edit" class="p-1 text-gray-400 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
-                  <button *ngIf="!c.isBase" (click)="remove(c)" title="Delete" class="p-1 text-gray-400 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+                  <button aria-label="Edit" (click)="edit(c)" title="Edit" class="p-1 text-gray-400 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
+                  <button aria-label="Delete" *ngIf="!c.isBase" (click)="remove(c)" title="Delete" class="p-1 text-gray-400 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
                 </td>
               </tr>
             </tbody>
@@ -106,7 +107,7 @@ interface ConversionForm {
       <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden" (click)="$event.stopPropagation()">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
           <h3 class="text-base font-black m-0">{{ f.id ? 'Edit' : 'Add' }} Unit Conversion</h3>
-          <button (click)="form.set(null)" class="text-gray-400"><mat-icon>close</mat-icon></button>
+          <button aria-label="Close" (click)="form.set(null)" class="text-gray-400"><mat-icon>close</mat-icon></button>
         </div>
         <div class="p-5 space-y-3 text-sm">
           <p *ngIf="f.isBase" class="text-[11px] text-amber-700 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-lg m-0">This is the base unit itself — only its description can change.</p>
@@ -152,6 +153,7 @@ interface ConversionForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UnitConversionsComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly inventory = inject(InventoryService);
 
   readonly conversions = signal<UnitConversion[]>([]);
@@ -228,13 +230,13 @@ export class UnitConversionsComponent {
     });
   }
 
-  remove(c: UnitConversion): void {
-    if (!confirm(`Delete unit conversion "${c.name}"?`)) return;
+  async remove(c: UnitConversion): Promise<void> {
+    if (!(await this.confirmService.confirmAsync({ message: `Delete unit conversion "${c.name}"?`, confirmText: 'Delete', destructive: true }))) return;
     this.delete([c.id]);
   }
 
-  removeSelected(): void {
-    if (!confirm(`Delete ${this.selected().length} unit conversion(s)?`)) return;
+  async removeSelected(): Promise<void> {
+    if (!(await this.confirmService.confirmAsync({ message: `Delete ${this.selected().length} unit conversion(s)?`, confirmText: 'Delete', destructive: true }))) return;
     this.delete(this.selected());
   }
 

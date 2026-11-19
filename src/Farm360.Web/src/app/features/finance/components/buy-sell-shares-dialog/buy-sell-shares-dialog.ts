@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,8 +14,9 @@ import {
   TransferSharesRequest, 
   UpdateShareValuationRequest 
 } from '../../models/finance.model';
-
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+
 export type ShareActionType = 'purchase' | 'sell' | 'transfer' | 'valuation';
 
 export interface BuySellSharesDialogData {
@@ -31,12 +32,11 @@ export interface BuySellSharesDialogData {
   selector: 'app-buy-sell-shares-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
-    CurrencyPipe,
     DecimalPipe
   ],
   template: `
@@ -56,7 +56,7 @@ export interface BuySellSharesDialogData {
             </p>
           </div>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -100,7 +100,7 @@ export interface BuySellSharesDialogData {
             </div>
             <div>
               <span class="text-gray-500 dark:text-gray-400 block font-medium">Current Valuation Price</span>
-              <span class="text-sm font-bold text-emerald-700 dark:text-emerald-300">{{ data.config.sharePriceBdt | currency:'BDT':'symbol':'1.0-0' }} / share</span>
+              <span class="text-sm font-bold text-emerald-700 dark:text-emerald-300">{{ data.config.sharePriceBdt | money }} / share</span>
             </div>
             <div>
               <span class="text-gray-500 dark:text-gray-400 block font-medium">Min Purchase</span>
@@ -113,11 +113,11 @@ export interface BuySellSharesDialogData {
             <div class="p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/40 flex items-center justify-between text-xs">
               <div>
                 <span class="text-gray-500 dark:text-gray-400 block font-medium">Current Share Price</span>
-                <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ data.config.sharePriceBdt | currency:'BDT':'symbol':'1.0-0' }}</span>
+                <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ data.config.sharePriceBdt | money }}</span>
               </div>
               <div>
                 <span class="text-gray-500 dark:text-gray-400 block font-medium">Current Farm Valuation</span>
-                <span class="text-sm font-bold text-indigo-700 dark:text-indigo-300">{{ data.config.totalValuationBdt | currency:'BDT':'symbol':'1.0-0' }}</span>
+                <span class="text-sm font-bold text-indigo-700 dark:text-indigo-300">{{ data.config.totalValuationBdt | money }}</span>
               </div>
             </div>
 
@@ -178,11 +178,11 @@ export interface BuySellSharesDialogData {
               </div>
               <div>
                 <span class="text-gray-500 dark:text-gray-400 block font-medium">Avg Purchase Price</span>
-                <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ selectedInvestorHolding()?.averagePurchasePriceBdt | currency:'BDT':'symbol':'1.0-0' }}</span>
+                <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ selectedInvestorHolding()?.averagePurchasePriceBdt | money }}</span>
               </div>
               <div>
                 <span class="text-gray-500 dark:text-gray-400 block font-medium">Total Value</span>
-                <span class="text-sm font-bold text-teal-700 dark:text-teal-300">{{ (selectedInvestorHolding()?.shareCount || 0) * data.config.sharePriceBdt | currency:'BDT':'symbol':'1.0-0' }}</span>
+                <span class="text-sm font-bold text-teal-700 dark:text-teal-300">{{ (selectedInvestorHolding()?.shareCount || 0) * data.config.sharePriceBdt | money }}</span>
               </div>
             </div>
 
@@ -212,7 +212,7 @@ export interface BuySellSharesDialogData {
                   {{ actionType() === 'sell' ? 'Redemption Payout to Investor' : 'Total Investment Amount' }}
                 </span>
                 <span class="text-lg font-extrabold text-teal-700 dark:text-teal-300">
-                  {{ computedTotalAmount() | currency:'BDT':'symbol':'1.0-0' }}
+                  {{ computedTotalAmount() | money }}
                 </span>
               </div>
               <div class="text-right">
@@ -298,7 +298,7 @@ export class BuySellSharesDialogComponent implements OnInit {
       transactionDate: [todayStr],
       referenceId: [''],
       notes: [''],
-      newSharePriceBdt: [this.data.config.sharePriceBdt],
+      newSharePriceBdt: [this.data.config.sharePriceBdt, Validators.min(1)],
       valuationNotes: ['']
     });
 

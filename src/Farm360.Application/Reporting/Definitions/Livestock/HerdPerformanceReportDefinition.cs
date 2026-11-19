@@ -88,8 +88,8 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
         // was not the feed inside its own total cost.
         ReportColumn<HerdPerformanceReportRow>.Number("adg", new LocalizedText("Lifetime ADG (kg/d)", "আজীবন দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 22f),
         ReportColumn<HerdPerformanceReportRow>.Number("feedKg", new LocalizedText("Lifetime feed (kg)", "আজীবন খাদ্য (কেজি)"), r => r.FeedKg, 2, 24f, ReportAggregate.Sum),
-        ReportColumn<HerdPerformanceReportRow>.Money("feedCost", new LocalizedText("Lifetime feed cost", "আজীবন খাদ্য খরচ"), r => r.FeedCostBdt, 2, 26f),
-        ReportColumn<HerdPerformanceReportRow>.Money("totalCost", new LocalizedText("Lifetime total cost", "আজীবন মোট খরচ"), r => r.TotalCostBdt, 2, 28f),
+        ReportColumn<HerdPerformanceReportRow>.Money("feedCost", new LocalizedText("Lifetime feed cost", "আজীবন খাদ্য খরচ"), r => r.FeedCostBdt, 2, 26f, ReportAggregate.Sum),
+        ReportColumn<HerdPerformanceReportRow>.Money("totalCost", new LocalizedText("Lifetime total cost", "আজীবন মোট খরচ"), r => r.TotalCostBdt, 2, 28f, ReportAggregate.Sum),
         ReportColumn<HerdPerformanceReportRow>.Money("costPerKg", new LocalizedText("Lifetime cost / live kg", "আজীবন খরচ / জীবন্ত কেজি"), r => r.CostPerKgBdt, 2, 24f, ReportAggregate.None),
         ReportColumn<HerdPerformanceReportRow>.Text("band", new LocalizedText("Band", "স্তর"), r => r.Band, 22f, false),
     ];
@@ -103,7 +103,7 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = context.Id("farmId");
+        var farmId = context.FarmId();
         var period = context.Range("period");
 
         var herd = await _animals

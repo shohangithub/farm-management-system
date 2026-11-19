@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './core/layout/main-layout/main-layout.component';
 import { authGuard } from './core/guards/auth.guard';
+import { permissionGuard } from './core/guards/permission.guard';
+import { Permissions } from './core/auth/permissions';
 
 export const routes: Routes = [
   {
@@ -20,6 +22,8 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.Dashboard.View },
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
       },
@@ -40,6 +44,8 @@ export const routes: Routes = [
       },
       {
         path: 'finance',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.Finance.View },
         loadChildren: () =>
           import('./features/finance/finance.routes').then(m => m.FINANCE_ROUTES),
       },
@@ -59,6 +65,12 @@ export const routes: Routes = [
           import('./features/settings/settings.routes').then(m => m.SETTINGS_ROUTES),
       },
       {
+        path: 'access-denied',
+        loadComponent: () =>
+          import('./shared/components/access-denied/access-denied.component').then(m => m.AccessDeniedComponent),
+        title: 'Access denied - Farm360 AI',
+      },
+      {
         path: 'billing',
         redirectTo: 'settings/billing',
         pathMatch: 'full',
@@ -74,6 +86,12 @@ export const routes: Routes = [
     path: 'auth',
     loadChildren: () =>
       import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES),
+  },
+  {
+    // Short public link for invitations (query params such as ?token= are kept).
+    path: 'accept-invitation',
+    redirectTo: 'auth/accept-invitation',
+    pathMatch: 'full',
   },
   {
     path: 'login',

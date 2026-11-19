@@ -15,20 +15,21 @@ import { FulfillPoDialogComponent } from '../dialogs/fulfill-po-dialog/fulfill-p
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-purchase-order-detail',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,
     MatIconModule,
     PageHeaderComponent,
-    LoadingComponent,
-    EmptyStateComponent
+    LoadingComponent
   ],
   template: `
     <app-page-header
@@ -58,14 +59,12 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
-      <app-empty-state
-        *ngIf="error()"
-        icon="error_outline"
+      <app-error-state
+        *ngIf="error() as err"
         title="Error loading PO"
-        [description]="error() || 'An unknown error occurred.'"
-        actionLabel="Go Back"
-        (action)="router.navigate(['/inventory/purchase-orders'])">
-      </app-empty-state>
+        [message]="err"
+        (retry)="reload()">
+      </app-error-state>
 
       <ng-container *ngIf="po() as data">
         <!-- PO Header Info -->
@@ -93,7 +92,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
           
           <div class="text-right">
             <p class="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1">Total Amount</p>
-            <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400">৳ {{ data.totalAmountBdt | number:'1.2-2' }}</p>
+            <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400">{{ data.totalAmountBdt | money:2 }}</p>
           </div>
         </div>
 
@@ -123,13 +122,13 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-900 dark:text-white text-right font-medium">
                     {{ item.quantity }}
-                    <span *ngIf="item.enteredUnitName" class="block text-[10px] font-normal text-gray-500">{{ item.enteredQuantity | number:'1.0-4' }} × {{ item.enteredUnitName }}</span>
+                    <span *ngIf="item.enteredUnitName" class="block text-[11px] font-normal text-gray-500">{{ item.enteredQuantity | number:'1.0-4' }} × {{ item.enteredUnitName }}</span>
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-                    ৳ {{ item.unitCostBdt | number:'1.2-2' }}
+                    {{ item.unitCostBdt | money:2 }}
                   </td>
                   <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white text-right">
-                    ৳ {{ item.totalCostBdt | number:'1.2-2' }}
+                    {{ item.totalCostBdt | money:2 }}
                   </td>
                 </tr>
               </tbody>
@@ -172,7 +171,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                       {{ ret.status }}
                     </span>
                   </td>
-                  <td class="px-4 py-3 text-right font-black text-amber-600 dark:text-amber-400">৳ {{ ret.totalAmountBdt | number:'1.2-2' }}</td>
+                  <td class="px-4 py-3 text-right font-black text-amber-600 dark:text-amber-400">{{ ret.totalAmountBdt | money:2 }}</td>
                 </tr>
               </tbody>
             </table>
@@ -210,7 +209,7 @@ export class PurchaseOrderDetail {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(p => this.inventoryService.getPurchaseOrderById(p.id!).pipe(
         catchError(e => {
-          this.error.set(e?.error?.detail ?? 'Failed to load purchase order details');
+          this.error.set(parseApiError(e, 'Could not load purchase order details.'));
           return of(null);
         })
       )),
@@ -237,7 +236,7 @@ export class PurchaseOrderDetail {
     const data = this.po();
     if (!data) return;
 
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
@@ -293,7 +292,7 @@ export class PurchaseOrderDetail {
     const data = this.po();
     if (!data) return;
 
-    const dialogRef = this.dialog.open(CreatePurchaseReturnDialogComponent, {
+    const dialogRef = this.dialog.open(CreatePurchaseReturnDialogComponent, { maxWidth: '95vw',
       width: '900px',
       disableClose: true,
       data: {

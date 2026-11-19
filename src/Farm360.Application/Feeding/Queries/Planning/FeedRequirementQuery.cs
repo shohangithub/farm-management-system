@@ -98,15 +98,18 @@ public sealed class GetFeedRequirementQueryHandler(
     IPenRepository pens,
     IAnimalBatchRepository batches,
     IUnitService units,
-    ITenantService tenant) : IRequestHandler<GetFeedRequirementQuery, FeedRequirementDto>
+    ITenantService tenant,
+    IFarmClock? clock = null) : IRequestHandler<GetFeedRequirementQuery, FeedRequirementDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<FeedRequirementDto> Handle(GetFeedRequirementQuery request, CancellationToken cancellationToken)
     {
         if (request.Days is < 1 or > 366)
             throw new ArgumentException("Choose between 1 and 366 days.");
 
         var tenantId = tenant.TenantId;
-        var from = request.FromDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var from = request.FromDate ?? _clock.Today;
         var to = from.AddDays(request.Days - 1);
         var notes = new List<string>();
 

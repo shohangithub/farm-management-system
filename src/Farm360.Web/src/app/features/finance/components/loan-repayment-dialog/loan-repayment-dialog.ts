@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,17 +7,17 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoanRecord } from '../../models/finance.model';
-
+
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 @Component({
   selector: 'app-loan-repayment-dialog',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatIconModule,
-    CurrencyPipe
+    MatIconModule
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -30,7 +30,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Record a payment against an active loan</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -60,12 +60,12 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2.5 text-center">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 m-0">Principal</p>
-                <p class="text-sm font-bold text-gray-900 dark:text-white m-0 mt-0.5">{{ data.principalAmountBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">Principal</p>
+                <p class="text-sm font-bold text-gray-900 dark:text-white m-0 mt-0.5">{{ data.principalAmountBdt | money }}</p>
               </div>
               <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2.5 text-center">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 m-0">Outstanding</p>
-                <p class="text-sm font-bold text-rose-600 dark:text-rose-400 m-0 mt-0.5">{{ data.outstandingBalanceBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">Outstanding</p>
+                <p class="text-sm font-bold text-rose-600 dark:text-rose-400 m-0 mt-0.5">{{ data.outstandingBalanceBdt | money }}</p>
               </div>
             </div>
           </div>
@@ -81,17 +81,17 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
             <div *ngIf="split() as s" class="mt-1.5 grid grid-cols-2 gap-2 text-[11px]">
               <div class="rounded-lg px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
                 <span class="text-gray-500 dark:text-gray-400">Principal (reduces loan)</span>
-                <div class="font-bold text-emerald-700 dark:text-emerald-300">{{ s.principal | currency:'BDT ':'symbol':'1.0-2' }}</div>
+                <div class="font-bold text-emerald-700 dark:text-emerald-300">{{ s.principal | money:2 }}</div>
               </div>
               <div class="rounded-lg px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50">
                 <span class="text-gray-500 dark:text-gray-400">Interest (expense)</span>
-                <div class="font-bold text-amber-700 dark:text-amber-300">{{ s.interest | currency:'BDT ':'symbol':'1.0-2' }}</div>
+                <div class="font-bold text-amber-700 dark:text-amber-300">{{ s.interest | money:2 }}</div>
               </div>
             </div>
             <div *ngIf="data.outstandingBalanceBdt > 0" class="flex gap-2 mt-1.5">
               <button type="button" (click)="setFullAmount()"
                 class="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors font-medium">
-                Pay Full ({{ data.outstandingBalanceBdt | currency:'BDT ':'symbol':'1.0-0' }})
+                Pay Full ({{ data.outstandingBalanceBdt | money }})
               </button>
             </div>
           </div>

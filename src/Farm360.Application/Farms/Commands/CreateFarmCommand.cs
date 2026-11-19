@@ -69,6 +69,9 @@ public sealed class CreateFarmCommandHandler : IRequestHandler<CreateFarmCommand
         var tenant = await _tenantRepository.GetByIdAsync(tenantId, cancellationToken)
             ?? throw new Farm360.Application.Common.Exceptions.ValidationException(new[] { new FluentValidation.Results.ValidationFailure("TenantId", "Tenant not found.") });
 
+        // Serialise the plan-limit check per tenant (count-then-insert race): the lock is held
+        // until this transactional command commits.
+        await _tenantRepository.AcquireQuotaLockAsync(tenantId, cancellationToken);
         var (_, farmsCount, _) = await _tenantRepository.GetTenantUsageCountsAsync(tenantId, cancellationToken);
         if (farmsCount >= tenant.MaxFarms)
         {

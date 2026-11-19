@@ -45,7 +45,7 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
         ReportParameter.Select(
             "status",
             new LocalizedText("Plan Status", "পরিকল্পনা অবস্থা"),
@@ -89,7 +89,7 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
         var status = context.Text("status", "Active");
 
         var plans = await context
@@ -117,16 +117,5 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
             .OrderBy(r => r.RuleSetName)
             .ThenBy(r => r.AnimalTag)
             .ToList();
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

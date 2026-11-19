@@ -11,11 +11,15 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
+import { ConfirmService } from '../../../shared/services/confirm.service';
+
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-shed-detail',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -30,6 +34,7 @@ import { forkJoin, of } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShedDetailComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly shedService = inject(ShedService);
   private readonly penService = inject(PenService);
   private readonly route = inject(ActivatedRoute);
@@ -65,14 +70,14 @@ export class ShedDetailComponent {
       filter(params => !!params.shedId),
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
       switchMap(({ shedId }) => forkJoin({
-        shed: this.shedService.getShedById(shedId).pipe(catchError(() => of(null))),
+        shed: this.shedService.getShedById(shedId).pipe(catchError(err => { this.error.set(parseApiError(err, 'Failed to load shed details.')); return of(null); })),
         pens: this.penService.getPensByShed(shedId).pipe(catchError(() => of([])))
       }).pipe(
         tap(res => {
-          if (!res.shed) this.error.set('Failed to load shed details.');
+          if (!res.shed && !this.error()) this.error.set('Failed to load shed details.');
         }),
         catchError(err => {
-          this.error.set('Failed to load shed details.');
+          this.error.set(parseApiError(err, 'Failed to load shed details.'));
           return of({ shed: null, pens: [] });
         })
       )),
@@ -120,11 +125,11 @@ export class ShedDetailComponent {
     }
   }
 
-  deleteShed(): void {
+  async deleteShed(): Promise<void> {
     const sId = this.shedId();
     if (!sId) return;
 
-    if (confirm('Are you sure you want to delete this shed? This action cannot be undone.')) {
+    if ((await this.confirmService.confirmAsync({ message: 'Are you sure you want to delete this shed? This action cannot be undone.', confirmText: 'Delete', destructive: true }))) {
       this.shedService.deleteShed(sId).subscribe({
         next: () => {
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { DATE_RANGE_PRESETS, ReportParameter } from '../../models/report.models';
+import { DATE_RANGE_PRESETS, LocalizedText, ReportParameter, localized } from '../../models/report.models';
 import { ReportEntityPickerComponent } from '../report-entity-picker/report-entity-picker.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 
@@ -31,7 +31,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form class="panel" (ngSubmit)="submit()">
-      <h3 class="heading">Assumptions</h3>
+      <h3 class="heading">{{ t('Parameters', 'প্যারামিটার') }}</h3>
 
       @for (p of parameters(); track p.name) {
         <div class="field">
@@ -39,19 +39,19 @@ import { WorkingContextService } from '../../../../core/services/working-context
             @case ('dateRange') {
               <div class="space-y-2">
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                  <mat-label>{{ p.label.en }} Range</mat-label>
+                  <mat-label>{{ L(p.label) }}{{ p.required ? ' *' : '' }}</mat-label>
                   <mat-select [ngModel]="dateRangeSelection(p.name)" [name]="p.name"
                               (ngModelChange)="onDateRangePresetChange(p.name, $event)">
                     @for (preset of presets; track preset.value) {
-                      <mat-option [value]="preset.value">{{ preset.label }}</mat-option>
+                      <mat-option [value]="preset.value">{{ L(preset.label) }}</mat-option>
                     }
-                    <mat-option value="custom">Custom Date Range...</mat-option>
+                    <mat-option value="custom">{{ t('Custom date range…', 'নির্দিষ্ট তারিখ…') }}</mat-option>
                   </mat-select>
                 </mat-form-field>
 
                 <div class="grid grid-cols-2 gap-2" *ngIf="isCustomDateRange(p.name)">
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>From Date</mat-label>
+                    <mat-label>{{ t('From', 'শুরু') }}</mat-label>
                     <input matInput [matDatepicker]="fromPicker" [ngModel]="getFromDateObj(p.name)"
                            [name]="p.name + '_from'" [ngModelOptions]="{standalone: true}"
                            (dateChange)="onFromDateChange(p.name, $event.value)" placeholder="YYYY-MM-DD" />
@@ -59,7 +59,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
                     <mat-datepicker #fromPicker></mat-datepicker>
                   </mat-form-field>
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>To Date</mat-label>
+                    <mat-label>{{ t('To', 'শেষ') }}</mat-label>
                     <input matInput [matDatepicker]="toPicker" [ngModel]="getToDateObj(p.name)"
                            [name]="p.name + '_to'" [ngModelOptions]="{standalone: true}"
                            (dateChange)="onToDateChange(p.name, $event.value)" placeholder="YYYY-MM-DD" />
@@ -71,11 +71,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
             }
             @case ('select') {
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ p.label.en }}</mat-label>
+                <mat-label>{{ L(p.label) }}{{ p.required ? ' *' : '' }}</mat-label>
                 <mat-select [ngModel]="value(p.name)" [name]="p.name"
                             (ngModelChange)="set(p.name, $event)">
                   @for (opt of p.options ?? []; track opt.value) {
-                    <mat-option [value]="opt.value">{{ opt.label.en }}</mat-option>
+                    <mat-option [value]="opt.value">{{ L(opt.label) }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -83,12 +83,12 @@ import { WorkingContextService } from '../../../../core/services/working-context
             @case ('boolean') {
               <mat-checkbox [ngModel]="value(p.name) === 'true'" [name]="p.name"
                             (ngModelChange)="set(p.name, $event ? 'true' : 'false')">
-                {{ p.label.en }}
+                {{ L(p.label) }}
               </mat-checkbox>
             }
             @case ('date') {
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ p.label.en }}</mat-label>
+                <mat-label>{{ L(p.label) }}{{ p.required ? ' *' : '' }}</mat-label>
                 <input matInput [matDatepicker]="singleDatePicker" [ngModel]="getSingleDateObj(p.name)"
                        [name]="p.name" [ngModelOptions]="{standalone: true}"
                        (dateChange)="onSingleDateChange(p.name, $event.value)" placeholder="YYYY-MM-DD" />
@@ -101,13 +101,24 @@ import { WorkingContextService } from '../../../../core/services/working-context
                 [entityType]="p.type"
                 [value]="nullableValue(p.name)"
                 [farmId]="nullableValue('farmId')"
-                [label]="p.label.en"
+                [label]="L(p.label)"
                 [required]="p.required"
                 (valueChange)="set(p.name, $event)" />
             }
+            @case ('number') {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ L(p.label) }}{{ p.required ? ' *' : '' }}</mat-label>
+                <input matInput type="number" inputmode="decimal" [ngModel]="value(p.name)" [name]="p.name"
+                       (ngModelChange)="setNumber(p.name, $event)"
+                       [placeholder]="placeholder(p)" />
+                @if (p.helpText) {
+                  <mat-hint>{{ p.helpText }}</mat-hint>
+                }
+              </mat-form-field>
+            }
             @default {
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ p.label.en }}{{ p.required ? ' *' : '' }}</mat-label>
+                <mat-label>{{ L(p.label) }}{{ p.required ? ' *' : '' }}</mat-label>
                 <input matInput [ngModel]="value(p.name)" [name]="p.name"
                        (ngModelChange)="set(p.name, $event)"
                        [placeholder]="placeholder(p)" />
@@ -117,12 +128,15 @@ import { WorkingContextService } from '../../../../core/services/working-context
               </mat-form-field>
             }
           }
+          @if (showErrors() && fieldError(p); as err) {
+            <p class="field-error" role="alert">{{ err }}</p>
+          }
         </div>
       }
 
-      <h3 class="heading">Presentation</h3>
+      <h3 class="heading">{{ t('Presentation', 'উপস্থাপনা') }}</h3>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Language</mat-label>
+        <mat-label>{{ t('Language', 'ভাষা') }}</mat-label>
         <mat-select [ngModel]="language()" name="language" (ngModelChange)="language.set($event)">
           <mat-option value="en">English</mat-option>
           <mat-option value="bn">বাংলা</mat-option>
@@ -131,17 +145,17 @@ import { WorkingContextService } from '../../../../core/services/working-context
 
       <mat-checkbox [ngModel]="bengaliNumerals()" name="bengaliNumerals"
                     (ngModelChange)="bengaliNumerals.set($event)">
-        Bengali numerals (০-৯)
+        {{ t('Bengali numerals (০-৯)', 'বাংলা সংখ্যা (০-৯)') }}
       </mat-checkbox>
 
       <div class="actions">
-        <button mat-flat-button color="primary" type="submit" [disabled]="!isValid() || busy()">
-          <mat-icon>play_arrow</mat-icon> Run report
+        <button mat-flat-button color="primary" type="submit" [disabled]="busy()">
+          <mat-icon>play_arrow</mat-icon> {{ busy() ? t('Running…', 'চলছে…') : t('Run report', 'প্রতিবেদন চালান') }}
         </button>
       </div>
 
-      @if (!isValid()) {
-        <p class="warn">Fill the required fields marked *.</p>
+      @if (showErrors() && !isValid()) {
+        <p class="warn">{{ t('Fix the highlighted fields before running the report.', 'প্রতিবেদন চালানোর আগে চিহ্নিত ঘরগুলো ঠিক করুন।') }}</p>
       }
     </form>
   `,
@@ -154,6 +168,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
     .actions { margin-top: 8px; }
     .actions button { width: 100%; }
     .warn { margin: 0; font-size: 12px; color: var(--mat-sys-error, #b3261e); }
+    .field-error { margin: 4px 0 0 4px; font-size: 11px; color: var(--mat-sys-error, #b3261e); }
   `],
 })
 export class ReportParameterPanelComponent {
@@ -162,6 +177,9 @@ export class ReportParameterPanelComponent {
   readonly parameters = input.required<ReportParameter[]>();
   readonly initial = input<Record<string, string | null>>({});
   readonly busy = input(false);
+  /** Language and numeral choice to start with (the last run's, or a re-run's). */
+  readonly initialLanguage = input<'en' | 'bn'>('en');
+  readonly initialBengaliNumerals = input(false);
 
   readonly run = output<{
     parameters: Record<string, string | null>;
@@ -175,6 +193,61 @@ export class ReportParameterPanelComponent {
 
   private readonly values = signal<Record<string, string | null>>({});
   private readonly customMode = signal<Record<string, boolean>>({});
+
+  /** Errors appear once the user tries to run, not while they are still filling the form in. */
+  protected readonly showErrors = signal(false);
+
+  constructor() {
+    effect(() => this.language.set(this.initialLanguage()));
+    effect(() => this.bengaliNumerals.set(this.initialBengaliNumerals()));
+  }
+
+  /** A schema label in the chosen report language. */
+  protected L(text: LocalizedText | null | undefined): string {
+    return localized(text, this.language());
+  }
+
+  /** Fixed panel wording in the chosen report language. */
+  protected t(en: string, bn: string): string {
+    return this.language() === 'bn' ? bn : en;
+  }
+
+  protected setNumber(name: string, value: unknown): void {
+    this.set(name, value === null || value === undefined || value === '' ? '' : String(value));
+  }
+
+  /** The inline validation message for one field, or null when it is valid. */
+  protected fieldError(p: ReportParameter): string | null {
+    const v = this.value(p.name).trim();
+
+    if (p.required && !v) {
+      return this.t('This field is required.', 'এই ঘরটি পূরণ করা আবশ্যক।');
+    }
+
+    if (!v) {
+      return null;
+    }
+
+    if ((p.type === 'Number' || p.type === 'WholeNumber') && !/^-?\d+(\.\d+)?$/.test(v)) {
+      return this.t('Enter a number.', 'একটি সংখ্যা লিখুন।');
+    }
+
+    if (p.type === 'Number' && p.name === 'pricePerKg' && Number(v) <= 0) {
+      return this.t('Enter a rate above zero, or leave blank for the farm rate.', 'শূন্যের বেশি দর লিখুন, অথবা খামারের দরের জন্য খালি রাখুন।');
+    }
+
+    if (p.type === 'DateRange' && v.includes('..')) {
+      const [from, to] = v.split('..');
+      if (!from || !to) {
+        return this.t('Choose both a start and an end date.', 'শুরু ও শেষ দুটো তারিখই দিন।');
+      }
+      if (from > to) {
+        return this.t('The start date is after the end date.', 'শুরুর তারিখ শেষের তারিখের পরে।');
+      }
+    }
+
+    return null;
+  }
 
   protected isCustomDateRange(name: string): boolean {
     if (this.customMode()[name] === true) return true;
@@ -302,9 +375,7 @@ export class ReportParameterPanelComponent {
   }
 
   protected readonly isValid = computed(() =>
-    this.parameters()
-      .filter(p => p.required)
-      .every(p => this.value(p.name).trim().length > 0),
+    this.parameters().every(p => this.fieldError(p) === null),
   );
 
   protected value(name: string): string {
@@ -347,6 +418,8 @@ export class ReportParameterPanelComponent {
       case 'MultiSelect': return 'select';
       case 'Boolean': return 'boolean';
       case 'Date': return 'date';
+      case 'Number':
+      case 'WholeNumber': return 'number';
       case 'Animal':
       case 'Batch':
       case 'Farm':
@@ -362,6 +435,7 @@ export class ReportParameterPanelComponent {
   }
 
   protected submit(): void {
+    this.showErrors.set(true);
     if (!this.isValid()) {
       return;
     }

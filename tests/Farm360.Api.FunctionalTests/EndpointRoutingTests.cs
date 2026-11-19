@@ -15,6 +15,9 @@ using Farm360.Api.Endpoints.Farms;
 using Farm360.Api.Endpoints.MasterData;
 using Farm360.Api.Endpoints.Organizations;
 using Farm360.Api.Endpoints.Tenants;
+using Farm360.Api.Endpoints.Subscriptions;
+using Farm360.Api.Authorization;
+using Farm360.Api.Configuration;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -44,11 +47,13 @@ public class EndpointRoutingTests
     /// their services per request, so nothing here needs the application's DI container, a
     /// database or Redis — only the route metadata is built.
     /// </summary>
-    private static List<Endpoint> BuildEndpoints()
+    internal static List<Endpoint> BuildEndpoints()
     {
         var builder = WebApplication.CreateBuilder();
-        builder.Services.AddAuthorizationBuilder();
+        builder.Services.AddAuthorizationBuilder().AddFarm360Policies();
         builder.Services.AddRouting();
+        // Health probes (MapHealthChecks builds its middleware at map time, so HealthCheckService must exist).
+        builder.Services.AddFarm360HealthChecks(builder.Configuration);
 
         // Minimal APIs decide whether an un-attributed handler parameter is a service or a
         // request body by asking the container. Handlers take application interfaces
@@ -82,9 +87,11 @@ public class EndpointRoutingTests
         app.MapInventoryEndpoints();
         app.MapGroup("/api/v1/auth").MapAuthEndpoints();
         app.MapGroup("/api/v1/users").MapUsersEndpoints();
+        app.MapGroup("/api/v1/subscriptions").MapSubscriptionEndpoints();
         app.MapIntelligenceEndpoints();
         app.MapFinanceEndpoints();
         app.MapAnalyticsEndpoints();
+        app.MapFarm360HealthChecks();
 
         // Read the builder's own data sources. Resolving EndpointDataSource from the container
         // returns a composite that stays empty until the app is started, which would make the

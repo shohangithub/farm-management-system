@@ -74,7 +74,7 @@ public sealed class AuditSaveChangesInterceptor(
                         }
 
                         throw new CrossTenantWriteException(
-                            $"Cross-tenant write attempt blocked: {entityName}. Entity tenant: {entry.Entity.TenantId}, Current tenant: {tenantId.Value}");
+                            $"Cross-tenant write attempt blocked: {entityName}");
                     }
 
                     entry.Entity.SetCreatedAudit(userId, now);

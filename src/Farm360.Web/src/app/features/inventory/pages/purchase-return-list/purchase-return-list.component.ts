@@ -21,13 +21,17 @@ import {
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
   selector: 'app-purchase-return-list',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -35,6 +39,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
     MatIconModule,
     PageHeaderComponent,
     EmptyStateComponent,
+    ErrorStateComponent,
     LoadingComponent
   ],
   template: `
@@ -52,6 +57,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/30">
@@ -75,7 +81,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!loading() && (!result()?.items || result()?.items?.length === 0)"
+        *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="assignment_return"
         title="No Purchase Returns found"
         description="To return items to a supplier, open a fulfilled purchase order and click 'Return Items'."
@@ -138,7 +144,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                   </span>
                 </td>
                 <td class="px-5 py-4 text-sm font-black text-amber-600 dark:text-amber-400 text-right">
-                  ৳ {{ ret.totalAmountBdt | number:'1.2-2' }}
+                  {{ ret.totalAmountBdt | money:2 }}
                 </td>
                 <td class="px-5 py-4 text-sm text-right space-x-1.5 whitespace-nowrap">
                   <!-- Complete Draft Action -->
@@ -182,6 +188,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PurchaseReturnListComponent {
+  private readonly notify = inject(NotificationService);
   private readonly inventoryService = inject(InventoryService);
   private readonly workingContext = inject(WorkingContextService);
   readonly router = inject(Router);
@@ -190,6 +197,11 @@ export class PurchaseReturnListComponent {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.error.set(null);
+    this.refreshTrigger.update(n => n + 1);
+  }
   readonly searchTerm = signal('');
   readonly statusFilter = signal<PurchaseReturnStatus | null>(null);
   readonly pageNumber = signal(1);
@@ -222,9 +234,10 @@ export class PurchaseReturnListComponent {
       debounceTime(150),
       switchMap(({ params }) => {
         this.loading.set(true);
+        this.error.set(null);
         return this.inventoryService.getPurchaseReturns(params).pipe(
           catchError(err => {
-            this.error.set(err?.error?.detail || err?.message || 'Failed to load purchase returns.');
+            this.error.set(parseApiError(err, 'Could not load purchase returns.'));
             return of(null);
           })
         );
@@ -284,7 +297,7 @@ export class PurchaseReturnListComponent {
             next: () => this.refresh(),
             error: (err) => {
               this.loading.set(false);
-              alert(err?.error?.detail || err?.message || 'Failed to complete return.');
+              this.notify.error(err?.error?.detail || err?.message || 'Failed to complete return.');
             }
           });
       });
@@ -301,7 +314,7 @@ export class PurchaseReturnListComponent {
         next: () => this.refresh(),
         error: (err) => {
           this.loading.set(false);
-          alert(err?.error?.detail || err?.message || 'Failed to cancel return.');
+          this.notify.error(err?.error?.detail || err?.message || 'Failed to cancel return.');
         }
       });
   }

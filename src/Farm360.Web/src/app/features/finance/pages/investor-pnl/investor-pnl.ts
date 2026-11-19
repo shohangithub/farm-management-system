@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,10 +19,14 @@ import { InvestorPnLSummary, InvestorShare } from '../../models/finance.model';
 
 
 import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 @Component({
   selector: 'app-investor-pnl',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -31,8 +35,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
     MatButtonModule,
     MatDialogModule,
     PageHeaderComponent,
-    LoadingComponent,
-    CurrencyPipe
+    LoadingComponent
   ],
   template: `
     <app-page-header 
@@ -95,6 +98,8 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
 
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
+      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load profit sharing" [message]="err" (retry)="retryLoad()"></app-error-state>
+
       <!-- Main Content -->
       <div *ngIf="!isLoading() && summary()" #reportSheet id="investorPnlReport" class="space-y-6">
 
@@ -107,7 +112,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Farm Revenue</p>
                 <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                  {{ summary()!.totalFarmRevenueBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ summary()!.totalFarmRevenueBdt | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
@@ -123,7 +128,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Farm Expenses</p>
                 <h3 class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
-                  {{ summary()!.totalFarmExpensesBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ summary()!.totalFarmExpensesBdt | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
@@ -140,7 +145,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Net Farm Profit / Loss</p>
                 <h3 class="text-2xl font-bold mt-1"
                     [ngClass]="summary()!.netFarmProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                  {{ summary()!.netFarmProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ summary()!.netFarmProfitBdt | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-md text-white"
@@ -157,7 +162,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Charity Deduction ({{ summary()!.charityPercentage }}%)</p>
                 <h3 class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
-                  {{ summary()!.charityAmountBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ summary()!.charityAmountBdt | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
@@ -174,7 +179,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Distributable Profit (95%)</p>
                 <h3 class="text-2xl font-bold mt-1"
                     [ngClass]="summary()!.distributableProfitBdt >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'">
-                  {{ summary()!.distributableProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ summary()!.distributableProfitBdt | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
@@ -190,7 +195,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Capital Pool</p>
                 <h3 class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-1">
-                  {{ summary()!.totalActiveCapitalBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ summary()!.totalActiveCapitalBdt | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
@@ -216,7 +221,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
 
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-gray-700 dark:text-gray-300">
-              <thead class="bg-gray-50 dark:bg-gray-800/50 uppercase font-semibold text-[10px] tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
+              <thead class="bg-gray-50 dark:bg-gray-800/50 uppercase font-semibold text-[11px] tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   <th class="px-6 py-3.5">Investor Name</th>
                   <th class="px-4 py-3.5 text-right">Invested Capital</th>
@@ -241,7 +246,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
                     </div>
                     <div>
                       <span class="block">{{ share.investorName }}</span>
-                      <span class="text-[10px] font-normal" [ngClass]="share.isActive ? 'text-emerald-500' : 'text-gray-400'">
+                      <span class="text-[11px] font-normal" [ngClass]="share.isActive ? 'text-emerald-500' : 'text-gray-400'">
                         {{ share.isActive ? 'Active Partner' : 'Inactive' }}
                       </span>
                     </div>
@@ -249,7 +254,7 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
 
                   <!-- Invested Capital -->
                   <td class="px-4 py-4 text-right font-medium">
-                    {{ share.investedCapitalBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                    {{ share.investedCapitalBdt | money }}
                   </td>
 
                   <!-- Capital Share % -->
@@ -265,25 +270,25 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
                   <!-- Allocated Profit / Loss -->
                   <td class="px-4 py-4 text-right font-bold"
                       [ngClass]="share.allocatedProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                    {{ share.allocatedProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                    {{ share.allocatedProfitBdt | money }}
                   </td>
 
                   <!-- Total Distributed Paid -->
                   <td class="px-4 py-4 text-right font-medium text-indigo-600 dark:text-indigo-400">
-                    {{ share.distributedProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                    {{ share.distributedProfitBdt | money }}
                   </td>
 
                   <!-- Undistributed Balance -->
                   <td class="px-4 py-4 text-right">
                     <span class="inline-block px-2.5 py-1 rounded-full font-bold text-[11px]"
                           [ngClass]="share.undistributedProfitBdt > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : (share.undistributedProfitBdt < 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400')">
-                      {{ share.undistributedProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                      {{ share.undistributedProfitBdt | money }}
                     </span>
                   </td>
 
                   <!-- Net Equity Value -->
                   <td class="px-4 py-4 text-right font-bold text-gray-900 dark:text-white">
-                    {{ share.netEquityValueBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                    {{ share.netEquityValueBdt | money }}
                   </td>
 
                   <!-- Action -->
@@ -303,15 +308,15 @@ import { fiscalYearStart, toLocalIsoDate } from '../../../../shared/utils/local-
               <tfoot class="bg-gray-50/80 dark:bg-gray-800/80 font-bold border-t border-gray-200 dark:border-gray-700">
                 <tr>
                   <td class="px-6 py-3.5">Totals</td>
-                  <td class="px-4 py-3.5 text-right">{{ summary()!.totalActiveCapitalBdt | currency:'BDT ':'symbol':'1.0-0' }}</td>
+                  <td class="px-4 py-3.5 text-right">{{ summary()!.totalActiveCapitalBdt | money }}</td>
                   <td class="px-4 py-3.5 text-right">100%</td>
                   <td class="px-4 py-3.5 text-right">-</td>
                   <td class="px-4 py-3.5 text-right" [ngClass]="summary()!.distributableProfitBdt >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600'">
-                    {{ summary()!.distributableProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                    {{ summary()!.distributableProfitBdt | money }}
                   </td>
-                  <td class="px-4 py-3.5 text-right text-indigo-600">{{ summary()!.totalDistributedProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}</td>
-                  <td class="px-4 py-3.5 text-right text-emerald-600">{{ summary()!.totalUndistributedProfitBdt | currency:'BDT ':'symbol':'1.0-0' }}</td>
-                  <td class="px-4 py-3.5 text-right">{{ (summary()!.totalActiveCapitalBdt + summary()!.totalUndistributedProfitBdt) | currency:'BDT ':'symbol':'1.0-0' }}</td>
+                  <td class="px-4 py-3.5 text-right text-indigo-600">{{ summary()!.totalDistributedProfitBdt | money }}</td>
+                  <td class="px-4 py-3.5 text-right text-emerald-600">{{ summary()!.totalUndistributedProfitBdt | money }}</td>
+                  <td class="px-4 py-3.5 text-right">{{ (summary()!.totalActiveCapitalBdt + summary()!.totalUndistributedProfitBdt) | money }}</td>
                   <td class="px-6 py-3.5"></td>
                 </tr>
               </tfoot>
@@ -361,12 +366,22 @@ export class InvestorPnLComponent {
     this.dateFilter$
   ]).pipe(
     switchMap(([_, farm, filter]) => {
+      this.loadError.set(null);
       if (!farm) return of(null);
       return this.financeService.getInvestorPnL(farm.id, filter.from, filter.to).pipe(
-        catchError(() => of(null))
+        catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load the investor P&L.'));
+          return of(null);
+        })
       );
     })
   );
+
+  readonly loadError = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.refreshTrigger$.next();
+  }
 
   readonly summary = toSignal(this.summary$);
   readonly isLoading = computed(() => this.summary() === undefined);
@@ -412,7 +427,7 @@ export class InvestorPnLComponent {
 
     // Fetch the investor to pass into dialog
     this.financeService.getInvestorById(farmId, share.investorId).subscribe(investor => {
-      const dialogRef = this.dialog.open(InvestorTransactionDialogComponent, {
+      const dialogRef = this.dialog.open(InvestorTransactionDialogComponent, { maxWidth: '95vw',
         width: '540px',
         disableClose: true,
         panelClass: ['premium-dialog-panel'],
@@ -449,8 +464,8 @@ export class InvestorPnLComponent {
           dateRange: `Period: ${dateRangeStr}`,
           currency: 'BDT (৳)',
           metaFields: [
-            { label: 'Farm Net Profit', value: `৳ ${(summary?.netFarmProfitBdt || 0).toLocaleString()}` },
-            { label: 'Distributable Profit', value: `৳ ${(summary?.distributableProfitBdt || 0).toLocaleString()}` },
+            { label: 'Farm Net Profit', value: `${formatMoney((summary?.netFarmProfitBdt || 0))}` },
+            { label: 'Distributable Profit', value: `${formatMoney((summary?.distributableProfitBdt || 0))}` },
             { label: 'Total Investors', value: `${summary?.investorShares?.length || 0}` }
           ]
         },

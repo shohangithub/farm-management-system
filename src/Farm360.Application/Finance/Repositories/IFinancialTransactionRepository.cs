@@ -56,4 +56,14 @@ public interface IFinancialTransactionRepository
         DateOnly from,
         DateOnly to,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Hand-entered vet/medicine expenses that were posted to an animal's vet bucket
+    /// (<c>LedgerVetPostedAnimalId</c> set), dated within the range. Feeds the daily cost reports.
+    /// </summary>
+    Task<IReadOnlyList<FinancialTransaction>> GetManualVetPostingsAsync(
+        Guid farmId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default);
 }

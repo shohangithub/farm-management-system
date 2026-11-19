@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,8 +8,9 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinancialTransaction, PAYMENT_METHODS, TradeBill, categoryLabel } from '../../models/finance.model';
-
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+
 export type TradeBillDialogMode = 'payment' | 'write-off' | 'terms' | 'open';
 
 export interface TradeBillDialogData {
@@ -27,7 +28,7 @@ export interface TradeBillDialogData {
 @Component({
   selector: 'app-trade-bill-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, DecimalPipe],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -39,7 +40,7 @@ export interface TradeBillDialogData {
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ subtitle }}</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -63,18 +64,18 @@ export interface TradeBillDialogData {
                   <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ b.referenceNo }} · {{ b.description }}</div>
                 </div>
                 <div class="text-right">
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Outstanding</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Outstanding</div>
                   <div class="text-base font-black" [ngClass]="isPayable ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-300'">
-                    ৳ {{ b.outstandingBdt | number: '1.2-2' }}
+                    {{ b.outstandingBdt | money:2 }}
                   </div>
-                  <div class="text-[10px] text-gray-500">of ৳ {{ b.amountBdt | number: '1.2-2' }}</div>
+                  <div class="text-[11px] text-gray-500">of {{ b.amountBdt | money:2 }}</div>
                 </div>
               </div>
             </div>
           }
           @if (data.transaction; as t) {
             <div class="rounded-xl p-4 border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
-              <div class="text-sm font-bold text-gray-900 dark:text-white">{{ label(t.category) }} · ৳ {{ t.amountBdt | number: '1.2-2' }}</div>
+              <div class="text-sm font-bold text-gray-900 dark:text-white">{{ label(t.category) }} · {{ t.amountBdt | money:2 }}</div>
               <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ t.transactionDate | date: 'dd MMM yyyy' }} · {{ t.description }}</div>
               <p class="text-[11px] text-amber-700 dark:text-amber-300 mt-2 mb-0">
                 This entry is booked as {{ t.type === 'Income' ? 'received' : 'paid' }} in cash. Putting it on credit removes it from the cash book

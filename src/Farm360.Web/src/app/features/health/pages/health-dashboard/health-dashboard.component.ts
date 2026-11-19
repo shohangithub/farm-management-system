@@ -18,13 +18,14 @@ import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-health-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent],
+  imports: [MoneyPipe, CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent],
   templateUrl: './health-dashboard.html',
-  styleUrls: ['./health-dashboard.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HealthDashboardComponent {
@@ -60,8 +61,7 @@ export class HealthDashboardComponent {
         }
         return this.healthService.getHealthDashboard(farm?.id).pipe(
           catchError((err) => {
-            console.error('Error loading health dashboard', err);
-            this.error.set('Failed to load dashboard data. Please try again.');
+            this.error.set(parseApiError(err, 'Failed to load dashboard data. Please try again.'));
             return of(null);
           }),
           tap(() => this.isLoading.set(false))
@@ -78,28 +78,28 @@ export class HealthDashboardComponent {
 
   // --- Dialogs ---
   openScheduleVaccinationDialog(): void {
-    const dialogRef = this.dialog.open(ScheduleVaccinationDialog, { disableClose: true, width: '560px' });
+    const dialogRef = this.dialog.open(ScheduleVaccinationDialog, { maxWidth: '95vw', disableClose: true, width: '560px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });
   }
 
   openLogTreatmentDialog(): void {
-    const dialogRef = this.dialog.open(LogTreatmentDialog, { disableClose: true, width: '720px' });
+    const dialogRef = this.dialog.open(LogTreatmentDialog, { maxWidth: '95vw', disableClose: true, width: '720px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });
   }
 
   openRecordMortalityDialog(): void {
-    const dialogRef = this.dialog.open(RecordMortalityDialog, { disableClose: true, width: '560px' });
+    const dialogRef = this.dialog.open(RecordMortalityDialog, { maxWidth: '95vw', disableClose: true, width: '560px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });
   }
 
   openReportIncidentDialog(): void {
-    const dialogRef = this.dialog.open(ReportIncidentDialog, { disableClose: true, width: '720px' });
+    const dialogRef = this.dialog.open(ReportIncidentDialog, { maxWidth: '95vw', disableClose: true, width: '720px' });
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.loadDashboard();
     });

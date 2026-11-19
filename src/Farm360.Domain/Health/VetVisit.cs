@@ -7,7 +7,8 @@ namespace Farm360.Domain.Health;
 /// <summary>
 /// VetVisit Aggregate Root — tracking veterinarian visits to a farm.
 /// </summary>
-public sealed class VetVisit : BaseEntity, IAggregateRoot
+/// Tenant-scoped (AuditableEntity → ITenantEntity), so the global tenant/soft-delete filter applies.
+public sealed class VetVisit : AuditableEntity, IAggregateRoot
 {
     private VetVisit() { } // EF Core
 
@@ -23,9 +24,8 @@ public sealed class VetVisit : BaseEntity, IAggregateRoot
         string? recommendations,
         decimal? costBdt,
         DateOnly? nextVisitDate)
-        : base(id)
+        : base(id, tenantId)
     {
-        TenantId = tenantId;
         FarmId = farmId;
         VetName = vetName;
         VisitDate = visitDate;
@@ -35,10 +35,8 @@ public sealed class VetVisit : BaseEntity, IAggregateRoot
         Recommendations = recommendations;
         CostBdt = costBdt;
         NextVisitDate = nextVisitDate;
-        CreatedAt = DateTime.UtcNow;
     }
 
-    public Guid TenantId { get; private set; }
     public Guid FarmId { get; private set; }
     public string VetName { get; private set; } = string.Empty;
     public DateOnly VisitDate { get; private set; }
@@ -48,7 +46,6 @@ public sealed class VetVisit : BaseEntity, IAggregateRoot
     public string? Recommendations { get; private set; }
     public decimal? CostBdt { get; private set; }
     public DateOnly? NextVisitDate { get; private set; }
-    public DateTime CreatedAt { get; private set; }
 
     public static VetVisit Create(
         Guid tenantId,
@@ -62,6 +59,9 @@ public sealed class VetVisit : BaseEntity, IAggregateRoot
         decimal? costBdt,
         DateOnly? nextVisitDate)
     {
+        if (tenantId == Guid.Empty)
+            throw new ArgumentException("TenantId is required.", nameof(tenantId));
+
         if (farmId == Guid.Empty)
             throw new ArgumentException("FarmId is required.", nameof(farmId));
 

@@ -53,7 +53,7 @@ public sealed class AuthService(
 
         // C1: Resolve tenant and role from TenantUser (first active membership)
         // System users: bypass tenant lookup → PlatformAdmin on Guid.Empty tenant
-        var (tenantId, role) = await ResolveTenantContextAsync(user, preferredTenantId: null, cancellationToken);
+        var (tenantId, role, farmIds) = await ResolveTenantContextAsync(user, preferredTenantId: null, cancellationToken);
 
         var permissions = await permissionService.GetPermissionsAsync(user.Id, tenantId, cancellationToken);
 
@@ -63,6 +63,7 @@ public sealed class AuthService(
             role: role,
             tokenVersion: user.TokenVersion,
             permissions: permissions,
+            farmIds: farmIds,
             isSystemUser: user.IsSystemUser,
             cancellationToken: cancellationToken);
 
@@ -90,7 +91,7 @@ public sealed class AuthService(
         _ = user ?? throw new AuthenticationException("User not found.");
 
         // C2: Resolve tenant and role — prefer the tenant stored in the rotated session
-        var (tenantId, role) = await ResolveTenantContextAsync(user, preferredTenantId: rotationResult.TenantId, cancellationToken);
+        var (tenantId, role, farmIds) = await ResolveTenantContextAsync(user, preferredTenantId: rotationResult.TenantId, cancellationToken);
 
         var permissions = await permissionService.GetPermissionsAsync(user.Id, tenantId, cancellationToken);
 
@@ -100,6 +101,7 @@ public sealed class AuthService(
             role: role,
             tokenVersion: user.TokenVersion,
             permissions: permissions,
+            farmIds: farmIds,
             isSystemUser: user.IsSystemUser,
             cancellationToken: cancellationToken);
 
@@ -156,6 +158,40 @@ public sealed class AuthService(
             cancellationToken);
     }
 
+    public async Task<LoginResponse> IssueSessionAsync(Guid userId, Guid? preferredTenantId, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString())
+            ?? throw new AuthenticationException("User not found.");
+
+        var (tenantId, role, farmIds) = await ResolveTenantContextAsync(user, preferredTenantId, cancellationToken);
+        var permissions = await permissionService.GetPermissionsAsync(user.Id, tenantId, cancellationToken);
+
+        var tokenResult = await tokenService.GenerateAccessTokenAsync(
+            userId: user.Id,
+            tenantId: tenantId,
+            role: role,
+            tokenVersion: user.TokenVersion,
+            permissions: permissions,
+            farmIds: farmIds,
+            isSystemUser: user.IsSystemUser,
+            cancellationToken: cancellationToken);
+
+        var refreshToken = await refreshTokenService.CreateSessionAsync(
+            userId: user.Id,
+            tenantId: tenantId,
+            deviceName: "Web Client",
+            deviceFingerprint: null,
+            ipHash: null,
+            userAgent: null,
+            cancellationToken: cancellationToken);
+
+        return new LoginResponse(
+            AccessToken: tokenResult.AccessToken,
+            RefreshToken: refreshToken,
+            ExpiresIn: (int)(tokenResult.ExpiresAt - DateTime.UtcNow).TotalSeconds,
+            SessionId: tokenResult.TokenId);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /// <summary>
@@ -167,7 +203,7 @@ public sealed class AuthService(
     ///   3. Fallback → first active TenantUser membership (ordered by JoinedAt)
     ///   4. No membership found → (Guid.Empty, "Viewer") — minimal privileges (valid pre-org state)
     /// </summary>
-    private async Task<(Guid TenantId, string Role)> ResolveTenantContextAsync(
+    private async Task<(Guid TenantId, string Role, IReadOnlyList<Guid>? FarmIds)> ResolveTenantContextAsync(
         ApplicationUser user,
         Guid? preferredTenantId,
         CancellationToken cancellationToken)
@@ -178,9 +214,11 @@ public sealed class AuthService(
         var membership = await tenantMembershipService.GetActiveMembershipAsync(
             user.Id, preferredTenantId, cancellationToken);
 
+        // No membership: Guid.Empty tenant. TenantResolutionMiddleware only lets such a user reach
+        // sign-in/profile/onboarding routes; it never grants a tier or tenant-scoped access.
         if (membership == null)
-            return (Guid.Empty, "Viewer");
+            return (Guid.Empty, "Viewer", null);
 
-        return (membership.TenantId, membership.RoleName);
+        return (membership.TenantId, membership.RoleName, membership.AllowedFarmIds);
     }
 }

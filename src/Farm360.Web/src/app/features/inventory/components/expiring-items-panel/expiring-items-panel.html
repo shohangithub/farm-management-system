@@ -11,7 +11,7 @@
         <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Next {{ daysThreshold }} days</p>
       </div>
     </div>
-    <button mat-icon-button (click)="refresh()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+    <button aria-label="Refresh" mat-icon-button (click)="refresh()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
       <mat-icon>refresh</mat-icon>
     </button>
   </div>
@@ -34,7 +34,7 @@
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
             <span class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.itemName }}</span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
               {{ item.category }}
             </span>
           </div>

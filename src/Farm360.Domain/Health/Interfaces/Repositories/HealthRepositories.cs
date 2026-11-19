@@ -24,6 +24,21 @@ public interface IVaccinationRepository
     Task<IReadOnlyList<VaccinationEvent>> GetEventsByAnimalIdAsync(Guid animalId, CancellationToken ct = default);
     Task<IReadOnlyList<VaccinationEvent>> GetUpcomingEventsAsync(Guid farmId, DateOnly beforeDate, CancellationToken ct = default);
     Task<(IReadOnlyList<(VaccinationEvent Event, string AnimalTag)> Items, int TotalCount)> GetDewormingEventsAsync(Guid farmId, int pageNumber, int pageSize, CancellationToken ct = default);
+
+    /// <summary>
+    /// Every vaccination event (any status) for animals still on the farm that was due or given
+    /// inside <paramref name="from"/>..<paramref name="to"/>, with the animal's tag and the protocol
+    /// title. Read-only; used by the vaccination compliance report.
+    /// </summary>
+    Task<IReadOnlyList<(VaccinationEvent Event, string AnimalTag, string? ProtocolTitle)>> GetComplianceEventsAsync(
+        Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default);
+
+    /// <summary>
+    /// Doses actually given (administered date inside the range) to a farm's animals, whatever the
+    /// animal's status now — a dose given before a sale was still given. Read-only; for reports.
+    /// </summary>
+    Task<IReadOnlyList<(VaccinationEvent Event, string AnimalTag)>> GetAdministeredByFarmAsync(
+        Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default);
     void AddEvent(VaccinationEvent @event);
     void AddEvents(IEnumerable<VaccinationEvent> events);
     void UpdateEvent(VaccinationEvent @event);
@@ -45,6 +60,12 @@ public interface IMedicalTreatmentRepository
         CancellationToken ct = default);
     Task<bool> HasActiveTreatmentForMedicationAsync(Guid animalId, string medicationName, CancellationToken ct = default);
     Task<IReadOnlyList<(MedicalTreatment Treatment, string AnimalTag)>> GetActiveMilkWithdrawalsAsync(Guid farmId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Every treatment (any status) of a farm's animals — on the farm or since exited — that started
+    /// inside [<paramref name="from"/>, <paramref name="to"/>], oldest first. Read-only; for reports.
+    /// </summary>
+    Task<IReadOnlyList<MedicalTreatment>> GetByFarmStartedBetweenAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default);
     void Add(MedicalTreatment treatment);
     void Update(MedicalTreatment treatment);
 }
@@ -64,6 +85,9 @@ public interface IDiseaseIncidentRepository
         string? sortBy = null,
         bool sortDescending = false,
         CancellationToken ct = default);
+
+    /// <summary>Every incident of a farm dated inside [<paramref name="from"/>, <paramref name="to"/>]. Read-only; for reports.</summary>
+    Task<IReadOnlyList<DiseaseIncident>> GetByFarmBetweenAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default);
     void Add(DiseaseIncident incident);
     void Update(DiseaseIncident incident);
 }
@@ -81,6 +105,9 @@ public interface IMortalityRecordRepository
         string? sortBy = null,
         bool sortDescending = false,
         CancellationToken ct = default);
+
+    /// <summary>Mortality records of a farm's animals with a death date inside [<paramref name="from"/>, <paramref name="to"/>]. Read-only; for reports.</summary>
+    Task<IReadOnlyList<MortalityRecord>> GetByFarmBetweenAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default);
     void Add(MortalityRecord record);
 }
 

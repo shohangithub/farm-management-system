@@ -4,7 +4,6 @@ import { FormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FeedingService } from '../../../services/feeding.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
@@ -21,6 +20,9 @@ import { UnitPickerComponent, UnitSelection } from '../../../../inventory/compon
 import { AnimalPickerComponent } from '../../../../../shared/components/animal-picker/animal-picker.component';
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 interface DirectRationRow {
   /** "f:<formulaId>" or "i:<inventoryItemId>" */
   source: string;
@@ -47,7 +49,7 @@ type Who = 'animals' | 'group';
 @Component({
   selector: 'app-assign-feeding-plan-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent],
   styles: [`
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.4); border-radius: 20px; }
@@ -69,7 +71,7 @@ type Who = 'animals' | 'group';
               <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Who eats, what they eat, and a check before saving</p>
             </div>
           </div>
-          <button mat-icon-button (click)="close()" class="text-gray-400"><mat-icon>close</mat-icon></button>
+          <button mat-icon-button (click)="close()" class="text-gray-400" aria-label="Close"><mat-icon>close</mat-icon></button>
         </div>
         <div class="flex items-center gap-2 mt-3 text-xs font-semibold">
           <ng-container *ngFor="let s of steps; let i = index">
@@ -87,7 +89,7 @@ type Who = 'animals' | 'group';
       <div *ngIf="errorMessage()" class="mx-6 mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-start gap-2">
         <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0 mt-0.5">error</mat-icon>
         <div class="flex-1">{{ errorMessage() }}</div>
-        <button type="button" (click)="errorMessage.set(null)"><mat-icon class="!w-4 !h-4 !text-[16px]">close</mat-icon></button>
+        <button type="button" (click)="errorMessage.set(null)" aria-label="Close"><mat-icon class="!w-4 !h-4 !text-[16px]">close</mat-icon></button>
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar p-6" [formGroup]="form">
@@ -189,7 +191,7 @@ type Who = 'animals' | 'group';
                   (selectionChange)="onDirectUnit(i, $event)"></app-unit-picker>
                 <ng-template #kgUnit><div class="field text-gray-500">kg</div></ng-template>
               </div>
-              <button type="button" (click)="removeDirect(i)" class="p-1 text-gray-400 hover:text-red-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+              <button type="button" (click)="removeDirect(i)" class="p-1 text-gray-400 hover:text-red-600" aria-label="Delete"><mat-icon class="!text-[18px]">delete</mat-icon></button>
             </div>
           </div>
         </section>
@@ -210,13 +212,13 @@ type Who = 'animals' | 'group';
             <div class="grid grid-cols-3 gap-3 text-xs">
               <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">Animals<b class="block text-lg">{{ pv.animals.length }}</b></div>
               <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">Feed a day<b class="block text-lg">{{ pv.totalKgPerDay | number:'1.0-2' }} kg</b></div>
-              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">Cost a day<b class="block text-lg">৳{{ pv.totalCostPerDayBdt | number:'1.0-0' }}</b></div>
+              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">Cost a day<b class="block text-lg">{{ pv.totalCostPerDayBdt | money }}</b></div>
             </div>
             <p *ngIf="who() === 'group'" class="text-[11px] text-gray-500 m-0">Group plan: each head gets the amount below; {{ pv.groupHeadCount }} animal(s) are in it today.</p>
 
             <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-x-auto">
               <table class="w-full text-xs">
-                <thead class="bg-gray-50 dark:bg-gray-900/50 text-[10px] uppercase tracking-wider text-gray-500">
+                <thead class="bg-gray-50 dark:bg-gray-900/50 text-[11px] uppercase tracking-wider text-gray-500">
                   <tr><th class="text-left px-3 py-2">Animal</th><th class="text-left px-3 py-2">Weight · age</th><th class="text-left px-3 py-2">Gets</th><th class="text-right px-3 py-2">kg/day</th><th class="text-right px-3 py-2">৳/day</th></tr>
                 </thead>
                 <tbody>
@@ -272,7 +274,7 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
   private readonly shedService = inject(ShedService);
   private readonly penService = inject(PenService);
   private readonly batchService = inject(BatchService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -306,7 +308,7 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
   /** Charts the user made; one-line "Direct · …" rule sets are created for extras and reused behind the scenes. */
   readonly charts = computed(() => this.ruleSets().filter(r => !r.name.startsWith('Direct · ')));
 
-  private readonly today = new Date().toISOString().split('T')[0];
+  private readonly today = toLocalIsoDate();
 
   readonly form = this.fb.group({
     animalIds: [[] as string[]],
@@ -461,7 +463,7 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
       replaceExistingCharts: req.replaceExistingCharts,
     }).subscribe({
       next: () => {
-        this.snackBar.open('Ration saved', 'Close', { duration: 3000 });
+        this.notify.success('Ration saved');
         this.dialogRef.close(true);
       },
       error: (err) => {

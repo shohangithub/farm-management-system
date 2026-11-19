@@ -1,0 +1,212 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  # ── Backend: build (warnings = errors via Directory.Build.props), tests, EF bundle ──
+  backend:
+    name: .NET build, test, migrations bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET (version from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Farm360.slnx
+
+      - name: Build (Release, warnings as errors)
+        run: dotnet build Farm360.slnx -c Release --no-restore -p:TreatWarningsAsErrors=true
+
+      # Docker-free test suites. Farm360.Application.IntegrationTests needs Testcontainers
+      # (SQL Server/Redis) and is run separately below.
+      - name: Test — Domain
+        run: dotnet test tests/Farm360.Domain.UnitTests -c Release --no-build --logger trx --results-directory TestResults
+      - name: Test — Application
+        run: dotnet test tests/Farm360.Application.UnitTests -c Release --no-build --logger trx --results-directory TestResults
+      - name: Test — Architecture
+        run: dotnet test tests/Farm360.Architecture.Tests -c Release --no-build --logger trx --results-directory TestResults
+      - name: Test — API functional (route table / security, no Docker)
+        run: dotnet test tests/Farm360.Api.FunctionalTests -c Release --no-build --logger trx --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+
+      - name: Restore local tools (dotnet-ef)
+        run: dotnet tool restore
+
+      - name: Build EF Core migrations bundle (linux-x64, self-contained)
+        run: >
+          dotnet ef migrations bundle
+          --project src/Farm360.Persistence/Farm360.Persistence.csproj
+          --startup-project src/Farm360.Api/Farm360.Api.csproj
+          --context ApplicationDbContext
+          --configuration Release
+          --self-contained -r linux-x64
+          --output artifacts/efbundle
+          --force
+
+      - name: Generate idempotent migration script (for DBA review)
+        run: >
+          dotnet ef migrations script --idempotent
+          --project src/Farm360.Persistence/Farm360.Persistence.csproj
+          --startup-project src/Farm360.Api/Farm360.Api.csproj
+          --context ApplicationDbContext
+          --configuration Release
+          --output artifacts/migrations.sql
+
+      - name: Upload migrations bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: efbundle-linux-x64
+          path: |
+            artifacts/efbundle
+            artifacts/migrations.sql
+          retention-days: 30
+
+  # ── Integration tests (Testcontainers: SQL Server + Redis via the runner's Docker) ──
+  integration:
+    name: Integration tests (Testcontainers)
+    runs-on: ubuntu-latest
+    needs: backend
+    timeout-minutes: 30
+    # Informational until the suite is stable on CI.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - name: Test — Application integration
+        run: dotnet test tests/Farm360.Application.IntegrationTests -c Release
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    name: Angular production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: src/Farm360.Web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: src/Farm360.Web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx ng build --configuration production
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: src/Farm360.Web/dist/farm360-web/browser
+          retention-days: 7
+
+  # ── Container images (always built; pushed to GHCR only from main) ─────────
+  docker:
+    name: Docker images
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Image names
+        id: names
+        run: |
+          prefix="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          echo "api=${prefix}/farm360-api" >> "$GITHUB_OUTPUT"
+          echo "web=${prefix}/farm360-web" >> "$GITHUB_OUTPUT"
+          echo "migrator=${prefix}/farm360-migrator" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Farm360.Api/Dockerfile
+          target: final
+          push: ${{ env.PUSH == 'true' }}
+          tags: |
+            ${{ steps.names.outputs.api }}:${{ github.sha }}
+            ${{ steps.names.outputs.api }}:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Migrator image (EF bundle)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Farm360.Api/Dockerfile
+          target: migrator
+          push: ${{ env.PUSH == 'true' }}
+          tags: |
+            ${{ steps.names.outputs.migrator }}:${{ github.sha }}
+            ${{ steps.names.outputs.migrator }}:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=migrator
+
+      - name: Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: src/Farm360.Web
+          push: ${{ env.PUSH == 'true' }}
+          build-args: |
+            API_BASE_URL=${{ vars.WEB_API_BASE_URL }}
+          tags: |
+            ${{ steps.names.outputs.web }}:${{ github.sha }}
+            ${{ steps.names.outputs.web }}:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web

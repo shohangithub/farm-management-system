@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FeedingService } from '../../../services/feeding.service';
 import { DailyFeedingEntry, FeedingEntryCostBreakdown } from '../../../models/feeding.models';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
 export interface CostBreakdownDialogData {
   entry: DailyFeedingEntry;
@@ -14,7 +15,7 @@ export interface CostBreakdownDialogData {
 @Component({
   selector: 'app-feeding-cost-breakdown-dialog',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     MatDialogModule,
     MatButtonModule,
@@ -40,7 +41,7 @@ export interface CostBreakdownDialogData {
             </p>
           </div>
         </div>
-        <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors">
+        <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors" aria-label="Close">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -68,7 +69,7 @@ export interface CostBreakdownDialogData {
               <div class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mt-1">
                 {{ (b.totalKg ?? (b.actualKg ?? b.expectedKg)) | number:'1.0-3' }} <span class="text-xs font-normal text-gray-500">kg</span>
               </div>
-              <span class="text-[10px] text-gray-400 block mt-0.5">
+              <span class="text-[11px] text-gray-400 block mt-0.5">
                 {{ b.actualKg != null ? 'Actual consumed' : 'Expected planned' }}<ng-container *ngIf="(b.headCount ?? 1) > 1"> · {{ b.actualKg ?? b.expectedKg }} kg x {{ b.headCount }} head</ng-container>
               </span>
             </div>
@@ -76,17 +77,17 @@ export interface CostBreakdownDialogData {
             <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-xs">
               <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Blended Cost</span>
               <div class="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                ৳{{ (b.blendedUnitCostBdt ?? 0) | number:'1.2-2' }} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">/kg</span>
+                {{ (b.blendedUnitCostBdt ?? 0) | money:2 }} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">/kg</span>
               </div>
-              <span class="text-[10px] text-gray-400 block mt-0.5">Weighted avg per kg</span>
+              <span class="text-[11px] text-gray-400 block mt-0.5">Weighted avg per kg</span>
             </div>
 
             <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-xs">
               <span class="text-[11px] font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider block">Total Cost</span>
               <div class="text-base sm:text-lg font-bold text-teal-700 dark:text-teal-300 mt-1">
-                ৳{{ (b.totalCostBdt ?? ((b.totalKg ?? (b.actualKg ?? b.expectedKg)) * (b.blendedUnitCostBdt ?? 0))) | number:'1.2-2' }}
+                {{ (b.totalCostBdt ?? ((b.totalKg ?? (b.actualKg ?? b.expectedKg)) * (b.blendedUnitCostBdt ?? 0))) | money:2 }}
               </div>
-              <span class="text-[10px] text-gray-400 block mt-0.5">Total feeding value</span>
+              <span class="text-[11px] text-gray-400 block mt-0.5">Total feeding value</span>
             </div>
 
             <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700/80 shadow-xs">
@@ -94,7 +95,7 @@ export interface CostBreakdownDialogData {
               <div class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-1 truncate" [matTooltip]="b.formulaName">
                 {{ b.formulaName }}
               </div>
-              <span class="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">
+              <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {{ b.status }}
               </span>
             </div>
@@ -136,7 +137,7 @@ export interface CostBreakdownDialogData {
                   <tr *ngFor="let item of b.ingredients" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
                     <td class="py-2.5 px-4 font-medium text-gray-900 dark:text-white">
                       {{ item.ingredientName }}
-                      <span *ngIf="item.inventoryItemName" class="block text-[10px] text-gray-400 font-normal">
+                      <span *ngIf="item.inventoryItemName" class="block text-[11px] text-gray-400 font-normal">
                         Linked: {{ item.inventoryItemName }}
                       </span>
                     </td>
@@ -147,13 +148,13 @@ export interface CostBreakdownDialogData {
                       {{ item.allocatedKg | number:'1.2-2' }} kg
                     </td>
                     <td class="py-2.5 px-3 text-right font-mono font-medium">
-                      ৳{{ item.unitCostBdt | number:'1.2-2' }}
+                      {{ item.unitCostBdt | money:2 }}
                     </td>
                     <td class="py-2.5 px-3 text-right font-mono font-bold text-gray-900 dark:text-white">
-                      ৳{{ item.totalCostBdt | number:'1.2-2' }}
+                      {{ item.totalCostBdt | money:2 }}
                     </td>
                     <td class="py-2.5 px-4 text-center">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
                             [ngClass]="item.costSource.includes('Inventory') 
                               ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600'">
@@ -178,10 +179,10 @@ export interface CostBreakdownDialogData {
                       {{ (b.totalKg ?? (b.actualKg ?? b.expectedKg)) | number:'1.2-2' }} kg
                     </td>
                     <td class="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
-                      ৳{{ (b.blendedUnitCostBdt ?? 0) | number:'1.2-2' }}
+                      {{ (b.blendedUnitCostBdt ?? 0) | money:2 }}
                     </td>
                     <td class="py-2.5 px-3 text-right font-mono text-teal-700 dark:text-teal-300">
-                      ৳{{ (b.totalCostBdt ?? ((b.totalKg ?? (b.actualKg ?? b.expectedKg)) * (b.blendedUnitCostBdt ?? 0))) | number:'1.2-2' }}
+                      {{ (b.totalCostBdt ?? ((b.totalKg ?? (b.actualKg ?? b.expectedKg)) * (b.blendedUnitCostBdt ?? 0))) | money:2 }}
                     </td>
                     <td></td>
                   </tr>

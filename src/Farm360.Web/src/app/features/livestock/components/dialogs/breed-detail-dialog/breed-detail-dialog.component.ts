@@ -27,7 +27,7 @@ import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dia
             <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Breed Profile & Intelligence Config</p>
           </div>
         </div>
-        <button mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600">
+        <button aria-label="Close" mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600">
           <mat-icon>close</mat-icon>
         </button>
       </div>

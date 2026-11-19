@@ -8,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 import { BreedSetupDialogComponent } from '../../components/dialogs/breed-setup-dialog/breed-setup-dialog.component';
 import { BreedDetailDialogComponent } from '../../components/dialogs/breed-detail-dialog/breed-detail-dialog.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -27,7 +29,8 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
     MatDialogModule,
     PageHeaderComponent,
     LoadingComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    ErrorStateComponent
   ],
   template: `
     <app-page-header
@@ -44,6 +47,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px] mt-6 mx-6 mb-6">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters & Sorting Toolbar -->
       <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
@@ -81,7 +85,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 
       <!-- Empty State -->
       <app-empty-state 
-        *ngIf="!loading() && (!result()?.items || result()?.items?.length === 0)"
+        *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="pets"
         title="No Breeds Found"
         description="Get started by adding your first livestock breed."
@@ -92,7 +96,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
       <!-- Breeds Grid -->
       <div *ngIf="!loading() && result()?.items?.length" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @for (breed of result()?.items; track breed.id) {
-          <div (click)="goToDetails(breed.id)" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer">
+          <div (click)="goToDetails(breed.id)" (keydown.enter)="goToDetails(breed.id)" role="link" tabindex="0" [attr.aria-label]="'Open breed ' + breed.name" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer">
             <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">pets</mat-icon>
 
             <!-- Card Header -->
@@ -110,10 +114,10 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
               </div>
 
               <div class="flex items-center gap-1">
-                <button (click)="openSetupDialog(breed); $event.stopPropagation()" class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="Edit Breed">
+                <button aria-label="Edit Breed" (click)="openSetupDialog(breed); $event.stopPropagation()" class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="Edit Breed">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                 </button>
-                <button (click)="onDelete(breed, $event)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Delete Breed">
+                <button aria-label="Delete Breed" (click)="onDelete(breed, $event)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Delete Breed">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                 </button>
               </div>
@@ -125,11 +129,11 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 
               <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 mb-2">
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Standard ADG</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Standard ADG</div>
                   <div class="font-extrabold text-gray-900 dark:text-white text-base mt-0.5">{{ breed.standardAdgMin }} - {{ breed.standardAdgMax }} kg</div>
                 </div>
                 <div>
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400">Target FCR</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Target FCR</div>
                   <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">{{ breed.fcrMin }} - {{ breed.fcrMax }}</div>
                 </div>
               </div>
@@ -155,11 +159,11 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
             </select>
           </div>
           <div class="flex items-center gap-2">
-            <button (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                   class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
           </button>
-          <button (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+          <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                   class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
           </button>
@@ -177,6 +181,11 @@ export class BreedList {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+
+  retryLoad(): void {
+    this.error.set(null);
+    this.refreshTrigger.update(n => n + 1);
+  }
   readonly searchTerm = signal('');
   readonly params = signal<BreedParams>({ pageNumber: 1, pageSize: 20 });
   private readonly refreshTrigger = signal(0);
@@ -247,7 +256,7 @@ export class BreedList {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ params }) => this.breedService.getBreeds(params).pipe(
         catchError(e => {
-          this.error.set(e?.error?.detail ?? 'Failed to load breeds');
+          this.error.set(parseApiError(e, 'Could not load breeds.'));
           return of(null);
         })
       )),
@@ -355,7 +364,7 @@ export class BreedList {
   onDelete(breed: BreedDto, event: Event): void {
     event.stopPropagation();
     
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {

@@ -15,15 +15,19 @@ import { of } from 'rxjs';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
+import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../core/utils/error-parser';
+import { NotificationService } from '../../../shared/services/notification.service';
+
 @Component({
   selector: 'app-branch-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, LoadingComponent, EmptyStateComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, LoadingComponent, EmptyStateComponent],
   templateUrl: './branch-list.html',
-  styleUrls: ['./branch-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BranchListComponent {
+  private readonly notify = inject(NotificationService);
   private readonly branchService = inject(BranchService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -59,8 +63,7 @@ export class BranchListComponent {
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
       switchMap(params => this.branchService.getBranchesByOrganization(params.orgId, params.search, params.status !== null ? params.status : undefined, params.pageNumber, params.pageSize).pipe(
         catchError(err => {
-          this.error.set('Failed to load branches.');
-          console.error(err);
+          this.error.set(parseApiError(err, 'Failed to load branches.'));
           return of({ items: [] as BranchList[], totalCount: 0 });
         })
       )),
@@ -78,7 +81,7 @@ export class BranchListComponent {
     {
       def: 'branch',
       header: 'Branch',
-      cell: (row: BranchList) => `<div><div class="font-semibold text-gray-900 dark:text-white">${row.name}</div><div class="text-[11px] text-gray-500 font-mono mt-0.5">Code: ${row.branchCode} ${row.isHeadOffice ? '<span class="ml-1 px-1.5 py-0.5 inline-flex text-[9px] leading-4 font-bold rounded-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 uppercase">HQ</span>' : ''}</div></div>`,
+      cell: (row: BranchList) => `<div><div class="font-semibold text-gray-900 dark:text-white">${row.name}</div><div class="text-[11px] text-gray-500 font-mono mt-0.5">Code: ${row.branchCode} ${row.isHeadOffice ? '<span class="ml-1 px-1.5 py-0.5 inline-flex text-[11px] leading-4 font-bold rounded-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 uppercase">HQ</span>' : ''}</div></div>`,
       isAction: false
     },
     {
@@ -146,7 +149,7 @@ export class BranchListComponent {
   }
 
   delete(id: string): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       data: {
         title: 'Delete Branch',
@@ -161,7 +164,7 @@ export class BranchListComponent {
       if (result) {
         this.branchService.deleteBranch(id).subscribe({
           next: () => this.loadBranches(),
-          error: (err) => console.error(err)
+          error: (err) => this.notify.error(parseApiError(err, 'The action could not be completed.'))
         });
       }
     });
@@ -184,7 +187,7 @@ export class BranchListComponent {
   }
 
   onRestore(branch: BranchList): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       data: {
         title: 'Restore Branch',
@@ -199,7 +202,7 @@ export class BranchListComponent {
       if (result) {
         this.branchService.activateBranch(branch.id).subscribe({
           next: () => this.loadBranches(),
-          error: (err) => console.error(err)
+          error: (err) => this.notify.error(parseApiError(err, 'The action could not be completed.'))
         });
       }
     });

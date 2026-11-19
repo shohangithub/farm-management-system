@@ -12,6 +12,8 @@ public sealed class VetVisitConfiguration : IEntityTypeConfiguration<VetVisit>
 
         builder.HasKey(v => v.Id);
 
+        builder.Property(v => v.RowVersion).IsRowVersion();
+
         builder.Property(v => v.VetName)
             .IsRequired()
             .HasMaxLength(200);

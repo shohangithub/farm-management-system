@@ -88,4 +88,17 @@ public readonly record struct DateRange(DateOnly From, DateOnly To)
 
     public static DateRange CurrentYear(DateOnly today) =>
         new(new DateOnly(today.Year, 1, 1), new DateOnly(today.Year, 12, 31));
+
+    /// <summary>The whole financial year containing <paramref name="today"/>.</summary>
+    public static DateRange FiscalYear(DateOnly today, int startMonth) =>
+        new(Domain.Finance.Accounting.FiscalYear.StartOf(today, startMonth),
+            Domain.Finance.Accounting.FiscalYear.EndOf(today, startMonth));
+
+    /// <summary>Financial year start to <paramref name="today"/>.</summary>
+    public static DateRange FiscalYearToDate(DateOnly today, int startMonth) =>
+        new(Domain.Finance.Accounting.FiscalYear.StartOf(today, startMonth), today);
+
+    /// <summary>The financial year before the one containing <paramref name="today"/>.</summary>
+    public static DateRange PreviousFiscalYear(DateOnly today, int startMonth) =>
+        FiscalYear(Domain.Finance.Accounting.FiscalYear.StartOf(today, startMonth).AddDays(-1), startMonth);
 }

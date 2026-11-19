@@ -5,7 +5,6 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, combineLatest, of, switchMap, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -15,6 +14,10 @@ import { BoardAnimal, FeedingBoard, RationItem } from '../../models/feeding.mode
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { AssignFeedingPlanDialogComponent, SetRationDialogData } from '../../components/dialogs/assign-feeding-plan-dialog/assign-feeding-plan-dialog.component';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 type Filter = 'all' | 'unfed' | 'extras' | 'paused';
 
 /**
@@ -24,7 +27,7 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
 @Component({
   selector: 'app-feeding-board',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
   template: `
     <app-page-header title="Who Eats What" description="Every animal and what it is fed each day — set, change, pause or stop rations here."
       breadcrumbActiveNode="Who Eats What">
@@ -71,7 +74,7 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
           </div>
           <div class="p-4 rounded-2xl bg-white/80 dark:bg-gray-800/80 border border-gray-100 dark:border-gray-800">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500 m-0">Cost a day</p>
-            <h3 class="text-xl font-black mt-1 mb-0 text-emerald-600">৳{{ b.summary.totalCostPerDayBdt | number:'1.0-0' }}</h3>
+            <h3 class="text-xl font-black mt-1 mb-0 text-emerald-600">{{ b.summary.totalCostPerDayBdt | money }}</h3>
           </div>
         </div>
 
@@ -117,24 +120,24 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
                 <td class="px-3 py-2.5">
                   <div *ngIf="!a.items.length" class="text-xs font-semibold text-rose-600">No ration — not fed by the system</div>
                   <div *ngFor="let it of a.items" class="flex flex-wrap items-center gap-x-2 text-xs py-0.5" [class.opacity-50]="it.isPaused">
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase" [ngClass]="kindClass(it)">{{ kindLabel(it) }}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[11px] font-bold uppercase" [ngClass]="kindClass(it)">{{ kindLabel(it) }}</span>
                     <span class="font-semibold">{{ it.name }}</span>
                     <span class="text-gray-500">{{ it.kgPerDay | number:'1.0-3' }} {{ it.unit || 'kg' }}<span *ngIf="it.feedName && it.feedName !== it.name"> · {{ it.feedName }}</span></span>
                     <span *ngIf="it.fit === 'BelowRange' || it.fit === 'AboveRange'" class="text-amber-600" title="Outside the chart's ranges — the nearest range is used">⚠ {{ it.fit === 'BelowRange' ? 'below' : 'above' }} chart</span>
                     <span *ngIf="it.isPaused" class="text-sky-600">paused{{ it.pausedUntil ? ' until ' + (it.pausedUntil | date:'d MMM') : '' }}</span>
                     <span *ngIf="it.planId && it.kind !== 'Group'" class="ml-auto inline-flex gap-0.5">
-                      <button (click)="pause(a, it)" title="Pause" class="p-0.5 text-gray-400 hover:text-sky-600"><mat-icon class="!text-[16px] !w-4 !h-4">pause_circle</mat-icon></button>
-                      <button (click)="stop(a, it)" title="Stop" class="p-0.5 text-gray-400 hover:text-rose-600"><mat-icon class="!text-[16px] !w-4 !h-4">stop_circle</mat-icon></button>
+                      <button (click)="pause(a, it)" title="Pause" class="p-0.5 text-gray-400 hover:text-sky-600" aria-label="Pause"><mat-icon class="!text-[16px] !w-4 !h-4">pause_circle</mat-icon></button>
+                      <button (click)="stop(a, it)" title="Stop" class="p-0.5 text-gray-400 hover:text-rose-600" aria-label="Stop"><mat-icon class="!text-[16px] !w-4 !h-4">stop_circle</mat-icon></button>
                     </span>
                   </div>
                 </td>
                 <td class="px-3 py-2.5 text-right font-mono">{{ a.totalKgPerDay | number:'1.0-2' }}</td>
                 <td class="px-3 py-2.5 text-right font-mono">{{ a.totalCostPerDayBdt | number:'1.0-0' }}</td>
                 <td class="px-3 py-2.5 text-right whitespace-nowrap">
-                  <button (click)="openSetRation([a.animalId], hasChart(a) ? 'switch' : undefined)" [title]="hasChart(a) ? 'Change chart' : 'Set ration'" class="p-1 text-gray-400 hover:text-emerald-600">
+                  <button (click)="openSetRation([a.animalId], hasChart(a) ? 'switch' : undefined)" [title]="hasChart(a) ? 'Change chart' : 'Set ration'" class="p-1 text-gray-400 hover:text-emerald-600" aria-label="Open set ration">
                     <mat-icon class="!text-[18px]">{{ hasChart(a) ? 'swap_horiz' : 'restaurant' }}</mat-icon>
                   </button>
-                  <button (click)="openSetRation([a.animalId], 'extra')" title="Add extra" class="p-1 text-gray-400 hover:text-amber-600">
+                  <button (click)="openSetRation([a.animalId], 'extra')" title="Add extra" class="p-1 text-gray-400 hover:text-amber-600" aria-label="Open set ration">
                     <mat-icon class="!text-[18px]">add_circle</mat-icon>
                   </button>
                 </td>
@@ -150,8 +153,8 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
       </ng-container>
 
       <!-- Pause dialog -->
-      <div *ngIf="pausing() as p" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" (click)="pausing.set(null)">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 w-full max-w-sm space-y-3 text-xs" (click)="$event.stopPropagation()">
+      <div *ngIf="pausing() as p" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" (click)="pausing.set(null)" (keydown.escape)="pausing.set(null)">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 w-full max-w-sm space-y-3 text-xs" role="dialog" aria-modal="true" [attr.aria-label]="'Pause ' + p.item.name" (click)="$event.stopPropagation()">
           <h3 class="text-sm font-black m-0">Pause {{ p.item.name }} for {{ p.animal.tag }}</h3>
           <label class="flex flex-col gap-1 font-semibold">From <input type="date" [(ngModel)]="p.from" class="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent" /></label>
           <label class="flex flex-col gap-1 font-semibold">Feed again on <input type="date" [(ngModel)]="p.until" class="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent" /></label>
@@ -167,10 +170,11 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedingBoardComponent {
+  private readonly confirmService = inject(ConfirmService);
   private readonly feeding = inject(FeedingService);
   private readonly context = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly board = signal<FeedingBoard | null>(null);
@@ -263,8 +267,8 @@ export class FeedingBoardComponent {
   }
 
   pause(animal: BoardAnimal, item: RationItem): void {
-    const today = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const today = toLocalIsoDate();
+    const tomorrow = toLocalIsoDate(new Date(Date.now() + 86400000));
     this.pausing.set({ animal, item, from: today, until: tomorrow, reason: '' });
   }
 
@@ -273,28 +277,28 @@ export class FeedingBoardComponent {
     if (!p?.item.planId) return;
     this.busy.set(true);
     this.feeding.excludeAnimalFromPlan(p.item.planId, p.from, p.reason || 'Paused', p.until).subscribe({
-      next: () => { this.busy.set(false); this.pausing.set(null); this.snack.open('Paused', 'Close', { duration: 2500 }); this.refresh$.next(); },
+      next: () => { this.busy.set(false); this.pausing.set(null); this.notify.info('Paused'); this.refresh$.next(); },
       error: err => { this.busy.set(false); this.error.set(err.error?.detail || 'Could not pause.'); }
     });
   }
 
-  stop(animal: BoardAnimal, item: RationItem): void {
-    if (!item.planId || !confirm(`Stop feeding "${item.name}" to ${animal.tag}? Past feeding records are kept.`)) return;
+  async stop(animal: BoardAnimal, item: RationItem): Promise<void> {
+    if (!item.planId || !(await this.confirmService.confirmAsync({ message: `Stop feeding "${item.name}" to ${animal.tag}? Past feeding records are kept.`, confirmText: 'Stop', destructive: true }))) return;
     this.busy.set(true);
     this.feeding.cancelPlan(item.planId).subscribe({
-      next: () => { this.busy.set(false); this.snack.open('Stopped', 'Close', { duration: 2500 }); this.refresh$.next(); },
+      next: () => { this.busy.set(false); this.notify.info('Stopped'); this.refresh$.next(); },
       error: err => { this.busy.set(false); this.error.set(err.error?.detail || 'Could not stop the ration.'); }
     });
   }
 
-  convertSchedules(): void {
+  async convertSchedules(): Promise<void> {
     const farmId = this.context.currentFarmValue?.id;
-    if (!farmId || !confirm('Convert all active feeding schedules into shed/batch rations? They will start feeding from today.')) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: 'Convert all active feeding schedules into shed/batch rations? They will start feeding from today.', confirmText: 'Convert' }))) return;
     this.busy.set(true);
     this.feeding.convertSchedules(farmId).subscribe({
       next: r => {
         this.busy.set(false);
-        alert(`${r.converted} converted, ${r.skipped} skipped.\n\n${r.notes.join('\n')}`);
+        this.notify.info(`${r.converted} converted, ${r.skipped} skipped.\n\n${r.notes.join('\n')}`);
         this.refresh$.next();
       },
       error: err => { this.busy.set(false); this.error.set(err.error?.detail || 'Conversion failed.'); }

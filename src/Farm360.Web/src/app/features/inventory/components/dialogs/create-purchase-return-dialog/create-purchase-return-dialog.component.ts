@@ -14,6 +14,8 @@ import {
   CreatePurchaseReturnRequest,
   CreatePurchaseReturnItemRequest
 } from '../../../models/inventory.models';
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
 export interface CreatePurchaseReturnDialogData {
   purchaseOrderId: string;
@@ -24,7 +26,7 @@ export interface CreatePurchaseReturnDialogData {
 @Component({
   selector: 'app-create-purchase-return-dialog',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -44,7 +46,7 @@ export interface CreatePurchaseReturnDialogData {
             Purchase Order: <span class="font-semibold text-gray-700 dark:text-gray-200">#{{ data.poNumber }}</span>
           </p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button aria-label="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -66,6 +68,7 @@ export interface CreatePurchaseReturnDialogData {
               </label>
               <input type="date" formControlName="returnDate"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+<p *ngIf="form.get('returnDate')?.invalid && form.get('returnDate')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'returnDate') }}</p>
             </div>
 
             <div class="space-y-1.5">
@@ -137,7 +140,7 @@ export interface CreatePurchaseReturnDialogData {
                     </td>
                     <td class="px-3 py-2 text-right text-gray-600 dark:text-gray-300">
                       {{ items()[i].orderedQuantity }}
-                      <span *ngIf="items()[i].enteredUnitName" class="block text-[10px] text-gray-400">
+                      <span *ngIf="items()[i].enteredUnitName" class="block text-[11px] text-gray-400">
                         ({{ items()[i].enteredQuantity | number:'1.0-4' }} × {{ items()[i].enteredUnitName }})
                       </span>
                     </td>
@@ -156,10 +159,10 @@ export interface CreatePurchaseReturnDialogData {
                         [ngClass]="{'border-red-500': itemGroup.get('quantity')?.invalid}">
                     </td>
                     <td class="px-3 py-2 text-right text-gray-600 dark:text-gray-300">
-                      ৳ {{ items()[i].unitCostBdt | number:'1.2-2' }}
+                      {{ items()[i].unitCostBdt | money:2 }}
                     </td>
                     <td class="px-3 py-2 text-right font-bold text-gray-900 dark:text-white">
-                      ৳ {{ getLineTotal(i) | number:'1.2-2' }}
+                      {{ getLineTotal(i) | money:2 }}
                     </td>
                   </tr>
                 </tbody>
@@ -169,7 +172,7 @@ export interface CreatePurchaseReturnDialogData {
                       Total Refund / Credit:
                     </td>
                     <td class="px-3 py-2.5 text-right font-black text-amber-600 dark:text-amber-400 text-base">
-                      ৳ {{ calculatedTotal() | number:'1.2-2' }}
+                      {{ calculatedTotal() | money:2 }}
                     </td>
                   </tr>
                 </tfoot>
@@ -233,7 +236,7 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
   ];
 
   readonly form: FormGroup = this.fb.group({
-    returnDate: [new Date().toISOString().split('T')[0], Validators.required],
+    returnDate: [toLocalIsoDate(), Validators.required],
     reason: [PurchaseReturnReason.Damaged, Validators.required],
     creditNoteNumber: [''],
     notes: [''],
@@ -377,5 +380,19 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
           this.error.set(err?.error?.detail || err?.message || 'Failed to create purchase return.');
         }
       });
+  }
+
+  /** Human-readable message for the first validation error on a control. */
+  fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
+    const e = group.get(name)?.errors;
+    if (!e) return '';
+    if (e['required']) return 'This field is required.';
+    if (e['min']) return `Must be at least ${e['min'].min}.`;
+    if (e['max']) return `Must be at most ${e['max'].max}.`;
+    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
+    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
+    if (e['email']) return 'Enter a valid email address.';
+    if (e['pattern']) return 'Invalid format.';
+    return 'Invalid value.';
   }
 }

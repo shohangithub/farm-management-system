@@ -1,4 +1,6 @@
+using Farm360.Api.Authorization;
 using Farm360.Application.Finance.Commands;
+using Farm360.Persistence.Seed;
 using Farm360.Application.Finance.Queries;
 using Farm360.Application.Finance.Services;
 using Farm360.Contracts.Finance;
@@ -15,6 +17,27 @@ namespace Farm360.Api.Endpoints.Finance;
 
 public static class FinanceEndpoints
 {
+    /// <summary>
+    /// Finance routes that need <see cref="PermissionConstants.FinanceModule.Admin"/> rather than
+    /// the method-derived view/create/edit/delete permission: accounting repair, overhead
+    /// allocation, ledger backfill, share-market and investor capital operations.
+    /// </summary>
+    internal static readonly string[] FinanceAdminRoutes =
+    [
+        "accounting/repair",
+        "overhead/allocate",
+        "ledger/backfill-manual-animal-expenses",
+        "shares/configure",
+        "shares/purchase",
+        "shares/sell",
+        "shares/transfer",
+        "shares/valuation",
+        "POST investors",
+        "PUT investors/{id:guid}",
+        "PATCH investors/{id:guid}/status",
+        "POST investors/{id:guid}/transactions",
+    ];
+
     public static IEndpointRouteBuilder MapFinanceEndpoints(this IEndpointRouteBuilder builder)
     {
         MapFinanceRoutes(builder, "/api/farms/{farmId:guid}/finance", "/api/finance");
@@ -26,7 +49,14 @@ public static class FinanceEndpoints
     {
         var group = builder.MapGroup(farmRoutePrefix)
             .WithTags("Finance")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePermissionsByMethod(
+                PermissionConstants.FinanceModule.View,
+                PermissionConstants.FinanceModule.Create,
+                PermissionConstants.FinanceModule.Edit,
+                PermissionConstants.FinanceModule.Delete,
+                PermissionConstants.FinanceModule.Admin,
+                FinanceAdminRoutes);
 
         // Transaction routes (Paged, Filtered, CRUD, Export)
         group.MapGet("transactions", async (
@@ -518,9 +548,10 @@ public static class FinanceEndpoints
             Guid farmId,
             [FromQuery] DateTime? fromDate,
             [FromQuery] DateTime? toDate,
-            IMediator mediator) =>
+            IMediator mediator,
+            Farm360.Application.Common.Interfaces.IFarmClock clock) =>
         {
-            var from = fromDate ?? DateTime.Today;
+            var from = fromDate ?? clock.Now.Date;
             var result = await mediator.Send(new GetIncomeExpenseReportQuery(farmId, from, toDate ?? from));
             return Results.Ok(result);
         }).Produces<IncomeExpenseReportDto>();
@@ -599,9 +630,10 @@ public static class FinanceEndpoints
             Guid farmId,
             [FromQuery] DateTime? fromDate,
             [FromQuery] DateTime? toDate,
-            IMediator mediator) =>
+            IMediator mediator,
+            Farm360.Application.Common.Interfaces.IFarmClock clock) =>
         {
-            var today = DateTime.Today;
+            var today = clock.Now.Date;
             var from = fromDate ?? new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
             var result = await mediator.Send(new GetFullAccountsReportQuery(farmId, from, toDate ?? today));
             return Results.Ok(result);
@@ -611,7 +643,14 @@ public static class FinanceEndpoints
         // But for consistency we can leave it here or map it separately.
         var tenantGroup = builder.MapGroup(tenantRoutePrefix)
             .WithTags("Finance")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePermissionsByMethod(
+                PermissionConstants.FinanceModule.View,
+                PermissionConstants.FinanceModule.Create,
+                PermissionConstants.FinanceModule.Edit,
+                PermissionConstants.FinanceModule.Delete,
+                PermissionConstants.FinanceModule.Admin,
+                FinanceAdminRoutes);
 
         tenantGroup.MapGet("reports/consolidated", async (int year, int month, Farm360.Application.Common.Interfaces.ITenantService tenantService, IMediator mediator) =>
         {

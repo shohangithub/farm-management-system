@@ -5,7 +5,6 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { FeedingService } from '../../../services/feeding.service';
@@ -21,6 +20,9 @@ import {
   FeedCategoryNames,
   FeedFormula
 } from '../../../models/feeding.models';
+import { NotificationService } from '../../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../../shared/pipes/money.pipe';
 
 interface PlanTypeOption {
   value: FeedingPlanType;
@@ -44,7 +46,7 @@ interface RuleRow {
 @Component({
   selector: 'app-feeding-rule-set-dialog',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -79,7 +81,7 @@ interface RuleRow {
             <p class="text-xs text-gray-500 dark:text-gray-400 m-0">How much each animal should eat per day</p>
           </div>
         </div>
-        <button mat-icon-button (click)="close()" class="text-gray-400"><mat-icon>close</mat-icon></button>
+        <button mat-icon-button (click)="close()" class="text-gray-400" aria-label="Close"><mat-icon>close</mat-icon></button>
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-7" [formGroup]="form">
@@ -154,7 +156,7 @@ interface RuleRow {
                 <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}{{ f.totalCostPerKgBdt ? ' (৳' + (f.totalCostPerKgBdt | number:'1.0-2') + '/kg)' : '' }}</option>
               </optgroup>
               <optgroup *ngIf="stockItems().length" label="Stock items (fed as they are)">
-                <option *ngFor="let it of stockItems()" [ngValue]="'i:' + it.id">{{ it.name }} (৳{{ it.weightedAverageCostBdt | number:'1.0-2' }}/{{ it.unitOfMeasure }})</option>
+                <option *ngFor="let it of stockItems()" [ngValue]="'i:' + it.id">{{ it.name }} ({{ it.weightedAverageCostBdt | money:2 }}/{{ it.unitOfMeasure }})</option>
               </optgroup>
             </select>
             <span class="text-gray-400">or</span>
@@ -167,19 +169,19 @@ interface RuleRow {
           <!-- Quick fill -->
           <div *ngIf="showGenerator()" class="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs flex flex-wrap items-end gap-3">
             <label class="font-semibold">From ({{ unitLabel }})
-              <input type="number" class="cell mt-1 !w-24" [(ngModel)]="gen.from" [ngModelOptions]="{ standalone: true }" />
+              <input type="number" min="0" class="cell mt-1 !w-24" [(ngModel)]="gen.from" [ngModelOptions]="{ standalone: true }" />
             </label>
             <label class="font-semibold">To ({{ unitLabel }})
-              <input type="number" class="cell mt-1 !w-24" [(ngModel)]="gen.to" [ngModelOptions]="{ standalone: true }" />
+              <input type="number" min="0" class="cell mt-1 !w-24" [(ngModel)]="gen.to" [ngModelOptions]="{ standalone: true }" />
             </label>
             <label class="font-semibold">Every ({{ unitLabel }})
-              <input type="number" class="cell mt-1 !w-20" [(ngModel)]="gen.step" [ngModelOptions]="{ standalone: true }" />
+              <input type="number" min="0" class="cell mt-1 !w-20" [(ngModel)]="gen.step" [ngModelOptions]="{ standalone: true }" />
             </label>
             <label class="font-semibold">First {{ quantityLabel }}
-              <input type="number" step="0.01" class="cell mt-1 !w-24" [(ngModel)]="gen.startQty" [ngModelOptions]="{ standalone: true }" />
+              <input type="number" min="0" step="0.01" class="cell mt-1 !w-24" [(ngModel)]="gen.startQty" [ngModelOptions]="{ standalone: true }" />
             </label>
             <label class="font-semibold">Increase per row
-              <input type="number" step="0.01" class="cell mt-1 !w-24" [(ngModel)]="gen.increment" [ngModelOptions]="{ standalone: true }" />
+              <input type="number" min="0" step="0.01" class="cell mt-1 !w-24" [(ngModel)]="gen.increment" [ngModelOptions]="{ standalone: true }" />
             </label>
             <button type="button" (click)="generate()" class="px-3 py-2 rounded-lg bg-emerald-600 text-white font-semibold">Create {{ generatorCount() }} rows</button>
             <p class="w-full m-0 text-gray-500">Replaces the rows below. Example: 81 → 450 kg every 50 kg, starting at 1.5 kg and adding 0.5 kg per row.</p>
@@ -206,11 +208,11 @@ interface RuleRow {
                   <td class="px-3 py-2 text-xs text-gray-400 pt-3.5">{{ i + 1 }}</td>
                   <ng-container *ngIf="hasRange">
                     <td class="px-2 py-2">
-                      <input type="number" class="cell" [ngClass]="{ invalid: rowError(i) }"
+                      <input type="number" min="0" class="cell" [ngClass]="{ invalid: rowError(i) }"
                         [formControlName]="isAge ? 'minAgeDays' : 'minWeightKg'" placeholder="0" />
                     </td>
                     <td class="px-2 py-2">
-                      <input type="number" class="cell" [ngClass]="{ invalid: rowError(i) }"
+                      <input type="number" min="0" class="cell" [ngClass]="{ invalid: rowError(i) }"
                         [formControlName]="isAge ? 'maxAgeDays' : 'maxWeightKg'" placeholder="no limit" />
                     </td>
                   </ng-container>
@@ -230,17 +232,17 @@ interface RuleRow {
                   </td>
                   <td class="px-2 py-2">
                     <div class="relative">
-                      <input type="number" step="0.01" formControlName="quantityValue" class="cell pr-9"
+                      <input type="number" min="0" step="0.01" formControlName="quantityValue" class="cell pr-9"
                         [ngClass]="{ invalid: rule.get('quantityValue')?.touched && rule.get('quantityValue')?.invalid }" placeholder="0" />
                       <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-400">{{ isPercent ? '%' : 'kg' }}</span>
                     </div>
                   </td>
                   <td class="px-2 py-2 text-[11px] text-gray-500 dark:text-gray-400 pt-3">{{ worksOut(i) }}</td>
                   <td class="px-2 py-2 text-right">
-                    <button type="button" (click)="duplicateRule(i)" title="Copy this row below" class="p-1 text-gray-400 hover:text-emerald-600">
+                    <button type="button" (click)="duplicateRule(i)" title="Copy this row below" class="p-1 text-gray-400 hover:text-emerald-600" aria-label="Duplicate">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">content_copy</mat-icon>
                     </button>
-                    <button type="button" (click)="removeRule(i)" title="Remove row" class="p-1 text-gray-400 hover:text-red-600" [disabled]="rules.length === 1">
+                    <button type="button" (click)="removeRule(i)" title="Remove row" class="p-1 text-gray-400 hover:text-red-600" [disabled]="rules.length === 1" aria-label="Delete">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                     </button>
                   </td>
@@ -296,7 +298,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<FeedingRuleSetDialogComponent>);
   private readonly data = inject<FeedingRuleSet>(MAT_DIALOG_DATA);
   private readonly feedingService = inject(FeedingService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly inventoryService = inject(InventoryService);
   private readonly context = inject(WorkingContextService);
@@ -388,10 +390,10 @@ export class FeedingRuleSetDialogComponent implements OnInit {
 
   createRuleFormGroup(rule?: any): FormGroup {
     return this.fb.group({
-      minWeightKg: [rule?.minWeightKg ?? null],
-      maxWeightKg: [rule?.maxWeightKg ?? null],
-      minAgeDays: [rule?.minAgeDays ?? null],
-      maxAgeDays: [rule?.maxAgeDays ?? null],
+      minWeightKg: [rule?.minWeightKg ?? null, [Validators.min(0)]],
+      maxWeightKg: [rule?.maxWeightKg ?? null, [Validators.min(0)]],
+      minAgeDays: [rule?.minAgeDays ?? null, [Validators.min(0)]],
+      maxAgeDays: [rule?.maxAgeDays ?? null, [Validators.min(0)]],
       feedType: [rule?.feedType ?? this.defaultFeedType, [Validators.required]],
       formulaId: [rule?.formulaId ?? this.defaultFormulaId ?? null],
       quantityValue: [rule?.quantityValue ?? null, [Validators.required, Validators.min(0.001)]]
@@ -491,7 +493,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     const { from, to, step, startQty, increment } = this.gen;
     const count = this.generatorCount();
     if (!count || count > 100) {
-      this.snackBar.open('Check the From / To / Every values.', 'Close', { duration: 3000 });
+      this.notify.warning('Check the From / To / Every values.');
       return;
     }
     this.rules.clear();
@@ -575,7 +577,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     const costPerKg = formulaId?.startsWith('i:')
       ? this.stockItems().find(it => it.id === formulaId.substring(2))?.weightedAverageCostBdt ?? 0
       : this.formulas().find(f => f.id === formulaId)?.totalCostPerKgBdt ?? 0;
-    const money = (kg: number) => costPerKg ? ` ≈ ৳${(kg * costPerKg).toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day` : '';
+    const money = (kg: number) => costPerKg ? ` ≈ ${formatMoney((kg * costPerKg))}/day` : '';
 
     if (this.isPercent) {
       const weight = r.min !== null && r.max !== null ? Math.round((r.min + r.max) / 2) : (r.min ?? r.max ?? 300);
@@ -596,7 +598,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     this.revision.update(v => v + 1);
     const blocking = this.blockingIssue();
     if (blocking || this.rules.length === 0) {
-      this.snackBar.open(`Cannot save yet: ${blocking ?? 'add at least one row'}.`, 'Close', { duration: 4000 });
+      this.notify.error(`Cannot save yet: ${blocking ?? 'add at least one row'}.`);
       return;
     }
 
@@ -631,11 +633,11 @@ export class FeedingRuleSetDialogComponent implements OnInit {
       : this.feedingService.createRuleSet(request);
     call.subscribe({
       next: () => {
-        this.snackBar.open(this.isEditing ? 'Feed chart updated' : 'Feed chart created', 'Close', { duration: 3000 });
+        this.notify.success(this.isEditing ? 'Feed chart updated' : 'Feed chart created');
         this.dialogRef.close(true);
       },
       error: (err: { error?: { detail?: string } }) => {
-        this.snackBar.open(err.error?.detail || 'Failed to save the rule set', 'Close', { duration: 5000 });
+        this.notify.error(err.error?.detail || 'Failed to save the rule set');
         this.isSubmitting.set(false);
       }
     });

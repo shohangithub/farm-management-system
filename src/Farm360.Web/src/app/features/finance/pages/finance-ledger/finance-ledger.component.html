@@ -42,7 +42,7 @@
       <div>
         <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Cash In (filtered)</p>
         <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-          {{ totalIncome() | currency:'BDT ':'symbol':'1.0-0' }}
+          {{ totalIncome() | money }}
         </h3>
         <p class="text-xs text-gray-400 mt-1">Money received — non-cash entries excluded</p>
       </div>
@@ -57,7 +57,7 @@
       <div>
         <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Cash Out (filtered)</p>
         <h3 class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
-          {{ totalExpense() | currency:'BDT ':'symbol':'1.0-0' }}
+          {{ totalExpense() | money }}
         </h3>
         <p class="text-xs text-gray-400 mt-1">Money paid — stock used from inventory excluded</p>
       </div>
@@ -73,7 +73,7 @@
         <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Net Cash Flow</p>
         <h3 class="text-2xl font-bold mt-1"
           [ngClass]="netCashFlow() >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
-          {{ netCashFlow() | currency:'BDT ':'symbol':'1.0-0' }}
+          {{ netCashFlow() | money }}
         </h3>
         <p class="text-xs text-gray-400 mt-1">{{ totalCount() }} transactions matched</p>
       </div>
@@ -201,12 +201,19 @@
     
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-    <app-empty-state 
-      *ngIf="!isLoading() && transactions().length === 0"
+    <app-error-state
+      *ngIf="!isLoading() && loadError() as err"
+      title="Couldn't load transactions"
+      [message]="err"
+      (retry)="refresh()">
+    </app-error-state>
+
+    <app-empty-state
+      *ngIf="!isLoading() && !loadError() && transactions().length === 0"
       icon="receipt_long"
       title="No Transactions Matched"
       description="No financial ledger entries match your filter criteria. Try clearing search filters or record a new transaction."
-      actionText="Record Income"
+      actionLabel="Record Income"
       (action)="openIncomeDialog()">
     </app-empty-state>
 
@@ -225,7 +232,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <tr *ngFor="let txn of transactions()" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer" (click)="openTransactionDetails(txn)">
+          <tr *ngFor="let txn of transactions()" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer" (click)="openTransactionDetails(txn)" role="button" tabindex="0" [attr.aria-label]="'View transaction details'" (keydown.enter)="openTransactionDetails(txn)" (keydown.space)="$event.preventDefault(); openTransactionDetails(txn)">
             <td class="py-4 px-6 text-sm text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
               {{ txn.transactionDate | date:'mediumDate' }}
             </td>
@@ -253,20 +260,20 @@
             <td class="py-4 px-6 text-sm text-gray-700 dark:text-gray-300 font-medium">
               <div>{{ label(txn.category) }}</div>
               <div class="flex flex-wrap gap-1 mt-0.5">
-                <span *ngIf="txn.accountCode" class="text-[10px] font-mono text-gray-400">{{ txn.accountCode }}</span>
+                <span *ngIf="txn.accountCode" class="text-[11px] font-mono text-gray-400">{{ txn.accountCode }}</span>
                 <span *ngIf="txn.affectsCash === false && !isOnCredit(txn)"
                       title="No cash moved: stock or an animal was used, sold or lost. It is a real cost but not a cash payment."
-                      class="inline-flex px-1.5 rounded text-[10px] font-semibold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50">
+                      class="inline-flex px-1.5 rounded text-[11px] font-semibold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50">
                   Non-cash · {{ txn.settlement }}
                 </span>
                 <a *ngIf="isOnCredit(txn)" routerLink="/finance/credit" (click)="$event.stopPropagation()"
                       [title]="txn.settlement === 'Payable' ? 'Bought on credit: owed to the supplier until paid in Payables & Receivables' : 'Sold on credit: owed by the customer until collected in Payables & Receivables'"
-                      class="inline-flex px-1.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                      class="inline-flex px-1.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
                   On credit · {{ txn.settlement === 'Payable' ? 'owed to supplier' : 'owed by customer' }}
                 </a>
                 <span *ngIf="txn.accountGroup && txn.accountGroup !== 'Operating'"
                       title="Not profit or loss: an asset bought, capital, or loan money"
-                      class="inline-flex px-1.5 rounded text-[10px] font-semibold bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/50">
+                      class="inline-flex px-1.5 rounded text-[11px] font-semibold bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/50">
                   {{ txn.accountGroup }}
                 </span>
               </div>
@@ -285,10 +292,10 @@
             </td>
             <td class="py-4 px-6 text-sm font-bold text-right whitespace-nowrap"
               [ngClass]="txn.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-              {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | currency:'BDT ':'symbol':'1.2-2' }}
+              {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | money:2 }}
             </td>
             <td class="py-4 px-6 text-sm text-center no-print" (click)="$event.stopPropagation()">
-              <button mat-icon-button [matMenuTriggerFor]="actionMenu" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <button mat-icon-button [matMenuTriggerFor]="actionMenu" aria-label="Transaction actions" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #actionMenu="matMenu" class="rounded-xl shadow-lg border border-gray-100 dark:border-gray-800">
@@ -305,15 +312,17 @@
                   <span>Open in Payables &amp; Receivables</span>
                 </a>
                 <ng-container *ngIf="!txn.isAutomated; else lockedEntry">
-                  <button mat-menu-item (click)="openEditDialog(txn)">
+                  <button mat-menu-item *hasPermission="'finance.edit'" (click)="openEditDialog(txn)">
                     <mat-icon class="text-amber-600">edit</mat-icon>
                     <span>Edit Transaction</span>
                   </button>
-                  <mat-divider></mat-divider>
-                  <button mat-menu-item (click)="voidTransaction(txn)" class="text-rose-600">
-                    <mat-icon class="text-rose-600">delete_outline</mat-icon>
-                    <span>Void / Delete</span>
-                  </button>
+                  <ng-container *hasPermission="'finance.delete'">
+                    <mat-divider></mat-divider>
+                    <button mat-menu-item (click)="voidTransaction(txn)" class="text-rose-600">
+                      <mat-icon class="text-rose-600">delete_outline</mat-icon>
+                      <span>Void / Delete</span>
+                    </button>
+                  </ng-container>
                 </ng-container>
                 <ng-template #lockedEntry>
                   <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 max-w-[240px] leading-snug">

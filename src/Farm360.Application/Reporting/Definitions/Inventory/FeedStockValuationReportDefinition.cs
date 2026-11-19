@@ -39,7 +39,7 @@ public sealed class FeedStockValuationReportDefinition : ReportDefinition<Invent
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
-        ReportParameter.Farm(),
+        ReportParameter.Farm(required: true),
     ];
 
     public override IReadOnlyList<ReportColumn<InventoryStockValuationReportRow>> Columns =>
@@ -47,7 +47,7 @@ public sealed class FeedStockValuationReportDefinition : ReportDefinition<Invent
         ReportColumn<InventoryStockValuationReportRow>.Text("name", new LocalizedText("Item Name", "পণ্য / খাদ্য উপাদান"), r => r.ItemName, width: 2.8f),
         ReportColumn<InventoryStockValuationReportRow>.Text("category", new LocalizedText("Category", "শ্রেণী"), r => r.Category, width: 2.0f),
         ReportColumn<InventoryStockValuationReportRow>.Text("unit", new LocalizedText("Unit", "একক"), r => r.Unit, width: 14f, relative: false),
-        ReportColumn<InventoryStockValuationReportRow>.Number("stock", new LocalizedText("Current Stock", "বর্তমান স্টক"), r => r.CurrentStock, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<InventoryStockValuationReportRow>.Number("stock", new LocalizedText("Current Stock", "বর্তমান স্টক"), r => r.CurrentStock, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum, unitOf: r => r.Unit),
         ReportColumn<InventoryStockValuationReportRow>.Money("rate", new LocalizedText("Avg. Rate (BDT)", "গড় দর (টাকা)"), r => r.UnitCostBdt, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.None),
         ReportColumn<InventoryStockValuationReportRow>.Money("totalValue", new LocalizedText("Total Value (BDT)", "মোট মূল্য (টাকা)"), r => r.TotalValueBdt, decimals: 2, widthMm: 28f, aggregate: ReportAggregate.Sum),
         ReportColumn<InventoryStockValuationReportRow>.Number("threshold", new LocalizedText("Min. Threshold", "সর্বনিম্ন সীমা"), r => r.MinThreshold, decimals: 2, widthMm: 22f),
@@ -55,9 +55,9 @@ public sealed class FeedStockValuationReportDefinition : ReportDefinition<Invent
     ];
 
     public override ReportGroup<InventoryStockValuationReportRow>? Group =>
-        ReportGroup<InventoryStockValuationReportRow>.By(
+        ReportGroup<InventoryStockValuationReportRow>.ByLocalized(
             r => r.Category,
-            r => $"Category: {r.Category}");
+            r => new LocalizedText($"Category: {r.Category}", $"শ্রেণী: {r.Category}"));
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
@@ -71,7 +71,7 @@ public sealed class FeedStockValuationReportDefinition : ReportDefinition<Invent
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
+        var farmId = context.FarmId();
 
         var data = await context
             .Send(new GetInventoryValuationReportQuery(farmId), cancellationToken)
@@ -95,16 +95,5 @@ public sealed class FeedStockValuationReportDefinition : ReportDefinition<Invent
             .OrderBy(r => r.Category)
             .ThenBy(r => r.ItemName)
             .ToList();
-    }
-
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
     }
 }

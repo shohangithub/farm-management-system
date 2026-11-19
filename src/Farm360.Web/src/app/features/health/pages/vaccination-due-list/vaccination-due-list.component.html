@@ -21,12 +21,7 @@
 <div #reportSheet id="vaccinationDueListSheet" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-  <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 m-6 rounded-md shadow-sm">
-    <div class="flex">
-      <mat-icon class="text-red-500 mr-2">error</mat-icon>
-      <p class="text-sm text-red-700 font-medium">{{ error() }}</p>
-    </div>
-  </div>
+  <app-error-state *ngIf="error()" class="block p-6" [message]="error()" (retry)="retryLoad()"></app-error-state>
 
   <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" *ngIf="!error() && !isLoading() && upcomingVaccinations().length > 0">
     <div *ngFor="let ev of upcomingVaccinations()" class="group relative bg-white dark:bg-gray-800 rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col"
@@ -66,7 +61,7 @@
           </div>
         </div>
         
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
               [ngClass]="{
                 'bg-gray-50 text-gray-700 border-gray-200': $any(ev).status === 'Scheduled',
                 'bg-emerald-50 text-emerald-700 border-emerald-200': $any(ev).status === 'Completed' || $any(ev).status === 'Administered',
@@ -81,7 +76,7 @@
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="grid grid-cols-2 gap-y-4 gap-x-2">
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Due Date</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Due Date</div>
             <div class="text-sm font-bold"
                  [ngClass]="{
                    'text-gray-900 dark:text-white': getUrgencyClass(ev.scheduledDate) === '',
@@ -91,14 +86,14 @@
                  }">
               {{ ev.scheduledDate | date:'mediumDate' }}
             </div>
-            <div class="text-[10px] uppercase tracking-wider font-bold mt-1"
+            <div class="text-[11px] uppercase tracking-wider font-bold mt-1"
                  *ngIf="getUrgencyClass(ev.scheduledDate) === 'danger-row'" class="text-red-500 text-xs font-semibold">Overdue!</div>
-            <div class="text-[10px] uppercase tracking-wider font-bold mt-1"
+            <div class="text-[11px] uppercase tracking-wider font-bold mt-1"
                  *ngIf="getUrgencyClass(ev.scheduledDate) === 'warning-row'" class="text-amber-500 text-xs font-semibold">Due Today!</div>
           </div>
           
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Batch No</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Batch No</div>
             <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ ev.batchNumber || '—' }}</div>
           </div>
         </div>

@@ -49,17 +49,31 @@ public interface IReportDefinition
 /// <summary>Single-level grouping. The platform emits a sub-total band whenever the key changes.</summary>
 public sealed class ReportGroup<TRow>
 {
-    private ReportGroup(Func<TRow, string> keySelector, Func<TRow, string>? labelSelector)
+    private ReportGroup(Func<TRow, string> keySelector, Func<TRow, ReportLanguage, string> labelSelector)
     {
         KeySelector = keySelector;
-        LabelSelector = labelSelector ?? keySelector;
+        LabelSelector = labelSelector;
     }
 
     public Func<TRow, string> KeySelector { get; }
-    public Func<TRow, string> LabelSelector { get; }
 
-    public static ReportGroup<TRow> By(Func<TRow, string> keySelector, Func<TRow, string>? labelSelector = null) =>
-        new(keySelector, labelSelector);
+    /// <summary>The printed band label, in the report's language.</summary>
+    public Func<TRow, ReportLanguage, string> LabelSelector { get; }
+
+    public static ReportGroup<TRow> By(Func<TRow, string> keySelector, Func<TRow, string>? labelSelector = null)
+    {
+        ArgumentNullException.ThrowIfNull(keySelector);
+        var label = labelSelector ?? keySelector;
+        return new(keySelector, (row, _) => label(row));
+    }
+
+    /// <summary>A group whose band label is translated; use this for any fixed wording in the label.</summary>
+    public static ReportGroup<TRow> ByLocalized(Func<TRow, string> keySelector, Func<TRow, LocalizedText> labelSelector)
+    {
+        ArgumentNullException.ThrowIfNull(keySelector);
+        ArgumentNullException.ThrowIfNull(labelSelector);
+        return new(keySelector, (row, language) => labelSelector(row).For(language));
+    }
 }
 
 /// <summary>
@@ -77,7 +91,12 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
 
     public abstract ReportCategory Category { get; }
 
-    public virtual string? Permission => null;
+    /// <summary>
+    /// The permission needed to run this report: by default its module's view permission
+    /// (finance reports need the finance permission). Override for a report that is more sensitive
+    /// than its module.
+    /// </summary>
+    public virtual string? Permission => ReportPermissions.ForCategory(Category);
 
     public virtual IReadOnlyList<ReportParameter> Parameters => [];
 
@@ -89,6 +108,12 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
 
     /// <summary>Set false for registers where a column sum is meaningless (e.g. a list of statuses).</summary>
     public virtual bool ShowGrandTotals => true;
+
+    /// <summary>
+    /// What the grand-total band is called. Statements whose bottom line is a result rather than a
+    /// sum (a P&amp;L's net profit) say so here; null prints the generic "Grand total".
+    /// </summary>
+    public virtual LocalizedText? GrandTotalLabel => null;
 
     private IReadOnlyList<ReportColumn>? _columnDescriptors;
 
@@ -105,9 +130,13 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
         ArgumentNullException.ThrowIfNull(context);
 
         var source = await FetchAsync(context, cancellationToken).ConfigureAwait(false);
+
+        // Before formatting: building cells is the expensive part, so refuse here rather than after.
+        context.EnsureWithinRowLimit(source.Count, Key);
+
         var columns = Columns;
         var descriptors = ColumnDescriptors;
-        var bn = context.BengaliNumerals;
+        var fmt = new CellFormat(context.BengaliNumerals, context.Language);
 
         var rows = new List<ReportRow>(source.Count);
         var groupOrder = new List<string>();
@@ -124,14 +153,14 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
                 {
                     bucket = [];
                     groupBuckets[groupKey] = bucket;
-                    groupLabels[groupKey] = Group.LabelSelector(item);
+                    groupLabels[groupKey] = Group.LabelSelector(item, context.Language);
                     groupOrder.Add(groupKey);
                 }
 
                 bucket.Add(item);
             }
 
-            rows.Add(new ReportRow(BuildCells(item, columns, descriptors, bn), groupKey));
+            rows.Add(new ReportRow(BuildCells(item, columns, descriptors, fmt), groupKey));
         }
 
         var groupTotals = new List<ReportGroupTotals>(groupOrder.Count);
@@ -142,12 +171,15 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
                 key,
                 groupLabels[key],
                 bucket.Count,
-                Aggregate(bucket, columns, descriptors, bn)));
+                Aggregate(bucket, columns, descriptors, fmt)));
         }
 
         var grandTotals = ShowGrandTotals && HasAnyAggregate(columns)
-            ? Aggregate(source, columns, descriptors, bn)
+            ? Aggregate(source, columns, descriptors, fmt)
             : [];
+
+        // A grand-total band in which every cell came out blank (mixed units everywhere) is noise.
+        var hasGrandTotals = grandTotals.Length > 0 && Array.Exists(grandTotals, c => c.V is not null);
 
         return new ReportDataSet(
             Key,
@@ -159,9 +191,14 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
             rows,
             groupTotals,
             grandTotals,
-            grandTotals.Length > 0,
-            source.Count);
+            hasGrandTotals,
+            source.Count,
+            context.Language,
+            context.BengaliNumerals,
+            GrandTotalLabel?.For(context.Language));
     }
+
+    private readonly record struct CellFormat(bool BengaliNumerals, ReportLanguage Language);
 
     private static bool HasAnyAggregate(IReadOnlyList<ReportColumn<TRow>> columns)
     {
@@ -180,23 +217,30 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
         TRow item,
         IReadOnlyList<ReportColumn<TRow>> columns,
         IReadOnlyList<ReportColumn> descriptors,
-        bool bengaliNumerals)
+        CellFormat fmt)
     {
         var cells = new ReportCell[columns.Count];
         for (var i = 0; i < columns.Count; i++)
         {
             var value = columns[i].Value(item);
-            cells[i] = new ReportCell(value, ReportValueFormatter.Format(value, descriptors[i].Type, descriptors[i].Decimals, bengaliNumerals));
+            cells[i] = new ReportCell(value, Format(value, descriptors[i], fmt));
         }
 
         return cells;
     }
 
+    private static string Format(object? value, ReportColumn descriptor, CellFormat fmt) =>
+        ReportValueFormatter.Format(value, descriptor.Type, descriptor.Decimals, fmt.BengaliNumerals, fmt.Language);
+
+    /// <summary>
+    /// Footer totals, under rules that keep a total honest: percentages are never added, and a
+    /// quantity with a unit is only totalled when every row it covers shares that unit.
+    /// </summary>
     private static ReportCell[] Aggregate(
         IReadOnlyCollection<TRow> items,
         IReadOnlyList<ReportColumn<TRow>> columns,
         IReadOnlyList<ReportColumn> descriptors,
-        bool bengaliNumerals)
+        CellFormat fmt)
     {
         var cells = new ReportCell[columns.Count];
 
@@ -211,7 +255,13 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
 
             if (column.Aggregate == ReportAggregate.Count)
             {
-                cells[i] = new ReportCell(items.Count, ReportValueFormatter.Format(items.Count, ReportColumnType.WholeNumber, 0, bengaliNumerals));
+                cells[i] = new ReportCell(items.Count, ReportValueFormatter.Format(items.Count, ReportColumnType.WholeNumber, 0, fmt.BengaliNumerals, fmt.Language));
+                continue;
+            }
+
+            if (!CanAggregate(column, items))
+            {
+                cells[i] = new ReportCell(null, string.Empty);
                 continue;
             }
 
@@ -244,9 +294,75 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
 
             cells[i] = result is null
                 ? new ReportCell(null, string.Empty)
-                : new ReportCell(result.Value, ReportValueFormatter.Format(result.Value, descriptors[i].Type, descriptors[i].Decimals, bengaliNumerals));
+                : new ReportCell(result.Value, Format(result.Value, descriptors[i], fmt));
         }
 
         return cells;
     }
+
+    /// <summary>The totalling rules for one column over a set of rows.</summary>
+    public static bool CanAggregate(ReportColumn<TRow> column, IEnumerable<TRow> items)
+    {
+        ArgumentNullException.ThrowIfNull(column);
+        ArgumentNullException.ThrowIfNull(items);
+
+        // A percentage summed is nonsense and averaged unweighted is misleading; Min/Max are fine.
+        if (column.Type == ReportColumnType.Percent
+            && column.Aggregate is ReportAggregate.Sum or ReportAggregate.Average)
+        {
+            return false;
+        }
+
+        if (column.Aggregate is ReportAggregate.Sum or ReportAggregate.Average
+            && !ReportValueFormatter.IsAdditive(column.Type))
+        {
+            return false;
+        }
+
+        if (column.UnitOf is null)
+        {
+            return true;
+        }
+
+        string? unit = null;
+        var first = true;
+        foreach (var item in items)
+        {
+            var u = column.UnitOf(item)?.Trim();
+            if (first)
+            {
+                unit = u;
+                first = false;
+            }
+            else if (!string.Equals(unit, u, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+/// <summary>
+/// The permission each report category requires. Codes mirror
+/// <c>Farm360.Persistence.Seed.PermissionConstants</c>, which the Application layer cannot reference.
+/// </summary>
+public static class ReportPermissions
+{
+    public const string LivestockView = "animals.view";
+    public const string FeedingView = "feeding.view";
+    public const string HealthView = "health.view";
+    public const string InventoryView = "inventory.view";
+    public const string FinanceView = "finance.view";
+
+    public static string? ForCategory(ReportCategory category) => category switch
+    {
+        ReportCategory.Livestock => LivestockView,
+        ReportCategory.Feeding => FeedingView,
+        ReportCategory.Health => HealthView,
+        ReportCategory.Inventory => InventoryView,
+        ReportCategory.Finance => FinanceView,
+        _ => null,
+    };
 }

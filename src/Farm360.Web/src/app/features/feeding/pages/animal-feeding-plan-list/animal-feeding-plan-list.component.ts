@@ -6,9 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { forkJoin, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FeedingService } from '../../services/feeding.service';
@@ -22,6 +21,9 @@ import { AnimalFeedsCostReportDialogComponent } from '../../components/dialogs/a
 import { FeedingReportPdfService } from '../../services/feeding-report-pdf.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 export interface RuleSetGroup {
   ruleSet: FeedingRuleSet;
@@ -34,7 +36,7 @@ export interface RuleSetGroup {
 @Component({
   selector: 'app-animal-feeding-plan-list',
   standalone: true,
-  imports: [
+  imports: [ErrorStateComponent, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -172,10 +174,11 @@ export interface RuleSetGroup {
     <!-- Main Container -->
     <div class="relative min-h-[300px]">
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadData()"></app-error-state>
 
       <!-- Empty State -->
       <app-empty-state
-        *ngIf="!isLoading() && plans().length === 0 && ruleSets().length === 0"
+        *ngIf="!isLoading() && !loadError() && plans().length === 0 && ruleSets().length === 0"
         icon="assignment"
         title="No Feeding Plans or Rules Found"
         description="Get started by configuring a feeding rule set or assigning animals."
@@ -203,7 +206,7 @@ export interface RuleSetGroup {
                     <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">
                       {{ group.ruleSet.name }}
                     </h3>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                       [ngClass]="group.ruleSet.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' : 'bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
                       {{ group.ruleSet.isActive ? 'Active' : 'Inactive' }}
                     </span>
@@ -246,7 +249,7 @@ export interface RuleSetGroup {
 
                 <!-- Expand/Collapse Chevron -->
                 <button (click)="toggleGroup(group.ruleSet.id)"
-                  class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Expand">
                   <mat-icon class="!text-[20px] !w-[20px] !h-[20px] transition-transform duration-200"
                     [class.rotate-180]="!isCollapsed(group.ruleSet.id)">expand_more</mat-icon>
                 </button>
@@ -256,7 +259,7 @@ export interface RuleSetGroup {
             <!-- Configured Rule Tiers Quick Preview (Chips) -->
             <div *ngIf="group.ruleSet.rules && group.ruleSet.rules.length > 0"
               class="px-6 py-2.5 bg-gray-50/40 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-2 text-xs">
-              <span class="text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider text-[10px]">Rule Tiers:</span>
+              <span class="text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider text-[11px]">Rule Tiers:</span>
               @for (rule of group.ruleSet.rules; track rule.id) {
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 shadow-xs text-[11px]">
                   <span class="text-gray-500 dark:text-gray-400">{{ formatRuleCondition(group.ruleSet.planType, rule) }}</span>
@@ -296,7 +299,7 @@ export interface RuleSetGroup {
                         </div>
                       </td>
                       <td class="px-6 py-3.5">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-xs"
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-xs"
                           [ngClass]="plan.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'">
                           {{ plan.isActive ? 'Active' : 'Canceled' }}
                         </span>
@@ -368,13 +371,13 @@ export interface RuleSetGroup {
                       <span>{{ plan.ruleSetName }}</span>
                       <button *ngIf="getRuleSetForPlan(plan)" (click)="openEditRuleDialog(getRuleSetForPlan(plan)!, $event)"
                         matTooltip="Edit this rule set"
-                        class="text-gray-400 hover:text-emerald-600 transition-colors">
+                        class="text-gray-400 hover:text-emerald-600 transition-colors" aria-label="Edit this rule set">
                         <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">edit_note</mat-icon>
                       </button>
                     </div>
                   </td>
                   <td class="px-6 py-4">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                       [ngClass]="plan.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'">
                       {{ plan.isActive ? 'Active' : 'Canceled' }}
                     </span>
@@ -404,11 +407,12 @@ export interface RuleSetGroup {
 export class AnimalFeedingPlanListComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly isSyncing = signal(false);
   readonly plans = signal<AnimalFeedingPlan[]>([]);
   readonly ruleSets = signal<FeedingRuleSet[]>([]);
@@ -521,19 +525,22 @@ export class AnimalFeedingPlanListComponent implements OnInit {
             return of({ plans: [], ruleSets: [] });
           }
           this.isLoading.set(true);
+          this.loadError.set(null);
           return forkJoin({
             plans: this.feedingService.getFeedingPlans(farm.id),
             ruleSets: this.feedingService.getRuleSets()
-          });
+          }).pipe(
+            catchError(err => {
+              this.loadError.set(parseApiError(err, 'Could not load feeding plans.'));
+              return of({ plans: [] as AnimalFeedingPlan[], ruleSets: [] as FeedingRuleSet[] });
+            })
+          );
         })
       )
-      .subscribe({
-        next: (res) => {
-          this.plans.set(res.plans);
-          this.ruleSets.set(res.ruleSets);
-          this.isLoading.set(false);
-        },
-        error: () => this.isLoading.set(false)
+      .subscribe(res => {
+        this.plans.set(res.plans);
+        this.ruleSets.set(res.ruleSets);
+        this.isLoading.set(false);
       });
   }
 
@@ -545,20 +552,12 @@ export class AnimalFeedingPlanListComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.isSyncing.set(false);
-          this.snackBar.open(
-            `Synchronized ${res.updatedPlans} of ${res.totalActivePlans} feeding plans (${res.updatedEntriesCount} pending daily entries updated)`,
-            'Close',
-            { duration: 4000 }
-          );
+          this.notify.success(`Synchronized ${res.updatedPlans} of ${res.totalActivePlans} feeding plans (${res.updatedEntriesCount} pending daily entries updated)`);
           this.loadData();
         },
         error: (err) => {
           this.isSyncing.set(false);
-          this.snackBar.open(
-            err.error?.message || 'Failed to sync feeding plan weights',
-            'Close',
-            { duration: 4000 }
-          );
+          this.notify.error(err.error?.message || 'Failed to sync feeding plan weights');
         }
       });
   }
@@ -571,6 +570,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
     }
 
     this.isLoading.set(true);
+    this.loadError.set(null);
     forkJoin({
       plans: this.feedingService.getFeedingPlans(farmId),
       ruleSets: this.feedingService.getRuleSets()
@@ -580,7 +580,10 @@ export class AnimalFeedingPlanListComponent implements OnInit {
         this.ruleSets.set(res.ruleSets);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: (err) => {
+        this.loadError.set(parseApiError(err, 'Could not load feeding plans.'));
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -675,7 +678,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
   }
 
   cancelPlan(plan: AnimalFeedingPlan): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw',
       disableClose: true,
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
@@ -692,11 +695,11 @@ export class AnimalFeedingPlanListComponent implements OnInit {
       if (confirmed) {
         this.feedingService.cancelPlan(plan.id).subscribe({
           next: () => {
-            this.snackBar.open('Feeding plan canceled', 'Close', { duration: 3000 });
+            this.notify.info('Feeding plan canceled');
             this.loadData();
           },
           error: (err) => {
-            this.snackBar.open(err.error?.detail || 'Failed to cancel plan', 'Close', { duration: 5000 });
+            this.notify.error(err.error?.detail || 'Failed to cancel plan');
           }
         });
       }

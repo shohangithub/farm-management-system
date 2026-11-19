@@ -9,7 +9,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { InventoryService } from '../../../services/inventory.service';
 import { InventoryItem, Supplier } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
@@ -20,10 +19,13 @@ import {
   toCreditTerms,
 } from '../../../../finance/components/credit-terms-fields/credit-terms-fields.component';
 
+import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { NotificationService } from '../../../../../shared/services/notification.service';
+import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 @Component({
   selector: 'app-stock-in-dialog',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -46,7 +48,7 @@ import {
           </div>
           <span>Record Stock In Receipt</span>
         </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button aria-label="Close" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -84,7 +86,7 @@ import {
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Cost / {{ unit()?.name || 'unit' }} (৳)</mat-label>
               <input matInput type="number" formControlName="unitCostBdt" step="any" min="0" required />
-              <mat-hint *ngIf="purchaseTotal() as t">Total ৳{{ t | number:'1.0-2' }}</mat-hint>
+              <mat-hint *ngIf="purchaseTotal() as t">Total {{ t | money:2 }}</mat-hint>
               <mat-error>Unit cost is required</mat-error>
             </mat-form-field>
           </div>
@@ -165,7 +167,7 @@ export class StockInDialogComponent implements OnInit {
   readonly data = inject<{ item?: InventoryItem; farmId: string }>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -180,7 +182,7 @@ export class StockInDialogComponent implements OnInit {
     quantity: [null as number | null, [Validators.required, Validators.min(0.0001)]],
     unitCostBdt: [this.data?.item?.weightedAverageCostBdt || null as number | null, [Validators.required, Validators.min(0)]],
     supplierId: [null as string | null],
-    transactionDate: [new Date().toISOString().split('T')[0], [Validators.required]],
+    transactionDate: [toLocalIsoDate(), [Validators.required]],
     invoiceNumber: [''],
     batchNumber: [''],
     expiryDate: [''],
@@ -271,7 +273,7 @@ export class StockInDialogComponent implements OnInit {
     this.inventoryService.recordStockIn(request as any).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.snackBar.open('Stock In transaction recorded successfully.', 'OK', { duration: 4000 });
+        this.notify.success('Stock In transaction recorded successfully.');
         this.dialogRef.close(true);
       },
       error: (err: any) => {

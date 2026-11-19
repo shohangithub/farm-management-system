@@ -89,9 +89,10 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
         return @event;
     }
 
-    public void RecordAdministration(DateOnly administeredDate, Guid administeredBy, string? notes = null)
+    /// <param name="today">The farm's local date (IFarmClock); UTC date when omitted.</param>
+    public void RecordAdministration(DateOnly administeredDate, Guid administeredBy, string? notes = null, DateOnly? today = null)
     {
-        if (administeredDate > DateOnly.FromDateTime(DateTime.UtcNow))
+        if (administeredDate > (today ?? DateOnly.FromDateTime(DateTime.UtcNow)))
             throw new FutureVaccinationDateException(administeredDate);
 
         AdministeredDate = administeredDate;
@@ -118,9 +119,33 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
         if (!string.IsNullOrWhiteSpace(reason)) Notes = reason;
     }
 
-    public void MarkOverdue()
+    /// <summary>
+    /// The animal left the farm (sold/died) on <paramref name="exitDate"/>: a dose still pending
+    /// (Scheduled or Overdue) can never be given, so it is cancelled with a note. Administered and
+    /// already-cancelled doses are history and stay untouched. Returns true when it changed.
+    /// </summary>
+    public bool CancelForAnimalExit(DateOnly exitDate, string reason)
     {
-        if (Status == VaccinationStatus.Scheduled && ScheduledDate < DateOnly.FromDateTime(DateTime.UtcNow))
+        if (Status is not (VaccinationStatus.Scheduled or VaccinationStatus.Overdue))
+            return false;
+
+        Status = VaccinationStatus.Cancelled;
+        Notes = AppendExitNote(Notes, reason);
+        return true;
+    }
+
+    // Notes column is 1000 chars: keep the exit reason, trim the older text if needed.
+    private static string AppendExitNote(string? notes, string reason)
+    {
+        const int max = 1000;
+        if (string.IsNullOrWhiteSpace(notes)) return reason.Length <= max ? reason : reason[..max];
+        var combined = $"{notes} | {reason}";
+        return combined.Length <= max ? combined : combined[^max..];
+    }
+
+    public void MarkOverdue(DateOnly? today = null)
+    {
+        if (Status == VaccinationStatus.Scheduled && ScheduledDate < (today ?? DateOnly.FromDateTime(DateTime.UtcNow)))
         {
             Status = VaccinationStatus.Overdue;
         }

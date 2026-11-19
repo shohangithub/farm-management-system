@@ -25,11 +25,18 @@ public sealed record BackfillAnimalFeedAllocationsResult(
 /// re-run, resumed after a failure, or executed in chunks over several nights without
 /// double-charging anyone. The unique index on (entry, animal) is the backstop.
 /// </remarks>
+/// <param name="TenantId">
+/// Restricts the run to one tenant. Null crosses tenants and is reserved for the startup/background
+/// job; the HTTP endpoint always sets it from the caller's tenant (never from the request body).
+/// </param>
+/// <param name="FarmId">Restricts the run to one farm (set by the HTTP endpoint).</param>
 public sealed record BackfillAnimalFeedAllocationsCommand(
     DateOnly From,
     DateOnly To,
     int BatchSize = 500,
-    int MaxBatches = 200) : IRequest<BackfillAnimalFeedAllocationsResult>;
+    int MaxBatches = 200,
+    Guid? TenantId = null,
+    Guid? FarmId = null) : IRequest<BackfillAnimalFeedAllocationsResult>;
 
 public sealed class BackfillAnimalFeedAllocationsCommandHandler
     : IRequestHandler<BackfillAnimalFeedAllocationsCommand, BackfillAnimalFeedAllocationsResult>
@@ -70,7 +77,7 @@ public sealed class BackfillAnimalFeedAllocationsCommandHandler
             cancellationToken.ThrowIfCancellationRequested();
 
             var entries = await _allocationRepository
-                .GetUnallocatedEntriesAcrossTenantsAsync(request.From, request.To, request.BatchSize, cancellationToken)
+                .GetUnallocatedEntriesAcrossTenantsAsync(request.From, request.To, request.BatchSize, request.TenantId, request.FarmId, cancellationToken)
                 .ConfigureAwait(false);
 
             if (entries.Count == 0)

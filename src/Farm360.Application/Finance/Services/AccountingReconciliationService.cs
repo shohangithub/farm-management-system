@@ -1,3 +1,4 @@
+using Farm360.Application.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +40,8 @@ public interface IAccountingReconciliationService
 
 public sealed class AccountingReconciliationService : IAccountingReconciliationService
 {
+    private readonly IFarmClock _clock;
+
     /// <summary>Differences below this (rounding on weighted average cost) are treated as reconciled.</summary>
     public const decimal Tolerance = 1m;
 
@@ -55,8 +58,10 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
         IAnimalRepository animals,
         ILoanRecordRepository loans,
         IInvestorRepository investors,
-        ITradeBillRepository bills)
+        ITradeBillRepository bills,
+        IFarmClock? clock = null)
     {
+        _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _transactions = transactions;
         _inventory = inventory;
         _animals = animals;
@@ -237,7 +242,7 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
         }
 
         // Customer balances long overdue: likely bad debts that overstate assets and profit.
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = _clock.Today;
         var stale = (await _bills.GetByFarmIdAsync(farmId, TradeBillKind.Receivable, cancellationToken: cancellationToken))
             .Where(b => b.IsOpen && TradeBillMapping.DaysOverdue(b, today) > 90)
             .ToList();

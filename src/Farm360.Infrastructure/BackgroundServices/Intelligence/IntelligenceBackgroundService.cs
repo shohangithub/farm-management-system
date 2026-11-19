@@ -42,6 +42,15 @@ public sealed class IntelligenceBackgroundService : BackgroundService
                     }
                     
                     using var scope = _serviceProvider.CreateScope();
+
+                    // A fresh scope has no tenant; without one every tenant-filtered query in the
+                    // handler finds nothing (Constitution §11: background work sets the tenant).
+                    if (domainEvent is ITenantScopedNotification scoped && scoped.TenantId != Guid.Empty)
+                    {
+                        scope.ServiceProvider.GetRequiredService<Farm360.Application.Common.Interfaces.ITenantService>()
+                            .SetTenant(scoped.TenantId, string.Empty, string.Empty, string.Empty, "Active");
+                    }
+
                     var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
                     
                     // We publish the event so that intelligence-specific handlers can pick it up.

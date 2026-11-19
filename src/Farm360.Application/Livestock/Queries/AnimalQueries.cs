@@ -48,9 +48,31 @@ public sealed record GetAnimalListQuery(
     AnimalStatus? Status = null,
     string? SearchTerm = null,
     string? SortBy = null,
-    bool SortDescending = false) : IRequest<PagedAnimalListDto>;
+    bool SortDescending = false,
+    AnimalPresence? Presence = null) : IRequest<PagedAnimalListDto>;
 
-public sealed class GetAnimalListQueryHandler(IAnimalRepository repository)
+/// <summary>
+/// Presence filter for animal lists (farm rules: see <see cref="AnimalStatusGroups"/>).
+/// Null = all animals (history pages, default). Pickers for NEW actions pass <see cref="OnFarm"/>.
+/// </summary>
+public enum AnimalPresence
+{
+    /// <summary>Active + Quarantined.</summary>
+    OnFarm = 1,
+    /// <summary>Sold, Dead, Slaughtered, Transferred.</summary>
+    LeftFarm = 2,
+}
+
+/// <summary>
+/// Read model for the paged animal list with the presence filter. Implemented in Persistence.
+/// Same filters/sorts as <see cref="IAnimalRepository.GetPagedAsync"/> plus presence.
+/// </summary>
+public interface IAnimalListQueries
+{
+    Task<(IReadOnlyList<Animal> Items, int TotalCount)> GetPagedAsync(GetAnimalListQuery filter, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+}
+
+public sealed class GetAnimalListQueryHandler(IAnimalRepository repository, IAnimalListQueries? listQueries = null)
     : IRequestHandler<GetAnimalListQuery, PagedAnimalListDto>
 {
     public async Task<PagedAnimalListDto> Handle(GetAnimalListQuery request, CancellationToken cancellationToken)
@@ -58,7 +80,10 @@ public sealed class GetAnimalListQueryHandler(IAnimalRepository repository)
         var pageNumber = Math.Max(1, request.PageNumber);
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
 
-        var (items, totalCount) = await repository.GetPagedAsync(
+        // A specific Status wins over Presence; otherwise Presence narrows to on-farm / left-farm.
+        var (items, totalCount) = request.Presence is not null && request.Status is null && listQueries is not null
+            ? await listQueries.GetPagedAsync(request, pageNumber, pageSize, cancellationToken)
+            : await repository.GetPagedAsync(
             pageNumber,
             pageSize,
             request.FarmId,

@@ -5,12 +5,13 @@ import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
 import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
 import { AnimalSpecies, SPECIES_LABELS } from '../../../../livestock/models/animal.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-create-protocol-dialog',
@@ -36,7 +37,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Define standardized vaccination schedule by target age</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -57,6 +58,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Protocol Title <span class="text-red-500">*</span></label>
               <input type="text" formControlName="title" placeholder="e.g. Standard Cattle Vaccination Schedule"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p *ngIf="form.get('title')?.touched && form.get('title')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('title')?.touched && form.get('title')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 200 characters or fewer.</p>
             </div>
 
             <div class="space-y-1.5">
@@ -66,6 +69,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                 <option [ngValue]="null" disabled>-- Select Species --</option>
                 <option *ngFor="let s of speciesOptions" [ngValue]="s.value">{{ s.label }}</option>
               </select>
+              <p *ngIf="form.get('targetSpecies')?.touched && form.get('targetSpecies')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
             </div>
           </div>
 
@@ -108,12 +112,16 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                     <label class="block text-[11px] font-semibold text-gray-500">Step Name <span class="text-red-500">*</span></label>
                     <input type="text" formControlName="stepName" placeholder="e.g. Primary Dose"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    <p *ngIf="step.get('stepName')?.touched && step.get('stepName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+                    <p *ngIf="step.get('stepName')?.touched && step.get('stepName')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 100 characters or fewer.</p>
                   </div>
 
                   <div class="space-y-1">
                     <label class="block text-[11px] font-semibold text-gray-500">Target Age (Days) <span class="text-red-500">*</span></label>
                     <input type="number" formControlName="targetAgeDays" min="0" placeholder="30"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    <p *ngIf="step.get('targetAgeDays')?.touched && step.get('targetAgeDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+                    <p *ngIf="step.get('targetAgeDays')?.touched && step.get('targetAgeDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
                   </div>
 
                   <div class="space-y-1">
@@ -131,6 +139,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                     <label class="block text-[11px] font-semibold text-gray-500">{{ form.get('isDeworming')?.value ? 'Medicine Name' : 'Vaccine Name' }} <span class="text-red-500">*</span></label>
                     <input type="text" formControlName="vaccineName" placeholder="e.g. {{ form.get('isDeworming')?.value ? 'Ivermectin' : 'Anthrax Vaccine' }}"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    <p *ngIf="step.get('vaccineName')?.touched && step.get('vaccineName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+                    <p *ngIf="step.get('vaccineName')?.touched && step.get('vaccineName')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 100 characters or fewer.</p>
                   </div>
                 </div>
 
@@ -145,6 +155,7 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
                     <label class="block text-[11px] font-semibold text-gray-500" title="Quantity deducted from inventory per administration">Deduct Quantity</label>
                     <input type="number" formControlName="dosageQuantity" step="0.01" min="0" placeholder="e.g. 2"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 disabled:opacity-50">
+                    <p *ngIf="step.get('dosageQuantity')?.touched && step.get('dosageQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
                   </div>
                 </div>
               </div>
@@ -188,7 +199,7 @@ export class CreateProtocolDialogComponent {
   private healthService = inject(HealthService);
   private inventoryService = inject(InventoryService);
   private dialogRef = inject(MatDialogRef<CreateProtocolDialogComponent>);
-  private snackBar = inject(MatSnackBar);
+  private readonly notify = inject(NotificationService);
 
   form: FormGroup;
   isSubmitting = signal(false);
@@ -223,7 +234,7 @@ export class CreateProtocolDialogComponent {
           vaccineName: [step.vaccineName, [Validators.required, Validators.maxLength(100)]],
           dosageInstruction: [step.dosageInstruction || ''],
           inventoryItemId: [step.inventoryItemId || null],
-          dosageQuantity: [{ value: step.dosageQuantity || null, disabled: !step.inventoryItemId }]
+          dosageQuantity: [{ value: step.dosageQuantity || null, disabled: !step.inventoryItemId }, [Validators.min(0)]]
         }));
       });
     } else {
@@ -242,7 +253,7 @@ export class CreateProtocolDialogComponent {
       vaccineName: ['', [Validators.required, Validators.maxLength(100)]],
       dosageInstruction: [''],
       inventoryItemId: [null],
-      dosageQuantity: [{ value: null, disabled: true }]
+      dosageQuantity: [{ value: null, disabled: true }, [Validators.min(0)]]
     }));
   }
 
@@ -270,10 +281,7 @@ export class CreateProtocolDialogComponent {
   onSubmit() {
     if (this.form.invalid || this.steps.length === 0) {
       this.form.markAllAsTouched();
-      this.snackBar.open('Please fill in all protocol fields and add at least one step.', 'Close', {
-        duration: 4000,
-        panelClass: ['snack-error']
-      });
+      this.notify.error('Please fill in all protocol fields and add at least one step.');
       return;
     }
 
@@ -298,19 +306,13 @@ export class CreateProtocolDialogComponent {
       this.healthService.updateVaccinationProtocol(this.protocolId!, request).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Protocol updated successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Protocol updated successfully!');
           this.dialogRef.close(true);
         },
         error: (err) => {
           const parsedMsg = parseApiError(err, 'Failed to update protocol.');
           this.error.set(parsedMsg);
-          this.snackBar.open(parsedMsg, 'Close', {
-            duration: 5000,
-            panelClass: ['snack-error']
-          });
+          this.notify.error(parsedMsg);
           this.isSubmitting.set(false);
         }
       });
@@ -318,19 +320,13 @@ export class CreateProtocolDialogComponent {
       this.healthService.createVaccinationProtocol(request).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Protocol created successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['snack-success']
-          });
+          this.notify.success('Protocol created successfully!');
           this.dialogRef.close(true);
         },
         error: (err) => {
           const parsedMsg = parseApiError(err, 'Failed to create protocol.');
           this.error.set(parsedMsg);
-          this.snackBar.open(parsedMsg, 'Close', {
-            duration: 5000,
-            panelClass: ['snack-error']
-          });
+          this.notify.error(parsedMsg);
           this.isSubmitting.set(false);
         }
       });

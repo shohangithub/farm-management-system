@@ -21,7 +21,6 @@ namespace Farm360.Application.Finance.EventHandlers.Integration;
 /// which knows whether the dose really came out of stock. Posting it here as well was a double count.
 /// </remarks>
 public sealed class VaccinationAdministeredFinanceEventHandler :
-    INotificationHandler<VaccinationAdministeredNotification>,
     INotificationHandler<VaccinationAdministeredEvent>
 {
     private readonly IAnimalCostLedgerRepository _ledgerRepository;
@@ -40,9 +39,6 @@ public sealed class VaccinationAdministeredFinanceEventHandler :
         _animalRepository = animalRepository;
         _unitOfWork = unitOfWork;
     }
-
-    public Task Handle(VaccinationAdministeredNotification wrapper, CancellationToken cancellationToken) =>
-        ProcessEventAsync(wrapper.DomainEvent, cancellationToken);
 
     public Task Handle(VaccinationAdministeredEvent notification, CancellationToken cancellationToken) =>
         ProcessEventAsync(notification, cancellationToken);

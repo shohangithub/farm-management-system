@@ -5,9 +5,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Finance.Queries;
-using Farm360.Application.Farms.Queries;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
+using Farm360.Application.Reporting.Services;
 
 namespace Farm360.Application.Reporting.Definitions.Finance;
 
@@ -19,8 +19,20 @@ public sealed record MonthlyPnlReportRow(
 /// <summary>
 /// Report FN3 — Monthly Profit and Loss Statement with categorized income and expenditure.
 /// </summary>
+/// <remarks>
+/// Income is positive and expenses negative, so each section sub-totals to its effect on profit
+/// and the bottom line is printed as what it is — "Net profit / (loss)" — rather than a "grand
+/// total" that adds income to expenses.
+/// </remarks>
 public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlReportRow>
 {
+    private static readonly (string En, string Bn)[] MonthNames =
+    [
+        ("January", "জানুয়ারি"), ("February", "ফেব্রুয়ারি"), ("March", "মার্চ"), ("April", "এপ্রিল"),
+        ("May", "মে"), ("June", "জুন"), ("July", "জুলাই"), ("August", "আগস্ট"),
+        ("September", "সেপ্টেম্বর"), ("October", "অক্টোবর"), ("November", "নভেম্বর"), ("December", "ডিসেম্বর"),
+    ];
+
     public override string Key => "finance.monthly-pnl";
 
     public override LocalizedText Title => new("Monthly Profit & Loss Statement", "মাসিক লাভ ও ক্ষতি বিবরণী");
@@ -33,50 +45,54 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
 
     public override PageSetup Page => PageSetup.A4PortraitSigned;
 
-    public override IReadOnlyList<ReportParameter> Parameters =>
-    [
-        ReportParameter.Farm(),
-        ReportParameter.Number("year", new LocalizedText("Year", "বছর"), @default: 2026, required: true),
-        ReportParameter.Select(
-            "month",
-            new LocalizedText("Month", "মাস"),
+    public override LocalizedText? GrandTotalLabel => new("Net profit / (loss) for the month", "মাসের নিট লাভ / (ক্ষতি)");
+
+    /// <summary>
+    /// Defaults are the current month in Bangladesh time, evaluated when the catalog is built —
+    /// not a year and month frozen into the code. A blank value falls back to the current month in
+    /// the farm's own zone at run time.
+    /// </summary>
+    public override IReadOnlyList<ReportParameter> Parameters
+    {
+        get
+        {
+            var today = ReportTimeZone.Today(DateTime.UtcNow, ReportTimeZone.Default);
+            return
             [
-                new ReportSelectOption("1", new LocalizedText("January", "জানুয়ারি")),
-                new ReportSelectOption("2", new LocalizedText("February", "ফেব্রুয়ারি")),
-                new ReportSelectOption("3", new LocalizedText("March", "মার্চ")),
-                new ReportSelectOption("4", new LocalizedText("April", "এপ্রিল")),
-                new ReportSelectOption("5", new LocalizedText("May", "মে")),
-                new ReportSelectOption("6", new LocalizedText("June", "জুন")),
-                new ReportSelectOption("7", new LocalizedText("July", "জুলাই")),
-                new ReportSelectOption("8", new LocalizedText("August", "আগস্ট")),
-                new ReportSelectOption("9", new LocalizedText("September", "সেপ্টেম্বর")),
-                new ReportSelectOption("10", new LocalizedText("October", "অক্টোবর")),
-                new ReportSelectOption("11", new LocalizedText("November", "নভেম্বর")),
-                new ReportSelectOption("12", new LocalizedText("December", "ডিসেম্বর")),
-            ],
-            @default: "9",
-            required: true),
-    ];
+                ReportParameter.Farm(required: true),
+                ReportParameter.Number("year", new LocalizedText("Year", "বছর"), @default: today.Year, required: false),
+                ReportParameter.Select(
+                    "month",
+                    new LocalizedText("Month", "মাস"),
+                    MonthNames
+                        .Select((m, i) => new ReportSelectOption(
+                            (i + 1).ToString(CultureInfo.InvariantCulture),
+                            new LocalizedText(m.En, m.Bn)))
+                        .ToList(),
+                    @default: today.Month.ToString(CultureInfo.InvariantCulture),
+                    required: false),
+            ];
+        }
+    }
 
     public override IReadOnlyList<ReportColumn<MonthlyPnlReportRow>> Columns =>
     [
-        ReportColumn<MonthlyPnlReportRow>.Text("section", new LocalizedText("Classification", "শ্রেণীবিভাগ"), r => r.Section, width: 28f, relative: false),
         ReportColumn<MonthlyPnlReportRow>.Text("category", new LocalizedText("Account Category", "হিসাবের খাত"), r => r.Category, width: 3.5f),
-        ReportColumn<MonthlyPnlReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "পরিমাণ (টাকা)"), r => r.AmountBdt, decimals: 2, widthMm: 32f, aggregate: ReportAggregate.Sum),
+        ReportColumn<MonthlyPnlReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "পরিমাণ (টাকা)"), r => r.AmountBdt, decimals: 2, widthMm: 36f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<MonthlyPnlReportRow>? Group =>
-        ReportGroup<MonthlyPnlReportRow>.By(
-            r => r.Section,
-            r => r.Section);
+        ReportGroup<MonthlyPnlReportRow>.By(r => r.Section, r => r.Section);
 
-    public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
+    public override Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var year = context.WholeNumber("year", context.Today.Year);
-        var month = context.WholeNumber("month", context.Today.Month);
-        var monthName = CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(Math.Clamp(month, 1, 12));
-        return $"Operating Performance for {monthName} {year}";
+        var (year, month) = ReadPeriod(context);
+        var name = MonthNames[month - 1];
+        var yearText = ReportValueFormatter.Format(year, ReportColumnType.Text, 0);
+        return Task.FromResult<string?>(context.Language == ReportLanguage.Bn
+            ? $"{name.Bn} {(context.BengaliNumerals ? ReportValueFormatter.ToBengaliNumerals(yearText) : yearText)} মাসের পরিচালন ফলাফল"
+            : $"Operating performance for {name.En} {yearText}");
     }
 
     protected override async Task<IReadOnlyList<MonthlyPnlReportRow>> FetchAsync(
@@ -85,50 +101,61 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var farmId = await ResolveFarmIdAsync(context, cancellationToken).ConfigureAwait(false);
-        var year = context.WholeNumber("year", context.Today.Year);
-        var month = context.WholeNumber("month", context.Today.Month);
+        var (year, month) = ReadPeriod(context);
 
         var data = await context
-            .Send(new GetMonthlyPnLReportQuery(farmId, year, month), cancellationToken)
+            .Send(new GetMonthlyPnLReportQuery(context.FarmId(), year, month), cancellationToken)
             .ConfigureAwait(false);
 
-        if (data is null)
-        {
-            return [];
-        }
+        return data is null
+            ? []
+            : BuildRows(data.IncomeByCategory, data.ExpenseByCategory, context.Language);
+    }
 
-        var rows = new List<MonthlyPnlReportRow>();
+    /// <summary>
+    /// The statement lines: income positive, expenses negative, so the column total is the net
+    /// result. Public for tests.
+    /// </summary>
+    public static IReadOnlyList<MonthlyPnlReportRow> BuildRows(
+        IReadOnlyDictionary<string, decimal> income,
+        IReadOnlyDictionary<string, decimal> expenses,
+        ReportLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(income);
+        ArgumentNullException.ThrowIfNull(expenses);
 
-        // Income Categories
-        foreach (var (cat, amount) in data.IncomeByCategory.OrderBy(k => k.Key))
-        {
-            rows.Add(new MonthlyPnlReportRow("1. Operating Income", SplitCamelCase(cat), amount));
-        }
+        var bn = language == ReportLanguage.Bn;
+        var incomeSection = bn ? "১. পরিচালন আয়" : "1. Operating income";
+        var expenseSection = bn ? "২. পরিচালন ব্যয়" : "2. Operating expenses";
 
-        // Expense Categories
-        foreach (var (cat, amount) in data.ExpenseByCategory.OrderBy(k => k.Key))
-        {
-            rows.Add(new MonthlyPnlReportRow("2. Operating Expenses", SplitCamelCase(cat), amount));
-        }
-
+        var rows = new List<MonthlyPnlReportRow>(income.Count + expenses.Count);
+        rows.AddRange(income.OrderBy(k => k.Key, StringComparer.Ordinal)
+            .Select(kv => new MonthlyPnlReportRow(incomeSection, SplitCamelCase(kv.Key), kv.Value)));
+        rows.AddRange(expenses.OrderBy(k => k.Key, StringComparer.Ordinal)
+            .Select(kv => new MonthlyPnlReportRow(expenseSection, SplitCamelCase(kv.Key), -kv.Value)));
         return rows;
     }
 
-    private static string SplitCamelCase(string text)
+    private static (int Year, int Month) ReadPeriod(ReportContext context)
     {
-        if (string.IsNullOrEmpty(text)) return text;
-        return System.Text.RegularExpressions.Regex.Replace(text, "(?<=[a-z])(?=[A-Z])", " ");
+        var year = context.WholeNumber("year", context.Today.Year);
+        var month = context.WholeNumber("month", context.Today.Month);
+
+        if (year is < 2000 or > 2100)
+        {
+            throw new ReportParameterException("year", "'Year' must be between 2000 and 2100.");
+        }
+
+        if (month is < 1 or > 12)
+        {
+            throw new ReportParameterException("month", "'Month' must be between 1 and 12.");
+        }
+
+        return (year, month);
     }
 
-    private static async Task<Guid> ResolveFarmIdAsync(ReportContext context, CancellationToken cancellationToken)
-    {
-        if (context.IdOrNull("farmId") is { } id && id != Guid.Empty)
-            return id;
-        if (context.AssignedFarmIds is { Count: > 0 } assigned && assigned[0] != Guid.Empty)
-            return assigned[0];
-
-        var farms = await context.Send(new GetAllFarmsQuery(), cancellationToken).ConfigureAwait(false);
-        return farms.Count > 0 ? farms[0].Id : Guid.Empty;
-    }
+    private static string SplitCamelCase(string text) =>
+        string.IsNullOrEmpty(text)
+            ? text
+            : System.Text.RegularExpressions.Regex.Replace(text, "(?<=[a-z])(?=[A-Z])", " ");
 }

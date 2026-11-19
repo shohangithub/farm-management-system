@@ -101,6 +101,51 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     public DisposalReason? DisposalReason { get; private set; }
     public string? Notes { get; private set; }
 
+    // ── Presence on the farm (farm rules: see AnimalStatusGroups) ─────────────
+    /// <summary>
+    /// The day the animal left the farm: SaleDate when Sold, DeathDate when Dead. Null while on
+    /// the farm (and for Slaughtered/Transferred, which no command sets and so carry no date).
+    /// The animal is NOT on the farm on its exit date itself.
+    /// </summary>
+    /// <remarks>Same rule as feeding uses (<see cref="Feeding.AnimalFeedingPresence.ExitDate"/>).</remarks>
+    public DateOnly? ExitDate => Feeding.AnimalFeedingPresence.ExitDate(this);
+
+    /// <summary>True once the animal is no longer on the farm (Sold, Dead, Slaughtered, Transferred).</summary>
+    public bool HasLeftFarm => AnimalStatusGroups.HasLeftFarm(Status);
+
+    /// <summary>
+    /// On farm on day D = acquired on or before D and (no exit date or D before the exit date).
+    /// An exited animal with no recorded exit date is treated as not on the farm on any day.
+    /// </summary>
+    public bool IsOnFarmOn(DateOnly day)
+    {
+        if (day < AcquisitionDate) return false;
+        if (!HasLeftFarm) return true;
+        return ExitDate is { } exit && day < exit;
+    }
+
+    /// <summary>
+    /// Guard for recording a new fact dated <paramref name="date"/>: allowed while the animal is on
+    /// the farm, or — for an animal that has left — only when dated before its exit date (late entry
+    /// of history). Throws <see cref="AnimalHasLeftFarmException"/> naming the sale/death date.
+    /// </summary>
+    public void EnsureCanRecordOn(DateOnly date, string action)
+    {
+        if (!HasLeftFarm) return;
+        if (ExitDate is { } exit && date < exit) return;
+        throw new AnimalHasLeftFarmException(Tag.TagId, Status, ExitDate, action, dateBased: true);
+    }
+
+    /// <summary>
+    /// Guard for actions that only make sense for an animal physically present today (transfer,
+    /// batch assignment, scheduling future work). Throws <see cref="AnimalHasLeftFarmException"/>.
+    /// </summary>
+    public void EnsureOnFarm(string action)
+    {
+        if (HasLeftFarm)
+            throw new AnimalHasLeftFarmException(Tag.TagId, Status, ExitDate, action, dateBased: false);
+    }
+
     // ── Update Method ─────────────────────────────────────────────────────────
     public void UpdateDetails(
         AnimalTag tag,
@@ -225,7 +270,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// Records a weight measurement.
     /// Business rules:
     ///   - RecordedDate >= DateOfBirth (Constitution §9.4)
-    ///   - Only Active or Quarantined animals can have weight recorded.
+    ///   - Active/Quarantined animals: any date. An animal that has left the farm: only a weight
+    ///     dated before its exit (sale/death) date — a late entry of history is allowed, a weight
+    ///     on/after the exit is not.
     /// Raises <see cref="WeightRecordedEvent"/>.
     /// </summary>
     public WeightRecord RecordWeight(
@@ -237,8 +284,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         if (recordedDate < DateOfBirth)
             throw new InvalidWeightDateException(Tag.TagId, recordedDate, DateOfBirth);
 
-        if (Status is not (AnimalStatus.Active or AnimalStatus.Quarantined))
-            throw new InvalidAnimalStateTransitionException(Status.ToString(), "RecordWeight");
+        EnsureCanRecordOn(recordedDate, "a weight");
 
         var record = new WeightRecord(
             Guid.NewGuid(),
@@ -291,6 +337,12 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         if (salePriceBdt <= 0)
             throw new ArgumentException("Sale price must be greater than zero.", nameof(salePriceBdt));
 
+        EnsureExitNotBeforeCurrentPlacement(saleDate, "sale");
+
+        // The animal leaves its pen/shed on the sale date: close the open movement so pen/shed
+        // occupancy and movement-based membership drop it from that day. BatchId is kept (history).
+        CloseCurrentMovement(saleDate, soldBy);
+
         Status = AnimalStatus.Sold;
         SalePriceBdt = salePriceBdt;
         SaleDate = saleDate;
@@ -317,10 +369,19 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     ///   - Only Active or Quarantined animals can be recorded as dead.
     /// Raises <see cref="AnimalDiedEvent"/>.
     /// </summary>
-    public void RecordDeath(DisposalReason cause, DateOnly deathDate, string? notes)
+    public void RecordDeath(DisposalReason cause, DateOnly deathDate, string? notes, Guid? recordedBy = null)
     {
         if (Status is not (AnimalStatus.Active or AnimalStatus.Quarantined))
             throw new InvalidAnimalStateTransitionException(Status.ToString(), AnimalStatus.Dead.ToString());
+
+        if (deathDate < AcquisitionDate)
+            throw new InvalidExitDateException(Tag.TagId,
+                $"death date {deathDate:dd MMM yyyy} is before the acquisition date {AcquisitionDate:dd MMM yyyy}.");
+
+        EnsureExitNotBeforeCurrentPlacement(deathDate, "death");
+
+        // The animal leaves its pen/shed on the death date (same as a sale). BatchId is kept.
+        CloseCurrentMovement(deathDate, recordedBy ?? Guid.Empty);
 
         Status = AnimalStatus.Dead;
         DisposalReason = cause;
@@ -378,8 +439,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// </summary>
     public void TransferToShed(Guid? toShedId, Guid? toPenId, DateOnly transferDate, Guid transferredBy, string? reason = null)
     {
-        if (Status is not (AnimalStatus.Active or AnimalStatus.Quarantined))
-            throw new InvalidAnimalStateTransitionException(Status.ToString(), "Transfer");
+        // A sold/dead animal is not in any pen; moving it would re-open occupancy.
+        EnsureOnFarm("a pen/shed transfer");
 
         var current = CurrentMovement;
         var fromShedId = current?.ShedId;
@@ -413,8 +474,14 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// </summary>
     public void UpdateNotes(string? notes) => Notes = notes;
 
+    /// <summary>
+    /// Assigns (or clears) the animal's batch. Only for animals on the farm: an animal that has
+    /// left keeps the batch it was in when it left (history), and cannot be moved into another.
+    /// </summary>
     public void AssignToBatch(Guid? batchId)
     {
+        EnsureOnFarm("a batch assignment");
+
         BatchId = batchId;
         RaiseDomainEvent(new AnimalAssignedToBatchEvent(
             Guid.NewGuid(),
@@ -428,6 +495,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     {
         if (score < 1.0m || score > 5.0m)
             throw new ArgumentException("BCS score must be between 1.0 and 5.0.", nameof(score));
+
+        // Like weights: a score dated before the exit may be entered late; none on/after it.
+        EnsureCanRecordOn(recordedDate, "a body condition score");
 
         var record = new BodyConditionScore(
             Guid.NewGuid(),
@@ -497,6 +567,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         if (Sex != AnimalSex.Female)
             throw new InvalidOperationException("Breeding records can only be added to female animals.");
 
+        // A mating can only happen while the dam is on the farm (late entry of an earlier one is fine).
+        EnsureCanRecordOn(matingDate, "a mating");
+
         var record = new BreedingRecord(
             Guid.NewGuid(),
             Id,
@@ -528,6 +601,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         var record = _breedingRecords.FirstOrDefault(r => r.Id == breedingRecordId)
             ?? throw new ArgumentException($"Breeding record '{breedingRecordId}' not found.");
 
+        EnsureCanRecordOn(confirmDate, "a pregnancy confirmation");
+
         record.ConfirmPregnancy(confirmDate, expectedCalvingDate);
 
         RaiseDomainEvent(new PregnancyConfirmedEvent(
@@ -548,6 +623,8 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         var record = _breedingRecords.FirstOrDefault(r => r.Id == breedingRecordId)
             ?? throw new ArgumentException($"Breeding record '{breedingRecordId}' not found.");
 
+        EnsureCanRecordOn(calvingDate, "a calving");
+
         record.RecordCalving(calvingDate, outcome, calvesCount);
 
         RaiseDomainEvent(new CalvingRecordedEvent(
@@ -559,6 +636,21 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             calvingDate,
             outcome,
             calvesCount));
+    }
+
+    /// <summary>
+    /// Closes the open pen/shed movement at the exit date (like <see cref="TransferToShed"/> does
+    /// when moving), so occupancy queries — which count open movements — drop the animal.
+    /// </summary>
+    private void CloseCurrentMovement(DateOnly exitDate, Guid removedBy) =>
+        CurrentMovement?.MarkAsRemoved(exitDate.ToDateTime(TimeOnly.MinValue), removedBy);
+
+    /// <summary>The exit cannot be dated before the animal was placed in its current pen/shed.</summary>
+    private void EnsureExitNotBeforeCurrentPlacement(DateOnly exitDate, string kind)
+    {
+        if (CurrentMovement is { } current && exitDate.ToDateTime(TimeOnly.MinValue) < current.PlacedAtUtc.Date)
+            throw new InvalidExitDateException(Tag.TagId,
+                $"{kind} date {exitDate:dd MMM yyyy} is before the animal was moved into its current pen/shed on {DateOnly.FromDateTime(current.PlacedAtUtc):dd MMM yyyy}.");
     }
 
     /// <summary>

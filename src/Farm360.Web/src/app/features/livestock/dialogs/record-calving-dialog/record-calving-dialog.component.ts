@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
 export interface RecordCalvingDialogData {
   animalId: string;
@@ -28,7 +29,7 @@ export class RecordCalvingDialogComponent {
   private readonly destroy$ = new Subject<void>();
 
   readonly form = this.fb.group({
-    calvingDate: [new Date().toISOString().split('T')[0], Validators.required],
+    calvingDate: [toLocalIsoDate(), Validators.required],
     outcome: ['Live Birth', Validators.required],
     calvesCount: [1, [Validators.required, Validators.min(1)]]
   });

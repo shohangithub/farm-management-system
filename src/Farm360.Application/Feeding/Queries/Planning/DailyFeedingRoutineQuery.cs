@@ -118,12 +118,15 @@ public sealed class GetDailyFeedingRoutineQueryHandler(
     IPenRepository pens,
     IAnimalBatchRepository batches,
     IUnitService units,
-    ITenantService tenant) : IRequestHandler<GetDailyFeedingRoutineQuery, DailyFeedingRoutineDto>
+    ITenantService tenant,
+    IFarmClock? clock = null) : IRequestHandler<GetDailyFeedingRoutineQuery, DailyFeedingRoutineDto>
 {
+    private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
+
     public async Task<DailyFeedingRoutineDto> Handle(GetDailyFeedingRoutineQuery request, CancellationToken cancellationToken)
     {
         var tenantId = tenant.TenantId;
-        var day = request.Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var day = request.Date ?? _clock.Today;
         var notes = new List<string>();
 
         var herd = (await animals.GetAllByFarmAsync(request.FarmId, cancellationToken))

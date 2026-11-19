@@ -17,6 +17,7 @@
 
 <div #reportSheet id="vetVisitListContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
   <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" *ngIf="!isLoading() && dataSource().length > 0">
     <div *ngFor="let element of dataSource()" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col">
@@ -36,7 +37,7 @@
                }">
             <mat-icon class="!w-5 !h-5 !text-[20px]">{{ element.visitType === 'Emergency' ? 'warning' : 'medical_services' }}</mat-icon>
           </div>
-          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm"
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="{
                   'bg-teal-50 text-teal-700 border-teal-200': element.visitType === 'RoutineCheckup',
                   'bg-red-50 text-red-700 border-red-200': element.visitType === 'Emergency',
@@ -62,21 +63,21 @@
       <!-- Card Body -->
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="mb-4">
-          <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Purpose of Visit</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-1">Purpose of Visit</div>
           <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" [matTooltip]="element.purpose">{{ element.purpose || 'No purpose recorded' }}</p>
         </div>
 
         <div class="grid grid-cols-2 gap-y-4 gap-x-2 border-t border-gray-100 dark:border-gray-700/50 pt-4 mt-auto">
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Cost</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Cost</div>
             <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-              <span *ngIf="element.costBdt">৳ {{ element.costBdt | number:'1.2-2' }}</span>
+              <span *ngIf="element.costBdt">{{ element.costBdt | money:2 }}</span>
               <span *ngIf="!element.costBdt" class="text-gray-400 font-medium">—</span>
             </div>
           </div>
           
           <div>
-            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Next Visit</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Next Visit</div>
             <div class="text-sm font-semibold" [ngClass]="element.nextVisitDate ? 'text-gray-900 dark:text-white' : 'text-gray-400'">
               {{ element.nextVisitDate ? (element.nextVisitDate | date:'mediumDate') : '—' }}
             </div>
@@ -94,7 +95,7 @@
   </div>
 
     <app-empty-state 
-      *ngIf="!isLoading() && dataSource().length === 0"
+      *ngIf="!isLoading() && dataSource().length === 0 && !loadError()"
       icon="local_hospital"
       title="No veterinary visits found"
       description="Log professional vet visits to track your farm's health history."

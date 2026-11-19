@@ -4,6 +4,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { InventoryService } from '../../services/inventory.service';
 import { ItemUnits, UnitConversion } from '../../models/inventory.models';
+import { APP_NUMBER_LOCALE } from '../../../../shared/utils/locale';
 
 export interface UnitSelection {
   unitId: string | null;
@@ -76,7 +77,7 @@ export class UnitPickerComponent {
     const q = Number(this.quantity()) || 0;
     const base = this.units()?.baseUnit;
     if (!u || u.isBase || !q || !base) return '';
-    return `= ${(q * u.factor).toLocaleString('en-IN', { maximumFractionDigits: 4 })} ${base}`;
+    return `= ${(q * u.factor).toLocaleString(APP_NUMBER_LOCALE, { maximumFractionDigits: 4 })} ${base}`;
   });
 
   constructor() {

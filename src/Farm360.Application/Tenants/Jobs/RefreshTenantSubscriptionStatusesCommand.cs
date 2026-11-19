@@ -1,4 +1,5 @@
 using Farm360.Application.Common.Interfaces;
+using Farm360.Domain.Tenancy;
 using Farm360.Domain.Tenancy.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -52,7 +53,18 @@ public sealed class RefreshTenantSubscriptionStatusesCommandHandler
         foreach (var tenant in tenants)
         {
             var oldStatus = tenant.Status;
-            var newStatus = tenant.CheckAndRefreshStatus();
+            TenantStatus newStatus;
+#pragma warning disable CA1031 // One tenant's bad subscription data must not stop every other tenant's refresh.
+            try
+            {
+                newStatus = tenant.CheckAndRefreshStatus();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not refresh the subscription status of tenant {TenantId}; other tenants continue.", tenant.Id);
+                continue;
+            }
+#pragma warning restore CA1031
 
             if (oldStatus == newStatus)
             {

@@ -16,10 +16,14 @@ import { CreatePurchaseOrderRequest, InventoryItem, Supplier } from '../../model
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { HasUnsavedChanges } from '../../../../shared/utils/unsaved-changes.guard';
+import { parseApiError } from '../../../../core/utils/error-parser';
 @Component({
   selector: 'app-purchase-order-form',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, 
     UnitPickerComponent,
     CommonModule,
     RouterModule,
@@ -66,12 +70,14 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
               <option value="" disabled selected>Select a supplier</option>
               <option *ngFor="let s of suppliers()" [value]="s.id">{{ s.name }}</option>
             </select>
+<p *ngIf="form.get('supplierId')?.invalid && form.get('supplierId')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'supplierId') }}</p>
           </div>
           
           <div>
             <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Order Date <span class="text-red-500">*</span></label>
             <input type="date" formControlName="orderDate"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+<p *ngIf="form.get('orderDate')?.invalid && form.get('orderDate')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'orderDate') }}</p>
           </div>
 
           <div>
@@ -135,7 +141,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                     {{ calculateRowTotal(i) | number:'1.2-2' }}
                   </td>
                   <td class="px-4 py-3 text-center align-middle">
-                    <button type="button" (click)="removeItem(i)" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30">
+                    <button aria-label="Delete" type="button" (click)="removeItem(i)" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30">
                       <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">delete</mat-icon>
                     </button>
                   </td>
@@ -149,7 +155,7 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
               <tfoot *ngIf="items.length > 0" class="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
                   <td colspan="3" class="px-4 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-300 uppercase">Grand Total:</td>
-                  <td class="px-4 py-3 text-right text-base font-black text-emerald-600 dark:text-emerald-400">৳ {{ grandTotal() | number:'1.2-2' }}</td>
+                  <td class="px-4 py-3 text-right text-base font-black text-emerald-600 dark:text-emerald-400">{{ grandTotal() | money:2 }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -161,7 +167,13 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PurchaseOrderForm implements OnInit {
+export class PurchaseOrderForm implements OnInit, HasUnsavedChanges {
+  private saved = false;
+
+  hasUnsavedChanges(): boolean {
+    return !this.saved && this.form.dirty;
+  }
+
   private readonly inventoryService = inject(InventoryService);
   private readonly contextService = inject(WorkingContextService);
   private readonly router = inject(Router);
@@ -176,7 +188,7 @@ export class PurchaseOrderForm implements OnInit {
 
   readonly form = this.fb.group({
     supplierId: ['', Validators.required],
-    orderDate: [new Date().toISOString().split('T')[0], Validators.required],
+    orderDate: [toLocalIsoDate(), Validators.required],
     expectedDeliveryDate: [''],
     notes: [''],
     items: this.fb.array([])
@@ -313,12 +325,27 @@ export class PurchaseOrderForm implements OnInit {
     this.inventoryService.createPurchaseOrder(payload).subscribe({
       next: (res) => {
         this.loading.set(false);
+        this.saved = true;
         this.router.navigate(['/inventory/purchase-orders', res.id]);
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err?.error?.detail || 'Failed to create purchase order.');
+        this.error.set(parseApiError(err, 'Failed to create purchase order.'));
       }
     });
+  }
+
+  /** Human-readable message for the first validation error on a control. */
+  fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
+    const e = group.get(name)?.errors;
+    if (!e) return '';
+    if (e['required']) return 'This field is required.';
+    if (e['min']) return `Must be at least ${e['min'].min}.`;
+    if (e['max']) return `Must be at most ${e['max'].max}.`;
+    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
+    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
+    if (e['email']) return 'Enter a valid email address.';
+    if (e['pattern']) return 'Invalid format.';
+    return 'Invalid value.';
   }
 }

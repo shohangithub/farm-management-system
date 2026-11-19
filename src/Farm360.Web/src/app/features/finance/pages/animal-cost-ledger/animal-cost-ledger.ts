@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { switchMap, catchError, of, combineLatest, map } from 'rxjs';
+import { switchMap, catchError, of, combineLatest, map, BehaviorSubject } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -12,19 +12,22 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
+import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-animal-cost-ledger',
   standalone: true,
-  imports: [
+  imports: [MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     MatIconModule,
     MatButtonModule,
     PageHeaderComponent,
     LoadingComponent,
-    EmptyStateComponent,
-    CurrencyPipe
+    EmptyStateComponent
   ],
   template: `
     <app-page-header 
@@ -48,6 +51,18 @@ import { ReportService } from '../../../reports/services/report.service';
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
           <span>SAP Report</span>
         </a>
+        <a mat-stroked-button [routerLink]="['/reports/finance.animal-daily-cost']" [queryParams]="{ animalId: animalId() }"
+          matTooltip="What this animal cost each day: feed, vet, labour and overhead"
+          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">calendar_month</mat-icon>
+          <span>Daily Cost</span>
+        </a>
+        <a mat-stroked-button routerLink="/reports/finance.herd-daily-cost"
+          matTooltip="What all animals cost each day, with head count and cost per head"
+          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">groups</mat-icon>
+          <span>Herd Daily Cost</span>
+        </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !ledgerData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
@@ -65,8 +80,10 @@ import { ReportService } from '../../../reports/services/report.service';
 
     <div *ngIf="!isLoading()" class="px-6 py-4 mx-auto max-w-7xl space-y-6">
       
-      <app-empty-state 
-        *ngIf="!ledgerData()"
+      <app-error-state *ngIf="loadError() as err" title="Couldn't load the cost ledger" [message]="err" (retry)="retryLoad()"></app-error-state>
+
+      <app-empty-state
+        *ngIf="!ledgerData() && !loadError()"
         icon="request_quote"
         title="No Cost Ledger Found"
         description="Cost ledger for this animal has not been initialized or no costs exist.">
@@ -93,7 +110,7 @@ import { ReportService } from '../../../reports/services/report.service';
               </div>
               <p class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mt-3">Total Accumulated Cost of Ownership</p>
               <h2 class="text-4xl font-black text-gray-900 dark:text-white mt-1">
-                {{ ledger.totalCostBdt | currency:'BDT ':'symbol':'1.0-0' }}
+                {{ ledger.totalCostBdt | money }}
               </h2>
             </div>
             
@@ -103,7 +120,7 @@ import { ReportService } from '../../../reports/services/report.service';
               </div>
               <div>
                 <p class="text-xs font-bold uppercase text-emerald-100 tracking-wider">Break-Even Price</p>
-                <p class="text-3xl font-black">{{ be.breakEvenPricePerKgBdt | currency:'BDT ':'symbol':'1.0-2' }} <span class="text-sm font-medium text-emerald-100">/ live kg</span></p>
+                <p class="text-3xl font-black">{{ be.breakEvenPricePerKgBdt | money:2 }} <span class="text-sm font-medium text-emerald-100">/ live kg</span></p>
                 <p class="text-[11px] text-emerald-100/80 mt-0.5">Minimum price per kg of live weight to recover all costs</p>
               </div>
             </div>
@@ -119,7 +136,7 @@ import { ReportService } from '../../../reports/services/report.service';
                   <mat-icon class="text-lg">shopping_cart</mat-icon>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Acquisition</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.acquisitionCostBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.acquisitionCostBdt | money }}</p>
               </div>
 
               <div class="p-4 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50">
@@ -127,7 +144,7 @@ import { ReportService } from '../../../reports/services/report.service';
                   <mat-icon class="text-lg">grass</mat-icon>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Feed Consumed</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.totalFeedCostBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.totalFeedCostBdt | money }}</p>
               </div>
 
               <div class="p-4 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50">
@@ -135,7 +152,7 @@ import { ReportService } from '../../../reports/services/report.service';
                   <mat-icon class="text-lg">medical_services</mat-icon>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Veterinary & Meds</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.totalVetCostBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.totalVetCostBdt | money }}</p>
               </div>
 
               <div class="p-4 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50">
@@ -143,7 +160,7 @@ import { ReportService } from '../../../reports/services/report.service';
                   <mat-icon class="text-lg">build</mat-icon>
                 </div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Labor & Overhead</p>
-                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ (ledger.totalLaborCostBdt + ledger.totalOverheadBdt) | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ (ledger.totalLaborCostBdt + ledger.totalOverheadBdt) | money }}</p>
               </div>
 
             </div>
@@ -155,14 +172,14 @@ import { ReportService } from '../../../reports/services/report.service';
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="p-5 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Realized Sale Revenue</p>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.saleRevenueBdt | currency:'BDT ':'symbol':'1.0-0' }}</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.saleRevenueBdt | money }}</p>
               </div>
               <div class="p-5 rounded-xl border" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'border-emerald-200 bg-emerald-50/70 dark:bg-emerald-950/30' : 'border-red-200 bg-red-50/70 dark:bg-red-950/30'">
                 <p class="text-xs font-bold uppercase tracking-wider" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
                   {{ (ledger.profitLossBdt || 0) >= 0 ? 'Net Realized Profit' : 'Net Realized Loss' }}
                 </p>
                 <p class="text-2xl font-black mt-1" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
-                  {{ Math.abs(ledger.profitLossBdt || 0) | currency:'BDT ':'symbol':'1.0-0' }}
+                  {{ Math.abs(ledger.profitLossBdt || 0) | money }}
                 </p>
               </div>
             </div>
@@ -191,10 +208,10 @@ import { ReportService } from '../../../reports/services/report.service';
                 <span class="text-xs text-teal-700 dark:text-teal-400 font-medium">Conservative</span>
               </div>
               <p class="text-2xl font-black text-teal-950 dark:text-teal-100 mt-3">
-                {{ be.targetPrice10PercentMarginPerKg | currency:'BDT ':'symbol':'1.0-2' }} <span class="text-xs font-normal">/ Kg</span>
+                {{ be.targetPrice10PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">/ Kg</span>
               </p>
               <p *ngIf="be.currentWeightKg as weight" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Est. Total: <strong>{{ ((be.targetPrice10PercentMarginPerKg ?? 0) * weight) | currency:'BDT ':'symbol':'1.0-0' }}</strong>
+                Est. Total: <strong>{{ ((be.targetPrice10PercentMarginPerKg ?? 0) * weight) | money }}</strong>
               </p>
             </div>
 
@@ -207,10 +224,10 @@ import { ReportService } from '../../../reports/services/report.service';
                 <span class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Optimal</span>
               </div>
               <p class="text-2xl font-black text-emerald-950 dark:text-emerald-100 mt-3">
-                {{ be.targetPrice20PercentMarginPerKg | currency:'BDT ':'symbol':'1.0-2' }} <span class="text-xs font-normal">/ Kg</span>
+                {{ be.targetPrice20PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">/ Kg</span>
               </p>
               <p *ngIf="be.currentWeightKg as weight" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Est. Total: <strong>{{ ((be.targetPrice20PercentMarginPerKg ?? 0) * weight) | currency:'BDT ':'symbol':'1.0-0' }}</strong>
+                Est. Total: <strong>{{ ((be.targetPrice20PercentMarginPerKg ?? 0) * weight) | money }}</strong>
               </p>
             </div>
 
@@ -223,10 +240,10 @@ import { ReportService } from '../../../reports/services/report.service';
                 <span class="text-xs text-purple-700 dark:text-purple-400 font-medium">Qurbani / Premium</span>
               </div>
               <p class="text-2xl font-black text-purple-950 dark:text-purple-100 mt-3">
-                {{ be.targetPrice30PercentMarginPerKg | currency:'BDT ':'symbol':'1.0-2' }} <span class="text-xs font-normal">/ Kg</span>
+                {{ be.targetPrice30PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">/ Kg</span>
               </p>
               <p *ngIf="be.currentWeightKg as weight" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Est. Total: <strong>{{ ((be.targetPrice30PercentMarginPerKg ?? 0) * weight) | currency:'BDT ':'symbol':'1.0-0' }}</strong>
+                Est. Total: <strong>{{ ((be.targetPrice30PercentMarginPerKg ?? 0) * weight) | money }}</strong>
               </p>
             </div>
 
@@ -256,16 +273,28 @@ export class AnimalCostLedgerComponent implements OnInit {
 
   readonly animalId = toSignal(this.routeParams$);
 
+  readonly loadError = signal<string | null>(null);
+  private readonly retry$ = new BehaviorSubject<void>(undefined);
+
+  retryLoad(): void {
+    this.retry$.next();
+  }
+
   private readonly pageData$ = combineLatest([
     this.routeParams$,
-    this.workingContextService.currentFarm$
+    this.workingContextService.currentFarm$,
+    this.retry$
   ]).pipe(
     switchMap(([animalId, farm]) => {
+      this.loadError.set(null);
       if (!animalId || !farm) {
         return of({ ledger: null, breakEven: null });
       }
       return combineLatest({
-        ledger: this.financeService.getAnimalCostLedger(farm.id, animalId).pipe(catchError(() => of(null))),
+        ledger: this.financeService.getAnimalCostLedger(farm.id, animalId).pipe(catchError(err => {
+          this.loadError.set(parseApiError(err, 'Could not load the animal cost ledger.'));
+          return of(null);
+        })),
         breakEven: this.financeService.getBreakEven(farm.id, animalId).pipe(catchError(() => of(null)))
       });
     })
@@ -316,7 +345,7 @@ export class AnimalCostLedgerComponent implements OnInit {
                 orgName: org?.name || 'Farm360 Enterprise',
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Accumulated Cost', value: `৳ ${(ledger?.totalCostBdt || 0).toLocaleString()}` },
+                  { label: 'Total Accumulated Cost', value: `${formatMoney((ledger?.totalCostBdt || 0))}` },
                   { label: 'Break-Even Price', value: `৳ ${(be?.breakEvenPricePerKgBdt || 0).toFixed(2)}/live kg` },
                   { label: 'Target +20% Margin', value: `৳ ${(be?.targetPrice20PercentMarginPerKg || 0).toFixed(2)}/kg` }
                 ]

@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
+import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
 export interface ConfirmPregnancyDialogData {
   animalId: string;
@@ -28,7 +29,7 @@ export class ConfirmPregnancyDialogComponent {
   private readonly destroy$ = new Subject<void>();
 
   readonly form = this.fb.group({
-    confirmDate: [new Date().toISOString().split('T')[0], Validators.required],
+    confirmDate: [toLocalIsoDate(), Validators.required],
     expectedCalvingDate: ['', Validators.required]
   });
 
@@ -38,7 +39,7 @@ export class ConfirmPregnancyDialogComponent {
   constructor() {
     const expected = new Date();
     expected.setDate(expected.getDate() + 283); // ~283 days for cows roughly, user can adjust
-    this.form.get('expectedCalvingDate')?.setValue(expected.toISOString().split('T')[0]);
+    this.form.get('expectedCalvingDate')?.setValue(toLocalIsoDate(expected));
   }
 
   ngOnDestroy(): void {

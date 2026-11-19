@@ -5,8 +5,17 @@ import {
   ReportCatalogItem,
   ReportDataSet,
   ReportExportFormat,
+  ReportLanguage,
+  ReportRunHistoryItem,
   RunReportRequest,
 } from '../models/report.models';
+
+/** A past run handed to the viewer so it can re-open with exactly the same parameters. */
+export interface ReportRerun {
+  parameters: Record<string, string | null>;
+  language: ReportLanguage;
+  bengaliNumerals: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ReportService {
@@ -16,8 +25,60 @@ export class ReportService {
   /** Remembers the last parameters used per report, per browser. */
   private readonly storageKey = 'farm360.report.params';
 
+  private readonly favouritesKey = 'farm360.report.favourites';
+  private readonly recentKey = 'farm360.report.recent';
+
   getCatalog(): Observable<ReportCatalogItem[]> {
     return this.http.get<ReportCatalogItem[]>(`${this.baseUrl}/catalog`);
+  }
+
+  /** Audited runs, newest first (only reports the user may still run). */
+  getRuns(take = 20, reportKey?: string): Observable<ReportRunHistoryItem[]> {
+    const params: Record<string, string> = { take: String(take) };
+    if (reportKey) {
+      params['reportKey'] = reportKey;
+    }
+    return this.http.get<ReportRunHistoryItem[]>(`${this.baseUrl}/runs`, { params });
+  }
+
+  // ── Favourites & recently opened (per browser; a convenience, not a record) ──
+
+  favourites(): string[] {
+    return this.readList(this.favouritesKey);
+  }
+
+  toggleFavourite(key: string): string[] {
+    const current = this.favourites();
+    const next = current.includes(key) ? current.filter(k => k !== key) : [...current, key];
+    this.writeList(this.favouritesKey, next);
+    return next;
+  }
+
+  recentlyOpened(): string[] {
+    return this.readList(this.recentKey);
+  }
+
+  markOpened(key: string): void {
+    const next = [key, ...this.recentlyOpened().filter(k => k !== key)].slice(0, 8);
+    this.writeList(this.recentKey, next);
+  }
+
+  private readList(storageKey: string): string[] {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private writeList(storageKey: string, keys: string[]): void {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(keys));
+    } catch {
+      // Private browsing or a full quota: favourites simply won't persist.
+    }
   }
 
   run(key: string, request?: Partial<RunReportRequest>): Observable<ReportDataSet> {
