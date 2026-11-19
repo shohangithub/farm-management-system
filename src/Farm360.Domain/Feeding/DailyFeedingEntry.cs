@@ -126,6 +126,25 @@ public sealed class DailyFeedingEntry : AuditableEntity, IAggregateRoot
         return true;
     }
 
+    /// <summary>
+    /// The animal's sale/death was undone: an entry skipped (or reversed) because of that exit goes
+    /// back to Pending so it can be confirmed again. <paramref name="exitReason"/> is the text the
+    /// exit wrote. Returns true when it changed.
+    /// </summary>
+    public bool ReopenAfterExitUndone(string exitReason)
+    {
+        if (Status != DailyFeedingEntryStatus.Skipped
+            || AdjustmentReason is null
+            || !AdjustmentReason.StartsWith(exitReason, StringComparison.Ordinal))
+            return false;
+
+        Status = DailyFeedingEntryStatus.Pending;
+        ActualKg = null;
+        TotalCostBdt = 0;
+        AdjustmentReason = null;
+        return true;
+    }
+
     public void UpdateExpectedQuantity(decimal expectedKg, Guid? ruleLineId = null)
     {
         if (Status != DailyFeedingEntryStatus.Pending)

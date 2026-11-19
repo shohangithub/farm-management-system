@@ -132,7 +132,7 @@ public sealed class AnimalDailyCostByAnimalReportDefinition : ReportDefinition<A
             }
         }
 
-        string TagOf(Guid id) => animalsById.TryGetValue(id, out var a) ? a.Tag.TagId : "(animal not found)";
+        string TagOf(Guid id) => animalsById.TryGetValue(id, out var a) ? AnimalLabels.Tag(a) : "(animal not found)";
         string LabelOf(Guid id)
         {
             if (!animalsById.TryGetValue(id, out var a))

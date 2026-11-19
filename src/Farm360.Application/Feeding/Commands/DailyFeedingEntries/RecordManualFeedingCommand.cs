@@ -102,6 +102,7 @@ public sealed class RecordManualFeedingCommandHandler(
                 FeedingPlanType.FixedQuantity, request.Date, request.Date, animalId);
             plan.UpdateCurrentRule(line.Id, animal.LatestWeightKg ?? 0m, perHead, 0m);
             plan.Complete();
+            plan.MarkOneOff();
             await plans.AddAsync(plan, cancellationToken);
 
             var entry = new DailyFeedingEntry(Guid.NewGuid(), tenant.TenantId, plan.Id, request.FarmId, request.Date,

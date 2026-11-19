@@ -47,6 +47,22 @@ public sealed record AnimalDiedEvent(
     DateOnly DeathDate) : IDomainEvent;
 
 /// <summary>
+/// Raised when a sale or death recorded by mistake is undone: the animal is back on the farm.
+/// Subscribers: finance (sale/loss reversed), health (closed doses and treatments reopened),
+/// feeding (plans and skipped entries reopened).
+/// </summary>
+public sealed record AnimalExitReversedEvent(
+    Guid EventId,
+    DateTime OccurredOnUtc,
+    Guid AnimalId,
+    Guid TenantId,
+    Guid FarmId,
+    bool WasSold,
+    DateOnly ExitDate,
+    string Reason,
+    Guid ReversedBy) : IDomainEvent;
+
+/// <summary>
 /// Raised when an animal is transferred to another shed or farm.
 /// Subscribers: audit log.
 /// </summary>

@@ -144,4 +144,35 @@ public class AnimalExitFeedingTests
     {
         Enum.IsDefined(StockTransactionType.FeedConsumptionReversal).Should().BeTrue();
     }
+
+    [Fact]
+    public void UndoneExit_ReopensThePlanItEnded_AndItsSkippedEntries()
+    {
+        var plan = new AnimalFeedingPlan(Guid.NewGuid(), TenantId, FarmId, Guid.NewGuid(), FeedingPlanType.FixedQuantity,
+            Acquired, null, animalId: Guid.NewGuid());
+        plan.EndOnExit(Exit);
+
+        plan.ReopenAfterExitUndone(Exit).Should().BeTrue();
+        plan.Status.Should().Be(FeedingPlanStatus.Active);
+        plan.EndDate.Should().BeNull();
+
+        var entry = new DailyFeedingEntry(Guid.NewGuid(), TenantId, Guid.NewGuid(), FarmId, Exit.AddDays(1), Guid.NewGuid(), 5m);
+        entry.Confirm(5m);
+        entry.VoidAfterExit("Animal sold on 13 Nov 2026");
+
+        entry.ReopenAfterExitUndone("Animal sold on 13 Nov 2026").Should().BeTrue();
+        entry.Status.Should().Be(DailyFeedingEntryStatus.Pending);
+        entry.ReopenAfterExitUndone("Animal sold on 13 Nov 2026").Should().BeFalse("a second run changes nothing");
+    }
+
+    [Fact]
+    public void UndoneExit_LeavesAPlanStoppedForAnotherReason()
+    {
+        var plan = new AnimalFeedingPlan(Guid.NewGuid(), TenantId, FarmId, Guid.NewGuid(), FeedingPlanType.FixedQuantity,
+            Acquired, null, animalId: Guid.NewGuid());
+        plan.Cancel(Exit.AddDays(-5));
+
+        plan.ReopenAfterExitUndone(Exit).Should().BeFalse();
+        plan.Status.Should().Be(FeedingPlanStatus.Cancelled);
+    }
 }

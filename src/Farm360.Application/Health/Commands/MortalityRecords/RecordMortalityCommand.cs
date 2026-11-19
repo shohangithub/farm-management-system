@@ -18,14 +18,17 @@ public sealed record RecordMortalityCommand(
     string? PostMortemNotes,
     decimal? EstimatedEconomicLossBdt,
     Guid? DiseaseIncidentId
-) : IRequest<Guid>;
+) : IRequest<Guid>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class RecordMortalityCommandValidator : AbstractValidator<RecordMortalityCommand>
 {
-    public RecordMortalityCommandValidator()
+    public RecordMortalityCommandValidator(IFarmClock? clock = null)
     {
+        clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
-        RuleFor(x => x.DeathDate).NotEmpty();
+        RuleFor(x => x.DeathDate).NotEmpty()
+            .LessThanOrEqualTo(_ => clock.Today)
+            .WithMessage("Death date cannot be in the future.");
         RuleFor(x => x.CauseOfDeath).IsInEnum();
         
         RuleFor(x => x.DiseaseName)

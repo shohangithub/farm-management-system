@@ -753,3 +753,89 @@ export interface AnimalNutrition {
   days: NutritionDay[];
   notes: string[];
 }
+
+// ── Daily feed sheet (GET/POST /feeding/sheet) ──
+export type FeedSheetQuantityMode = 'PerHead' | 'GroupTotal';
+export type FeedSheetSplit = 'Equal' | 'ByWeight';
+
+export interface FeedSheetFed {
+  entryId: string;
+  feed: string;
+  quantity: number;
+  unit: string;
+  costBdt: number;
+  confirmed: boolean;
+  /** "Daily sheet", "Manual", "Plan" or "Group plan". */
+  source: string;
+  canRemove: boolean;
+}
+
+export interface FeedSheetAnimal {
+  animalId: string;
+  tagId: string;
+  breed: string;
+  sex: string;
+  weightKg: number | null;
+  batchId: string | null;
+  batchName: string | null;
+  shedId: string | null;
+  shedName: string | null;
+  penId: string | null;
+  penName: string | null;
+  activePlans: string[];
+  hasOwnPlan: boolean;
+  fed: FeedSheetFed[];
+}
+
+export interface DailyFeedSheet {
+  date: string;
+  animals: FeedSheetAnimal[];
+}
+
+export interface FeedSheetLineRequest {
+  formulaId: string | null;
+  inventoryItemId: string | null;
+  quantity: number;
+  mode: FeedSheetQuantityMode;
+  unitId: string | null;
+}
+
+export interface SaveFeedSheetRequest {
+  farmId: string;
+  date: string;
+  animalIds: string[];
+  lines: FeedSheetLineRequest[];
+  split: FeedSheetSplit;
+  skipPlannedEntries: boolean;
+  notes?: string | null;
+}
+
+export interface DailyFeedSheetResult {
+  animalsFed: number;
+  entriesRecorded: number;
+  plannedEntriesSkipped: number;
+  totalCostBdt: number;
+  notes: string[];
+}
+
+export interface FeedSheetCopyLine {
+  formulaId: string | null;
+  inventoryItemId: string | null;
+  feed: string;
+  quantity: number;
+  unit: string;
+  headsFed: number;
+  /** PerHead: quantity is each animal's; GroupTotal: quantity is the total for headsFed animals. */
+  mode: FeedSheetQuantityMode;
+}
+
+export interface FeedSheetCopy {
+  fromDate: string | null;
+  lines: FeedSheetCopyLine[];
+  split: FeedSheetSplit;
+}
+
+export interface EndFeedingPlansResult {
+  plansEnded: number;
+  groupPlansStillCovering: string[];
+}

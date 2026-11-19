@@ -22,6 +22,7 @@ public sealed class GenerateDailyConsumableEntriesCommandHandler : IRequestHandl
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<GenerateDailyConsumableEntriesCommandHandler> _logger;
     private readonly IFarmClock _clock;
+    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository? _animals;
 
     public GenerateDailyConsumableEntriesCommandHandler(
         IConsumableUsagePlanRepository planRepository,
@@ -29,8 +30,10 @@ public sealed class GenerateDailyConsumableEntriesCommandHandler : IRequestHandl
         ITenantService tenantService,
         IUnitOfWork unitOfWork,
         ILogger<GenerateDailyConsumableEntriesCommandHandler> logger,
-        IFarmClock? clock = null)
+        IFarmClock? clock = null,
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null)
     {
+        _animals = animals;
         _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _planRepository = planRepository;
         _entryRepository = entryRepository;
@@ -47,6 +50,19 @@ public sealed class GenerateDailyConsumableEntriesCommandHandler : IRequestHandl
         if (activePlans.Count == 0)
         {
             return 0;
+        }
+
+        // No animals on the farm that day (all sold or dead): nothing is being used up, so no
+        // consumable entries — otherwise stock keeps falling and its cost has no animal to go to.
+        if (_animals is not null)
+        {
+            var present = await _animals.GetPresentDuringPeriodAsync(request.FarmId, targetDate, targetDate, cancellationToken);
+            if (!present.Any(a => a.IsOnFarmOn(targetDate)))
+            {
+                if (_logger.IsEnabled(LogLevel.Information))
+                    _logger.LogInformation("No animals on farm {FarmId} on {Date}; consumable entries not generated.", request.FarmId, targetDate);
+                return 0;
+            }
         }
 
         var existingPlanItemIds = await _entryRepository.GetExistingEntryPlanItemIdsByDateAsync(request.FarmId, targetDate, cancellationToken);

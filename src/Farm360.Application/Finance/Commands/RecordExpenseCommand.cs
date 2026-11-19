@@ -33,9 +33,12 @@ public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand,
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITradeCreditService _credit;
     private readonly IPublisher _publisher;
+    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository? _animals;
 
-    public RecordExpenseCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork, ITradeCreditService credit, IPublisher publisher)
+    public RecordExpenseCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork, ITradeCreditService credit, IPublisher publisher,
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null)
     {
+        _animals = animals;
         _repository = repository;
         _unitOfWork = unitOfWork;
         _credit = credit;
@@ -48,6 +51,7 @@ public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand,
             throw new ArgumentException($"Invalid transaction category: {request.Category}");
 
         AccountChart.EnsureManualAllowed(TransactionType.Expense, category);
+        await AnimalExpenseGuard.EnsureAsync(_animals, request.AnimalId, request.FarmId, request.TransactionDate, cancellationToken);
 
         var transaction = FinancialTransaction.Create(
             request.TenantId,

@@ -13,13 +13,25 @@ public sealed class GetProjectionDefaultsQueryHandler : IRequestHandler<GetProje
 {
     private readonly IProjectionDefaultsResolver _resolver;
 
-    public GetProjectionDefaultsQueryHandler(IProjectionDefaultsResolver resolver)
+    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository? _animals;
+
+    public GetProjectionDefaultsQueryHandler(IProjectionDefaultsResolver resolver,
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null)
     {
         _resolver = resolver;
+        _animals = animals;
     }
 
     public async Task<ProjectionDefaultsDto> Handle(GetProjectionDefaultsQuery request, CancellationToken cancellationToken)
     {
+        // A sold/dead animal has a final result, not a future: nothing to project.
+        if (_animals is not null
+            && await _animals.GetByIdAsync(request.AnimalId, cancellationToken) is { HasLeftFarm: true } gone)
+        {
+            throw new Farm360.Domain.Exceptions.DomainException(
+                $"{gone.Tag.TagId} has left the farm{(gone.ExitDate is { } d ? $" on {d:dd MMM yyyy}" : "")}, so there is nothing to project. See its final profit or loss instead.");
+        }
+
         var defaults = await _resolver.ResolveDefaultsAsync(request.AnimalId, cancellationToken);
 
         // The projection starts at the animal's latest weight, i.e. today. Day 0's investment is

@@ -48,6 +48,11 @@ internal sealed class UpdateTreatmentStatusCommandHandler : IRequestHandler<Upda
         if (treatment == null || treatment.TenantId != _tenantService.TenantId)
             throw new ArgumentException("Treatment not found.");
 
+        // Only a running treatment can be completed or failed. A treatment closed when the animal
+        // was sold or died keeps its end date (the exit date) and note.
+        if (treatment.Status != TreatmentStatus.Ongoing)
+            throw new Farm360.Domain.Exceptions.DomainException($"This treatment is already {treatment.Status.ToString().ToLowerInvariant()}.");
+
         if (request.Status == TreatmentStatus.Completed)
         {
             treatment.CompleteTreatment(_clock.Today, request.Notes);

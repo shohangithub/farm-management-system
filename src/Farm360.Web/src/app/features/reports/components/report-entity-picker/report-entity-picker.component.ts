@@ -22,7 +22,7 @@ import {
 import { AnimalService } from '../../../livestock/services/animal.service';
 import { BatchService } from '../../../livestock/services/batch.service';
 import { BreedService } from '../../../livestock/services/breed.service';
-import { AnimalDto, AnimalListItemDto } from '../../../livestock/models/animal.models';
+import { AnimalDto, AnimalListItemDto, isOnFarm } from '../../../livestock/models/animal.models';
 import { BatchDto } from '../../../livestock/models/batch.models';
 import { BreedDto } from '../../../livestock/models/breed.models';
 import { FarmService } from '../../../farms/services/farm.service';
@@ -379,7 +379,8 @@ export class ReportEntityPickerComponent {
   }
 
   private toOption(animal: AnimalListItemDto | AnimalDto): PickerOption {
-    return { id: animal.id, label: animal.tagId, sublabel: animal.breedName };
+    // Sold/dead animals stay pickable for reports, but are marked so they're not mistaken for live ones.
+    return { id: animal.id, label: animal.tagId, sublabel: isOnFarm(animal.status) ? animal.breedName : `${animal.breedName} · ${animal.status}` };
   }
 
   private loadBoundedList(type: ReportParameterType, farmId: string | null): Observable<PickerOption[]> {

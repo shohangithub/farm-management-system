@@ -29,8 +29,8 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
   standalone: true,
   imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
   template: `
-    <app-page-header title="Who Eats What" description="Every animal and what it is fed each day — set, change, pause or stop rations here."
-      breadcrumbActiveNode="Who Eats What">
+    <app-page-header title="Feeding Plans · খাওয়ানোর পরিকল্পনা" description="Who eats what: every animal and what it is fed each day. Set, change, pause or stop plans here."
+      breadcrumbActiveNode="Feeding Plans">
       <div actions>
         <button mat-flat-button (click)="openSetRation()" class="!rounded-xl !bg-emerald-600 !text-white">
           <mat-icon>restaurant</mat-icon> Set ration{{ selected().length ? ' (' + selected().length + ')' : '' }}

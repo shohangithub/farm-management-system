@@ -28,7 +28,8 @@ export class BreadcrumbComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['customLastNode'] && !changes['customLastNode'].firstChange) {
+    // Also on the first change: the constructor builds the trail before the input is set.
+    if (changes['customLastNode']) {
       this.breadcrumbs = this.buildBreadcrumb(this.activatedRoute.root);
     }
   }

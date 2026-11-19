@@ -41,6 +41,11 @@ public class GrowthPredictionEngine : IGrowthPredictionEngine
             }
 
             var currentW = weights.LastOrDefault()?.Weight.WeightKg ?? weights.FirstOrDefault()?.Weight.WeightKg ?? 0m;
+            if (animal.HasLeftFarm)
+            {
+                var final = animal.SaleWeightKg ?? currentW;
+                return new GrowthCurve(final, final, final, final, 0m);
+            }
             var w30_baseline = currentW + (baselineAdg * 30);
             var w60_baseline = currentW + (baselineAdg * 60);
             var w90_baseline = currentW + (baselineAdg * 90);
@@ -64,6 +69,13 @@ public class GrowthPredictionEngine : IGrowthPredictionEngine
         if (adg > maxAdg) adg = maxAdg; // Cap at breed's maximum genetic potential
         
         var currentWeight = lastRecord.Weight.WeightKg;
+
+        // A sold/dead animal doesn't grow any more: its "projection" is its final weight.
+        if (animal.HasLeftFarm)
+        {
+            var final = animal.SaleWeightKg ?? currentWeight;
+            return new GrowthCurve(final, final, final, final, Math.Round(adg, 3));
+        }
         
         var w30 = currentWeight + (adg * 30);
         var w60 = currentWeight + (adg * 60);

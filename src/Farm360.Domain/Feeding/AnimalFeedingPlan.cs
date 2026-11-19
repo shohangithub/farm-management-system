@@ -18,6 +18,12 @@ public sealed class AnimalFeedingPlan : AuditableEntity, IAggregateRoot
     public DateOnly StartDate { get; private set; }
     public DateOnly? EndDate { get; private set; }
     public FeedingPlanStatus Status { get; private set; }
+
+    /// <summary>
+    /// A one-day holder for feed recorded by hand (manual entry or daily feed sheet), not a ration
+    /// anyone assigned. It keeps the entry's link to its feed but is hidden from plan lists.
+    /// </summary>
+    public bool IsOneOff { get; private set; }
     
     // Denormalized from the current active rule line for performance
     public Guid? CurrentRuleLineId { get; private set; }
@@ -69,6 +75,9 @@ public sealed class AnimalFeedingPlan : AuditableEntity, IAggregateRoot
     }
 
     /// <param name="today">The farm's local date (IFarmClock); UTC date when omitted.</param>
+    /// <summary>Marks the plan as a one-day holder for hand-recorded feed (see <see cref="IsOneOff"/>).</summary>
+    public void MarkOneOff() => IsOneOff = true;
+
     public void Cancel(DateOnly? today = null)
     {
         if (Status == FeedingPlanStatus.Cancelled || Status == FeedingPlanStatus.Completed)
@@ -91,6 +100,24 @@ public sealed class AnimalFeedingPlan : AuditableEntity, IAggregateRoot
         Status = FeedingPlanStatus.Cancelled;
         if (EndDate is null || EndDate.Value > exitDate)
             EndDate = exitDate < StartDate ? StartDate : exitDate;
+        return true;
+    }
+
+    /// <summary>
+    /// The animal's sale/death was undone: a plan that <see cref="EndOnExit"/> ended on that exit
+    /// date runs again, open-ended. One-off (manual/daily sheet) plans and plans ended on another
+    /// day are left alone. Returns true when it changed.
+    /// </summary>
+    public bool ReopenAfterExitUndone(DateOnly exitDate)
+    {
+        if (Status != FeedingPlanStatus.Cancelled || IsOneOff || AnimalId is null)
+            return false;
+        var endedByExit = EndDate == exitDate || (EndDate == StartDate && StartDate > exitDate);
+        if (!endedByExit)
+            return false;
+
+        Status = FeedingPlanStatus.Active;
+        EndDate = null;
         return true;
     }
 

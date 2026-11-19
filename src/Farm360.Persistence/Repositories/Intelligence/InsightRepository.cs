@@ -43,6 +43,9 @@ public class InsightRepository : IInsightRepository
     {
         return await _dbSet
             .Where(x => x.FarmId == farmId && !x.IsDismissed)
+            // Insights about animals that have since been sold or died are no longer actionable.
+            .Where(x => x.AnimalId == null || _dbContext.Animals.Any(a => a.Id == x.AnimalId &&
+                Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status)))
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }

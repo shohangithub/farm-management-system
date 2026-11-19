@@ -162,6 +162,11 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         var oldTag = Tag?.TagId;
         var oldAcquisitionDate = AcquisitionDate;
 
+        // A sold/dead animal must have arrived before it left, or its on-farm days turn negative.
+        if (ExitDate is { } exit && acquisitionDate > exit)
+            throw new InvalidExitDateException(tag.TagId,
+                $"the acquisition date {acquisitionDate:dd MMM yyyy} is after the animal left the farm on {exit:dd MMM yyyy}.");
+
         Tag = tag;
         Species = species;
         BreedId = breedId;
@@ -338,6 +343,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             throw new ArgumentException("Sale price must be greater than zero.", nameof(salePriceBdt));
 
         EnsureExitNotBeforeCurrentPlacement(saleDate, "sale");
+        EnsureNoRecordsAfterExit(saleDate, "sale");
 
         // The animal leaves its pen/shed on the sale date: close the open movement so pen/shed
         // occupancy and movement-based membership drop it from that day. BatchId is kept (history).
@@ -379,6 +385,7 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
                 $"death date {deathDate:dd MMM yyyy} is before the acquisition date {AcquisitionDate:dd MMM yyyy}.");
 
         EnsureExitNotBeforeCurrentPlacement(deathDate, "death");
+        EnsureNoRecordsAfterExit(deathDate, "death");
 
         // The animal leaves its pen/shed on the death date (same as a sale). BatchId is kept.
         CloseCurrentMovement(deathDate, recordedBy ?? Guid.Empty);
@@ -386,7 +393,9 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         Status = AnimalStatus.Dead;
         DisposalReason = cause;
         DeathDate = deathDate;
-        Notes = notes;
+        // Keep the animal's own notes; add the death notes below them.
+        if (!string.IsNullOrWhiteSpace(notes))
+            Notes = string.IsNullOrWhiteSpace(Notes) ? notes.Trim() : Notes + Environment.NewLine + "Death: " + notes.Trim();
 
         RaiseDomainEvent(new AnimalDiedEvent(
             Guid.NewGuid(),
@@ -395,6 +404,39 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             TenantId,
             cause,
             deathDate));
+    }
+
+    /// <summary>
+    /// Undoes a sale or death recorded by mistake: the animal is Active again, back in the pen/shed
+    /// it left on its exit day, and its sale/death details are cleared. Raises
+    /// <see cref="AnimalExitReversedEvent"/> so finance, health and feeding undo their side.
+    /// </summary>
+    public void ReverseExit(Guid reversedBy, string reason)
+    {
+        if (Status is not (AnimalStatus.Sold or AnimalStatus.Dead) || ExitDate is not { } exit)
+            throw new InvalidAnimalStateTransitionException(Status.ToString(), AnimalStatus.Active.ToString());
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("Say why the sale or death is being undone.", nameof(reason));
+
+        var wasSold = Status == AnimalStatus.Sold;
+
+        // Back into the pen/shed it was removed from on the exit day, if it has not been placed
+        // anywhere since (it can't have been: nothing can be recorded after the exit).
+        var exitDay = exit.ToDateTime(TimeOnly.MinValue);
+        var last = _movements.OrderByDescending(m => m.PlacedAtUtc).FirstOrDefault();
+        if (CurrentMovement is null && last?.RemovedAtUtc is { } removed && removed.Date == exitDay.Date)
+            last.Reopen();
+
+        Status = AnimalStatus.Active;
+        SalePriceBdt = null;
+        SaleDate = null;
+        BuyerName = null;
+        SaleWeightKg = null;
+        DeathDate = null;
+        DisposalReason = null;
+
+        RaiseDomainEvent(new AnimalExitReversedEvent(
+            Guid.NewGuid(), DateTime.UtcNow, Id, TenantId, FarmId, wasSold, exit, reason.Trim(), reversedBy));
     }
 
     /// <summary>
@@ -644,6 +686,21 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
     /// </summary>
     private void CloseCurrentMovement(DateOnly exitDate, Guid removedBy) =>
         CurrentMovement?.MarkAsRemoved(exitDate.ToDateTime(TimeOnly.MinValue), removedBy);
+
+    /// <summary>
+    /// The exit cannot be dated before weights or body-condition scores already recorded for the
+    /// animal: they would describe days it was no longer on the farm. A weight on the exit day itself
+    /// (weighing at sale) is fine.
+    /// </summary>
+    private void EnsureNoRecordsAfterExit(DateOnly exitDate, string kind)
+    {
+        var lastWeight = _weightRecords.Count == 0 ? (DateOnly?)null : _weightRecords.Max(w => w.RecordedDate);
+        var lastBcs = _bcsRecords.Count == 0 ? (DateOnly?)null : _bcsRecords.Max(b => b.RecordedDate);
+        var latest = new[] { lastWeight, lastBcs }.Where(d => d.HasValue).Select(d => d!.Value).DefaultIfEmpty().Max();
+        if (latest != default && latest > exitDate)
+            throw new InvalidExitDateException(Tag.TagId,
+                $"{kind} date {exitDate:dd MMM yyyy} is before records already entered for this animal (latest on {latest:dd MMM yyyy}). Correct those records or use a later date.");
+    }
 
     /// <summary>The exit cannot be dated before the animal was placed in its current pen/shed.</summary>
     private void EnsureExitNotBeforeCurrentPlacement(DateOnly exitDate, string kind)

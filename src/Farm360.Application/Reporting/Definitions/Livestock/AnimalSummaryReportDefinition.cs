@@ -96,7 +96,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             return null;
         }
 
-        var age = AnimalAge.Format(animal.DateOfBirth, context.Today);
+        var age = AnimalAge.Format(animal.DateOfBirth, animal.ExitDate ?? context.Today);
         return $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {age} · {animal.Status}";
     }
 
@@ -146,7 +146,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         var penName = pen?.PenNumber ?? (penId.HasValue ? "Assigned" : "Unassigned");
 
         // Computations
-        var today = context.Today;
+        var today = animal.ExitDate ?? context.Today; // age stops at sale/death
         var ageDays = AnimalAge.Days(animal.DateOfBirth, today);
         var ageFormatted = $"{AnimalAge.Format(animal.DateOfBirth, today)} ({ageDays} days)";
 
@@ -179,7 +179,9 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
                 : $"Based on live weight: {latestWeight:N1} kg × ৳ {marketPricePerKg:N0}")
             : animal.Status is Farm360.Domain.Livestock.Enums.AnimalStatus.Sold or Farm360.Domain.Livestock.Enums.AnimalStatus.Slaughtered
                 ? "Realised sale revenue"
-                : "Animal died — no realisable value";
+                : animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Dead
+                    ? "Animal died — no realisable value"
+                    : "Left the farm — no realisable value";
 
         var rows = new List<AnimalSummaryReportRow>
         {
@@ -189,7 +191,12 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             new("1. Identification & Demographics", "Sex & Gender", animal.Sex.ToString(), "Biological sex classification"),
             new("1. Identification & Demographics", "Date of Birth & Age", $"{animal.DateOfBirth:dd-MMM-yyyy} ({ageFormatted})", $"Born: {animal.DateOfBirth:yyyy-MM-dd}"),
             new("1. Identification & Demographics", "Acquisition Info", $"{animal.AcquisitionType} on {animal.AcquisitionDate:dd-MMM-yyyy}", $"Initial Cost: ৳ {purchaseCost:N0}"),
-            new("1. Identification & Demographics", "Current Status", animal.Status.ToString().ToUpperInvariant(), string.IsNullOrWhiteSpace(animal.QuarantineReason) ? "Normal herd condition" : $"Quarantine: {animal.QuarantineReason}"),
+            new("1. Identification & Demographics", "Current Status", animal.Status.ToString().ToUpperInvariant(),
+                animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Sold
+                    ? $"Sold on {animal.SaleDate:dd-MMM-yyyy}{(animal.BuyerName is { Length: > 0 } b ? $" to {b}" : "")} for ৳ {animal.SalePriceBdt:N0}"
+                    : animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Dead
+                        ? $"Died on {animal.DeathDate:dd-MMM-yyyy} ({animal.DisposalReason})"
+                        : string.IsNullOrWhiteSpace(animal.QuarantineReason) ? "Normal herd condition" : $"Quarantine: {animal.QuarantineReason}"),
 
             // ── Section 2: Housing & Location ─────────────────────────────────
             new("2. Housing & Location", "Shed Allocation", shedName, shedId.HasValue ? "Current housing" : "No active shed assigned"),

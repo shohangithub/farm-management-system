@@ -12,6 +12,7 @@ import {
   SellAnimalRequest,
   QuarantineAnimalRequest,
   RecordDeathRequest,
+  ReverseAnimalExitResult,
   TransferAnimalRequest,
   AddPhotoRequest,
   WeightRecordDto,
@@ -87,6 +88,11 @@ export class AnimalService {
 
   releaseFromQuarantine(id: string): Observable<void> {
     return this.http.post(`${this.base}/${id}/release-quarantine`, {}).pipe(map(() => undefined));
+  }
+
+  /** Undo a sale or death recorded by mistake. */
+  reverseExit(id: string, reason: string): Observable<ReverseAnimalExitResult> {
+    return this.http.post<ReverseAnimalExitResult>(`${this.base}/${id}/reverse-exit`, { reason });
   }
 
   recordDeath(id: string, request: RecordDeathRequest): Observable<void> {

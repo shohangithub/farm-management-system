@@ -246,4 +246,92 @@ public sealed class AnimalExitTests
         treatment.CostBdt.Should().Be(500m);
         treatment.CloseForAnimalExit(SaleDate, "again").Should().BeFalse();
     }
+
+    // ── Exit date vs records already entered ─────────────────────────────────
+
+    [Fact]
+    public void Sell_IsRefused_WhenDatedBeforeAWeightAlreadyRecorded()
+    {
+        var animal = PlacedAnimal();
+        animal.RecordWeight(Weight.Create(300m), new DateOnly(2026, 11, 20), Guid.NewGuid(), null);
+
+        var act = () => animal.Sell(90_000m, SaleDate, Guid.NewGuid(), null, null);
+
+        act.Should().Throw<InvalidExitDateException>().WithMessage("*20 Nov 2026*");
+    }
+
+    [Fact]
+    public void Sell_IsAllowed_WithAWeighingOnTheSaleDayItself()
+    {
+        var animal = PlacedAnimal();
+        animal.RecordWeight(Weight.Create(300m), SaleDate, Guid.NewGuid(), null);
+
+        animal.Sell(90_000m, SaleDate, Guid.NewGuid(), null, 300m);
+
+        animal.Status.Should().Be(AnimalStatus.Sold);
+    }
+
+    [Fact]
+    public void RecordDeath_KeepsTheAnimalsNotes_AndAddsTheDeathNotes()
+    {
+        var animal = PlacedAnimal();
+        animal.UpdateNotes("Calm, good eater");
+
+        animal.RecordDeath(DisposalReason.Disease, SaleDate, "Bloat");
+
+        animal.Notes.Should().StartWith("Calm, good eater").And.EndWith("Death: Bloat");
+    }
+
+    [Fact]
+    public void UpdateDetails_RefusesAnAcquisitionDateAfterTheAnimalLeft()
+    {
+        var animal = SoldAnimal();
+
+        var act = () => animal.UpdateDetails(animal.Tag, animal.Species, animal.BreedId, animal.Sex, animal.DateOfBirth,
+            animal.AcquisitionType, SaleDate.AddDays(1), animal.AcquisitionPriceBdt, animal.Notes);
+
+        act.Should().Throw<InvalidExitDateException>();
+    }
+
+    // ── Undo a sale or death ──────────────────────────────────────────────────
+
+    [Fact]
+    public void ReverseExit_PutsASoldAnimalBackInItsPen_AndClearsTheSale()
+    {
+        var animal = SoldAnimal();
+        animal.ClearDomainEvents();
+
+        animal.ReverseExit(Guid.NewGuid(), "Sale entered by mistake");
+
+        animal.Status.Should().Be(AnimalStatus.Active);
+        animal.SaleDate.Should().BeNull();
+        animal.SalePriceBdt.Should().BeNull();
+        animal.BuyerName.Should().BeNull();
+        animal.HasLeftFarm.Should().BeFalse();
+        animal.CurrentMovement.Should().NotBeNull("it is back in the pen it left on the sale day");
+        animal.IsOnFarmOn(SaleDate.AddDays(3)).Should().BeTrue();
+        animal.DomainEvents.OfType<Farm360.Domain.Livestock.Events.AnimalExitReversedEvent>().Single()
+            .Should().Match<Farm360.Domain.Livestock.Events.AnimalExitReversedEvent>(e => e.WasSold && e.ExitDate == SaleDate);
+    }
+
+    [Fact]
+    public void ReverseExit_BringsBackADeadAnimal()
+    {
+        var animal = PlacedAnimal();
+        animal.RecordDeath(DisposalReason.Disease, SaleDate, null);
+
+        animal.ReverseExit(Guid.NewGuid(), "Wrong animal");
+
+        animal.Status.Should().Be(AnimalStatus.Active);
+        animal.DeathDate.Should().BeNull();
+        animal.DisposalReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void ReverseExit_IsRefused_ForAnAnimalOnTheFarm()
+    {
+        var act = () => PlacedAnimal().ReverseExit(Guid.NewGuid(), "x");
+
+        act.Should().Throw<InvalidAnimalStateTransitionException>();
+    }
 }

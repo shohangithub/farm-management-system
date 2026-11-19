@@ -38,8 +38,10 @@ public class GetBreakEvenCalculatorQueryHandler : IRequestHandler<GetBreakEvenCa
         // confirmed feed allocations). Without a ledger yet, the purchase price is the cost.
         decimal totalCost = ledger?.TotalCostBdt ?? (animal.AcquisitionPriceBdt ?? 0m);
 
-        // Break-even is per kg of LIVE weight: the latest recorded weight.
-        var currentWeight = animal.LatestWeightKg
+        // Break-even is per kg of LIVE weight: the latest recorded weight (the weight at sale for a
+        // sold animal, whose actual price can then be compared with these figures).
+        var currentWeight = (animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Sold ? animal.SaleWeightKg : null)
+            ?? animal.LatestWeightKg
             ?? animal.WeightRecords.OrderByDescending(w => w.RecordedDate).FirstOrDefault()?.Weight.WeightKg
             ?? 0m;
 

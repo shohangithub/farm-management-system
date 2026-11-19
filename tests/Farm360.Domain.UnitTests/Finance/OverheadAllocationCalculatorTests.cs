@@ -37,12 +37,13 @@ public class OverheadAllocationCalculatorTests
     [Fact]
     public void HeadDays_IsProRated_ForAnAnimalSoldMidPeriod()
     {
-        // Sold on the 10th: ten days of the month's labour, not all of it.
+        // Sold on the 10th: on the farm the 1st to the 9th (not on its sale day), so nine days of
+        // the month's labour, not all of it.
         var days = OverheadAllocationCalculator.HeadDays(
             new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30),
             arrived: new DateOnly(2025, 1, 1), left: new DateOnly(2026, 4, 10));
 
-        days.Should().Be(10m);
+        days.Should().Be(9m);
     }
 
     [Fact]
@@ -66,6 +67,12 @@ public class OverheadAllocationCalculatorTests
         OverheadAllocationCalculator.HeadDays(
             new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30),
             arrived: new DateOnly(2025, 1, 1), left: new DateOnly(2026, 3, 15))
+            .Should().Be(0m);
+
+        // Left on the first day of the period: not on the farm on any day of it.
+        OverheadAllocationCalculator.HeadDays(
+            new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30),
+            arrived: new DateOnly(2025, 1, 1), left: new DateOnly(2026, 4, 1))
             .Should().Be(0m);
     }
 

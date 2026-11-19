@@ -36,8 +36,17 @@ public sealed class AnimalSoldEventHandler(
         if (animal is not null)
             await livestockAccounting.SyncDisposalAsync(animal, cancellationToken);
 
+        // The ledger normally exists from registration; if it doesn't (older data), create it at the
+        // book cost so the sale revenue is never lost and the animal's profit is shown.
         var ledger = await ledgerRepository.GetByAnimalIdAsync(domainEvent.AnimalId, cancellationToken);
-        if (ledger != null)
+        if (ledger is null && animal is not null)
+        {
+            ledger = Farm360.Domain.Finance.AnimalCostLedger.Create(
+                animal.TenantId, animal.Id, animal.FarmId, await livestockAccounting.BookCostAsync(animal, cancellationToken));
+            ledger.RecordSaleRevenue(domainEvent.SalePriceBdt);
+            ledgerRepository.Add(ledger);
+        }
+        else if (ledger is not null)
         {
             ledger.RecordSaleRevenue(domainEvent.SalePriceBdt);
             ledgerRepository.Update(ledger);

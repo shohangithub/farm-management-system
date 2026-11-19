@@ -41,8 +41,9 @@ internal sealed class RecordVaccinationAdministrationCommandHandler(
             ?? throw new KeyNotFoundException($"Vaccination event with ID '{request.VaccinationEventId}' was not found.");
 
         // A dose given before the animal left may be entered late; none on/after the exit date.
-        var animal = await animalRepository.GetByIdAsync(@event.AnimalId, cancellationToken);
-        animal?.EnsureCanRecordOn(request.AdministeredDate, "a vaccination");
+        var animal = await animalRepository.GetByIdAsync(@event.AnimalId, cancellationToken)
+            ?? throw new KeyNotFoundException($"The animal for this vaccination ({@event.AnimalId}) was not found.");
+        animal.EnsureCanRecordOn(request.AdministeredDate, "a vaccination");
 
         var userId = currentUserService.UserId ?? Guid.Empty;
 

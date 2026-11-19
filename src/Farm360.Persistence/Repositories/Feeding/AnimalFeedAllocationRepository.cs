@@ -27,6 +27,25 @@ public sealed class AnimalFeedAllocationRepository : IAnimalFeedAllocationReposi
     public void AddRange(IEnumerable<AnimalFeedAllocation> allocations) =>
         _context.AnimalFeedAllocations.AddRange(allocations);
 
+    public async Task<IReadOnlyList<(Guid AnimalId, DateOnly ExitDate, bool Sold)>> GetExitedAnimalsStillFedAsync(
+        Guid farmId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _context.Animals
+            .AsNoTracking()
+            .Where(a => a.FarmId == farmId
+                        && Farm360.Domain.Livestock.AnimalStatusGroups.LeftFarm.Contains(a.Status)
+                        && (a.SaleDate != null || a.DeathDate != null))
+            .Select(a => new { a.Id, a.SaleDate, a.DeathDate, Exit = a.SaleDate ?? a.DeathDate })
+            .Where(a =>
+                _context.AnimalFeedingPlans.Any(p => p.AnimalId == a.Id && p.Status == FeedingPlanStatus.Active)
+                || _context.AnimalFeedAllocations.Any(al => al.AnimalId == a.Id && al.EntryDate >= a.Exit && al.AllocatedKg > 0))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows.Select(r => (r.Id, r.Exit!.Value, r.SaleDate != null)).ToList();
+    }
+
     public async Task<IReadOnlyList<AnimalFeedAllocation>> GetByAnimalAsync(
         Guid animalId,
         DateOnly from,

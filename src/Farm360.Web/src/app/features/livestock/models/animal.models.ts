@@ -217,6 +217,14 @@ export interface RecordWeightRequest {
   notes?: string;
 }
 
+/** What undoing a sale or death changed. */
+export interface ReverseAnimalExitResult {
+  wasSold: boolean;
+  exitDate: string;
+  receivedFromBuyerBdt: number;
+  mortalityRecordsRemoved: number;
+}
+
 export interface SellAnimalRequest {
   salePriceBdt: number;
   saleDate: string;
@@ -224,6 +232,8 @@ export interface SellAnimalRequest {
   saleWeightKg?: number;
   /** Set when the buyer pays later — the balance becomes a customer receivable. */
   credit?: CreditTerms | null;
+  /** Sell even though a medicine's meat withdrawal period is still running (e.g. sold live). */
+  allowDuringMeatWithdrawal?: boolean;
 }
 
 export interface QuarantineAnimalRequest {

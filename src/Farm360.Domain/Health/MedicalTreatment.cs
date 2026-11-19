@@ -144,6 +144,23 @@ public sealed class MedicalTreatment : AuditableEntity, IAggregateRoot
         return true;
     }
 
+    /// <summary>
+    /// The animal's sale/death was undone: a course closed because of that exit is ongoing again
+    /// (with no end date; set one when it finishes). <paramref name="reason"/> is the exit's note.
+    /// </summary>
+    public bool ReopenAfterExitUndone(string reason)
+    {
+        if (Status != TreatmentStatus.Completed || Notes is null || !Notes.Contains(reason, StringComparison.Ordinal))
+            return false;
+
+        var cleaned = Notes.Replace($" | {reason}", string.Empty, StringComparison.Ordinal)
+                           .Replace(reason, string.Empty, StringComparison.Ordinal).Trim();
+        Notes = cleaned.Length == 0 ? null : cleaned;
+        Status = TreatmentStatus.Ongoing;
+        EndDate = null;
+        return true;
+    }
+
     // Notes column is 1000 chars: keep the exit reason, trim the older text if needed.
     private static string AppendExitNote(string? notes, string reason)
     {

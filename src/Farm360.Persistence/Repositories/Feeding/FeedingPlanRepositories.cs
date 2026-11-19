@@ -69,7 +69,8 @@ public sealed class AnimalFeedingPlanRepository : IAnimalFeedingPlanRepository
     {
         var query = _dbContext.AnimalFeedingPlans
             .Include(x => x.Exclusions)
-            .Where(x => x.TenantId == tenantId && x.FarmId == farmId);
+            // One-day holders of hand-recorded feed are not plans anyone manages; keep them out of the list.
+            .Where(x => x.TenantId == tenantId && x.FarmId == farmId && !x.IsOneOff);
 
         if (status.HasValue)
         {

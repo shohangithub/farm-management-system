@@ -315,7 +315,8 @@ public sealed record SellAnimalCommand(
     DateOnly SaleDate,
     string? BuyerName,
     decimal? SaleWeightKg,
-    Farm360.Contracts.Finance.CreditTermsRequest? Credit = null) : IRequest, Farm360.Application.Common.Behaviors.ITransactionalCommand;
+    Farm360.Contracts.Finance.CreditTermsRequest? Credit = null,
+    bool AllowDuringMeatWithdrawal = false) : IRequest, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCommand>
 {
@@ -358,12 +359,41 @@ public sealed class SellAnimalCommandHandler(
     ICurrentUserService currentUser,
     MediatR.IPublisher publisher,
     Farm360.Application.Finance.Services.ITradeCreditService? credit = null,
-    Farm360.Application.Feeding.Services.IAnimalExitService? exitService = null) : IRequestHandler<SellAnimalCommand>
+    Farm360.Application.Feeding.Services.IAnimalExitService? exitService = null,
+    Farm360.Domain.Health.Interfaces.Repositories.IMedicalTreatmentRepository? treatments = null) : IRequestHandler<SellAnimalCommand>
 {
     public async Task Handle(SellAnimalCommand request, CancellationToken cancellationToken)
     {
         var animal = await repository.GetByIdAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
+
+        // Food safety: an animal still inside a medicine's meat withdrawal period must not be sold
+        // for meat. The seller can override (e.g. sold live to another farm) after being told.
+        if (!request.AllowDuringMeatWithdrawal && treatments is not null)
+        {
+            DateOnly? clearOn = null;
+            string? medicine = null;
+            foreach (var t in await treatments.GetByAnimalIdAsync(animal.Id, cancellationToken))
+            {
+                if (t.WithdrawalPeriod.MeatDays <= 0 || t.StartDate > request.SaleDate)
+                    continue;
+                var position = Farm360.Application.Reporting.Definitions.Health.Withdrawal.Evaluate(
+                    t.StartDate, t.EndDate, t.Status, t.WithdrawalPeriod.MeatDays, t.WithdrawalPeriod.MilkDays, request.SaleDate);
+                if (!position.MeatWithheld)
+                    continue;
+                var clear = position.MeatClearDate ?? DateOnly.MaxValue;
+                if (clearOn is null || clear > clearOn)
+                {
+                    clearOn = clear;
+                    medicine = t.MedicationName;
+                }
+            }
+
+            if (clearOn is { } until)
+                throw new Farm360.Domain.Exceptions.DomainException(until == DateOnly.MaxValue
+                    ? $"{animal.Tag.TagId} is still on {medicine}, so its meat is not safe yet. Finish the treatment first, or confirm the sale anyway."
+                    : $"{animal.Tag.TagId} is in the meat withdrawal period of {medicine} until {until:dd MMM yyyy}. Sell on or after that day, or confirm the sale anyway.");
+        }
 
         animal.Sell(request.SalePriceBdt, request.SaleDate, currentUser.UserId ?? Guid.Empty, request.BuyerName, request.SaleWeightKg);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -461,7 +491,7 @@ public sealed record RecordAnimalDeathCommand(
     Guid AnimalId,
     DisposalReason Cause,
     DateOnly DeathDate,
-    string? Notes) : IRequest;
+    string? Notes) : IRequest, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class RecordAnimalDeathCommandValidator : AbstractValidator<RecordAnimalDeathCommand>
 {
@@ -469,31 +499,40 @@ public sealed class RecordAnimalDeathCommandValidator : AbstractValidator<Record
     {
         clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
+        RuleFor(x => x.Cause).IsInEnum()
+            .NotEqual(DisposalReason.Sale).WithMessage("Use Record Sale for a sold animal.");
         RuleFor(x => x.DeathDate)
             .LessThanOrEqualTo(_ => clock.Today)
             .WithMessage("Death date cannot be in the future.");
     }
 }
 
-public sealed class RecordAnimalDeathCommandHandler(
-    IAnimalRepository repository,
-    IUnitOfWork unitOfWork,
-    MediatR.IPublisher publisher) : IRequestHandler<RecordAnimalDeathCommand>
+/// <summary>
+/// Records a death the same way the Health mortality screen does, so every death has a mortality
+/// record (mortality list, health dashboard) as well as the animal's Dead status, and the Finance,
+/// Feeding and Health exit handlers run in the same transaction.
+/// </summary>
+public sealed class RecordAnimalDeathCommandHandler(ISender sender) : IRequestHandler<RecordAnimalDeathCommand>
 {
     public async Task Handle(RecordAnimalDeathCommand request, CancellationToken cancellationToken)
     {
-        var animal = await repository.GetByIdAsync(request.AnimalId, cancellationToken)
-            ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
-
-        animal.RecordDeath(request.Cause, request.DeathDate, request.Notes);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Finance writes the animal off the livestock asset; Feeding stops its plans.
-        var died = animal.DomainEvents.OfType<Farm360.Domain.Livestock.Events.AnimalDiedEvent>().FirstOrDefault();
-        if (died != null)
+        var cause = request.Cause switch
         {
-            await publisher.Publish(died, cancellationToken);
-        }
+            DisposalReason.Disease => Farm360.Domain.Health.Enums.CauseOfDeath.Disease,
+            DisposalReason.Accident => Farm360.Domain.Health.Enums.CauseOfDeath.Accident,
+            DisposalReason.NaturalDeath => Farm360.Domain.Health.Enums.CauseOfDeath.NaturalCauses,
+            DisposalReason.Slaughter => Farm360.Domain.Health.Enums.CauseOfDeath.Slaughter,
+            _ => Farm360.Domain.Health.Enums.CauseOfDeath.Unknown
+        };
+
+        await sender.Send(new Farm360.Application.Health.Commands.MortalityRecords.RecordMortalityCommand(
+            request.AnimalId,
+            request.DeathDate,
+            cause,
+            DiseaseName: cause == Farm360.Domain.Health.Enums.CauseOfDeath.Disease ? "Not specified" : null,
+            PostMortemNotes: request.Notes,
+            EstimatedEconomicLossBdt: null,
+            DiseaseIncidentId: null), cancellationToken);
     }
 }
 

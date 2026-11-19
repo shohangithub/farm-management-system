@@ -1,7 +1,7 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
@@ -131,6 +131,8 @@ export class RecordMortalityDialog {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<RecordMortalityDialog>);
+  /** Opened from an animal's page: that animal is preselected. */
+  private data = inject<{ animalId?: string } | null>(MAT_DIALOG_DATA, { optional: true });
 
   form: FormGroup;
   isSubmitting = signal(false);
@@ -145,7 +147,7 @@ export class RecordMortalityDialog {
 
   constructor() {
     this.form = this.fb.group({
-      animalId: ['', Validators.required],
+      animalId: [this.data?.animalId ?? '', Validators.required],
       deathDate: [new Date(), Validators.required],
       causeOfDeath: [CauseOfDeath.Unknown, Validators.required],
       diseaseName: [''],

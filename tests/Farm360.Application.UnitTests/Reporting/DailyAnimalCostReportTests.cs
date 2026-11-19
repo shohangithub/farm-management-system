@@ -64,14 +64,14 @@ public class DailyAnimalCostReportTests
     public async Task Monthly_labour_is_spread_over_the_days_the_animal_was_on_the_farm_and_adds_up()
     {
         var animal = NewAnimal("A-1");
-        animal.Sell(80_000m, new DateOnly(2026, 10, 10), Guid.NewGuid(), "Buyer", 300m);
+        animal.Sell(80_000m, new DateOnly(2026, 10, 11), Guid.NewGuid(), "Buyer", 300m);
         _allocations.Add(Labour(animal, new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 31), 100m));
 
         var costs = await Calculator().CalculateAsync(
             FarmId, new(new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 31)),
             new Dictionary<Guid, Animal> { [animal.Id] = animal }, null, CancellationToken.None);
 
-        costs.Should().HaveCount(10, "the animal was sold on 10 October");
+        costs.Should().HaveCount(10, "the animal was sold on 11 October, so its last day on the farm was the 10th");
         costs.Max(c => c.Date).Should().Be(new DateOnly(2026, 10, 10));
         costs.Sum(c => c.LabourBdt).Should().Be(100m, "the rounding remainder goes on the last day");
         costs[0].LabourBdt.Should().Be(10m);

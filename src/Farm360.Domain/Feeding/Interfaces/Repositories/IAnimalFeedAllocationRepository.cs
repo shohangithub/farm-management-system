@@ -15,6 +15,15 @@ public interface IAnimalFeedAllocationRepository
 {
     void Add(AnimalFeedAllocation allocation);
 
+    /// <summary>
+    /// Sold/dead animals (with an exit date) whose feeding was never stopped: an individual plan is
+    /// still active, or feed is still allocated to them on or after the exit date. These need exit
+    /// processing (usually animals sold before exits were applied to feeding).
+    /// </summary>
+    Task<IReadOnlyList<(Guid AnimalId, DateOnly ExitDate, bool Sold)>> GetExitedAnimalsStillFedAsync(
+        Guid farmId,
+        CancellationToken cancellationToken = default);
+
     void AddRange(IEnumerable<AnimalFeedAllocation> allocations);
 
     /// <summary>Every allocation for one animal in a date range, oldest first. Powers report A1.</summary>

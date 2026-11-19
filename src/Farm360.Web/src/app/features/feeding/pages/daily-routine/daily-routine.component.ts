@@ -85,7 +85,7 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
         <div *ngFor="let n of r.notes" class="mt-2 text-[11px] text-gray-500 flex items-start gap-1"><mat-icon class="!text-[14px] !w-4 !h-4">info</mat-icon>{{ n }}</div>
 
         <div *ngIf="!r.perAnimal.length" class="mt-6 p-8 text-center text-sm text-gray-500 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-          No rations for this day. Set them from <a routerLink="/feeding/board" class="underline">Who Eats What</a>.
+          No rations for this day. Set them in <a routerLink="/feeding/board" class="underline">Feeding Plans</a>.
         </div>
 
         <ng-container *ngIf="r.perAnimal.length">

@@ -191,7 +191,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
 
             var location = movement?.PenId.HasValue == true ? $"{shedLabel} / Pen" : shedLabel;
 
-            var ageLabel = AnimalAge.Format(a.DateOfBirth, today);
+            var ageLabel = AnimalAge.Format(a.DateOfBirth, a.ExitDate ?? today);
 
             var weight = a.LatestWeightKg ?? 0m;
             var adg = a.AdgKgPerDay ?? 0m;

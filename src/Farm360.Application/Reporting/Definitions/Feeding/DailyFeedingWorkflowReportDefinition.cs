@@ -296,6 +296,15 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
             }
 
             animalsMap.TryGetValue(a.AnimalId, out var animal);
+
+            // Not on the farm that day (sold/died before or on it) and not actually fed: not part
+            // of the day's workflow.
+            if (animal is not null && !animal.IsOnFarmOn(a.EntryDate)
+                && entry.Status is not (Farm360.Domain.Feeding.Enums.DailyFeedingEntryStatus.Confirmed or Farm360.Domain.Feeding.Enums.DailyFeedingEntryStatus.Adjusted))
+            {
+                continue;
+            }
+
             formulasMap.TryGetValue(a.FormulaId, out var formula);
             plansMap.TryGetValue(a.FeedingPlanId, out var plan);
 
@@ -305,7 +314,7 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
                 ruleSetsMap.TryGetValue(plan.FeedingRuleSetId, out ruleSet);
             }
 
-            string tag = animal?.Tag.TagId ?? "Tag —";
+            string tag = animal is null ? "Tag —" : AnimalLabels.Tag(animal);
             string species = animal?.Species.ToString() ?? "Cattle";
 
             Guid? targetShedId = a.ShedId;

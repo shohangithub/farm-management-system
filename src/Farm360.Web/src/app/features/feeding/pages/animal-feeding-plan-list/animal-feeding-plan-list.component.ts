@@ -24,6 +24,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 
 export interface RuleSetGroup {
   ruleSet: FeedingRuleSet;
@@ -36,7 +37,7 @@ export interface RuleSetGroup {
 @Component({
   selector: 'app-animal-feeding-plan-list',
   standalone: true,
-  imports: [ErrorStateComponent, 
+  imports: [ErrorStateComponent, FeedingSubnavComponent, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -57,9 +58,9 @@ export interface RuleSetGroup {
   `],
   template: `
     <app-page-header
-      title="Animal Feeding Plans"
+      title="Plan History · পরিকল্পনার ইতিহাস"
       description="View and manage animal feeding allocations grouped by rule sets, edit formulas, and enroll cattle."
-      breadcrumbActiveNode="Feeding Plans">
+      breadcrumbActiveNode="Plan History">
       <div actions class="flex items-center gap-2 flex-wrap xl:flex-nowrap shrink-0">
         <!-- View Mode Switcher -->
         <div class="inline-flex items-center h-9 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200/80 dark:border-gray-700/80 shrink-0">
@@ -141,6 +142,8 @@ export interface RuleSetGroup {
         </button>
       </div>
     </app-page-header>
+
+    <app-feeding-subnav></app-feeding-subnav>
 
     <!-- Global Toolbar / Metrics -->
     <div class="mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">

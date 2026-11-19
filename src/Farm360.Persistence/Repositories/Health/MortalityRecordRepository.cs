@@ -80,4 +80,9 @@ internal sealed class MortalityRecordRepository(ApplicationDbContext context) : 
     }
 
     public void Add(MortalityRecord record) => context.MortalityRecords.Add(record);
+
+    public async Task<IReadOnlyList<MortalityRecord>> GetByAnimalIdAsync(Guid animalId, CancellationToken ct = default) =>
+        await context.MortalityRecords.Where(m => m.AnimalId == animalId).ToListAsync(ct);
+
+    public void Remove(MortalityRecord record) => context.MortalityRecords.Remove(record);
 }

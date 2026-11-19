@@ -95,6 +95,10 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
         if (administeredDate > (today ?? DateOnly.FromDateTime(DateTime.UtcNow)))
             throw new FutureVaccinationDateException(administeredDate);
 
+        // Recording it twice would deduct the vaccine from stock (and cost it) twice.
+        if (Status == VaccinationStatus.Completed)
+            throw new Farm360.Domain.Exceptions.DomainException($"This {VaccineName} dose was already recorded as given.");
+
         AdministeredDate = administeredDate;
         AdministeredBy = administeredBy;
         Status = VaccinationStatus.Completed;
@@ -132,6 +136,27 @@ public sealed class VaccinationEvent : AuditableEntity, IAggregateRoot
         Status = VaccinationStatus.Cancelled;
         Notes = AppendExitNote(Notes, reason);
         return true;
+    }
+
+    /// <summary>
+    /// The animal's sale/death was undone: a dose cancelled because of that exit is due again
+    /// (Overdue when its date has passed). <paramref name="reason"/> is the note the exit wrote.
+    /// </summary>
+    public bool ReopenAfterExitUndone(string reason, DateOnly today)
+    {
+        if (Status != VaccinationStatus.Cancelled || Notes is null || !Notes.Contains(reason, StringComparison.Ordinal))
+            return false;
+
+        Notes = RemoveExitNote(Notes, reason);
+        Status = ScheduledDate < today ? VaccinationStatus.Overdue : VaccinationStatus.Scheduled;
+        return true;
+    }
+
+    private static string? RemoveExitNote(string notes, string reason)
+    {
+        var cleaned = notes.Replace($" | {reason}", string.Empty, StringComparison.Ordinal)
+                           .Replace(reason, string.Empty, StringComparison.Ordinal).Trim();
+        return cleaned.Length == 0 ? null : cleaned;
     }
 
     // Notes column is 1000 chars: keep the exit reason, trim the older text if needed.

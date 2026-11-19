@@ -47,14 +47,17 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
     private readonly IUnitOfWork _unitOfWork;
     private readonly Farm360.Domain.Finance.Interfaces.ITradeBillRepository _bills;
     private readonly Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository _ledgers;
+    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository? _animals;
 
     public UpdateFinancialTransactionCommandHandler(
         IFinancialTransactionRepository repository,
         IOverheadAllocationService overheadAllocation,
         IUnitOfWork unitOfWork,
         Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills,
-        Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository ledgers)
+        Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository ledgers,
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null)
     {
+        _animals = animals;
         _ledgers = ledgers;
         _repository = repository;
         _overheadAllocation = overheadAllocation;
@@ -69,6 +72,8 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
 
         AccountChart.EnsureEditable(transaction);
         AccountChart.EnsureManualAllowed(transaction.Type, request.Category);
+        if (transaction.Type == TransactionType.Expense)
+            await AnimalExpenseGuard.EnsureAsync(_animals, request.AnimalId, transaction.FarmId, request.TransactionDate, cancellationToken);
 
         // On credit: the bill must keep matching the entry it was raised for.
         var bill = transaction.SourceDocumentId is { } sourceId

@@ -98,7 +98,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
               Link to Animal (Optional)
             </label>
-            <app-animal-picker formControlName="animalId"></app-animal-picker>
+            <app-animal-picker [includeExited]="true" formControlName="animalId"></app-animal-picker>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">If this income is related to a specific animal.</p>
           </div>
 

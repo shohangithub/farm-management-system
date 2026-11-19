@@ -132,7 +132,17 @@ public sealed class GetTodayFeedingEntriesQueryHandler : IRequestHandler<GetToda
             : (await _ruleSetRepository.GetAllAsync(cancellationToken)).ToDictionary(r => r.Id, r => r.Name);
         var basis = _rules?.Current.GroupPlanQuantityBasis ?? Farm360.Domain.BusinessRules.GroupPlanQuantityBasis.PerHead;
 
-        return entries.Select(e =>
+        // An animal's own entries for a day it was no longer on the farm (sold/died before or on it)
+        // are not part of that day's feeding: hide them unless they were actually confirmed, which
+        // would need fixing and so must stay visible.
+        bool BelongsToTheDay(Farm360.Domain.Feeding.DailyFeedingEntry e) =>
+            !planDict.TryGetValue(e.FeedingPlanId, out var p)
+            || p.AnimalId is not { } aid
+            || !animalDict.TryGetValue(aid, out var a)
+            || a.IsOnFarmOn(e.EntryDate)
+            || e.Status is DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted;
+
+        return entries.Where(BelongsToTheDay).Select(e =>
         {
             planDict.TryGetValue(e.FeedingPlanId, out var plan);
             var heads = Farm360.Application.Feeding.Services.FeedEntryHeads.Multiplier(plan,

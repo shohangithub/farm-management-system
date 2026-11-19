@@ -34,7 +34,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
   template: `
     <app-page-header
       title="Feed Charts · খাদ্য তালিকা"
-      description="How much to feed by weight or age. Give a chart to animals from Who Eats What."
+      description="How much to feed by weight or age. Give a chart to animals from Feeding Plans."
       breadcrumbActiveNode="Feed Charts">
       <div actions>
         <button (click)="openCreateDialog()"

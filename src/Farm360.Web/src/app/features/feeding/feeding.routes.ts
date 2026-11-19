@@ -13,7 +13,13 @@ export const FEEDING_ROUTES: Routes = [
   {
     path: 'today',
     loadComponent: () => import('./pages/today-feeding-dashboard/today-feeding-dashboard.component').then(m => m.TodayFeedingDashboardComponent),
-    title: 'Today\'s Feeding — Farm360 AI'
+    title: 'Confirm Planned Feed — Farm360 AI'
+  },
+  {
+    // What was actually fed today, in any mix of feeds, with no plan needed
+    path: 'sheet',
+    loadComponent: () => import('./pages/daily-feed-sheet/daily-feed-sheet.component').then(m => m.DailyFeedSheetComponent),
+    title: 'Record Daily Feed — Farm360 AI'
   },
   {
     path: 'routine',
@@ -23,7 +29,7 @@ export const FEEDING_ROUTES: Routes = [
   {
     path: 'board',
     loadComponent: () => import('./pages/feeding-board/feeding-board.component').then(m => m.FeedingBoardComponent),
-    title: 'Who Eats What — Farm360 AI'
+    title: 'Feeding Plans — Farm360 AI'
   },
   {
     // What to buy for the next 7 / 10 / 15 / 30 days
@@ -66,7 +72,7 @@ export const FEEDING_ROUTES: Routes = [
     // Every plan ever assigned, including stopped ones (the board shows only today's).
     path: 'plans',
     loadComponent: () => import('./pages/animal-feeding-plan-list/animal-feeding-plan-list.component').then(m => m.AnimalFeedingPlanListComponent),
-    title: 'Feeding Plan History — Farm360 AI'
+    title: 'Plan History — Farm360 AI'
   },
 
   // ── Retired / merged pages ───────────────────────────────────────────────

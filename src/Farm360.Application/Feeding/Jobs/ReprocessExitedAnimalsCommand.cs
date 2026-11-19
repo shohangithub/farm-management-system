@@ -67,3 +67,20 @@ public sealed class ReprocessExitedAnimalsCommandHandler(
         return new ReprocessExitedAnimalsResult(processed, changed, plans, entriesSkipped, reversed, resplit, skipped);
     }
 }
+
+/// <summary>
+/// Applies one sold/dead animal's exit to feeding, in its own transaction (plans ended, entries from
+/// the exit day skipped or reversed with stock returned, group entries re-split, feed cost re-synced).
+/// Used by the daily job to repair animals whose exit was never applied to feeding.
+/// </summary>
+public sealed record ApplyAnimalExitToFeedingCommand(Guid AnimalId, DateOnly ExitDate, bool Sold)
+    : IRequest<AnimalExitResult>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
+
+public sealed class ApplyAnimalExitToFeedingCommandHandler(IAnimalExitService exitService)
+    : IRequestHandler<ApplyAnimalExitToFeedingCommand, AnimalExitResult>
+{
+    public Task<AnimalExitResult> Handle(ApplyAnimalExitToFeedingCommand request, CancellationToken cancellationToken) =>
+        exitService.ProcessExitAsync(request.AnimalId, request.ExitDate,
+            request.Sold ? AnimalExitService.SoldReason(request.ExitDate) : AnimalExitService.DiedReason(request.ExitDate),
+            cancellationToken);
+}

@@ -134,7 +134,7 @@ public sealed class HerdRegisterReportDefinition : ReportDefinition<HerdRegister
         return items
             .Select(a =>
             {
-                var ageMonths = AnimalAge.CompletedMonths(a.DateOfBirth, today);
+                var ageMonths = AnimalAge.CompletedMonths(a.DateOfBirth, a.ExitDate ?? today);
                 return new HerdRegisterReportRow(
                     TagId: a.Tag.TagId,
                     Batch: a.BatchId is { } b && batches.TryGetValue(b, out var batchName) ? batchName : "—",

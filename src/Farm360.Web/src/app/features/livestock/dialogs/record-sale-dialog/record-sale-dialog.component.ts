@@ -41,13 +41,15 @@ export class RecordSaleDialogComponent {
 
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
+  /** The server refused because the animal is inside a meat withdrawal period; the user may override. */
+  readonly withdrawalWarning = signal(false);
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  submit(): void {
+  submit(allowDuringMeatWithdrawal = false): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -55,6 +57,7 @@ export class RecordSaleDialogComponent {
 
     this.submitting.set(true);
     this.error.set(null);
+    this.withdrawalWarning.set(false);
 
     const v = this.form.getRawValue();
     const credit = toCreditTerms(this.credit.getRawValue());
@@ -69,7 +72,8 @@ export class RecordSaleDialogComponent {
       saleDate: v.date!,
       buyerName: v.buyer || undefined,
       saleWeightKg: v.weight || undefined,
-      credit
+      credit,
+      allowDuringMeatWithdrawal
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => this.dialogRef.close(true),
       error: (err) => {
@@ -77,7 +81,9 @@ export class RecordSaleDialogComponent {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            this.error.set(err.error?.detail || err.error?.title || 'Recording sale failed.');
+            const message: string = err.error?.detail || err.error?.title || 'Recording sale failed.';
+            this.error.set(message);
+            this.withdrawalWarning.set(message.includes('confirm the sale anyway'));
         }
       }
     });

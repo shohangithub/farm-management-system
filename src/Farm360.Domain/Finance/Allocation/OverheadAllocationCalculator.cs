@@ -112,12 +112,14 @@ public static class OverheadAllocationCalculator
 
     /// <summary>
     /// Days an animal was on the farm within a cost period: the overlap between its stay and the
-    /// period, inclusive. Zero when the two do not overlap.
+    /// period, inclusive. <paramref name="left"/> is its exit (sale/death) date, and the animal is
+    /// not on the farm on that day (farm rule, see <c>AnimalStatusGroups</c>), so its last day is
+    /// the day before. Zero when the two do not overlap.
     /// </summary>
     public static decimal HeadDays(DateOnly periodStart, DateOnly periodEnd, DateOnly arrived, DateOnly? left)
     {
         var from = arrived > periodStart ? arrived : periodStart;
-        var departure = left ?? periodEnd;
+        var departure = left is { } exit ? exit.AddDays(-1) : periodEnd;
         var to = departure < periodEnd ? departure : periodEnd;
 
         if (to < from)

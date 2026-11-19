@@ -16,6 +16,13 @@
     <!-- Error State inside Dialog -->
     <div *ngIf="error()" class="mx-6 mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm whitespace-pre-wrap">
       {{ error() }}
+      <div *ngIf="withdrawalWarning()" class="mt-2 flex flex-wrap items-center gap-2">
+        <span class="text-xs text-red-600">Only if it is not going for meat (for example, sold live to another farm):</span>
+        <button type="button" (click)="submit(true)" [disabled]="submitting()"
+          class="h-7 px-3 rounded-md text-xs font-semibold bg-white border border-red-300 text-red-700 hover:bg-red-100 disabled:opacity-50">
+          Sell anyway
+        </button>
+      </div>
     </div>
 
     <div class="p-6 space-y-4 overflow-y-auto">

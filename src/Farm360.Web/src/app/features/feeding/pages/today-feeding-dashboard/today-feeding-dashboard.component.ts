@@ -1,4 +1,5 @@
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
+import { RouterLink } from '@angular/router';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -57,7 +58,7 @@ interface ShedGroup {
 @Component({
   selector: 'app-today-feeding-dashboard',
   standalone: true,
-  imports: [ErrorStateComponent, MoneyPipe, 
+  imports: [RouterLink, ErrorStateComponent, MoneyPipe, 
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
@@ -73,9 +74,9 @@ interface ShedGroup {
   ],
   template: `
     <app-page-header
-      title="Daily Feeding Entries & Workflow"
-      description="Manage and confirm daily feeding instructions based on active feeding plans across all sheds."
-      breadcrumbActiveNode="Today's Feeding">
+      title="Confirm Planned Feed · পরিকল্পিত খাবার নিশ্চিত"
+      description="Entries made automatically from your feeding plans. Confirm, adjust or skip them. To record feed without a plan, use Record Daily Feed."
+      breadcrumbActiveNode="Confirm Planned Feed">
       <div actions class="flex flex-wrap items-center gap-2.5">
         <!-- Date Stepper / Picker Controls -->
         <div class="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
@@ -301,57 +302,62 @@ interface ShedGroup {
         <div *ngFor="let cow of cowGroups()" 
           class="border border-gray-200 dark:border-gray-700/80 rounded-2xl bg-white dark:bg-gray-800/90 shadow-xs overflow-hidden transition-all hover:shadow-md">
           
-          <!-- Cow Header Banner -->
-          <div class="p-4 md:p-5 bg-gradient-to-r from-gray-50 via-emerald-50/20 to-teal-50/20 dark:from-gray-900/60 dark:via-gray-800/80 dark:to-emerald-950/20 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
+          <!-- Cow Header Banner: wraps cleanly at any card width -->
+          <div class="px-4 py-3.5 md:px-5 bg-gradient-to-r from-gray-50 via-emerald-50/20 to-teal-50/20 dark:from-gray-900/60 dark:via-gray-800/80 dark:to-emerald-950/20 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1 basis-60">
               <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
                 <mat-icon class="!text-[22px] !w-[22px] !h-[22px]">pets</mat-icon>
               </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <h3 class="text-base font-extrabold text-gray-900 dark:text-white leading-tight">{{ cow.animalTag }}</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                    {{ cow.entries.length }} rations
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
+                  <h3 class="m-0 text-base font-extrabold text-gray-900 dark:text-white leading-tight truncate" [title]="cow.animalTag">{{ cow.animalTag }}</h3>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 whitespace-nowrap shrink-0">
+                    {{ cow.entries.length }} {{ cow.entries.length === 1 ? 'ration' : 'rations' }}
                   </span>
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
-                  <span>{{ cow.shedName || 'Unassigned Shed' }} / {{ cow.penName || 'Unassigned Pen' }}</span>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                  {{ cow.shedName || 'Unassigned Shed' }} / {{ cow.penName || 'Unassigned Pen' }}
                 </div>
               </div>
             </div>
 
-            <!-- Cow Total Metrics & Confirm All for Cow -->
-            <div class="flex items-center gap-4 self-end md:self-auto">
-              <div class="text-right">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Planned Feed</div>
-                <div class="text-sm font-extrabold text-gray-900 dark:text-white">
-                  <span class="text-emerald-600 dark:text-emerald-400">{{ cow.totalActualKg | number:'1.2-2' }}kg</span>
-                  <span class="text-gray-400 font-normal"> / {{ cow.totalExpectedKg | number:'1.2-2' }}kg</span>
+            <!-- Fed vs planned, cost, and actions -->
+            <div class="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 ml-auto">
+              <div class="flex items-center gap-4">
+                <div class="text-right whitespace-nowrap">
+                  <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Fed / Planned</div>
+                  <div class="text-sm font-extrabold tabular-nums">
+                    <span class="text-emerald-600 dark:text-emerald-400">{{ cow.totalActualKg | number:'1.2-2' }}</span>
+                    <span class="text-gray-400 font-medium"> / {{ cow.totalExpectedKg | number:'1.2-2' }} kg</span>
+                  </div>
+                </div>
+
+                <div class="text-right whitespace-nowrap border-l border-gray-200 dark:border-gray-700 pl-4">
+                  <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Est. Cost</div>
+                  <div class="text-sm font-extrabold text-teal-600 dark:text-teal-400 tabular-nums">
+                    {{ cow.totalCostBdt | money:2 }}
+                  </div>
                 </div>
               </div>
 
-              <div class="text-right hidden sm:block border-l border-gray-200 dark:border-gray-700 pl-4">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Est. Cost</div>
-                <div class="text-sm font-extrabold text-teal-600 dark:text-teal-400 font-mono">
-                  {{ cow.totalCostBdt | money:2 }}
-                </div>
+              <div class="flex items-center gap-2">
+                <button type="button" (click)="openManualEntry([cow.animalId])" matTooltip="Record extra feed given to this cow"
+                  class="h-8 px-3 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-lg inline-flex items-center gap-1 whitespace-nowrap transition-colors">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Add Feed
+                </button>
+
+                <button *ngIf="cow.hasPending" type="button" (click)="confirmCow(cow)"
+                  [matTooltip]="'Confirm all ' + getPendingCountForCow(cow) + ' pending rations for this cow'"
+                  class="h-8 px-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">done_all</mat-icon>
+                  Confirm ({{ getPendingCountForCow(cow) }})
+                </button>
+
+                <span *ngIf="cow.allConfirmed"
+                  class="h-8 px-3 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1 whitespace-nowrap">
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon> All Confirmed
+                </span>
               </div>
-
-              <button type="button" (click)="openManualEntry([cow.animalId])" matTooltip="Record extra feed given to this cow"
-                class="px-2.5 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl inline-flex items-center gap-1 shrink-0">
-                <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">add</mat-icon> Add Feed
-              </button>
-
-              <button *ngIf="cow.hasPending" (click)="confirmCow(cow)"
-                class="px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1.5 shrink-0">
-                <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">done_all</mat-icon>
-                Confirm Cow ({{ getPendingCountForCow(cow) }})
-              </button>
-
-              <span *ngIf="cow.allConfirmed" 
-                class="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1">
-                <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">check_circle</mat-icon> All Confirmed
-              </span>
             </div>
           </div>
 

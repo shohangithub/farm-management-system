@@ -155,7 +155,7 @@ export class GlobalSearchComponent implements OnInit {
             // Global search keeps all animals (incl. Sold/Dead) but always shows the status.
             subtitle: `${a.species} - ${a.breedName} · ${a.status}`,
             icon: 'pets',
-            route: `/livestock/animals/${a.id}`
+            route: `/livestock/${a.id}`
           }))
         });
       }

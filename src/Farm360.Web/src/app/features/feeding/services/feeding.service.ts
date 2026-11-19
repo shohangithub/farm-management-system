@@ -19,7 +19,12 @@ import {
   DailyFeedingEntry,
   FeedingCycleReconciliation,
   FeedingEntryCostBreakdown,
-  AnimalFeedingSummary
+  AnimalFeedingSummary,
+  DailyFeedSheet,
+  FeedSheetCopy,
+  SaveFeedSheetRequest,
+  DailyFeedSheetResult,
+  EndFeedingPlansResult
 ,
   FeedingBoard,
   RationPreviewRequest,
@@ -274,5 +279,27 @@ export class FeedingService {
       id,
       reason
     });
+  }
+
+  // ── Daily feed sheet ──
+  getFeedSheet(farmId: string, date: string): Observable<DailyFeedSheet> {
+    const params = new HttpParams().set('farmId', farmId).set('date', date);
+    return this.http.get<DailyFeedSheet>(`${this.baseUrl}/sheet`, { params });
+  }
+
+  copyLastFeedSheet(farmId: string, date: string, animalIds: string[]): Observable<FeedSheetCopy> {
+    return this.http.post<FeedSheetCopy>(`${this.baseUrl}/sheet/copy-last`, { farmId, date, animalIds });
+  }
+
+  saveFeedSheet(request: SaveFeedSheetRequest): Observable<DailyFeedSheetResult> {
+    return this.http.post<DailyFeedSheetResult>(`${this.baseUrl}/sheet`, request);
+  }
+
+  removeFeedSheetEntry(farmId: string, entryId: string, reason?: string | null): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/sheet/remove-entry`, { farmId, entryId, reason: reason ?? null });
+  }
+
+  endFeedingPlansForAnimals(farmId: string, animalIds: string[]): Observable<EndFeedingPlansResult> {
+    return this.http.post<EndFeedingPlansResult>(`${this.baseUrl}/sheet/end-plans`, { farmId, animalIds });
   }
 }

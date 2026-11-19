@@ -79,7 +79,7 @@ export class AnimalListComponent {
 
   readonly presenceOptions: { value: AnimalPresence | ''; label: string }[] = [
     { value: 'OnFarm', label: 'On farm' },
-    { value: 'LeftFarm', label: 'Sold / Dead' },
+    { value: 'LeftFarm', label: 'Left farm (sold / dead)' },
     { value: '', label: 'All animals' },
   ];
 

@@ -39,7 +39,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
       <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 flex flex-wrap items-end gap-4 print:hidden">
         <div class="w-72">
           <p class="text-xs font-bold text-gray-600 dark:text-gray-300 m-0 mb-1.5">Animal</p>
-          <app-animal-picker [(ngModel)]="animalId" (ngModelChange)="run()"></app-animal-picker>
+          <app-animal-picker [includeExited]="true" [(ngModel)]="animalId" (ngModelChange)="run()"></app-animal-picker>
         </div>
         <div>
           <p class="text-xs font-bold text-gray-600 dark:text-gray-300 m-0 mb-1.5">Period</p>

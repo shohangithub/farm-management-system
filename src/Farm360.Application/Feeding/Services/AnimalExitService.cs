@@ -295,57 +295,7 @@ public sealed class AnimalExitService : IAnimalExitService
     /// Reverses a confirmed individual entry dated after the exit: stock back at the cost it was
     /// issued at, the feed-cost ledger postings removed, the entry voided, its rows zeroed.
     /// </summary>
-    private async Task ReverseConfirmedAsync(DailyFeedingEntry entry, string reason, HashSet<Guid> touched, CancellationToken cancellationToken)
-    {
-        var movements = await _stockTransactions.GetByFarmIdAsync(entry.FarmId, entry.EntryDate, null, cancellationToken).ConfigureAwait(false);
-        var mine = movements.Where(t => t.ReferenceId == entry.Id).ToList();
-        var alreadyReturned = mine
-            .Where(t => t.TransactionType == StockTransactionType.FeedConsumptionReversal)
-            .Select(t => t.InventoryItemId)
-            .ToHashSet();
-        var today = _clock.Today;
-
-        foreach (var issued in mine.Where(t => t.TransactionType == StockTransactionType.PlannedFeedConsumption))
-        {
-            if (!alreadyReturned.Add(issued.InventoryItemId))
-                continue;
-
-            var item = await _inventory.GetByIdAsync(issued.InventoryItemId, cancellationToken).ConfigureAwait(false);
-            if (item is null)
-                continue;
-
-            item.ReturnConsumedStock(issued.Quantity, issued.UnitCostBdt);
-            _inventory.Update(item);
-
-            await _stockTransactions.AddAsync(new StockTransaction(
-                id: Guid.NewGuid(),
-                tenantId: entry.TenantId,
-                farmId: entry.FarmId,
-                inventoryItemId: item.Id,
-                transactionType: StockTransactionType.FeedConsumptionReversal,
-                quantity: issued.Quantity,
-                unitCostBdt: issued.UnitCostBdt,
-                balanceAfter: item.CurrentStock,
-                transactionDate: today < entry.EntryDate ? entry.EntryDate : today,
-                reason: $"{reason}: feed for {entry.EntryDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)} returned to stock (entry {entry.Id})",
-                referenceId: entry.Id), cancellationToken).ConfigureAwait(false);
-        }
-
-        // The feed handler books two postings per entry: feed from stock (keyed on the entry) and
-        // ingredients not tracked in stock (keyed on its "direct-feed" sub key). Both go.
-        await _ledgerPosting.ReverseAsync(entry.FarmId, entry.Id, TransactionCategory.FeedCost, cancellationToken).ConfigureAwait(false);
-        await _ledgerPosting.ReverseAsync(entry.FarmId, LedgerPosting.SubKey(entry.Id, "direct-feed"), TransactionCategory.FeedCost, cancellationToken).ConfigureAwait(false);
-
-        entry.VoidAfterExit(reason);
-        _entries.Update(entry);
-
-        var rows = await _allocations.GetByEntryIdAcrossTenantsAsync(entry.Id, cancellationToken).ConfigureAwait(false);
-        if (rows.Count > 0)
-        {
-            foreach (var row in rows)
-                row.UpdateConsumption(0m, 0m, row.UnitCostBdtPerKg);
-            _allocations.UpdateRange(rows);
-            touched.UnionWith(rows.Select(r => r.AnimalId));
-        }
-    }
+    private Task ReverseConfirmedAsync(DailyFeedingEntry entry, string reason, HashSet<Guid> touched, CancellationToken cancellationToken) =>
+        ConfirmedFeedEntryReversal.ReverseAsync(
+            entry, reason, touched, _stockTransactions, _inventory, _ledgerPosting, _entries, _allocations, _clock.Today, cancellationToken);
 }

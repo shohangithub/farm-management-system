@@ -10,7 +10,8 @@ namespace Farm360.Application.Health.EventHandlers;
 /// When an animal leaves the farm (sold or died) its future health work is closed:
 ///   - pending vaccinations / deworming doses (Scheduled or Overdue) are Cancelled with a note;
 ///   - ongoing treatment courses are closed at the exit date (no more doses; withdrawal alerts stop
-///     because they only list animals on the farm).
+///     because they only list animals on the farm);
+///   - open intelligence insights about the animal (growth alerts etc.) are dismissed.
 /// History is kept: administered doses, finished treatments, costs and mortality records are not
 /// touched (farm rules: see <c>AnimalStatusGroups</c>). Idempotent — only pending items change —
 /// and saves its own changes.
@@ -22,7 +23,8 @@ namespace Farm360.Application.Health.EventHandlers;
 public sealed class AnimalExitHealthHandler(
     IVaccinationRepository vaccinationRepository,
     IMedicalTreatmentRepository treatmentRepository,
-    IUnitOfWork unitOfWork) :
+    IUnitOfWork unitOfWork,
+    Farm360.Domain.Intelligence.Interfaces.Repositories.IInsightRepository? insights = null) :
     INotificationHandler<AnimalSoldNotification>,
     INotificationHandler<AnimalDiedEvent>
 {
@@ -63,6 +65,15 @@ public sealed class AnimalExitHealthHandler(
             if (treatment.CloseForAnimalExit(exitDate, reason))
             {
                 treatmentRepository.Update(treatment);
+                changed = true;
+            }
+        }
+
+        if (insights is not null)
+        {
+            foreach (var insight in await insights.GetActiveInsightsByAnimalIdAsync(animalId, cancellationToken))
+            {
+                insight.Dismiss();
                 changed = true;
             }
         }

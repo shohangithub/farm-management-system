@@ -85,7 +85,7 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
             return null;
         }
 
-        var age = AnimalAge.Format(animal.DateOfBirth, context.Today);
+        var age = AnimalAge.Format(animal.DateOfBirth, animal.ExitDate ?? context.Today);
         return $"Tag {animal.TagId} · {animal.Species} · {animal.Sex} · {age} · {animal.Status}";
     }
 

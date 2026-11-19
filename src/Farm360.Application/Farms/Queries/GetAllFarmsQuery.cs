@@ -21,6 +21,11 @@ public sealed class GetAllFarmsQueryHandler : IRequestHandler<GetAllFarmsQuery, 
     public async Task<IReadOnlyList<FarmListDto>> Handle(GetAllFarmsQuery request, CancellationToken cancellationToken)
     {
         var farms = await _repository.GetAllByTenantAsync(_tenantService.TenantId, cancellationToken);
-        return farms.Select(f => f.ToListDto()).ToList().AsReadOnly();
+        // Head count = animals on the farm now (sold/dead excluded), not the stored column.
+        var occupancies = await _repository.GetOccupancyByTenantAsync(_tenantService.TenantId, cancellationToken);
+        return farms.Select(f => f.ToListDto() with
+        {
+            CurrentAnimalCount = occupancies.TryGetValue(f.Id, out var count) ? count : 0
+        }).ToList().AsReadOnly();
     }
 }

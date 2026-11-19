@@ -209,9 +209,10 @@ public class OverheadAllocationServiceTests
     [Fact]
     public async Task ExpenseIsSharedByHeadDays_SoAMidMonthSaleCarriesOnlyItsDays()
     {
-        // Sold on the 10th: 10 of 40 head-days, so a quarter of the wage bill.
+        // Sold on the 11th: on the farm the 1st to the 10th (not on its sale day), so 10 of 40
+        // head-days — a quarter of the wage bill.
         var stayed = AnimalPresent("B-001", new DateOnly(2025, 1, 1));
-        var sold = AnimalPresent("B-002", new DateOnly(2025, 1, 1), sold: new DateOnly(2026, 4, 10));
+        var sold = AnimalPresent("B-002", new DateOnly(2025, 1, 1), sold: new DateOnly(2026, 4, 11));
         var stayedLedger = LedgerFor(stayed);
         var soldLedger = LedgerFor(sold);
 

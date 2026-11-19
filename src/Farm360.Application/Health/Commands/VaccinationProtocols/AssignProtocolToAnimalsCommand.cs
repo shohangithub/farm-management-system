@@ -50,18 +50,24 @@ internal sealed class AssignProtocolToAnimalsCommandHandler : IRequestHandler<As
             throw new KeyNotFoundException("Protocol not found.");
 
         // A protocol schedules future doses: only animals still on the farm can be enrolled.
+        // Doses are scheduled only for animals that exist in this tenant (unknown ids are refused).
+        var animalIds = request.AnimalIds.Distinct().ToList();
         if (_animalRepository is not null)
         {
-            var animals = await _animalRepository.GetByIdsAsync(request.AnimalIds, cancellationToken);
+            var animals = await _animalRepository.GetByIdsAsync(animalIds, cancellationToken);
             foreach (var animal in animals)
             {
                 animal.EnsureOnFarm("a vaccination protocol");
             }
+
+            var missing = animalIds.Except(animals.Select(a => a.Id)).Count();
+            if (missing > 0)
+                throw new KeyNotFoundException($"{missing} of the chosen animals were not found.");
         }
 
         var events = new List<VaccinationEvent>();
 
-        foreach (var animalId in request.AnimalIds)
+        foreach (var animalId in animalIds)
         {
             foreach (var step in protocol.Steps)
             {

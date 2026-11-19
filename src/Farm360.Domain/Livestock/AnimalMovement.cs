@@ -41,6 +41,13 @@ public sealed class AnimalMovement : AuditableEntity
     
     public string? TransferReason { get; private set; }
 
+    /// <summary>A sale/death was undone: the animal is back in the pen/shed it left on its exit day.</summary>
+    internal void Reopen()
+    {
+        RemovedAtUtc = null;
+        RemovedBy = null;
+    }
+
     internal void MarkAsRemoved(DateTime removedAtUtc, Guid removedBy)
     {
         if (RemovedAtUtc.HasValue)

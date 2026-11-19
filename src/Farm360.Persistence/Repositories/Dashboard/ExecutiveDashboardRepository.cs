@@ -126,7 +126,10 @@ public sealed class ExecutiveDashboardRepository : IExecutiveDashboardRepository
     public async Task<IReadOnlyList<ActionableInsight>> GetActiveInsightsAsync(Guid tenantId, Guid? farmId, CancellationToken cancellationToken = default)
     {
         var query = _context.ActionableInsights.AsNoTracking()
-            .Where(i => i.TenantId == tenantId && !i.IsDismissed && !i.IsRead);
+            .Where(i => i.TenantId == tenantId && !i.IsDismissed && !i.IsRead)
+            // Insights about animals that have since been sold or died are no longer actionable.
+            .Where(i => i.AnimalId == null || _context.Animals.Any(a => a.Id == i.AnimalId &&
+                Farm360.Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(a.Status)));
             
         if (farmId.HasValue)
         {

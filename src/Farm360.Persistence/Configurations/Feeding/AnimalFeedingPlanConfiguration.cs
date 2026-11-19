@@ -27,6 +27,9 @@ public sealed class AnimalFeedingPlanConfiguration : IEntityTypeConfiguration<An
         builder.Property(p => p.TriggeredByWeightKg)
             .HasPrecision(18, 2);
 
+        builder.Property(p => p.IsOneOff)
+            .HasDefaultValue(false);
+
         builder.HasMany(p => p.Exclusions)
             .WithOne()
             .HasForeignKey(e => e.AnimalFeedingPlanId)

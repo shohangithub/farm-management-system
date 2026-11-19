@@ -129,7 +129,7 @@ public class GetAnimalFeedingSummaryQueryHandler : IRequestHandler<GetAnimalFeed
         }
 
         // Map plan briefs
-        var planBriefs = plans.Select(p =>
+        var planBriefs = plans.Where(p => !p.IsOneOff).Select(p =>
         {
             var rName = ruleSetDict.TryGetValue(p.FeedingRuleSetId, out var name) ? name : "Standard Rule Set";
             return new AnimalFeedingPlanBriefDto(

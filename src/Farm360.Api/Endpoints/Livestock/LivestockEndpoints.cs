@@ -145,6 +145,14 @@ public static class LivestockEndpoints
             .Produces(422)
             .RequireAuthorization("Permission:animals.edit");
 
+        group.MapPost("/animals/{id:guid}/reverse-exit", ReverseExit)
+            .WithName("ReverseAnimalExit")
+            .WithSummary("Undo a sale or death recorded by mistake — the animal is back on the farm and finance, health and feeding are restored")
+            .Produces<ReverseAnimalExitResult>(200)
+            .Produces(404)
+            .Produces(422)
+            .RequireAuthorization("Permission:animals.delete");
+
         group.MapPost("/animals/{id:guid}/transfer", TransferAnimal)
             .WithName("TransferAnimal")
             .WithSummary("Transfer animal to a different location (Shed/Pen)")
@@ -288,7 +296,7 @@ public static class LivestockEndpoints
         ISender sender,
         CancellationToken cancellationToken)
     {
-        await sender.Send(new SellAnimalCommand(id, request.SalePriceBdt, request.SaleDate, request.BuyerName, request.SaleWeightKg, request.Credit), cancellationToken);
+        await sender.Send(new SellAnimalCommand(id, request.SalePriceBdt, request.SaleDate, request.BuyerName, request.SaleWeightKg, request.Credit, request.AllowDuringMeatWithdrawal), cancellationToken);
         return Results.NoContent();
     }
 
@@ -320,6 +328,13 @@ public static class LivestockEndpoints
             cancellationToken);
         return Results.NoContent();
     }
+
+    private static async Task<IResult> ReverseExit(
+        Guid id,
+        [FromBody] ReverseExitRequest request,
+        ISender sender,
+        CancellationToken cancellationToken) =>
+        Results.Ok(await sender.Send(new ReverseAnimalExitCommand(id, request.Reason), cancellationToken));
 
     private static async Task<IResult> TransferAnimal(
         Guid id,
@@ -431,13 +446,16 @@ public static class LivestockEndpoints
 public sealed record RecordWeightRequest(decimal WeightKg, DateOnly RecordedDate, string? Notes);
 
 /// <summary>Sale request body.</summary>
-public sealed record SellAnimalRequest(decimal SalePriceBdt, DateOnly SaleDate, string? BuyerName, decimal? SaleWeightKg, Farm360.Contracts.Finance.CreditTermsRequest? Credit = null);
+public sealed record SellAnimalRequest(decimal SalePriceBdt, DateOnly SaleDate, string? BuyerName, decimal? SaleWeightKg, Farm360.Contracts.Finance.CreditTermsRequest? Credit = null, bool AllowDuringMeatWithdrawal = false);
 
 /// <summary>Quarantine request body.</summary>
 public sealed record QuarantineAnimalRequest(string Reason);
 
 /// <summary>Death recording request body.</summary>
 public sealed record RecordDeathRequest(DisposalReason Cause, DateOnly DeathDate, string? Notes);
+
+/// <summary>Undo sale/death request body.</summary>
+public sealed record ReverseExitRequest(string Reason);
 
 /// <summary>Location transfer request body.</summary>
 public sealed record TransferAnimalRequest(Guid? ToShedId, Guid? ToPenId, DateOnly TransferDate, string? Reason);

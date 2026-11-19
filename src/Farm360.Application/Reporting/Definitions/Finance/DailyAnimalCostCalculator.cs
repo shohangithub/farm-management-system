@@ -228,20 +228,20 @@ public sealed class DailyAnimalCostCalculator
     }
 
     /// <summary>
-    /// The first and last day the animal is counted on the farm: from acquisition until sale or death,
-    /// inclusive. These are the same rules the overhead allocation uses to choose which animals share
-    /// a cost.
+    /// The first and last day the animal is counted on the farm: from acquisition until the day
+    /// before its sale or death (the farm rule: an animal is not on the farm on its exit date, the
+    /// same rule feeding and the overhead allocation use). An animal that left with no recorded
+    /// date was on the farm on no day we can name, so its span is empty.
     /// </summary>
     public static (DateOnly From, DateOnly To) OnFarmSpan(Animal animal)
     {
         ArgumentNullException.ThrowIfNull(animal);
-        var exit = animal.SaleDate ?? animal.DeathDate ?? DateOnly.MaxValue;
-        if (animal.SaleDate.HasValue && animal.DeathDate.HasValue)
-        {
-            exit = animal.SaleDate.Value < animal.DeathDate.Value ? animal.SaleDate.Value : animal.DeathDate.Value;
-        }
+        if (animal.ExitDate is { } exit)
+            return (animal.AcquisitionDate, exit.AddDays(-1));
 
-        return (animal.AcquisitionDate, exit);
+        return animal.HasLeftFarm
+            ? (animal.AcquisitionDate, animal.AcquisitionDate.AddDays(-1))
+            : (animal.AcquisitionDate, DateOnly.MaxValue);
     }
 
     /// <summary>Is the animal on the farm on <paramref name="date"/>?</summary>

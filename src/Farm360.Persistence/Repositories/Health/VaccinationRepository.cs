@@ -82,8 +82,8 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
         Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default)
     {
         // Report query only: unlike GetUpcomingEventsAsync this returns every status (given,
-        // pending, overdue, cancelled) so compliance can be measured, still limited to animals on
-        // the farm — a sold animal's missed booster is not this farm's compliance problem.
+        // pending, overdue, cancelled) so compliance can be measured. A sold/dead animal's missed
+        // booster is not this farm's compliance problem, but doses it was given before leaving are.
         var rows = await context.VaccinationEvents
             .AsNoTracking()
             .Join(context.Animals,
@@ -91,7 +91,12 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
                 a => a.Id,
                 (ve, a) => new { Event = ve, Animal = a })
             .Where(x => x.Animal.FarmId == farmId &&
-                        Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(x.Animal.Status) &&
+                        // On-farm animals: everything. Sold/dead animals: only doses actually given
+                        // before they left (history stays); their cancelled/missed doses don't count.
+                        (Domain.Livestock.AnimalStatusGroups.OnFarm.Contains(x.Animal.Status) ||
+                         (x.Event.AdministeredDate != null &&
+                          ((x.Animal.SaleDate != null && x.Event.AdministeredDate < x.Animal.SaleDate) ||
+                           (x.Animal.DeathDate != null && x.Event.AdministeredDate < x.Animal.DeathDate)))) &&
                         ((x.Event.ScheduledDate >= from && x.Event.ScheduledDate <= to) ||
                          (x.Event.AdministeredDate != null && x.Event.AdministeredDate >= from && x.Event.AdministeredDate <= to)))
             .OrderBy(x => x.Event.ScheduledDate)

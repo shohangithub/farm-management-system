@@ -76,6 +76,20 @@ internal sealed class UpdateMedicalTreatmentCommandHandler(
             consumption = (await units.ToBaseAsync(item, unitId, consumption.Value, 0m, cancellationToken)).BaseQuantity;
         }
 
+        // A sold/dead animal keeps its treatment history, but an edit can't move a treatment past
+        // the day it left or reopen one that the exit closed.
+        var animal = await animals.GetByIdAsync(treatment.AnimalId, cancellationToken);
+        if (animal is { HasLeftFarm: true })
+        {
+            animal.EnsureCanRecordOn(request.StartDate, "a treatment");
+            if (request.Status == TreatmentStatus.Ongoing)
+                throw new Farm360.Domain.Exceptions.DomainException(
+                    $"{animal.Tag.TagId} has left the farm, so this treatment can't be ongoing. Mark it completed or failed.");
+            if (request.EndDate is { } end && animal.ExitDate is { } exit && end > exit)
+                throw new Farm360.Domain.Exceptions.DomainException(
+                    $"The end date can't be after {animal.Tag.TagId} left the farm on {exit:dd MMM yyyy}.");
+        }
+
         var dosage = Dosage.Create(request.DosageAmount, request.DosageUnit);
         var withdrawal = WithdrawalPeriod.Create(request.MilkWithdrawalDays, request.MeatWithdrawalDays);
 
@@ -97,7 +111,6 @@ internal sealed class UpdateMedicalTreatmentCommandHandler(
 
         // Restate the treatment's cash cost. Medicine already issued from stock keeps its stock
         // posting (stock is not re-issued on edit); only the cash charges move with the new cost.
-        var animal = await animals.GetByIdAsync(treatment.AnimalId, cancellationToken);
         if (animal is not null)
         {
             var date = treatment.StartDate.ToDateTime(TimeOnly.MinValue);

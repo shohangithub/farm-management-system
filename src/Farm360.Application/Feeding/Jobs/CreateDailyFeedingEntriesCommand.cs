@@ -84,7 +84,8 @@ public sealed class GenerateTenantDailyFeedingEntriesCommandHandler(
     IDailyFeedingEntryRepository entries,
     IFarmClock clock,
     ISender sender,
-    ILogger<GenerateTenantDailyFeedingEntriesCommandHandler> logger)
+    ILogger<GenerateTenantDailyFeedingEntriesCommandHandler> logger,
+    IAnimalFeedAllocationRepository? allocations = null)
     : IRequestHandler<GenerateTenantDailyFeedingEntriesCommand, DailyFeedingGenerationResult>
 {
     public async Task<DailyFeedingGenerationResult> Handle(GenerateTenantDailyFeedingEntriesCommand request, CancellationToken cancellationToken)
@@ -107,6 +108,8 @@ public sealed class GenerateTenantDailyFeedingEntriesCommandHandler(
 
         foreach (var farmId in farmIds)
         {
+            await StopFeedingExitedAnimalsAsync(farmId, cancellationToken);
+
             foreach (var day in days)
             {
                 try
@@ -145,6 +148,40 @@ public sealed class GenerateTenantDailyFeedingEntriesCommandHandler(
                 request.TenantId, created, string.Join(", ", days), farmIds.Count, failed);
 
         return new DailyFeedingGenerationResult(created, failed, days);
+    }
+
+    /// <summary>
+    /// Self-repair: a sold/dead animal whose feeding was never stopped (sold before exits were
+    /// applied to feeding, or a failed exit) still has active plans or feed allocated after it left.
+    /// Its exit is applied here, so it disappears from feeding and its cost stops at the exit day
+    /// without anyone having to run a repair. Each animal in its own transaction; a failure is
+    /// logged and retried on the next run.
+    /// </summary>
+    private async Task StopFeedingExitedAnimalsAsync(Guid farmId, CancellationToken cancellationToken)
+    {
+        if (allocations is null)
+            return;
+
+        foreach (var (animalId, exitDate, sold) in await allocations.GetExitedAnimalsStillFedAsync(farmId, cancellationToken))
+        {
+            try
+            {
+                var result = await sender.Send(new ApplyAnimalExitToFeedingCommand(animalId, exitDate, sold), cancellationToken);
+                if (result.ChangedAnything && logger.IsEnabled(LogLevel.Information))
+                    logger.LogInformation("Stopped feeding for exited animal {AnimalId} from {ExitDate}: {Plans} plans ended, {Skipped} entries skipped, {Reversed} reversed, {Resplit} group entries re-split.",
+                        animalId, exitDate, result.PlansCancelled, result.EntriesSkipped, result.EntriesReversed, result.GroupEntriesResplit);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+#pragma warning disable CA1031 // One animal's repair must not stop the day's feeding entries.
+            catch (Exception ex)
+#pragma warning restore CA1031
+            {
+                logger.LogError(ex, "Could not stop feeding for exited animal {AnimalId} (farm {FarmId}); will retry next run.", animalId, farmId);
+            }
+        }
     }
 
     private async Task<IReadOnlyList<DateOnly>> DaysToGenerateAsync(

@@ -109,6 +109,12 @@ public interface IMortalityRecordRepository
     /// <summary>Mortality records of a farm's animals with a death date inside [<paramref name="from"/>, <paramref name="to"/>]. Read-only; for reports.</summary>
     Task<IReadOnlyList<MortalityRecord>> GetByFarmBetweenAsync(Guid farmId, DateOnly from, DateOnly to, CancellationToken ct = default);
     void Add(MortalityRecord record);
+
+    /// <summary>The animal's mortality records, tracked (to remove them when a death is undone).</summary>
+    Task<IReadOnlyList<MortalityRecord>> GetByAnimalIdAsync(Guid animalId, CancellationToken ct = default);
+
+    /// <summary>Removes a record (soft-deleted by the audit interceptor, so it stays in the audit trail).</summary>
+    void Remove(MortalityRecord record);
 }
 
 public interface IVetVisitRepository

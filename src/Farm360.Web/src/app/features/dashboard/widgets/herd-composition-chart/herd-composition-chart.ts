@@ -81,7 +81,7 @@ interface LegendItem {
               {{ totalCount() }}
             </span>
             <span class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-1">
-              Total Head
+              {{ activeTab() === 'status' ? 'All-time animals' : 'Head on farm' }}
             </span>
           </div>
         </div>

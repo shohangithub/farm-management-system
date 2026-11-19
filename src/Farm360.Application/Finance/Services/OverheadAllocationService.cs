@@ -374,8 +374,15 @@ public sealed class OverheadAllocationService : IOverheadAllocationService
 
         foreach (var animal in herd)
         {
+            // An animal that left with no recorded exit date was on the farm on no day we can
+            // name (farm rule): it takes no share rather than a whole period's.
+            if (animal.HasLeftFarm && animal.ExitDate is null)
+            {
+                continue;
+            }
+
             var headDays = OverheadAllocationCalculator.HeadDays(
-                periodStart, periodEnd, animal.AcquisitionDate, animal.SaleDate ?? animal.DeathDate);
+                periodStart, periodEnd, animal.AcquisitionDate, animal.ExitDate);
 
             if (headDays <= 0m)
             {

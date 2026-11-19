@@ -169,7 +169,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             var id = group.Key;
             animalsById.TryGetValue(id, out var animal);
 
-            var tagId = animal?.Tag.TagId ?? "(animal not found)";
+            var tagId = animal is null ? "(animal not found)" : AnimalLabels.Tag(animal);
             var breedName = animal != null && breedsById.TryGetValue(animal.BreedId, out var bName) ? bName : "Standard";
             var animalName = $"{breedName} ({animal?.Sex.ToString() ?? "—"})";
             var species = animal?.Species.ToString() ?? "Livestock";

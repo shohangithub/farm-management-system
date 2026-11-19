@@ -136,7 +136,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">grid_view</mat-icon>
             </div>
-            <span class="font-semibold text-gray-900 dark:text-white text-sm">Who Eats What</span>
+            <span class="font-semibold text-gray-900 dark:text-white text-sm">Feeding Plans</span>
           </div>
           <mat-icon class="text-gray-400 group-hover:translate-x-1 transition-transform !text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
         </a>
@@ -207,7 +207,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <h2 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
               <mat-icon class="text-emerald-600 !text-[20px] !w-[20px] !h-[20px]">schedule</mat-icon> Old Feeding Schedules
             </h2>
-            <a routerLink="../board" class="text-xs font-semibold text-emerald-600 hover:underline">Convert on Who Eats What</a>
+            <a routerLink="../board" class="text-xs font-semibold text-emerald-600 hover:underline">Convert in Feeding Plans</a>
           </div>
 
           <app-empty-state

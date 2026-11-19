@@ -31,7 +31,8 @@ public class RuleEngine : IRuleEngine
         var insights = new List<ActionableInsight>();
         var animal = await _animalRepository.GetByIdAsync(animalId, cancellationToken);
         
-        if (animal is null)
+        // Sold/dead animals get no new alerts (a late weight entry must not raise "underperforming").
+        if (animal is null || animal.HasLeftFarm)
             return insights;
 
         var growthCurve = await _growthPredictionEngine.CalculateGrowthCurveAsync(animalId, cancellationToken);

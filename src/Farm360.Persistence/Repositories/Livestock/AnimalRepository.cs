@@ -113,15 +113,17 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         DateOnly to,
         CancellationToken cancellationToken = default)
     {
-        // Present = arrived on or before the period ends, and had not left before it began.
-        // Animals sold, slaughtered or dead mid-period are included: they incurred cost while here.
+        // Present = arrived on or before the period ends, and still on the farm on at least one day
+        // of it. The exit (sale/death) date itself is not an on-farm day, so an animal that left on
+        // `from` was here on none. Animals sold or dead mid-period are included: they incurred cost
+        // while here. One that left with no recorded date (slaughtered/transferred) is excluded.
         return await _animals
             .Where(a => a.FarmId == farmId
                         && !a.IsDeleted
                         && a.AcquisitionDate <= to
-                        && (a.SaleDate == null || a.SaleDate >= from)
-                        // A dead animal stops sharing the farm's overhead from its death date.
-                        && (a.DeathDate == null || a.DeathDate >= from))
+                        && (a.SaleDate == null || a.SaleDate > from)
+                        && (a.DeathDate == null || a.DeathDate > from)
+                        && (AnimalStatusGroups.OnFarm.Contains(a.Status) || a.SaleDate != null || a.DeathDate != null))
             .ToListAsync(cancellationToken);
     }
 

@@ -32,6 +32,11 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { UndoExitDialogComponent } from '../../dialogs/undo-exit-dialog/undo-exit-dialog.component';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
+import { ReverseAnimalExitResult } from '../../models/animal.models';
+import { RecordMortalityDialog } from '../../../health/components/dialogs/record-mortality-dialog/record-mortality-dialog.component';
 import { FarmService } from '../../../farms/services/farm.service';
 import { BatchService } from '../../services/batch.service';
 import { BatchDto } from '../../models/batch.models';
@@ -74,7 +79,7 @@ import { APP_DATE_LOCALE } from '../../../../shared/utils/locale';
   imports: [ErrorStateComponent, MoneyPipe, 
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
-    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule,
+    MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule, MatTooltipModule, HasPermissionDirective,
     NgxEchartsModule,
     CattleProfitProjectionComponent
   ],
@@ -600,6 +605,36 @@ export class AnimalDetailComponent {
       autoFocus: false,
       panelClass: 'bg-transparent',
       data: { animalId: a.id, animalTag: a.tagId, latestWeightKg: a.latestWeightKg }
+    });
+    dialogRef.afterClosed().subscribe(res => { if (res) this.load(); });
+  }
+
+  /** Undo a sale or death recorded by mistake: the animal comes back with its plans, doses and accounts restored. */
+  onUndoExit(): void {
+    const a = this.animal();
+    if (!a || !(this.isSold() || this.isDead())) return;
+    const dialogRef = this.dialog.open(UndoExitDialogComponent, {
+      maxWidth: '95vw', width: '520px', disableClose: true, autoFocus: false,
+      data: { animalId: a.id, animalTag: a.tagId, kind: this.isSold() ? 'sold' : 'died', exitDate: this.exitDate() }
+    });
+    dialogRef.afterClosed().subscribe((res: ReverseAnimalExitResult | undefined) => {
+      if (!res) return;
+      const refund = res.receivedFromBuyerBdt > 0
+        ? ` ৳${res.receivedFromBuyerBdt.toLocaleString()} received from the buyer was removed from the accounts — hand it back.`
+        : '';
+      this.notify.success(`${a.tagId} is back on the farm. Check Confirm Planned Feed for its pending feed entries.${refund}`, { duration: 10000 });
+      this.load();
+    });
+  }
+
+  /** Records the death (mortality record + Dead status) with this animal preselected. */
+  onRecordDeath(): void {
+    if (!this.isOnFarm()) return; // already left the farm
+    const a = this.animal();
+    if (!a) return;
+    const dialogRef = this.dialog.open(RecordMortalityDialog, {
+      maxWidth: '95vw', width: '560px', disableClose: true, autoFocus: false,
+      data: { animalId: a.id }
     });
     dialogRef.afterClosed().subscribe(res => { if (res) this.load(); });
   }

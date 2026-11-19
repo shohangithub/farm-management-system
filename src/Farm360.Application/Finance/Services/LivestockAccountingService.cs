@@ -122,7 +122,8 @@ public sealed class LivestockAccountingService : ILivestockAccountingService
             return;
         }
 
-        // Back in the herd (e.g. a disposal was corrected): nothing should be released.
+        // Back in the herd (a sale or death was undone): no sale, nothing released, no loss.
+        await _posting.ReverseAsync(animal.FarmId, animal.Id, TransactionCategory.AnimalSale, cancellationToken);
         await _posting.ReverseAsync(animal.FarmId, animal.Id, TransactionCategory.CostOfAnimalsSold, cancellationToken);
         await _posting.ReverseAsync(animal.FarmId, animal.Id, TransactionCategory.LivestockLoss, cancellationToken);
     }

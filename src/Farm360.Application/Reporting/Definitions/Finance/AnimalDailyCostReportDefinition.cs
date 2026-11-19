@@ -78,9 +78,8 @@ public sealed class AnimalDailyCostReportDefinition : ReportDefinition<AnimalDai
         }
 
         var period = context.Range("period");
-        var (from, to) = DailyAnimalCostCalculator.OnFarmSpan(animal);
-        var exit = to == DateOnly.MaxValue ? string.Empty : $" · Left {to:dd-MMM-yyyy}";
-        return $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {animal.Status} · Arrived {from:dd-MMM-yyyy}{exit} · Period {period}";
+        var exit = animal.ExitDate is { } left ? $" · Left {left:dd-MMM-yyyy}" : string.Empty;
+        return $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {animal.Status} · Arrived {animal.AcquisitionDate:dd-MMM-yyyy}{exit} · Period {period}";
     }
 
     protected override async Task<IReadOnlyList<AnimalDailyCostReportRow>> FetchAsync(

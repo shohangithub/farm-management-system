@@ -337,6 +337,42 @@ public static class FeedingEndpoints
             CancellationToken ct) => Results.Ok(await sender.Send(command, ct)))
             .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
 
+        // ── Daily feed sheet: record what was actually fed, with no plan ─────────
+        group.MapGet("/sheet", async (
+            [FromQuery] Guid farmId,
+            [FromQuery] DateOnly date,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+            Results.Ok(await sender.Send(new Farm360.Application.Feeding.Queries.DailyFeedSheets.GetDailyFeedSheetQuery(farmId, date), ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/sheet/copy-last", async (
+            [FromBody] Farm360.Application.Feeding.Queries.DailyFeedSheets.GetLastFeedSheetQuery query,
+            [FromServices] ISender sender,
+            CancellationToken ct) => Results.Ok(await sender.Send(query, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.View}");
+
+        group.MapPost("/sheet", async (
+            [FromBody] Farm360.Application.Feeding.Commands.DailyFeedSheets.SaveDailyFeedSheetCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) => Results.Ok(await sender.Send(command, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        group.MapPost("/sheet/remove-entry", async (
+            [FromBody] Farm360.Application.Feeding.Commands.DailyFeedSheets.RemoveFeedSheetEntryCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        }).RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
+        group.MapPost("/sheet/end-plans", async (
+            [FromBody] Farm360.Application.Feeding.Commands.DailyFeedSheets.EndFeedingPlansForAnimalsCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) => Results.Ok(await sender.Send(command, ct)))
+            .RequireAuthorization($"Permission:{PermissionConstants.FeedingModule.Edit}");
+
         group.MapPost("/entries/{id:guid}/confirm", async (
             [FromRoute] Guid id,
             [FromBody] ConfirmDailyFeedingEntryCommand command,
