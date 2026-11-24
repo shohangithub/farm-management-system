@@ -66,9 +66,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             {{ incident.affectedAnimalCount }}
           </td>
           <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [ngClass]="getStatusClass(incident.status)">
-              {{ getStatusName(incident.status) }}
-            </span>
+            <label [for]="'status-' + incident.id" class="sr-only">Status</label>
+            <select [id]="'status-' + incident.id"
+              class="text-xs font-medium rounded-full border-0 px-2.5 py-1 cursor-pointer disabled:opacity-50"
+              [ngClass]="getStatusClass(incident.status)"
+              [disabled]="savingId() === incident.id"
+              (change)="changeStatus(incident, $any($event.target).value, $event)">
+              <option *ngFor="let s of statusOptions" [value]="s" [selected]="s === incident.status">{{ getStatusName(s) }}</option>
+            </select>
+            <p *ngIf="statusErrorId() === incident.id && statusError()" class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ statusError() }}</p>
           </td>
           <td class="px-6 py-4 text-right space-x-2">
             <a [routerLink]="['/health/incidents', incident.id]" class="px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors shadow-sm inline-block">
@@ -138,6 +144,39 @@ export class IncidentListComponent {
 
   loadIncidents() {
     this.refreshTrigger.update(v => v + 1);
+  }
+
+  readonly statusOptions: IncidentStatus[] = [
+    IncidentStatus.Reported,
+    IncidentStatus.UnderTreatment,
+    IncidentStatus.Contained,
+    IncidentStatus.Resolved
+  ];
+  readonly savingId = signal<string | null>(null);
+  readonly statusErrorId = signal<string | null>(null);
+  readonly statusError = signal<string | null>(null);
+
+  /** Quick status change from the row. The affected count is sent unchanged (the endpoint sets both). */
+  changeStatus(incident: DiseaseIncident, status: IncidentStatus, event: Event): void {
+    if (status === incident.status) return;
+    const select = event.target as HTMLSelectElement;
+
+    this.savingId.set(incident.id);
+    this.statusErrorId.set(null);
+    this.statusError.set(null);
+    this.healthService.updateIncidentStatus(incident.id, status, incident.affectedAnimalCount).subscribe({
+      next: () => {
+        this.savingId.set(null);
+        this.loadIncidents();
+      },
+      error: (err) => {
+        this.savingId.set(null);
+        // Put the dropdown back to the saved status.
+        select.value = incident.status;
+        this.statusErrorId.set(incident.id);
+        this.statusError.set(parseApiError(err, 'Could not update the status.'));
+      }
+    });
   }
 
   getSeverityName(severity: IncidentSeverity): string {

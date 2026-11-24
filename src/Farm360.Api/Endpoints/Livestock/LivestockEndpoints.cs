@@ -48,7 +48,7 @@ public static class LivestockEndpoints
             .WithSummary("Bulk assign animals to a batch")
             .Produces(204)
             .Produces(404)
-            .RequireAuthorization("Permission:animals.update");
+            .RequireAuthorization("Permission:animals.edit");
 
         // ── Animal CRUD ────────────────────────────────────────────────────────
         group.MapGet("/animals", GetAnimalList)
@@ -78,7 +78,7 @@ public static class LivestockEndpoints
             .Produces<AnimalDto>(200)
             .Produces(404)
             .Produces(422)
-            .RequireAuthorization("Permission:animals.update");
+            .RequireAuthorization("Permission:animals.edit");
 
         group.MapDelete("/animals/{id:guid}", DeleteAnimal)
             .WithName("DeleteAnimal")
@@ -101,7 +101,7 @@ public static class LivestockEndpoints
             .Produces<WeightRecordDto>(201)
             .Produces(400) // Domain validation error
             .Produces(404)
-            .RequireAuthorization("Permission:animals.update");
+            .RequireAuthorization("Permission:animals.edit|animals.create");
 
         // ── Body Condition Score ───────────────────────────────────────────────
         group.MapPost("/animals/{id:guid}/bcs", RecordBcs)
@@ -110,7 +110,7 @@ public static class LivestockEndpoints
             .Produces<BcsRecordDto>(201)
             .Produces(400)
             .Produces(404)
-            .RequireAuthorization("Permission:animals.update");
+            .RequireAuthorization("Permission:animals.edit|animals.create");
 
         // ── Status Transitions ─────────────────────────────────────────────────
         group.MapPost("/animals/{id:guid}/sell", SellAnimal)

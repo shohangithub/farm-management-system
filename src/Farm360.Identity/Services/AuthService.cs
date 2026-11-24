@@ -1,5 +1,6 @@
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Common.Phones;
 using Farm360.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
 using System.Linq;
@@ -23,7 +24,7 @@ public sealed class AuthService(
     public async Task<LoginResponse> LoginWithPasswordAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         // Find user by phone number (UserName == PhoneNumber in this system)
-        var user = await userManager.FindByNameAsync(request.Phone);
+        var user = await FindByPhoneAsync(request.Phone);
 
         // F360-AUTH-2026-001 §8: Check lockout BEFORE password validation to prevent timing side-channel
         if (user != null && await userManager.IsLockedOutAsync(user))
@@ -114,7 +115,9 @@ public sealed class AuthService(
 
     public async Task RegisterUserAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
-        var existingUser = await userManager.FindByNameAsync(request.Phone);
+        var phone = PhoneNumberNormalizer.Normalize(request.Phone) ?? request.Phone;
+
+        var existingUser = await FindByPhoneAsync(request.Phone);
         if (existingUser != null)
         {
             // Generic error to avoid user enumeration
@@ -123,8 +126,8 @@ public sealed class AuthService(
 
         var user = new ApplicationUser
         {
-            UserName = request.Phone,
-            PhoneNumber = request.Phone,
+            UserName = phone,
+            PhoneNumber = phone,
             Email = request.Email,
             IsSystemUser = false
         };
@@ -153,7 +156,7 @@ public sealed class AuthService(
             user.Id,
             farmName,
             request.Email,
-            request.Phone,
+            phone,
             trialDays,
             cancellationToken);
     }
@@ -193,6 +196,21 @@ public sealed class AuthService(
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Finds the account for a typed phone number: the canonical form (+8801…) first, then the
+    /// value as typed, so accounts stored in an older format can still sign in.
+    /// </summary>
+    private async Task<ApplicationUser?> FindByPhoneAsync(string? phone)
+    {
+        foreach (var candidate in PhoneNumberNormalizer.LookupCandidates(phone))
+        {
+            var user = await userManager.FindByNameAsync(candidate);
+            if (user is not null) return user;
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// Resolves the TenantId and Role name to embed in the JWT.

@@ -27,6 +27,7 @@ import {
   UpdateConsumableUsagePlanRequest,
   ConfirmDailyConsumableEntryRequest,
   BulkConfirmDailyConsumablesRequest,
+  BulkConfirmDailyConsumablesResult,
   SkipDailyConsumableEntryRequest,
   PurchaseReturn,
   ReturnablePoItem,
@@ -214,6 +215,16 @@ export class InventoryService {
     return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/approve`, {});
   }
 
+  /** Sends a Draft order for approval (Draft -> Pending Approval). */
+  submitPurchaseOrder(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/submit`, {});
+  }
+
+  /** Cancels a Draft, Pending Approval or Approved order. Fulfilled orders cannot be cancelled. */
+  cancelPurchaseOrder(id: string, reason: string | null = null): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/cancel`, { reason });
+  }
+
   /** Receives the order into stock. Pass credit terms when the supplier is paid later. */
   fulfillPurchaseOrder(id: string, credit: CreditTerms | null = null): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, { credit });
@@ -316,8 +327,9 @@ export class InventoryService {
     return this.http.put<void>(`${this.baseUrl}/daily-consumables/${request.entryId}/confirm`, request);
   }
 
-  bulkConfirmDailyConsumables(request: BulkConfirmDailyConsumablesRequest): Observable<{ confirmedCount: number }> {
-    return this.http.post<{ confirmedCount: number }>(`${this.baseUrl}/daily-consumables/bulk-confirm`, request);
+  /** Confirms all pending entries for the day; returns the count and the entries that failed, with reasons. */
+  bulkConfirmDailyConsumables(request: BulkConfirmDailyConsumablesRequest): Observable<BulkConfirmDailyConsumablesResult> {
+    return this.http.post<BulkConfirmDailyConsumablesResult>(`${this.baseUrl}/daily-consumables/bulk-confirm`, request);
   }
 
   skipDailyConsumable(request: SkipDailyConsumableEntryRequest): Observable<void> {

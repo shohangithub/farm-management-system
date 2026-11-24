@@ -3,9 +3,9 @@
   description="Trends on mortality and vaccination compliance."
   breadcrumbActiveNode="Health Analytics">
   <div actions>
-    <button mat-flat-button color="primary">
-      <mat-icon>assessment</mat-icon>
-      Export Report
+    <button mat-flat-button color="primary" class="print:hidden" [disabled]="!hasData()" (click)="printReport()">
+      <mat-icon>print</mat-icon>
+      Print Report
     </button>
   </div>
 </app-page-header>
@@ -13,16 +13,23 @@
 <div class="p-6 relative min-h-[400px]">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-  <app-empty-state 
-    *ngIf="!isLoading() && !hasData()"
-    icon="health_and_safety"
-    title="No Health Data Found"
-    description="There are no health records to analyze for this farm."
-    actionLabel="Add Health Record"
-    (action)="isLoading.set(true)">
+  <app-empty-state
+    *ngIf="!hasFarm()"
+    icon="agriculture"
+    title="Choose a farm at the top"
+    description="Health analytics are shown per farm. Pick a farm in the selector at the top of the page.">
   </app-empty-state>
 
-  <div *ngIf="!isLoading() && hasData()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <app-empty-state
+    *ngIf="hasFarm() && !isLoading() && !hasData()"
+    icon="health_and_safety"
+    title="Could not load health analytics"
+    description="Something went wrong while loading the numbers for this farm. You can still record treatments, vaccinations and mortality from the Health dashboard."
+    actionLabel="Open Health Dashboard"
+    (action)="goToHealthDashboard()">
+  </app-empty-state>
+
+  <div *ngIf="hasFarm() && !isLoading() && hasData()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     
     <!-- KPI Card: Total Deaths Last 12 Months -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">

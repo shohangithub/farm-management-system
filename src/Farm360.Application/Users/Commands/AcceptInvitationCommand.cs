@@ -1,5 +1,6 @@
 using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Common.Phones;
 using Farm360.Domain.Identity;
 using Farm360.Domain.Identity.Repositories;
 using Farm360.Domain.Tenancy.Repositories;
@@ -91,7 +92,7 @@ public sealed class AcceptInvitationCommandValidator : AbstractValidator<AcceptI
         // confirms its current password, which may predate the current policy.
         RuleFor(x => x.Password!).MeetsPasswordPolicy()
             .When(x => !string.IsNullOrEmpty(x.Password) && !string.IsNullOrWhiteSpace(x.FullName));
-        RuleFor(x => x.Phone!).Matches(@"^\+?[0-9]{6,20}$").WithMessage("Enter a valid phone number.")
+        RuleFor(x => x.Phone!).Must(PhoneNumberNormalizer.IsValid).WithMessage("Enter a valid phone number.")
             .When(x => !string.IsNullOrWhiteSpace(x.Phone));
     }
 }

@@ -27,6 +27,11 @@
     (retry)="main.retry()"
   ></app-error-state>
 
+  <!-- Getting started: setup checklist for new farms (hides itself when done or dismissed) -->
+  <div class="max-w-7xl mx-auto">
+    <app-setup-checklist></app-setup-checklist>
+  </div>
+
   <!-- Main Content -->
   <div *ngIf="data() as dashboard" class="space-y-8 max-w-7xl mx-auto pb-12">
     

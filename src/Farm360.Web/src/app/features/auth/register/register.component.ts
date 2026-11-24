@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/services/auth.service';
+import { PASSWORD_HINT, PASSWORD_PATTERN } from '../../../core/services/account.service';
 
 @Component({
   selector: 'app-register',
@@ -26,10 +27,13 @@ export class RegisterComponent {
     name: ['', Validators.required],
     phone: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s]+$/)]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    // Same rule as the server's Identity password options (8+ with upper, lower, digit, symbol).
+    password: ['', [Validators.required, Validators.pattern(PASSWORD_PATTERN)]],
     farmName: ['', Validators.required],
     trialDays: [7, Validators.required]
   });
+
+  readonly passwordHint = PASSWORD_HINT;
 
   isLoading = signal(false);
   error = signal<string | null>(null);

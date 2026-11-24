@@ -215,6 +215,18 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
                 <p *ngIf="form.get('dosageUnit')?.touched && form.get('dosageUnit')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
               </div>
             </div>
+            <!-- More than on hand: the server records the treatment but takes nothing from stock and books the cost as cash. -->
+            <div
+              *ngIf="stockShortfall() as sf"
+              role="alert"
+              class="md:col-span-3 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800 rounded-lg text-xs flex items-start gap-2"
+            >
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-500 shrink-0">warning</mat-icon>
+              <span>
+                Only {{ sf.available | number: "1.0-3" }} {{ sf.unit }} in stock — nothing will be taken from stock and the cost
+                will be booked as a cash purchase. Record the Stock In first to keep stock correct.
+              </span>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -380,6 +392,8 @@ export class LogTreatmentDialog implements OnInit {
   stockCost = signal<{ qty: number; unit: string; unitCost: number; total: number } | null>(null);
   /** Unit the consumption is entered in (null = the item's base unit). */
   consumptionUnit = signal<UnitSelection | null>(null);
+  /** Set when the quantity (in base units) is more than the item has on hand. */
+  stockShortfall = signal<{ available: number; unit: string } | null>(null);
   /** Last stock value written into the cost, so a vet fee typed on top survives a qty change. */
   private lastStockValue = 0;
   private loadingExisting = false;
@@ -505,6 +519,15 @@ export class LogTreatmentDialog implements OnInit {
     const item = id ? this.inventoryItems().find((i) => i.id === id) : undefined;
     const costControl = this.form.get("costBdt")!;
     const current = Number(costControl.value) || 0;
+
+    // Mirrors TreatmentLoggedStockDeductionHandler: short stock is not deducted at all.
+    // Only for new treatments; an edit's earlier deduction is already in the stock figure.
+    const baseQty = qty * (this.consumptionUnit()?.factor ?? 1);
+    this.stockShortfall.set(
+      item && qty > 0 && !this.isEditMode() && baseQty > (item.currentStock ?? 0)
+        ? { available: item.currentStock ?? 0, unit: item.unitOfMeasure }
+        : null,
+    );
 
     if (!item || qty <= 0) {
       // Medicine no longer from stock: keep only what was added on top of the old stock value.

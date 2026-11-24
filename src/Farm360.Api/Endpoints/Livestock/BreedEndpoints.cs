@@ -18,30 +18,30 @@ public static class BreedEndpoints
         group.MapPost("/breeds", CreateBreed)
             .WithName("CreateBreed")
             .Produces<BreedDto>(201)
-            .RequireAuthorization("Permission:masterdata.write");
+            .RequireAuthorization("Permission:masterdata.manage");
 
         group.MapPut("/breeds/{id:guid}", UpdateBreed)
             .WithName("UpdateBreed")
             .Produces<BreedDto>(200)
             .Produces(404)
-            .RequireAuthorization("Permission:masterdata.write");
+            .RequireAuthorization("Permission:masterdata.manage");
 
         group.MapDelete("/breeds/{id:guid}", DeleteBreed)
             .WithName("DeleteBreed")
             .Produces(204)
             .Produces(404)
-            .RequireAuthorization("Permission:masterdata.write");
+            .RequireAuthorization("Permission:masterdata.manage");
 
         group.MapGet("/breeds", GetBreeds)
             .WithName("GetBreeds")
             .Produces<PagedResult<BreedDto>>()
-            .RequireAuthorization("Permission:masterdata.read");
+            .RequireAuthorization("Permission:masterdata.view|animals.view");
 
         group.MapGet("/breeds/{id:guid}", GetBreedById)
             .WithName("GetBreedById")
             .Produces<BreedDto>()
             .Produces(404)
-            .RequireAuthorization("Permission:masterdata.read");
+            .RequireAuthorization("Permission:masterdata.view|animals.view");
 
         return group;
     }

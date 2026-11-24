@@ -90,3 +90,22 @@ export interface ActivityFeedItem {
   userName: string;
   timestamp: string;
 }
+
+/** Stable keys of the "Get your farm ready" checklist steps, in setup order (server: GetFarmSetupStatusQuery). */
+export type FarmSetupStepKey =
+  | 'sheds' | 'breeds' | 'animals' | 'weights' | 'inventory'
+  | 'recipes' | 'feedChart' | 'plans' | 'accounts' | 'team';
+
+export interface FarmSetupStep {
+  key: FarmSetupStepKey;
+  isDone: boolean;
+  count: number;
+}
+
+export interface FarmSetupStatus {
+  farmId: string;
+  completedSteps: number;
+  totalSteps: number;
+  isComplete: boolean;
+  steps: FarmSetupStep[];
+}

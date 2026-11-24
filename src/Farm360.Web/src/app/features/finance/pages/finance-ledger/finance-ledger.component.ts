@@ -230,6 +230,8 @@ export class FinanceLedgerComponent {
         return { label: 'Livestock', icon: 'pets', bgClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40', textClass: 'text-emerald-700 dark:text-emerald-300' };
       case 'inventory':
         return { label: 'Inventory', icon: 'inventory_2', bgClass: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800/40', textClass: 'text-purple-700 dark:text-purple-300' };
+      case 'fixedassets':
+        return { label: 'Fixed Assets', icon: 'domain', bgClass: 'bg-slate-50 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200 dark:border-slate-800/40', textClass: 'text-slate-700 dark:text-slate-300' };
       default:
         return { label: 'System', icon: 'smart_toy', bgClass: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border-sky-200 dark:border-sky-800/40', textClass: 'text-sky-700 dark:text-sky-300' };
     }

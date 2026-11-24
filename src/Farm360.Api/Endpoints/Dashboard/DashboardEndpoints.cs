@@ -31,6 +31,10 @@ public static class DashboardEndpoints
         group.MapGet("/vaccination-compliance", GetVaccinationCompliance).WithName("GetVaccinationCompliance").WithTags("Dashboard");
         group.MapGet("/farm-summary-cards", GetFarmSummaryCards).WithName("GetFarmSummaryCards").WithTags("Dashboard");
         group.MapGet("/recent-activity", GetRecentActivityFeed).WithName("GetRecentActivityFeed").WithTags("Dashboard");
+        group.MapGet("/setup-status", GetFarmSetupStatus)
+            .WithName("GetFarmSetupStatus")
+            .WithSummary("Gets the onboarding checklist (what is set up and what is next) for the farm.")
+            .WithTags("Dashboard");
     }
 
     /// <summary>
@@ -53,6 +57,20 @@ public static class DashboardEndpoints
 
         var query = new GetExecutiveDashboardQuery(farmId);
         var result = await sender.Send(query);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetFarmSetupStatus(
+        Guid farmId,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser)
+    {
+        if (IsForbiddenFarm(farmId, currentUser))
+        {
+            return Results.Problem("You do not have access to this farm.", statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        var result = await sender.Send(new GetFarmSetupStatusQuery(farmId));
         return Results.Ok(result);
     }
 

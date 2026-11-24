@@ -77,10 +77,11 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs text-blue-800 dark:text-blue-300 flex gap-2">
               <mat-icon class="!text-[16px] !w-[16px] !h-[16px] shrink-0 mt-0.5">info</mat-icon>
               <span>
-                Only expenses posted as Labor Cost, Utilities, Transport, or Miscellaneous that aren't
-                already linked to one animal are picked up. Feed and veterinary costs are allocated
-                separately and are not affected. Re-running a period is safe -- already-allocated
-                transactions are skipped.
+                Labour, utilities, transport, miscellaneous and daily consumables that aren't already
+                linked to one animal are shared out. Feed, vet and medicine costs reach each animal
+                separately. This runs automatically on the 3rd of every month for the previous month --
+                run it yourself only to see the current month early or after entering older expenses.
+                Re-running a period is safe: already-shared expenses are skipped.
               </span>
             </div>
 

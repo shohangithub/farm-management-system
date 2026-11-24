@@ -1,5 +1,6 @@
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Common.Phones;
 using Farm360.Identity.Context;
 using Farm360.Identity.Entities;
 using FluentValidation.Results;
@@ -38,9 +39,14 @@ public sealed class UserAccountService(
 
     public async Task<UserAccountSummary?> FindByPhoneAsync(string phone, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(phone)) return null;
-        var user = await userManager.FindByNameAsync(phone.Trim());
-        return user is null ? null : await SummaryAsync(user.Id, cancellationToken);
+        // Canonical form first, then the value as typed (accounts stored in an older format).
+        foreach (var candidate in PhoneNumberNormalizer.LookupCandidates(phone))
+        {
+            var user = await userManager.FindByNameAsync(candidate);
+            if (user is not null) return await SummaryAsync(user.Id, cancellationToken);
+        }
+
+        return null;
     }
 
     public async Task<UserAccountSummary?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -60,10 +66,11 @@ public sealed class UserAccountService(
 
     public async Task<Guid> CreateUserAsync(string phone, string? email, string fullName, string password, CancellationToken cancellationToken = default)
     {
+        var canonicalPhone = PhoneNumberNormalizer.Normalize(phone) ?? phone;
         var user = new ApplicationUser
         {
-            UserName = phone,
-            PhoneNumber = phone,
+            UserName = canonicalPhone,
+            PhoneNumber = canonicalPhone,
             Email = email,
             IsSystemUser = false,
         };

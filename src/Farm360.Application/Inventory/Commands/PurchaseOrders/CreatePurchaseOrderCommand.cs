@@ -12,7 +12,8 @@ public record CreatePurchaseOrderCommand(
     DateOnly OrderDate,
     DateOnly? ExpectedDeliveryDate,
     string? Notes,
-    IReadOnlyList<PurchaseOrderItemDto> Items) : IRequest<Guid>, ITransactionalCommand;
+    IReadOnlyList<PurchaseOrderItemDto> Items,
+    bool SubmitForApproval = true) : IRequest<Guid>, ITransactionalCommand;
 
 /// <param name="Quantity">In <paramref name="UnitId"/> (e.g. 10 "Bag (50 kg)"), or the base unit when none.</param>
 /// <param name="UnitCostBdt">Price of one <paramref name="UnitId"/>.</param>
@@ -70,6 +71,10 @@ public class CreatePurchaseOrderCommandHandler : IRequestHandler<CreatePurchaseO
                 purchaseOrder.AddItem(item.InventoryItemId, item.Quantity, item.UnitCostBdt);
             }
         }
+
+        // The "Submit PO" button sends the order straight to approval; only an explicit draft stays in Draft.
+        if (request.SubmitForApproval)
+            purchaseOrder.SubmitForApproval();
 
         await _repository.AddAsync(purchaseOrder, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

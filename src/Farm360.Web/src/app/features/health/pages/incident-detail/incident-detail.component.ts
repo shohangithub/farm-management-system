@@ -5,12 +5,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HealthService } from '../../services/health.service';
-import { DiseaseIncidentDetail, IncidentSeverity, IncidentStatus } from '../../models/health.models';
+import { DiseaseIncidentDetail, IncidentAffectedAnimal, IncidentSeverity, IncidentStatus } from '../../models/health.models';
+import { AnimalService } from '../../../livestock/services/animal.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap, map } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 
@@ -64,6 +65,27 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" *ngIf="incident()?.status !== undefined" [ngClass]="getStatusClass(incident()!.status)">
               {{ getStatusName(incident()!.status) }}
             </span>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <label for="incident-status" class="sr-only">Change status</label>
+              <select id="incident-status"
+                class="text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2.5 py-1.5"
+                [disabled]="savingStatus()"
+                (change)="selectedStatus.set($any($event.target).value)">
+                <option *ngFor="let s of statusOptions" [value]="s" [selected]="s === (selectedStatus() ?? incident()!.status)">{{ getStatusName(s) }}</option>
+              </select>
+              <button type="button"
+                class="px-3 py-1.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                [disabled]="savingStatus() || !selectedStatus() || selectedStatus() === incident()!.status"
+                (click)="updateStatus()">
+                {{ savingStatus() ? 'Saving...' : 'Update Status' }}
+              </button>
+            </div>
+            <p *ngIf="statusError()" class="mt-2 text-xs text-rose-600 dark:text-rose-400">{{ statusError() }}</p>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Animals Affected</div>
+            <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident()?.affectedAnimalCount ?? 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Count entered when the incident was reported</div>
           </div>
         </div>
 
@@ -90,29 +112,32 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
             <mat-icon class="mr-2 text-gray-400">pets</mat-icon> Affected Animals
           </h2>
-          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">{{ incident()?.affectedAnimals?.length || 0 }}</span>
+          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full" matTooltip="Animals affected (reported count)">{{ incident()?.affectedAnimalCount ?? 0 }}</span>
         </div>
-        
-        <ul class="space-y-3" *ngIf="incident()?.affectedAnimals?.length">
-          <li *ngFor="let animal of incident()?.affectedAnimals" class="flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 transition-colors">
+        <p *ngIf="affectedAnimals().length" class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          {{ affectedAnimals().length }} tracked individually
+        </p>
+
+        <ul class="space-y-3" *ngIf="affectedAnimals().length">
+          <li *ngFor="let animal of affectedAnimals()" class="flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 transition-colors">
             <div class="flex items-center">
               <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mr-3 border border-indigo-200 dark:border-indigo-800">
                 <mat-icon class="text-indigo-600 dark:text-indigo-400">pets</mat-icon>
               </div>
               <div>
                 <div class="text-sm font-bold text-gray-900 dark:text-white">{{ animal.tagNumber }}</div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">{{ animal.species }} - {{ animal.breedName }}</div>
+                <div *ngIf="animal.species || animal.breedName" class="text-xs text-gray-500 dark:text-gray-400">{{ animal.species }}<span *ngIf="animal.species && animal.breedName"> - </span>{{ animal.breedName }}</div>
               </div>
             </div>
-            <button mat-icon-button color="primary" [routerLink]="['/livestock/animal', animal.animalId]" matTooltip="View Animal" aria-label="View Animal">
+            <button mat-icon-button color="primary" [routerLink]="['/livestock', animal.animalId]" matTooltip="View Animal" aria-label="View Animal">
               <mat-icon>chevron_right</mat-icon>
             </button>
           </li>
         </ul>
-        
-        <div *ngIf="!incident()?.affectedAnimals?.length" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+
+        <div *ngIf="!affectedAnimals().length" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
           <mat-icon class="text-gray-400 mb-2">info_outline</mat-icon>
-          <p class="text-sm text-gray-500">No individual animals explicitly tracked for this incident.</p>
+          <p class="text-sm text-gray-500">{{ incident()?.affectedAnimalCount ?? 0 }} animal(s) reported affected. No individual animals are tracked for this incident.</p>
         </div>
       </div>
     </div>
@@ -124,6 +149,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 export class IncidentDetailComponent {
   private route = inject(ActivatedRoute);
   private healthService = inject(HealthService);
+  private animalService = inject(AnimalService);
 
   isLoading = signal(true);
   error = signal('');
@@ -159,8 +185,55 @@ export class IncidentDetailComponent {
     { initialValue: null }
   );
 
+  /** Display details for the individually tracked animals (the server only sends their ids). */
+  affectedAnimals = toSignal(
+    toObservable(this.incident).pipe(
+      switchMap(inc => {
+        const ids = inc?.affectedAnimalIds ?? [];
+        if (!ids.length) return of([] as IncidentAffectedAnimal[]);
+        return forkJoin(ids.map(id => this.animalService.getById(id).pipe(
+          map((a): IncidentAffectedAnimal => ({ animalId: id, tagNumber: a.tagId, species: a.species, breedName: a.breedName })),
+          catchError(() => of<IncidentAffectedAnimal>({ animalId: id, tagNumber: id.slice(0, 8) }))
+        )));
+      })
+    ),
+    { initialValue: [] as IncidentAffectedAnimal[] }
+  );
+
+  readonly statusOptions: IncidentStatus[] = [
+    IncidentStatus.Reported,
+    IncidentStatus.UnderTreatment,
+    IncidentStatus.Contained,
+    IncidentStatus.Resolved
+  ];
+  /** Status picked in the dropdown but not saved yet; null = same as the saved status. */
+  readonly selectedStatus = signal<IncidentStatus | null>(null);
+  readonly savingStatus = signal(false);
+  readonly statusError = signal<string | null>(null);
+
   loadIncident() {
     this.refreshTrigger.update(v => v + 1);
+  }
+
+  updateStatus(): void {
+    const inc = this.incident();
+    const status = this.selectedStatus();
+    if (!inc || !status || status === inc.status) return;
+
+    this.savingStatus.set(true);
+    this.statusError.set(null);
+    // The endpoint also sets the affected count, so send the current one unchanged.
+    this.healthService.updateIncidentStatus(inc.id, status, inc.affectedAnimalCount).subscribe({
+      next: () => {
+        this.savingStatus.set(false);
+        this.selectedStatus.set(null);
+        this.loadIncident();
+      },
+      error: (err) => {
+        this.savingStatus.set(false);
+        this.statusError.set(parseApiError(err, 'Could not update the incident status.'));
+      }
+    });
   }
 
   getSeverityName(severity: IncidentSeverity): string {

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ExecutiveDashboardData, HerdComposition, AdgTrend, FeedCostTrend, VaccinationCompliance, FarmSummaryCard, ActivityFeedItem } from '../models/dashboard.model';
+import { ExecutiveDashboardData, HerdComposition, AdgTrend, FeedCostTrend, VaccinationCompliance, FarmSummaryCard, ActivityFeedItem, FarmSetupStatus } from '../models/dashboard.model';
 
 @Injectable({
   providedIn: 'root'
@@ -37,5 +37,10 @@ export class DashboardService {
 
   getRecentActivityFeed(farmId: string): Observable<ActivityFeedItem[]> {
     return this.http.get<ActivityFeedItem[]>(`${this.baseUrl}/${farmId}/dashboard/recent-activity`);
+  }
+
+  /** The onboarding checklist: which setup steps this farm has done. */
+  getSetupStatus(farmId: string): Observable<FarmSetupStatus> {
+    return this.http.get<FarmSetupStatus>(`${this.baseUrl}/${farmId}/dashboard/setup-status`);
   }
 }

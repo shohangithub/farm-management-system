@@ -1,4 +1,5 @@
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Common.Phones;
 using Farm360.Application.Users;
 using FluentValidation;
 using MediatR;
@@ -102,12 +103,13 @@ public sealed class RequestPasswordResetCommandHandler(
         }
     }
 
-    private async Task SendIfAccountExistsAsync(string phone, CancellationToken cancellationToken)
+    private async Task SendIfAccountExistsAsync(string typedPhone, CancellationToken cancellationToken)
     {
-
         // Same outcome whether or not the phone has an account (no user enumeration).
-        var account = await accounts.FindByPhoneAsync(phone, cancellationToken);
+        // The lookup tries the canonical form and the typed one; the OTP is keyed on the canonical form.
+        var account = await accounts.FindByPhoneAsync(typedPhone, cancellationToken);
         if (account is null) return;
+        var phone = PhoneNumberNormalizer.Normalize(typedPhone) ?? typedPhone;
 
         if (await otp.IsLockedOutAsync(phone, cancellationToken))
         {
@@ -147,11 +149,13 @@ public sealed class VerifyPasswordResetCodeCommandHandler(
 {
     public async Task<PasswordResetTokenDto> Handle(VerifyPasswordResetCodeCommand request, CancellationToken cancellationToken)
     {
-        var phone = request.Phone.Trim();
+        var typedPhone = request.Phone.Trim();
+        // Same canonical form the reset request keyed the OTP on.
+        var phone = PhoneNumberNormalizer.Normalize(typedPhone) ?? typedPhone;
 
         // OTP lockout (3 wrong codes → 15 min) is enforced inside IOtpService.VerifyAsync.
         var verified = await otp.VerifyAsync(phone, request.Code.Trim(), OtpPurpose.PasswordReset, cancellationToken);
-        var account = (verified ? await accounts.FindByPhoneAsync(phone, cancellationToken) : null)
+        var account = (verified ? await accounts.FindByPhoneAsync(typedPhone, cancellationToken) : null)
             ?? throw Fail.Validation(nameof(request.Code), PasswordReset.InvalidCodeMessage);
 
         var resetToken = SecureTokens.Generate();

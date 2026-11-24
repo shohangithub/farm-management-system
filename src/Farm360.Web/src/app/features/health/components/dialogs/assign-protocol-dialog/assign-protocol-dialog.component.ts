@@ -127,7 +127,7 @@ export class AssignProtocolDialog {
   constructor() {
     this.form = this.fb.group({
       animalIds: [[], [Validators.required, Validators.minLength(1)]],
-      startDate: [new Date(), Validators.required]
+      startDate: [toLocalIsoDate(), Validators.required] // local 'yyyy-MM-dd'; a Date object shows blank
     });
   }
 
@@ -166,7 +166,7 @@ export class AssignProtocolDialog {
       farmId: farmId,
       protocolId: this.data.protocol.id,
       animalIds: animalIdArray,
-      startDate: toLocalIsoDate(new Date(val.startDate))
+      startDate: val.startDate // already a local 'yyyy-MM-dd' string
     };
 
     this.healthService.assignProtocolToAnimals(request).subscribe({

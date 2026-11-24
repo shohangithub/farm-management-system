@@ -127,7 +127,7 @@ public static class MemberAuthority
 internal static class Contact
 {
     public static string? NormalizePhone(string? phone) =>
-        string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
+        Farm360.Application.Common.Phones.PhoneNumberNormalizer.Normalize(phone);
 
     public static string? NormalizeEmail(string? email) =>
         string.IsNullOrWhiteSpace(email) ? null : email.Trim().ToLowerInvariant();

@@ -158,7 +158,7 @@ export class ScheduleVaccinationDialog {
       animalId: ['', Validators.required],
       vaccineName: ['', Validators.required],
       batchNumber: [''],
-      scheduledDate: [new Date(), Validators.required],
+      scheduledDate: [toLocalIsoDate(), Validators.required], // local 'yyyy-MM-dd'; a Date object shows blank
       notes: [''],
       inventoryItemId: [null],
       dosageQuantity: [null, [Validators.min(0)]]
@@ -191,7 +191,8 @@ export class ScheduleVaccinationDialog {
     this.error.set('');
 
     const val = this.form.value;
-    const formattedDate = toLocalIsoDate(new Date(val.scheduledDate));
+    // Already a local 'yyyy-MM-dd' string from the date input.
+    const formattedDate: string = val.scheduledDate;
 
     this.healthService.scheduleVaccination(
       val.animalId, 

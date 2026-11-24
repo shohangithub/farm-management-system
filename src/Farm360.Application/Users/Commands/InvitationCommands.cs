@@ -3,6 +3,7 @@ using System.Net;
 using Farm360.Application.Common.Behaviors;
 using Farm360.Application.Common.Exceptions;
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Common.Phones;
 using Farm360.Domain.Identity;
 using Farm360.Domain.Identity.Repositories;
 using Farm360.Domain.Organizations.Repositories;
@@ -83,7 +84,7 @@ public sealed class CreateInvitationCommandValidator : AbstractValidator<CreateI
             .Must(x => !string.IsNullOrWhiteSpace(x.Phone) || !string.IsNullOrWhiteSpace(x.Email))
             .WithName("Phone")
             .WithMessage("Enter a phone number or an email address.");
-        RuleFor(x => x.Phone!).Matches(@"^\+?[0-9]{6,20}$").WithMessage("Enter a valid phone number (digits only, optional +).")
+        RuleFor(x => x.Phone!).Must(PhoneNumberNormalizer.IsValid).WithMessage("Enter a valid phone number (digits only, optional +).")
             .When(x => !string.IsNullOrWhiteSpace(x.Phone));
         RuleFor(x => x.Email!).EmailAddress().MaximumLength(256)
             .When(x => !string.IsNullOrWhiteSpace(x.Email));

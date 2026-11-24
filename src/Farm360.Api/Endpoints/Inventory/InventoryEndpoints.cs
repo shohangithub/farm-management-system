@@ -347,6 +347,29 @@ public static class InventoryEndpoints
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
         .WithName("ApprovePurchaseOrder");
 
+        group.MapPost("/purchase-orders/{id:guid}/submit", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new SubmitPurchaseOrderCommand(id), ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("SubmitPurchaseOrder");
+
+        group.MapPost("/purchase-orders/{id:guid}/cancel", async (
+            Guid id,
+            [FromBody] CancelPurchaseOrderRequest? request,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new CancelPurchaseOrderCommand(id, request?.Reason), ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
+        .WithName("CancelPurchaseOrder");
+
         group.MapPost("/purchase-orders/{id:guid}/fulfill", async (
             Guid id,
             [FromBody] FulfillPurchaseOrderRequest? request,
@@ -579,8 +602,9 @@ public static class InventoryEndpoints
             ISender sender,
             CancellationToken ct) =>
         {
-            var count = await sender.Send(command, ct);
-            return Results.Ok(new { confirmedCount = count });
+            // Confirmed count plus the entries that failed and why (e.g. not enough stock).
+            var result = await sender.Send(command, ct);
+            return Results.Ok(result);
         })
         .RequireAuthorization($"Permission:{PermissionConstants.InventoryModule.Edit}")
         .WithName("BulkConfirmDailyConsumableEntries");
@@ -609,3 +633,5 @@ public sealed record CancelPurchaseReturnRequest(string Reason);
 
 /// <summary>Receipt of a purchase order. Leave <paramref name="Credit"/> out when paid in cash.</summary>
 public sealed record FulfillPurchaseOrderRequest(Farm360.Contracts.Finance.CreditTermsRequest? Credit = null);
+
+public sealed record CancelPurchaseOrderRequest(string? Reason = null);

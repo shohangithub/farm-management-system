@@ -85,6 +85,25 @@ interface GroupedPlanEntries {
       </div>
     </app-page-header>
 
+    <!-- Entries "Confirm All" could not confirm, and why -->
+    <div *ngIf="bulkFailures().length && bulkFailuresDate() === selectedDate()" role="alert"
+      class="mb-6 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2 font-bold text-sm">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-500">warning</mat-icon>
+          {{ bulkFailures().length }} {{ bulkFailures().length === 1 ? 'entry was' : 'entries were' }} not confirmed
+        </div>
+        <button type="button" (click)="bulkFailures.set([])" aria-label="Dismiss"
+          class="p-1 -m-1 text-amber-700 hover:text-amber-900 dark:text-amber-300 rounded-lg">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon>
+        </button>
+      </div>
+      <ul class="mt-2 space-y-1 text-xs list-disc pl-6">
+        <li *ngFor="let f of bulkFailures()"><b>{{ f.itemName }}</b>: {{ f.reason }}</li>
+      </ul>
+      <p class="mt-2 mb-0 text-xs text-amber-800 dark:text-amber-200">These are still pending. Fix the cause (for example, record the Stock In) and confirm them again.</p>
+    </div>
+
     <!-- KPI Summary Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
       
@@ -271,6 +290,10 @@ export class DailyConsumableDashboardComponent {
   readonly loading = signal(true);
   readonly generating = signal(false);
   readonly bulkConfirming = signal(false);
+  /** Entries the last "Confirm All" could not confirm, with the reason (e.g. not enough stock). */
+  readonly bulkFailures = signal<{ itemName: string; reason: string }[]>([]);
+  /** Day those failures belong to; the list is hidden on other days. */
+  readonly bulkFailuresDate = signal<string | null>(null);
   readonly selectedDate = signal<string>(toLocalIsoDate());
   private readonly refreshTrigger = signal(0);
   readonly loadError = signal<string | null>(null);
@@ -418,13 +441,24 @@ export class DailyConsumableDashboardComponent {
     if (!farmId) return;
 
     this.bulkConfirming.set(true);
+    this.bulkFailures.set([]);
+    const entryDate = this.selectedDate();
     this.inventoryService.bulkConfirmDailyConsumables({
       farmId,
-      entryDate: this.selectedDate()
+      entryDate
     }).subscribe({
       next: res => {
         this.bulkConfirming.set(false);
-        this.notify.success(`Confirmed ${res.confirmedCount} daily consumable entries.`);
+        const failed = res.failed ?? [];
+        // Name each failed entry from the list on screen.
+        const names = new Map(this.entries().map(e => [e.id, e.itemName]));
+        this.bulkFailuresDate.set(entryDate);
+        this.bulkFailures.set(failed.map(f => ({ itemName: names.get(f.entryId) ?? 'Entry', reason: f.reason })));
+        if (failed.length) {
+          this.notify.warning(`Confirmed ${res.confirmedCount}; ${failed.length} could not be confirmed — see the list on the page.`);
+        } else {
+          this.notify.success(`Confirmed ${res.confirmedCount} daily consumable entries.`);
+        }
         this.refreshTrigger.update(v => v + 1);
       },
       error: () => {

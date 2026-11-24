@@ -25,7 +25,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
   template: `
 <app-page-header 
   title="Deworming Calendar" 
-  description="Manage scheduled deworming and vaccination events."
+  description="Doses scheduled by deworming protocols. Vaccinations are listed under Due Vaccinations."
   icon="event_note" 
   iconColor="text-emerald-600">
   <div actions class="flex items-center gap-2">
@@ -181,7 +181,7 @@ export class DewormingCalendarComponent {
         orientation: 'landscape',
         header: {
           title: 'Deworming & Parasite Control Schedule',
-          subtitle: 'Scheduled Deworming & Preventive Healthcare Calendar',
+          subtitle: 'Doses scheduled by deworming protocols',
           farmName: farm?.name || 'Primary Farm',
           orgName: org?.name || 'Farm360 Enterprise',
           currency: 'BDT (৳)',

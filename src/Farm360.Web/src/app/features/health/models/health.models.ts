@@ -216,13 +216,17 @@ export interface AnimalHealthHistoryDto {
   treatments: MedicalTreatmentDto[];
 }
 
+/** Matches the server's DiseaseIncidentDetailDto: only the ids of individually tracked animals are sent. */
 export interface DiseaseIncidentDetail extends DiseaseIncidentDto {
-  affectedAnimals: {
-    animalId: string;
-    tagNumber: string;
-    species: string;
-    breedName: string;
-  }[];
+  affectedAnimalIds: string[];
+}
+
+/** An individually tracked animal on an incident, with display details looked up on the client. */
+export interface IncidentAffectedAnimal {
+  animalId: string;
+  tagNumber: string;
+  species?: string;
+  breedName?: string;
 }
 
 export interface DewormingCalendarDto {

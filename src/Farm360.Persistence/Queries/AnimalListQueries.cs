@@ -54,8 +54,14 @@ internal sealed class AnimalListQueries(ApplicationDbContext context) : IAnimalL
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {
-            var normalized = filter.SearchTerm.Trim().ToUpperInvariant();
-            query = query.Where(a => a.Tag.TagId.Contains(normalized));
+            var term = filter.SearchTerm.Trim();
+            var normalized = term.ToUpperInvariant();
+            var breedPattern = $"%{term}%";
+            var breeds = context.Breeds;
+            // Tag IDs are stored upper-case; breed names match via LIKE (case-insensitive collation).
+            query = query.Where(a =>
+                a.Tag.TagId.Contains(normalized) ||
+                breeds.Any(b => b.Id == a.BreedId && EF.Functions.Like(b.Name, breedPattern)));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

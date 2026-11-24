@@ -1,6 +1,8 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, distinctUntilChanged, map, of, switchMap, tap } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
@@ -35,24 +37,21 @@ echarts.use([PieChart, LineChart, TitleComponent, TooltipComponent, GridComponen
 export class BreedingDashboardComponent {
   private analyticsService = inject(AnalyticsService);
   private workingContext = inject(WorkingContextService);
+  private router = inject(Router);
 
-  private farmId = computed(() => this.workingContext.currentFarmValue?.id);
+  /** The farm picked in the context selector; the page re-loads whenever it changes. */
+  private farm = toSignal(this.workingContext.currentFarm$, { initialValue: this.workingContext.currentFarmValue });
+  public hasFarm = computed(() => !!this.farm()?.id);
 
-  // Derive the query observable, mapping empty farmId to null so we don't query
-  private breedingData$ = computed(() => {
-    const id = this.farmId();
-    if (!id) return null;
-    return this.analyticsService.getBreedingAnalytics(id);
+  public isLoading = signal(false);
+  public loadFailed = signal(false);
+  private data = signal<BreedingAnalyticsDto | null>(null);
+
+  /** All-zero analytics means the farm has no breeding records yet. */
+  public hasData = computed(() => {
+    const d = this.data();
+    return !!d && (d.totalConfirmedPregnancies > 0 || d.expectedCalvingsNext30Days > 0 || d.conceptionRatePercentage > 0);
   });
-
-  // Use toSignal to automatically subscribe/unsubscribe and turn the Observable into a Signal
-  public isLoading = signal(true);
-  
-  // We'll fetch data when the component initializes, using the current farm ID.
-  
-  private data = toSignal(this.analyticsService.getBreedingAnalytics(this.workingContext.currentFarmValue?.id || ''));
-
-  public hasData = computed(() => !!this.data());
 
   public chartOptions = computed(() => {
     const data = this.data();
@@ -90,7 +89,7 @@ export class BreedingDashboardComponent {
           },
           data: [
             { value: data.conceptionRatePercentage, name: 'Conception Rate' },
-            { value: 100 - data.conceptionRatePercentage, name: 'Failed' }
+            { value: 100 - data.conceptionRatePercentage, name: 'Did Not Conceive' }
           ]
         }
       ]
@@ -98,15 +97,37 @@ export class BreedingDashboardComponent {
   });
 
   constructor() {
-    effect(() => {
-      // Manage loading state
-      if (this.data()) {
-        this.isLoading.set(false);
-      }
-    }, { allowSignalWrites: true });
+    this.workingContext.currentFarm$.pipe(
+      map(f => f?.id ?? null),
+      distinctUntilChanged(),
+      tap(id => {
+        this.data.set(null);
+        this.loadFailed.set(false);
+        this.isLoading.set(!!id);
+      }),
+      switchMap(id => !id ? of(null) : this.analyticsService.getBreedingAnalytics(id).pipe(
+        catchError(() => {
+          this.loadFailed.set(true);
+          return of(null);
+        })
+      )),
+      takeUntilDestroyed()
+    ).subscribe(result => {
+      this.data.set(result);
+      this.isLoading.set(false);
+    });
+  }
+
+  public printReport(): void {
+    window.print();
+  }
+
+  /** Breeding is recorded on a female animal's page (Breeding History tab). */
+  public goToAnimals(): void {
+    this.router.navigate(['/livestock']);
   }
 
   public get dataValue(): BreedingAnalyticsDto | undefined {
-    return this.data() as BreedingAnalyticsDto | undefined;
+    return this.data() ?? undefined;
   }
 }

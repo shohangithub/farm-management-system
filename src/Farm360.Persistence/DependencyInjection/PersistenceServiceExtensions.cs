@@ -107,6 +107,7 @@ public static class PersistenceServiceExtensions
         
         // ── Dashboard repositories ──────────────────────────────────────────────
         services.AddScoped<Farm360.Domain.Dashboard.Interfaces.IExecutiveDashboardRepository, Farm360.Persistence.Repositories.Dashboard.ExecutiveDashboardRepository>();
+        services.AddScoped<Farm360.Domain.Dashboard.Interfaces.IFarmSetupStatusRepository, Farm360.Persistence.Repositories.Dashboard.FarmSetupStatusRepository>();
 
         // ── Finance repositories ──────────────────────────────────────────────
         services.AddScoped<Farm360.Application.Finance.Repositories.IFinancialTransactionRepository, Farm360.Persistence.Repositories.Finance.FinancialTransactionRepository>();

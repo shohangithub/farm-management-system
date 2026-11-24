@@ -7,6 +7,7 @@ import {
   VaccinationProtocolDto,
   MedicalTreatmentDto,
   DiseaseIncidentDto,
+  DiseaseIncidentDetail,
   MortalityRecordDto,
   VetVisitDto,
   HealthDashboardDto,
@@ -142,8 +143,8 @@ export class HealthService {
     return this.http.get<PagedResult<DiseaseIncidentDto>>(`${this.apiUrl}/incidents`, { params: httpParams });
   }
 
-  getIncidentDetails(id: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/incidents/${id}`);
+  getIncidentDetails(id: string): Observable<DiseaseIncidentDetail> {
+    return this.http.get<DiseaseIncidentDetail>(`${this.apiUrl}/incidents/${id}`);
   }
 
   reportIncident(data: any): Observable<{ id: string }> {

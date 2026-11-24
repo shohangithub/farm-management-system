@@ -261,6 +261,8 @@ export interface CreatePurchaseOrderRequest {
   expectedDeliveryDate?: string;
   notes?: string;
   items: PurchaseOrderItemDto[];
+  /** True (server default) sends the order straight to Pending Approval; false keeps it as a Draft. */
+  submitForApproval?: boolean;
 }
 
 export interface PurchaseOrderParams {
@@ -494,6 +496,18 @@ export interface ConfirmDailyConsumableEntryRequest {
 export interface BulkConfirmDailyConsumablesRequest {
   farmId: string;
   entryDate: string;
+}
+
+/** An entry "Confirm All" could not confirm, and why (e.g. not enough stock). */
+export interface BulkConfirmFailure {
+  entryId: string;
+  inventoryItemId: string;
+  reason: string;
+}
+
+export interface BulkConfirmDailyConsumablesResult {
+  confirmedCount: number;
+  failed: BulkConfirmFailure[];
 }
 
 export interface SkipDailyConsumableEntryRequest {

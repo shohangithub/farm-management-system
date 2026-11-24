@@ -21,6 +21,7 @@ import { FeedCostTrendChartComponent } from '../../widgets/feed-cost-trend-chart
 import { VaccinationComplianceChartComponent } from '../../widgets/vaccination-compliance-chart/vaccination-compliance-chart';
 import { FarmSummaryCardsComponent } from '../../widgets/farm-summary-cards/farm-summary-cards';
 import { RecentActivityFeedComponent } from '../../widgets/recent-activity-feed/recent-activity-feed';
+import { SetupChecklistComponent } from '../../widgets/setup-checklist/setup-checklist';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 @Component({
@@ -39,7 +40,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     FeedCostTrendChartComponent,
     VaccinationComplianceChartComponent,
     FarmSummaryCardsComponent,
-    RecentActivityFeedComponent
+    RecentActivityFeedComponent,
+    SetupChecklistComponent
   ],
   templateUrl: './executive-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

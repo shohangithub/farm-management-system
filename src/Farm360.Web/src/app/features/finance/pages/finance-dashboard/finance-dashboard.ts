@@ -17,13 +17,14 @@ import { ExpenseFormDialogComponent } from '../../components/expense-form-dialog
 import { AllocateOverheadDialogComponent } from '../../components/allocate-overhead-dialog/allocate-overhead-dialog';
 import { MonthlyCashFlowPoint } from '../../models/finance.model';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 
 @Component({
   selector: 'app-finance-dashboard',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [MoneyPipe, HasPermissionDirective, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterLink,

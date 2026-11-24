@@ -246,9 +246,14 @@ public sealed class AnimalRepository(ApplicationDbContext context) : IAnimalRepo
         // ── Full-text search: TagId or BreedName ──────────────────────────────
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var normalized = searchTerm.Trim().ToUpperInvariant();
+            var term = searchTerm.Trim();
+            var normalized = term.ToUpperInvariant();
+            var breedPattern = $"%{term}%";
+            var breeds = context.Breeds;
+            // Tag IDs are stored upper-case; breed names match via LIKE (case-insensitive collation).
             query = query.Where(a =>
-                a.Tag.TagId.Contains(normalized));
+                a.Tag.TagId.Contains(normalized) ||
+                breeds.Any(b => b.Id == a.BreedId && EF.Functions.Like(b.Name, breedPattern)));
         }
 
         // ── Count (before pagination) ─────────────────────────────────────────

@@ -4,7 +4,24 @@
   primaryActionLabel="Register Animal"
   primaryActionIcon="add"
   (primaryAction)="onRegister()">
-  <div actions class="flex items-center gap-2 no-print">
+  <div actions class="flex flex-wrap items-center gap-2 no-print">
+    <!-- Livestock sub-pages -->
+    <a routerLink="/livestock/batches"
+      class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-750 rounded-xl transition-all shadow-xs inline-flex items-center gap-2">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-indigo-600 dark:text-indigo-400">workspaces</mat-icon>
+      <span>Batches</span>
+    </a>
+    <a routerLink="/livestock/breeds"
+      class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-750 rounded-xl transition-all shadow-xs inline-flex items-center gap-2">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-600 dark:text-amber-400">category</mat-icon>
+      <span>Breeds</span>
+    </a>
+    <a routerLink="/livestock/breeding-analytics"
+      class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-750 rounded-xl transition-all shadow-xs inline-flex items-center gap-2">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-rose-600 dark:text-rose-400">favorite</mat-icon>
+      <span>Breeding Analytics</span>
+    </a>
+
     <!-- SAP Master Report Export Dropdown -->
     <button 
       [matMenuTriggerFor]="exportMenu" 

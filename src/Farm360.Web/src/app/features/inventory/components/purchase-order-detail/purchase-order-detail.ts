@@ -41,6 +41,14 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Back to List
         </button>
+        <button *ngIf="canCancel()" (click)="onCancel()"
+          class="px-4 py-2 text-sm font-semibold text-red-700 bg-white border border-red-300 hover:bg-red-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">cancel</mat-icon> Cancel PO
+        </button>
+        <button *ngIf="po()?.status === PurchaseOrderStatus.Draft" (click)="onSubmit()"
+          class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">send</mat-icon> Submit for Approval
+        </button>
         <button *ngIf="po()?.status === PurchaseOrderStatus.PendingApproval" (click)="onApprove()"
           class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon> Approve PO
@@ -255,6 +263,73 @@ export class PurchaseOrderDetail {
           error: (err) => {
             this.loading.set(false);
             this.error.set(err?.error?.detail || 'Failed to approve PO');
+          }
+        });
+      }
+    });
+  }
+
+  /** Draft, Pending Approval and Approved orders can be cancelled; Fulfilled and Cancelled cannot. */
+  canCancel(): boolean {
+    const status = this.po()?.status;
+    return status === PurchaseOrderStatus.Draft
+      || status === PurchaseOrderStatus.PendingApproval
+      || status === PurchaseOrderStatus.Approved;
+  }
+
+  onSubmit(): void {
+    const data = this.po();
+    if (!data) return;
+
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
+      width: '450px',
+      panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
+      data: {
+        title: 'Submit for Approval',
+        message: `Send PO #${data.poNumber} for approval? Items can still be reviewed before it is approved.`,
+        confirmButtonText: 'Submit',
+        cancelButtonText: 'Back'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.loading.set(true);
+        this.inventoryService.submitPurchaseOrder(data.id).subscribe({
+          next: () => this.reload(),
+          error: (err) => {
+            this.loading.set(false);
+            this.error.set(parseApiError(err, 'Failed to submit PO'));
+          }
+        });
+      }
+    });
+  }
+
+  onCancel(): void {
+    const data = this.po();
+    if (!data) return;
+
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
+      width: '450px',
+      panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
+      data: {
+        title: 'Cancel Purchase Order',
+        message: `Cancel PO #${data.poNumber}? It can no longer be approved or received. This cannot be undone.`,
+        confirmButtonText: 'Cancel PO',
+        cancelButtonText: 'Keep PO',
+        isDestructive: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.loading.set(true);
+        this.inventoryService.cancelPurchaseOrder(data.id, 'Cancelled from the purchase order page').subscribe({
+          next: () => this.reload(),
+          error: (err) => {
+            this.loading.set(false);
+            this.error.set(parseApiError(err, 'Failed to cancel PO'));
           }
         });
       }

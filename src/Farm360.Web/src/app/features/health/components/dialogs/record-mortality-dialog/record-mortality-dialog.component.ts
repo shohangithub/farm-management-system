@@ -11,6 +11,7 @@ import { AnimalPickerComponent } from '../../../../../shared/components/animal-p
 import { WorkingContextService } from '../../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-record-mortality-dialog',
@@ -75,10 +76,11 @@ import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
             </div>
           </div>
 
-          <div *ngIf="form.get('causeOfDeath')?.value === 1" class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Disease Name</label>
-            <input type="text" formControlName="diseaseName" placeholder="e.g. Unknown Disease"
+          <div *ngIf="form.get('causeOfDeath')?.value === CauseOfDeath.Disease" class="space-y-1.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Disease Name <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="diseaseName" placeholder="e.g. Foot and Mouth Disease"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+            <p *ngIf="form.get('diseaseName')?.touched && form.get('diseaseName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">Disease name is required when the cause is Disease.</p>
           </div>
 
           <div class="space-y-1.5">
@@ -135,6 +137,7 @@ export class RecordMortalityDialog {
   private data = inject<{ animalId?: string } | null>(MAT_DIALOG_DATA, { optional: true });
 
   form: FormGroup;
+  readonly CauseOfDeath = CauseOfDeath;
   isSubmitting = signal(false);
   error = signal('');
   causes = [
@@ -148,11 +151,23 @@ export class RecordMortalityDialog {
   constructor() {
     this.form = this.fb.group({
       animalId: [this.data?.animalId ?? '', Validators.required],
-      deathDate: [new Date(), Validators.required],
+      // <input type="date"> needs a local 'yyyy-MM-dd' string; a Date object shows blank.
+      deathDate: [toLocalIsoDate(), Validators.required],
       causeOfDeath: [CauseOfDeath.Unknown, Validators.required],
       diseaseName: [''],
       postMortemNotes: [''],
       estimatedEconomicLossBdt: [0, Validators.min(0)]
+    });
+
+    // The server requires a disease name when the cause is Disease.
+    const diseaseName = this.form.get('diseaseName')!;
+    this.form.get('causeOfDeath')!.valueChanges.pipe(takeUntilDestroyed()).subscribe(cause => {
+      if (cause === CauseOfDeath.Disease) {
+        diseaseName.setValidators([Validators.required, Validators.pattern(/\S/)]);
+      } else {
+        diseaseName.clearValidators();
+      }
+      diseaseName.updateValueAndValidity();
     });
   }
 
@@ -178,9 +193,11 @@ export class RecordMortalityDialog {
     const request = {
       farmId: farmId,
       animalId: val.animalId,
-      deathDate: toLocalIsoDate(new Date(val.deathDate)),
-      causeOfDeath: Number(val.causeOfDeath),
-      diseaseName: val.causeOfDeath === CauseOfDeath.Disease ? val.diseaseName : null,
+      // Already a local 'yyyy-MM-dd' string from the date input.
+      deathDate: val.deathDate,
+      // Sent by name; the API reads enums as strings (Number() of 'Disease' gave NaN -> null).
+      causeOfDeath: val.causeOfDeath,
+      diseaseName: val.causeOfDeath === CauseOfDeath.Disease ? (val.diseaseName ?? '').trim() : null,
       postMortemNotes: val.postMortemNotes,
       estimatedEconomicLossBdt: val.estimatedEconomicLossBdt,
       recordedByUserId: '00000000-0000-0000-0000-000000000000'

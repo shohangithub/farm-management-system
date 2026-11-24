@@ -161,9 +161,15 @@ public sealed class ConfirmDailyConsumableEntryCommandHandler : IRequestHandler<
 
 public sealed record BulkConfirmDailyConsumableEntriesCommand(
     Guid FarmId,
-    DateOnly EntryDate) : IRequest<int>;
+    DateOnly EntryDate) : IRequest<BulkConfirmDailyConsumablesResult>;
 
-public sealed class BulkConfirmDailyConsumableEntriesCommandHandler : IRequestHandler<BulkConfirmDailyConsumableEntriesCommand, int>
+/// <summary>An entry "Confirm All" could not confirm, and why (e.g. not enough stock).</summary>
+public sealed record BulkConfirmFailure(Guid EntryId, Guid InventoryItemId, string Reason);
+
+/// <summary>Outcome of "Confirm All": how many were confirmed and which entries failed.</summary>
+public sealed record BulkConfirmDailyConsumablesResult(int ConfirmedCount, IReadOnlyList<BulkConfirmFailure> Failed);
+
+public sealed class BulkConfirmDailyConsumableEntriesCommandHandler : IRequestHandler<BulkConfirmDailyConsumableEntriesCommand, BulkConfirmDailyConsumablesResult>
 {
     private readonly IDailyConsumableEntryRepository _entryRepository;
     private readonly ISender _sender;
@@ -179,12 +185,13 @@ public sealed class BulkConfirmDailyConsumableEntriesCommandHandler : IRequestHa
         _logger = logger;
     }
 
-    public async Task<int> Handle(BulkConfirmDailyConsumableEntriesCommand request, CancellationToken cancellationToken)
+    public async Task<BulkConfirmDailyConsumablesResult> Handle(BulkConfirmDailyConsumableEntriesCommand request, CancellationToken cancellationToken)
     {
         var entries = await _entryRepository.GetByDateAsync(request.FarmId, request.EntryDate, cancellationToken);
         var pendingEntries = entries.Where(e => e.Status == DailyConsumableEntryStatus.Pending).ToList();
 
         int confirmedCount = 0;
+        var failed = new List<BulkConfirmFailure>();
         foreach (var entry in pendingEntries)
         {
             try
@@ -192,16 +199,30 @@ public sealed class BulkConfirmDailyConsumableEntriesCommandHandler : IRequestHa
                 await _sender.Send(new ConfirmDailyConsumableEntryCommand(entry.Id, entry.ExpectedQuantity), cancellationToken);
                 confirmedCount++;
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
 #pragma warning disable CA1031
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to bulk-confirm daily consumable entry {EntryId}", entry.Id);
+                failed.Add(new BulkConfirmFailure(entry.Id, entry.InventoryItemId, DescribeFailure(ex)));
             }
 #pragma warning restore CA1031
         }
 
-        return confirmedCount;
+        return new BulkConfirmDailyConsumablesResult(confirmedCount, failed);
     }
+
+    /// <summary>User-facing reason: business-rule messages as written (they name the item and the shortfall); anything else stays generic.</summary>
+    private static string DescribeFailure(Exception ex) => ex switch
+    {
+        DomainException or ConflictException or NotFoundException => ex.Message,
+        Farm360.Application.Common.Exceptions.ValidationException v when v.Errors.Count > 0
+            => string.Join(" ", v.Errors.SelectMany(e => e.Value)),
+        _ => "Unexpected error while confirming this entry."
+    };
 }
 
 public sealed record SkipDailyConsumableEntryCommand(

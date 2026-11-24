@@ -319,7 +319,9 @@ export class PurchaseOrderForm implements OnInit, HasUnsavedChanges {
         quantity: i.quantity,
         unitCostBdt: i.unitCostBdt,
         unitId: i.unitId || null
-      }))
+      })),
+      // "Submit PO" sends the order for approval straight away.
+      submitForApproval: true
     };
 
     this.inventoryService.createPurchaseOrder(payload).subscribe({

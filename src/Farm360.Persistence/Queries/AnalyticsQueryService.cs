@@ -61,22 +61,39 @@ public class AnalyticsQueryService : IAnalyticsQueryService
             breedingQuery = breedingQuery.Where(br => _context.Animals.Any(a => a.Id == br.AnimalId && a.FarmId == farmId.Value));
         }
 
-        var totalMatings = await breedingQuery.CountAsync(cancellationToken);
-        var confirmedPregnancies = await breedingQuery.CountAsync(br => br.IsPregnancyConfirmed, cancellationToken);
-        
-        var next30Days = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30));
+        // Active pregnancies: confirmed, not yet calved, dam still on the farm (distinct dams, the
+        // same definition as the executive dashboard's "pregnant animals").
+        var activePregnancies = await breedingQuery
+            .Where(br => br.IsPregnancyConfirmed && br.ActualCalvingDate == null &&
+                         _context.Animals.Any(a => a.Id == br.AnimalId && AnimalStatusGroups.OnFarm.Contains(a.Status)))
+            .Select(br => br.AnimalId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+
+        // Conception rate over matings whose outcome is known. A mating took when the pregnancy was
+        // confirmed or the dam calved from it; it failed when the dam was mated again later without
+        // either. Matings still awaiting a pregnancy check are left out of the denominator.
+        var conceived = await breedingQuery
+            .CountAsync(br => br.IsPregnancyConfirmed || br.ActualCalvingDate != null, cancellationToken);
+        var failed = await breedingQuery
+            .CountAsync(br => !br.IsPregnancyConfirmed && br.ActualCalvingDate == null &&
+                              _context.BreedingRecords.Any(later => later.AnimalId == br.AnimalId && later.MatingDate > br.MatingDate),
+                        cancellationToken);
+        var checkedMatings = conceived + failed;
+
         var today = _clock.Today;
-        
+        var next30Days = today.AddDays(30);
+
         // Expected calvings are an alert: only dams still on the farm and not yet calved.
         var expectedCalvings = await breedingQuery
             .Where(br => br.ActualCalvingDate == null &&
                          _context.Animals.Any(a => a.Id == br.AnimalId && AnimalStatusGroups.OnFarm.Contains(a.Status)))
             .CountAsync(br => br.ExpectedCalvingDate >= today && br.ExpectedCalvingDate <= next30Days, cancellationToken);
 
-        var conceptionRate = totalMatings == 0 ? 0 : (double)confirmedPregnancies / totalMatings * 100.0;
+        var conceptionRate = checkedMatings == 0 ? 0 : (double)conceived / checkedMatings * 100.0;
 
         return new BreedingAnalyticsDto(
-            confirmedPregnancies,
+            activePregnancies,
             expectedCalvings,
             Math.Round(conceptionRate, 2));
     }

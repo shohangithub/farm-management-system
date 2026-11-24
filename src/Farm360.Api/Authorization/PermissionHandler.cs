@@ -58,7 +58,7 @@ public sealed class PermissionHandler(
         if (jwtPermissions is not null)
         {
             var permArray = jwtPermissions.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            if (permArray.Contains(requirement.PermissionCode, StringComparer.OrdinalIgnoreCase))
+            if (AcceptedCodes(requirement.PermissionCode).Any(code => permArray.Contains(code, StringComparer.OrdinalIgnoreCase)))
             {
                 context.Succeed(requirement);
                 return;
@@ -67,8 +67,15 @@ public sealed class PermissionHandler(
 
         // 4. Slow path: check via PermissionService (Redis → DB)
         // Happens when JWT was issued before a role change (or permissions not embedded)
-        var hasPermission = await permissionService.HasPermissionAsync(
-            userId.Value, tenantId.Value, requirement.PermissionCode);
+        var hasPermission = false;
+        foreach (var code in AcceptedCodes(requirement.PermissionCode))
+        {
+            if (await permissionService.HasPermissionAsync(userId.Value, tenantId.Value, code))
+            {
+                hasPermission = true;
+                break;
+            }
+        }
 
         if (hasPermission)
         {
@@ -82,4 +89,11 @@ public sealed class PermissionHandler(
             context.Fail();
         }
     }
+
+    /// <summary>
+    /// A policy may accept any one of several codes, written "a.view|b.view"
+    /// (e.g. weighing is allowed for whoever can create or edit animals).
+    /// </summary>
+    private static string[] AcceptedCodes(string permissionCode) =>
+        permissionCode.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }

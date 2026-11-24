@@ -92,6 +92,8 @@ public class PurchaseOrder : AuditableEntity, IAggregateRoot
     {
         if (Status == PurchaseOrderStatus.Fulfilled)
             throw new InventoryDomainException("Cannot cancel a fulfilled purchase order.");
+        if (Status == PurchaseOrderStatus.Cancelled)
+            throw new InventoryDomainException("This purchase order is already cancelled.");
 
         Status = PurchaseOrderStatus.Cancelled;
         Notes = (string.IsNullOrWhiteSpace(Notes) ? "" : Notes + " | ") + $"Cancelled: {reason}";

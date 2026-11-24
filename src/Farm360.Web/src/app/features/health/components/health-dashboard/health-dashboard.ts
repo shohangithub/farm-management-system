@@ -1,6 +1,8 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, distinctUntilChanged, map, of, switchMap, tap } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -29,15 +31,20 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class HealthDashboardComponent {
   private analyticsService = inject(AnalyticsService);
   private workingContext = inject(WorkingContextService);
+  private router = inject(Router);
 
-  public isLoading = signal(true);
-  
-  private data = toSignal(this.analyticsService.getHealthAnalytics(this.workingContext.currentFarmValue?.id || ''));
+  /** The farm picked in the context selector; the page re-loads whenever it changes. */
+  private farm = toSignal(this.workingContext.currentFarm$, { initialValue: this.workingContext.currentFarmValue });
+  public hasFarm = computed(() => !!this.farm()?.id);
+
+  public isLoading = signal(false);
+  public loadFailed = signal(false);
+  private data = signal<HealthAnalyticsDto | null>(null);
 
   public hasData = computed(() => !!this.data());
 
   public chartOptions = computed(() => {
-    const data = this.data() as HealthAnalyticsDto | undefined;
+    const data = this.data();
     if (!data) return {};
 
     return {
@@ -86,14 +93,36 @@ export class HealthDashboardComponent {
   });
 
   constructor() {
-    effect(() => {
-      if (this.data()) {
-        this.isLoading.set(false);
-      }
-    }, { allowSignalWrites: true });
+    this.workingContext.currentFarm$.pipe(
+      map(f => f?.id ?? null),
+      distinctUntilChanged(),
+      tap(id => {
+        this.data.set(null);
+        this.loadFailed.set(false);
+        this.isLoading.set(!!id);
+      }),
+      switchMap(id => !id ? of(null) : this.analyticsService.getHealthAnalytics(id).pipe(
+        catchError(() => {
+          this.loadFailed.set(true);
+          return of(null);
+        })
+      )),
+      takeUntilDestroyed()
+    ).subscribe(result => {
+      this.data.set(result);
+      this.isLoading.set(false);
+    });
+  }
+
+  public printReport(): void {
+    window.print();
+  }
+
+  public goToHealthDashboard(): void {
+    this.router.navigate(['/health']);
   }
 
   public get dataValue(): HealthAnalyticsDto | undefined {
-    return this.data() as HealthAnalyticsDto | undefined;
+    return this.data() ?? undefined;
   }
 }

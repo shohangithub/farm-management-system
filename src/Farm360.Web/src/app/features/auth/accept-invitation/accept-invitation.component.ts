@@ -42,7 +42,8 @@ export class AcceptInvitationComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.maxLength(150)]],
-    phone: ['', [Validators.pattern(/^\+?[0-9]{6,20}$/)]],
+    // Spaces/dashes allowed: the server normalises (017… / 8801… → +8801…).
+    phone: ['', [Validators.pattern(/^\+?[0-9][0-9\s-]{5,24}$/)]],
     password: ['', [Validators.required, Validators.pattern(PASSWORD_PATTERN)]],
     confirmPassword: ['', [Validators.required]]
   }, { validators: passwordsMatch });

@@ -165,7 +165,7 @@ export interface SubscribeDialogData {
               <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Bank'">Bank Transfer</p>
 
               <p class="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400" *ngIf="selectedMethod() === 'bKash' || selectedMethod() === 'Nagad'">
-                Send <strong>{{ currentPrice() | money:2 }}</strong> via Make Payment to <strong>01700-FARM360</strong>. Then enter the 8-10 character Transaction ID (TrxID) below to instantly activate your plan.
+                Send <strong>{{ currentPrice() | money:2 }}</strong> via Make Payment to <strong>01700-FARM360</strong>. Then enter the 8-10 character Transaction ID (TrxID) below. We activate your plan as soon as we've checked it.
               </p>
               <p class="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400" *ngIf="selectedMethod() === 'Card'">
                 Instant card payment verification via SSLCommerz / VISA / Mastercard. Enter transaction approval code or reference below.
