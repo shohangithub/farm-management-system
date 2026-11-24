@@ -38,17 +38,31 @@ public sealed class AnimalDailyCostReportDefinition : ReportDefinition<AnimalDai
 
     public override string Key => "finance.animal-daily-cost";
 
-    public override LocalizedText Title => new("Animal Daily Cost Report", "পশুর দৈনিক খরচ প্রতিবেদন");
+    public override LocalizedText Title => new("Daily Cost of One Animal", "একটি পশুর দৈনিক খরচ");
 
     public override LocalizedText Description => new(
-        "Day-by-day cost of one animal — feed, vet & medicine, labour and overhead — with the running cost since it arrived.",
-        "একটি পশুর দিনভিত্তিক খরচ — খাদ্য, চিকিৎসা, শ্রম ও পরোক্ষ খরচ — এবং আগমন থেকে ক্রমযোজিত খরচ।");
+        "What one animal cost each day — feed, vet & medicine, labour and overhead — and how much it has cost in total since it arrived.",
+        "একটি পশুর প্রতিদিনের খরচ — খাদ্য, চিকিৎসা ও ওষুধ, শ্রম ও পরোক্ষ খরচ — এবং খামারে আসার পর থেকে মোট কত খরচ হয়েছে।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
     public override PageSetup Page => PageSetup.A4LandscapeSigned;
 
-    public override LocalizedText? GrandTotalLabel => new("Total for the period", "সময়কালের মোট খরচ");
+    public override LocalizedText? GrandTotalLabel => new("Total cost for the period", "সময়কালের মোট খরচ");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each line is one day the animal was on the farm in the period, including days with no cost.",
+            "প্রতিটি সারি সময়কালের মধ্যে পশুটির খামারে থাকা একটি দিন, খরচ না থাকলেও।"),
+        new("Feed is what the animal was actually fed that day; vet & medicine is booked on the day of treatment or vaccination.",
+            "খাদ্য খরচ সেদিন আসলে যা খাওয়ানো হয়েছে; চিকিৎসা ও ওষুধ খরচ চিকিৎসা বা টিকার দিনে ধরা হয়েছে।"),
+        new("Labour and overhead are shared among animals by the days each was on the farm, then spread evenly over those days.",
+            "শ্রম ও পরোক্ষ খরচ প্রতিটি পশুর খামারে থাকার দিন অনুযায়ী ভাগ করে সেই দিনগুলোতে সমানভাবে ছড়ানো হয়েছে।"),
+        new("Cost since arrival is the running total from the day it came to the farm, so it includes days before this period. The purchase price is not included.",
+            "আগমন থেকে মোট খরচ = খামারে আসার দিন থেকে চলমান যোগফল, তাই এই সময়ের আগের দিনগুলোও এতে আছে। ক্রয়মূল্য ধরা হয়নি।"),
+        new("A sold or dead animal's costs stop the day before it left the farm.",
+            "বিক্রি বা মৃত পশুর খরচ খামার ছাড়ার আগের দিন পর্যন্ত ধরা হয়েছে।"),
+    ];
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -56,17 +70,23 @@ public sealed class AnimalDailyCostReportDefinition : ReportDefinition<AnimalDai
         ReportParameter.DateRange(name: "period", @default: "current-month", required: true),
     ];
 
+    // Column positions (day total = 6, running = 7) are relied on by DailyAnimalCostReportTests.
     public override IReadOnlyList<ReportColumn<AnimalDailyCostReportRow>> Columns =>
     [
         ReportColumn<AnimalDailyCostReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date, widthMm: 24f),
-        ReportColumn<AnimalDailyCostReportRow>.Number("feedKg", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostReportRow>.Money("feed", new LocalizedText("Feed (BDT)", "খাদ্য খরচ"), r => r.FeedBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostReportRow>.Money("vet", new LocalizedText("Vet & Medicine (BDT)", "চিকিৎসা ও ওষুধ"), r => r.VetBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostReportRow>.Money("labour", new LocalizedText("Labour (BDT)", "শ্রম"), r => r.LabourBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostReportRow>.Money("overhead", new LocalizedText("Overhead (BDT)", "পরোক্ষ খরচ"), r => r.OverheadBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostReportRow>.Money("total", new LocalizedText("Day Total (BDT)", "দিনের মোট"), r => r.TotalBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostReportRow>.Money("running", new LocalizedText("Cost Since Arrival (BDT)", "আগমন থেকে মোট"), r => r.RunningBdt, widthMm: 32f),
+        ReportColumn<AnimalDailyCostReportRow>.Number("feedKg", new LocalizedText("Feed fed (kg)", "খাওয়ানো খাদ্য (কেজি)"), r => r.FeedKg, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostReportRow>.Money("feed", new LocalizedText("Feed (BDT)", "খাদ্য (টাকা)"), r => r.FeedBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostReportRow>.Money("vet", new LocalizedText("Vet & medicine (BDT)", "চিকিৎসা ও ওষুধ (টাকা)"), r => r.VetBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostReportRow>.Money("labour", new LocalizedText("Labour (BDT)", "শ্রম (টাকা)"), r => r.LabourBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostReportRow>.Money("overhead", new LocalizedText("Overhead (BDT)", "পরোক্ষ খরচ (টাকা)"), r => r.OverheadBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostReportRow>.Money("total", new LocalizedText("Total for the day (BDT)", "দিনের মোট (টাকা)"), r => r.TotalBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostReportRow>.Money("running", new LocalizedText("Cost since arrival (BDT)", "আগমন থেকে মোট খরচ (টাকা)"), r => r.RunningBdt, widthMm: 32f),
     ];
+
+    public override ReportGroup<AnimalDailyCostReportRow>? Group =>
+        ReportGroup<AnimalDailyCostReportRow>.ByLocalized(
+            r => AnimalCostReportText.MonthKey(r.Date),
+            r => AnimalCostReportText.MonthLabel(r.Date));
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
@@ -77,9 +97,8 @@ public sealed class AnimalDailyCostReportDefinition : ReportDefinition<AnimalDai
             return null;
         }
 
-        var period = context.Range("period");
-        var exit = animal.ExitDate is { } left ? $" · Left {left:dd-MMM-yyyy}" : string.Empty;
-        return $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {animal.Status} · Arrived {animal.AcquisitionDate:dd-MMM-yyyy}{exit} · Period {period}";
+        return AnimalCostReportText.AnimalLine(animal, context.Language)
+            + " · " + AnimalCostReportText.Period(context.Range("period"));
     }
 
     protected override async Task<IReadOnlyList<AnimalDailyCostReportRow>> FetchAsync(

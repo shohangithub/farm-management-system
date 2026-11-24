@@ -11,10 +11,15 @@ using Farm360.Application.Reporting.Services;
 
 namespace Farm360.Application.Reporting.Definitions.Finance;
 
+/// <summary>
+/// One statement line. <paramref name="ShareOfSection"/> is a 0–1 ratio of total income (income
+/// lines) or total expenses (expense lines).
+/// </summary>
 public sealed record MonthlyPnlReportRow(
     string Section,
     string Category,
-    decimal AmountBdt);
+    decimal AmountBdt,
+    decimal? ShareOfSection = null);
 
 /// <summary>
 /// Report FN3 — Monthly Profit and Loss Statement with categorized income and expenditure.
@@ -35,11 +40,11 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
 
     public override string Key => "finance.monthly-pnl";
 
-    public override LocalizedText Title => new("Monthly Profit & Loss Statement", "মাসিক লাভ ও ক্ষতি বিবরণী");
+    public override LocalizedText Title => new("Monthly Profit or Loss", "মাসিক লাভ বা ক্ষতি");
 
     public override LocalizedText Description => new(
-        "Detailed breakdown of income and operating expenses by category for a specific month.",
-        "নির্দিষ্ট মাসের জন্য খাতভিত্তিক আয় ও পরিচালনা ব্যয়ের বিস্তারিত লাভ-ক্ষতি বিবরণী।");
+        "Did the farm make a profit this month? Income by type, expenses by type, and the profit or loss left over.",
+        "এই মাসে খামারে লাভ হয়েছে কি? ধরনভিত্তিক আয়, ধরনভিত্তিক খরচ, এবং শেষে লাভ বা ক্ষতি।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
@@ -47,6 +52,19 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
 
     public override LocalizedText? GrandTotalLabel => new("Net profit / (loss) for the month", "মাসের নিট লাভ / (ক্ষতি)");
 
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Income is shown as plus and expenses as minus, so the bottom line is the month's profit; a minus sign means a loss.",
+            "আয় যোগ (+) ও খরচ বিয়োগ (−) হিসেবে দেখানো হয়েছে, তাই শেষ লাইনটিই মাসের লাভ; বিয়োগ চিহ্ন মানে ক্ষতি।"),
+        new("Share (%) is each line's part of total income (for income) or of total expenses (for expenses).",
+            "অংশ (%) হলো আয়ের লাইনের জন্য মোট আয়ের অংশ, আর খরচের লাইনের জন্য মোট খরচের অংশ।"),
+        new("Feed and medicine count when they are used, not when they are bought; stock still in the store is not an expense yet.",
+            "খাদ্য ও ওষুধ কেনার সময় নয়, ব্যবহারের সময় খরচ ধরা হয়; গুদামে থাকা মজুদ এখনও খরচ নয়।"),
+        new("Buying animals is not an expense; their cost appears as 'Cost of animals sold' in the month they are sold, or 'Animals that died' if they die.",
+            "পশু কেনা খরচ নয়; পশু বিক্রি হলে সেই মাসে তার খরচ 'বিক্রিত পশুর ক্রয়মূল্য' হিসেবে, আর মারা গেলে 'মৃত পশুর ক্ষতি' হিসেবে আসে।"),
+        new("Owner or investor money and loans are not income, and loan repayments are not expenses (only the interest is).",
+            "মালিক বা বিনিয়োগকারীর টাকা ও ঋণ আয় নয়, এবং ঋণ পরিশোধ খরচ নয় (শুধু সুদ খরচ)।"),
+    ];
     /// <summary>
     /// Defaults are the current month in Bangladesh time, evaluated when the catalog is built —
     /// not a year and month frozen into the code. A blank value falls back to the current month in
@@ -77,8 +95,9 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
 
     public override IReadOnlyList<ReportColumn<MonthlyPnlReportRow>> Columns =>
     [
-        ReportColumn<MonthlyPnlReportRow>.Text("category", new LocalizedText("Account Category", "হিসাবের খাত"), r => r.Category, width: 3.5f),
+        ReportColumn<MonthlyPnlReportRow>.Text("category", new LocalizedText("Income or expense", "আয় বা খরচের ধরন"), r => r.Category, width: 3.5f),
         ReportColumn<MonthlyPnlReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "পরিমাণ (টাকা)"), r => r.AmountBdt, decimals: 2, widthMm: 36f, aggregate: ReportAggregate.Sum),
+        ReportColumn<MonthlyPnlReportRow>.Percent("share", new LocalizedText("Share (%)", "অংশ (%)"), r => r.ShareOfSection, decimals: 1, widthMm: 22f),
     ];
 
     public override ReportGroup<MonthlyPnlReportRow>? Group =>
@@ -89,10 +108,10 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
         ArgumentNullException.ThrowIfNull(context);
         var (year, month) = ReadPeriod(context);
         var name = MonthNames[month - 1];
-        var yearText = ReportValueFormatter.Format(year, ReportColumnType.Text, 0);
+        var yearText = year.ToString(CultureInfo.InvariantCulture);
         return Task.FromResult<string?>(context.Language == ReportLanguage.Bn
-            ? $"{name.Bn} {(context.BengaliNumerals ? ReportValueFormatter.ToBengaliNumerals(yearText) : yearText)} মাসের পরিচালন ফলাফল"
-            : $"Operating performance for {name.En} {yearText}");
+            ? $"{name.Bn} {(context.BengaliNumerals ? ReportValueFormatter.ToBengaliNumerals(yearText) : yearText)} মাসের হিসাব"
+            : $"Month of {name.En} {yearText}");
     }
 
     protected override async Task<IReadOnlyList<MonthlyPnlReportRow>> FetchAsync(
@@ -114,7 +133,7 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
 
     /// <summary>
     /// The statement lines: income positive, expenses negative, so the column total is the net
-    /// result. Public for tests.
+    /// result. Largest lines first within each section. Public for tests.
     /// </summary>
     public static IReadOnlyList<MonthlyPnlReportRow> BuildRows(
         IReadOnlyDictionary<string, decimal> income,
@@ -125,14 +144,23 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
         ArgumentNullException.ThrowIfNull(expenses);
 
         var bn = language == ReportLanguage.Bn;
-        var incomeSection = bn ? "১. পরিচালন আয়" : "1. Operating income";
-        var expenseSection = bn ? "২. পরিচালন ব্যয়" : "2. Operating expenses";
+        var incomeSection = bn ? "১. আয় (খামারে যা এসেছে)" : "1. Income (money earned)";
+        var expenseSection = bn ? "২. খরচ (খামারে যা খরচ হয়েছে)" : "2. Expenses (costs of running the farm)";
+
+        var totalIncome = income.Values.Sum();
+        var totalExpense = expenses.Values.Sum();
+        decimal? Share(decimal value, decimal total) =>
+            total != 0m ? decimal.Round(value / total, 4, MidpointRounding.AwayFromZero) : null;
 
         var rows = new List<MonthlyPnlReportRow>(income.Count + expenses.Count);
-        rows.AddRange(income.OrderBy(k => k.Key, StringComparer.Ordinal)
-            .Select(kv => new MonthlyPnlReportRow(incomeSection, SplitCamelCase(kv.Key), kv.Value)));
-        rows.AddRange(expenses.OrderBy(k => k.Key, StringComparer.Ordinal)
-            .Select(kv => new MonthlyPnlReportRow(expenseSection, SplitCamelCase(kv.Key), -kv.Value)));
+        rows.AddRange(income
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Select(kv => new MonthlyPnlReportRow(incomeSection, CategoryName(kv.Key, language), kv.Value, Share(kv.Value, totalIncome))));
+        rows.AddRange(expenses
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Select(kv => new MonthlyPnlReportRow(expenseSection, CategoryName(kv.Key, language), -kv.Value, Share(kv.Value, totalExpense))));
         return rows;
     }
 
@@ -152,6 +180,45 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
         }
 
         return (year, month);
+    }
+
+    /// <summary>
+    /// The ledger groups lines by category code ("LaborCost", "CostOfAnimalsSold"); a farmer reads
+    /// "Labour", "Cost of animals sold". Unknown keys fall back to the words split apart.
+    /// </summary>
+    private static string CategoryName(string key, ReportLanguage language)
+    {
+        var bn = language == ReportLanguage.Bn;
+        (string En, string Bn)? name = key switch
+        {
+            "AnimalSale" => ("Animal sales", "পশু বিক্রয়"),
+            "MilkSale" => ("Milk sales", "দুধ বিক্রয়"),
+            "ByproductSale" => ("By-product & manure sales", "উপজাত ও গোবর বিক্রয়"),
+            "OtherIncome" => ("Other farm income", "অন্যান্য আয়"),
+            "CostOfAnimalsSold" => ("Cost of animals sold (their purchase price)", "বিক্রিত পশুর ক্রয়মূল্য"),
+            "LivestockLoss" => ("Animals that died (their cost)", "মৃত পশুর ক্ষতি"),
+            "FeedCost" => ("Feed", "খাদ্য"),
+            "VeterinaryCost" => ("Vet & treatment", "পশু চিকিৎসা"),
+            "MedicineCost" => ("Medicines & vaccines", "ঔষধ ও টিকা"),
+            "LaborCost" => ("Labour", "শ্রমিক মজুরি"),
+            "Utilities" => ("Electricity, water & fuel", "বিদ্যুৎ, পানি ও জ্বালানি"),
+            "Transport" => ("Transport", "পরিবহন"),
+            "MiscellaneousExpense" => ("Other expenses", "বিবিধ খরচ"),
+            "ConsumableExpense" => ("Daily supplies used", "দৈনিক ভোগ্যপণ্য"),
+            "InventoryWriteOff" => ("Stock spoiled or lost", "নষ্ট বা হারানো মজুদ"),
+            "InterestExpense" => ("Loan interest", "ঋণের সুদ"),
+            "BadDebt" => ("Money owed that will not be paid", "অনাদায়ী পাওনা"),
+            "AssetDisposal" => ("Loss / (gain) on selling equipment", "সরঞ্জাম বিক্রয়ে ক্ষতি / (লাভ)"),
+            "Depreciation" => ("Wear and tear of sheds & equipment (depreciation)", "শেড ও সরঞ্জামের অবচয়"),
+            _ => null,
+        };
+
+        if (name is { } n)
+        {
+            return bn ? n.Bn : n.En;
+        }
+
+        return SplitCamelCase(key);
     }
 
     private static string SplitCamelCase(string text) =>

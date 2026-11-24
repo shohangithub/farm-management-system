@@ -100,6 +100,20 @@ export interface PageSetup {
   showSignatureBlock: boolean;
 }
 
+export interface ReportSummaryFigure {
+  label: string;
+  value: string;
+  /** 'good' | 'bad' | 'neutral' */
+  tone?: string;
+}
+
+export interface ReportSummary {
+  title: string;
+  figures: ReportSummaryFigure[];
+  insightsTitle?: string | null;
+  insights: string[];
+}
+
 export interface ReportDataSet {
   key: string;
   title: string;
@@ -115,6 +129,10 @@ export interface ReportDataSet {
   language?: string;
   bengaliNumerals?: boolean;
   grandTotalLabel?: string | null;
+  /** "How to read this report" lines, already in the report's language. */
+  notes?: string[] | null;
+  /** Headline figures and findings printed above the table (only some reports have one). */
+  summary?: ReportSummary | null;
   grandTotalCaption?: string | null;
 }
 

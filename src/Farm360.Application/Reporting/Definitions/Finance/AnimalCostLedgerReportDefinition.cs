@@ -11,10 +11,12 @@ using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Finance;
 
+/// <summary>One kind of cost. <paramref name="ShareOfTotal"/> is a 0–1 ratio of the animal's total cost.</summary>
 public sealed record AnimalCostLedgerReportRow(
     string CostCategory,
     string Description,
-    decimal AmountBdt);
+    decimal AmountBdt,
+    decimal? ShareOfTotal = null);
 
 /// <summary>
 /// Report FN5 — Comprehensive cost accumulation and unit economics ledger for an individual animal.
@@ -46,17 +48,29 @@ public sealed class AnimalCostLedgerReportDefinition : ReportDefinition<AnimalCo
 
     public override string Key => "finance.animal-cost-ledger";
 
-    public override LocalizedText Title => new("Animal Cost Ledger Report", "পশুর খরচ খতিয়ান প্রতিবেদন");
+    public override LocalizedText Title => new("Animal Cost to Date", "পশুর এ পর্যন্ত মোট খরচ");
 
     public override LocalizedText Description => new(
-        "Unit economics and life-to-date cost accumulation by category for an individual animal.",
-        "একটি নির্দিষ্ট পশুর জন্য খাতভিত্তিক সামগ্রিক খরচ খতিয়ান ও অর্থনৈতিক হিসাব প্রতিবেদন।");
+        "Everything one animal has cost since it came to the farm — purchase price, feed, vet & medicine, labour and overhead.",
+        "খামারে আসার পর থেকে একটি পশুর পেছনে মোট কত খরচ হয়েছে — ক্রয়মূল্য, খাদ্য, চিকিৎসা ও ওষুধ, শ্রম ও পরোক্ষ খরচ।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
     public override PageSetup Page => PageSetup.A4PortraitSigned;
 
     public override LocalizedText? GrandTotalLabel => new("Total cost to date", "এ পর্যন্ত মোট খরচ");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each line is one kind of cost; the total at the bottom is what the animal has cost the farm so far.",
+            "প্রতিটি সারি এক ধরনের খরচ; নিচের মোট হলো পশুটির পেছনে এ পর্যন্ত খামারের মোট খরচ।"),
+        new("Purchase price is what was paid for the animal, or its value when it was first recorded.",
+            "ক্রয়মূল্য হলো পশুটি কেনার দাম, অথবা প্রথম নথিভুক্ত করার সময় ধরা মূল্য।"),
+        new("Labour and overhead are farm-wide bills shared among animals by the days each was on the farm.",
+            "শ্রম ও পরোক্ষ খরচ পুরো খামারের বিল, যা প্রতিটি পশুর খামারে থাকার দিন অনুযায়ী ভাগ করা হয়েছে।"),
+        new("Share of total = this cost ÷ the animal's total cost. A sold or dead animal's costs stop the day before it left.",
+            "মোটের অংশ = এই খরচ ÷ পশুটির মোট খরচ। বিক্রি বা মৃত পশুর খরচ খামার ছাড়ার আগের দিন পর্যন্ত ধরা হয়েছে।"),
+    ];
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -65,18 +79,17 @@ public sealed class AnimalCostLedgerReportDefinition : ReportDefinition<AnimalCo
 
     public override IReadOnlyList<ReportColumn<AnimalCostLedgerReportRow>> Columns =>
     [
-        ReportColumn<AnimalCostLedgerReportRow>.Text("category", new LocalizedText("Cost Category", "খরচের খাত"), r => r.CostCategory, width: 2.5f),
-        ReportColumn<AnimalCostLedgerReportRow>.Text("description", new LocalizedText("Description / Basis", "বিবরণ / ভিত্তি"), r => r.Description, width: 3.5f),
+        ReportColumn<AnimalCostLedgerReportRow>.Text("category", new LocalizedText("Type of cost", "খরচের ধরন"), r => r.CostCategory, width: 2.2f),
+        ReportColumn<AnimalCostLedgerReportRow>.Text("description", new LocalizedText("What it includes", "এতে যা আছে"), r => r.Description, width: 3.8f),
         ReportColumn<AnimalCostLedgerReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "পরিমাণ (টাকা)"), r => r.AmountBdt, decimals: 2, widthMm: 32f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalCostLedgerReportRow>.Percent("share", new LocalizedText("Share of total (%)", "মোটের অংশ (%)"), r => r.ShareOfTotal, decimals: 1, widthMm: 24f),
     ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         var animal = await LoadAnimalAsync(context, cancellationToken).ConfigureAwait(false);
-        return animal is null
-            ? null
-            : $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {animal.Status}";
+        return animal is null ? null : AnimalCostReportText.AnimalLine(animal, context.Language);
     }
 
     protected override async Task<IReadOnlyList<AnimalCostLedgerReportRow>> FetchAsync(
@@ -101,16 +114,21 @@ public sealed class AnimalCostLedgerReportDefinition : ReportDefinition<AnimalCo
         string T(string en, string bnText) => bn ? bnText : en;
 
         var feedBasis = ledger is null
-            ? T("Confirmed feed allocations (no cost ledger yet)", "নিশ্চিত খাদ্য বরাদ্দ (খরচ খতিয়ান এখনও নেই)")
-            : T("Direct ration consumption and allocated feed costs", "সরাসরি খাদ্য গ্রহণ ও বরাদ্দকৃত খাদ্য খরচ");
+            ? T("Feed recorded as given to this animal (cost book not started yet)", "এই পশুকে দেওয়া হিসেবে নথিভুক্ত খাদ্য (খরচের হিসাব এখনও শুরু হয়নি)")
+            : T("Feed this animal was given, at stock cost", "এই পশুকে দেওয়া খাদ্য, মজুদের দামে");
+
+        var total = cost.TotalBdt;
+        decimal? Share(decimal amount) => total != 0m ? decimal.Round(amount / total, 4, MidpointRounding.AwayFromZero) : null;
+        AnimalCostLedgerReportRow Line(string category, string description, decimal amount) =>
+            new(category, description, amount, Share(amount));
 
         return
         [
-            new(T("Acquisition", "ক্রয়"), T("Purchase or initial capitalization valuation", "ক্রয়মূল্য বা প্রারম্ভিক মূল্যায়ন"), cost.PurchaseBdt),
-            new(T("Feed & Nutrition", "খাদ্য ও পুষ্টি"), feedBasis, cost.FeedBdt),
-            new(T("Veterinary & Health", "চিকিৎসা ও স্বাস্থ্য"), T("Medications, vaccines, treatments, and vet procedures", "ওষুধ, টিকা, চিকিৎসা ও পশুচিকিৎসা"), cost.VetBdt),
-            new(T("Labour Allocation", "শ্রম বণ্টন"), T("Apportioned barn management and farm labour", "বণ্টনকৃত খামার ব্যবস্থাপনা ও শ্রম"), cost.LabourBdt),
-            new(T("Overhead Allocation", "পরোক্ষ খরচ বণ্টন"), T("Utilities, facility depreciation, and administration", "ইউটিলিটি, অবচয় ও প্রশাসনিক খরচ"), cost.OverheadBdt),
+            Line(T("Purchase price", "ক্রয়মূল্য"), T("Price paid, or value when first recorded on the farm", "কেনার দাম, বা খামারে প্রথম নথিভুক্তির সময়ের মূল্য"), cost.PurchaseBdt),
+            Line(T("Feed", "খাদ্য"), feedBasis, cost.FeedBdt),
+            Line(T("Vet & medicine", "চিকিৎসা ও ওষুধ"), T("Treatments, medicines, vaccines and vet visits", "চিকিৎসা, ওষুধ, টিকা ও পশুচিকিৎসকের খরচ"), cost.VetBdt),
+            Line(T("Labour", "শ্রম"), T("Its share of farm wages", "খামারের মজুরিতে এই পশুর অংশ"), cost.LabourBdt),
+            Line(T("Overhead", "পরোক্ষ খরচ"), T("Its share of electricity, water, transport, upkeep and other farm costs", "বিদ্যুৎ, পানি, পরিবহন, রক্ষণাবেক্ষণ ও অন্যান্য খামার খরচে এই পশুর অংশ"), cost.OverheadBdt),
         ];
     }
 

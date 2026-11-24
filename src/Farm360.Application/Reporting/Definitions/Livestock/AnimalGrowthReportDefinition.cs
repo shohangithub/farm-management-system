@@ -7,21 +7,27 @@ using System.Threading.Tasks;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
+using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Livestock;
 
 /// <summary>One weigh-in and what happened in the interval leading up to it.</summary>
+/// <remarks>
+/// The interval figures are null on the first weigh-in of the range (there is nothing earlier to
+/// measure against) and the efficiency figures are null when the animal did not gain weight or no
+/// feed was confirmed — a blank cell, never a misleading zero.
+/// </remarks>
 public sealed record AnimalGrowthReportRow(
     DateOnly Date,
     decimal WeightKg,
     int IntervalDays,
-    decimal GainKg,
-    decimal AdgKg,
+    decimal? GainKg,
+    decimal? AdgKg,
     decimal FeedKg,
     decimal FeedCostBdt,
-    decimal Fcr,
-    decimal CostPerKgGainBdt);
+    decimal? Fcr,
+    decimal? CostPerKgGainBdt);
 
 /// <summary>
 /// Report A3 — every weigh-in for one animal, with the feed and cost of each interval between
@@ -55,13 +61,15 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
 
     public override string Key => "livestock.animal-growth";
 
-    public override LocalizedText Title => new("Animal Weight & Growth Report", "পশুর ওজন ও বৃদ্ধি প্রতিবেদন");
+    public override LocalizedText Title => new("Animal Weight & Growth", "পশুর ওজন ও বৃদ্ধি");
 
     public override LocalizedText Description => new(
-        "Weigh-ins with interval gain, ADG, feed consumed, FCR and cost per kg of gain.",
-        "ওজন রেকর্ড, বৃদ্ধি, দৈনিক গড় বৃদ্ধি, খাদ্য, এফসিআর ও প্রতি কেজি বৃদ্ধির খরচ।");
+        "Is this animal growing well for the feed it eats? Every weigh-in with the weight gained since the last one, the feed eaten in between and what each kg of gain cost.",
+        "পশুটি খাওয়া খাদ্যের তুলনায় ঠিকমতো বাড়ছে কি? প্রতিটি ওজনের তারিখে আগের ওজনের পর কত কেজি বেড়েছে, মাঝের সময়ে কত খাদ্য খেয়েছে এবং প্রতি কেজি বৃদ্ধিতে কত খরচ হয়েছে।");
 
     public override ReportCategory Category => ReportCategory.Livestock;
+
+    public override PageSetup Page => PageSetup.A4Landscape;
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -71,19 +79,32 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
 
     public override IReadOnlyList<ReportColumn<AnimalGrowthReportRow>> Columns =>
     [
-        ReportColumn<AnimalGrowthReportRow>.Date("date", new LocalizedText("Weigh-in", "ওজনের তারিখ"), r => r.Date),
+        ReportColumn<AnimalGrowthReportRow>.Date("date", new LocalizedText("Weigh-in date", "ওজনের তারিখ"), r => r.Date, 24f),
         ReportColumn<AnimalGrowthReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.WeightKg, 1, 22f),
-        ReportColumn<AnimalGrowthReportRow>.WholeNumber("days", new LocalizedText("Days", "দিন"), r => r.IntervalDays, 14f, ReportAggregate.Sum),
-        ReportColumn<AnimalGrowthReportRow>.Number("gain", new LocalizedText("Gain (kg)", "বৃদ্ধি (কেজি)"), r => r.GainKg, 2, 20f, ReportAggregate.Sum),
-        // Period ADG (between consecutive weigh-ins inside the selected date range) -- labeled
-        // distinctly from HerdSummaryReportDefinition/AnimalSummaryReportDefinition's lifetime ADG
-        // column, which uses a different window (oldest-to-newest weight record, ever) and will
-        // legitimately disagree with this one for any animal weighed more than twice.
-        ReportColumn<AnimalGrowthReportRow>.Number("adg", new LocalizedText("Period ADG (kg/d)", "নির্দিষ্ট সময়ের দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 20f),
-        ReportColumn<AnimalGrowthReportRow>.Number("feed", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, 2, 20f, ReportAggregate.Sum),
-        ReportColumn<AnimalGrowthReportRow>.Money("feedCost", new LocalizedText("Feed cost", "খাদ্য খরচ"), r => r.FeedCostBdt, 2, 22f, ReportAggregate.Sum),
-        ReportColumn<AnimalGrowthReportRow>.Number("fcr", new LocalizedText("FCR", "এফসিআর"), r => r.Fcr, 2, 16f),
-        ReportColumn<AnimalGrowthReportRow>.Money("costPerKg", new LocalizedText("Cost / kg gain", "প্রতি কেজি খরচ"), r => r.CostPerKgGainBdt, 2, 24f, ReportAggregate.None),
+        ReportColumn<AnimalGrowthReportRow>.WholeNumber("days", new LocalizedText("Days since last weigh-in", "আগের ওজনের পর (দিন)"), r => r.IntervalDays, 24f, ReportAggregate.Sum),
+        ReportColumn<AnimalGrowthReportRow>.Number("gain", new LocalizedText("Weight gained (kg)", "ওজন বৃদ্ধি (কেজি)"), r => r.GainKg, 1, 24f, ReportAggregate.Sum),
+        // Period daily gain (between consecutive weigh-ins inside the selected date range) --
+        // distinct from the lifetime daily gain on the herd/animal summaries, which uses the
+        // oldest-to-newest weight record ever and will legitimately disagree with this one.
+        ReportColumn<AnimalGrowthReportRow>.Number("adg", new LocalizedText("Daily gain (kg/day)", "দৈনিক বৃদ্ধি (কেজি/দিন)"), r => r.AdgKg, 3, 24f),
+        ReportColumn<AnimalGrowthReportRow>.Number("feed", new LocalizedText("Feed eaten (kg)", "খাওয়া খাদ্য (কেজি)"), r => r.FeedKg, 1, 24f, ReportAggregate.Sum),
+        ReportColumn<AnimalGrowthReportRow>.Money("feedCost", new LocalizedText("Feed cost (BDT)", "খাদ্য খরচ (টাকা)"), r => r.FeedCostBdt, 2, 26f, ReportAggregate.Sum),
+        ReportColumn<AnimalGrowthReportRow>.Number("fcr", new LocalizedText("Feed per kg gain (kg)", "প্রতি কেজি বৃদ্ধিতে খাদ্য (কেজি)"), r => r.Fcr, 2, 26f),
+        ReportColumn<AnimalGrowthReportRow>.Money("costPerKg", new LocalizedText("Feed cost per kg gain (BDT)", "প্রতি কেজি বৃদ্ধিতে খাদ্য খরচ (টাকা)"), r => r.CostPerKgGainBdt, 2, 28f, ReportAggregate.None),
+    ];
+
+    public override LocalizedText? GrandTotalLabel => new("Total for the period", "সময়কালের মোট");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one weigh-in; the gain, feed and cost columns cover the days since the previous weigh-in.",
+            "প্রতিটি সারি একটি ওজন নেওয়ার দিন; বৃদ্ধি, খাদ্য ও খরচের ঘর আগের ওজনের পর থেকে এই দিন পর্যন্ত সময়ের হিসাব।"),
+        new("The first weigh-in in the period has nothing earlier to compare with, so its gain and efficiency cells are blank.",
+            "সময়কালের প্রথম ওজনের আগে তুলনা করার মতো ওজন নেই, তাই তার বৃদ্ধি ও দক্ষতার ঘর ফাঁকা থাকে।"),
+        new("Daily gain = weight gained ÷ days. Feed per kg gain = feed eaten ÷ weight gained — lower is better.",
+            "দৈনিক বৃদ্ধি = ওজন বৃদ্ধি ÷ দিন। প্রতি কেজি বৃদ্ধিতে খাদ্য = খাওয়া খাদ্য ÷ ওজন বৃদ্ধি — যত কম তত ভালো।"),
+        new("Only confirmed feed is counted, not planned rations. If the animal lost weight or no feed was confirmed, the efficiency cells are blank.",
+            "শুধু নিশ্চিত করা খাদ্য গণনা হয়েছে, পরিকল্পিত রেশন নয়। ওজন কমলে বা খাদ্য নিশ্চিত না হলে দক্ষতার ঘর ফাঁকা থাকে।"),
     ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
@@ -91,9 +112,14 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
         ArgumentNullException.ThrowIfNull(context);
 
         var animal = await _animals.GetByIdAsync(context.Id("animalId"), cancellationToken).ConfigureAwait(false);
-        return animal is null
-            ? null
-            : $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {animal.Status}";
+        if (animal is null)
+        {
+            return null;
+        }
+
+        var bn = context.Language == ReportLanguage.Bn;
+        var period = context.Range("period");
+        return $"{(bn ? "ট্যাগ" : "Tag")} {AnimalLabels.Tag(animal)} · {SpeciesLabel(animal.Species, bn)} · {SexLabel(animal.Sex, bn)} · {DescribePeriod(period)}";
     }
 
     protected override async Task<IReadOnlyList<AnimalGrowthReportRow>> FetchAsync(
@@ -142,9 +168,9 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
             var weight = weighing.Weight.WeightKg;
 
             // The first weigh-in opens the series: there is no prior weight to measure a gain
-            // against, so its interval columns are deliberately zero rather than misleading.
+            // against, so its gain is blank rather than a misleading zero.
             var days = previousDate is null ? 0 : weighing.RecordedDate.DayNumber - previousDate.Value.DayNumber;
-            var gain = previousWeight is null ? 0m : weight - previousWeight.Value;
+            decimal? gain = previousWeight is null ? null : weight - previousWeight.Value;
 
             var intervalFeed = previousDate is null
                 ? []
@@ -160,14 +186,14 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
                 weight,
                 days,
                 gain,
-                days > 0 ? decimal.Round(gain / days, 3, MidpointRounding.AwayFromZero) : 0m,
+                gain is { } g && days > 0 ? decimal.Round(g / days, 3, MidpointRounding.AwayFromZero) : null,
                 feedKg,
                 feedCost,
 
-                // Guard the divisions: an animal that lost or held weight has no meaningful FCR,
-                // and printing a vast number or a crash helps nobody.
-                gain > 0 ? decimal.Round(feedKg / gain, 2, MidpointRounding.AwayFromZero) : 0m,
-                gain > 0 ? decimal.Round(feedCost / gain, 2, MidpointRounding.AwayFromZero) : 0m));
+                // Guard the divisions: an animal that lost or held weight, or an interval with no
+                // confirmed feed, has no meaningful efficiency: a blank cell, not a vast number or 0.
+                gain is { } g1 && g1 > 0 && feedKg > 0 ? decimal.Round(feedKg / g1, 2, MidpointRounding.AwayFromZero) : null,
+                gain is { } g2 && g2 > 0 && feedCost > 0 ? decimal.Round(feedCost / g2, 2, MidpointRounding.AwayFromZero) : null));
 
             previousDate = weighing.RecordedDate;
             previousWeight = weight;
@@ -175,6 +201,25 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
 
         return rows;
     }
+
+    private static string DescribePeriod(DateRange period) =>
+        $"{period.From.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} – {period.To.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
+
+    private static string SpeciesLabel(AnimalSpecies species, bool bn) => species switch
+    {
+        AnimalSpecies.CattleBeef => bn ? "মাংসের গরু" : "Beef cattle",
+        AnimalSpecies.CattleDairy => bn ? "দুগ্ধ গরু" : "Dairy cattle",
+        AnimalSpecies.Goat => bn ? "ছাগল" : "Goat",
+        AnimalSpecies.Sheep => bn ? "ভেড়া" : "Sheep",
+        _ => species.ToString(),
+    };
+
+    private static string SexLabel(AnimalSex sex, bool bn) => sex switch
+    {
+        AnimalSex.Male => bn ? "পুরুষ" : "Male",
+        AnimalSex.Female => bn ? "স্ত্রী" : "Female",
+        _ => sex.ToString(),
+    };
 
     /// <summary>Formats an interval for a log line or a tooltip.</summary>
     public static string DescribeInterval(DateOnly from, DateOnly to) =>

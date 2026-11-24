@@ -115,6 +115,12 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
     /// </summary>
     public virtual LocalizedText? GrandTotalLabel => null;
 
+    /// <summary>
+    /// "How to read this report": a few short plain-language lines printed under the table — what
+    /// a row is, what the key figures mean and how they are worked out. Keep each line one sentence.
+    /// </summary>
+    public virtual IReadOnlyList<LocalizedText> Notes => [];
+
     private IReadOnlyList<ReportColumn>? _columnDescriptors;
 
     public IReadOnlyList<ReportColumn> ColumnDescriptors =>
@@ -125,11 +131,19 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
     public virtual Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken) =>
         Task.FromResult<string?>(null);
 
+    /// <summary>
+    /// Optional summary box above the table — headline figures and findings worked out from the
+    /// fetched rows. Null (the default) prints no box.
+    /// </summary>
+    protected virtual Task<ReportSummary?> SummarizeAsync(ReportContext context, IReadOnlyList<TRow> rows, CancellationToken cancellationToken) =>
+        Task.FromResult<ReportSummary?>(null);
+
     public async Task<ReportDataSet> ExecuteAsync(ReportContext context, ReportMetaHeader meta, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
 
         var source = await FetchAsync(context, cancellationToken).ConfigureAwait(false);
+        var summary = source.Count == 0 ? null : await SummarizeAsync(context, source, cancellationToken).ConfigureAwait(false);
 
         // Before formatting: building cells is the expensive part, so refuse here rather than after.
         context.EnsureWithinRowLimit(source.Count, Key);
@@ -195,7 +209,9 @@ public abstract class ReportDefinition<TRow> : IReportDefinition
             source.Count,
             context.Language,
             context.BengaliNumerals,
-            GrandTotalLabel?.For(context.Language));
+            GrandTotalLabel?.For(context.Language),
+            Notes.Select(n => n.For(context.Language)).Where(n => !string.IsNullOrWhiteSpace(n)).ToList(),
+            summary);
     }
 
     private readonly record struct CellFormat(bool BengaliNumerals, ReportLanguage Language);

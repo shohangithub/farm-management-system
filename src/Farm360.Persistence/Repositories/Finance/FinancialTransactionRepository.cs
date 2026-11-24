@@ -239,7 +239,8 @@ public class FinancialTransactionRepository : IFinancialTransactionRepository
         CancellationToken cancellationToken = default)
     {
         var start = from.ToDateTime(TimeOnly.MinValue);
-        var endExclusive = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+        // "No end" (DateOnly.MaxValue) has no next day to stop before.
+        var endExclusive = to == DateOnly.MaxValue ? DateTime.MaxValue : to.AddDays(1).ToDateTime(TimeOnly.MinValue);
         return await _context.FinancialTransactions
             .AsNoTracking()
             .Where(t => t.FarmId == farmId

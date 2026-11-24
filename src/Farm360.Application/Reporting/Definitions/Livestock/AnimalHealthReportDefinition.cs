@@ -9,6 +9,8 @@ using Farm360.Application.Livestock.Queries;
 using Farm360.Application.Intelligence.Services;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
+using Farm360.Domain.Health.Enums;
+using Farm360.Domain.Livestock.Enums;
 
 namespace Farm360.Application.Reporting.Definitions.Livestock;
 
@@ -19,7 +21,7 @@ public sealed record AnimalHealthReportRow(
     string Title,
     string Detail,
     string Provider,
-    decimal CostBdt,
+    decimal? CostBdt,
     string Status);
 
 /// <summary>
@@ -42,13 +44,15 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
 
     public override string Key => "livestock.animal-health";
 
-    public override LocalizedText Title => new("Animal Medical & Health Report", "পশুর চিকিৎসা ও স্বাস্থ্য প্রতিবেদন");
+    public override LocalizedText Title => new("Animal Health History", "পশুর স্বাস্থ্য ইতিহাস");
 
     public override LocalizedText Description => new(
-        "Treatments, vaccinations and disease incidents for one animal, by month.",
-        "একটি পশুর চিকিৎসা, টিকা ও রোগের ঘটনা, মাসভিত্তিক।");
+        "What illnesses, treatments and vaccinations has this animal had, and what did they cost? One line per event, month by month.",
+        "পশুটির কী কী রোগ, চিকিৎসা ও টিকা হয়েছে এবং খরচ কত? প্রতিটি ঘটনা এক লাইনে, মাস অনুযায়ী।");
 
     public override ReportCategory Category => ReportCategory.Health;
+
+    public override PageSetup Page => PageSetup.A4Landscape;
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -59,18 +63,34 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
     public override IReadOnlyList<ReportColumn<AnimalHealthReportRow>> Columns =>
     [
         ReportColumn<AnimalHealthReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date),
-        ReportColumn<AnimalHealthReportRow>.Text("eventType", new LocalizedText("Type", "ধরন"), r => r.EventType, width: 22f, relative: false),
-        ReportColumn<AnimalHealthReportRow>.Text("title", new LocalizedText("Diagnosis / Vaccine", "রোগ / টিকা"), r => r.Title, width: 2.2f),
-        ReportColumn<AnimalHealthReportRow>.Text("detail", new LocalizedText("Medication / Detail", "ঔষধ / বিবরণ"), r => r.Detail, width: 2.4f),
-        ReportColumn<AnimalHealthReportRow>.Text("provider", new LocalizedText("Veterinarian", "পশুচিকিৎসক"), r => r.Provider, width: 1.6f),
-        ReportColumn<AnimalHealthReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, width: 20f, relative: false),
+        ReportColumn<AnimalHealthReportRow>.Text("eventType", new LocalizedText("Event", "ঘটনা"), r => r.EventType, width: 24f, relative: false),
+        ReportColumn<AnimalHealthReportRow>.Text("title", new LocalizedText("Illness / vaccine", "রোগ / টিকা"), r => r.Title, width: 2.2f),
+        ReportColumn<AnimalHealthReportRow>.Text("detail", new LocalizedText("Medicine, dose & details", "ঔষধ, মাত্রা ও বিবরণ"), r => r.Detail, width: 3.2f),
+        ReportColumn<AnimalHealthReportRow>.Text("provider", new LocalizedText("Vet", "পশুচিকিৎসক"), r => r.Provider, width: 1.6f),
+        ReportColumn<AnimalHealthReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, width: 26f, relative: false),
         ReportColumn<AnimalHealthReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<AnimalHealthReportRow>? Group =>
-        ReportGroup<AnimalHealthReportRow>.By(
+        ReportGroup<AnimalHealthReportRow>.ByLocalized(
             r => r.Date.ToString("yyyy-MM", CultureInfo.InvariantCulture),
-            r => r.Date.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
+            r => new LocalizedText(
+                $"Month: {r.Date.ToString("MMMM yyyy", CultureInfo.InvariantCulture)}",
+                $"মাস: {BanglaMonths[r.Date.Month - 1]} {r.Date.Year.ToString(CultureInfo.InvariantCulture)}"));
+
+    public override LocalizedText? GrandTotalLabel => new("Total health cost for the period", "সময়কালের মোট স্বাস্থ্য খরচ");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one health event: a treatment, a vaccination or a reported illness, in date order and grouped by month.",
+            "প্রতিটি সারি একটি স্বাস্থ্য ঘটনা: চিকিৎসা, টিকা বা রোগের খবর; তারিখ অনুযায়ী সাজানো ও মাস অনুযায়ী ভাগ করা।"),
+        new("Treatment cost is the amount entered on the treatment; vaccination cost is the medicine booked against that vaccination.",
+            "চিকিৎসার খরচ চিকিৎসার সাথে লেখা পরিমাণ; টিকার খরচ সেই টিকার জন্য হিসাবে তোলা ঔষধের দাম।"),
+        new("Illness reports carry no cost of their own (the treatment that follows does), so their cost cell is blank.",
+            "রোগের খবরের নিজস্ব কোনো খরচ নেই (পরের চিকিৎসায় খরচ ধরা হয়), তাই খরচের ঘর ফাঁকা।"),
+        new("Where a medicine has a withdrawal period, do not sell the milk or meat for the days shown.",
+            "যে ঔষধের প্রত্যাহারকাল আছে, দেখানো দিনগুলোতে দুধ বা মাংস বিক্রি করবেন না।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
@@ -85,8 +105,11 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
             return null;
         }
 
+        var bn = context.Language == ReportLanguage.Bn;
+        var period = context.Range("period");
         var age = AnimalAge.Format(animal.DateOfBirth, animal.ExitDate ?? context.Today);
-        return $"Tag {animal.TagId} · {animal.Species} · {animal.Sex} · {age} · {animal.Status}";
+        return $"{(bn ? "ট্যাগ" : "Tag")} {TagLabel(animal.TagId, animal.Status, animal.ExitDate)} · {SpeciesLabel(animal.Species, bn)} · {SexLabel(animal.Sex, bn)} · {(bn ? "বয়স" : "age")} {age} · "
+            + $"{period.From.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} – {period.To.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
     }
 
     protected override async Task<IReadOnlyList<AnimalHealthReportRow>> FetchAsync(
@@ -97,6 +120,7 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
 
         var animalId = context.Id("animalId");
         var period = context.Range("period");
+        var bn = context.Language == ReportLanguage.Bn;
 
         var data = await context
             .Send(new GetAnimalHealthReportQuery(animalId), cancellationToken)
@@ -116,23 +140,25 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
                 continue;
             }
 
-            var dosage = $"{t.MedicationName} — {t.DosageAmount.ToString("0.##", CultureInfo.InvariantCulture)} {t.DosageUnit}";
+            var dosage = $"{t.MedicationName}: {t.DosageAmount.ToString("0.##", CultureInfo.InvariantCulture)} {t.DosageUnit}";
 
             // Withdrawal periods belong on the face of the report: selling milk or meat inside
             // one is a food-safety breach, not a footnote.
             if (t.MilkWithdrawalDays > 0 || t.MeatWithdrawalDays > 0)
             {
-                dosage += $" (withdrawal: milk {t.MilkWithdrawalDays}d, meat {t.MeatWithdrawalDays}d)";
+                dosage += bn
+                    ? $" (দুধ বিক্রি বন্ধ {t.MilkWithdrawalDays} দিন, মাংস {t.MeatWithdrawalDays} দিন)"
+                    : $" (no milk sale for {t.MilkWithdrawalDays} days, no meat sale for {t.MeatWithdrawalDays} days)";
             }
 
             rows.Add(new AnimalHealthReportRow(
                 t.StartDate,
-                "Treatment",
-                t.Diagnosis,
+                bn ? "চিকিৎসা" : "Treatment",
+                string.IsNullOrWhiteSpace(t.Diagnosis) ? "—" : t.Diagnosis,
                 dosage,
-                t.VeterinarianName ?? "—",
+                string.IsNullOrWhiteSpace(t.VeterinarianName) ? "—" : t.VeterinarianName,
                 t.CostBdt,
-                t.Status.ToString()));
+                TreatmentStatusLabel(t.Status, bn)));
         }
 
         foreach (var v in data.Vaccinations)
@@ -143,16 +169,18 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
                 continue;
             }
 
-            var detail = string.IsNullOrWhiteSpace(v.BatchNumber) ? "—" : $"Batch {v.BatchNumber}";
+            var detail = string.IsNullOrWhiteSpace(v.BatchNumber) ? "—" : (bn ? $"ব্যাচ নম্বর {v.BatchNumber}" : $"Vaccine batch {v.BatchNumber}");
 
             rows.Add(new AnimalHealthReportRow(
                 date,
-                "Vaccination",
+                bn ? "টিকা" : "Vaccination",
                 v.VaccineName,
-                v.AdministeredDate is null ? $"{detail} (scheduled {v.ScheduledDate:dd-MMM-yyyy})" : detail,
+                v.AdministeredDate is null
+                    ? (bn ? $"{detail} (নির্ধারিত তারিখ {v.ScheduledDate.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture)})" : $"{detail} (due {v.ScheduledDate.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture)})")
+                    : detail,
                 "—",
-                vaccinationCosts.GetValueOrDefault(v.Id),
-                v.Status.ToString()));
+                vaccinationCosts.TryGetValue(v.Id, out var vaccineCost) ? vaccineCost : null,
+                VaccinationStatusLabel(v.Status, bn)));
         }
 
         foreach (var i in data.DiseaseIncidents)
@@ -164,12 +192,12 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
 
             rows.Add(new AnimalHealthReportRow(
                 i.IncidentDate,
-                "Incident",
+                bn ? "অসুস্থতা" : "Illness",
                 i.DiseaseName,
-                i.Symptoms,
-                $"Severity: {i.Severity}",
-                0m,
-                i.Status.ToString()));
+                $"{(string.IsNullOrWhiteSpace(i.Symptoms) ? "—" : i.Symptoms)} · {(bn ? "তীব্রতা" : "Severity")}: {SeverityLabel(i.Severity, bn)}",
+                "—",
+                null,
+                IncidentStatusLabel(i.Status, bn)));
         }
 
         // Chronological, then by type, so the group band stays contiguous and the reader
@@ -179,6 +207,86 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
             .ThenBy(r => r.EventType, StringComparer.Ordinal)
             .ToList();
     }
+
+    private static readonly string[] BanglaMonths =
+    [
+        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+        "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর",
+    ];
+
+    /// <summary>"B-04", or "B-04 (Sold 12-Nov-2026)" once the animal has left the farm.</summary>
+    private static string TagLabel(string tagId, AnimalStatus status, DateOnly? exitDate)
+    {
+        var what = status switch
+        {
+            AnimalStatus.Sold => "Sold",
+            AnimalStatus.Dead => "Died",
+            AnimalStatus.Slaughtered => "Slaughtered",
+            AnimalStatus.Transferred => "Left",
+            _ => null,
+        };
+
+        if (what is null)
+        {
+            return tagId;
+        }
+
+        return exitDate is { } d
+            ? $"{tagId} ({what} {d.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture)})"
+            : $"{tagId} ({what})";
+    }
+
+    private static string SpeciesLabel(AnimalSpecies species, bool bn) => species switch
+    {
+        AnimalSpecies.CattleBeef => bn ? "মাংসের গরু" : "Beef cattle",
+        AnimalSpecies.CattleDairy => bn ? "দুগ্ধ গরু" : "Dairy cattle",
+        AnimalSpecies.Goat => bn ? "ছাগল" : "Goat",
+        AnimalSpecies.Sheep => bn ? "ভেড়া" : "Sheep",
+        _ => species.ToString(),
+    };
+
+    private static string SexLabel(AnimalSex sex, bool bn) => sex switch
+    {
+        AnimalSex.Male => bn ? "পুরুষ" : "Male",
+        AnimalSex.Female => bn ? "স্ত্রী" : "Female",
+        _ => sex.ToString(),
+    };
+
+    private static string TreatmentStatusLabel(TreatmentStatus status, bool bn) => status switch
+    {
+        TreatmentStatus.Ongoing => bn ? "চলছে" : "Ongoing",
+        TreatmentStatus.Completed => bn ? "সম্পন্ন" : "Completed",
+        TreatmentStatus.Failed => bn ? "কাজ করেনি" : "Did not work",
+        TreatmentStatus.Referred => bn ? "অন্যত্র পাঠানো" : "Referred",
+        _ => status.ToString(),
+    };
+
+    private static string VaccinationStatusLabel(VaccinationStatus status, bool bn) => status switch
+    {
+        VaccinationStatus.Scheduled => bn ? "নির্ধারিত" : "Scheduled",
+        VaccinationStatus.Completed => bn ? "দেওয়া হয়েছে" : "Given",
+        VaccinationStatus.Overdue => bn ? "সময় পেরিয়েছে" : "Overdue",
+        VaccinationStatus.Cancelled => bn ? "বাতিল" : "Cancelled",
+        _ => status.ToString(),
+    };
+
+    private static string IncidentStatusLabel(IncidentStatus status, bool bn) => status switch
+    {
+        IncidentStatus.Reported => bn ? "জানানো হয়েছে" : "Reported",
+        IncidentStatus.UnderTreatment => bn ? "চিকিৎসাধীন" : "Under treatment",
+        IncidentStatus.Contained => bn ? "নিয়ন্ত্রণে" : "Contained",
+        IncidentStatus.Resolved => bn ? "সেরে গেছে" : "Recovered",
+        _ => status.ToString(),
+    };
+
+    private static string SeverityLabel(IncidentSeverity severity, bool bn) => severity switch
+    {
+        IncidentSeverity.Mild => bn ? "হালকা" : "Mild",
+        IncidentSeverity.Moderate => bn ? "মাঝারি" : "Moderate",
+        IncidentSeverity.Severe => bn ? "গুরুতর" : "Severe",
+        IncidentSeverity.Critical => bn ? "সংকটজনক" : "Critical",
+        _ => severity.ToString(),
+    };
 
     private async Task<Dictionary<Guid, decimal>> LoadVaccinationCostsAsync(Guid animalId, CancellationToken cancellationToken)
     {

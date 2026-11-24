@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Finance.Queries;
+using Farm360.Application.Livestock.Queries;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 using Farm360.Contracts.Finance;
@@ -33,17 +34,29 @@ public sealed class BatchPnlReportDefinition : ReportDefinition<BatchPnlReportRo
 {
     public override string Key => "finance.batch-pnl";
 
-    public override LocalizedText Title => new("Batch Profit & Loss Statement", "ব্যাচ লাভ ও ক্ষতি বিবরণী");
+    public override LocalizedText Title => new("Batch Profit or Loss", "ব্যাচের লাভ বা ক্ষতি");
 
     public override LocalizedText Description => new(
-        "Revenues, accumulated costs, gross profit, and return on investment for an individual batch.",
-        "একটি নির্দিষ্ট ব্যাচের রাজস্ব, মোট অর্জিত খরচ, মোট লাভ ও বিনিয়োগের ওপর অর্জিত লাভ।");
+        "Did this batch make money? Money earned from the batch against everything it cost, with an estimate that includes the animals still on the farm.",
+        "এই ব্যাচে লাভ হয়েছে কি? ব্যাচ থেকে আয় বনাম মোট খরচ, এবং খামারে থাকা পশুসহ আনুমানিক ফলাফল।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
     public override PageSetup Page => PageSetup.A4PortraitSigned;
 
     public override bool ShowGrandTotals => false;
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Part 1 counts only money actually received; part 2 adds what the animals still on the farm are worth today.",
+            "অংশ ১-এ শুধু আসলে পাওয়া টাকা ধরা হয়েছে; অংশ ২-এ খামারে থাকা পশুর আজকের আনুমানিক মূল্যও যোগ করা হয়েছে।"),
+        new("Total cost covers every animal in the batch, sold or not: purchase price, feed, vet & medicine, and its share of labour and overhead.",
+            "মোট খরচে ব্যাচের সব পশু ধরা হয়েছে, বিক্রি হোক বা না হোক: ক্রয়মূল্য, খাদ্য, চিকিৎসা ও ওষুধ, এবং শ্রম ও পরোক্ষ খরচের অংশ।"),
+        new("So part 1 usually shows a loss until most of the batch is sold; part 2 is the expected outcome.",
+            "তাই ব্যাচের বেশিরভাগ পশু বিক্রি না হওয়া পর্যন্ত অংশ ১-এ সাধারণত ক্ষতি দেখায়; অংশ ২ হলো প্রত্যাশিত ফলাফল।"),
+        new("Return on cost = profit ÷ total cost. Animals still on the farm are valued using the farm's valuation setting.",
+            "খরচের ওপর লাভ = লাভ ÷ মোট খরচ। খামারে থাকা পশুর মূল্য খামারের মূল্যায়ন নিয়ম অনুযায়ী ধরা হয়েছে।"),
+    ];
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -53,10 +66,10 @@ public sealed class BatchPnlReportDefinition : ReportDefinition<BatchPnlReportRo
 
     public override IReadOnlyList<ReportColumn<BatchPnlReportRow>> Columns =>
     [
-        ReportColumn<BatchPnlReportRow>.Text("lineItem", new LocalizedText("Particulars", "বিবরণ"), r => r.LineItem, width: 3.2f),
+        ReportColumn<BatchPnlReportRow>.Text("lineItem", new LocalizedText("Item", "বিবরণ"), r => r.LineItem, width: 3.2f),
         ReportColumn<BatchPnlReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "পরিমাণ (টাকা)"), r => r.AmountBdt, decimals: 2, widthMm: 32f),
-        ReportColumn<BatchPnlReportRow>.Text("metric", new LocalizedText("Measure", "পরিমাপ"), r => r.Metric, width: 24f, relative: false, align: ReportAlign.Right),
-        ReportColumn<BatchPnlReportRow>.Text("notes", new LocalizedText("Notes / Basis", "মন্তব্য / ভিত্তি"), r => r.Notes, width: 3.0f),
+        ReportColumn<BatchPnlReportRow>.Text("metric", new LocalizedText("Head / return on cost", "পশু / খরচের ওপর লাভ"), r => r.Metric, width: 34f, relative: false, align: ReportAlign.Right),
+        ReportColumn<BatchPnlReportRow>.Text("notes", new LocalizedText("How it is worked out", "যেভাবে হিসাব করা"), r => r.Notes, width: 3.0f),
     ];
 
     public override ReportGroup<BatchPnlReportRow>? Group =>
@@ -71,9 +84,18 @@ public sealed class BatchPnlReportDefinition : ReportDefinition<BatchPnlReportRo
             return null;
         }
 
-        return context.Language == ReportLanguage.Bn
-            ? $"মোট {Whole(context, data.TotalAnimals)} টি পশু, খামারে আছে {Whole(context, data.OnHandAnimals)} টি"
-            : $"{data.TotalAnimals} head in batch, {data.OnHandAnimals} still on the farm";
+        var batch = await context
+            .Send(new GetBatchDetailsQuery(context.Id("batchId")), cancellationToken)
+            .ConfigureAwait(false);
+        var bn = context.Language == ReportLanguage.Bn;
+        var name = string.IsNullOrWhiteSpace(batch?.Name) ? null : batch!.Name;
+        var batchText = bn
+            ? (name is null ? "ব্যাচ" : "ব্যাচ " + name)
+            : (name is null ? "Batch" : "Batch " + name);
+
+        return bn
+            ? $"{batchText} · মোট {Whole(context, data.TotalAnimals)} টি পশু, খামারে আছে {Whole(context, data.OnHandAnimals)} টি · আজ পর্যন্ত"
+            : $"{batchText} · {data.TotalAnimals} head in batch, {data.OnHandAnimals} still on the farm · as of today";
     }
 
     protected override async Task<IReadOnlyList<BatchPnlReportRow>> FetchAsync(
@@ -90,26 +112,33 @@ public sealed class BatchPnlReportDefinition : ReportDefinition<BatchPnlReportRo
 
         var bn = context.Language == ReportLanguage.Bn;
         string T(string en, string bnText) => bn ? bnText : en;
+        string Roi(decimal ratio) => bn
+            ? "খরচের ওপর " + Percent(context, ratio)
+            : Percent(context, ratio) + " return on cost";
 
-        var realised = T("1. Realised result", "১. অর্জিত ফলাফল");
-        var estimated = T("2. Including animals still on hand", "২. খামারে থাকা পশুসহ আনুমানিক ফলাফল");
+        var realised = T("1. Money actually received so far", "১. এ পর্যন্ত আসলে পাওয়া টাকা");
+        var estimated = T("2. Including animals still on the farm (estimate)", "২. খামারে থাকা পশুসহ (আনুমানিক)");
+        var perHeadText = string.Empty;
+        if (data.TotalAnimals > 0)
+        {
+            var perHead = decimal.Round(data.TotalCostBdt / data.TotalAnimals, 2, MidpointRounding.AwayFromZero);
+            perHeadText = bn ? Money(context, perHead) + " টাকা/টি" : Money(context, perHead) + " BDT/head";
+        }
 
         return
         [
-            new(realised, T("Batch revenue", "ব্যাচের আয়"), data.TotalIncomeBdt, string.Empty,
-                T("Income from animal sales and other batch revenue", "পশু বিক্রয় ও ব্যাচের অন্যান্য আয়")),
-            new(realised, T("Less: total accumulated cost", "বাদ: মোট খরচ"), data.TotalCostBdt, string.Empty,
-                T("Acquisition, feed, healthcare, labour and overhead of every animal", "ক্রয়, খাদ্য, চিকিৎসা, শ্রম ও পরোক্ষ খরচ")),
-            new(realised, T("Realised profit / (loss)", "অর্জিত লাভ / (ক্ষতি)"), data.GrossProfitBdt,
-                Percent(context, data.ReturnOnInvestmentPercent) + " ROI",
-                T("Revenue − total cost; ROI = profit ÷ cost", "আয় − মোট খরচ; ROI = লাভ ÷ খরচ")),
+            new(realised, T("Money earned from the batch", "ব্যাচ থেকে আয়"), data.TotalIncomeBdt, string.Empty,
+                T("Animal sales and any other income booked to this batch or its animals", "পশু বিক্রয় ও এই ব্যাচ বা এর পশুর নামে লেখা অন্যান্য আয়")),
+            new(realised, T("Less: total cost of the batch", "বাদ: ব্যাচের মোট খরচ"), data.TotalCostBdt, perHeadText,
+                T("Purchase, feed, vet & medicine, labour and overhead of every animal in the batch", "ব্যাচের প্রতিটি পশুর ক্রয়, খাদ্য, চিকিৎসা, শ্রম ও পরোক্ষ খরচ")),
+            new(realised, T("Profit / (loss) so far", "এ পর্যন্ত লাভ / (ক্ষতি)"), data.GrossProfitBdt, Roi(data.ReturnOnInvestmentPercent),
+                T("Money earned − total cost", "আয় − মোট খরচ")),
 
-            new(estimated, T("Unrealised value of on-hand animals", "খামারে থাকা পশুর আনুমানিক মূল্য"), data.UnrealisedValueBdt,
-                T($"{Whole(context, data.OnHandAnimals)} head", $"{Whole(context, data.OnHandAnimals)} টি"),
+            new(estimated, T("Value of animals still on the farm", "খামারে থাকা পশুর আনুমানিক মূল্য"), data.UnrealisedValueBdt,
+                bn ? Whole(context, data.OnHandAnimals) + " টি" : Whole(context, data.OnHandAnimals) + " head",
                 T("Active and quarantined animals at the farm's valuation rate", "খামারের মূল্যায়ন দরে সক্রিয় ও পৃথক রাখা পশু")),
-            new(estimated, T("Estimated total profit / (loss)", "আনুমানিক মোট লাভ / (ক্ষতি)"), data.EstimatedTotalProfitBdt,
-                Percent(context, data.EstimatedRoiPercent) + " ROI",
-                T("Revenue + unrealised value − total cost", "আয় + আনুমানিক মূল্য − মোট খরচ")),
+            new(estimated, T("Expected profit / (loss)", "প্রত্যাশিত লাভ / (ক্ষতি)"), data.EstimatedTotalProfitBdt, Roi(data.EstimatedRoiPercent),
+                T("Money earned + value on the farm − total cost", "আয় + খামারে থাকা পশুর মূল্য − মোট খরচ")),
         ];
     }
 
@@ -120,7 +149,10 @@ public sealed class BatchPnlReportDefinition : ReportDefinition<BatchPnlReportRo
                 .ConfigureAwait(false));
 
     private static string Percent(ReportContext context, decimal ratio) =>
-        ReportValueFormatter.Format(ratio, ReportColumnType.Percent, 2, context.BengaliNumerals) + "%";
+        ReportValueFormatter.Format(ratio, ReportColumnType.Percent, 1, context.BengaliNumerals) + "%";
+
+    private static string Money(ReportContext context, decimal value) =>
+        ReportValueFormatter.Format(value, ReportColumnType.Money, 2, context.BengaliNumerals);
 
     private static string Whole(ReportContext context, int value) =>
         ReportValueFormatter.Format(value, ReportColumnType.WholeNumber, 0, context.BengaliNumerals);

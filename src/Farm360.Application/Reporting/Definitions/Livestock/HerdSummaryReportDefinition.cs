@@ -11,6 +11,7 @@ using Farm360.Application.Reporting.Model;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Finance.Interfaces;
+using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Livestock;
@@ -22,8 +23,8 @@ public sealed record HerdSummaryReportRow(
     string Sex,
     string Age,
     string Location,
-    decimal LatestWeightKg,
-    decimal AdgKg,
+    decimal? LatestWeightKg,
+    decimal? AdgKg,
     decimal PurchaseCostBdt,
     decimal FeedCostBdt,
     decimal VetCostBdt,
@@ -64,11 +65,11 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
 
     public override string Key => "livestock.herd-summary";
 
-    public override LocalizedText Title => new("Herd Master Summary Register", "পশুর সামগ্রিক বিবরণ ও লাভ-ক্ষতি রেজিস্টার");
+    public override LocalizedText Title => new("Herd Cost, Value & Profit", "পালের খরচ, মূল্য ও লাভ-ক্ষতি");
 
     public override LocalizedText Description => new(
-        "Comprehensive herd-wide summary table displaying demographics, current weights, ADG, full cost breakdown, projected market valuation, and net profit/loss for every animal.",
-        "খামারের সকল পশুর পরিচিতি, ওজন, দৈনিক বৃদ্ধি, মোট খরচ (ক্রয়, খাদ্য ও চিকিৎসা), বাজারমূল্য ও সম্ভাব্য লাভ-ক্ষতির পূর্ণাঙ্গ রেজিস্টার প্রতিবেদন।");
+        "Is each animal making or losing money? Every animal with its weight, what it has cost so far (purchase, feed, vet and other costs), what it is worth and the profit or loss.",
+        "প্রতিটি পশু লাভে না ক্ষতিতে আছে? প্রতিটি পশুর ওজন, এ পর্যন্ত খরচ (কেনা, খাদ্য, চিকিৎসা ও অন্যান্য), বর্তমান মূল্য এবং লাভ বা ক্ষতি।");
 
     public override ReportCategory Category => ReportCategory.Livestock;
 
@@ -83,24 +84,21 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
 
     public override IReadOnlyList<ReportColumn<HerdSummaryReportRow>> Columns =>
     [
-        ReportColumn<HerdSummaryReportRow>.Text("tag", new LocalizedText("Tag ID", "ট্যাগ নম্বর"), r => r.TagId, 22f, false),
-        ReportColumn<HerdSummaryReportRow>.Text("breed", new LocalizedText("Breed", "জাত"), r => r.Breed, 2.2f),
-        ReportColumn<HerdSummaryReportRow>.Text("sex", new LocalizedText("Sex", "লিঙ্গ"), r => r.Sex, 14f, false),
+        ReportColumn<HerdSummaryReportRow>.Text("tag", new LocalizedText("Tag", "ট্যাগ"), r => r.TagId, 2.6f),
+        ReportColumn<HerdSummaryReportRow>.Text("breed", new LocalizedText("Breed / sex", "জাত / লিঙ্গ"), r => $"{r.Breed} · {r.Sex}", 2.2f),
         ReportColumn<HerdSummaryReportRow>.Text("age", new LocalizedText("Age", "বয়স"), r => r.Age, 16f, false),
-        ReportColumn<HerdSummaryReportRow>.Text("location", new LocalizedText("Location", "অবস্থান"), r => r.Location, 2.0f),
-        ReportColumn<HerdSummaryReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.LatestWeightKg, 1, 20f),
-        // Lifetime ADG (oldest-to-newest weight record, not bounded to any reporting period) --
-        // labeled distinctly from AnimalGrowthReportDefinition's period-bounded ADG column so the
-        // two are never mistaken for the same figure when they legitimately differ.
-        ReportColumn<HerdSummaryReportRow>.Number("adg", new LocalizedText("Lifetime ADG (kg/d)", "আজীবন দৈনিক বৃদ্ধি"), r => r.AdgKg, 3, 20f),
-        ReportColumn<HerdSummaryReportRow>.Money("purchaseCost", new LocalizedText("Purchase (৳)", "ক্রয় মূল্য"), r => r.PurchaseCostBdt, 0, 22f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("feedCost", new LocalizedText("Feed (৳)", "খাদ্য খরচ"), r => r.FeedCostBdt, 0, 22f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("vetCost", new LocalizedText("Vet / Care (৳)", "চিকিৎসা"), r => r.VetCostBdt, 0, 20f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("labourOverhead", new LocalizedText("Labour & OH (৳)", "শ্রম ও পরোক্ষ"), r => r.LabourOverheadBdt, 0, 22f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("totalCost", new LocalizedText("Total Cost (৳)", "মোট খরচ"), r => r.TotalCostBdt, 0, 24f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("projectedValue", new LocalizedText("Value (৳) — est. / realised", "মূল্য (আনুমানিক / প্রাপ্ত)"), r => r.ProjectedValueBdt, 0, 24f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Money("projectedProfit", new LocalizedText("Net P/L (৳)", "লাভ/ক্ষতি"), r => r.ProjectedProfitBdt, 0, 24f, ReportAggregate.Sum),
-        ReportColumn<HerdSummaryReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, 18f, false),
+        ReportColumn<HerdSummaryReportRow>.Text("location", new LocalizedText("Shed", "শেড"), r => r.Location, 1.4f),
+        ReportColumn<HerdSummaryReportRow>.Number("weight", new LocalizedText("Latest weight (kg)", "সর্বশেষ ওজন (কেজি)"), r => r.LatestWeightKg, 1, 22f),
+        // Lifetime daily gain (oldest-to-newest weight record, not bounded to any reporting
+        // period) -- the Animal Weight & Growth report shows gain for a chosen period, and the two
+        // legitimately differ.
+        ReportColumn<HerdSummaryReportRow>.Number("adg", new LocalizedText("Daily gain (kg/day)", "দৈনিক বৃদ্ধি (কেজি/দিন)"), r => r.AdgKg, 3, 22f),
+        ReportColumn<HerdSummaryReportRow>.Money("purchaseCost", new LocalizedText("Purchase (BDT)", "কেনার দাম (টাকা)"), r => r.PurchaseCostBdt, 0, 24f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("feedCost", new LocalizedText("Feed (BDT)", "খাদ্য (টাকা)"), r => r.FeedCostBdt, 0, 22f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("otherCost", new LocalizedText("Vet, labour & overhead (BDT)", "চিকিৎসা, শ্রম ও অন্যান্য (টাকা)"), r => r.VetCostBdt + r.LabourOverheadBdt, 0, 26f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("totalCost", new LocalizedText("Total cost (BDT)", "মোট খরচ (টাকা)"), r => r.TotalCostBdt, 0, 24f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("projectedValue", new LocalizedText("Value (BDT)", "মূল্য (টাকা)"), r => r.ProjectedValueBdt, 0, 24f, ReportAggregate.Sum),
+        ReportColumn<HerdSummaryReportRow>.Money("projectedProfit", new LocalizedText("Profit / loss (BDT)", "লাভ / ক্ষতি (টাকা)"), r => r.ProjectedProfitBdt, 0, 24f, ReportAggregate.Sum),
     ];
 
     public override ReportGroup<HerdSummaryReportRow>? Group =>
@@ -108,10 +106,30 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
 
     public override bool ShowGrandTotals => true;
 
-    public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
+    public override LocalizedText? GrandTotalLabel => new("Whole herd", "সমগ্র পাল");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one animal, grouped by status: animals on the farm first, then those that were sold, slaughtered, died or left.",
+            "প্রতিটি সারি একটি পশু, অবস্থা অনুযায়ী ভাগ করা: খামারে থাকা পশু আগে, তারপর বিক্রি, জবাই, মৃত বা চলে যাওয়া পশু।"),
+        new("Total cost = purchase + confirmed feed + vet + this animal's share of labour and overhead, from arrival up to today (or the sale/death date).",
+            "মোট খরচ = কেনার দাম + নিশ্চিত খাদ্য + চিকিৎসা + শ্রম ও অন্যান্য খরচে এই পশুর ভাগ, আসার দিন থেকে আজ (বা বিক্রি/মৃত্যুর দিন) পর্যন্ত।"),
+        new("Value: for an animal on the farm, latest weight × live-weight rate (an estimate); for a sold animal, the sale price; for a dead animal, zero.",
+            "মূল্য: খামারে থাকা পশুর জন্য সর্বশেষ ওজন × জীবন্ত ওজনের দর (আনুমানিক); বিক্রি হলে বিক্রয়মূল্য; মৃত পশুর জন্য শূন্য।"),
+        new("Profit / loss = value − total cost; for animals still on the farm it is expected, not yet earned.",
+            "লাভ / ক্ষতি = মূল্য − মোট খরচ; খামারে থাকা পশুর ক্ষেত্রে এটি সম্ভাব্য, এখনো অর্জিত নয়।"),
+        new("Age stops at the sale or death date.",
+            "বিক্রি বা মৃত্যুর তারিখে বয়স গণনা থেমে যায়।"),
+    ];
+
+    public override Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        return "Complete Herd Inventory, Cost & Valuation Register";
+        var asOf = context.Today.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
+        var rate = LiveWeightRateParameter.EffectiveRate(context, _valuation).ToString("N0", CultureInfo.InvariantCulture);
+        return Task.FromResult<string?>(context.Language == ReportLanguage.Bn
+            ? $"{asOf} পর্যন্ত · খামারে থাকা পশুর মূল্য ৳ {rate}/কেজি জীবন্ত ওজন দরে"
+            : $"As of {asOf} · animals on the farm valued at ৳ {rate} per live kg");
     }
 
     protected override async Task<IReadOnlyList<HerdSummaryReportRow>> FetchAsync(
@@ -172,7 +190,8 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
         var shedsMap = sheds.ToDictionary(s => s.Id);
 
         var today = context.Today;
-        var rows = new List<HerdSummaryReportRow>(animals.Count);
+        var bn = context.Language == ReportLanguage.Bn;
+        var rows = new List<(int Order, HerdSummaryReportRow Row)>(animals.Count);
 
         foreach (var a in animals)
         {
@@ -180,21 +199,16 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
             feedMap.TryGetValue(a.Id, out var feed);
             breedsMap.TryGetValue(a.BreedId, out var breed);
 
+            // Where the animal is kept now; an animal that has left the farm is kept nowhere.
             var movement = a.CurrentMovement;
-            string shedLabel = "—";
-            if (movement?.ShedId.HasValue == true)
+            var location = "—";
+            if (!a.HasLeftFarm && movement?.ShedId is { } shedId)
             {
-                shedLabel = shedsMap.TryGetValue(movement.ShedId.Value, out var s)
-                    ? s.ShedNumber
-                    : "Shed";
+                location = shedsMap.TryGetValue(shedId, out var s) ? s.ShedNumber : "—";
             }
-
-            var location = movement?.PenId.HasValue == true ? $"{shedLabel} / Pen" : shedLabel;
 
             var ageLabel = AnimalAge.Format(a.DateOfBirth, a.ExitDate ?? today);
 
-            var weight = a.LatestWeightKg ?? 0m;
-            var adg = a.AdgKgPerDay ?? 0m;
 
             // Cost ledger buckets (purchase falls back to the animal record); without a ledger,
             // purchase + allocated feed. The columns always sum to the total.
@@ -205,14 +219,14 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
             var projectedValue = _valuation.CurrentValue(a, ledger, totalCost, rateOverride);
             var projectedProfit = projectedValue - totalCost;
 
-            rows.Add(new HerdSummaryReportRow(
-                TagId: a.Tag.TagId,
-                Breed: breed?.Name ?? $"{a.Species}",
-                Sex: a.Sex.ToString(),
+            rows.Add(((int)a.Status, new HerdSummaryReportRow(
+                TagId: AnimalLabels.Tag(a),
+                Breed: breed?.Name ?? SpeciesLabel(a.Species, bn),
+                Sex: SexLabel(a.Sex, bn),
                 Age: ageLabel,
                 Location: location,
-                LatestWeightKg: weight,
-                AdgKg: adg,
+                LatestWeightKg: a.LatestWeightKg,
+                AdgKg: a.AdgKgPerDay,
                 PurchaseCostBdt: cost.PurchaseBdt,
                 FeedCostBdt: cost.FeedBdt,
                 VetCostBdt: cost.VetBdt,
@@ -220,12 +234,41 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
                 TotalCostBdt: totalCost,
                 ProjectedValueBdt: projectedValue,
                 ProjectedProfitBdt: projectedProfit,
-                Status: a.Status.ToString()));
+                Status: StatusLabel(a.Status, bn))));
         }
 
+        // On-farm animals first, then the ones that left, in status order; bands follow it.
         return rows
-            .OrderBy(r => r.Status)
-            .ThenBy(r => r.TagId)
+            .OrderBy(r => r.Order)
+            .ThenBy(r => r.Row.TagId, StringComparer.OrdinalIgnoreCase)
+            .Select(r => r.Row)
             .ToList();
     }
+
+    private static string SpeciesLabel(AnimalSpecies species, bool bn) => species switch
+    {
+        AnimalSpecies.CattleBeef => bn ? "মাংসের গরু" : "Beef cattle",
+        AnimalSpecies.CattleDairy => bn ? "দুগ্ধ গরু" : "Dairy cattle",
+        AnimalSpecies.Goat => bn ? "ছাগল" : "Goat",
+        AnimalSpecies.Sheep => bn ? "ভেড়া" : "Sheep",
+        _ => species.ToString(),
+    };
+
+    private static string SexLabel(AnimalSex sex, bool bn) => sex switch
+    {
+        AnimalSex.Male => bn ? "পুরুষ" : "Male",
+        AnimalSex.Female => bn ? "স্ত্রী" : "Female",
+        _ => sex.ToString(),
+    };
+
+    private static string StatusLabel(AnimalStatus status, bool bn) => status switch
+    {
+        AnimalStatus.Active => bn ? "খামারে আছে" : "On farm",
+        AnimalStatus.Quarantined => bn ? "আলাদা রাখা (কোয়ারেন্টাইন)" : "In quarantine",
+        AnimalStatus.Sold => bn ? "বিক্রি হয়েছে" : "Sold",
+        AnimalStatus.Slaughtered => bn ? "জবাই হয়েছে" : "Slaughtered",
+        AnimalStatus.Dead => bn ? "মারা গেছে" : "Died",
+        AnimalStatus.Transferred => bn ? "অন্যত্র পাঠানো" : "Transferred out",
+        _ => status.ToString(),
+    };
 }

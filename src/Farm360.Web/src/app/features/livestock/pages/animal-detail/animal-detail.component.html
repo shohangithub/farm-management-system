@@ -18,6 +18,13 @@
       <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
         Animal Profile & Dossier
       </div>
+      <a mat-menu-item routerLink="/reports/finance.animal-life-history" [queryParams]="{ animalId: animal()?.id, autoRun: 'true' }" class="!rounded-xl">
+        <mat-icon class="!text-emerald-600">history</mat-icon>
+        <div class="flex flex-col text-left">
+          <span class="font-medium text-xs">Full History & Profit/Loss</span>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500">Every cost, the sale and the profit, from arrival to today</span>
+        </div>
+      </a>
       <button mat-menu-item [matMenuTriggerFor]="summarySubmenu" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">assessment</mat-icon>
         <div class="flex flex-col text-left">
@@ -217,10 +224,10 @@
 <div id="reportSheet" *ngIf="!loading() && animal()" class="space-y-6 animate-fade-in-up">
 
   <!-- Left-farm banner: Sold / Dead (etc.) animals are history only - no new records. -->
-  <div *ngIf="isExited()" class="rounded-2xl border-l-4 p-4 flex items-start gap-3 shadow-sm"
+  <div *ngIf="isExited()" class="rounded-2xl border-l-4 p-4 flex flex-wrap items-start gap-3 shadow-sm"
        [ngClass]="isDead() ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-300' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-800 dark:text-blue-300'">
     <mat-icon class="mt-0.5 flex-shrink-0">{{ isDead() ? 'heart_broken' : (isSold() ? 'sell' : 'logout') }}</mat-icon>
-    <div class="min-w-0">
+    <div class="min-w-0 flex-1 basis-64">
       <p class="text-sm font-bold">
         <ng-container *ngIf="isSold()">
           Sold<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span><span *ngIf="animal()!.buyerName"> to {{ animal()!.buyerName }}</span><span *ngIf="animal()!.salePriceBdt != null"> for {{ animal()!.salePriceBdt | money }}</span><span *ngIf="animal()!.saleWeightKg"> ({{ animal()!.saleWeightKg | number:'1.0-1' }} kg)</span>
@@ -235,9 +242,14 @@
       <p *ngIf="isDead() && animal()!.notes" class="text-xs mt-1 opacity-90">{{ animal()!.notes }}</p>
       <p class="text-xs mt-1 opacity-80">This animal has left the farm. Its history is kept below; new weight, health, breeding, feeding or location records cannot be added.</p>
     </div>
+    <a routerLink="/reports/finance.animal-life-history" [queryParams]="{ animalId: animal()!.id, autoRun: 'true' }"
+      class="ml-auto shrink-0 self-center h-8 px-3 rounded-lg text-xs font-semibold bg-white/80 dark:bg-gray-900/40 border border-current/30 hover:bg-white dark:hover:bg-gray-900 inline-flex items-center gap-1.5 no-print">
+      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">history</mat-icon>
+      History & profit/loss
+    </a>
     <ng-container *hasPermission="'animals.delete'">
     <button *ngIf="(isSold() || isDead()) && exitDate()" type="button" (click)="onUndoExit()"
-      class="ml-auto shrink-0 self-center h-8 px-3 rounded-lg text-xs font-semibold bg-white/80 dark:bg-gray-900/40 border border-current/30 hover:bg-white dark:hover:bg-gray-900 inline-flex items-center gap-1.5 no-print">
+      class="shrink-0 self-center h-8 px-3 rounded-lg text-xs font-semibold bg-white/80 dark:bg-gray-900/40 border border-current/30 hover:bg-white dark:hover:bg-gray-900 inline-flex items-center gap-1.5 no-print">
       <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">undo</mat-icon>
       Undo {{ isSold() ? 'sale' : 'death' }}
     </button>

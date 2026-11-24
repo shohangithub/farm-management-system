@@ -4,19 +4,25 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Farm360.Application.Farms.Queries;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
+using Farm360.Domain.Farms;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Feeding;
+using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
 using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Feeding;
 
 /// <summary>
-/// Row model for the Daily Feeding Entries & Nutrition Workflow SAP Report.
+/// One ration given to one animal on one day, with its feeding status.
 /// </summary>
+/// <param name="Status">The feeding status in plain words ("Fed (confirmed)").</param>
+/// <param name="WeightKg">Weight used for the ration that day; null when none was recorded.</param>
+/// <param name="DryMatterKg">Null when the recipe has no dry-matter value.</param>
+/// <param name="CrudeProteinGrams">Null when the recipe has no protein value.</param>
+/// <param name="Notes">Why the amount was changed, for an adjusted feeding.</param>
 public sealed record DailyFeedingWorkflowReportRow(
     DateOnly Date,
     string AnimalTag,
@@ -25,21 +31,19 @@ public sealed record DailyFeedingWorkflowReportRow(
     string RuleSetName,
     string FormulaName,
     string Status,
-    decimal WeightKg,
+    decimal? WeightKg,
     decimal FeedKg,
     decimal DryMatterPercent,
-    decimal DryMatterKg,
+    decimal? DryMatterKg,
     decimal CrudeProteinPercent,
-    decimal CrudeProteinGrams,
+    decimal? CrudeProteinGrams,
     decimal UnitCostBdt,
     decimal TotalCostBdt,
     string Notes);
 
 /// <summary>
-/// Report F3 — Daily Feeding Entries & Workflow Report.
-/// Displays animal-wise chronological feed intake, nutritional breakdown (Dry Matter and Crude Protein),
-/// unit rate, financial cost, and operational workflow status (Pending, Confirmed, Adjusted, Skipped).
-/// Formatted according to SAP enterprise reporting standards.
+/// Report F3 — Daily feeding record by animal: what each animal was given each day, whether that
+/// feeding was confirmed, and the dry matter, protein and cost in it.
 /// </summary>
 public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<DailyFeedingWorkflowReportRow>
 {
@@ -72,12 +76,12 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
     public override string Key => "feeding.daily-workflow";
 
     public override LocalizedText Title => new(
-        "Daily Feeding Entries & Nutrition Workflow Report",
-        "দৈনিক খাদ্য গ্রহণ, পুষ্টি ও কর্মপ্রবাহ প্রতিবেদন");
+        "Daily Feeding Record by Animal",
+        "পশুভিত্তিক দৈনিক খাওয়ানোর রেকর্ড");
 
     public override LocalizedText Description => new(
-        "Animal-wise daily feeding history with workflow status, ration quantities, nutrient intake (Dry Matter & Crude Protein), unit rates, and cost analytics.",
-        "প্রতিটি পশুর দৈনিক খাদ্য গ্রহণের ইতিহাস, অনুমোদন অবস্থা, পুষ্টির পরিমাণ (ডিএম ও প্রোটিন), একক দর ও খাদ্য ব্যয়ের বিস্তারিত প্রতিবেদন।");
+        "What each animal was given each day, whether the feeding was confirmed, and the dry matter, protein and cost in it.",
+        "প্রতিদিন প্রতিটি পশুকে কী দেওয়া হয়েছে, খাওয়ানো নিশ্চিত হয়েছে কি না, এবং তাতে কত শুষ্ক পদার্থ, প্রোটিন ও খরচ।");
 
     public override ReportCategory Category => ReportCategory.Feeding;
 
@@ -89,13 +93,13 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
         ReportParameter.DateRange(@default: "current-month"),
         ReportParameter.Select(
             "status",
-            new LocalizedText("Workflow Status", "কর্মপ্রবাহ অবস্থা"),
+            new LocalizedText("Feeding status", "খাওয়ানোর অবস্থা"),
             [
-                new ReportSelectOption("all", new LocalizedText("All Statuses", "সকল অবস্থা")),
-                new ReportSelectOption("Confirmed", new LocalizedText("Confirmed", "অনুমোদিত")),
-                new ReportSelectOption("Pending", new LocalizedText("Pending", "অপেক্ষমান")),
-                new ReportSelectOption("Adjusted", new LocalizedText("Adjusted", "সংশোধিত")),
-                new ReportSelectOption("Skipped", new LocalizedText("Skipped", "বাদ দেওয়া")),
+                new ReportSelectOption("all", new LocalizedText("All statuses", "সকল অবস্থা")),
+                new ReportSelectOption("Confirmed", new LocalizedText("Fed (confirmed)", "খাওয়ানো হয়েছে (নিশ্চিত)")),
+                new ReportSelectOption("Pending", new LocalizedText("Not yet confirmed", "এখনো নিশ্চিত হয়নি")),
+                new ReportSelectOption("Adjusted", new LocalizedText("Fed (amount changed)", "খাওয়ানো হয়েছে (পরিমাণ পরিবর্তিত)")),
+                new ReportSelectOption("Skipped", new LocalizedText("Skipped", "বাদ দেওয়া হয়েছে")),
             ],
             @default: "all"),
         ReportParameter.Animal(required: false),
@@ -103,6 +107,8 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
         ReportParameter.Shed(required: false)
     ];
 
+    // Tag, species and shed are in the group band above each animal's rows, so they are not repeated
+    // on every line; dry-matter % and protein % belong to the recipe and are folded into the kg/g.
     public override IReadOnlyList<ReportColumn<DailyFeedingWorkflowReportRow>> Columns =>
     [
         ReportColumn<DailyFeedingWorkflowReportRow>.Date(
@@ -112,47 +118,29 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
             widthMm: 22f),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Text(
-            "tag",
-            new LocalizedText("Animal Tag", "ট্যাগ নম্বর"),
-            r => r.AnimalTag,
-            width: 1.8f),
-
-        ReportColumn<DailyFeedingWorkflowReportRow>.Text(
-            "species",
-            new LocalizedText("Species", "প্রজাতি"),
-            r => r.Species,
-            width: 1.4f),
-
-        ReportColumn<DailyFeedingWorkflowReportRow>.Text(
-            "location",
-            new LocalizedText("Location", "অবস্থান"),
-            r => r.Location,
-            width: 1.6f),
-
-        ReportColumn<DailyFeedingWorkflowReportRow>.Text(
             "rule",
-            new LocalizedText("Feeding Rule", "খাদ্য নিয়ম"),
+            new LocalizedText("Feed chart", "খাদ্য তালিকা"),
             r => r.RuleSetName,
             width: 1.8f),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Text(
             "formula",
-            new LocalizedText("Recipe / Formula", "রেসিপি / ফর্মুলা"),
+            new LocalizedText("Recipe (feed mix)", "রেসিপি (খাদ্য মিশ্রণ)"),
             r => r.FormulaName,
             width: 2.0f),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Text(
             "status",
-            new LocalizedText("Status", "অবস্থা"),
+            new LocalizedText("Feeding status", "খাওয়ানোর অবস্থা"),
             r => r.Status,
-            width: 1.3f),
+            width: 1.6f),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Number(
             "weight",
-            new LocalizedText("Wt (kg)", "ওজন"),
+            new LocalizedText("Weight (kg)", "ওজন (কেজি)"),
             r => r.WeightKg,
             decimals: 1,
-            widthMm: 16f,
+            widthMm: 18f,
             aggregate: ReportAggregate.None),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Number(
@@ -164,61 +152,98 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
             aggregate: ReportAggregate.Sum),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Number(
-            "dmPct",
-            new LocalizedText("DM %", "ডিএম %"),
-            r => r.DryMatterPercent,
-            decimals: 1,
-            widthMm: 14f,
-            aggregate: ReportAggregate.None),
-
-        ReportColumn<DailyFeedingWorkflowReportRow>.Number(
             "dmKg",
-            new LocalizedText("DM (kg)", "ডিএম (কেজি)"),
+            new LocalizedText("Dry matter (kg)", "শুষ্ক পদার্থ (কেজি)"),
             r => r.DryMatterKg,
             decimals: 2,
-            widthMm: 17f,
+            widthMm: 20f,
             aggregate: ReportAggregate.Sum),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Number(
-            "cpPct",
-            new LocalizedText("CP %", "সিপি %"),
-            r => r.CrudeProteinPercent,
-            decimals: 1,
-            widthMm: 14f,
-            aggregate: ReportAggregate.None),
-
-        ReportColumn<DailyFeedingWorkflowReportRow>.WholeNumber(
             "cpGrams",
-            new LocalizedText("CP (g)", "সিপি (গ্রাম)"),
-            r => (int)Math.Round(r.CrudeProteinGrams),
-            widthMm: 16f,
+            new LocalizedText("Protein (g)", "প্রোটিন (গ্রাম)"),
+            r => r.CrudeProteinGrams,
+            decimals: 0,
+            widthMm: 18f,
             aggregate: ReportAggregate.Sum),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Money(
             "rate",
-            new LocalizedText("Rate (BDT)", "দর (টাকা)"),
+            new LocalizedText("Rate (BDT/kg)", "দর (টাকা/কেজি)"),
             r => r.UnitCostBdt,
-            widthMm: 18f,
+            widthMm: 20f,
             aggregate: ReportAggregate.None),
 
         ReportColumn<DailyFeedingWorkflowReportRow>.Money(
             "cost",
             new LocalizedText("Cost (BDT)", "খরচ (টাকা)"),
             r => r.TotalCostBdt,
-            widthMm: 20f,
+            widthMm: 22f,
             aggregate: ReportAggregate.Sum),
+
+        ReportColumn<DailyFeedingWorkflowReportRow>.Text(
+            "notes",
+            new LocalizedText("Reason for change", "পরিবর্তনের কারণ"),
+            r => r.Notes,
+            width: 1.6f),
     ];
 
     public override ReportGroup<DailyFeedingWorkflowReportRow>? Group =>
-        ReportGroup<DailyFeedingWorkflowReportRow>.By(
+        ReportGroup<DailyFeedingWorkflowReportRow>.ByLocalized(
             r => r.AnimalTag,
-            r => $"Animal: {r.AnimalTag} · {r.Species} · {r.Location}");
+            r => new LocalizedText(
+                $"Animal: {r.AnimalTag} · {r.Species} · Shed: {r.Location}",
+                $"পশু: {r.AnimalTag} · {r.Species} · শেড: {r.Location}"));
+
+    public override LocalizedText? GrandTotalLabel => new("Total for all animals shown", "দেখানো সব পশুর মোট");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Rows are grouped by animal; each row is one ration given on one day, with a sub-total for each animal.",
+            "সারিগুলো পশু অনুযায়ী সাজানো; প্রতিটি সারি একদিনের একটি রেশন, প্রতিটি পশুর নিচে উপ-মোট আছে।"),
+        new("\"Not yet confirmed\" means the feeding was planned but nobody has confirmed it was given; only confirmed or changed feedings count as fed.",
+            "\"এখনো নিশ্চিত হয়নি\" মানে খাওয়ানোর পরিকল্পনা ছিল কিন্তু কেউ নিশ্চিত করেনি; শুধু নিশ্চিত বা পরিবর্তিত খাওয়ানোই খাওয়ানো হিসেবে ধরা হয়।"),
+        new("Dry matter (kg) = feed × the recipe's dry-matter %; Protein (g) = feed × the recipe's protein %. Blank means the recipe has no nutrition values.",
+            "শুষ্ক পদার্থ (কেজি) = খাদ্য × রেসিপির শুষ্ক পদার্থ %; প্রোটিন (গ্রাম) = খাদ্য × রেসিপির প্রোটিন %। ফাঁকা মানে রেসিপিতে পুষ্টির তথ্য নেই।"),
+        new("Cost (BDT) = Feed (kg) × Rate (BDT/kg).",
+            "খরচ (টাকা) = খাদ্য (কেজি) × দর (টাকা/কেজি)।"),
+        new("Sold or dead animals show the date they left beside the tag, and appear only for days they were on the farm or were actually fed.",
+            "বিক্রি হওয়া বা মৃত পশুর ট্যাগের পাশে খামার ছাড়ার তারিখ থাকে; শুধু খামারে থাকা বা সত্যিই খাওয়ানো দিনগুলো দেখানো হয়।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var period = context.Range("period");
-        return $"Herd Daily Feed Consumption & Nutrition Workflow · {period.From:dd MMM yyyy} to {period.To:dd MMM yyyy}";
+        var language = context.Language;
+        var parts = new List<string> { FeedReportText.Period(context.Range("period")) };
+
+        var shedId = context.IdOrNull("shedId");
+        if (shedId.HasValue)
+        {
+            var shed = await _sheds.GetByIdAsync(context.TenantId, shedId.Value, cancellationToken).ConfigureAwait(false);
+            if (shed is not null)
+            {
+                parts.Add(new LocalizedText("Shed: ", "শেড: ").For(language) + ShedLabel(shed));
+            }
+        }
+
+        var animalId = context.IdOrNull("animalId");
+        if (animalId.HasValue)
+        {
+            var animal = await _animals.GetByIdAsync(animalId.Value, cancellationToken).ConfigureAwait(false);
+            if (animal is not null)
+            {
+                parts.Add(new LocalizedText("Tag ", "ট্যাগ ").For(language) + AnimalLabels.Tag(animal));
+            }
+        }
+
+        var status = context.Text("status", "all");
+        if (Enum.TryParse<DailyFeedingEntryStatus>(status, ignoreCase: true, out var parsed))
+        {
+            parts.Add(FeedReportText.FeedingStatus(parsed).For(language));
+        }
+
+        return string.Join(" · ", parts);
     }
 
     protected override async Task<IReadOnlyList<DailyFeedingWorkflowReportRow>> FetchAsync(
@@ -233,6 +258,7 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
         var animalId = context.IdOrNull("animalId");
         var batchId = context.IdOrNull("batchId");
         var shedId = context.IdOrNull("shedId");
+        var language = context.Language;
 
         var allocations = await _allocations
             .GetByFarmAsync(farmId, period.From, period.To, animalId, batchId, shedId, cancellationToken)
@@ -277,6 +303,10 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
         var shedsList = await _sheds.GetAllByFarmAsync(context.TenantId, farmId, cancellationToken).ConfigureAwait(false);
         var shedsMap = shedsList.ToDictionary(s => s.Id);
 
+        var notRecorded = FeedReportText.NotRecorded.For(language);
+        var noShed = new LocalizedText("none", "নেই").For(language);
+        var unknownAnimal = new LocalizedText("Unknown animal", "অজানা পশু").For(language);
+
         var rows = new List<DailyFeedingWorkflowReportRow>(allocations.Count);
 
         foreach (var a in allocations)
@@ -300,7 +330,7 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
             // Not on the farm that day (sold/died before or on it) and not actually fed: not part
             // of the day's workflow.
             if (animal is not null && !animal.IsOnFarmOn(a.EntryDate)
-                && entry.Status is not (Farm360.Domain.Feeding.Enums.DailyFeedingEntryStatus.Confirmed or Farm360.Domain.Feeding.Enums.DailyFeedingEntryStatus.Adjusted))
+                && entry.Status is not (DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted))
             {
                 continue;
             }
@@ -314,28 +344,28 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
                 ruleSetsMap.TryGetValue(plan.FeedingRuleSetId, out ruleSet);
             }
 
-            string tag = animal is null ? "Tag —" : AnimalLabels.Tag(animal);
-            string species = animal?.Species.ToString() ?? "Cattle";
+            string tag = animal is null ? unknownAnimal : AnimalLabels.Tag(animal);
+            string species = animal is null ? notRecorded : FeedReportText.Species(animal.Species).For(language);
 
-            Guid? targetShedId = a.ShedId;
-            string location = "General Herd";
-            if (targetShedId.HasValue && shedsMap.TryGetValue(targetShedId.Value, out var shed))
+            string location = noShed;
+            if (a.ShedId is { } targetShedId && shedsMap.TryGetValue(targetShedId, out var shed))
             {
-                location = shed.ShedNumber;
+                location = ShedLabel(shed);
             }
 
-            string ruleName = ruleSet?.Name ?? "Standard Rule";
-            string formulaName = formula?.Title ?? "Daily Mixed Ration";
+            string ruleName = ruleSet?.Name ?? notRecorded;
+            string formulaName = formula?.Title ?? notRecorded;
 
-            // Nutrition values from FeedFormula
+            // Nutrition values from FeedFormula. A recipe without them gives a blank, not a 0 that
+            // reads like "no protein in this feed".
             decimal dmPct = formula?.NutritionalProfile.DryMatterPercentage ?? 0m;
             decimal cpPct = formula?.NutritionalProfile.CrudeProteinPercentage ?? 0m;
 
             decimal feedKg = a.AllocatedKg;
-            decimal dmKg = dmPct > 0 ? Math.Round(feedKg * (dmPct / 100m), 2) : 0m;
-            decimal cpGrams = cpPct > 0 ? Math.Round(feedKg * (cpPct / 100m) * 1000m, 0) : 0m;
+            decimal? dmKg = dmPct > 0 ? Math.Round(feedKg * (dmPct / 100m), 2) : null;
+            decimal? cpGrams = cpPct > 0 ? Math.Round(feedKg * (cpPct / 100m) * 1000m, 0) : null;
 
-            decimal weight = a.WeightAtAllocationKg > 0 ? a.WeightAtAllocationKg : (animal?.LatestWeightKg ?? 0m);
+            decimal? weight = a.WeightAtAllocationKg > 0 ? a.WeightAtAllocationKg : animal?.LatestWeightKg;
 
             rows.Add(new DailyFeedingWorkflowReportRow(
                 Date: a.EntryDate,
@@ -344,8 +374,8 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
                 Location: location,
                 RuleSetName: ruleName,
                 FormulaName: formulaName,
-                Status: statusStr,
-                WeightKg: weight,
+                Status: FeedReportText.FeedingStatus(entry.Status).For(language),
+                WeightKg: weight is > 0m ? weight : null,
                 FeedKg: feedKg,
                 DryMatterPercent: dmPct,
                 DryMatterKg: dmKg,
@@ -357,8 +387,14 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
         }
 
         return rows
-            .OrderBy(r => r.AnimalTag)
+            .OrderBy(r => r.AnimalTag, StringComparer.Ordinal)
             .ThenBy(r => r.Date)
             .ToList();
     }
+
+    /// <summary>"A", or "A – Fattening shed" when the shed has a name as well as a number.</summary>
+    private static string ShedLabel(Shed shed) =>
+        string.IsNullOrWhiteSpace(shed.ShedName) || string.Equals(shed.ShedName, shed.ShedNumber, StringComparison.OrdinalIgnoreCase)
+            ? shed.ShedNumber
+            : $"{shed.ShedNumber} – {shed.ShedName}";
 }

@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Model;
 using Farm360.Domain.Livestock;
+using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Finance;
@@ -39,17 +41,31 @@ public sealed class HerdDailyCostReportDefinition : ReportDefinition<HerdDailyCo
 
     public override string Key => "finance.herd-daily-cost";
 
-    public override LocalizedText Title => new("Herd Daily Cost Report", "পালের দৈনিক খরচ প্রতিবেদন");
+    public override LocalizedText Title => new("Daily Cost of the Herd", "পুরো পালের দৈনিক খরচ");
 
     public override LocalizedText Description => new(
-        "Day-by-day cost of all animals on the farm (or one batch): head count, feed, vet & medicine, labour, overhead and cost per head.",
-        "খামারের (বা একটি ব্যাচের) সকল পশুর দিনভিত্তিক খরচ: পশুর সংখ্যা, খাদ্য, চিকিৎসা, শ্রম, পরোক্ষ খরচ ও মাথাপিছু খরচ।");
+        "How much the whole herd (or one batch) cost each day — feed, vet & medicine, labour and overhead — and what that comes to per animal.",
+        "পুরো পাল (বা একটি ব্যাচ) প্রতিদিন কত খরচ করেছে — খাদ্য, চিকিৎসা ও ওষুধ, শ্রম ও পরোক্ষ খরচ — এবং পশুপ্রতি কত পড়েছে।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
     public override PageSetup Page => PageSetup.A4LandscapeSigned;
 
-    public override LocalizedText? GrandTotalLabel => new("Total for the period", "সময়কালের মোট খরচ");
+    public override LocalizedText? GrandTotalLabel => new("Total cost for the period", "সময়কালের মোট খরচ");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each line is one calendar day; days with no cost still appear so gaps are visible.",
+            "প্রতিটি সারি একটি দিন; খরচ না থাকলেও দিনটি দেখানো হয়েছে, যাতে ফাঁক বোঝা যায়।"),
+        new("Animals = head on the farm that day. A sold or dead animal stops counting (and costing) the day before it left.",
+            "পশুর সংখ্যা = সেদিন খামারে থাকা পশু। বিক্রি বা মৃত পশু যেদিন খামার ছাড়ে তার আগের দিন পর্যন্ত গণনা ও খরচে থাকে।"),
+        new("Feed is what was actually fed that day; vet & medicine is booked on the day of treatment or vaccination.",
+            "খাদ্য খরচ সেদিন আসলে যা খাওয়ানো হয়েছে; চিকিৎসা ও ওষুধ খরচ চিকিৎসা বা টিকার দিনে ধরা হয়েছে।"),
+        new("Labour and overhead bills are shared among animals by the days each was on the farm, then spread evenly over those days.",
+            "শ্রম ও পরোক্ষ খরচ প্রতিটি পশুর খামারে থাকার দিন অনুযায়ী ভাগ করে সেই দিনগুলোতে সমানভাবে ছড়ানো হয়েছে।"),
+        new("Cost per animal = total for the day ÷ animals that day. Purchase prices are not included.",
+            "পশুপ্রতি খরচ = দিনের মোট খরচ ÷ সেদিনের পশুর সংখ্যা। পশুর ক্রয়মূল্য এখানে ধরা হয়নি।"),
+    ];
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -58,24 +74,30 @@ public sealed class HerdDailyCostReportDefinition : ReportDefinition<HerdDailyCo
         ReportParameter.Batch(name: "batchId", required: false),
     ];
 
+    // Column order (Date, Animals, …, Total, Per animal) is relied on by DailyAnimalCostReportTests.
     public override IReadOnlyList<ReportColumn<HerdDailyCostReportRow>> Columns =>
     [
         ReportColumn<HerdDailyCostReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date, widthMm: 24f),
-        ReportColumn<HerdDailyCostReportRow>.WholeNumber("head", new LocalizedText("Animals", "পশুর সংখ্যা"), r => r.HeadCount, widthMm: 18f),
-        ReportColumn<HerdDailyCostReportRow>.Number("feedKg", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
-        ReportColumn<HerdDailyCostReportRow>.Money("feed", new LocalizedText("Feed (BDT)", "খাদ্য খরচ"), r => r.FeedBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<HerdDailyCostReportRow>.Money("vet", new LocalizedText("Vet & Medicine (BDT)", "চিকিৎসা ও ওষুধ"), r => r.VetBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
-        ReportColumn<HerdDailyCostReportRow>.Money("labour", new LocalizedText("Labour (BDT)", "শ্রম"), r => r.LabourBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<HerdDailyCostReportRow>.Money("overhead", new LocalizedText("Overhead (BDT)", "পরোক্ষ খরচ"), r => r.OverheadBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<HerdDailyCostReportRow>.Money("total", new LocalizedText("Day Total (BDT)", "দিনের মোট"), r => r.TotalBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
-        ReportColumn<HerdDailyCostReportRow>.Money("perHead", new LocalizedText("Cost / Head (BDT)", "মাথাপিছু খরচ"), r => r.CostPerHeadBdt, widthMm: 26f),
+        ReportColumn<HerdDailyCostReportRow>.WholeNumber("head", new LocalizedText("Animals (head)", "পশু (টি)"), r => r.HeadCount, widthMm: 20f),
+        ReportColumn<HerdDailyCostReportRow>.Number("feedKg", new LocalizedText("Feed fed (kg)", "খাওয়ানো খাদ্য (কেজি)"), r => r.FeedKg, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<HerdDailyCostReportRow>.Money("feed", new LocalizedText("Feed (BDT)", "খাদ্য (টাকা)"), r => r.FeedBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<HerdDailyCostReportRow>.Money("vet", new LocalizedText("Vet & medicine (BDT)", "চিকিৎসা ও ওষুধ (টাকা)"), r => r.VetBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<HerdDailyCostReportRow>.Money("labour", new LocalizedText("Labour (BDT)", "শ্রম (টাকা)"), r => r.LabourBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<HerdDailyCostReportRow>.Money("overhead", new LocalizedText("Overhead (BDT)", "পরোক্ষ খরচ (টাকা)"), r => r.OverheadBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<HerdDailyCostReportRow>.Money("total", new LocalizedText("Total for the day (BDT)", "দিনের মোট (টাকা)"), r => r.TotalBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<HerdDailyCostReportRow>.Money("perHead", new LocalizedText("Per animal (BDT/head)", "পশুপ্রতি (টাকা/টি)"), r => r.CostPerHeadBdt, widthMm: 28f),
     ];
+
+    public override ReportGroup<HerdDailyCostReportRow>? Group =>
+        ReportGroup<HerdDailyCostReportRow>.ByLocalized(
+            r => AnimalCostReportText.MonthKey(r.Date),
+            r => AnimalCostReportText.MonthLabel(r.Date));
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         var scope = await _scope.ResolveAsync(context, cancellationToken).ConfigureAwait(false);
-        return $"{scope.Label} · Period {context.Range("period")}";
+        return $"{scope.Label} · {AnimalCostReportText.Period(scope.Period)}";
     }
 
     protected override async Task<IReadOnlyList<HerdDailyCostReportRow>> FetchAsync(
@@ -169,15 +191,100 @@ public sealed class DailyAnimalCostScope
         IReadOnlyList<Animal> animals = batchId is { } b ? present.Where(a => a.BatchId == b).ToList() : present;
         var byId = animals.ToDictionary(a => a.Id);
 
-        var label = "All animals on the farm";
+        var bn = context.Language == ReportLanguage.Bn;
+        var label = bn ? "খামারের সকল পশু" : "All animals on the farm";
         HashSet<Guid>? filter = null;
         if (batchId is { } id)
         {
             var batch = await _batches.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
-            label = $"Batch {batch?.Name ?? "(not found)"}";
+            var name = batch?.Name ?? (bn ? "অজানা" : "unknown");
+            label = bn ? $"ব্যাচ {name}" : $"Batch {name}";
             filter = [.. byId.Keys];
         }
 
         return new Result(farmId, period, animals, byId, filter, label);
+    }
+}
+
+/// <summary>
+/// Plain-language wording shared by the animal cost reports in this folder: species and sex in
+/// words, readable periods ("1 Nov – 18 Nov 2026"), month bands and the one-line animal subject.
+/// </summary>
+internal static class AnimalCostReportText
+{
+    private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
+
+    public static string Day(DateOnly date) => date.ToString("d MMM yyyy", Invariant);
+
+    /// <summary>"18 Nov 2026", "1 Nov – 18 Nov 2026" or "20 Dec 2025 – 18 Jan 2026".</summary>
+    public static string Period(DateRange range)
+    {
+        if (range.From == range.To)
+        {
+            return Day(range.From);
+        }
+
+        var from = range.From.Year == range.To.Year ? range.From.ToString("d MMM", Invariant) : Day(range.From);
+        return from + " – " + Day(range.To);
+    }
+
+    public static string MonthKey(DateOnly date) => date.ToString("yyyy-MM", Invariant);
+
+    public static LocalizedText MonthLabel(DateOnly date)
+    {
+        var month = date.ToString("MMM yyyy", Invariant);
+        return new LocalizedText("Month: " + month, "মাস: " + month);
+    }
+
+    public static string Species(AnimalSpecies species, ReportLanguage language)
+    {
+        var bn = language == ReportLanguage.Bn;
+        return species switch
+        {
+            AnimalSpecies.CattleBeef => bn ? "মাংসের গরু" : "Beef cattle",
+            AnimalSpecies.CattleDairy => bn ? "দুধের গাভী" : "Dairy cattle",
+            AnimalSpecies.Goat => bn ? "ছাগল" : "Goat",
+            AnimalSpecies.Sheep => bn ? "ভেড়া" : "Sheep",
+            _ => species.ToString(),
+        };
+    }
+
+    public static string Sex(AnimalSex sex, ReportLanguage language)
+    {
+        var bn = language == ReportLanguage.Bn;
+        return sex switch
+        {
+            AnimalSex.Male => bn ? "পুরুষ" : "Male",
+            AnimalSex.Female => bn ? "স্ত্রী" : "Female",
+            _ => sex.ToString(),
+        };
+    }
+
+    /// <summary>
+    /// "Tag B-04 · Beef cattle · Male · on farm since 21 Aug 2026", or for an animal that has left,
+    /// "Tag B-04 (Sold 12-Nov-2026) · … · on farm 21 Aug 2026 – 11 Nov 2026".
+    /// </summary>
+    public static string AnimalLine(Animal animal, ReportLanguage language, string? breed = null)
+    {
+        ArgumentNullException.ThrowIfNull(animal);
+        var bn = language == ReportLanguage.Bn;
+        var parts = new List<string>
+        {
+            (bn ? "ট্যাগ " : "Tag ") + AnimalLabels.Tag(animal),
+            string.IsNullOrWhiteSpace(breed) ? Species(animal.Species, language) : breed!,
+            Sex(animal.Sex, language),
+        };
+
+        var (from, to) = DailyAnimalCostCalculator.OnFarmSpan(animal);
+        if (!animal.HasLeftFarm)
+        {
+            parts.Add(bn ? Day(from) + " থেকে খামারে" : "on farm since " + Day(from));
+        }
+        else if (to >= from)
+        {
+            parts.Add(bn ? "খামারে ছিল " + Day(from) + " – " + Day(to) : "on farm " + Day(from) + " – " + Day(to));
+        }
+
+        return string.Join(" · ", parts);
     }
 }

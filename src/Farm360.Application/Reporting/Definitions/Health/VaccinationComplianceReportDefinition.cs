@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,17 +75,17 @@ public sealed class VaccinationComplianceReportDefinition : ReportDefinition<Vac
 
     public override string Key => "health.vaccination-compliance";
 
-    public override LocalizedText Title => new("Vaccination Due & Compliance Report", "টিকা প্রদান ও মান্যতা প্রতিবেদন");
+    public override LocalizedText Title => new("Vaccinations: Given, Due & Overdue", "টিকা: দেওয়া, বাকি ও সময় পেরোনো");
 
     public override LocalizedText Description => new(
-        "Given, due, overdue and cancelled vaccinations per protocol for animals on the farm, with the on-time compliance rate for the period.",
-        "খামারে থাকা পশুর প্রোটোকলভিত্তিক প্রদত্ত, নির্ধারিত, বকেয়া ও বাতিল টিকা এবং সময়মতো টিকা প্রদানের হার।");
+        "Are our animals vaccinated on time? Every dose due in the period, by vaccine schedule: given on time, given late, still to give or overdue, with the on-time rate.",
+        "আমাদের পশুরা কি সময়মতো টিকা পাচ্ছে? নির্বাচিত সময়ে প্রতিটি টিকার মাত্রা, টিকা সূচি অনুযায়ী: সময়মতো দেওয়া, দেরিতে দেওয়া, বাকি বা সময় পেরোনো, এবং সময়মতো দেওয়ার হার।");
 
     public override ReportCategory Category => ReportCategory.Health;
 
     public override PageSetup Page => PageSetup.A4LandscapeSigned;
 
-    public override LocalizedText? GrandTotalLabel => new("Herd total", "পালের মোট");
+    public override LocalizedText? GrandTotalLabel => new("All vaccines", "সকল টিকা");
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -98,24 +99,35 @@ public sealed class VaccinationComplianceReportDefinition : ReportDefinition<Vac
 
     public override IReadOnlyList<ReportColumn<VaccinationComplianceReportRow>> Columns =>
     [
-        ReportColumn<VaccinationComplianceReportRow>.Text("vaccine", new LocalizedText("Vaccine", "টিকা"), r => r.VaccineName, width: 2.4f),
-        ReportColumn<VaccinationComplianceReportRow>.Text("tag", new LocalizedText("Animal Tag", "পশুর ট্যাগ"), r => r.AnimalTag, width: 1.6f),
-        ReportColumn<VaccinationComplianceReportRow>.Date("due", new LocalizedText("Due Date", "নির্ধারিত তারিখ"), r => r.DueDate),
-        ReportColumn<VaccinationComplianceReportRow>.Date("given", new LocalizedText("Given On", "প্রদানের তারিখ"), r => r.GivenDate),
-        ReportColumn<VaccinationComplianceReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.StatusLabel, width: 24f, relative: false),
-        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("daysLate", new LocalizedText("Days late", "দেরি (দিন)"), r => r.DaysLate, widthMm: 16f),
-        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("givenCount", new LocalizedText("Given", "প্রদত্ত"), r => r.Given, widthMm: 14f, aggregate: ReportAggregate.Sum),
-        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("onTimeCount", new LocalizedText("On time", "সময়মতো"), r => r.OnTime, widthMm: 14f, aggregate: ReportAggregate.Sum),
-        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("dueCount", new LocalizedText("Due", "নির্ধারিত"), r => r.Pending, widthMm: 14f, aggregate: ReportAggregate.Sum),
-        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("overdueCount", new LocalizedText("Overdue", "বকেয়া"), r => r.Overdue, widthMm: 16f, aggregate: ReportAggregate.Sum),
-        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("cancelledCount", new LocalizedText("Cancelled", "বাতিল"), r => r.Cancelled, widthMm: 16f, aggregate: ReportAggregate.Sum),
-        ReportColumn<VaccinationComplianceReportRow>.Text("notes", new LocalizedText("Notes / Batch", "মন্তব্য / ব্যাচ"), r => r.Notes, width: 2.0f),
+        ReportColumn<VaccinationComplianceReportRow>.Text("tag", new LocalizedText("Tag", "ট্যাগ"), r => r.AnimalTag, width: 1.6f),
+        ReportColumn<VaccinationComplianceReportRow>.Text("vaccine", new LocalizedText("Vaccine", "টিকা"), r => r.VaccineName, width: 2.2f),
+        ReportColumn<VaccinationComplianceReportRow>.Date("due", new LocalizedText("Due date", "নির্ধারিত তারিখ"), r => r.DueDate),
+        ReportColumn<VaccinationComplianceReportRow>.Date("given", new LocalizedText("Given on", "দেওয়ার তারিখ"), r => r.GivenDate),
+        ReportColumn<VaccinationComplianceReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.StatusLabel, width: 26f, relative: false),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("daysLate", new LocalizedText("Days late", "দেরি (দিন)"), r => r.DaysLate, widthMm: 18f),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("givenCount", new LocalizedText("Given (doses)", "দেওয়া হয়েছে (মাত্রা)"), r => r.Given, widthMm: 18f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("onTimeCount", new LocalizedText("On time (doses)", "সময়মতো (মাত্রা)"), r => r.OnTime, widthMm: 18f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("dueCount", new LocalizedText("Still to give (doses)", "এখনো বাকি (মাত্রা)"), r => r.Pending, widthMm: 18f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.WholeNumber("overdueCount", new LocalizedText("Overdue (doses)", "সময় পেরিয়েছে (মাত্রা)"), r => r.Overdue, widthMm: 18f, aggregate: ReportAggregate.Sum),
+        ReportColumn<VaccinationComplianceReportRow>.Text("notes", new LocalizedText("Notes / vaccine batch", "মন্তব্য / টিকার ব্যাচ"), r => r.Notes, width: 2.0f),
     ];
 
     public override ReportGroup<VaccinationComplianceReportRow>? Group =>
         ReportGroup<VaccinationComplianceReportRow>.ByLocalized(
             r => r.Protocol,
-            r => new LocalizedText($"Protocol: {r.Protocol}", $"প্রোটোকল: {r.Protocol}"));
+            r => new LocalizedText($"Vaccine schedule: {r.Protocol}", $"টিকা সূচি: {r.Protocol}"));
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one dose for one animal on the farm, grouped by vaccine schedule; the count columns are 1 or 0 so each group shows how many doses are in each state.",
+            "প্রতিটি সারি খামারে থাকা একটি পশুর একটি টিকার মাত্রা, টিকা সূচি অনুযায়ী ভাগ করা; গণনার ঘরগুলো ১ বা ০, তাই প্রতিটি গ্রুপে কোন অবস্থায় কতটি মাত্রা তা দেখা যায়।"),
+        new("A dose is on time if given no later than the due date plus the grace days chosen for this report.",
+            "নির্ধারিত তারিখ + এই প্রতিবেদনের জন্য বাছাই করা অতিরিক্ত দিনের মধ্যে দিলে মাত্রাটি সময়মতো ধরা হয়।"),
+        new("On-time rate (in the line above the table) = doses given on time ÷ doses whose due date has already come; doses due later are not counted as missed.",
+            "সময়মতো দেওয়ার হার (টেবিলের উপরের লাইনে) = সময়মতো দেওয়া মাত্রা ÷ যে মাত্রার নির্ধারিত তারিখ এসে গেছে; পরে নির্ধারিত মাত্রা বাদ পড়া ধরা হয় না।"),
+        new("Days late: for a given dose, days after the due date it was given; for an overdue dose, days since it fell due. Cancelled doses are listed but not counted.",
+            "দেরি (দিন): দেওয়া মাত্রার ক্ষেত্রে নির্ধারিত তারিখের কত দিন পর দেওয়া হয়েছে; সময় পেরোনো মাত্রার ক্ষেত্রে নির্ধারিত তারিখ থেকে কত দিন গেছে। বাতিল মাত্রা দেখানো হয় কিন্তু গণনা হয় না।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
@@ -129,16 +141,18 @@ public sealed class VaccinationComplianceReportDefinition : ReportDefinition<Vac
         string N(decimal value, int decimals = 0) => ReportValueFormatter.Format(
             value, decimals == 0 ? ReportColumnType.WholeNumber : ReportColumnType.Number, decimals, context.BengaliNumerals);
 
+        var range = $"{period.From.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} – {period.To.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
+
         if (s.CompliancePercent is not { } pct)
         {
             return bn
-                ? $"এই সময়ে কোনো টিকা নির্ধারিত ছিল না · আসন্ন {N(s.Upcoming)}"
-                : $"No doses fell due in the period · {N(s.Upcoming)} upcoming";
+                ? $"{range} · এই সময়ে কোনো টিকার তারিখ আসেনি · আসন্ন {N(s.Upcoming)} টি"
+                : $"{range} · No doses fell due yet in the period · {N(s.Upcoming)} still to give";
         }
 
         return bn
-            ? $"সময়মতো টিকা প্রদানের হার {N(pct, 1)}% ({N(s.DueInPeriod)} টির মধ্যে {N(s.GivenOnTime)} টি) · বকেয়া {N(s.Overdue)} · আসন্ন {N(s.Upcoming)}"
-            : $"Compliance {N(pct, 1)}% ({N(s.GivenOnTime)} of {N(s.DueInPeriod)} doses due were given on time) · {N(s.Overdue)} overdue · {N(s.Upcoming)} upcoming";
+            ? $"{range} · সময়মতো দেওয়ার হার {N(pct, 1)}% ({N(s.DueInPeriod)} টির মধ্যে {N(s.GivenOnTime)} টি) · সময় পেরিয়েছে {N(s.Overdue)} টি · বাকি {N(s.Upcoming)} টি"
+            : $"{range} · On-time rate {N(pct, 1)}% ({N(s.GivenOnTime)} of {N(s.DueInPeriod)} doses due were given on time) · {N(s.Overdue)} overdue · {N(s.Upcoming)} still to give";
     }
 
     protected override Task<IReadOnlyList<VaccinationComplianceReportRow>> FetchAsync(
@@ -237,7 +251,7 @@ public sealed class VaccinationComplianceReportDefinition : ReportDefinition<Vac
                 .GetComplianceEventsAsync(context.FarmId(), period.From, period.To, cancellationToken)
                 .ConfigureAwait(false);
 
-            var noProtocol = context.Language == ReportLanguage.Bn ? "প্রোটোকল ছাড়া" : "No protocol (ad-hoc)";
+            var noProtocol = context.Language == ReportLanguage.Bn ? "সূচির বাইরে (একক টিকা)" : "Not on a schedule (one-off)";
 
             IReadOnlyList<VaccinationComplianceReportRow> rows = events
                 .Select(x =>
@@ -276,10 +290,10 @@ public sealed class VaccinationComplianceReportDefinition : ReportDefinition<Vac
         var bn = language == ReportLanguage.Bn;
         return status switch
         {
-            VaccinationComplianceStatus.GivenOnTime => bn ? "সময়মতো প্রদত্ত" : "Given on time",
-            VaccinationComplianceStatus.GivenLate => bn ? "দেরিতে প্রদত্ত" : "Given late",
-            VaccinationComplianceStatus.Due => bn ? "নির্ধারিত" : "Due",
-            VaccinationComplianceStatus.Overdue => bn ? "বকেয়া" : "Overdue",
+            VaccinationComplianceStatus.GivenOnTime => bn ? "সময়মতো দেওয়া" : "Given on time",
+            VaccinationComplianceStatus.GivenLate => bn ? "দেরিতে দেওয়া" : "Given late",
+            VaccinationComplianceStatus.Due => bn ? "এখনো বাকি" : "Still to give",
+            VaccinationComplianceStatus.Overdue => bn ? "সময় পেরিয়েছে" : "Overdue",
             VaccinationComplianceStatus.Cancelled => bn ? "বাতিল" : "Cancelled",
             _ => status.ToString(),
         };

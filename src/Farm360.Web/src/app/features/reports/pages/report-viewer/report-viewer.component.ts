@@ -58,7 +58,7 @@ import {
       <main class="canvas">
         <div class="toolbar no-print">
           @if (data(); as d) {
-            <span class="meta">{{ d.totalRowCount }} rows · run {{ d.meta.runId.slice(0, 8) }}</span>
+            <span class="meta">{{ d.totalRowCount }} {{ d.totalRowCount === 1 ? 'row' : 'rows' }} · run {{ d.meta.runId.slice(0, 8) }}</span>
           }
           <span class="spacer"></span>
           <button mat-stroked-button [disabled]="!data() || running()" (click)="print()">

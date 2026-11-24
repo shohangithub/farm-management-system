@@ -53,14 +53,28 @@ public sealed class AnimalDailyCostByAnimalReportDefinition : ReportDefinition<A
     public override LocalizedText Title => new("Daily Cost of Every Animal", "প্রতিটি পশুর দৈনিক খরচ");
 
     public override LocalizedText Description => new(
-        "Each animal's cost day by day — feed, vet & medicine, labour and overhead — grouped by animal with a subtotal for each.",
-        "প্রতিটি পশুর দিনভিত্তিক খরচ — খাদ্য, চিকিৎসা, শ্রম ও পরোক্ষ খরচ — পশুভিত্তিক উপমোটসহ।");
+        "What each animal cost day by day — feed, vet & medicine, labour and overhead — with a total for each animal.",
+        "প্রতিটি পশুর দিনভিত্তিক খরচ — খাদ্য, চিকিৎসা ও ওষুধ, শ্রম ও পরোক্ষ খরচ — প্রতিটি পশুর আলাদা মোটসহ।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
     public override PageSetup Page => PageSetup.A4LandscapeSigned;
 
-    public override LocalizedText? GrandTotalLabel => new("Total for all animals", "সকল পশুর মোট খরচ");
+    public override LocalizedText? GrandTotalLabel => new("Total cost for all animals", "সকল পশুর মোট খরচ");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Lines are grouped by animal; each line is one day, and the sub-total under each animal is what it cost in the period.",
+            "সারিগুলো পশু অনুযায়ী সাজানো; প্রতিটি সারি একটি দিন, আর প্রতিটি পশুর নিচের উপ-মোট হলো এই সময়ে তার মোট খরচ।"),
+        new("Days on which an animal had no cost are left out to keep the report short.",
+            "যে দিনে কোনো খরচ হয়নি সেই দিনগুলো প্রতিবেদন ছোট রাখতে বাদ দেওয়া হয়েছে।"),
+        new("Feed is what was actually fed that day; vet & medicine is booked on the day of treatment or vaccination.",
+            "খাদ্য খরচ সেদিন আসলে যা খাওয়ানো হয়েছে; চিকিৎসা ও ওষুধ খরচ চিকিৎসা বা টিকার দিনে ধরা হয়েছে।"),
+        new("Labour and overhead are shared among animals by the days each was on the farm, then spread evenly over those days.",
+            "শ্রম ও পরোক্ষ খরচ প্রতিটি পশুর খামারে থাকার দিন অনুযায়ী ভাগ করে সেই দিনগুলোতে সমানভাবে ছড়ানো হয়েছে।"),
+        new("A sold or dead animal is marked next to its tag and its costs stop the day before it left. Purchase prices are not included.",
+            "বিক্রি বা মৃত পশুর ট্যাগের পাশে তা লেখা আছে, এবং খামার ছাড়ার আগের দিন পর্যন্ত খরচ ধরা হয়েছে। ক্রয়মূল্য ধরা হয়নি।"),
+    ];
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -72,12 +86,12 @@ public sealed class AnimalDailyCostByAnimalReportDefinition : ReportDefinition<A
     public override IReadOnlyList<ReportColumn<AnimalDailyCostByAnimalReportRow>> Columns =>
     [
         ReportColumn<AnimalDailyCostByAnimalReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date, widthMm: 24f),
-        ReportColumn<AnimalDailyCostByAnimalReportRow>.Number("feedKg", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("feed", new LocalizedText("Feed (BDT)", "খাদ্য খরচ"), r => r.FeedBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("vet", new LocalizedText("Vet & Medicine (BDT)", "চিকিৎসা ও ওষুধ"), r => r.VetBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("labour", new LocalizedText("Labour (BDT)", "শ্রম"), r => r.LabourBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("overhead", new LocalizedText("Overhead (BDT)", "পরোক্ষ খরচ"), r => r.OverheadBdt, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("total", new LocalizedText("Day Total (BDT)", "দিনের মোট"), r => r.TotalBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostByAnimalReportRow>.Number("feedKg", new LocalizedText("Feed fed (kg)", "খাওয়ানো খাদ্য (কেজি)"), r => r.FeedKg, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("feed", new LocalizedText("Feed (BDT)", "খাদ্য (টাকা)"), r => r.FeedBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("vet", new LocalizedText("Vet & medicine (BDT)", "চিকিৎসা ও ওষুধ (টাকা)"), r => r.VetBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("labour", new LocalizedText("Labour (BDT)", "শ্রম (টাকা)"), r => r.LabourBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("overhead", new LocalizedText("Overhead (BDT)", "পরোক্ষ খরচ (টাকা)"), r => r.OverheadBdt, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalDailyCostByAnimalReportRow>.Money("total", new LocalizedText("Total for the day (BDT)", "দিনের মোট (টাকা)"), r => r.TotalBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<AnimalDailyCostByAnimalReportRow>? Group =>
@@ -87,7 +101,7 @@ public sealed class AnimalDailyCostByAnimalReportDefinition : ReportDefinition<A
     {
         ArgumentNullException.ThrowIfNull(context);
         var scope = await _scope.ResolveAsync(context, cancellationToken).ConfigureAwait(false);
-        return $"{scope.Label} · Period {context.Range("period")}";
+        return $"{scope.Label} · {AnimalCostReportText.Period(scope.Period)}";
     }
 
     protected override async Task<IReadOnlyList<AnimalDailyCostByAnimalReportRow>> FetchAsync(
@@ -132,17 +146,29 @@ public sealed class AnimalDailyCostByAnimalReportDefinition : ReportDefinition<A
             }
         }
 
-        string TagOf(Guid id) => animalsById.TryGetValue(id, out var a) ? AnimalLabels.Tag(a) : "(animal not found)";
+        var bn = context.Language == ReportLanguage.Bn;
+        var unknown = bn ? "রেকর্ডে নেই এমন পশু" : "Animal no longer on record";
+
+        string TagOf(Guid id) => animalsById.TryGetValue(id, out var a) ? AnimalLabels.Tag(a) : "~";
         string LabelOf(Guid id)
         {
             if (!animalsById.TryGetValue(id, out var a))
             {
-                return "(animal not found)";
+                return (bn ? "পশু: " : "Animal: ") + unknown;
             }
 
-            var breed = breeds.GetValueOrDefault(a.BreedId) ?? a.Species.ToString();
-            var batch = a.BatchId is { } b && batchNames.TryGetValue(b, out var name) ? $" · Batch {name}" : string.Empty;
-            return $"Tag {a.Tag.TagId} · {breed} · {a.Sex} · {a.Status}{batch}";
+            var parts = new List<string>
+            {
+                (bn ? "পশু: " : "Animal: ") + AnimalLabels.Tag(a),
+                breeds.GetValueOrDefault(a.BreedId) ?? AnimalCostReportText.Species(a.Species, context.Language),
+                AnimalCostReportText.Sex(a.Sex, context.Language),
+            };
+            if (a.BatchId is { } b && batchNames.TryGetValue(b, out var name))
+            {
+                parts.Add((bn ? "ব্যাচ " : "Batch ") + name);
+            }
+
+            return string.Join(" · ", parts);
         }
 
         return costs

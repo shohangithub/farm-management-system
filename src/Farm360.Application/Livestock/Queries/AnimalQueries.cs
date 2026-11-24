@@ -17,13 +17,17 @@ namespace Farm360.Application.Livestock.Queries;
 /// </summary>
 public sealed record GetAnimalByIdQuery(Guid AnimalId) : IRequest<AnimalDto?>;
 
-public sealed class GetAnimalByIdQueryHandler(IAnimalRepository repository)
+public sealed class GetAnimalByIdQueryHandler(IAnimalRepository repository, IBreedRepository? breeds = null)
     : IRequestHandler<GetAnimalByIdQuery, AnimalDto?>
 {
     public async Task<AnimalDto?> Handle(GetAnimalByIdQuery request, CancellationToken cancellationToken)
     {
         var animal = await repository.GetByIdAsync(request.AnimalId, cancellationToken);
-        return animal?.ToDto();
+        if (animal is null)
+            return null;
+
+        var breedName = breeds is null ? null : (await breeds.GetByIdAsync(animal.BreedId, cancellationToken))?.Name;
+        return animal.ToDto() with { BreedName = breedName };
     }
 }
 
@@ -72,7 +76,7 @@ public interface IAnimalListQueries
     Task<(IReadOnlyList<Animal> Items, int TotalCount)> GetPagedAsync(GetAnimalListQuery filter, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 }
 
-public sealed class GetAnimalListQueryHandler(IAnimalRepository repository, IAnimalListQueries? listQueries = null)
+public sealed class GetAnimalListQueryHandler(IAnimalRepository repository, IAnimalListQueries? listQueries = null, IBreedRepository? breeds = null)
     : IRequestHandler<GetAnimalListQuery, PagedAnimalListDto>
 {
     public async Task<PagedAnimalListDto> Handle(GetAnimalListQuery request, CancellationToken cancellationToken)
@@ -98,8 +102,13 @@ public sealed class GetAnimalListQueryHandler(IAnimalRepository repository, IAni
             request.SortDescending,
             cancellationToken);
 
+        // Lists and pickers show "tag · breed", so the breed's name travels with each row.
+        var breedNames = items.Count == 0 || breeds is null
+            ? new Dictionary<Guid, string>()
+            : (await breeds.GetAllAsync(cancellationToken)).GroupBy(b => b.Id).ToDictionary(g => g.Key, g => g.First().Name);
+
         return new PagedAnimalListDto(
-            items.Select(a => a.ToListItemDto()).ToList().AsReadOnly(),
+            items.Select(a => a.ToListItemDto() with { BreedName = breedNames.GetValueOrDefault(a.BreedId) }).ToList().AsReadOnly(),
             totalCount,
             pageNumber,
             pageSize);

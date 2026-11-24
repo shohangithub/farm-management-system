@@ -82,17 +82,31 @@ public sealed class SalesRegisterReportDefinition : ReportDefinition<SalesRegist
 
     public override string Key => "finance.sales-register";
 
-    public override LocalizedText Title => new("Sales Register", "বিক্রয় রেজিস্টার");
+    public override LocalizedText Title => new("What We Sold (Sales Register)", "যা বিক্রি হয়েছে (বিক্রয় রেজিস্টার)");
 
     public override LocalizedText Description => new(
-        "Every animal sold in the period with buyer, sale weight, price, price/kg, cost to date and profit, cash or credit and amount outstanding; plus milk, by-product and other sales.",
-        "নির্বাচিত সময়ে বিক্রিত প্রতিটি পশু — ক্রেতা, বিক্রয় ওজন, মূল্য, প্রতি কেজি দর, মোট খরচ ও লাভ, নগদ/বাকি ও বকেয়া; সাথে দুধ, উপজাত ও অন্যান্য বিক্রয়।");
+        "Every animal sold in the period — buyer, weight, price, what it cost us and the profit on it — plus milk, by-product and other sales, and what buyers still owe.",
+        "নির্বাচিত সময়ে বিক্রি হওয়া প্রতিটি পশু — ক্রেতা, ওজন, দাম, পশুটির পেছনে মোট খরচ ও লাভ — সাথে দুধ, উপজাত ও অন্যান্য বিক্রয়, এবং ক্রেতার কাছে কত বাকি।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
     public override PageSetup Page => PageSetup.A4LandscapeSigned;
 
     public override LocalizedText? GrandTotalLabel => new("Total sales", "মোট বিক্রয়");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Part 1 has one line per animal sold; part 2 lists milk, by-product and other sales from the accounts.",
+            "অংশ ১-এ প্রতিটি বিক্রিত পশুর জন্য একটি সারি; অংশ ২-এ হিসাব থেকে দুধ, উপজাত ও অন্যান্য বিক্রয়।"),
+        new("Total cost of the animal = purchase price + feed + vet & medicine + its share of labour and overhead, up to the day before the sale.",
+            "পশুর মোট খরচ = ক্রয়মূল্য + খাদ্য + চিকিৎসা ও ওষুধ + শ্রম ও পরোক্ষ খরচের অংশ, বিক্রির আগের দিন পর্যন্ত।"),
+        new("Profit / (loss) = sale price − total cost of the animal; a minus figure is a loss.",
+            "লাভ / (ক্ষতি) = বিক্রয়মূল্য − পশুর মোট খরচ; বিয়োগ চিহ্নযুক্ত সংখ্যা মানে ক্ষতি।"),
+        new("Price per kg = sale price ÷ sale weight; it is left blank when no sale weight was recorded.",
+            "প্রতি কেজি দর = বিক্রয়মূল্য ÷ বিক্রয় ওজন; ওজন লেখা না থাকলে ঘরটি ফাঁকা রাখা হয়েছে।"),
+        new("Still owed is what the buyer has not yet paid on a credit sale, as of today.",
+            "বাকি হলো বাকিতে বিক্রির ক্ষেত্রে ক্রেতা আজ পর্যন্ত যে টাকা দেননি।"),
+    ];
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -104,16 +118,16 @@ public sealed class SalesRegisterReportDefinition : ReportDefinition<SalesRegist
     public override IReadOnlyList<ReportColumn<SalesRegisterReportRow>> Columns =>
     [
         ReportColumn<SalesRegisterReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date),
-        ReportColumn<SalesRegisterReportRow>.Text("ref", new LocalizedText("Tag / Voucher", "ট্যাগ / ভাউচার"), r => r.Reference, width: 1.3f),
-        ReportColumn<SalesRegisterReportRow>.Text("item", new LocalizedText("Breed / Item", "জাত / পণ্য"), r => r.Item, width: 1.5f),
+        ReportColumn<SalesRegisterReportRow>.Text("ref", new LocalizedText("Animal tag / voucher no.", "পশুর ট্যাগ / ভাউচার নং"), r => r.Reference, width: 1.3f),
+        ReportColumn<SalesRegisterReportRow>.Text("item", new LocalizedText("Breed / what was sold", "জাত / যা বিক্রি হয়েছে"), r => r.Item, width: 1.5f),
         ReportColumn<SalesRegisterReportRow>.Text("buyer", new LocalizedText("Buyer", "ক্রেতা"), r => r.Buyer, width: 1.6f),
         ReportColumn<SalesRegisterReportRow>.Number("weight", new LocalizedText("Sale weight (kg)", "বিক্রয় ওজন (কেজি)"), r => r.SaleWeightKg, 1, 20f, ReportAggregate.Sum),
-        ReportColumn<SalesRegisterReportRow>.Money("price", new LocalizedText("Price (BDT)", "মূল্য (টাকা)"), r => r.PriceBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<SalesRegisterReportRow>.Money("pricePerKg", new LocalizedText("Price / kg", "প্রতি কেজি দর"), r => r.PricePerKgBdt, widthMm: 20f),
-        ReportColumn<SalesRegisterReportRow>.Money("cost", new LocalizedText("Cost to date", "মোট খরচ"), r => r.CostToDateBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<SalesRegisterReportRow>.Money("profit", new LocalizedText("Profit / (loss)", "লাভ / (ক্ষতি)"), r => r.ProfitBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<SalesRegisterReportRow>.Text("terms", new LocalizedText("Cash / Credit", "নগদ / বাকি"), r => r.Terms, width: 16f, relative: false),
-        ReportColumn<SalesRegisterReportRow>.Money("outstanding", new LocalizedText("Outstanding (today)", "বকেয়া (আজ)"), r => r.OutstandingBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<SalesRegisterReportRow>.Money("price", new LocalizedText("Sale price (BDT)", "বিক্রয়মূল্য (টাকা)"), r => r.PriceBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<SalesRegisterReportRow>.Money("pricePerKg", new LocalizedText("Price per kg (BDT/kg)", "প্রতি কেজি দর (টাকা/কেজি)"), r => r.PricePerKgBdt, widthMm: 24f),
+        ReportColumn<SalesRegisterReportRow>.Money("cost", new LocalizedText("Total cost of animal (BDT)", "পশুর মোট খরচ (টাকা)"), r => r.CostToDateBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<SalesRegisterReportRow>.Money("profit", new LocalizedText("Profit / (loss) (BDT)", "লাভ / (ক্ষতি) (টাকা)"), r => r.ProfitBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<SalesRegisterReportRow>.Text("terms", new LocalizedText("Cash / credit", "নগদ / বাকি"), r => r.Terms, width: 16f, relative: false),
+        ReportColumn<SalesRegisterReportRow>.Money("outstanding", new LocalizedText("Still owed today (BDT)", "আজ পর্যন্ত বাকি (টাকা)"), r => r.OutstandingBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<SalesRegisterReportRow>? Group =>
@@ -130,10 +144,11 @@ public sealed class SalesRegisterReportDefinition : ReportDefinition<SalesRegist
         var revenue = animalRows.Sum(r => r.PriceBdt);
         var profit = animalRows.Sum(r => r.ProfitBdt ?? 0m);
         var outstanding = rows.Sum(r => r.OutstandingBdt);
+        var period = AnimalCostReportText.Period(context.Range("period"));
 
         return context.Language == ReportLanguage.Bn
-            ? $"{N(animalRows.Count)} টি পশু {M(revenue)} টাকায় বিক্রি · লাভ {M(profit)} · মোট বকেয়া {M(outstanding)}"
-            : $"{N(animalRows.Count)} animals sold for {M(revenue)} BDT · profit {M(profit)} · outstanding {M(outstanding)}";
+            ? $"{period} · {N(animalRows.Count)} টি পশু {M(revenue)} টাকায় বিক্রি · লাভ {M(profit)} · মোট বাকি {M(outstanding)}"
+            : $"{period} · {N(animalRows.Count)} animals sold for {M(revenue)} BDT · profit {M(profit)} · still owed {M(outstanding)}";
     }
 
     protected override Task<IReadOnlyList<SalesRegisterReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)

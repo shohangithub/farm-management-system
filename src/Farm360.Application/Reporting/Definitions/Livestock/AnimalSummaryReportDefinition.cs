@@ -11,6 +11,7 @@ using Farm360.Domain.Feeding.Interfaces.Repositories;
 using Farm360.Domain.Farms;
 using Farm360.Domain.Farms.Repositories;
 using Farm360.Domain.Finance.Interfaces;
+using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Livestock;
@@ -59,11 +60,11 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
 
     public override string Key => "livestock.animal-summary";
 
-    public override LocalizedText Title => new("Animal Comprehensive Summary Report", "পশুর সামগ্রিক সারসংক্ষেপ প্রতিবেদন");
+    public override LocalizedText Title => new("Animal Profile & Profit/Loss", "পশুর পরিচিতি ও লাভ-ক্ষতি");
 
     public override LocalizedText Description => new(
-        "Complete animal profile sheet detailing demographics, location, weight & ADG trajectory, cost accumulation, and projected market profit/loss.",
-        "পশুর পরিচিতি, অবস্থান, ওজন ও দৈনন্দিন বৃদ্ধি, ব্যয় খতিয়ান এবং বাজারমূল্যভিত্তিক সম্ভাব্য লাভ-ক্ষতি সংক্রান্ত সামগ্রিক প্রতিবেদন।");
+        "Everything about one animal on one page: who it is, where it lives, how it has grown, what it has cost so far and whether it is making or losing money.",
+        "এক পাতায় একটি পশুর সব তথ্য: পরিচিতি, কোথায় আছে, কতটা বেড়েছে, এ পর্যন্ত কত খরচ হয়েছে এবং লাভে না ক্ষতিতে আছে।");
 
     public override ReportCategory Category => ReportCategory.Livestock;
 
@@ -77,15 +78,29 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
 
     public override IReadOnlyList<ReportColumn<AnimalSummaryReportRow>> Columns =>
     [
-        ReportColumn<AnimalSummaryReportRow>.Text("metric", new LocalizedText("Metric / Indicator", "সূচক / বিবরণ"), r => r.Metric, width: 3.2f),
-        ReportColumn<AnimalSummaryReportRow>.Text("value", new LocalizedText("Current Value", "বর্তমান মান"), r => r.Value, width: 2.8f),
-        ReportColumn<AnimalSummaryReportRow>.Text("context", new LocalizedText("Notes & Analysis", "বিশ্লেষণ ও ভিত্তি"), r => r.Context, width: 5.0f),
+        ReportColumn<AnimalSummaryReportRow>.Text("metric", new LocalizedText("Item", "বিষয়"), r => r.Metric, width: 3.2f),
+        ReportColumn<AnimalSummaryReportRow>.Text("value", new LocalizedText("Value", "মান"), r => r.Value, width: 2.8f),
+        ReportColumn<AnimalSummaryReportRow>.Text("context", new LocalizedText("What it means / where it comes from", "অর্থ / কোথা থেকে এসেছে"), r => r.Context, width: 5.0f),
     ];
 
     public override bool ShowGrandTotals => false;
 
     public override ReportGroup<AnimalSummaryReportRow>? Group =>
-        ReportGroup<AnimalSummaryReportRow>.By(r => r.Section, r => r.Section);
+        ReportGroup<AnimalSummaryReportRow>.ByLocalized(r => r.Section, r => SectionLabel(r.Section));
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one fact about the animal; figures are as of today, or as of the sale or death date if it has left the farm.",
+            "প্রতিটি সারি পশুটির একটি তথ্য; হিসাব আজকের দিন পর্যন্ত, আর পশুটি খামার ছেড়ে গেলে বিক্রি বা মৃত্যুর দিন পর্যন্ত।"),
+        new("Age stops at the sale or death date.",
+            "বিক্রি বা মৃত্যুর তারিখে বয়স গণনা থেমে যায়।"),
+        new("Total cost = purchase price + confirmed feed + vet + labour + overhead share booked to this animal.",
+            "মোট খরচ = কেনার দাম + নিশ্চিত খাদ্য + চিকিৎসা + শ্রম + এই পশুর ভাগের অন্যান্য খরচ।"),
+        new("For an animal on the farm, value = latest weight × live-weight rate; for a sold animal it is the sale price; a dead animal is worth nothing.",
+            "খামারে থাকা পশুর মূল্য = সর্বশেষ ওজন × জীবন্ত ওজনের দর; বিক্রি হলে বিক্রয়মূল্য; মৃত পশুর মূল্য শূন্য।"),
+        new("Profit/loss = value − total cost; return on cost (%) = profit ÷ total cost × 100.",
+            "লাভ/ক্ষতি = মূল্য − মোট খরচ; খরচের উপর লাভ (%) = লাভ ÷ মোট খরচ × ১০০।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
@@ -96,8 +111,10 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             return null;
         }
 
+        var bn = context.Language == ReportLanguage.Bn;
         var age = AnimalAge.Format(animal.DateOfBirth, animal.ExitDate ?? context.Today);
-        return $"Tag {animal.Tag.TagId} · {animal.Species} · {animal.Sex} · {age} · {animal.Status}";
+        return $"{(bn ? "ট্যাগ" : "Tag")} {AnimalLabels.Tag(animal)} · {SpeciesLabel(animal.Species)} · {animal.Sex} · {(bn ? "বয়স" : "age")} {age} · "
+            + $"{(bn ? "খামারে আছে" : "on farm since")} {animal.AcquisitionDate.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
     }
 
     protected override async Task<IReadOnlyList<AnimalSummaryReportRow>> FetchAsync(
@@ -175,10 +192,10 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         var marginPct = totalInvestment > 0 ? decimal.Round((projectedProfit / totalInvestment) * 100m, 1) : 0m;
         var valueBasis = onHand
             ? (rateOverride is null && _valuation.Policy == Farm360.Domain.BusinessRules.AnimalValuationPolicy.CostBasis
-                ? "Cost-basis valuation policy: value = cost to date"
-                : $"Based on live weight: {latestWeight:N1} kg × ৳ {marketPricePerKg:N0}")
+                ? "Valued at cost (farm setting): value = cost so far"
+                : $"Latest weight {latestWeight:N1} kg × ৳ {marketPricePerKg:N0}/kg")
             : animal.Status is Farm360.Domain.Livestock.Enums.AnimalStatus.Sold or Farm360.Domain.Livestock.Enums.AnimalStatus.Slaughtered
-                ? "Realised sale revenue"
+                ? "Sale price received"
                 : animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Dead
                     ? "Animal died — no realisable value"
                     : "Left the farm — no realisable value";
@@ -186,45 +203,90 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         var rows = new List<AnimalSummaryReportRow>
         {
             // ── Section 1: Demographics ───────────────────────────────────────
-            new("1. Identification & Demographics", "Tag Identification", animal.Tag.TagId, $"Type: {animal.Tag.TagType}"),
-            new("1. Identification & Demographics", "Species & Breed", $"{animal.Species} · {breedName}", breed is null ? "Breed not recorded" : "Registered breed"),
-            new("1. Identification & Demographics", "Sex & Gender", animal.Sex.ToString(), "Biological sex classification"),
-            new("1. Identification & Demographics", "Date of Birth & Age", $"{animal.DateOfBirth:dd-MMM-yyyy} ({ageFormatted})", $"Born: {animal.DateOfBirth:yyyy-MM-dd}"),
-            new("1. Identification & Demographics", "Acquisition Info", $"{animal.AcquisitionType} on {animal.AcquisitionDate:dd-MMM-yyyy}", $"Initial Cost: ৳ {purchaseCost:N0}"),
-            new("1. Identification & Demographics", "Current Status", animal.Status.ToString().ToUpperInvariant(),
+            new("1. Identification & Demographics", "Tag", AnimalLabels.Tag(animal), animal.Tag.TagType switch { TagType.EarTag => "Ear tag", TagType.Rfid => "RFID tag", _ => "Manual tag number" }),
+            new("1. Identification & Demographics", "Species & breed", $"{SpeciesLabel(animal.Species)} · {breedName}", breed is null ? "Breed not recorded" : "Registered breed"),
+            new("1. Identification & Demographics", "Sex", animal.Sex.ToString(), "—"),
+            new("1. Identification & Demographics", "Date of birth & age", $"{animal.DateOfBirth:dd-MMM-yyyy} ({ageFormatted})", animal.ExitDate is { } exit ? $"Age counted up to {exit:dd-MMM-yyyy}, when it left the farm" : "Age as of today"),
+            new("1. Identification & Demographics", "How it came to the farm", $"{AcquisitionLabel(animal.AcquisitionType)} on {animal.AcquisitionDate:dd-MMM-yyyy}", $"Purchase cost: ৳ {purchaseCost:N0}"),
+            new("1. Identification & Demographics", "Current status", StatusLabel(animal.Status),
                 animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Sold
                     ? $"Sold on {animal.SaleDate:dd-MMM-yyyy}{(animal.BuyerName is { Length: > 0 } b ? $" to {b}" : "")} for ৳ {animal.SalePriceBdt:N0}"
                     : animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Dead
-                        ? $"Died on {animal.DeathDate:dd-MMM-yyyy} ({animal.DisposalReason})"
+                        ? $"Died on {animal.DeathDate:dd-MMM-yyyy}{(animal.DisposalReason is { } reason ? $" ({DisposalLabel(reason)})" : "")}"
                         : string.IsNullOrWhiteSpace(animal.QuarantineReason) ? "Normal herd condition" : $"Quarantine: {animal.QuarantineReason}"),
 
             // ── Section 2: Housing & Location ─────────────────────────────────
-            new("2. Housing & Location", "Shed Allocation", shedName, shedId.HasValue ? "Current housing" : "No active shed assigned"),
-            new("2. Housing & Location", "Pen / Stall", penName, penId.HasValue ? $"In {shedName}" : "No active pen assigned"),
-            new("2. Housing & Location", "Batch Assignment", batch?.Name ?? (animal.BatchId.HasValue ? "Batch not found" : "Individual (No Batch)"), "Herd management grouping"),
+            new("2. Housing & Location", "Shed", shedName, shedId.HasValue ? "Current housing" : "No shed assigned"),
+            new("2. Housing & Location", "Pen / stall", penName, penId.HasValue ? $"In shed {shedName}" : "No pen assigned"),
+            new("2. Housing & Location", "Batch", batch?.Name ?? (animal.BatchId.HasValue ? "Batch not found" : "Not in a batch"), "Group the animal is managed with"),
 
             // ── Section 3: Growth & Performance ───────────────────────────────
-            new("3. Growth & Weight KPIs", "Current / Latest Weight", $"{latestWeight:N1} kg", animal.LatestWeightDate.HasValue ? $"Recorded on {animal.LatestWeightDate.Value:dd-MMM-yyyy}" : "No weighing record"),
-            new("3. Growth & Weight KPIs", "Initial Weight", $"{initialWeight:N1} kg", weightRecords.Count > 0 ? $"First recorded {weightRecords[0].RecordedDate:dd-MMM-yyyy}" : "Baseline"),
-            new("3. Growth & Weight KPIs", "Lifetime Net Gain", $"{totalGainKg:N1} kg", $"Across {weightRecords.Count} weigh-in sessions"),
-            new("3. Growth & Weight KPIs", "Lifetime Average Daily Gain (ADG)", $"{adg:N3} kg/day", "Oldest-to-newest weigh-in, not bounded to this report's period -- see the Animal Growth report for period-specific ADG"),
-            new("3. Growth & Weight KPIs", "Body Condition Score (BCS)", animal.LatestBcs.HasValue ? $"{animal.LatestBcs.Value:N1} / 5.0" : "Not evaluated", "Muscling & fat coverage assessment"),
+            new("3. Growth & Weight KPIs", "Latest weight", animal.LatestWeightKg.HasValue ? $"{latestWeight:N1} kg" : "Not recorded", animal.LatestWeightDate.HasValue ? $"Weighed on {animal.LatestWeightDate.Value:dd-MMM-yyyy}" : "No weighing record"),
+            new("3. Growth & Weight KPIs", "First recorded weight", weightRecords.Count > 0 ? $"{initialWeight:N1} kg" : "Not recorded", weightRecords.Count > 0 ? $"Weighed on {weightRecords[0].RecordedDate:dd-MMM-yyyy}" : "No weighing record"),
+            new("3. Growth & Weight KPIs", "Weight gained since first weigh-in", $"{totalGainKg:N1} kg", $"Latest weight − first weight, over {weightRecords.Count} weigh-ins"),
+            new("3. Growth & Weight KPIs", "Average daily gain (kg/day)", animal.AdgKgPerDay.HasValue ? $"{adg:N3} kg/day" : "Not enough weigh-ins", "First to latest weigh-in; see the Animal Weight & Growth report for gain in a chosen period"),
+            new("3. Growth & Weight KPIs", "Body condition (1–5)", animal.LatestBcs.HasValue ? $"{animal.LatestBcs.Value:N1} / 5" : "Not recorded", "Visual score of muscle and fat cover: 1 = very thin, 5 = very fat"),
 
             // ── Section 4: Cost & Financial Ledger ────────────────────────────
-            new("4. Financial Investment Breakdown", "Acquisition / Purchase Cost", $"৳ {purchaseCost:N2}", "Original purchase or capital valuation"),
-            new("4. Financial Investment Breakdown", "Feed & Nutrition Cost", $"৳ {feedCost:N2}", $"{feedTotals.TotalKg:N1} kg feed allocated across {feedTotals.Days} days"),
-            new("4. Financial Investment Breakdown", "Veterinary & Healthcare Cost", $"৳ {vetCost:N2}", "Vaccinations, medications and clinic treatments"),
-            new("4. Financial Investment Breakdown", "Labor Allocation", $"৳ {laborCost:N2}", "Apportioned barn management & labor"),
-            new("4. Financial Investment Breakdown", "Overhead & Facilities", $"৳ {overheadCost:N2}", "Utilities, barn depreciation & operating share"),
-            new("4. Financial Investment Breakdown", "Total Accumulated Investment", $"৳ {totalInvestment:N2}", "Full-absorption cumulative cost to date"),
+            new("4. Financial Investment Breakdown", "Purchase cost", $"৳ {purchaseCost:N2}", "Price paid, or opening value if born on the farm"),
+            new("4. Financial Investment Breakdown", "Feed cost", $"৳ {feedCost:N2}", $"{feedTotals.TotalKg:N1} kg confirmed feed over {feedTotals.Days} days"),
+            new("4. Financial Investment Breakdown", "Vet & medicine cost", $"৳ {vetCost:N2}", "Vaccines, medicines and treatments"),
+            new("4. Financial Investment Breakdown", "Labour cost (share)", $"৳ {laborCost:N2}", "This animal's share of farm labour"),
+            new("4. Financial Investment Breakdown", "Overhead cost (share)", $"৳ {overheadCost:N2}", "This animal's share of utilities, shed upkeep and running costs"),
+            new("4. Financial Investment Breakdown", "Total cost so far", $"৳ {totalInvestment:N2}", "Sum of the five costs above"),
 
             // ── Section 5: Valuation & Profit Projections ─────────────────────
-            new("5. Valuation & Profit Projections", "Live Weight Valuation Rate", $"৳ {marketPricePerKg:N2} / live kg", rateOverride is null ? _valuation.RateBasisDescription : "User-selected override rate"),
-            new("5. Valuation & Profit Projections", onHand ? "Estimated Market Value" : "Realised Value", $"৳ {projectedValue:N2}", valueBasis),
-            new("5. Valuation & Profit Projections", onHand ? "Projected Net Profit / Margin" : "Realised Net Profit / Loss", $"৳ {projectedProfit:N2}", projectedProfit >= 0 ? "PROFITABLE INVESTMENT" : "DEFICIT / LOSS"),
-            new("5. Valuation & Profit Projections", "Return on Investment (ROI)", $"{marginPct:+0.0;-0.0;0.0}%", $"Net margin over total investment (৳ {totalInvestment:N0})")
+            new("5. Valuation & Profit Projections", "Live-weight rate (BDT/kg)", $"৳ {marketPricePerKg:N2} / kg", rateOverride is null ? _valuation.RateBasisDescription : "Rate entered for this report"),
+            new("5. Valuation & Profit Projections", onHand ? "Estimated value today" : "Value realised", $"৳ {projectedValue:N2}", valueBasis),
+            new("5. Valuation & Profit Projections", onHand ? "Expected profit / loss" : "Actual profit / loss", $"৳ {projectedProfit:N2}", projectedProfit >= 0 ? "Profit: value is above total cost" : "Loss: value is below total cost"),
+            new("5. Valuation & Profit Projections", "Return on cost (%)", $"{marginPct:+0.0;-0.0;0.0}%", $"Profit ÷ total cost (৳ {totalInvestment:N0})")
         };
 
         return rows;
     }
+
+    private static LocalizedText SectionLabel(string section) => section switch
+    {
+        "1. Identification & Demographics" => new("1. Identity", "১. পরিচিতি"),
+        "2. Housing & Location" => new("2. Where it is kept", "২. কোথায় রাখা হয়েছে"),
+        "3. Growth & Weight KPIs" => new("3. Weight & growth", "৩. ওজন ও বৃদ্ধি"),
+        "4. Financial Investment Breakdown" => new("4. Cost so far (BDT)", "৪. এ পর্যন্ত খরচ (টাকা)"),
+        "5. Valuation & Profit Projections" => new("5. Value & profit/loss (BDT)", "৫. মূল্য ও লাভ-ক্ষতি (টাকা)"),
+        _ => new(section, section),
+    };
+
+    private static string SpeciesLabel(AnimalSpecies species) => species switch
+    {
+        AnimalSpecies.CattleBeef => "Beef cattle",
+        AnimalSpecies.CattleDairy => "Dairy cattle",
+        _ => species.ToString(),
+    };
+
+    private static string AcquisitionLabel(AcquisitionType type) => type switch
+    {
+        AcquisitionType.Purchased => "Bought",
+        AcquisitionType.BornOnFarm => "Born on farm",
+        _ => type.ToString(),
+    };
+
+    private static string StatusLabel(AnimalStatus status) => status switch
+    {
+        AnimalStatus.Active => "On farm",
+        AnimalStatus.Quarantined => "In quarantine",
+        AnimalStatus.Sold => "Sold",
+        AnimalStatus.Slaughtered => "Slaughtered",
+        AnimalStatus.Dead => "Died",
+        AnimalStatus.Transferred => "Transferred out",
+        _ => status.ToString(),
+    };
+
+    private static string DisposalLabel(DisposalReason reason) => reason switch
+    {
+        DisposalReason.NaturalDeath => "natural death",
+        DisposalReason.Disease => "disease",
+        DisposalReason.Accident => "accident",
+        DisposalReason.Slaughter => "slaughter",
+        DisposalReason.Sale => "sale",
+        _ => "cause not recorded",
+    };
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -121,11 +122,11 @@ public sealed class CashFlowStatementReportDefinition : ReportDefinition<CashFlo
 
     public override string Key => "finance.cash-flow";
 
-    public override LocalizedText Title => new("Statement of Cash Flows", "নগদ প্রবাহ বিবরণী");
+    public override LocalizedText Title => new("Cash Flow Statement", "নগদ প্রবাহ বিবরণী");
 
     public override LocalizedText Description => new(
-        "Cash received and paid by operating, investing and financing activity, from opening to closing cash — reconciled to the balance sheet and cash book.",
-        "পরিচালন, বিনিয়োগ ও অর্থায়ন কার্যক্রমে নগদ প্রাপ্তি ও প্রদান — প্রারম্ভিক থেকে সমাপনী নগদ, উদ্বৃত্তপত্র ও নগদ বইয়ের সাথে মিলানো।");
+        "Where the farm's cash came from and where it went in a period — day-to-day farming, sheds and machinery, and loans or owner money — from opening to closing cash.",
+        "নির্দিষ্ট সময়ে খামারের নগদ কোথা থেকে এল আর কোথায় গেল — দৈনন্দিন খামার পরিচালনা, শেড ও যন্ত্রপাতি, এবং ঋণ বা মালিকের অর্থ — প্রারম্ভিক থেকে সমাপনী নগদ পর্যন্ত।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
@@ -139,26 +140,45 @@ public sealed class CashFlowStatementReportDefinition : ReportDefinition<CashFlo
 
     public override IReadOnlyList<ReportColumn<CashFlowReportRow>> Columns =>
     [
-        ReportColumn<CashFlowReportRow>.Text("code", new LocalizedText("Code", "কোড"), r => r.Code, width: 16f, relative: false),
-        ReportColumn<CashFlowReportRow>.Text("particulars", new LocalizedText("Particulars", "বিবরণ"), r => r.Particulars, width: 4f),
-        ReportColumn<CashFlowReportRow>.Money("flow", new LocalizedText("Cash flow (BDT)", "নগদ প্রবাহ (টাকা)"), r => r.FlowBdt, widthMm: 32f, aggregate: ReportAggregate.Sum),
+        ReportColumn<CashFlowReportRow>.Text("code", new LocalizedText("Code", "কোড"), r => r.Code, width: 14f, relative: false),
+        ReportColumn<CashFlowReportRow>.Text("particulars", new LocalizedText("Item", "বিবরণ"), r => r.Particulars, width: 4f),
+        ReportColumn<CashFlowReportRow>.Money("flow", new LocalizedText("Cash in / (out) (BDT)", "নগদ প্রাপ্তি / (প্রদান) (টাকা)"), r => r.FlowBdt, widthMm: 34f, aggregate: ReportAggregate.Sum),
         ReportColumn<CashFlowReportRow>.Money("balance", new LocalizedText("Cash balance (BDT)", "নগদ স্থিতি (টাকা)"), r => r.BalanceBdt, widthMm: 32f),
     ];
 
     public override ReportGroup<CashFlowReportRow>? Group =>
         ReportGroup<CashFlowReportRow>.By(r => r.Section, r => r.Section);
 
+    // Only the flow column is totalled and the cash-check rows carry no flow, so the grand total is
+    // exactly the net change in cash: never a balance added to a flow.
     public override LocalizedText? GrandTotalLabel => new("Net increase / (decrease) in cash", "নগদের নিট বৃদ্ধি / (হ্রাস)");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new(
+            "Plus figures are cash that came in; minus figures are cash that went out. Each section's sub-total is the net cash it brought in or used.",
+            "ধনাত্মক অঙ্ক মানে নগদ এসেছে; ঋণাত্মক অঙ্ক মানে নগদ গেছে। প্রতিটি অংশের উপ-মোট সেই খাতে নিট কত নগদ এল বা গেল।"),
+        new(
+            "Day-to-day farming includes buying and selling animals, feed and supplies, wages, loan interest, paying suppliers and collecting from customers.",
+            "দৈনন্দিন খামার পরিচালনায় আছে পশু, খাদ্য ও মালামাল কেনাবেচা, মজুরি, ঋণের সুদ, সরবরাহকারীকে পরিশোধ ও ক্রেতার কাছ থেকে আদায়।"),
+        new(
+            "Section 4 checks the result: cash at the start plus the net change equals cash at the end, which is the cash & bank figure on the balance sheet.",
+            "৪ নম্বর অংশে মিলিয়ে দেখা হয়েছে: শুরুর নগদ + নিট পরিবর্তন = শেষের নগদ, যা উদ্বৃত্তপত্রের নগদ ও ব্যাংকের অঙ্ক।"),
+        new(
+            "Cash is not profit: sales and purchases on credit appear here only when the money is actually received or paid.",
+            "নগদ মানেই মুনাফা নয়: বাকিতে বিক্রি ও কেনা এখানে দেখা যায় কেবল যখন টাকা আসলে পাওয়া বা দেওয়া হয়।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         var s = await LoadAsync(context, cancellationToken).ConfigureAwait(false);
-        string M(decimal v) => ReportValueFormatter.Format(v, ReportColumnType.Money, 2, context.BengaliNumerals);
+        string M(decimal v) => StatementWording.Money(context, v);
+        var period = $"{StatementWording.Day(context, s.From)} – {StatementWording.Day(context, s.To)}";
 
         return context.Language == ReportLanguage.Bn
-            ? $"প্রারম্ভিক নগদ {M(s.OpeningCashBdt)} · নিট পরিবর্তন {M(s.NetChangeBdt)} · সমাপনী নগদ {M(s.ClosingCashBdt)}"
-            : $"Opening cash {M(s.OpeningCashBdt)} · net change {M(s.NetChangeBdt)} · closing cash {M(s.ClosingCashBdt)}";
+            ? $"{period} · শুরুতে নগদ {M(s.OpeningCashBdt)} · নিট পরিবর্তন {M(s.NetChangeBdt)} · শেষে নগদ {M(s.ClosingCashBdt)} টাকা"
+            : $"{period} · Cash at start {M(s.OpeningCashBdt)} · net change {M(s.NetChangeBdt)} · cash at end {M(s.ClosingCashBdt)} BDT";
     }
 
     protected override async Task<IReadOnlyList<CashFlowReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)
@@ -174,12 +194,13 @@ public sealed class CashFlowStatementReportDefinition : ReportDefinition<CashFlo
         ArgumentNullException.ThrowIfNull(statement);
         var bn = language == ReportLanguage.Bn;
         string T(string en, string bnText) => bn ? bnText : en;
+        static string D(DateOnly d) => d.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
 
         var sections = new Dictionary<CashFlowActivity, string>
         {
-            [CashFlowActivity.Operating] = T("1. Cash flows from operating activities", "১. পরিচালন কার্যক্রম থেকে নগদ প্রবাহ"),
-            [CashFlowActivity.Investing] = T("2. Cash flows from investing activities", "২. বিনিয়োগ কার্যক্রম থেকে নগদ প্রবাহ"),
-            [CashFlowActivity.Financing] = T("3. Cash flows from financing activities", "৩. অর্থায়ন কার্যক্রম থেকে নগদ প্রবাহ"),
+            [CashFlowActivity.Operating] = T("1. Day-to-day farming (operating activities)", "১. দৈনন্দিন খামার পরিচালনা (পরিচালন কার্যক্রম)"),
+            [CashFlowActivity.Investing] = T("2. Sheds, machinery & other fixed assets (investing activities)", "২. শেড, যন্ত্রপাতি ও অন্যান্য স্থায়ী সম্পদ (বিনিয়োগ কার্যক্রম)"),
+            [CashFlowActivity.Financing] = T("3. Loans, owner & investor money (financing activities)", "৩. ঋণ, মালিক ও বিনিয়োগকারীর অর্থ (অর্থায়ন কার্যক্রম)"),
         };
 
         var rows = new List<CashFlowReportRow>();
@@ -200,11 +221,11 @@ public sealed class CashFlowStatementReportDefinition : ReportDefinition<CashFlo
                 null)));
         }
 
-        var reconciliation = T("4. Cash reconciliation", "৪. নগদ মিলকরণ");
+        var reconciliation = T("4. Cash check — start to end of the period", "৪. নগদ মিলকরণ — সময়ের শুরু থেকে শেষ");
         var cash = AccountChart.CashAccount;
-        rows.Add(new CashFlowReportRow(reconciliation, cash, T($"Opening cash & bank ({statement.From:dd-MMM-yyyy})", $"প্রারম্ভিক নগদ ও ব্যাংক ({statement.From:dd-MMM-yyyy})"), null, statement.OpeningCashBdt));
-        rows.Add(new CashFlowReportRow(reconciliation, string.Empty, T("Net increase / (decrease) in cash", "নগদের নিট বৃদ্ধি / (হ্রাস)"), null, statement.NetChangeBdt));
-        rows.Add(new CashFlowReportRow(reconciliation, cash, T($"Closing cash & bank ({statement.To:dd-MMM-yyyy}) — balance sheet", $"সমাপনী নগদ ও ব্যাংক ({statement.To:dd-MMM-yyyy}) — উদ্বৃত্তপত্র"), null, statement.ClosingCashBdt));
+        rows.Add(new CashFlowReportRow(reconciliation, cash, T($"Cash & bank at the start ({D(statement.From)})", $"শুরুতে নগদ ও ব্যাংক ({D(statement.From)})"), null, statement.OpeningCashBdt));
+        rows.Add(new CashFlowReportRow(reconciliation, string.Empty, T("Net increase / (decrease) in cash (sections 1–3)", "নগদের নিট বৃদ্ধি / (হ্রাস) (অংশ ১–৩)"), null, statement.NetChangeBdt));
+        rows.Add(new CashFlowReportRow(reconciliation, cash, T($"Cash & bank at the end ({D(statement.To)}) — as on the balance sheet", $"শেষে নগদ ও ব্যাংক ({D(statement.To)}) — উদ্বৃত্তপত্র অনুযায়ী"), null, statement.ClosingCashBdt));
 
         if (Math.Abs(statement.UnexplainedBdt) >= 0.01m)
         {

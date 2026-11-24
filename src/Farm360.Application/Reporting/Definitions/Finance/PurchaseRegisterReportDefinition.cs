@@ -92,17 +92,29 @@ public sealed class PurchaseRegisterReportDefinition : ReportDefinition<Purchase
 
     public override string Key => "finance.purchase-register";
 
-    public override LocalizedText Title => new("Purchase Register", "ক্রয় রেজিস্টার");
+    public override LocalizedText Title => new("What We Bought (Purchase Register)", "যা কেনা হয়েছে (ক্রয় রেজিস্টার)");
 
     public override LocalizedText Description => new(
-        "Animals, feed and other stock (purchase orders and stock-in) and fixed assets bought in the period, with supplier, quantity, unit cost, amount, paid and outstanding.",
-        "নির্বাচিত সময়ে কেনা পশু, খাদ্য ও অন্যান্য মজুদ (ক্রয় আদেশ ও মজুদ গ্রহণ) এবং স্থায়ী সম্পদ — সরবরাহকারী, পরিমাণ, একক দর, মূল্য, পরিশোধিত ও বকেয়া।");
+        "Everything bought in the period — animals, feed, medicine and other stock, equipment — from whom, how much, at what price, and what is still owed.",
+        "নির্বাচিত সময়ে যা কেনা হয়েছে — পশু, খাদ্য, ঔষধ ও অন্যান্য মজুদ, সরঞ্জাম — কার কাছ থেকে, কত পরিমাণ, কত দামে, এবং কত বাকি আছে।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
     public override PageSetup Page => PageSetup.A4LandscapeSigned;
 
     public override LocalizedText? GrandTotalLabel => new("Total purchases", "মোট ক্রয়");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each line is one item bought (one animal, or one line of a bill); lines are grouped by type of purchase.",
+            "প্রতিটি সারি একটি কেনা জিনিস (একটি পশু, বা একটি বিলের একটি লাইন); সারিগুলো ক্রয়ের ধরন অনুযায়ী সাজানো।"),
+        new("Rate = amount ÷ quantity, in taka per unit shown. Quantities are totalled only when every line is in the same unit.",
+            "দর = মূল্য ÷ পরিমাণ, দেখানো একক প্রতি টাকা। সব সারির একক এক হলে তবেই পরিমাণের মোট দেখানো হয়।"),
+        new("Still owed is today's unpaid balance on the supplier's bill; for a purchase order it is shared across its lines by value.",
+            "বাকি হলো সরবরাহকারীর বিলে আজ পর্যন্ত অপরিশোধিত টাকা; ক্রয় আদেশের ক্ষেত্রে তা লাইনগুলোর মূল্য অনুযায়ী ভাগ করা।"),
+        new("Returns to suppliers are shown as minus amounts. Stock the owner brought in without paying is not a purchase and is not listed.",
+            "সরবরাহকারীকে ফেরত বিয়োগ (−) হিসেবে দেখানো হয়েছে। মালিক বিনা মূল্যে যে মজুদ এনেছেন তা ক্রয় নয়, তাই এখানে নেই।"),
+    ];
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -113,15 +125,15 @@ public sealed class PurchaseRegisterReportDefinition : ReportDefinition<Purchase
     public override IReadOnlyList<ReportColumn<PurchaseRegisterReportRow>> Columns =>
     [
         ReportColumn<PurchaseRegisterReportRow>.Date("date", new LocalizedText("Date", "তারিখ"), r => r.Date),
-        ReportColumn<PurchaseRegisterReportRow>.Text("ref", new LocalizedText("Reference", "রেফারেন্স"), r => r.Reference, width: 1.2f),
+        ReportColumn<PurchaseRegisterReportRow>.Text("item", new LocalizedText("What was bought", "যা কেনা হয়েছে"), r => r.Item, width: 2f),
         ReportColumn<PurchaseRegisterReportRow>.Text("supplier", new LocalizedText("Supplier", "সরবরাহকারী"), r => r.Supplier, width: 1.6f),
-        ReportColumn<PurchaseRegisterReportRow>.Text("item", new LocalizedText("Item / Animal", "পণ্য / পশু"), r => r.Item, width: 2f),
+        ReportColumn<PurchaseRegisterReportRow>.Text("ref", new LocalizedText("Bill / voucher no.", "বিল / ভাউচার নং"), r => r.Reference, width: 1.2f),
         ReportColumn<PurchaseRegisterReportRow>.Number("qty", new LocalizedText("Quantity", "পরিমাণ"), r => r.Quantity, 2, 20f, ReportAggregate.Sum, r => r.Unit),
-        ReportColumn<PurchaseRegisterReportRow>.Text("unit", new LocalizedText("Unit", "একক"), r => r.Unit, width: 14f, relative: false),
-        ReportColumn<PurchaseRegisterReportRow>.Money("unitCost", new LocalizedText("Unit cost", "একক দর"), r => r.UnitCostBdt, widthMm: 22f),
+        ReportColumn<PurchaseRegisterReportRow>.Text("unit", new LocalizedText("Unit", "একক"), r => string.IsNullOrWhiteSpace(r.Unit) ? "—" : r.Unit, width: 14f, relative: false),
+        ReportColumn<PurchaseRegisterReportRow>.Money("unitCost", new LocalizedText("Rate (BDT/unit)", "দর (টাকা/একক)"), r => r.UnitCostBdt, widthMm: 24f),
         ReportColumn<PurchaseRegisterReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "মূল্য (টাকা)"), r => r.AmountBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<PurchaseRegisterReportRow>.Money("paid", new LocalizedText("Paid", "পরিশোধিত"), r => r.PaidBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
-        ReportColumn<PurchaseRegisterReportRow>.Money("outstanding", new LocalizedText("Outstanding (today)", "বকেয়া (আজ)"), r => r.OutstandingBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<PurchaseRegisterReportRow>.Money("paid", new LocalizedText("Paid (BDT)", "পরিশোধিত (টাকা)"), r => r.PaidBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<PurchaseRegisterReportRow>.Money("outstanding", new LocalizedText("Still owed today (BDT)", "আজ পর্যন্ত বাকি (টাকা)"), r => r.OutstandingBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<PurchaseRegisterReportRow>? Group =>
@@ -134,10 +146,11 @@ public sealed class PurchaseRegisterReportDefinition : ReportDefinition<Purchase
         string M(decimal v) => ReportValueFormatter.Format(v, ReportColumnType.Money, 2, context.BengaliNumerals);
         var total = rows.Sum(r => r.AmountBdt);
         var owed = rows.Sum(r => r.OutstandingBdt);
+        var period = AnimalCostReportText.Period(context.Range("period"));
 
         return context.Language == ReportLanguage.Bn
-            ? $"মোট ক্রয় {M(total)} টাকা · পরিশোধিত {M(total - owed)} · বকেয়া {M(owed)}"
-            : $"Purchases {M(total)} BDT · paid {M(total - owed)} · outstanding {M(owed)}";
+            ? $"{period} · মোট ক্রয় {M(total)} টাকা · পরিশোধিত {M(total - owed)} · বাকি {M(owed)}"
+            : $"{period} · Bought {M(total)} BDT · paid {M(total - owed)} · still owed {M(owed)}";
     }
 
     protected override Task<IReadOnlyList<PurchaseRegisterReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)
@@ -208,9 +221,11 @@ public sealed class PurchaseRegisterReportDefinition : ReportDefinition<Purchase
                     {
                         var animalId = t.AnimalId ?? source;
                         var item = animals.TryGetValue(animalId, out var animal)
-                            ? $"{animal.Tag.TagId} · {(breeds.TryGetValue(animal.BreedId, out var b) ? b : "—")}"
+                            ? (breeds.TryGetValue(animal.BreedId, out var b)
+                                ? $"{T("Tag", "ট্যাগ")} {AnimalLabels.Tag(animal)} · {b}"
+                                : $"{T("Tag", "ট্যাগ")} {AnimalLabels.Tag(animal)}")
                             : AccountChart.Describe(t);
-                        rows.Add(new(livestock, date, animal?.Tag.TagId ?? reference, bill?.PartyName ?? "—", item,
+                        rows.Add(new(livestock, date, reference, bill?.PartyName ?? "—", item,
                             1m, head, amount, amount, paid, owed));
                         break;
                     }

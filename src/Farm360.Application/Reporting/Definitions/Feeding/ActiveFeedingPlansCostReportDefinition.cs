@@ -13,7 +13,7 @@ namespace Farm360.Application.Reporting.Definitions.Feeding;
 public sealed record ActiveFeedingPlansCostReportRow(
     string AnimalTag,
     string Species,
-    decimal WeightKg,
+    decimal? WeightKg,
     string RuleSetName,
     string FormulaName,
     decimal ConcentrateKgPerDay,
@@ -59,28 +59,57 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
 
     public override IReadOnlyList<ReportColumn<ActiveFeedingPlansCostReportRow>> Columns =>
     [
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("animalTag", new LocalizedText("Animal Tag", "পশুর ট্যাগ"), r => r.AnimalTag, width: 2.0f),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("species", new LocalizedText("Species", "প্রজাতি"), r => r.Species, width: 1.6f),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.WeightKg, decimals: 1, widthMm: 20f),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("ruleSetName", new LocalizedText("Feed Chart / Ration", "খাদ্য তালিকা"), r => r.RuleSetName, width: 2.2f),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("formulaName", new LocalizedText("Formula / Recipe", "রেসিপি / ফর্মুলা"), r => r.FormulaName, width: 2.2f),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Number("concentrate", new LocalizedText("Conc. (kg/d)", "দানাদার (কেজি/দিন)"), r => r.ConcentrateKgPerDay, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Number("roughage", new LocalizedText("Rough. (kg/d)", "আঁশজাত (কেজি/দিন)"), r => r.RoughageKgPerDay, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Number("dailyFeed", new LocalizedText("Total Feed (kg)", "মোট খাদ্য (কেজি)"), r => r.ExpectedDailyFeedKg, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("ruleSetName", new LocalizedText("Feed Chart / Ration", "খাদ্য তালিকা"), r => r.RuleSetName, width: 2.6f),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Text("formulaName", new LocalizedText("Formula / Recipe", "রেসিপি / ফর্মুলা"), r => r.FormulaName, width: 2.6f),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Number("concentrate", new LocalizedText("Concentrate (kg/day)", "দানাদার (কেজি/দিন)"), r => r.ConcentrateKgPerDay, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Number("roughage", new LocalizedText("Roughage (kg/day)", "আঁশজাত (কেজি/দিন)"), r => r.RoughageKgPerDay, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Number("dailyFeed", new LocalizedText("Total feed (kg/day)", "মোট খাদ্য (কেজি/দিন)"), r => r.ExpectedDailyFeedKg, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
         ReportColumn<ActiveFeedingPlansCostReportRow>.Money("rate", new LocalizedText("Rate (BDT/kg)", "দর (টাকা/কেজি)"), r => r.EstimatedCostPerKgBdt, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.None),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Money("dailyCost", new LocalizedText("Daily Cost", "দৈনিক খরচ"), r => r.EstimatedDailyCostBdt, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
-        ReportColumn<ActiveFeedingPlansCostReportRow>.Money("monthlyCost", new LocalizedText("30-Day Cost", "৩০ দিনের খরচ"), r => r.EstimatedMonthlyCostBdt, decimals: 2, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Money("dailyCost", new LocalizedText("Daily cost (BDT)", "দৈনিক খরচ (টাকা)"), r => r.EstimatedDailyCostBdt, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<ActiveFeedingPlansCostReportRow>.Money("monthlyCost", new LocalizedText("30-day cost (BDT)", "৩০ দিনের খরচ (টাকা)"), r => r.EstimatedMonthlyCostBdt, decimals: 2, widthMm: 26f, aggregate: ReportAggregate.Sum),
     ];
 
+    // One block per cow: its plans underneath, and the cow's own daily total as the sub-total.
     public override ReportGroup<ActiveFeedingPlansCostReportRow>? Group =>
-        ReportGroup<ActiveFeedingPlansCostReportRow>.By(
-            r => r.RuleSetName,
-            r => $"Ration: {r.RuleSetName}");
+        ReportGroup<ActiveFeedingPlansCostReportRow>.ByLocalized(
+            r => r.AnimalTag,
+            r => new LocalizedText(AnimalHeading(r, "kg"), AnimalHeading(r, "কেজি")));
 
-    public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
+    private static string AnimalHeading(ActiveFeedingPlansCostReportRow r, string kg)
+    {
+        var parts = new List<string> { r.AnimalTag };
+        if (!string.IsNullOrWhiteSpace(r.Species)) parts.Add(r.Species);
+        if (r.WeightKg is { } w) parts.Add($"{w:0.#} {kg}");
+        return string.Join(" · ", parts);
+    }
+
+    public override LocalizedText? GrandTotalLabel => new("Whole herd", "পুরো পাল");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each block is one animal (tag · species · weight); each row under it is one of its feeding plans as it stands today, and the sub-total is that animal's whole day.",
+            "প্রতিটি ভাগ একটি পশু (ট্যাগ · প্রজাতি · ওজন); নিচের প্রতিটি সারি তার একটি আজকের খাদ্য পরিকল্পনা, আর উপ-মোট হলো ওই পশুর সারাদিনের খাদ্য ও খরচ।"),
+        new("Concentrate is grain/mixed feed, roughage is grass and straw; total feed is the planned amount per day.",
+            "দানাদার হলো দানা/মিশ্র খাদ্য, আঁশজাত হলো ঘাস ও খড়; মোট খাদ্য হলো দৈনিক পরিকল্পিত পরিমাণ।"),
+        new("Daily cost = concentrate (kg/day) × rate (BDT/kg) at today's recipe price; roughage is not costed here.",
+            "দৈনিক খরচ = দানাদার (কেজি/দিন) × দর (টাকা/কেজি), আজকের রেসিপির দামে; আঁশজাত খাদ্যের খরচ এখানে ধরা হয়নি।"),
+        new("30-day cost = daily cost × 30. This is a forecast from the plan, not what was actually fed.",
+            "৩০ দিনের খরচ = দৈনিক খরচ × ৩০। এটি পরিকল্পনা থেকে পূর্বাভাস, প্রকৃত খাওয়ানো নয়।"),
+    ];
+
+    public override Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        return "Herd Active Nutrition Plans & Monthly Projections";
+
+        var which = context.Text("status", "Active") switch
+        {
+            var s when string.Equals(s, "all", StringComparison.OrdinalIgnoreCase) => new LocalizedText("All feeding plans", "সকল খাদ্য পরিকল্পনা"),
+            var s when string.Equals(s, "Paused", StringComparison.OrdinalIgnoreCase) => new LocalizedText("Paused feeding plans", "স্থগিত খাদ্য পরিকল্পনা"),
+            _ => new LocalizedText("Active feeding plans", "সক্রিয় খাদ্য পরিকল্পনা"),
+        };
+        var asOf = new LocalizedText("as of ", "তারিখ ").For(context.Language) + FeedReportText.Day(context.Today);
+
+        return Task.FromResult<string?>($"{which.For(context.Language)} · {asOf}");
     }
 
     protected override async Task<IReadOnlyList<ActiveFeedingPlansCostReportRow>> FetchAsync(
@@ -104,8 +133,8 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
         return plans
             .Select(p => new ActiveFeedingPlansCostReportRow(
                 AnimalTag: p.AnimalTag,
-                Species: p.AnimalSpecies ?? "Cattle",
-                WeightKg: p.AnimalWeightKg ?? 0m,
+                Species: FeedReportText.Species(p.AnimalSpecies).For(context.Language),
+                WeightKg: p.AnimalWeightKg is > 0m ? p.AnimalWeightKg : null,
                 RuleSetName: p.RuleSetName,
                 FormulaName: string.IsNullOrWhiteSpace(p.FormulaName) ? "Standard Ration" : p.FormulaName,
                 ConcentrateKgPerDay: p.ConcentrateKgPerDay,
@@ -114,8 +143,8 @@ public sealed class ActiveFeedingPlansCostReportDefinition : ReportDefinition<Ac
                 EstimatedCostPerKgBdt: p.EstimatedCostPerKgBdt,
                 EstimatedDailyCostBdt: p.EstimatedDailyCostBdt,
                 EstimatedMonthlyCostBdt: decimal.Round(p.EstimatedDailyCostBdt * 30m, 2, MidpointRounding.AwayFromZero)))
-            .OrderBy(r => r.RuleSetName)
-            .ThenBy(r => r.AnimalTag)
+            .OrderBy(r => r.AnimalTag, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.RuleSetName)
             .ToList();
     }
 }

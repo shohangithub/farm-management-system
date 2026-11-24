@@ -57,6 +57,8 @@ public sealed class ClosedXmlReportRenderer : IReportRenderer
         WriteHeader(sheet, dataSet, headerRow);
         var (lastRow, detailRows) = WriteBody(sheet, dataSet, headerRow + 1, cancellationToken);
 
+        var notesRow = WriteSummary(sheet, dataSet, lastRow + 2);
+        WriteNotes(sheet, dataSet, notesRow);
         Finish(sheet, dataSet, headerRow, lastRow, detailRows);
 
         using var stream = new MemoryStream();
@@ -179,6 +181,83 @@ public sealed class ClosedXmlReportRenderer : IReportRenderer
         }
 
         return (sheetRow - 1, data.Rows.Count);
+    }
+
+    /// <summary>
+    /// The summary box (headline figures, then findings) under the table — kept below it so the
+    /// header row, filter and frozen panes stay where every other report has them. Returns the
+    /// next free row.
+    /// </summary>
+    private static int WriteSummary(IXLWorksheet sheet, ReportDataSet data, int row)
+    {
+        if (data.Summary is not { } summary)
+            return row;
+
+        var width = Math.Max(2, data.Columns.Count);
+        var title = sheet.Range(row, 1, row, width);
+        title.Merge();
+        title.Value = summary.Title;
+        title.Style.Font.SetBold();
+        title.Style.Fill.SetBackgroundColor(GroupFill);
+
+        foreach (var figure in summary.Figures)
+        {
+            row++;
+            sheet.Cell(row, 1).Value = figure.Label;
+            var value = sheet.Range(row, 2, row, width);
+            value.Merge();
+            value.Value = figure.Value;
+            value.Style.Font.SetBold();
+            if (figure.Tone == ReportTone.Good) value.Style.Font.SetFontColor(XLColor.FromHtml("#1B5E20"));
+            if (figure.Tone == ReportTone.Bad) value.Style.Font.SetFontColor(XLColor.FromHtml("#B71C1C"));
+        }
+
+        if (summary.Insights.Count > 0)
+        {
+            row += 2;
+            if (!string.IsNullOrWhiteSpace(summary.InsightsTitle))
+            {
+                var head = sheet.Range(row, 1, row, width);
+                head.Merge();
+                head.Value = summary.InsightsTitle;
+                head.Style.Font.SetBold();
+                row++;
+            }
+
+            foreach (var insight in summary.Insights)
+            {
+                var line = sheet.Range(row, 1, row, width);
+                line.Merge();
+                line.Value = "• " + insight;
+                line.Style.Alignment.SetWrapText(true);
+                row++;
+            }
+        }
+
+        return row + 1;
+    }
+
+    /// <summary>"How to read this report" lines under the table, one per row, merged across the columns.</summary>
+    private static void WriteNotes(IXLWorksheet sheet, ReportDataSet data, int row)
+    {
+        if (data.NotesOrEmpty.Count == 0)
+            return;
+
+        var width = Math.Max(1, data.Columns.Count);
+        var title = sheet.Range(row, 1, row, width);
+        title.Merge();
+        title.Value = data.Text(ReportStrings.HowToRead);
+        title.Style.Font.SetBold();
+
+        foreach (var note in data.NotesOrEmpty)
+        {
+            row++;
+            var line = sheet.Range(row, 1, row, width);
+            line.Merge();
+            line.Value = "• " + note;
+            line.Style.Alignment.SetWrapText(true);
+            line.Style.Font.SetFontColor(XLColor.FromHtml("#444444"));
+        }
     }
 
     private static int WriteGroupHeader(IXLWorksheet sheet, ReportDataSet data, string label, int row)

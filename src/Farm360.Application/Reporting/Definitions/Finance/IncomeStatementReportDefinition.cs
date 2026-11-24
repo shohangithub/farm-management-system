@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ public sealed record IncomeStatementReportRow(
     decimal? PriorAmountBdt);
 
 /// <summary>
-/// Report FN8 — Statement of Profit or Loss for a period (default: the financial year to date),
+/// Report FN8 — Profit &amp; loss statement for a period (default: the financial year to date),
 /// with the same period of the previous year. Income is positive and costs negative, so each
 /// section sub-totals to its effect on profit and the grand total is the net profit.
 /// </summary>
@@ -27,11 +28,11 @@ public sealed class IncomeStatementReportDefinition : ReportDefinition<IncomeSta
 {
     public override string Key => "finance.income-statement";
 
-    public override LocalizedText Title => new("Statement of Profit or Loss", "লাভ-ক্ষতির বিবরণী");
+    public override LocalizedText Title => new("Profit & Loss Statement", "লাভ-ক্ষতির বিবরণী");
 
     public override LocalizedText Description => new(
-        "Revenue, cost of sales, gross profit, operating expenses (incl. depreciation), finance costs and net profit, compared with the same period last year.",
-        "আয়, বিক্রীত পণ্যের ব্যয়, মোট মুনাফা, পরিচালন ব্যয় (অবচয়সহ), আর্থিক ব্যয় ও নিট মুনাফা — গত বছরের একই সময়ের সাথে তুলনাসহ।");
+        "Did the farm make a profit? Money earned, minus the cost of the animals sold and of running the farm, for a period — compared with the same period last year.",
+        "খামার কি লাভ করেছে? নির্দিষ্ট সময়ে আয় থেকে বিক্রিত পশুর খরচ ও খামার চালানোর খরচ বাদ দিয়ে — গত বছরের একই সময়ের সাথে তুলনাসহ।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
@@ -46,39 +47,78 @@ public sealed class IncomeStatementReportDefinition : ReportDefinition<IncomeSta
 
     public override IReadOnlyList<ReportColumn<IncomeStatementReportRow>> Columns =>
     [
-        ReportColumn<IncomeStatementReportRow>.Text("code", new LocalizedText("Code", "কোড"), r => r.Code, width: 16f, relative: false),
-        ReportColumn<IncomeStatementReportRow>.Text("account", new LocalizedText("Particulars", "বিবরণ"), r => r.Account, width: 4f),
-        ReportColumn<IncomeStatementReportRow>.Money("amount", new LocalizedText("Current (BDT)", "চলতি (টাকা)"), r => r.AmountBdt, decimals: 2, widthMm: 30f, aggregate: ReportAggregate.Sum),
-        ReportColumn<IncomeStatementReportRow>.Money("prior", new LocalizedText("Previous (BDT)", "পূর্ববর্তী (টাকা)"), r => r.PriorAmountBdt, decimals: 2, widthMm: 30f, aggregate: ReportAggregate.Sum),
+        ReportColumn<IncomeStatementReportRow>.Text("code", new LocalizedText("Code", "কোড"), r => r.Code, width: 14f, relative: false),
+        ReportColumn<IncomeStatementReportRow>.Text("account", new LocalizedText("Item", "বিবরণ"), r => r.Account, width: 4f),
+        ReportColumn<IncomeStatementReportRow>.Money("amount", new LocalizedText("This period (BDT)", "এই সময়ে (টাকা)"), r => r.AmountBdt, decimals: 2, widthMm: 32f, aggregate: ReportAggregate.Sum),
+        ReportColumn<IncomeStatementReportRow>.Money("prior", new LocalizedText("Same period last year (BDT)", "গত বছর একই সময়ে (টাকা)"), r => r.PriorAmountBdt, decimals: 2, widthMm: 32f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<IncomeStatementReportRow>? Group =>
         ReportGroup<IncomeStatementReportRow>.By(r => r.Section, r => r.Section);
+
+    public override LocalizedText? GrandTotalLabel => new("Net profit / (loss) for the period", "এই সময়ের নিট মুনাফা / (ক্ষতি)");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new(
+            "Income is shown as a plus and every cost as a minus, so each section's sub-total is how much it added to or took from profit.",
+            "আয় যোগ (+) এবং প্রতিটি খরচ বিয়োগ (−) হিসেবে দেখানো হয়েছে, তাই প্রতিটি অংশের উপ-মোট দেখায় সেটি মুনাফায় কত যোগ বা বিয়োগ করেছে।"),
+        new(
+            "The bottom line is net profit: all income minus all costs. A minus figure there is a loss.",
+            "শেষ লাইনটি নিট মুনাফা: মোট আয় বাদ মোট খরচ। সেখানে ঋণাত্মক অঙ্ক মানে ক্ষতি।"),
+        new(
+            "Gross profit (under the title) is income minus the direct cost of the animals sold — the purchase price plus the feed, medicine and labour that raised them.",
+            "মোট মুনাফা (শিরোনামের নিচে) হলো আয় বাদ বিক্রিত পশুর সরাসরি খরচ — ক্রয়মূল্য এবং তাদের লালনপালনের খাদ্য, ঔষধ ও শ্রম।"),
+        new(
+            "Buying animals or stock is not a cost on its own: an animal's purchase price becomes a cost only when it is sold or dies, and feed only when it is used.",
+            "পশু বা মালামাল কেনা নিজে খরচ নয়: পশুর ক্রয়মূল্য খরচ হয় যখন পশুটি বিক্রি হয় বা মারা যায়, আর খাদ্য খরচ হয় যখন তা ব্যবহার হয়।"),
+        new(
+            "Loans received and owner or investor money are not income, and loan repayments are not costs — only the interest is.",
+            "গৃহীত ঋণ এবং মালিক বা বিনিয়োগকারীর অর্থ আয় নয়, আর ঋণের আসল পরিশোধ খরচ নয় — শুধু সুদ খরচ।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         var data = await LoadAsync(context, cancellationToken).ConfigureAwait(false);
         var t = data.Totals;
-        var result = t.NetProfitBdt >= 0 ? "profit" : "loss";
-        return $"{data.FromDate:dd-MMM-yyyy} to {data.ToDate:dd-MMM-yyyy} — Gross profit {t.GrossProfitBdt:N2} ({t.GrossMarginPercent:0.#}%), net {result} {Math.Abs(t.NetProfitBdt):N2} BDT";
+        string M(decimal v) => StatementWording.Money(context, v);
+        var margin = StatementWording.Number(context, t.GrossMarginPercent.ToString("0.#", CultureInfo.InvariantCulture));
+        var period = $"{StatementWording.Day(context, data.FromDate)} – {StatementWording.Day(context, data.ToDate)}";
+
+        if (context.Language == ReportLanguage.Bn)
+        {
+            var resultBn = t.NetProfitBdt >= 0 ? "নিট মুনাফা" : "নিট ক্ষতি";
+            return $"{period} · আয় {M(t.RevenueBdt)} · মোট মুনাফা {M(t.GrossProfitBdt)} (আয়ের {margin}%) · {resultBn} {M(Math.Abs(t.NetProfitBdt))} টাকা";
+        }
+
+        var result = t.NetProfitBdt >= 0 ? "Net profit" : "Net loss";
+        return $"{period} · Income {M(t.RevenueBdt)} · Gross profit {M(t.GrossProfitBdt)} ({margin}% of income) · {result} {M(Math.Abs(t.NetProfitBdt))} BDT";
     }
 
     protected override async Task<IReadOnlyList<IncomeStatementReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         var data = await LoadAsync(context, cancellationToken).ConfigureAwait(false);
+        var bn = context.Language == ReportLanguage.Bn;
 
         var rows = new List<IncomeStatementReportRow>();
         var number = 0;
         foreach (var section in data.Sections)
         {
+            if (section.Lines.Count == 0)
+            {
+                continue;
+            }
+
             number++;
             var sign = section.Key == "revenue" ? 1m : -1m;
+            var label = SectionLabel(section, bn);
+            var prefix = bn ? ReportValueFormatter.ToBengaliNumerals(number.ToString(CultureInfo.InvariantCulture)) : number.ToString(CultureInfo.InvariantCulture);
             rows.AddRange(section.Lines.Select(l => new IncomeStatementReportRow(
-                $"{number}. {section.Name}",
+                $"{prefix}. {label}",
                 l.AccountCode,
-                l.AccountName,
+                bn && !string.IsNullOrWhiteSpace(l.AccountNameBn) ? l.AccountNameBn : l.AccountName,
                 sign * l.AmountBdt,
                 l.PriorAmountBdt is { } p ? sign * p : null)));
         }
@@ -86,7 +126,14 @@ public sealed class IncomeStatementReportDefinition : ReportDefinition<IncomeSta
         return rows;
     }
 
-    public override LocalizedText? GrandTotalLabel => new("Net profit / (loss)", "নিট লাভ / (ক্ষতি)");
+    private static string SectionLabel(IncomeStatementSectionDto section, bool bn) => section.Key switch
+    {
+        "revenue" => bn ? "আয় (বিক্রয় ও অন্যান্য আয়)" : "Income (sales and other income)",
+        "cost-of-sales" => bn ? "বিক্রিত পশুর সরাসরি খরচ (বিক্রীত পণ্যের ব্যয়)" : "Direct cost of animals sold (cost of sales)",
+        "operating-expenses" => bn ? "খামার চালানোর অন্যান্য খরচ (পরিচালন ব্যয়)" : "Other running costs (operating expenses)",
+        "finance-costs" => bn ? "ঋণের সুদ (আর্থিক ব্যয়)" : "Loan interest (finance costs)",
+        _ => bn ? section.NameBn : section.Name,
+    };
 
     // The subject line and the body both need the statement; load it once per run.
     private static Task<IncomeStatementDto> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>

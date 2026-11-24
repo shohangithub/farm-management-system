@@ -106,7 +106,17 @@ internal sealed class Farm360ReportDocument : IDocument
                 col.Item().ShowOnce().PaddingBottom(4).Element(ComposeParameterBox);
             }
 
+            if (_data.Summary is { } summary)
+            {
+                col.Item().ShowOnce().PaddingBottom(6).Element(c => ComposeSummary(c, summary));
+            }
+
             col.Item().Element(ComposeTable);
+
+            if (_data.NotesOrEmpty.Count > 0)
+            {
+                col.Item().PaddingTop(8).Element(ComposeNotes);
+            }
 
             if (_data.Page.ShowSignatureBlock)
             {
@@ -398,6 +408,81 @@ internal sealed class Farm360ReportDocument : IDocument
         ReportAlign.Center => container.AlignCenter(),
         _ => container.AlignLeft(),
     };
+
+    // ── Summary box (headline figures + findings) ──────────────────────────
+
+    private static Color ToneColor(string tone) => tone switch
+    {
+        ReportTone.Good => Colors.Green.Darken3,
+        ReportTone.Bad => Colors.Red.Darken3,
+        _ => Colors.Black,
+    };
+
+    private static void ComposeSummary(IContainer container, ReportSummary summary) =>
+        container.Border(RuleWidth).BorderColor(Colors.Black).Column(col =>
+        {
+            col.Item().Background(HeaderFill).Padding(CellPadding).Text(summary.Title).Bold().FontSize(HeaderFontSize + 1);
+
+            if (summary.Figures.Count > 0)
+            {
+                const int perRow = 5;
+                foreach (var chunk in summary.Figures.Chunk(perRow))
+                {
+                    col.Item().Row(row =>
+                    {
+                        foreach (var figure in chunk)
+                        {
+                            row.RelativeItem().Border(RuleWidth).BorderColor(Colors.Grey.Lighten1).Padding(4).Column(cell =>
+                            {
+                                cell.Item().Text(figure.Label).FontSize(FooterFontSize).FontColor(Muted);
+                                cell.Item().Text(figure.Value).Bold().FontSize(BodyFontSize + 2).FontColor(ToneColor(figure.Tone));
+                            });
+                        }
+
+                        for (var i = chunk.Length; i < perRow; i++)
+                        {
+                            row.RelativeItem();
+                        }
+                    });
+                }
+            }
+
+            if (summary.Insights.Count > 0)
+            {
+                col.Item().PaddingHorizontal(5).PaddingTop(4).PaddingBottom(4).Column(list =>
+                {
+                    if (!string.IsNullOrWhiteSpace(summary.InsightsTitle))
+                    {
+                        list.Item().Text(summary.InsightsTitle!).Bold().FontSize(BodyFontSize);
+                    }
+
+                    foreach (var insight in summary.Insights)
+                    {
+                        list.Item().PaddingTop(1).Row(row =>
+                        {
+                            row.ConstantItem(8).Text("•");
+                            row.RelativeItem().Text(insight).FontSize(BodyFontSize);
+                        });
+                    }
+                });
+            }
+        });
+
+    // ── How to read this report ─────────────────────────────────────────────
+
+    private void ComposeNotes(IContainer container) =>
+        container.Border(RuleWidth).BorderColor(Muted).Padding(5).Column(col =>
+        {
+            col.Item().Text(ReportStrings.HowToRead.For(_data.Language)).Bold().FontSize(FooterFontSize + 1);
+            foreach (var note in _data.NotesOrEmpty)
+            {
+                col.Item().PaddingTop(1).Row(row =>
+                {
+                    row.ConstantItem(8).Text("•").FontSize(FooterFontSize + 0.5f);
+                    row.RelativeItem().Text(note).FontSize(FooterFontSize + 0.5f);
+                });
+            }
+        });
 
     // ── Signatures ──────────────────────────────────────────────────────────
     // Financial and valuation documents only — a management report nobody signs

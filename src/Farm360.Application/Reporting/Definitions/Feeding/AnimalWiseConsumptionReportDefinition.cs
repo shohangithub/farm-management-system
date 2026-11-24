@@ -12,6 +12,8 @@ using Farm360.Domain.Livestock.Repositories;
 
 namespace Farm360.Application.Reporting.Definitions.Feeding;
 
+/// <param name="AnimalName">Breed and sex, e.g. "Sahiwal · Male".</param>
+/// <param name="LocationOrBatch">The batch name, or empty when the animal is not in a batch.</param>
 public sealed record AnimalWiseConsumptionReportRow(
     string TagId,
     string AnimalName,
@@ -28,8 +30,8 @@ public sealed record AnimalWiseConsumptionReportRow(
     string Status);
 
 /// <summary>
-/// Report F4 — Animal-wise Comprehensive Feed & Consumables Consumption Statement.
-/// Shows per-animal feed intake, daily averages, ration costs, and medical treatment expenses.
+/// Report F4 — Animal-wise feed and treatment cost: per animal, how much it ate over the period,
+/// what the feed cost, what its treatments cost, and the cost per day it was fed.
 /// </summary>
 public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<AnimalWiseConsumptionReportRow>
 {
@@ -55,11 +57,11 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
 
     public override string Key => "feeding.animal-consumption";
 
-    public override LocalizedText Title => new("Animal-wise Consumption & Feeding Cost Report", "পশুভিত্তিক খাদ্য গ্রহণ ও খরচ প্রতিবেদন");
+    public override LocalizedText Title => new("Feed & Treatment Cost by Animal", "পশুভিত্তিক খাদ্য ও চিকিৎসা খরচ");
 
     public override LocalizedText Description => new(
-        "Comprehensive feed intake, days fed, average daily ration, and feeding expenditure per animal over the selected period.",
-        "নির্দিষ্ট সময়কালে প্রতিটি পশুর মোট খাদ্য গ্রহণ, দৈনিক গড় মাত্রা ও খাদ্য খরচের পশুভিত্তিক তুলনামূলক প্রতিবেদন।");
+        "How much each animal ate in the period, what its feed and treatments cost, and its cost per day.",
+        "নির্বাচিত সময়ে প্রতিটি পশু কত খাদ্য খেয়েছে, তার খাদ্য ও চিকিৎসায় কত খরচ হয়েছে এবং দৈনিক খরচ কত।");
 
     public override ReportCategory Category => ReportCategory.Feeding;
 
@@ -75,30 +77,47 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
 
     public override IReadOnlyList<ReportColumn<AnimalWiseConsumptionReportRow>> Columns =>
     [
-        ReportColumn<AnimalWiseConsumptionReportRow>.Text("tag", new LocalizedText("Tag ID", "ট্যাগ নং"), r => r.TagId, width: 22f, relative: false),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Text("name", new LocalizedText("Animal Name / Breed", "পশুর নাম / জাত"), r => r.AnimalName, width: 2.5f),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Text("species", new LocalizedText("Species", "প্রজাতি"), r => r.Species, width: 1.4f),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Text("location", new LocalizedText("Location / Batch", "স্থান / ব্যাচ"), r => r.LocationOrBatch, width: 1.8f),
-        ReportColumn<AnimalWiseConsumptionReportRow>.WholeNumber("daysFed", new LocalizedText("Days Fed", "খাওয়ানোর দিন"), r => r.DaysFed, widthMm: 16f),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Number("feedKg", new LocalizedText("Total Feed (kg)", "মোট খাদ্য (কেজি)"), r => r.TotalFeedKg, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Number("avgKg", new LocalizedText("Avg Feed/Day (kg)", "গড় দৈনিক খাদ্য"), r => r.DailyAvgFeedKg, decimals: 2, widthMm: 22f),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Money("rate", new LocalizedText("Avg Rate (BDT)", "গড় দর (টাকা)"), r => r.AvgUnitCostBdt, decimals: 2, widthMm: 20f, aggregate: ReportAggregate.None),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Money("feedCost", new LocalizedText("Feed Cost (BDT)", "খাদ্য খরচ"), r => r.FeedCostBdt, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Money("medCost", new LocalizedText("Med/Treat (BDT)", "চিকিৎসা খরচ"), r => r.TreatmentCostBdt, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Money("totalCost", new LocalizedText("Total Cost (BDT)", "মোট খরচ"), r => r.TotalConsumptionCostBdt, decimals: 2, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Money("dailyCost", new LocalizedText("Cost/Day (BDT)", "দৈনিক খরচ"), r => r.DailyAvgCostBdt, decimals: 2, widthMm: 20f),
-        ReportColumn<AnimalWiseConsumptionReportRow>.Text("status", new LocalizedText("Status", "অবস্থা"), r => r.Status, width: 16f, relative: false),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Text("tag", new LocalizedText("Tag", "ট্যাগ"), r => r.TagId, width: 1.6f),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Text("species", new LocalizedText("Species", "প্রজাতি"), r => r.Species, width: 1.2f),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Text("name", new LocalizedText("Breed · sex", "জাত · লিঙ্গ"), r => r.AnimalName, width: 1.8f),
+        ReportColumn<AnimalWiseConsumptionReportRow>.WholeNumber("daysFed", new LocalizedText("Days fed", "খাওয়ানোর দিন"), r => r.DaysFed, widthMm: 16f),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Number("feedKg", new LocalizedText("Feed eaten (kg)", "খাওয়া খাদ্য (কেজি)"), r => r.TotalFeedKg, decimals: 2, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Number("avgKg", new LocalizedText("Feed per day (kg/day)", "দৈনিক খাদ্য (কেজি/দিন)"), r => r.DailyAvgFeedKg, decimals: 2, widthMm: 20f),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Money("rate", new LocalizedText("Feed rate (BDT/kg)", "খাদ্যের দর (টাকা/কেজি)"), r => r.AvgUnitCostBdt, decimals: 2, widthMm: 20f, aggregate: ReportAggregate.None),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Money("feedCost", new LocalizedText("Feed cost (BDT)", "খাদ্য খরচ (টাকা)"), r => r.FeedCostBdt, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Money("medCost", new LocalizedText("Treatment cost (BDT)", "চিকিৎসা খরচ (টাকা)"), r => r.TreatmentCostBdt, decimals: 2, widthMm: 24f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Money("totalCost", new LocalizedText("Total cost (BDT)", "মোট খরচ (টাকা)"), r => r.TotalConsumptionCostBdt, decimals: 2, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<AnimalWiseConsumptionReportRow>.Money("dailyCost", new LocalizedText("Cost per day (BDT/day)", "দৈনিক খরচ (টাকা/দিন)"), r => r.DailyAvgCostBdt, decimals: 2, widthMm: 22f),
     ];
 
     public override ReportGroup<AnimalWiseConsumptionReportRow>? Group =>
-        ReportGroup<AnimalWiseConsumptionReportRow>.By(
+        ReportGroup<AnimalWiseConsumptionReportRow>.ByLocalized(
             r => r.LocationOrBatch,
-            r => $"Group / Location: {r.LocationOrBatch}");
+            r => string.IsNullOrEmpty(r.LocationOrBatch)
+                ? new LocalizedText("Not in a batch", "কোনো ব্যাচে নেই")
+                : new LocalizedText($"Batch: {r.LocationOrBatch}", $"ব্যাচ: {r.LocationOrBatch}"));
+
+    public override LocalizedText? GrandTotalLabel => new("Total for all animals shown", "দেখানো সব পশুর মোট");
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one animal over the whole period; its feed includes its own ration and its share of any shed, batch or pen ration.",
+            "প্রতিটি সারি পুরো সময়ের জন্য একটি পশু; তার খাদ্যে নিজস্ব রেশন এবং শেড, ব্যাচ বা পেনের রেশনের ভাগ দুটোই ধরা আছে।"),
+        new("Days fed counts the days with any feed recorded; feed per day and cost per day are divided by days fed, not by the length of the period.",
+            "খাওয়ানোর দিন মানে যেসব দিনে খাদ্য রেকর্ড আছে; দৈনিক খাদ্য ও দৈনিক খরচ খাওয়ানোর দিন দিয়ে ভাগ করা, পুরো সময়ের দিন দিয়ে নয়।"),
+        new("Feed rate (BDT/kg) = feed cost ÷ feed eaten, the average price of the feed this animal ate.",
+            "খাদ্যের দর (টাকা/কেজি) = খাদ্য খরচ ÷ খাওয়া খাদ্য, অর্থাৎ এই পশুর খাওয়া খাদ্যের গড় দাম।"),
+        new("Treatment cost is the cost of treatments started in the period; total cost = feed cost + treatment cost.",
+            "চিকিৎসা খরচ হলো এই সময়ে শুরু হওয়া চিকিৎসার খরচ; মোট খরচ = খাদ্য খরচ + চিকিৎসা খরচ।"),
+        new("Sold or dead animals show the date they left beside the tag and count only the days they were on the farm.",
+            "বিক্রি হওয়া বা মৃত পশুর ট্যাগের পাশে খামার ছাড়ার তারিখ থাকে, আর শুধু খামারে থাকা দিনগুলো গোনা হয়।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var period = context.Range("period");
+        var language = context.Language;
+        var parts = new List<string> { FeedReportText.Period(context.Range("period")) };
 
         var animalId = context.IdOrNull("animalId");
         if (animalId.HasValue)
@@ -106,11 +125,27 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             var animal = await _animals.GetByIdAsync(animalId.Value, cancellationToken).ConfigureAwait(false);
             if (animal is not null)
             {
-                return $"Tag {animal.Tag.TagId} · {animal.Species} · Period {period.From:dd-MMM-yyyy} to {period.To:dd-MMM-yyyy}";
+                parts.Add(new LocalizedText("Tag ", "ট্যাগ ").For(language) + AnimalLabels.Tag(animal));
+                parts.Add(FeedReportText.Species(animal.Species).For(language));
             }
         }
 
-        return $"Herd Animal-wise Feed & Consumption Statement ({period.From:dd-MMM-yyyy} to {period.To:dd-MMM-yyyy})";
+        var batchId = context.IdOrNull("batchId");
+        if (batchId.HasValue)
+        {
+            var batch = await _batches.GetByIdAsync(batchId.Value, cancellationToken).ConfigureAwait(false);
+            if (batch is not null)
+            {
+                parts.Add(new LocalizedText("Batch: ", "ব্যাচ: ").For(language) + batch.Name);
+            }
+        }
+
+        if (parts.Count == 1)
+        {
+            parts.Add(new LocalizedText("All animals fed in the period", "এই সময়ে খাওয়ানো সব পশু").For(language));
+        }
+
+        return string.Join(" · ", parts);
     }
 
     protected override async Task<IReadOnlyList<AnimalWiseConsumptionReportRow>> FetchAsync(
@@ -123,6 +158,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
         var period = context.Range("period");
         var animalId = context.IdOrNull("animalId");
         var batchId = context.IdOrNull("batchId");
+        var language = context.Language;
 
         var allocations = await _allocations
             .GetByFarmAsync(farmId, period.From, period.To, animalId, batchId, cancellationToken: cancellationToken)
@@ -162,6 +198,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
         // pages — previously one query per animal, which on a 400-head farm was 400 round trips.
         var treatmentCostByAnimal = await LoadTreatmentCostsAsync(farmId, animalId, period, cancellationToken).ConfigureAwait(false);
 
+        var notRecorded = FeedReportText.NotRecorded.For(language);
         var rows = new List<AnimalWiseConsumptionReportRow>(animalGroups.Count);
 
         foreach (var group in animalGroups)
@@ -169,15 +206,25 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             var id = group.Key;
             animalsById.TryGetValue(id, out var animal);
 
-            var tagId = animal is null ? "(animal not found)" : AnimalLabels.Tag(animal);
-            var breedName = animal != null && breedsById.TryGetValue(animal.BreedId, out var bName) ? bName : "Standard";
-            var animalName = $"{breedName} ({animal?.Sex.ToString() ?? "—"})";
-            var species = animal?.Species.ToString() ?? "Livestock";
-
-            var locationOrBatch = "Main Herd";
-            if (animal?.BatchId.HasValue == true && batchesById.TryGetValue(animal.BatchId.Value, out var batchName))
+            string tagId, animalName, species, status, batchName;
+            if (animal is null)
             {
-                locationOrBatch = $"Batch: {batchName}";
+                tagId = new LocalizedText("Unknown animal", "অজানা পশু").For(language);
+                animalName = notRecorded;
+                species = notRecorded;
+                status = notRecorded;
+                batchName = string.Empty;
+            }
+            else
+            {
+                tagId = AnimalLabels.Tag(animal);
+                var breed = breedsById.TryGetValue(animal.BreedId, out var bName) && !string.IsNullOrWhiteSpace(bName)
+                    ? bName
+                    : new LocalizedText("Breed not recorded", "জাত রেকর্ড নেই").For(language);
+                animalName = $"{breed} · {FeedReportText.Sex(animal.Sex).For(language)}";
+                species = FeedReportText.Species(animal.Species).For(language);
+                status = FeedReportText.Status(animal.Status).For(language);
+                batchName = animal.BatchId is { } b && batchesById.TryGetValue(b, out var name) ? name : string.Empty;
             }
 
             var daysFed = group.Select(a => a.EntryDate).Distinct().Count();
@@ -190,13 +237,12 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
 
             var totalConsumptionCost = feedCostBdt + treatmentCost;
             var dailyAvgCost = daysFed > 0 ? decimal.Round(totalConsumptionCost / daysFed, 2, MidpointRounding.AwayFromZero) : 0m;
-            var status = animal?.Status.ToString() ?? "Active";
 
             rows.Add(new AnimalWiseConsumptionReportRow(
                 TagId: tagId,
                 AnimalName: animalName,
                 Species: species,
-                LocationOrBatch: locationOrBatch,
+                LocationOrBatch: batchName,
                 DaysFed: daysFed,
                 TotalFeedKg: totalFeedKg,
                 DailyAvgFeedKg: dailyAvgFeedKg,
@@ -208,9 +254,10 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
                 Status: status));
         }
 
+        // Named batches first (A–Z), animals outside any batch last; within a group, by tag.
         return rows
-            .OrderBy(r => r.LocationOrBatch, StringComparer.Ordinal)
-            .ThenByDescending(r => r.TotalConsumptionCostBdt)
+            .OrderBy(r => string.IsNullOrEmpty(r.LocationOrBatch))
+            .ThenBy(r => r.LocationOrBatch, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(r => r.TagId, StringComparer.Ordinal)
             .ToList();
     }

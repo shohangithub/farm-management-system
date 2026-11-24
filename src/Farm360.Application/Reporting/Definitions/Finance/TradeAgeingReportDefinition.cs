@@ -102,11 +102,13 @@ public sealed class TradeAgeingReportDefinition : ReportDefinition<TradeAgeingRe
 
     public override string Key => "finance.trade-ageing";
 
-    public override LocalizedText Title => new("Receivables & Payables Ageing", "প্রাপ্য ও প্রদেয় বয়সভিত্তিক বিশ্লেষণ");
+    public override LocalizedText Title => new(
+        "Who Owes Us & Whom We Owe (Receivables & Payables Ageing)",
+        "কার কাছে পাওনা ও কাকে দেনা (প্রাপ্য ও প্রদেয় বয়সভিত্তিক বিশ্লেষণ)");
 
     public override LocalizedText Description => new(
-        "Open customer invoices and supplier bills on a date, by party, in Current / 1-30 / 31-60 / 61-90 / 90+ days overdue buckets, reconciled to the ledger.",
-        "নির্দিষ্ট তারিখে ক্রেতা ও সরবরাহকারীভিত্তিক বকেয়া বিল — চলতি / ১-৩০ / ৩১-৬০ / ৬১-৯০ / ৯০+ দিন মেয়াদোত্তীর্ণ, খতিয়ানের সাথে মিলানোসহ।");
+        "Unpaid customer invoices and supplier bills on a date, by customer or supplier, split by how many days late they are — checked against the books.",
+        "নির্দিষ্ট তারিখে ক্রেতা ও সরবরাহকারীভিত্তিক অপরিশোধিত বিল, কত দিন দেরি হয়েছে সে অনুযায়ী ভাগ করা — খাতার সাথে মিলিয়ে।");
 
     public override ReportCategory Category => ReportCategory.Finance;
 
@@ -133,40 +135,64 @@ public sealed class TradeAgeingReportDefinition : ReportDefinition<TradeAgeingRe
     public override IReadOnlyList<ReportColumn<TradeAgeingReportRow>> Columns =>
     [
         ReportColumn<TradeAgeingReportRow>.Text("party", new LocalizedText("Customer / Supplier", "ক্রেতা / সরবরাহকারী"), r => r.Party, width: 3f),
-        ReportColumn<TradeAgeingReportRow>.WholeNumber("bills", new LocalizedText("Bills", "বিল"), r => r.Bills, widthMm: 14f, aggregate: ReportAggregate.Sum),
-        ReportColumn<TradeAgeingReportRow>.Money("current", new LocalizedText("Current", "চলতি"), r => r.CurrentBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<TradeAgeingReportRow>.Money("d1_30", new LocalizedText("1-30 days", "১-৩০ দিন"), r => r.Days1To30Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<TradeAgeingReportRow>.Money("d31_60", new LocalizedText("31-60 days", "৩১-৬০ দিন"), r => r.Days31To60Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<TradeAgeingReportRow>.Money("d61_90", new LocalizedText("61-90 days", "৬১-৯০ দিন"), r => r.Days61To90Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<TradeAgeingReportRow>.Money("d90", new LocalizedText("Over 90 days", "৯০ দিনের বেশি"), r => r.Over90Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
-        ReportColumn<TradeAgeingReportRow>.Money("total", new LocalizedText("Total outstanding", "মোট বকেয়া"), r => r.TotalBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
-        ReportColumn<TradeAgeingReportRow>.Date("oldestDue", new LocalizedText("Oldest due", "প্রাচীনতম মেয়াদ"), r => r.OldestDueDate),
-        ReportColumn<TradeAgeingReportRow>.WholeNumber("maxDays", new LocalizedText("Max days overdue", "সর্বোচ্চ মেয়াদোত্তীর্ণ দিন"), r => r.MaxDaysOverdue, widthMm: 20f, aggregate: ReportAggregate.Max),
+        ReportColumn<TradeAgeingReportRow>.WholeNumber("bills", new LocalizedText("Unpaid bills", "অপরিশোধিত বিল"), r => r.Bills, widthMm: 16f, aggregate: ReportAggregate.Sum),
+        ReportColumn<TradeAgeingReportRow>.Money("current", new LocalizedText("Not yet due (BDT)", "মেয়াদ বাকি (টাকা)"), r => r.CurrentBdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<TradeAgeingReportRow>.Money("d1_30", new LocalizedText("1–30 days late (BDT)", "১–৩০ দিন দেরি (টাকা)"), r => r.Days1To30Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<TradeAgeingReportRow>.Money("d31_60", new LocalizedText("31–60 days late (BDT)", "৩১–৬০ দিন দেরি (টাকা)"), r => r.Days31To60Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<TradeAgeingReportRow>.Money("d61_90", new LocalizedText("61–90 days late (BDT)", "৬১–৯০ দিন দেরি (টাকা)"), r => r.Days61To90Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<TradeAgeingReportRow>.Money("d90", new LocalizedText("Over 90 days late (BDT)", "৯০ দিনের বেশি দেরি (টাকা)"), r => r.Over90Bdt, widthMm: 26f, aggregate: ReportAggregate.Sum),
+        ReportColumn<TradeAgeingReportRow>.Money("total", new LocalizedText("Total owed (BDT)", "মোট বকেয়া (টাকা)"), r => r.TotalBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
+        ReportColumn<TradeAgeingReportRow>.Date("oldestDue", new LocalizedText("Oldest due date", "সবচেয়ে পুরোনো পরিশোধের তারিখ"), r => r.OldestDueDate),
+        ReportColumn<TradeAgeingReportRow>.WholeNumber("maxDays", new LocalizedText("Most days late", "সর্বোচ্চ দেরি (দিন)"), r => r.MaxDaysOverdue, widthMm: 20f, aggregate: ReportAggregate.Max),
     ];
 
     public override ReportGroup<TradeAgeingReportRow>? Group =>
         ReportGroup<TradeAgeingReportRow>.By(r => r.Section, r => r.Section);
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new(
+            "One line per customer or supplier: what they still owe us (section A), or what we still owe them (section B), on the date chosen.",
+            "প্রতি ক্রেতা বা সরবরাহকারীর জন্য এক লাইন: নির্বাচিত তারিখে তারা আমাদের কত দেবে (অংশ ক), বা আমরা তাদের কত দেব (অংশ খ)।"),
+        new(
+            "The amount is placed by how late the bill is: days past its due date (a bill with no due date was due on the day it was raised).",
+            "বিলটি কত দেরিতে আছে সে অনুযায়ী অঙ্ক বসানো: পরিশোধের তারিখ পেরিয়ে কত দিন (তারিখ না থাকলে বিলের দিনই পরিশোধযোগ্য)।"),
+        new(
+            "Total owed = not yet due + all the late columns. The two sections are never added together, because one is owed to the farm and the other by it.",
+            "মোট বকেয়া = মেয়াদ বাকি + সব দেরির কলাম। দুই অংশ কখনো যোগ করা হয় না, কারণ একটি খামারের পাওনা আর অন্যটি খামারের দেনা।"),
+        new(
+            "Chase the right-hand columns first: money over 90 days late is the most likely never to be paid.",
+            "ডান দিকের কলামগুলো আগে আদায়ের চেষ্টা করুন: ৯০ দিনের বেশি দেরির টাকা না পাওয়ার ঝুঁকি সবচেয়ে বেশি।"),
+        new(
+            "The line under the title compares each total with the books; a difference means a credit sale, purchase or payment was not linked to its bill.",
+            "শিরোনামের নিচের লাইনে প্রতিটি মোট খাতার সাথে মেলানো হয়েছে; পার্থক্য থাকলে কোনো বাকি বিক্রি, ক্রয় বা পরিশোধ তার বিলের সাথে যুক্ত হয়নি।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         var data = await LoadAsync(context, cancellationToken).ConfigureAwait(false);
         var bn = context.Language == ReportLanguage.Bn;
-        string M(decimal v) => ReportValueFormatter.Format(v, ReportColumnType.Money, 2, context.BengaliNumerals);
+        string M(decimal v) => StatementWording.Money(context, v);
 
-        var parts = new List<string>(2);
+        var parts = new List<string>(3)
+        {
+            bn
+                ? $"{StatementWording.Day(context, context.Date("asAt"))} তারিখে"
+                : $"As at {StatementWording.Day(context, context.Date("asAt"))}",
+        };
         if (data.ShowReceivables)
         {
             parts.Add(bn
-                ? $"প্রাপ্য {M(data.ReceivablesBdt)} (খতিয়ান {M(data.LedgerReceivablesBdt)})"
-                : $"Receivables {M(data.ReceivablesBdt)} (ledger {M(data.LedgerReceivablesBdt)})");
+                ? $"ক্রেতাদের কাছে পাওনা {M(data.ReceivablesBdt)} টাকা (খাতায় {M(data.LedgerReceivablesBdt)})"
+                : $"Customers owe us {M(data.ReceivablesBdt)} BDT (books {M(data.LedgerReceivablesBdt)})");
         }
 
         if (data.ShowPayables)
         {
             parts.Add(bn
-                ? $"প্রদেয় {M(data.PayablesBdt)} (খতিয়ান {M(data.LedgerPayablesBdt)})"
-                : $"Payables {M(data.PayablesBdt)} (ledger {M(data.LedgerPayablesBdt)})");
+                ? $"সরবরাহকারীদের দেনা {M(data.PayablesBdt)} টাকা (খাতায় {M(data.LedgerPayablesBdt)})"
+                : $"We owe suppliers {M(data.PayablesBdt)} BDT (books {M(data.LedgerPayablesBdt)})");
         }
 
         return string.Join(" · ", parts);
@@ -207,12 +233,12 @@ public sealed class TradeAgeingReportDefinition : ReportDefinition<TradeAgeingRe
             var receivables = showReceivables
                 ? BuildSection(
                     bills.Where(b => b.Kind == TradeBillKind.Receivable), payments, asAt,
-                    bn ? "ক. প্রাপ্য — ক্রেতার কাছে পাওনা" : "A. Receivables — owed to the farm")
+                    bn ? "ক. ক্রেতাদের কাছে খামারের পাওনা (প্রাপ্য)" : "A. Customers owe the farm (receivables)")
                 : [];
             var payables = showPayables
                 ? BuildSection(
                     bills.Where(b => b.Kind == TradeBillKind.Payable), payments, asAt,
-                    bn ? "খ. প্রদেয় — সরবরাহকারীর পাওনা" : "B. Payables — owed by the farm")
+                    bn ? "খ. সরবরাহকারীদের কাছে খামারের দেনা (প্রদেয়)" : "B. The farm owes suppliers (payables)")
                 : [];
 
             return new AgeingData(

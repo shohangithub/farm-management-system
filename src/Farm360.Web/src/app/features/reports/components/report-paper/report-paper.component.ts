@@ -60,6 +60,34 @@ interface RenderBand {
         </table>
       }
 
+      @if (data().summary; as summary) {
+        <section class="summary">
+          <div class="summary-title">{{ summary.title }}</div>
+          @if (summary.figures.length) {
+            <div class="figures">
+              @for (fig of summary.figures; track $index) {
+                <div class="figure">
+                  <div class="fig-label">{{ fig.label }}</div>
+                  <div class="fig-value" [class.good]="fig.tone === 'good'" [class.bad]="fig.tone === 'bad'">{{ fig.value }}</div>
+                </div>
+              }
+            </div>
+          }
+          @if (summary.insights.length) {
+            <div class="insights">
+              @if (summary.insightsTitle) {
+                <div class="insights-title">{{ summary.insightsTitle }}</div>
+              }
+              <ul>
+                @for (line of summary.insights; track $index) {
+                  <li>{{ line }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </section>
+      }
+
       @if (!data().rows.length) {
         <p class="empty">{{ t('No data available for the selected criteria.', 'নির্বাচিত শর্তে কোনো তথ্য পাওয়া যায়নি।') }}</p>
       } @else {
@@ -120,6 +148,17 @@ interface RenderBand {
         </table>
       }
 
+      @if (data().notes?.length) {
+        <section class="notes">
+          <div class="notes-title">{{ t('How to read this report', 'প্রতিবেদনটি যেভাবে পড়বেন') }}</div>
+          <ul>
+            @for (note of data().notes; track $index) {
+              <li>{{ note }}</li>
+            }
+          </ul>
+        </section>
+      }
+
       @if (data().page.showSignatureBlock) {
         <div class="signatures">
           <span>{{ t('Prepared by', 'প্রস্তুতকারী') }}</span><span>{{ t('Checked by', 'যাচাইকারী') }}</span><span>{{ t('Approved by', 'অনুমোদনকারী') }}</span>
@@ -128,7 +167,7 @@ interface RenderBand {
 
       <footer class="foot">
         <span>{{ data().meta.reportKey }} · run {{ shortRunId() }}</span>
-        <span>{{ data().totalRowCount }} {{ t('rows', 'সারি') }}</span>
+        <span>{{ data().totalRowCount }} {{ data().totalRowCount === 1 ? t('row', 'সারি') : t('rows', 'সারি') }}</span>
       </footer>
     </div>
   `,
@@ -171,6 +210,23 @@ interface RenderBand {
 
     .empty { text-align: center; padding: 30px; color: #666; }
 
+    .summary { border: 1px solid #000; margin: 0 0 8px; break-inside: avoid; }
+    .summary-title { background: #e8e8e8; font-weight: 700; font-size: 9pt; padding: 3px 6px; border-bottom: .5px solid #000; }
+    .figures { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .figure { border-right: .5px solid #bbb; border-bottom: .5px solid #bbb; padding: 4px 6px; }
+    .fig-label { font-size: 7pt; color: #555; }
+    .fig-value { font-size: 10pt; font-weight: 700; }
+    .fig-value.good { color: #1b5e20; }
+    .fig-value.bad { color: #b71c1c; }
+    .insights { padding: 4px 8px 5px; }
+    .insights-title { font-weight: 700; margin-bottom: 2px; }
+    .insights ul { margin: 0; padding-left: 14px; }
+    .insights li { margin: 1px 0; }
+
+    .notes { margin-top: 8px; border: 0.5pt solid #999; padding: 5px 8px; font-size: 7.5pt; color: #333; break-inside: avoid; }
+    .notes-title { font-weight: 700; font-size: 8pt; margin-bottom: 2px; color: #000; }
+    .notes ul { margin: 0; padding-left: 14px; }
+    .notes li { margin: 1px 0; }
     .signatures {
       display: flex; justify-content: space-between; margin-top: 18mm; gap: 12mm;
     }

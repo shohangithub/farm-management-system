@@ -151,6 +151,7 @@ public static class ReportStrings
     public static LocalizedText SubTotal { get; } = new("Sub-total", "উপ-মোট");
     public static LocalizedText GrandTotal { get; } = new("Grand total", "সর্বমোট");
     public static LocalizedText Rows { get; } = new("rows", "সারি");
+    public static LocalizedText HowToRead { get; } = new("How to read this report", "প্রতিবেদনটি যেভাবে পড়বেন");
     public static LocalizedText NoData { get; } = new(
         "No data available for the selected criteria.",
         "নির্বাচিত শর্তে কোনো তথ্য পাওয়া যায়নি।");

@@ -45,7 +45,8 @@ public sealed record AnimalDto(
     DateTime? ModifiedAtUtc,
     // Death date (Dead) and exit date = SaleDate (Sold) or DeathDate (Dead); null while on farm.
     DateOnly? DeathDate = null,
-    DateOnly? ExitDate = null);
+    DateOnly? ExitDate = null,
+    string? BreedName = null);
 
 /// <summary>
 /// Lightweight list item DTO — returned by GetAnimalListQuery.
@@ -69,7 +70,9 @@ public sealed record AnimalListItemDto(
     decimal? AdgKgPerDay,
     decimal? LatestBcs,
     string? PrimaryPhotoUrl,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    // The breed's name, for lists and pickers ("B-04 · Sahiwal"); null if the breed is unknown.
+    string? BreedName = null);
 
 /// <summary>
 /// Weight record DTO.

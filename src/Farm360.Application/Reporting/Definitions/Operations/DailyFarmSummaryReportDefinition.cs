@@ -78,8 +78,8 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
     public override LocalizedText Title => new("Daily Farm Summary", "দৈনিক খামার সারসংক্ষেপ");
 
     public override LocalizedText Description => new(
-        "One day at a glance: head count, arrivals, sales and deaths, feedings done vs planned, feed issued, treatments and vaccinations, stock alerts and cash in/out.",
-        "এক নজরে একটি দিন: পশুসংখ্যা, আগমন, বিক্রয় ও মৃত্যু, পরিকল্পিত বনাম সম্পন্ন খাদ্য প্রদান, খাদ্য বিতরণ, চিকিৎসা ও টিকা, মজুদ সতর্কতা এবং নগদ আয়-ব্যয়।");
+        "What happened on the farm today? Animals in and out, feedings done against plan, feed used, treatments and vaccinations, items running low and cash in and out — on one page.",
+        "আজ খামারে কী হয়েছে? পশু আসা-যাওয়া, পরিকল্পনার তুলনায় খাওয়ানো, ব্যবহৃত খাদ্য, চিকিৎসা ও টিকা, ফুরিয়ে আসা মালামাল এবং নগদ আয়-ব্যয় — এক পাতায়।");
 
     public override ReportCategory Category => ReportCategory.Operations;
 
@@ -99,21 +99,36 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
 
     public override IReadOnlyList<ReportColumn<DailyFarmSummaryReportRow>> Columns =>
     [
-        ReportColumn<DailyFarmSummaryReportRow>.Text("item", new LocalizedText("Particulars", "বিবরণ"), r => r.Item, width: 3f),
-        ReportColumn<DailyFarmSummaryReportRow>.Number("qty", new LocalizedText("Count / Qty", "সংখ্যা / পরিমাণ"), r => r.Quantity, 2, 24f),
+        ReportColumn<DailyFarmSummaryReportRow>.Text("item", new LocalizedText("Item", "বিষয়"), r => r.Item, width: 3f),
+        ReportColumn<DailyFarmSummaryReportRow>.Number("qty", new LocalizedText("Count / quantity", "সংখ্যা / পরিমাণ"), r => r.Quantity, 2, 26f),
         ReportColumn<DailyFarmSummaryReportRow>.Text("unit", new LocalizedText("Unit", "একক"), r => r.Unit, width: 14f, relative: false),
-        ReportColumn<DailyFarmSummaryReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "পরিমাণ (টাকা)"), r => r.AmountBdt, widthMm: 28f),
-        ReportColumn<DailyFarmSummaryReportRow>.Text("notes", new LocalizedText("Notes", "মন্তব্য"), r => r.Notes, width: 2.4f),
+        ReportColumn<DailyFarmSummaryReportRow>.Money("amount", new LocalizedText("Amount (BDT)", "টাকার পরিমাণ (টাকা)"), r => r.AmountBdt, widthMm: 28f),
+        ReportColumn<DailyFarmSummaryReportRow>.Text("notes", new LocalizedText("Details", "বিস্তারিত"), r => r.Notes, width: 2.4f),
     ];
 
     public override ReportGroup<DailyFarmSummaryReportRow>? Group =>
         ReportGroup<DailyFarmSummaryReportRow>.By(r => r.Section, r => r.Section);
 
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Animals: start of day + arrivals − sold − died = end of day; any difference is shown as exits without a recorded date.",
+            "পশু: দিনের শুরু + আগমন − বিক্রি − মৃত্যু = দিনের শেষ; কোনো পার্থক্য থাকলে তা তারিখবিহীন প্রস্থান হিসেবে দেখানো হয়।"),
+        new("Feed used counts only feedings marked done (confirmed or adjusted), at the feed's cost on the day it was used.",
+            "ব্যবহৃত খাদ্যে শুধু সম্পন্ন (নিশ্চিত বা সমন্বিত) খাওয়ানো ধরা হয়েছে, ব্যবহারের দিনের খাদ্য দরে।"),
+        new("Items running low are as of now, not as of the report date.",
+            "ফুরিয়ে আসা মালামালের তালিকা এখনকার অবস্থা, প্রতিবেদনের তারিখের নয়।"),
+        new("Cash lines appear only for users allowed to see finance; the end-of-day balance matches the balance sheet.",
+            "নগদের লাইন শুধু আর্থিক তথ্য দেখার অনুমতি থাকলে দেখা যায়; দিনের শেষের স্থিতি উদ্বৃত্তপত্রের সাথে মেলে।"),
+    ];
+
     public override Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var date = ReportValueFormatter.Format(context.Date("date"), ReportColumnType.Date, 0, context.BengaliNumerals, context.Language);
-        return Task.FromResult<string?>(context.Language == ReportLanguage.Bn ? $"{date} তারিখের সারসংক্ষেপ" : $"Summary for {date}");
+        var day = context.Date("date");
+        var date = ReportValueFormatter.Format(day, ReportColumnType.Date, 0, context.BengaliNumerals, context.Language);
+        return Task.FromResult<string?>(context.Language == ReportLanguage.Bn
+            ? $"{date} তারিখের সারসংক্ষেপ"
+            : $"Summary for {day.ToString("dddd", System.Globalization.CultureInfo.InvariantCulture)}, {date}");
     }
 
     protected override async Task<IReadOnlyList<DailyFarmSummaryReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)
@@ -125,7 +140,7 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
         var bn = context.Language == ReportLanguage.Bn;
         string T(string en, string bnText) => bn ? bnText : en;
         var head = T("head", "টি");
-        var count = T("no.", "টি");
+        var count = T("count", "টি");
         var kg = T("kg", "কেজি");
 
         var rows = new List<DailyFarmSummaryReportRow>();
@@ -133,7 +148,7 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
             rows.Add(new DailyFarmSummaryReportRow(section, item, qty, unit, amount, notes));
 
         // ── 1. Herd ─────────────────────────────────────────────────────────
-        var herd = T("1. Herd", "১. পশুপাল");
+        var herd = T("1. Animals", "১. পশু");
         var animals = await _animals.GetAllByFarmAsync(farmId, cancellationToken).ConfigureAwait(false);
         var opening = animals.Count(a => a.IsOnFarmOn(day.AddDays(-1)));
         var arrivals = animals.Where(a => a.AcquisitionDate == day).ToList();
@@ -144,7 +159,7 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
         Add(herd, T("On farm at start of day", "দিনের শুরুতে খামারে"), opening, head, null);
         Add(herd, T("(+) Arrivals (bought / born)", "(+) আগমন (ক্রয় / জন্ম)"), arrivals.Count, head, arrivals.Sum(a => a.AcquisitionPriceBdt ?? 0m),
             Tags(arrivals.Select(a => a.Tag.TagId)));
-        Add(herd, T("(−) Sold", "(−) বিক্রিত"), sales.Count, head, sales.Sum(a => a.SalePriceBdt ?? 0m),
+        Add(herd, T("(−) Sold", "(−) বিক্রি"), sales.Count, head, sales.Sum(a => a.SalePriceBdt ?? 0m),
             Tags(sales.Select(a => a.Tag.TagId)));
         Add(herd, T("(−) Died", "(−) মৃত"), deaths.Count, head, null, Tags(deaths.Select(a => a.Tag.TagId)));
         var unexplained = opening + arrivals.Count - sales.Count - deaths.Count - closing;
@@ -152,7 +167,7 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
             unexplained == 0 ? string.Empty : T($"{unexplained} other exit(s) without a recorded date", $"তারিখবিহীন অন্যান্য প্রস্থান {unexplained} টি"));
 
         // ── 2. Feeding ──────────────────────────────────────────────────────
-        var feeding = T("2. Feeding", "২. খাদ্য প্রদান");
+        var feeding = T("2. Feeding", "২. খাওয়ানো");
         var entries = await _feedingEntries.GetEntriesByDateAsync(context.TenantId, farmId, day, cancellationToken).ConfigureAwait(false);
         var done = entries.Where(e => e.Status is DailyFeedingEntryStatus.Confirmed or DailyFeedingEntryStatus.Adjusted).ToList();
         var skipped = entries.Count(e => e.Status == DailyFeedingEntryStatus.Skipped);
@@ -165,8 +180,8 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
         Add(feeding, T("Feedings still pending / exceptions", "এখনো বাকি / ব্যতিক্রম"), open, count, null,
             open > 0 ? T("Confirm or skip on the feeding board", "খাদ্য বোর্ডে নিশ্চিত বা বাদ দিন") : string.Empty);
         Add(feeding, T("Feed planned", "পরিকল্পিত খাদ্য"), entries.Sum(e => e.ExpectedKg), kg, null);
-        Add(feeding, T("Feed issued (done feedings)", "বিতরণকৃত খাদ্য (সম্পন্ন)"), done.Sum(e => e.ActualKg ?? e.ExpectedKg), kg,
-            done.Sum(e => e.TotalCostBdt ?? 0m), T("At cost when consumed", "ব্যবহারের সময়ের দরে"));
+        Add(feeding, T("Feed used (done feedings)", "ব্যবহৃত খাদ্য (সম্পন্ন)"), done.Sum(e => e.ActualKg ?? e.ExpectedKg), kg,
+            done.Sum(e => e.TotalCostBdt ?? 0m), T("Cost at the day's feed price", "ব্যবহারের দিনের দরে খরচ"));
 
         // ── 3. Health ───────────────────────────────────────────────────────
         var health = T("3. Health", "৩. স্বাস্থ্য");
@@ -178,7 +193,7 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
             string.Join(", ", vaccinations.Select(v => v.Event.VaccineName).Distinct(StringComparer.OrdinalIgnoreCase).Take(5)));
 
         // ── 4. Stock alerts ─────────────────────────────────────────────────
-        var stock = T("4. Stock alerts (current)", "৪. মজুদ সতর্কতা (বর্তমান)");
+        var stock = T("4. Items running low (now)", "৪. ফুরিয়ে আসা মালামাল (এখন)");
         var low = await _items.GetLowStockItemsAsync(farmId, cancellationToken).ConfigureAwait(false);
         if (low.Count == 0)
         {
@@ -190,7 +205,7 @@ public sealed class DailyFarmSummaryReportDefinition : ReportDefinition<DailyFar
             Add(stock, item.Name, item.CurrentStock, item.UnitOfMeasure, null,
                 item.CurrentStock <= 0m
                     ? T("Out of stock", "মজুদ শেষ")
-                    : T($"Reorder level {item.ReorderThreshold:0.##}", $"পুনঃক্রয় সীমা {item.ReorderThreshold:0.##}"));
+                    : T($"Reorder when at or below {item.ReorderThreshold:0.##} {item.UnitOfMeasure}", $"{item.ReorderThreshold:0.##} {item.UnitOfMeasure} বা কম হলে আবার কিনুন"));
         }
 
         // ── 5. Cash ─────────────────────────────────────────────────────────

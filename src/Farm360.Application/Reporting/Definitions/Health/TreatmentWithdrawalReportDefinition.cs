@@ -109,17 +109,17 @@ public sealed class TreatmentWithdrawalReportDefinition : ReportDefinition<Treat
 
     public override string Key => "health.treatment-withdrawal";
 
-    public override LocalizedText Title => new("Treatment & Withdrawal Register", "চিকিৎসা ও প্রত্যাহারকাল রেজিস্টার");
+    public override LocalizedText Title => new("Treatments & Medicine Withdrawal", "চিকিৎসা ও ঔষধের প্রত্যাহারকাল");
 
     public override LocalizedText Description => new(
-        "Treatments in the period with medicine, dose and meat/milk withdrawal end dates; animals currently within a withdrawal period (no sale, no milk) listed first.",
-        "নির্বাচিত সময়ের চিকিৎসা — ঔষধ, মাত্রা এবং মাংস/দুধের প্রত্যাহারকাল শেষের তারিখ; বর্তমানে প্রত্যাহারকালে থাকা পশু (বিক্রয় ও দুধ নিষেধ) সবার আগে।");
+        "Which animals must not be sold or milked yet because of medicine? Animals still inside a withdrawal period are listed first, then every other treatment started in the period with its medicine, dose and safe dates.",
+        "ঔষধের কারণে কোন পশু এখনো বিক্রি বা দোহন করা যাবে না? প্রত্যাহারকালে থাকা পশু আগে, তারপর নির্বাচিত সময়ে শুরু হওয়া অন্যান্য চিকিৎসা — ঔষধ, মাত্রা ও নিরাপদ তারিখসহ।");
 
     public override ReportCategory Category => ReportCategory.Health;
 
     public override PageSetup Page => PageSetup.A4LandscapeSigned;
 
-    public override LocalizedText? GrandTotalLabel => new("Total (treatments started in the period)", "মোট (নির্বাচিত সময়ে শুরু হওয়া চিকিৎসা)");
+    public override LocalizedText? GrandTotalLabel => new("Treatment cost for the period", "নির্বাচিত সময়ের চিকিৎসা খরচ");
 
     public override IReadOnlyList<ReportParameter> Parameters =>
     [
@@ -129,21 +129,33 @@ public sealed class TreatmentWithdrawalReportDefinition : ReportDefinition<Treat
 
     public override IReadOnlyList<ReportColumn<TreatmentWithdrawalReportRow>> Columns =>
     [
-        ReportColumn<TreatmentWithdrawalReportRow>.Text("tag", new LocalizedText("Tag", "ট্যাগ"), r => r.Tag, width: 22f, relative: false),
-        ReportColumn<TreatmentWithdrawalReportRow>.Date("start", new LocalizedText("Started", "শুরু"), r => r.StartDate),
-        ReportColumn<TreatmentWithdrawalReportRow>.Text("diagnosis", new LocalizedText("Diagnosis", "রোগনির্ণয়"), r => r.Diagnosis, width: 1.6f),
+        ReportColumn<TreatmentWithdrawalReportRow>.Text("tag", new LocalizedText("Tag", "ট্যাগ"), r => r.Tag, width: 1.6f),
+        ReportColumn<TreatmentWithdrawalReportRow>.Date("start", new LocalizedText("Treatment started", "চিকিৎসা শুরু"), r => r.StartDate, 24f),
+        ReportColumn<TreatmentWithdrawalReportRow>.Text("diagnosis", new LocalizedText("Illness", "রোগ"), r => r.Diagnosis, width: 1.6f),
         ReportColumn<TreatmentWithdrawalReportRow>.Text("medication", new LocalizedText("Medicine", "ঔষধ"), r => r.Medication, width: 1.6f),
-        ReportColumn<TreatmentWithdrawalReportRow>.Number("dose", new LocalizedText("Dose", "মাত্রা"), r => r.DoseAmount, 2, 16f, ReportAggregate.Sum, r => r.DoseUnit),
-        ReportColumn<TreatmentWithdrawalReportRow>.Text("unit", new LocalizedText("Unit", "একক"), r => r.DoseUnit, width: 12f, relative: false),
-        ReportColumn<TreatmentWithdrawalReportRow>.Date("lastDose", new LocalizedText("Last dose", "শেষ মাত্রা"), r => r.LastDoseDate),
-        ReportColumn<TreatmentWithdrawalReportRow>.Date("meatClear", new LocalizedText("Meat clear on", "মাংস নিরাপদ"), r => r.MeatClearDate),
-        ReportColumn<TreatmentWithdrawalReportRow>.Date("milkClear", new LocalizedText("Milk clear on", "দুধ নিরাপদ"), r => r.MilkClearDate),
-        ReportColumn<TreatmentWithdrawalReportRow>.Text("status", new LocalizedText("Withdrawal status", "প্রত্যাহারকালের অবস্থা"), r => r.Status, width: 2f),
+        // Dose and unit read as one value ("5 ml"); doses of different medicines are not added up.
+        ReportColumn<TreatmentWithdrawalReportRow>.Text("dose", new LocalizedText("Dose", "মাত্রা"), r => $"{r.DoseAmount.ToString("0.##", CultureInfo.InvariantCulture)} {r.DoseUnit}".Trim(), width: 18f, relative: false, align: ReportAlign.Right),
+        ReportColumn<TreatmentWithdrawalReportRow>.Date("lastDose", new LocalizedText("Last dose given", "শেষ মাত্রা দেওয়া"), r => r.LastDoseDate, 24f),
+        ReportColumn<TreatmentWithdrawalReportRow>.Date("meatClear", new LocalizedText("Safe to sell for meat from", "মাংসের জন্য বিক্রি নিরাপদ"), r => r.MeatClearDate, 26f),
+        ReportColumn<TreatmentWithdrawalReportRow>.Date("milkClear", new LocalizedText("Milk safe to use from", "দুধ ব্যবহার নিরাপদ"), r => r.MilkClearDate, 26f),
+        ReportColumn<TreatmentWithdrawalReportRow>.Text("status", new LocalizedText("What to do today", "আজ করণীয়"), r => r.Status, width: 2.2f),
         ReportColumn<TreatmentWithdrawalReportRow>.Money("cost", new LocalizedText("Cost (BDT)", "খরচ (টাকা)"), r => r.CostBdt, widthMm: 22f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<TreatmentWithdrawalReportRow>? Group =>
         ReportGroup<TreatmentWithdrawalReportRow>.By(r => r.Section, r => r.Section);
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one treatment. Section A lists animals on the farm whose meat or milk is not yet safe today, whenever the treatment began.",
+            "প্রতিটি সারি একটি চিকিৎসা। ক অংশে খামারে থাকা সেই পশুরা, যাদের মাংস বা দুধ আজও নিরাপদ নয় — চিকিৎসা যখনই শুরু হোক।"),
+        new("Safe dates = last dose + the medicine's withdrawal days; a course still running has no safe date yet, so the animal stays withheld until it ends.",
+            "নিরাপদ তারিখ = শেষ মাত্রা + ঔষধের প্রত্যাহারকাল (দিন); চিকিৎসা চলতে থাকলে এখনো নিরাপদ তারিখ নেই, শেষ না হওয়া পর্যন্ত পশুটি নিষেধের মধ্যে থাকে।"),
+        new("A blank safe date means the medicine has no withdrawal period for meat or milk.",
+            "নিরাপদ তারিখের ঘর ফাঁকা থাকলে ঐ ঔষধের মাংস বা দুধের জন্য কোনো প্রত্যাহারকাল নেই।"),
+        new("Cost is shown only for treatments started in the period, so the total is the period's treatment cost.",
+            "খরচ শুধু নির্বাচিত সময়ে শুরু হওয়া চিকিৎসার জন্য দেখানো হয়েছে, তাই মোট খরচ ঐ সময়ের চিকিৎসা খরচ।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
@@ -151,9 +163,12 @@ public sealed class TreatmentWithdrawalReportDefinition : ReportDefinition<Treat
         var data = await LoadAsync(context, cancellationToken).ConfigureAwait(false);
         string N(int v) => ReportValueFormatter.Format(v, ReportColumnType.WholeNumber, 0, context.BengaliNumerals);
 
+        var period = context.Range("period");
+        var range = $"{period.From.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} – {period.To.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
+
         return context.Language == ReportLanguage.Bn
-            ? $"আজ প্রত্যাহারকালে {N(data.WithheldAnimals)} টি পশু (বিক্রয়/দুধ নিষেধ) · এই সময়ে {N(data.TreatmentsInPeriod)} টি চিকিৎসা"
-            : $"{N(data.WithheldAnimals)} animals within a withdrawal period today (no sale / no milk) · {N(data.TreatmentsInPeriod)} treatments in the period";
+            ? $"{range} · আজ {N(data.WithheldAnimals)} টি পশু প্রত্যাহারকালে (বিক্রি/দুধ নিষেধ) · এই সময়ে {N(data.TreatmentsInPeriod)} টি চিকিৎসা"
+            : $"{range} · {N(data.WithheldAnimals)} animals must not be sold or milked today · {N(data.TreatmentsInPeriod)} treatments started in the period";
     }
 
     protected override async Task<IReadOnlyList<TreatmentWithdrawalReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)
@@ -180,7 +195,7 @@ public sealed class TreatmentWithdrawalReportDefinition : ReportDefinition<Treat
             var animals = (await _animals.GetAllByFarmAsync(farmId, cancellationToken).ConfigureAwait(false))
                 .ToDictionary(a => a.Id);
 
-            var withheldSection = T("A. On the farm and within withdrawal today — do not sell, do not use milk", "ক. আজ প্রত্যাহারকালে থাকা পশু — বিক্রয় ও দুধ ব্যবহার নিষেধ");
+            var withheldSection = T("A. Do not sell or use milk today — still inside withdrawal", "ক. আজ বিক্রি বা দুধ ব্যবহার করবেন না — প্রত্যাহারকাল চলছে");
             var periodSection = T("B. Other treatments started in the period", "খ. নির্বাচিত সময়ে শুরু হওয়া অন্যান্য চিকিৎসা");
 
             var rows = new List<TreatmentWithdrawalReportRow>();
@@ -212,9 +227,9 @@ public sealed class TreatmentWithdrawalReportDefinition : ReportDefinition<Treat
 
                 rows.Add(new TreatmentWithdrawalReportRow(
                     withheld ? withheldSection : periodSection,
-                    animal?.Tag.TagId ?? "—",
+                    animal is null ? "—" : AnimalLabels.Tag(animal),
                     t.StartDate,
-                    t.Diagnosis,
+                    string.IsNullOrWhiteSpace(t.Diagnosis) ? "—" : t.Diagnosis,
                     t.MedicationName,
                     t.Dosage.Amount,
                     t.Dosage.Unit,
@@ -252,19 +267,19 @@ public sealed class TreatmentWithdrawalReportDefinition : ReportDefinition<Treat
 
         if (p.MeatWithheld && p.MilkWithheld)
         {
-            return bn ? $"বিক্রয় নিষেধ {D(p.MeatClearDate)} পর্যন্ত; দুধ নিষেধ {D(p.MilkClearDate)} পর্যন্ত" : $"No sale before {D(p.MeatClearDate)}; no milk before {D(p.MilkClearDate)}";
+            return bn ? $"{D(p.MeatClearDate)} এর আগে বিক্রি নয়; {D(p.MilkClearDate)} এর আগে দুধ নয়" : $"No sale before {D(p.MeatClearDate)}; no milk before {D(p.MilkClearDate)}";
         }
 
         if (p.MeatWithheld)
         {
-            return bn ? $"বিক্রয় নিষেধ {D(p.MeatClearDate)} পর্যন্ত" : $"No sale before {D(p.MeatClearDate)}";
+            return bn ? $"{D(p.MeatClearDate)} এর আগে বিক্রি নয়" : $"No sale before {D(p.MeatClearDate)}";
         }
 
         if (p.MilkWithheld)
         {
-            return bn ? $"দুধ নিষেধ {D(p.MilkClearDate)} পর্যন্ত" : $"No milk before {D(p.MilkClearDate)}";
+            return bn ? $"{D(p.MilkClearDate)} এর আগে দুধ নয়" : $"No milk before {D(p.MilkClearDate)}";
         }
 
-        return bn ? "নিরাপদ" : "Clear";
+        return bn ? "নিরাপদ — বিক্রি ও দুধ ব্যবহার করা যাবে" : "Clear — safe to sell and milk";
     }
 }

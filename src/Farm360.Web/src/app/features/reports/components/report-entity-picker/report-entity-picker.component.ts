@@ -380,7 +380,21 @@ export class ReportEntityPickerComponent {
 
   private toOption(animal: AnimalListItemDto | AnimalDto): PickerOption {
     // Sold/dead animals stay pickable for reports, but are marked so they're not mistaken for live ones.
-    return { id: animal.id, label: animal.tagId, sublabel: isOnFarm(animal.status) ? animal.breedName : `${animal.breedName} · ${animal.status}` };
+    const parts: string[] = [];
+    if (animal.breedName) parts.push(animal.breedName);
+    if (!isOnFarm(animal.status)) parts.push(this.leftFarmLabel(animal.status));
+    return { id: animal.id, label: animal.tagId, sublabel: parts.length ? parts.join(' · ') : undefined };
+  }
+
+  /** "Sold", "Died", … — how an animal that has left the farm is marked in the list. */
+  private leftFarmLabel(status: unknown): string {
+    switch (String(status)) {
+      case 'Sold': return 'Sold';
+      case 'Dead': return 'Died';
+      case 'Slaughtered': return 'Slaughtered';
+      case 'Transferred': return 'Transferred';
+      default: return 'Left farm';
+    }
   }
 
   private loadBoundedList(type: ReportParameterType, farmId: string | null): Observable<PickerOption[]> {

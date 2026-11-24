@@ -41,8 +41,13 @@ public sealed record ReportDataSet(
     int TotalRowCount,
     ReportLanguage Language = ReportLanguage.En,
     bool BengaliNumerals = false,
-    string? GrandTotalLabel = null)
+    string? GrandTotalLabel = null,
+    IReadOnlyList<string>? Notes = null,
+    ReportSummary? Summary = null)
 {
+    /// <summary>"How to read this report" lines, in the report's language (empty when none).</summary>
+    public IReadOnlyList<string> NotesOrEmpty => Notes ?? [];
+
     /// <summary>
     /// The label printed on the grand-total band. Statements override it ("Net profit / (loss)")
     /// so the bottom line says what it is instead of a generic "Grand total".
@@ -56,3 +61,25 @@ public sealed record ReportDataSet(
     public string Count(int value) =>
         ReportValueFormatter.Format(value, ReportColumnType.WholeNumber, 0, BengaliNumerals, Language);
 }
+
+/// <summary>How a headline figure should be read: good news, bad news, or just a fact.</summary>
+public static class ReportTone
+{
+    public const string Neutral = "neutral";
+    public const string Good = "good";
+    public const string Bad = "bad";
+}
+
+/// <summary>One headline figure in a report's summary box ("Net profit", "12,500.00 BDT").</summary>
+public sealed record ReportSummaryFigure(string Label, string Value, string Tone = ReportTone.Neutral);
+
+/// <summary>
+/// The box printed above the table: a handful of headline figures, then plain-language findings
+/// worked out from the rows ("B-04 lost 5,000 BDT — feed cost was 61% of its cost"). Built by
+/// the report itself, in the report's language.
+/// </summary>
+public sealed record ReportSummary(
+    string Title,
+    IReadOnlyList<ReportSummaryFigure> Figures,
+    string? InsightsTitle,
+    IReadOnlyList<string> Insights);

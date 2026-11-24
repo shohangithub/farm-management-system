@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -170,11 +171,11 @@ public sealed class BatchPerformanceReportDefinition : ReportDefinition<BatchPer
 
     public override string Key => "livestock.batch-performance";
 
-    public override LocalizedText Title => new("Batch Performance & FCR", "ব্যাচ কর্মক্ষমতা ও খাদ্য রূপান্তর অনুপাত (FCR)");
+    public override LocalizedText Title => new("Batch Growth & Feed Efficiency", "ব্যাচের বৃদ্ধি ও খাদ্য দক্ষতা");
 
     public override LocalizedText Description => new(
-        "Per batch: head count start/end, measured weight gain and ADG, confirmed feed kg and cost, FCR, feed cost per kg gain and per head-day; missing weigh-ins flagged.",
-        "ব্যাচভিত্তিক: শুরু/শেষের পশুসংখ্যা, পরিমাপকৃত ওজন বৃদ্ধি ও দৈনিক বৃদ্ধি, নিশ্চিত খাদ্য (কেজি ও খরচ), FCR, প্রতি কেজি বৃদ্ধিতে ও প্রতি পশু-দিনে খাদ্য খরচ; ওজন না থাকলে চিহ্নিত।");
+        "Which batch turns feed into weight most cheaply? Per batch: animals at start and end, weight gained, daily gain, feed eaten, feed needed per kg of gain and feed cost per kg of gain.",
+        "কোন ব্যাচ সবচেয়ে কম খরচে খাদ্যকে ওজনে পরিণত করছে? ব্যাচভিত্তিক: শুরু ও শেষের পশুসংখ্যা, ওজন বৃদ্ধি, দৈনিক বৃদ্ধি, খাওয়া খাদ্য, প্রতি কেজি বৃদ্ধিতে খাদ্য ও খাদ্য খরচ।");
 
     public override ReportCategory Category => ReportCategory.Livestock;
 
@@ -192,18 +193,29 @@ public sealed class BatchPerformanceReportDefinition : ReportDefinition<BatchPer
     public override IReadOnlyList<ReportColumn<BatchPerformanceReportRow>> Columns =>
     [
         ReportColumn<BatchPerformanceReportRow>.Text("batch", new LocalizedText("Batch", "ব্যাচ"), r => r.Batch, width: 2f),
-        ReportColumn<BatchPerformanceReportRow>.WholeNumber("headStart", new LocalizedText("Head at start", "শুরুতে পশু"), r => r.HeadStart, 16f, ReportAggregate.Sum),
-        ReportColumn<BatchPerformanceReportRow>.WholeNumber("headEnd", new LocalizedText("Head at end", "শেষে পশু"), r => r.HeadEnd, 16f, ReportAggregate.Sum),
-        ReportColumn<BatchPerformanceReportRow>.Number("avgHead", new LocalizedText("Avg head", "গড় পশু"), r => r.AverageHead, 1, 16f, ReportAggregate.Sum),
-        ReportColumn<BatchPerformanceReportRow>.Text("weighed", new LocalizedText("Weighed / present", "ওজনকৃত / উপস্থিত"), r => r.Weighed, width: 20f, relative: false, align: ReportAlign.Right),
-        ReportColumn<BatchPerformanceReportRow>.Number("gain", new LocalizedText("Weight gain (kg)", "ওজন বৃদ্ধি (কেজি)"), r => r.WeightGainKg, 1, 22f, ReportAggregate.Sum),
-        ReportColumn<BatchPerformanceReportRow>.Number("adg", new LocalizedText("ADG (kg/day)", "দৈনিক বৃদ্ধি (কেজি)"), r => r.AdgKgPerDay, 3, 18f),
-        ReportColumn<BatchPerformanceReportRow>.Number("feedKg", new LocalizedText("Feed (kg)", "খাদ্য (কেজি)"), r => r.FeedKg, 1, 22f, ReportAggregate.Sum),
+        ReportColumn<BatchPerformanceReportRow>.WholeNumber("headStart", new LocalizedText("Animals at start (head)", "শুরুতে পশু (টি)"), r => r.HeadStart, 18f, ReportAggregate.Sum),
+        ReportColumn<BatchPerformanceReportRow>.WholeNumber("headEnd", new LocalizedText("Animals at end (head)", "শেষে পশু (টি)"), r => r.HeadEnd, 18f, ReportAggregate.Sum),
+        ReportColumn<BatchPerformanceReportRow>.Text("weighed", new LocalizedText("Weighed twice / present", "দুইবার ওজন / উপস্থিত"), r => r.Weighed, width: 22f, relative: false, align: ReportAlign.Right),
+        ReportColumn<BatchPerformanceReportRow>.Number("gain", new LocalizedText("Weight gained (kg)", "ওজন বৃদ্ধি (কেজি)"), r => r.WeightGainKg, 1, 22f, ReportAggregate.Sum),
+        ReportColumn<BatchPerformanceReportRow>.Number("adg", new LocalizedText("Daily gain per animal (kg/day)", "পশুপ্রতি দৈনিক বৃদ্ধি (কেজি/দিন)"), r => r.AdgKgPerDay, 3, 22f),
+        ReportColumn<BatchPerformanceReportRow>.Number("feedKg", new LocalizedText("Feed eaten (kg)", "খাওয়া খাদ্য (কেজি)"), r => r.FeedKg, 1, 22f, ReportAggregate.Sum),
         ReportColumn<BatchPerformanceReportRow>.Money("feedCost", new LocalizedText("Feed cost (BDT)", "খাদ্য খরচ (টাকা)"), r => r.FeedCostBdt, widthMm: 24f, aggregate: ReportAggregate.Sum),
-        ReportColumn<BatchPerformanceReportRow>.Number("fcr", new LocalizedText("FCR (kg feed / kg gain)", "FCR (খাদ্য/বৃদ্ধি)"), r => r.Fcr, 2, 18f),
-        ReportColumn<BatchPerformanceReportRow>.Money("costPerKgGain", new LocalizedText("Feed cost / kg gain", "প্রতি কেজি বৃদ্ধিতে খাদ্য খরচ"), r => r.FeedCostPerKgGainBdt, widthMm: 22f),
-        ReportColumn<BatchPerformanceReportRow>.Money("costPerHeadDay", new LocalizedText("Feed cost / head-day", "প্রতি পশু-দিনে খাদ্য খরচ"), r => r.FeedCostPerHeadDayBdt, widthMm: 22f),
-        ReportColumn<BatchPerformanceReportRow>.Text("flags", new LocalizedText("Data notes", "তথ্য সংক্রান্ত মন্তব্য"), r => r.Flags, width: 2.4f),
+        ReportColumn<BatchPerformanceReportRow>.Number("fcr", new LocalizedText("Feed per kg gain (kg)", "প্রতি কেজি বৃদ্ধিতে খাদ্য (কেজি)"), r => r.Fcr, 2, 20f),
+        ReportColumn<BatchPerformanceReportRow>.Money("costPerKgGain", new LocalizedText("Feed cost per kg gain (BDT)", "প্রতি কেজি বৃদ্ধিতে খাদ্য খরচ (টাকা)"), r => r.FeedCostPerKgGainBdt, widthMm: 24f),
+        ReportColumn<BatchPerformanceReportRow>.Money("costPerHeadDay", new LocalizedText("Feed cost per animal per day (BDT)", "পশুপ্রতি দৈনিক খাদ্য খরচ (টাকা)"), r => r.FeedCostPerHeadDayBdt, widthMm: 24f),
+        ReportColumn<BatchPerformanceReportRow>.Text("flags", new LocalizedText("Data gaps", "তথ্যের ঘাটতি"), r => r.Flags, width: 2.4f),
+    ];
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each row is one batch (as the animals are grouped today); animals in no batch share a line at the bottom.",
+            "প্রতিটি সারি একটি ব্যাচ (পশুরা আজ যেভাবে ভাগ করা আছে); ব্যাচবিহীন পশুরা নিচে এক লাইনে।"),
+        new("Weight gained counts only animals weighed at least twice in the period (last weigh-in − first); others are listed under Data gaps, never guessed.",
+            "ওজন বৃদ্ধিতে শুধু সেই পশুরা ধরা হয়েছে যাদের এই সময়ে অন্তত দুইবার ওজন নেওয়া হয়েছে (শেষ ওজন − প্রথম ওজন); বাকিরা তথ্যের ঘাটতিতে দেখানো, অনুমান করা হয়নি।"),
+        new("Feed per kg gain = confirmed feed eaten between those weigh-ins ÷ weight gained; lower is better.",
+            "প্রতি কেজি বৃদ্ধিতে খাদ্য = ঐ দুই ওজনের মাঝে খাওয়া নিশ্চিত খাদ্য ÷ ওজন বৃদ্ধি; যত কম তত ভালো।"),
+        new("Feed eaten and feed cost cover the whole period; sold or dead animals are counted only for the days they were on the farm.",
+            "খাওয়া খাদ্য ও খাদ্য খরচ পুরো সময়ের; বিক্রি হওয়া বা মৃত পশু শুধু খামারে থাকার দিনগুলোর জন্য গণনা হয়েছে।"),
     ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
@@ -211,12 +223,14 @@ public sealed class BatchPerformanceReportDefinition : ReportDefinition<BatchPer
         ArgumentNullException.ThrowIfNull(context);
         var data = await LoadAsync(context, cancellationToken).ConfigureAwait(false);
         var farm = data.Farm;
+        var period = context.Range("period");
+        var range = $"{period.From.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} – {period.To.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
         string N(decimal v, int d) => ReportValueFormatter.Format(v, d == 0 ? ReportColumnType.WholeNumber : ReportColumnType.Number, d, context.BengaliNumerals);
         var fcr = farm.Fcr is { } f ? N(f, 2) : "—";
 
         return context.Language == ReportLanguage.Bn
-            ? $"খামারের FCR {fcr} ({N(farm.AnimalsWeighed, 0)} টি ওজনকৃত পশুর ভিত্তিতে) · {N(farm.AnimalsMissingWeights, 0)} টি পশুর পর্যাপ্ত ওজন নেই"
-            : $"Farm FCR {fcr} (over {N(farm.AnimalsWeighed, 0)} weighed animals) · {N(farm.AnimalsMissingWeights, 0)} animals lack two weigh-ins in the period";
+            ? $"{range} · পুরো খামারে প্রতি কেজি বৃদ্ধিতে খাদ্য {fcr} কেজি ({N(farm.AnimalsWeighed, 0)} টি ওজনকৃত পশুর ভিত্তিতে) · {N(farm.AnimalsMissingWeights, 0)} টি পশুর এই সময়ে দুইবার ওজন নেই"
+            : $"{range} · Whole farm: {fcr} kg feed per kg gain (from {N(farm.AnimalsWeighed, 0)} weighed animals) · {N(farm.AnimalsMissingWeights, 0)} animals not weighed twice in the period";
     }
 
     protected override async Task<IReadOnlyList<BatchPerformanceReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)

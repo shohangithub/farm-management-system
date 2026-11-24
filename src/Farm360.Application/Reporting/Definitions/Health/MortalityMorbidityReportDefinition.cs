@@ -112,11 +112,11 @@ public sealed class MortalityMorbidityReportDefinition : ReportDefinition<Mortal
 
     public override string Key => "health.mortality-morbidity";
 
-    public override LocalizedText Title => new("Mortality & Morbidity Report", "মৃত্যুহার ও রোগাক্রান্ততা প্রতিবেদন");
+    public override LocalizedText Title => new("Deaths & Illness", "মৃত্যু ও অসুস্থতা");
 
     public override LocalizedText Description => new(
-        "Deaths by cause, month, batch and shed with the mortality rate on the average on-farm head count; disease incidents and treatments by diagnosis with treatment cost.",
-        "কারণ, মাস, ব্যাচ ও শেড অনুযায়ী মৃত্যু এবং খামারের গড় পশুসংখ্যার ভিত্তিতে মৃত্যুহার; রোগনির্ণয় অনুযায়ী রোগের ঘটনা, চিকিৎসা ও চিকিৎসা খরচ।");
+        "How many animals died or fell ill, and why? Deaths by cause, month, batch and shed with the death rate, then illness cases and treatments by disease with their cost.",
+        "কতগুলো পশু মারা গেছে বা অসুস্থ হয়েছে, এবং কেন? কারণ, মাস, ব্যাচ ও শেড অনুযায়ী মৃত্যু ও মৃত্যুহার, তারপর রোগ অনুযায়ী অসুস্থতা, চিকিৎসা ও খরচ।");
 
     public override ReportCategory Category => ReportCategory.Health;
 
@@ -133,18 +133,30 @@ public sealed class MortalityMorbidityReportDefinition : ReportDefinition<Mortal
 
     public override IReadOnlyList<ReportColumn<MortalityMorbidityReportRow>> Columns =>
     [
-        ReportColumn<MortalityMorbidityReportRow>.Text("item", new LocalizedText("Particulars", "বিবরণ"), r => r.Item, width: 3f),
-        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("deaths", new LocalizedText("Deaths", "মৃত্যু"), r => r.Deaths, widthMm: 16f, aggregate: ReportAggregate.Sum),
-        ReportColumn<MortalityMorbidityReportRow>.Number("avgHead", new LocalizedText("Avg head on farm", "গড় পশুসংখ্যা"), r => r.AverageHead, 1, 24f),
-        ReportColumn<MortalityMorbidityReportRow>.Percent("rate", new LocalizedText("Mortality %", "মৃত্যুহার %"), r => r.MortalityRate, 2, 20f),
-        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("incidents", new LocalizedText("Incidents", "রোগের ঘটনা"), r => r.Incidents, widthMm: 18f, aggregate: ReportAggregate.Sum),
-        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("affected", new LocalizedText("Animals affected", "আক্রান্ত পশু"), r => r.AnimalsAffected, widthMm: 20f, aggregate: ReportAggregate.Sum),
-        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("treatments", new LocalizedText("Treatments", "চিকিৎসা"), r => r.Treatments, widthMm: 20f, aggregate: ReportAggregate.Sum),
+        ReportColumn<MortalityMorbidityReportRow>.Text("item", new LocalizedText("Cause / month / batch / shed / disease", "কারণ / মাস / ব্যাচ / শেড / রোগ"), r => r.Item, width: 3f),
+        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("deaths", new LocalizedText("Deaths (head)", "মৃত্যু (টি)"), r => r.Deaths, widthMm: 18f, aggregate: ReportAggregate.Sum),
+        ReportColumn<MortalityMorbidityReportRow>.Number("avgHead", new LocalizedText("Average animals on farm (head)", "খামারে গড় পশু (টি)"), r => r.AverageHead, 1, 26f),
+        ReportColumn<MortalityMorbidityReportRow>.Percent("rate", new LocalizedText("Death rate (%)", "মৃত্যুহার (%)"), r => r.MortalityRate, 2, 20f),
+        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("incidents", new LocalizedText("Illness cases", "অসুস্থতার ঘটনা"), r => r.Incidents, widthMm: 20f, aggregate: ReportAggregate.Sum),
+        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("affected", new LocalizedText("Animals affected (head)", "আক্রান্ত পশু (টি)"), r => r.AnimalsAffected, widthMm: 22f, aggregate: ReportAggregate.Sum),
+        ReportColumn<MortalityMorbidityReportRow>.WholeNumber("treatments", new LocalizedText("Treatments given", "চিকিৎসা দেওয়া হয়েছে"), r => r.Treatments, widthMm: 22f, aggregate: ReportAggregate.Sum),
         ReportColumn<MortalityMorbidityReportRow>.Money("cost", new LocalizedText("Treatment cost (BDT)", "চিকিৎসা খরচ (টাকা)"), r => r.TreatmentCostBdt, widthMm: 28f, aggregate: ReportAggregate.Sum),
     ];
 
     public override ReportGroup<MortalityMorbidityReportRow>? Group =>
         ReportGroup<MortalityMorbidityReportRow>.By(r => r.Section, r => r.Section);
+
+    public override IReadOnlyList<LocalizedText> Notes =>
+    [
+        new("Each section breaks down the same deaths (or the same illness cases) a different way, so each section adds up to the whole-farm line; sections are not added together.",
+            "প্রতিটি অংশ একই মৃত্যু (বা একই অসুস্থতা) ভিন্নভাবে ভাগ করে দেখায়, তাই প্রতিটি অংশের যোগফল সমগ্র খামারের লাইনের সমান; অংশগুলো একসাথে যোগ করা হয় না।"),
+        new("Death rate = deaths ÷ average number of animals on the farm over the same days; each row uses its own average (its month, batch or shed).",
+            "মৃত্যুহার = মৃত্যু ÷ একই সময়ে খামারে গড় পশুর সংখ্যা; প্রতিটি সারি নিজের গড় ব্যবহার করে (তার মাস, ব্যাচ বা শেড)।"),
+        new("Average animals counts sold or dead animals only for the days they were on the farm. Slaughter is a sale, not a death.",
+            "গড় পশুর হিসাবে বিক্রি হওয়া বা মৃত পশু শুধু খামারে থাকার দিনগুলোর জন্য ধরা হয়েছে। জবাই বিক্রি হিসেবে ধরা হয়, মৃত্যু নয়।"),
+        new("Batch is the animal's batch today; shed is the shed it was in when it died.",
+            "ব্যাচ হলো পশুটির আজকের ব্যাচ; শেড হলো মৃত্যুর সময় যে শেডে ছিল।"),
+    ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
     {
@@ -159,9 +171,12 @@ public sealed class MortalityMorbidityReportDefinition : ReportDefinition<Mortal
         string N(decimal v, int d) => ReportValueFormatter.Format(v, d == 0 ? ReportColumnType.WholeNumber : ReportColumnType.Number, d, context.BengaliNumerals);
         var rate = farm.MortalityRate is { } r ? N(r * 100m, 2) + "%" : "—";
 
+        var period = context.Range("period");
+        var range = $"{period.From.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} – {period.To.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
+
         return context.Language == ReportLanguage.Bn
-            ? $"মৃত্যু {N(farm.Deaths ?? 0, 0)} · গড় পশুসংখ্যা {N(farm.AverageHead ?? 0m, 1)} · মৃত্যুহার {rate} · চিকিৎসা {N(farm.Treatments ?? 0, 0)}"
-            : $"{N(farm.Deaths ?? 0, 0)} deaths · average {N(farm.AverageHead ?? 0m, 1)} head on farm · mortality {rate} · {N(farm.Treatments ?? 0, 0)} treatments";
+            ? $"{range} · মৃত্যু {N(farm.Deaths ?? 0, 0)} টি · খামারে গড় {N(farm.AverageHead ?? 0m, 1)} টি পশু · মৃত্যুহার {rate} · চিকিৎসা {N(farm.Treatments ?? 0, 0)} টি"
+            : $"{range} · {N(farm.Deaths ?? 0, 0)} deaths · average {N(farm.AverageHead ?? 0m, 1)} animals on farm · death rate {rate} · {N(farm.Treatments ?? 0, 0)} treatments";
     }
 
     protected override Task<IReadOnlyList<MortalityMorbidityReportRow>> FetchAsync(ReportContext context, CancellationToken cancellationToken)
@@ -226,14 +241,17 @@ public sealed class MortalityMorbidityReportDefinition : ReportDefinition<Mortal
                 var monthEnd = month.AddMonths(1).AddDays(-1);
                 var end = monthEnd > to ? to : monthEnd;
                 var count = deaths.Count(a => a.DeathDate >= start && a.DeathDate <= end);
-                rows.Add(DeathRow(byMonth, month.ToString("MMM yyyy", CultureInfo.InvariantCulture), count,
+                var monthLabel = bn
+                    ? $"{BanglaMonths[month.Month - 1]} {month.Year.ToString(CultureInfo.InvariantCulture)}"
+                    : month.ToString("MMM yyyy", CultureInfo.InvariantCulture);
+                rows.Add(DeathRow(byMonth, monthLabel, count,
                     HerdMetrics.AverageHeadCount(residency.Values, start, end)));
             }
 
             // 4. By batch (current batch membership).
             var batches = (await _batches.GetPagedAsync(1, 10_000, farmId, null, cancellationToken).ConfigureAwait(false)).Items
                 .ToDictionary(b => b.Id, b => b.Name);
-            var noBatch = T("No batch", "ব্যাচবিহীন");
+            var noBatch = T("Not in a batch", "ব্যাচবিহীন");
             var byBatch = T("4. Deaths by batch", "৪. ব্যাচ অনুযায়ী মৃত্যু");
             foreach (var g in animals
                          .Where(a => residency[a.Id] is var r && r.Entry <= to && (r.Exit is null || r.Exit > from))
@@ -252,7 +270,7 @@ public sealed class MortalityMorbidityReportDefinition : ReportDefinition<Mortal
                 animals, residency, deaths, movements, sheds, context.TimeZone, from, to));
 
             // 6. Disease incidents by diagnosis.
-            var byDisease = T("6. Disease incidents by diagnosis", "৬. রোগনির্ণয় অনুযায়ী রোগের ঘটনা");
+            var byDisease = T("6. Illness cases by disease", "৬. রোগ অনুযায়ী অসুস্থতার ঘটনা");
             foreach (var g in incidents
                          .GroupBy(i => Clean(i.DiseaseName), StringComparer.OrdinalIgnoreCase)
                          .OrderByDescending(g => g.Count()).ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
@@ -262,11 +280,11 @@ public sealed class MortalityMorbidityReportDefinition : ReportDefinition<Mortal
 
             if (incidents.Count == 0)
             {
-                rows.Add(new MortalityMorbidityReportRow(byDisease, T("No incidents recorded", "কোনো ঘটনা নেই"), null, null, null, 0, 0, null, null));
+                rows.Add(new MortalityMorbidityReportRow(byDisease, T("No illness recorded", "কোনো অসুস্থতা নেই"), null, null, null, 0, 0, null, null));
             }
 
             // 7. Treatments by diagnosis.
-            var byDiagnosis = T("7. Treatments by diagnosis", "৭. রোগনির্ণয় অনুযায়ী চিকিৎসা");
+            var byDiagnosis = T("7. Treatments by disease", "৭. রোগ অনুযায়ী চিকিৎসা");
             foreach (var g in treatments
                          .GroupBy(t => Clean(t.Diagnosis), StringComparer.OrdinalIgnoreCase)
                          .OrderByDescending(g => g.Sum(t => t.CostBdt)).ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
@@ -369,6 +387,12 @@ public sealed class MortalityMorbidityReportDefinition : ReportDefinition<Mortal
             _ => bn ? "অজানা" : "Unknown",
         };
     }
+
+    private static readonly string[] BanglaMonths =
+    [
+        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+        "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর",
+    ];
 
     private static string Clean(string? text) => string.IsNullOrWhiteSpace(text) ? "—" : text.Trim();
 }
