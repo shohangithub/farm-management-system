@@ -1,17 +1,17 @@
 <app-page-header [title]="animal() ? animal()!.tagId : 'Animal Details'"
-  [description]="animal() ? speciesLabel(animal()!.species) + (breedName() ? ' · ' + breedName() : '') + ' · ' + sexLabel(animal()!.sex) : ''"
+  [description]="animal() ? speciesLabel(animal()!.species) + (breedName() ? ' · ' + breedName() : '') + ' · ' + sexLabel(animal()!.sex) + ' · ' + ageLabel(animal()!.dateOfBirth) : ''"
   [breadcrumbActiveNode]="animal() ? animal()!.tagId : ''">
-  <div actions class="flex flex-wrap items-center gap-2 no-print" *ngIf="animal()">
+  <div actions class="flex flex-wrap items-center gap-2 max-w-full no-print" *ngIf="animal()">
     <!-- Animal Dossier & Specialized Reports Export Dropdown -->
-    <button 
-      [matMenuTriggerFor]="exportMenu" 
+    <button type="button"
+      [matMenuTriggerFor]="exportMenu"
       [disabled]="isExporting() || loading() || !animal()"
-      class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-300 dark:border-gray-700 rounded-md transition-all shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50">
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400" [class.animate-spin]="isExporting()">
+      class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400" [class.animate-spin]="isExporting()" aria-hidden="true">
         {{ isExporting() ? 'sync' : 'ios_share' }}
       </mat-icon>
       <span>{{ isExporting() ? 'Exporting...' : 'Export' }}</span>
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-400">arrow_drop_down</mat-icon>
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400 -mr-1" aria-hidden="true">arrow_drop_down</mat-icon>
     </button>
 
     <mat-menu #exportMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
@@ -169,48 +169,101 @@
       </button>
     </mat-menu>
 
-    <button (click)="onEdit()"
-      class="px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors shadow-sm">
+    <button type="button" (click)="onEdit()"
+      class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-500 dark:text-gray-400" aria-hidden="true">edit</mat-icon>
       Edit
     </button>
-    <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()"
-      class="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors shadow-sm">
-      Quarantine
+
+    <!-- Secondary actions: visible as buttons from the sm breakpoint up; on phones they live in the "More actions" menu below. -->
+    <div class="hidden sm:contents">
+      <button type="button" *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()"
+        class="h-9 px-3 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        Quarantine
+      </button>
+      <button type="button" *ngIf="animal()!.status === AnimalStatus.Quarantined" (click)="onRelease()"
+        class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        Release from Quarantine
+      </button>
+      <button type="button" *ngIf="isOnFarm()" (click)="onTransfer()"
+        class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        Assign Location
+      </button>
+      <button type="button" *ngIf="isOnFarm()" (click)="onAssignBatch()"
+        class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        Assign to Batch
+      </button>
+      <button type="button" *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()"
+        class="h-9 px-3 text-xs font-semibold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        Record Sale
+      </button>
+      <button type="button" *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled
+        matTooltip="Release it from quarantine before selling"
+        class="h-9 px-3 text-xs font-semibold text-blue-400 dark:text-blue-500 bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/40 rounded-lg cursor-not-allowed inline-flex items-center">
+        Record Sale
+      </button>
+      <button type="button" *ngIf="isOnFarm()" (click)="onRecordDeath()"
+        class="h-9 px-3 text-xs font-semibold text-red-700 dark:text-red-300 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        Record Death
+      </button>
+      <!-- Smart Consultant projects sale scenarios: only meaningful while the animal is on the farm. -->
+      <button type="button" *ngIf="isOnFarm()" (click)="onOpenIntelligence()"
+        class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/50 dark:hover:to-teal-900/50 border border-emerald-200 dark:border-emerald-800/60 rounded-lg shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400" aria-hidden="true">psychology</mat-icon>
+        Smart Consultant
+      </button>
+    </div>
+
+    <!-- Phones: the same secondary actions (same conditions and handlers) in an overflow menu. -->
+    <button type="button" *ngIf="isOnFarm()" [matMenuTriggerFor]="moreActionsMenu"
+      aria-label="More actions" matTooltip="More actions"
+      class="sm:hidden h-9 w-9 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+      <mat-icon class="!text-[20px] !w-[20px] !h-[20px]" aria-hidden="true">more_vert</mat-icon>
     </button>
-    <button *ngIf="animal()!.status === AnimalStatus.Quarantined" (click)="onRelease()"
-      class="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors shadow-sm">
-      Release from Quarantine
-    </button>
-    <button *ngIf="isOnFarm()" (click)="onTransfer()"
-      class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm">
-      Assign Location
-    </button>
-    <button *ngIf="isOnFarm()" (click)="onAssignBatch()"
-      class="px-3 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition-colors shadow-sm">
-      Assign to Batch
-    </button>
-    <button *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()"
-      class="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors shadow-sm">
-      Record Sale
-    </button>
-    <button *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled
-      matTooltip="Release it from quarantine before selling"
-      class="px-3 py-1.5 text-xs font-semibold text-blue-400 bg-blue-50/60 border border-blue-100 rounded-md cursor-not-allowed">
-      Record Sale
-    </button>
-    <button *ngIf="isOnFarm()" (click)="onRecordDeath()"
-      class="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors shadow-sm">
-      Record Death
-    </button>
-    <button *ngIf="isOnFarm()" (click)="onRecordWeight()"
-      class="px-3 py-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors shadow-sm">
+    <mat-menu #moreActionsMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5">
+      <button mat-menu-item *ngIf="isOnFarm()" (click)="onOpenIntelligence()" class="!rounded-xl">
+        <mat-icon class="!text-emerald-600">psychology</mat-icon>
+        <span class="text-sm">Smart Consultant</span>
+      </button>
+      <button mat-menu-item *ngIf="isOnFarm()" (click)="onTransfer()" class="!rounded-xl">
+        <mat-icon>place</mat-icon>
+        <span class="text-sm">Assign Location</span>
+      </button>
+      <button mat-menu-item *ngIf="isOnFarm()" (click)="onAssignBatch()" class="!rounded-xl">
+        <mat-icon>group_work</mat-icon>
+        <span class="text-sm">Assign to Batch</span>
+      </button>
+      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()" class="!rounded-xl">
+        <mat-icon class="!text-amber-600">health_and_safety</mat-icon>
+        <span class="text-sm">Quarantine</span>
+      </button>
+      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Quarantined" (click)="onRelease()" class="!rounded-xl">
+        <mat-icon class="!text-emerald-600">lock_open</mat-icon>
+        <span class="text-sm">Release from Quarantine</span>
+      </button>
+      <mat-divider class="!my-1"></mat-divider>
+      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()" class="!rounded-xl">
+        <mat-icon class="!text-blue-600">sell</mat-icon>
+        <span class="text-sm">Record Sale</span>
+      </button>
+      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled class="!rounded-xl">
+        <mat-icon>sell</mat-icon>
+        <div class="flex flex-col text-left">
+          <span class="text-sm">Record Sale</span>
+          <span class="text-[11px]">Release it from quarantine before selling</span>
+        </div>
+      </button>
+      <button mat-menu-item *ngIf="isOnFarm()" (click)="onRecordDeath()" class="!rounded-xl">
+        <mat-icon class="!text-red-600">heart_broken</mat-icon>
+        <span class="text-sm text-red-700 dark:text-red-300">Record Death</span>
+      </button>
+    </mat-menu>
+
+    <!-- Primary action: first on phones, last (right-most) on wider screens. -->
+    <button type="button" *ngIf="isOnFarm()" (click)="onRecordWeight()"
+      class="order-first sm:order-none h-9 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm shadow-primary-600/20 transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">scale</mat-icon>
       Record Weight
-    </button>
-    <!-- Smart Consultant projects sale scenarios: only meaningful while the animal is on the farm. -->
-    <button *ngIf="isOnFarm()" (click)="onOpenIntelligence()"
-      class="px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-md shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5">
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">psychology</mat-icon>
-      Smart Consultant
     </button>
   </div>
 </app-page-header>
@@ -221,14 +274,17 @@
 <!-- Loading State -->
 <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
-<div id="reportSheet" *ngIf="!loading() && animal()" class="space-y-6 animate-fade-in-up">
+<div id="reportSheet" *ngIf="!loading() && animal()" class="space-y-4 sm:space-y-6 animate-fade-in-up">
 
   <!-- Left-farm banner: Sold / Dead (etc.) animals are history only - no new records. -->
-  <div *ngIf="isExited()" class="rounded-2xl border-l-4 p-4 flex flex-wrap items-start gap-3 shadow-sm"
-       [ngClass]="isDead() ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-300' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-800 dark:text-blue-300'">
-    <mat-icon class="mt-0.5 flex-shrink-0">{{ isDead() ? 'heart_broken' : (isSold() ? 'sell' : 'logout') }}</mat-icon>
-    <div class="min-w-0 flex-1 basis-64">
-      <p class="text-sm font-bold">
+  <div *ngIf="isExited()" role="status" class="rounded-2xl border p-4 sm:p-5 flex flex-wrap items-start gap-x-4 gap-y-3 shadow-sm"
+       [ngClass]="isDead() ? 'bg-red-50/70 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 text-red-900 dark:text-red-200' : 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-900 dark:text-blue-200'">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+         [ngClass]="isDead() ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300'">
+      <mat-icon class="!text-[22px] !w-[22px] !h-[22px]" aria-hidden="true">{{ isDead() ? 'heart_broken' : (isSold() ? 'sell' : 'logout') }}</mat-icon>
+    </div>
+    <div class="min-w-0 flex-1 basis-56">
+      <p class="text-sm sm:text-base font-semibold leading-snug">
         <ng-container *ngIf="isSold()">
           Sold<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span><span *ngIf="animal()!.buyerName"> to {{ animal()!.buyerName }}</span><span *ngIf="animal()!.salePriceBdt != null"> for {{ animal()!.salePriceBdt | money }}</span><span *ngIf="animal()!.saleWeightKg"> ({{ animal()!.saleWeightKg | number:'1.0-1' }} kg)</span>
         </ng-container>
@@ -239,79 +295,87 @@
           {{ statusLabel() }}<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span>
         </ng-container>
       </p>
-      <p *ngIf="isDead() && animal()!.notes" class="text-xs mt-1 opacity-90">{{ animal()!.notes }}</p>
-      <p class="text-xs mt-1 opacity-80">This animal has left the farm. Its history is kept below; new weight, health, breeding, feeding or location records cannot be added.</p>
+      <p *ngIf="isDead() && animal()!.notes" class="text-sm mt-1 opacity-90">{{ animal()!.notes }}</p>
+      <p class="text-xs mt-1 text-gray-600 dark:text-gray-400">This animal has left the farm. Its history is kept below; new weight, health, breeding, feeding or location records cannot be added.</p>
     </div>
-    <a routerLink="/reports/finance.animal-life-history" [queryParams]="{ animalId: animal()!.id, autoRun: 'true' }"
-      class="ml-auto shrink-0 self-center h-8 px-3 rounded-lg text-xs font-semibold bg-white/80 dark:bg-gray-900/40 border border-current/30 hover:bg-white dark:hover:bg-gray-900 inline-flex items-center gap-1.5 no-print">
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">history</mat-icon>
-      History & profit/loss
-    </a>
-    <ng-container *hasPermission="'animals.delete'">
-    <button *ngIf="(isSold() || isDead()) && exitDate()" type="button" (click)="onUndoExit()"
-      class="shrink-0 self-center h-8 px-3 rounded-lg text-xs font-semibold bg-white/80 dark:bg-gray-900/40 border border-current/30 hover:bg-white dark:hover:bg-gray-900 inline-flex items-center gap-1.5 no-print">
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">undo</mat-icon>
-      Undo {{ isSold() ? 'sale' : 'death' }}
-    </button>
-    </ng-container>
+    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto sm:self-center no-print">
+      <a routerLink="/reports/finance.animal-life-history" [queryParams]="{ animalId: animal()!.id, autoRun: 'true' }"
+        class="h-9 px-3 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">history</mat-icon>
+        History & profit/loss
+      </a>
+      <button *ngIf="isSold()" type="button" (click)="documents.openSaleInvoice(animal()!.id)"
+        class="h-9 px-3 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">receipt_long</mat-icon>
+        Sale invoice
+      </button>
+      <ng-container *hasPermission="'animals.delete'">
+      <button *ngIf="(isSold() || isDead()) && exitDate()" type="button" (click)="onUndoExit()"
+        class="h-9 px-3 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">undo</mat-icon>
+        Undo {{ isSold() ? 'sale' : 'death' }}
+      </button>
+      </ng-container>
+    </div>
   </div>
 
-<!-- Hero & KPI Dashboard Layout -->
-  <div class="flex flex-col lg:flex-row gap-6 mb-6">
+  <!-- Hero & KPI Dashboard Layout -->
+  <div class="flex flex-col lg:flex-row gap-4 lg:gap-6">
 
-    <!-- Left Side: Image & Core Details -->
-    <div class="w-full lg:w-1/3 flex flex-col gap-6">
-      <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden flex flex-col h-full">
+    <!-- Left Side: Identity card (photo, tag, chips, status, core details) -->
+    <div class="w-full lg:w-1/3 flex flex-col">
+      <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 overflow-hidden flex flex-col h-full">
         <!-- Image Section -->
-        <div class="relative w-full h-56 lg:h-64 shrink-0 bg-gradient-to-br from-emerald-50/70 via-teal-50/50 to-slate-100/80 dark:from-gray-900/60 dark:to-gray-800/40 flex flex-col items-center justify-center overflow-hidden border-b border-gray-100 dark:border-gray-800/60">
-          <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
+        <div class="relative w-full h-44 sm:h-56 lg:h-60 shrink-0 bg-gradient-to-br from-emerald-50/70 via-teal-50/50 to-slate-100/80 dark:from-gray-900/60 dark:to-gray-800/40 flex flex-col items-center justify-center overflow-hidden border-b border-gray-100 dark:border-gray-800">
+          <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" [alt]="'Photo of ' + animal()!.tagId" class="absolute inset-0 w-full h-full object-cover" />
           <div *ngIf="!animal()!.primaryPhotoUrl" class="flex flex-col items-center justify-center gap-2 p-6 text-center">
-            <div class="w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-emerald-100 dark:border-gray-700 flex items-center justify-center text-3xl">
+            <div class="w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-emerald-100 dark:border-gray-700 flex items-center justify-center text-3xl" aria-hidden="true">
               {{ speciesEmoji(animal()!.species) }}
             </div>
-            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ animal()!.tagId }}</span>
-            <span class="text-[11px] text-gray-400 dark:text-gray-500">No profile photo uploaded</span>
-          </div>
-          
-          <!-- Status Badge -->
-          <div class="absolute top-4 right-4 shadow-sm px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md border backdrop-blur-md" [ngClass]="statusClass()">
-            {{ statusLabel() }}
+            <span class="text-xs text-gray-500 dark:text-gray-400">No profile photo yet</span>
           </div>
         </div>
 
-        <!-- Core Details Section -->
-        <div class="p-6 flex-1 flex flex-col">
-          <div class="flex items-center gap-2 flex-wrap mb-4">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{{ animal()!.tagId }}</h2>
-            <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
-              {{ speciesLabel(animal()!.species) }} <span *ngIf="breedName()"> · {{ breedName() }}</span>
-            </span>
-          </div>
-          
-          <dl class="grid grid-cols-2 gap-y-4 gap-x-4">
-            <div>
-              <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Sex</dt>
-              <dd class="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" [class.text-blue-500]="animal()!.sex === AnimalSex.Male" [class.text-pink-500]="animal()!.sex === AnimalSex.Female">{{ animal()!.sex === AnimalSex.Male ? 'male' : 'female' }}</mat-icon>
+        <!-- Identity -->
+        <div class="p-4 sm:p-6 flex-1 flex flex-col gap-4">
+          <div>
+            <div class="flex items-start justify-between gap-3">
+              <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight break-all">{{ animal()!.tagId }}</h2>
+              <span class="shrink-0 mt-1 inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full" [ngClass]="statusClass()">
+                {{ statusLabel() }}
+              </span>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-1.5">
+              <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 border border-primary-200/70 dark:border-primary-800/60">
+                {{ speciesLabel(animal()!.species) }}
+              </span>
+              <span *ngIf="breedName()" class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                {{ breedName() }}
+              </span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]" aria-hidden="true" [class.text-blue-500]="animal()!.sex === AnimalSex.Male" [class.text-pink-500]="animal()!.sex === AnimalSex.Female">{{ animal()!.sex === AnimalSex.Male ? 'male' : 'female' }}</mat-icon>
                 {{ sexLabel(animal()!.sex) }}
-              </dd>
+              </span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-gray-400" aria-hidden="true">cake</mat-icon>
+                {{ ageLabel(animal()!.dateOfBirth) }}
+              </span>
             </div>
-            <div>
-              <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Age</dt>
-              <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ ageLabel(animal()!.dateOfBirth) }}</dd>
-            </div>
-            <div>
-              <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Location</dt>
+          </div>
+
+          <dl class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <div class="min-w-0">
+              <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Location</dt>
               <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
                 <ng-container *ngIf="shedName() || penName(); else noLocation">
-                  <span *ngIf="shedName()" class="text-primary-600 font-semibold">{{ shedName() }}</span>
-                  <span *ngIf="penName()" class="text-gray-500 font-medium"> &middot; {{ penName() }}</span>
+                  <span *ngIf="shedName()" class="text-primary-700 dark:text-primary-400 font-semibold">{{ shedName() }}</span>
+                  <span *ngIf="penName()" class="text-gray-500 dark:text-gray-400 font-medium"> &middot; {{ penName() }}</span>
                 </ng-container>
                 <ng-template #noLocation><span class="text-gray-400 italic">Not Assigned</span></ng-template>
               </dd>
             </div>
-            <div>
-              <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Tag Type</dt>
+            <div class="min-w-0">
+              <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tag Type</dt>
               <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ tagTypeLabel(animal()!.tagType) }}</dd>
             </div>
           </dl>
@@ -321,131 +385,131 @@
 
     <!-- Right Side: KPI Grid -->
     <div class="w-full lg:w-2/3 flex flex-col gap-4">
-      
+
       <!-- Row 1: Weight & ADG -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- Latest Weight -->
-        <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 flex items-center justify-between">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Latest Weight</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ animal()!.latestWeightKg ? (animal()!.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}</p>
-            <p class="text-xs text-gray-400 mt-1" *ngIf="animal()!.latestWeightDate">Recorded {{ animal()!.latestWeightDate | date:'mediumDate' }}</p>
+        <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Latest Weight</p>
+            <p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ animal()!.latestWeightKg ? (animal()!.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" *ngIf="animal()!.latestWeightDate">Recorded {{ animal()!.latestWeightDate | date:'mediumDate' }}</p>
           </div>
-          <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl">
-            <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[28px] !w-[28px] !h-[28px]">scale</mat-icon>
+          <div class="w-11 h-11 shrink-0 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 rounded-xl" aria-hidden="true">
+            <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[24px] !w-[24px] !h-[24px]">scale</mat-icon>
           </div>
         </div>
 
         <!-- ADG -->
-        <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 flex items-center justify-between">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Avg Daily Gain (ADG)</p>
-            <p class="text-2xl font-bold mt-1" [class.text-emerald-600]="(animal()!.adgKgPerDay ?? 0) > 0" [class.text-gray-900]="!(animal()!.adgKgPerDay ?? 0)" [class.dark:text-white]="!(animal()!.adgKgPerDay ?? 0)">
+        <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Avg Daily Gain (ADG)</p>
+            <p class="text-3xl font-bold tracking-tight mt-2 tabular-nums" [class.text-emerald-600]="(animal()!.adgKgPerDay ?? 0) > 0" [class.dark:text-emerald-400]="(animal()!.adgKgPerDay ?? 0) > 0" [class.text-gray-900]="!(animal()!.adgKgPerDay ?? 0)" [class.dark:text-white]="!(animal()!.adgKgPerDay ?? 0)">
               {{ animal()!.adgKgPerDay ? (animal()!.adgKgPerDay | number:'1.3-3') + ' kg/d' : '—' }}
             </p>
-            <p class="text-xs text-gray-400 mt-1">Growth rate history</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Growth rate history</p>
           </div>
-          <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
-            <mat-icon class="!text-blue-600 dark:!text-blue-400 !text-[28px] !w-[28px] !h-[28px]">trending_up</mat-icon>
+          <div class="w-11 h-11 shrink-0 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-xl" aria-hidden="true">
+            <mat-icon class="!text-blue-600 dark:!text-blue-400 !text-[24px] !w-[24px] !h-[24px]">trending_up</mat-icon>
           </div>
         </div>
       </div>
 
       <!-- Row 2: Financial Summary -->
-      <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden shrink-0">
-        <mat-icon class="absolute -right-4 -bottom-4 text-[100px] opacity-[0.03] rotate-[-10deg] pointer-events-none">payments</mat-icon>
-        <div class="relative z-10">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Financial Summary</p>
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div>
-              <p class="text-[11px] text-gray-500 mb-1">Purchase Cost</p>
-              <p class="text-lg font-bold text-gray-900 dark:text-white">{{ acquisitionCost() | money }}</p>
-            </div>
-            <div>
-              <p class="text-[11px] text-gray-500 mb-1">Health Care Cost</p>
-              <p class="text-lg font-bold text-gray-900 dark:text-white">{{ totalTreatmentCost() | money }}</p>
-            </div>
-            <div>
-              <p class="text-[11px] text-gray-500 mb-1">Feed Cost</p>
-              <p class="text-lg font-bold text-gray-900 dark:text-white">{{ totalFeedCost() | money }}</p>
-            </div>
-            <div>
-              <p class="text-[11px] text-gray-500 mb-1">Labour &amp; Overhead</p>
-              <p class="text-lg font-bold text-gray-900 dark:text-white">{{ laborOverheadCost() | money }}</p>
-            </div>
-            <div>
-              <p class="text-[11px] text-gray-500 mb-1">Total Investment</p>
-              <p class="text-lg font-bold text-gray-900 dark:text-white">{{ totalCost() | money }}</p>
-            </div>
+      <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400" aria-hidden="true">payments</mat-icon>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Financial Summary</p>
+        </div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 sm:gap-y-4">
+          <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block border-b border-gray-100 dark:border-gray-800 sm:border-0">
+            <dt class="text-xs text-gray-500 dark:text-gray-400">Purchase Cost</dt>
+            <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ acquisitionCost() | money }}</dd>
           </div>
+          <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block border-b border-gray-100 dark:border-gray-800 sm:border-0">
+            <dt class="text-xs text-gray-500 dark:text-gray-400">Health Care Cost</dt>
+            <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ totalTreatmentCost() | money }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block border-b border-gray-100 dark:border-gray-800 sm:border-0">
+            <dt class="text-xs text-gray-500 dark:text-gray-400">Feed Cost</dt>
+            <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ totalFeedCost() | money }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block">
+            <dt class="text-xs text-gray-500 dark:text-gray-400">Labour &amp; Overhead</dt>
+            <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ laborOverheadCost() | money }}</dd>
+          </div>
+        </dl>
+        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-baseline justify-between gap-3">
+          <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Investment</p>
+          <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{{ totalCost() | money }}</p>
         </div>
       </div>
 
       <!-- Row 3: Current Profit / Loss -->
-      <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 flex flex-col justify-center shrink-0"
-           [ngClass]="(isExited() || hasValuationWeight()) ? (netProfit() >= 0 ? 'border-l-4 !border-l-emerald-500' : 'border-l-4 !border-l-red-500') : 'border-l-4 !border-l-gray-300'">
+      <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex flex-col"
+           [ngClass]="(isExited() || hasValuationWeight()) ? (netProfit() >= 0 ? 'border-l-4 !border-l-emerald-500' : 'border-l-4 !border-l-red-500') : 'border-l-4 !border-l-gray-300 dark:!border-l-gray-600'">
 
-        <div class="flex justify-between items-start mb-2 gap-3">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        <div class="flex flex-wrap justify-between items-start gap-3">
+          <div class="min-w-0 flex-1 basis-48">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               {{ isExited() ? 'Final Profit / Loss' : 'Projected Profit / Loss' }}
             </p>
-            <p *ngIf="!isExited()" class="text-[11px] text-gray-400 mt-0.5">If sold today: latest weight × live rate − total investment</p>
-            <p *ngIf="isExited() && !isDead()" class="text-[11px] text-gray-400 mt-0.5">Sale revenue − total investment</p>
-            <p *ngIf="isDead()" class="text-[11px] text-gray-400 mt-0.5">Died — no revenue; the total investment is lost</p>
+            <p *ngIf="!isExited()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">If sold today: latest weight × live rate − total investment</p>
+            <p *ngIf="isExited() && !isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sale revenue − total investment</p>
+            <p *ngIf="isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Died — no revenue; the total investment is lost</p>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2">
             <!-- Live rate (defaults to the farm's valuation rate; editable) -->
-            <div *ngIf="!isExited()" class="flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1 border border-gray-200 dark:border-gray-700 no-print"
+            <div *ngIf="!isExited()" class="h-9 flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-2.5 border border-gray-200 dark:border-gray-700 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 no-print"
                  [title]="'Live-weight rate (BDT/kg) — ' + liveWeightPriceSource()">
-              <span class="text-[11px] text-gray-500 mr-1">৳/kg</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 mr-1.5">৳/kg</span>
               <input type="number" min="0" step="1"
                      [ngModel]="liveWeightPrice()"
                      (ngModelChange)="onLiveWeightPriceChange($event)"
-                     class="w-16 bg-transparent border-none text-xs font-semibold text-gray-900 dark:text-white p-0 text-right focus:ring-0 appearance-none"
+                     class="w-16 bg-transparent border-none text-sm font-semibold text-gray-900 dark:text-white p-0 text-right tabular-nums focus:ring-0 focus:outline-none appearance-none"
                      aria-label="Live weight price (BDT per kg)">
               <button aria-label="Reset to farm valuation rate" type="button" *ngIf="liveWeightPriceSource() === 'Manual rate'" (click)="resetLiveWeightPrice()"
-                      class="ml-1 text-gray-400 hover:text-gray-600" title="Reset to farm valuation rate">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">restart_alt</mat-icon>
+                      class="ml-1 w-6 h-6 inline-flex items-center justify-center rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500" title="Reset to farm valuation rate">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">restart_alt</mat-icon>
               </button>
-              <mat-icon *ngIf="liveWeightPriceSource() !== 'Manual rate'" class="!text-[12px] !w-[12px] !h-[12px] text-gray-400 ml-1">edit</mat-icon>
+              <mat-icon *ngIf="liveWeightPriceSource() !== 'Manual rate'" class="!text-[14px] !w-[14px] !h-[14px] text-gray-400 ml-1" aria-hidden="true">edit</mat-icon>
             </div>
 
             <!-- Status Badge -->
-            <div *ngIf="isExited() || hasValuationWeight()" class="px-2 py-0.5 rounded-full text-[11px] font-bold"
-                 [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'">
+            <div *ngIf="isExited() || hasValuationWeight()" class="px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider"
+                 [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'">
               {{ netProfit() >= 0 ? 'PROFIT' : 'LOSS' }}
             </div>
           </div>
         </div>
 
         <ng-container *ngIf="isExited() || hasValuationWeight(); else noWeightForValuation">
-          <div class="flex items-end gap-3 mt-1">
-            <p class="text-3xl font-bold tracking-tight" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mt-3">
+            <p class="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
               {{ netProfit() > 0 ? '+' : '' }}{{ netProfit() | money }}
             </p>
-            <p *ngIf="totalCost() > 0" class="text-xs font-semibold mb-1" [ngClass]="netProfit() >= 0 ? 'text-emerald-600' : 'text-red-600'">
+            <p *ngIf="totalCost() > 0" class="text-sm font-semibold" [ngClass]="netProfit() >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
               ({{ netProfit() / totalCost() | percent:'1.1-1' }} on cost)
             </p>
           </div>
 
           <!-- Breakdown -->
-          <div *ngIf="!isExited()" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500 bg-gray-50/50 dark:bg-gray-900/30 rounded p-1.5 border border-gray-100 dark:border-gray-800">
-            <span class="flex items-center">
-              <mat-icon class="!text-[12px] !w-[12px] !h-[12px] mr-1 text-gray-400">info</mat-icon>
-              ({{ animal()!.latestWeightKg | number:'1.0-1' }} kg × {{ liveWeightPrice() | money:2 }}) = {{ currentEstimatedValue() | money }} − {{ totalCost() | money }} (Total Investment)
+          <div *ngIf="!isExited()" class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-800">
+            <span class="flex items-start gap-1.5 tabular-nums">
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mt-px shrink-0 text-gray-400" aria-hidden="true">info</mat-icon>
+              <span>({{ animal()!.latestWeightKg | number:'1.0-1' }} kg × {{ liveWeightPrice() | money:2 }}) = {{ currentEstimatedValue() | money }} − {{ totalCost() | money }} (Total Investment)</span>
             </span>
-            <span class="text-gray-400">Break-even rate: <b class="text-gray-600 dark:text-gray-300">{{ breakEvenLiveRate() | money:2 }}/kg</b></span>
-            <span class="text-gray-400">Rate: {{ liveWeightPriceSource() }}</span>
+            <span>Break-even rate: <b class="text-gray-800 dark:text-gray-200 tabular-nums">{{ breakEvenLiveRate() | money:2 }}/kg</b></span>
+            <span class="text-gray-500 dark:text-gray-400">Rate: {{ liveWeightPriceSource() }}</span>
           </div>
-          <div *ngIf="isExited()" class="mt-3 flex items-center text-[11px] text-gray-500 bg-gray-50/50 dark:bg-gray-900/30 rounded p-1.5 border border-gray-100 dark:border-gray-800">
-            <mat-icon class="!text-[12px] !w-[12px] !h-[12px] mr-1 text-gray-400">info</mat-icon>
-            {{ realisedRevenue() | money }} ({{ isDead() ? 'no sale — died' : 'Sale' }}) − {{ totalCost() | money }} (Total Investment)
+          <div *ngIf="isExited()" class="mt-4 flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-800 tabular-nums">
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mt-px shrink-0 text-gray-400" aria-hidden="true">info</mat-icon>
+            <span>{{ realisedRevenue() | money }} ({{ isDead() ? 'no sale — died' : 'Sale' }}) − {{ totalCost() | money }} (Total Investment)</span>
           </div>
         </ng-container>
         <ng-template #noWeightForValuation>
-          <p class="text-sm text-gray-500 mt-1">Record a weight to value this animal. Investment so far: <b>{{ totalCost() | money }}</b>.</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">Record a weight to value this animal. Investment so far: <b class="text-gray-900 dark:text-white">{{ totalCost() | money }}</b>.</p>
         </ng-template>
       </div>
 
@@ -455,61 +519,53 @@
 
   <!-- Tabbed Details -->
   <div
-    class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
-    <mat-tab-group animationDuration="200ms" class="farm-tab-group">
+    class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 overflow-hidden">
+    <mat-tab-group animationDuration="200ms" mat-stretch-tabs="false" mat-align-tabs="start" class="farm-tab-group animal-detail-tabs">
 
       <!-- ─── Weight History Tab ────────────────────── -->
       <mat-tab label="Weight History">
-        <div class="p-6 sm:p-8">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white">Weight Progression</h3>
+        <div class="p-4 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div class="min-w-0">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Weight Progression</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of animal weights.</p>
             </div>
-            <button *ngIf="isOnFarm()" (click)="onRecordWeight()"
-              class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all shadow-sm no-print">
-              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Add Weight
+            <button type="button" *ngIf="isOnFarm()" (click)="onRecordWeight()"
+              class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm no-print focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> Add Weight
             </button>
           </div>
 
           <div *ngIf="animal()!.weightRecords.length === 0"
-            class="py-12 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-            <div
-              class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
-              <mat-icon class="!text-gray-400">scale</mat-icon>
+            class="py-10 px-4 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+            <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
+              <mat-icon class="!text-gray-400" aria-hidden="true">scale</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No weight records</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Start tracking weight to automatically
-              calculate Average Daily Gain (ADG).</p>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">No weight records</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">Record a weight to start tracking growth and Average Daily Gain (ADG).</p>
           </div>
 
-          <div *ngIf="weightChartOptions()" class="mb-8 bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm">
-            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Growth Trend</h4>
-            <div echarts [options]="weightChartOptions()!" class="h-64 w-full"></div>
+          <div *ngIf="weightChartOptions()" class="mb-6 bg-white dark:bg-surface-dark rounded-xl border border-gray-200/70 dark:border-gray-800 p-4">
+            <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Growth Trend</h4>
+            <div echarts [options]="weightChartOptions()!" class="h-56 sm:h-64 w-full"></div>
           </div>
 
           <div *ngIf="animal()!.weightRecords.length > 0"
-            class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-gray-800/50">
+            class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+            <table class="min-w-full text-left text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-800/60">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Date</th>
-                  <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Weight (kg)</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Notes</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Date</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Weight (kg)</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notes</th>
                 </tr>
               </thead>
-              <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
                 <tr *ngFor="let w of animal()!.weightRecords"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{
-                    w.recordedDate | date:'mediumDate' }}</td>
-                  <td
-                    class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-emerald-600 dark:text-emerald-400">
-                    {{ w.weightKg | number:'1.1-2' }} kg</td>
-                  <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ w.notes || '-' }}</td>
+                  class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                  <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-white">{{ w.recordedDate | date:'mediumDate' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{{ w.weightKg | number:'1.1-2' }} kg</td>
+                  <td class="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-[10rem]">{{ w.notes || '-' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -519,51 +575,45 @@
 
       <!-- ─── Body Condition Score (BCS) ─────────────────────────────── -->
       <mat-tab label="Body Condition Score">
-        <div class="p-0">
-          <div class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-8 pb-4">
-            <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white">Body Condition Score</h3>
+        <div class="p-4 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div class="min-w-0">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Body Condition Score</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Periodic body condition assessments (1–5 scale).</p>
             </div>
-            <button *ngIf="isOnFarm()" (click)="onRecordBcs()"
-              class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all shadow-sm no-print">
-              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Record BCS
+            <button type="button" *ngIf="isOnFarm()" (click)="onRecordBcs()"
+              class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm no-print focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> Record BCS
             </button>
           </div>
 
-          <div *ngIf="animal()!.bcsRecords.length === 0" class="py-16 text-center">
-            <div
-              class="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
-              <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">fitness_center</mat-icon>
+          <div *ngIf="animal()!.bcsRecords.length === 0"
+            class="py-10 px-4 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+            <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
+              <mat-icon class="!text-gray-400" aria-hidden="true">fitness_center</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No BCS records</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Record the first Body Condition
-              Score
-              measurement for this animal.</p>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">No BCS records</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">Score this animal's body condition to see how it is doing over time.</p>
           </div>
 
-          <div *ngIf="animal()!.bcsRecords.length > 0" class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Date</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Score</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Notes</th>
+          <div *ngIf="animal()!.bcsRecords.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+            <table class="min-w-full text-left text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-800/60">
+                <tr>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Date</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Score</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Notes</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
                 <tr *ngFor="let b of animal()!.bcsRecords"
-                  class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                  <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ b.recordedDate | date:'mediumDate' }}
-                  </td>
-                  <td class="px-6 py-4 text-sm font-bold"
-                    [ngClass]="{'text-amber-600': b.score < 2.5 || b.score > 4.0, 'text-emerald-600': b.score >= 2.5 && b.score <= 4.0}">
+                  class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                  <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-white">{{ b.recordedDate | date:'mediumDate' }}</td>
+                  <td class="px-4 py-3 text-right tabular-nums font-semibold"
+                    [ngClass]="{'text-amber-600 dark:text-amber-400': b.score < 2.5 || b.score > 4.0, 'text-emerald-700 dark:text-emerald-400': b.score >= 2.5 && b.score <= 4.0}">
                     {{ b.score | number:'1.1-1' }}
                   </td>
-                  <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">{{ b.notes || '—' }}</td>
+                  <td class="px-4 py-3 text-gray-500 dark:text-gray-400 truncate max-w-xs">{{ b.notes || '—' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -574,15 +624,15 @@
 
       <!-- ─── Location & Status Tab ────────────────────────────────────── -->
       <mat-tab label="Location & Status">
-        <div class="p-6 sm:p-8 space-y-8">
+        <div class="p-4 sm:p-6 space-y-8">
 
           <!-- Current Details Section -->
           <div>
-            <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Current Status</h3>
-            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Current Status</h3>
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-6">
               <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-6">
                 <div>
-                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Current Location
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Current Location
                   </dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
                     <div class="flex flex-col gap-0.5">
@@ -599,7 +649,7 @@
                   </dd>
                 </div>
                 <div *ngIf="animal()!.batchId">
-                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Batch Assignment
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Batch Assignment
                   </dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
                     <span
@@ -610,14 +660,14 @@
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Acquisition</dt>
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Acquisition</dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200 flex flex-col gap-0.5">
                     <span>{{ animal()!.acquisitionType === 'Purchased' ? 'Purchased' : 'Born on Farm' }}</span>
                     <span class="text-xs text-gray-500">{{ animal()!.acquisitionDate | date:'mediumDate' }}</span>
                   </dd>
                 </div>
                 <div *ngIf="animal()!.acquisitionPriceBdt">
-                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Purchase Price</dt>
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Purchase Price</dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ animal()!.acquisitionPriceBdt | money:2 }}</dd>
                 </div>
                 <div *ngIf="animal()!.status === AnimalStatus.Quarantined && animal()!.quarantineReason">
@@ -631,7 +681,7 @@
                   <dd class="text-sm font-medium text-red-700 dark:text-red-400">{{ animal()!.disposalReason === 'Sale' ? 'Sale' : animal()!.disposalReason === 'Slaughter' ? 'Slaughter' : animal()!.disposalReason === 'NaturalDeath' ? 'Natural Death' : animal()!.disposalReason === 'Disease' ? 'Disease' : animal()!.disposalReason === 'Accident' ? 'Accident' : 'Unknown' }}</dd>
                 </div>
                 <div *ngIf="animal()!.notes" class="col-span-1 sm:col-span-2 md:col-span-3">
-                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Notes</dt>
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Notes</dt>
                   <dd class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ animal()!.notes }}</dd>
                 </div>
               </dl>
@@ -640,22 +690,22 @@
 
           <!-- Transfer History Section -->
           <div class="border-t border-gray-100 dark:border-gray-800/50 pt-8">
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
               <div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">Transfer History</h3>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">Transfer History</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of all physical location
                   changes.</p>
               </div>
             </div>
 
             <div *ngIf="!resolvedMovements().length"
-              class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-12 px-6 text-center">
+              class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center py-10 px-4 text-center">
               <div
                 class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 shadow-sm">
-                <mat-icon class="!text-gray-400">route</mat-icon>
+                <mat-icon class="!text-gray-400" aria-hidden="true">route</mat-icon>
               </div>
-              <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No Transfer History</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">This animal has not been transferred yet.</p>
+              <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">No Transfer History</h4>
+              <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm">Moves between sheds and pens will appear here.</p>
             </div>
 
             <div *ngIf="resolvedMovements().length" class="relative">
@@ -671,10 +721,10 @@
                   </div>
 
                   <div
-                    class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 sm:p-5 transition-all hover:shadow-md hover:border-primary-100 dark:hover:border-primary-900/30">
+                    class="bg-white dark:bg-gray-800/60 rounded-xl border border-gray-200/70 dark:border-gray-700 p-4 sm:p-5">
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div>
-                        <div class="flex items-center gap-2 mb-1.5">
+                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
                           <span
                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 text-xs font-semibold">
                             <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">warehouse</mat-icon>
@@ -723,36 +773,36 @@
 
       <!-- ─── Photo Gallery Tab ────────────────────── -->
       <mat-tab label="Photo Gallery">
-        <div class="p-6 sm:p-8">
-          <div class="flex items-center justify-between mb-6">
+        <div class="p-4 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white">Animal Photos</h3>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Animal Photos</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Visual record and identification.</p>
             </div>
-            <button (click)="onUploadPhoto()"
-              class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm">
-              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add_a_photo</mat-icon> Add Photo
+            <button type="button" (click)="onUploadPhoto()"
+              class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add_a_photo</mat-icon> Add Photo
             </button>
           </div>
 
           <div *ngIf="animal()!.photos.length === 0"
-            class="py-12 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+            class="py-10 px-4 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
             <div
               class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
-              <mat-icon class="!text-gray-400">photo_library</mat-icon>
+              <mat-icon class="!text-gray-400" aria-hidden="true">photo_library</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No photos</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">Upload photos to visually track growth
-              or for identification.</p>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">No photos</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">Add a photo to help identify this animal and see it grow.</p>
           </div>
 
-          <div *ngIf="animal()!.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div *ngIf="animal()!.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <div *ngFor="let p of animal()!.photos"
-              class="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 aspect-square">
+              class="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 aspect-square">
               <img [src]="p.photoUrl" [alt]="p.caption || 'Animal photo'"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <!-- Caption: always visible on touch screens, revealed on hover from sm up. -->
               <div
-                class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
                 <p class="text-white text-xs font-medium">{{ p.caption || 'No caption' }}</p>
                 <p class="text-gray-300 text-[11px] mt-0.5">{{ p.uploadedAtUtc | date:'shortDate' }}</p>
               </div>
@@ -767,53 +817,54 @@
 
       <!-- ─── Breeding History Tab (Females Only) ────────────────────── -->
       <mat-tab label="Breeding History" *ngIf="animal()?.sex === AnimalSex.Female">
-        <div class="p-6 sm:p-8">
-          <div *ngIf="animal()!.breedingRecords.length === 0" class="py-16 text-center">
+        <div class="p-4 sm:p-6">
+          <div *ngIf="animal()!.breedingRecords.length === 0"
+            class="py-10 px-4 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
             <div
-              class="w-14 h-14 bg-pink-50 dark:bg-pink-900/20 rounded-full flex items-center justify-center mb-4 mx-auto shadow-sm">
-              <mat-icon class="!text-pink-400 !text-[28px] !w-[28px] !h-[28px]">favorite_border</mat-icon>
+              class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
+              <mat-icon class="!text-pink-400" aria-hidden="true">favorite_border</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No breeding records</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">Record the first mating or
-              breeding event for this animal.</p>
-            <button *ngIf="isOnFarm()" (click)="onRecordMating()"
-              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-all shadow-sm">
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">No breeding records</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">Record a mating to start this animal's breeding history.</p>
+            <button type="button" *ngIf="isOnFarm()" (click)="onRecordMating()"
+              class="h-9 inline-flex items-center gap-1.5 px-4 text-xs font-semibold text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
               Record Mating
             </button>
           </div>
 
-          <div *ngIf="animal()!.breedingRecords.length > 0" class="overflow-x-auto">
-            <div class="flex justify-end mb-4">
-              <button *ngIf="isOnFarm()" (click)="onRecordMating()"
-                class="px-3 py-1.5 text-xs font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg transition-colors shadow-sm">
+          <ng-container *ngIf="animal()!.breedingRecords.length > 0">
+            <div *ngIf="isOnFarm()" class="flex justify-end mb-4">
+              <button type="button" (click)="onRecordMating()"
+                class="h-9 px-3 text-xs font-semibold text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/40 border border-pink-200 dark:border-pink-800/60 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 Record New Mating
               </button>
             </div>
-            <table class="w-full text-left border-collapse">
+          <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+            <table class="min-w-full text-left text-sm">
               <thead>
-                <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                <tr class="bg-gray-50 dark:bg-gray-800/60">
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     Mating Date</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     Method</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     Sire Details</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     Pregnancy Status</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
                 <tr *ngFor="let br of animal()!.breedingRecords"
-                  class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                  <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{{ br.matingDate |
+                  class="align-top hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                  <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ br.matingDate |
                     date:'mediumDate' }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                  <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                       [ngClass]="br.isArtificialInsemination ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'">
                       {{ br.isArtificialInsemination ? 'AI' : 'Natural' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                  <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     <ng-container *ngIf="br.sireAnimalId || br.sireExternalId; else noSire">
                       <div class="flex flex-col">
                         <span *ngIf="br.sireAnimalId" class="font-medium">Internal: {{ br.sireAnimalId }}</span>
@@ -823,7 +874,7 @@
                     </ng-container>
                     <ng-template #noSire><span class="text-gray-400 italic">Unknown Sire</span></ng-template>
                   </td>
-                  <td class="px-6 py-4 text-sm">
+                  <td class="px-4 py-3 text-sm">
                     <ng-container *ngIf="br.isPregnancyConfirmed; else notConfirmed">
                       <div class="flex flex-col gap-1">
                         <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
@@ -862,12 +913,13 @@
               </tbody>
             </table>
           </div>
+          </ng-container>
         </div>
       </mat-tab>
 
       <!-- ─── Medical & Health Tab ───────────────────────────────────── -->
       <mat-tab label="Medical & Health">
-        <div class="p-6 sm:p-8 space-y-8">
+        <div class="p-4 sm:p-6 space-y-8">
 
           <div *ngIf="!healthHistory()" class="flex justify-center py-8">
             <div class="animate-pulse flex gap-2 items-center text-gray-500">
@@ -881,37 +933,37 @@
             <!-- Vaccinations -->
             <div>
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-blue-500">vaccines</mat-icon>
                   Vaccinations
                 </h3>
               </div>
 
               <div *ngIf="healthHistory()!.vaccinations.length === 0"
-                class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
-                <p class="text-sm text-gray-500 dark:text-gray-400">No vaccination records found.</p>
+                class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-6 px-4 text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">No vaccinations yet. Vaccines given to this animal will be listed here.</p>
               </div>
 
               <div *ngIf="healthHistory()!.vaccinations.length > 0"
-                class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                <table class="w-full text-left border-collapse">
+                class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800">
+                <table class="min-w-full text-left text-sm">
                   <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Vaccine</th>
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Batch</th>
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Scheduled</th>
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+                    <tr class="bg-gray-50 dark:bg-gray-800/60">
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Vaccine</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Batch</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Scheduled</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Status</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                  <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
                     <tr *ngFor="let v of healthHistory()!.vaccinations"
-                      class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                      class="align-top hover:bg-gray-50 dark:hover:bg-gray-800/40">
                       <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ v.vaccineName }}</td>
-                      <td class="px-4 py-3 text-sm text-gray-500">{{ v.batchNumber }}</td>
-                      <td class="px-4 py-3 text-sm text-gray-500">{{ v.scheduledDate | date:'mediumDate' }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ v.batchNumber }}</td>
+                      <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ v.scheduledDate | date:'mediumDate' }}</td>
                       <td class="px-4 py-3 text-sm">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                          [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-emerald-100 text-emerald-800' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800')">
+                          [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300')">
                           {{ v.status }}
                         </span>
                         <div class="text-[11px] text-gray-400 mt-0.5" *ngIf="v.administeredDate">On {{
@@ -925,33 +977,33 @@
 
             <!-- Treatments -->
             <div>
-              <div class="flex items-center justify-between mb-4 mt-8">
-                <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-amber-500">medical_services</mat-icon>
                   Medical Treatments
                 </h3>
               </div>
 
               <div *ngIf="healthHistory()!.treatments.length === 0"
-                class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
-                <p class="text-sm text-gray-500 dark:text-gray-400">No medical treatments found.</p>
+                class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-6 px-4 text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">No treatments yet. Treatments and their costs will be listed here.</p>
               </div>
 
               <div *ngIf="healthHistory()!.treatments.length > 0"
-                class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                <table class="w-full text-left border-collapse">
+                class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800">
+                <table class="min-w-full text-left text-sm">
                   <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Diagnosis & Vet</th>
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Medication</th>
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Dates</th>
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Cost</th>
-                      <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+                    <tr class="bg-gray-50 dark:bg-gray-800/60">
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Diagnosis & Vet</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Medication</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Dates</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Cost</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Status</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                  <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
                     <tr *ngFor="let t of healthHistory()!.treatments"
-                      class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                      class="align-top hover:bg-gray-50 dark:hover:bg-gray-800/40">
                       <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                         {{ t.diagnosis }}
                         <div *ngIf="t.veterinarianName" class="text-xs text-gray-500 font-normal mt-0.5 flex items-center gap-1">
@@ -959,18 +1011,18 @@
                           {{ t.veterinarianName }}
                         </div>
                       </td>
-                      <td class="px-4 py-3 text-sm text-gray-500">
+                      <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                         {{ t.medicationName }}<br />
                         <span class="text-[11px] text-gray-400">{{ t.dosageAmount }} {{ t.dosageUnit }}</span>
                       </td>
-                      <td class="px-4 py-3 text-sm text-gray-500">
+                      <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         {{ t.startDate | date:'shortDate' }}
                         <span *ngIf="t.endDate"> - {{ t.endDate | date:'shortDate' }}</span>
                       </td>
-                      <td class="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">{{ t.costBdt | money:2 }}</td>
+                      <td class="px-4 py-3 text-sm text-right tabular-nums whitespace-nowrap font-medium text-gray-800 dark:text-gray-200">{{ t.costBdt | money:2 }}</td>
                       <td class="px-4 py-3 text-sm">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                          [ngClass]="t.status === TreatmentStatus.Ongoing ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'">
+                          [ngClass]="t.status === TreatmentStatus.Ongoing ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'">
                           {{ t.status }}
                         </span>
                       </td>
@@ -985,7 +1037,7 @@
 
       <!-- ─── Feeding & Nutrition Tab ───────────────────────────────── -->
       <mat-tab label="Feeding & Nutrition">
-        <div class="p-6 sm:p-8 space-y-8">
+        <div class="p-4 sm:p-6 space-y-8">
 
           <!-- Loading state -->
           <div *ngIf="!feedingSummary()" class="flex justify-center py-12">
@@ -1000,71 +1052,71 @@
             <!-- KPI Summary Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <!-- Total Feed Cost -->
-              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
-                <div>
-                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Total Feed Cost</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ (feedingSummary()!.totalFeedCostBdt || 0) | money }}</p>
-                  <p class="text-xs text-gray-400 mt-1">Confirmed consumption expenses</p>
+              <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Feed Cost</p>
+                  <p class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ (feedingSummary()!.totalFeedCostBdt || 0) | money }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Confirmed consumption expenses</p>
                 </div>
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 flex items-center justify-center shrink-0" aria-hidden="true">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">payments</mat-icon>
                 </div>
               </div>
 
               <!-- Total Intake in Kg -->
-              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
-                <div>
-                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Total Feed Intake</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ (feedingSummary()!.totalFeedConsumedKg || 0) | number:'1.1-1' }} kg</p>
-                  <p class="text-xs text-gray-400 mt-1">Accumulated intake</p>
+              <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Feed Intake</p>
+                  <p class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ (feedingSummary()!.totalFeedConsumedKg || 0) | number:'1.1-1' }} kg</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Accumulated intake</p>
                 </div>
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 flex items-center justify-center shrink-0" aria-hidden="true">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">scale</mat-icon>
                 </div>
               </div>
 
               <!-- Average Feed Cost / kg -->
-              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
-                <div>
-                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Avg Cost / kg</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ (feedingSummary()!.averageCostPerKgBdt || 0) | money:2 }}</p>
-                  <p class="text-xs text-gray-400 mt-1">Weighted ration cost</p>
+              <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Avg Cost / kg</p>
+                  <p class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ (feedingSummary()!.averageCostPerKgBdt || 0) | money:2 }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Weighted ration cost</p>
                 </div>
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+                <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 flex items-center justify-center shrink-0" aria-hidden="true">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">calculate</mat-icon>
                 </div>
               </div>
 
               <!-- Active Feeding Plan & Daily Target -->
-              <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden flex items-center justify-between">
+              <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
                 <div class="min-w-0 pr-2">
-                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Active Plan</p>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white mt-1 truncate" [title]="activeFeedingPlan()?.ruleSetName || 'None'">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Active Plan</p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white mt-2 truncate" [title]="activeFeedingPlan()?.ruleSetName || 'None'">
                     {{ activeFeedingPlans().length > 1 ? activeFeedingPlans().length + ' plans' : (activeFeedingPlan()?.ruleSetName || 'No Active Plan') }}
                   </p>
-                  <p class="text-xs text-gray-400 mt-1" *ngIf="activeFeedingPlan()">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" *ngIf="activeFeedingPlan()">
                     Target: {{ (activeDailyKg() | number:'1.1-2') || '—' }} kg/day in total
                   </p>
-                  <p class="text-xs text-gray-400 mt-1" *ngIf="!activeFeedingPlan()">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" *ngIf="!activeFeedingPlan()">
                     Not enrolled in active plan
                   </p>
                 </div>
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 shrink-0">
+                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 flex items-center justify-center shrink-0" aria-hidden="true">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">restaurant_menu</mat-icon>
                 </div>
               </div>
             </div>
 
             <!-- No ration yet -->
-            <div *ngIf="!activeFeedingPlan() && isOnFarm()" class="rounded-2xl p-4 border border-dashed border-rose-200 dark:border-rose-800/60 bg-rose-50/40 dark:bg-rose-950/10 flex items-center justify-between gap-3">
-              <span class="text-xs text-rose-700 dark:text-rose-300">This animal has no ration — the system is not feeding it or charging it feed cost.</span>
-              <button type="button" *ngIf="isOnFarm()" (click)="openSetRation()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">restaurant</mat-icon> Set ration
+            <div *ngIf="!activeFeedingPlan() && isOnFarm()" class="rounded-xl p-4 border border-dashed border-rose-200 dark:border-rose-800/60 bg-rose-50/50 dark:bg-rose-950/20 flex flex-wrap items-center justify-between gap-3">
+              <span class="text-sm text-rose-800 dark:text-rose-300 min-w-0 flex-1 basis-56">This animal has no ration — the system is not feeding it or charging it feed cost.</span>
+              <button type="button" *ngIf="isOnFarm()" (click)="openSetRation()" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">restaurant</mat-icon> Set ration
               </button>
             </div>
 
             <!-- Active Feeding Plan Banner -->
-            <div *ngIf="activeFeedingPlan()" class="bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white dark:from-emerald-950/20 dark:via-gray-800/40 dark:to-gray-800/20 rounded-2xl p-5 border border-emerald-200/60 dark:border-emerald-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div *ngIf="activeFeedingPlan()" class="bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white dark:from-emerald-950/20 dark:via-gray-800/40 dark:to-gray-800/20 rounded-xl p-4 sm:p-5 border border-emerald-200/60 dark:border-emerald-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div class="flex items-start gap-3.5">
                 <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-700 dark:text-emerald-300">
                   <mat-icon class="!text-[22px] !w-[22px] !h-[22px]">assignment_turned_in</mat-icon>
@@ -1091,21 +1143,21 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-2 self-end md:self-center">
-                <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('extra')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 transition-colors shadow-sm">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add_circle</mat-icon>
+              <div class="flex flex-wrap items-center gap-2 md:justify-end md:self-center">
+                <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('extra')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shadow-sm">
+                  <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add_circle</mat-icon>
                   Add extra
                 </button>
-                <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('switch')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 transition-colors shadow-sm">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">swap_horiz</mat-icon>
+                <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('switch')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors shadow-sm">
+                  <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">swap_horiz</mat-icon>
                   Change ration
                 </button>
-                <a routerLink="/feeding/nutrition" [queryParams]="{ animalId: animal()?.id }" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-50 transition-colors shadow-sm">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">monitor_heart</mat-icon>
+                <a routerLink="/feeding/nutrition" [queryParams]="{ animalId: animal()?.id }" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors shadow-sm">
+                  <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">monitor_heart</mat-icon>
                   Nutrition &amp; growth
                 </a>
-                <a routerLink="/feeding/board" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">grid_view</mat-icon>
+                <a routerLink="/feeding/board" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors shadow-sm">
+                  <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">grid_view</mat-icon>
                   Who Eats What
                 </a>
               </div>
@@ -1113,9 +1165,9 @@
 
             <!-- Feeding Logs Table Section -->
             <div class="space-y-4">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div>
-                  <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-emerald-600">history_edu</mat-icon>
                     Feeding Logs & Consumption History ({{ filteredFeedingEntries().length }})
                   </h3>
@@ -1126,31 +1178,31 @@
                 <div class="flex flex-wrap items-center gap-1.5">
                   <button type="button" 
                           (click)="feedingStatusFilter.set('ALL')"
-                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'ALL' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
                     All ({{ feedingEntries().length }})
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Confirmed')"
-                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Confirmed' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
                     Confirmed
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Adjusted')"
-                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Adjusted' ? 'bg-amber-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
                     Adjusted
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Pending')"
-                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Pending' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
                     Pending
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Skipped')"
-                          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                          class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Skipped' ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
                     Skipped
                   </button>
@@ -1159,16 +1211,16 @@
 
               <!-- Empty State -->
               <div *ngIf="filteredFeedingEntries().length === 0"
-                   class="bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 py-12 text-center">
+                   class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-10 px-4 text-center">
                 <div class="w-12 h-12 mx-auto rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3">
-                  <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">restaurant</mat-icon>
+                  <mat-icon class="!text-[24px] !w-[24px] !h-[24px]" aria-hidden="true">restaurant</mat-icon>
                 </div>
-                <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">No Feeding Records Found</h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
-                  {{ feedingStatusFilter() !== 'ALL' ? 'No feeding logs match the "' + feedingStatusFilter() + '" filter.' : 'This animal does not have any recorded daily feeding logs yet. Enroll the animal in a feeding plan to begin tracking consumption.' }}
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">No Feeding Records Found</h4>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
+                  {{ feedingStatusFilter() !== 'ALL' ? 'No feeding logs match the "' + feedingStatusFilter() + '" filter.' : 'No feeding logs yet. Once this animal has a ration, its daily feed and cost will appear here.' }}
                 </p>
                 <div class="mt-4" *ngIf="feedingStatusFilter() !== 'ALL'">
-                  <button type="button" (click)="feedingStatusFilter.set('ALL')" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                  <button type="button" (click)="feedingStatusFilter.set('ALL')" class="h-9 px-3 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
                     Clear Filter
                   </button>
                 </div>
@@ -1176,22 +1228,22 @@
 
               <!-- Feeding Logs Table -->
               <div *ngIf="filteredFeedingEntries().length > 0"
-                   class="overflow-x-auto bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                <table class="w-full text-left border-collapse">
+                   class="overflow-x-auto bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800">
+                <table class="min-w-full text-left text-sm">
                   <thead>
-                    <tr class="bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Date</th>
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Formula / Ration</th>
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Intake Quantity</th>
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Unit Cost</th>
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Cost</th>
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Status</th>
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Location</th>
-                      <th class="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">Notes</th>
+                    <tr class="bg-gray-50 dark:bg-gray-800/60">
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Date</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Formula / Ration</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Intake Quantity</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Unit Cost</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Total Cost</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Status</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Location</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Notes</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <tr *ngFor="let entry of filteredFeedingEntries()" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
+                    <tr *ngFor="let entry of filteredFeedingEntries()" class="align-top hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                       <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
                         {{ entry.entryDate | date:'mediumDate' }}
                       </td>
@@ -1199,7 +1251,7 @@
                         <div class="font-semibold text-gray-900 dark:text-white">{{ entry.formulaName }}</div>
                         <div class="text-[11px] text-gray-400" *ngIf="entry.ruleSetName">{{ entry.ruleSetName }}</div>
                       </td>
-                      <td class="px-4 py-3 text-sm">
+                      <td class="px-4 py-3 text-sm text-right tabular-nums whitespace-nowrap">
                         <div class="font-semibold text-gray-900 dark:text-white">
                           {{ (entry.actualKg !== null && entry.actualKg !== undefined) ? (entry.actualKg | number:'1.2-2') + ' kg' : '—' }}
                         </div>
@@ -1207,12 +1259,12 @@
                           Plan: {{ entry.expectedKg | number:'1.2-2' }} kg
                         </div>
                       </td>
-                      <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      <td class="px-4 py-3 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400 whitespace-nowrap">
                         <span *ngIf="entry.unitCostAtConsumptionBdt">{{ entry.unitCostAtConsumptionBdt | money:2 }}/kg</span>
                         <span *ngIf="!entry.unitCostAtConsumptionBdt">—</span>
                       </td>
-                      <td class="px-4 py-3 text-sm whitespace-nowrap">
-                        <span *ngIf="entry.totalCostBdt !== null && entry.totalCostBdt !== undefined" class="font-bold text-emerald-600 dark:text-emerald-400">
+                      <td class="px-4 py-3 text-sm text-right tabular-nums whitespace-nowrap">
+                        <span *ngIf="entry.totalCostBdt !== null && entry.totalCostBdt !== undefined" class="font-semibold text-gray-900 dark:text-white">
                           {{ entry.totalCostBdt | money:2 }}
                         </span>
                         <span *ngIf="entry.totalCostBdt === null || entry.totalCostBdt === undefined" class="text-gray-400">—</span>
@@ -1228,11 +1280,11 @@
                           {{ entry.status }}
                         </span>
                       </td>
-                      <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         <span *ngIf="entry.shedName || entry.penName">{{ entry.shedName || 'Shed' }} / {{ entry.penName || 'Pen' }}</span>
                         <span *ngIf="!entry.shedName && !entry.penName">—</span>
                       </td>
-                      <td class="px-4 py-3 text-xs text-gray-400 max-w-[200px] truncate" [title]="entry.adjustmentReason || ''">
+                      <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 max-w-[200px] truncate" [title]="entry.adjustmentReason || ''">
                         {{ entry.adjustmentReason || '—' }}
                       </td>
                     </tr>
@@ -1248,30 +1300,30 @@
 
       <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
       <mat-tab label="Audit Info">
-        <div class="p-6 sm:p-8">
-          <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+        <div class="p-4 sm:p-6">
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
               <dt
-                class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_circle_outline</mat-icon> Created At
+                class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">add_circle_outline</mat-icon> Created At
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (animal()?.createdAtUtc | date:'MMM d, y, h:mm a') || '—' }}
               </dd>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
               <dt
-                class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon> Created By
+                class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">person_add</mat-icon> Created By
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ animal()?.createdBy || '—' }}
               </dd>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
+            <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
               <dt
-                class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_calendar</mat-icon> Last Modified
+                class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">edit_calendar</mat-icon> Last Modified
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (animal()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || 'Never modified' }}
@@ -1282,27 +1334,27 @@
       </mat-tab>
       <!-- ─── Profit Projections Tab ─────────────────────────── -->
       <mat-tab label="Profit Projections">
-        <div class="h-full min-h-[500px]">
+        <div class="h-full min-h-[400px] sm:min-h-[500px]">
           <!-- A sold/dead animal is not projected: show the realised result instead. -->
           <app-cattle-profit-projection *ngIf="!isExited()" [animalId]="animal()!.id"></app-cattle-profit-projection>
-          <div *ngIf="isExited()" class="p-6 sm:p-8">
-            <h3 class="text-base font-bold text-gray-900 dark:text-white">Realised Result</h3>
+          <div *ngIf="isExited()" class="p-4 sm:p-6">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Realised Result</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               This animal {{ isDead() ? 'died' : (isSold() ? 'was sold' : 'left the farm') }}<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span>, so no projection is made.
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
               <div class="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/30 p-4">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ isDead() ? 'Revenue (none — died)' : 'Sale Revenue' }}</p>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ realisedRevenue() | money }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ isDead() ? 'Revenue (none — died)' : 'Sale Revenue' }}</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2 tabular-nums">{{ realisedRevenue() | money }}</p>
               </div>
               <div class="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/30 p-4">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Cost</p>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ totalCost() | money }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Cost</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2 tabular-nums">{{ totalCost() | money }}</p>
               </div>
               <div class="rounded-xl border p-4"
                    [ngClass]="netProfit() >= 0 ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ netProfit() >= 0 ? 'Final Profit' : 'Final Loss' }}</p>
-                <p class="text-2xl font-bold mt-1" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ netProfit() >= 0 ? 'Final Profit' : 'Final Loss' }}</p>
+                <p class="text-2xl font-bold mt-2 tabular-nums" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
                   {{ netProfit() > 0 ? '+' : '' }}{{ netProfit() | money }}
                 </p>
               </div>

@@ -16,6 +16,7 @@ import { TradeBillDialogComponent, TradeBillDialogMode } from '../../components/
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { DocumentService } from '../../../../core/services/document.service';
 
 /**
  * Payables & Receivables — the credit book. Who owes the farm (customers), whom the farm owes
@@ -35,11 +36,16 @@ export class TradeCreditComponent {
   private readonly context = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly documents = inject(DocumentService);
 
   readonly overview = signal<TradeCreditOverview | null>(null);
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
+  /** The payment just recorded, so the notice can offer its receipt straight away. */
+  readonly lastPaymentId = signal<string | null>(null);
+  /** Document being fetched (payment or bill id), to show a spinner on its button. */
+  readonly printing = signal<string | null>(null);
 
   readonly tab = signal<TradeBillKind>('Receivable');
   readonly includeSettled = signal(false);
@@ -125,12 +131,45 @@ export class TradeCreditComponent {
       .afterClosed()
       .subscribe(result => {
         if (!result) return;
+        this.lastPaymentId.set(mode === 'payment' ? this.newPaymentId(bill, result) : null);
         this.notice.set(
           mode === 'payment' ? (bill.kind === 'Payable' ? 'Payment recorded and posted to the cash book.' : 'Collection recorded and posted to the cash book.')
           : mode === 'write-off' ? 'Balance written off and posted to the ledger.'
           : 'Credit terms updated.');
         this.reload();
       });
+  }
+
+  /** The payment the dialog just recorded: the one on the returned bill that was not there before. */
+  private newPaymentId(before: TradeBill, result: unknown): string | null {
+    const after = (result as Partial<TradeBill> | null)?.payments;
+    if (!Array.isArray(after)) return null;
+    const known = new Set(before.payments.map(p => p.id));
+    return after.find(p => !known.has(p.id))?.id ?? null;
+  }
+
+  /** Money receipt (collection) or payment voucher (supplier payment) as a PDF in a new tab. */
+  async printReceipt(paymentId: string): Promise<void> {
+    this.printing.set(paymentId);
+    try {
+      await this.documents.openPaymentReceipt(paymentId);
+    } finally {
+      this.printing.set(null);
+    }
+  }
+
+  /** A receivable raised for an animal sale points at the animal, so its invoice can be printed. */
+  isAnimalSale(bill: TradeBill): boolean {
+    return bill.kind === 'Receivable' && bill.category === 'AnimalSale' && !!bill.sourceDocumentId;
+  }
+
+  async printSaleInvoice(bill: TradeBill): Promise<void> {
+    this.printing.set(bill.id);
+    try {
+      await this.documents.openSaleInvoice(bill.sourceDocumentId);
+    } finally {
+      this.printing.set(null);
+    }
   }
 
   async voidPayment(bill: TradeBill, payment: TradeBillPayment): Promise<void> {
@@ -141,6 +180,7 @@ export class TradeCreditComponent {
     }
     this.finance.voidBillPayment(farmId, bill.id, payment.id).subscribe({
       next: () => {
+        this.lastPaymentId.set(null);
         this.notice.set('Payment voided.');
         this.reload();
       },
@@ -156,6 +196,7 @@ export class TradeCreditComponent {
     }
     this.finance.cancelTradeBill(farmId, bill.id).subscribe({
       next: () => {
+        this.lastPaymentId.set(null);
         this.notice.set('Bill cancelled — the deal is now treated as settled in cash.');
         this.reload();
       },

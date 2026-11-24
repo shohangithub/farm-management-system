@@ -8,6 +8,7 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { AnimalService } from '../../services/animal.service';
+import { DocumentService } from '../../../../core/services/document.service';
 import { ShedService } from '../../../farms/services/shed.service';
 import { PenService } from '../../../farms/services/pen.service';
 import { BreedService } from '../../services/breed.service';
@@ -83,10 +84,12 @@ import { APP_DATE_LOCALE } from '../../../../shared/utils/locale';
     NgxEchartsModule,
     CattleProfitProjectionComponent
   ],
-  templateUrl: './animal-detail.component.html'
+  templateUrl: './animal-detail.component.html',
+  styleUrl: './animal-detail.component.scss'
 })
 export class AnimalDetailComponent {
   private readonly svc = inject(AnimalService);
+  readonly documents = inject(DocumentService);
   private readonly route = inject(ActivatedRoute);
   private readonly shedSvc = inject(ShedService);
   private readonly penSvc = inject(PenService);

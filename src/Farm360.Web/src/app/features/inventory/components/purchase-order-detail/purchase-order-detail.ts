@@ -19,6 +19,7 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { DocumentService } from '../../../../core/services/document.service';
 
 @Component({
   selector: 'app-purchase-order-detail',
@@ -40,6 +41,10 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <button [routerLink]="['/inventory/purchase-orders']"
           class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Back to List
+        </button>
+        <button *ngIf="po()" type="button" (click)="onPrint()" [disabled]="printing()"
+          class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-60">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ printing() ? 'hourglass_top' : 'print' }}</mat-icon> Print PO
         </button>
         <button *ngIf="canCancel()" (click)="onCancel()"
           class="px-4 py-2 text-sm font-semibold text-red-700 bg-white border border-red-300 hover:bg-red-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
@@ -195,8 +200,10 @@ export class PurchaseOrderDetail {
   private readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly documents = inject(DocumentService);
 
   readonly loading = signal(true);
+  readonly printing = signal(false);
   readonly error = signal<string | null>(null);
   private readonly refreshTrigger = signal(0);
   
@@ -233,6 +240,18 @@ export class PurchaseOrderDetail {
       case PurchaseOrderStatus.Fulfilled: return 'Fulfilled';
       case PurchaseOrderStatus.Cancelled: return 'Cancelled';
       default: return 'Unknown';
+    }
+  }
+
+  /** Opens the printable purchase order (server PDF with the farm letterhead) in a new tab. */
+  async onPrint(): Promise<void> {
+    const id = this.po()?.id;
+    if (!id) return;
+    this.printing.set(true);
+    try {
+      await this.documents.openPurchaseOrder(id);
+    } finally {
+      this.printing.set(false);
     }
   }
 

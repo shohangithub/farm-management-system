@@ -1,0 +1,20 @@
+// Animal Detail — local polish only.
+// The tab bar stays on one line: Material scrolls (paginates) the labels when they
+// overflow, so on a phone the tabs slide sideways instead of wrapping.
+:host ::ng-deep .animal-detail-tabs {
+  .mat-mdc-tab {
+    min-width: 0;
+    padding: 0 16px;
+  }
+
+  @media (max-width: 639.98px) {
+    .mat-mdc-tab {
+      padding: 0 12px;
+    }
+
+    .mat-mdc-tab-header-pagination {
+      min-width: 32px;
+      padding: 0 4px;
+    }
+  }
+}

@@ -14,12 +14,12 @@ import { MatButtonModule } from '@angular/material/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div role="alert"
-         class="flex flex-col items-center justify-center text-center bg-white dark:bg-gray-800 rounded-xl border border-dashed border-red-200 dark:border-red-900/50"
+         class="flex flex-col items-center justify-center text-center bg-white dark:bg-gray-800 rounded-xl border border-dashed border-rose-200 dark:border-rose-900/50"
          [class.p-12]="!compact" [class.p-4]="compact">
-      <div class="rounded-full flex items-center justify-center bg-red-50 dark:bg-red-900/20"
+      <div class="rounded-full flex items-center justify-center bg-rose-50 dark:bg-rose-900/20"
            [class.h-16]="!compact" [class.w-16]="!compact" [class.mb-4]="!compact"
            [class.h-10]="compact" [class.w-10]="compact" [class.mb-2]="compact">
-        <mat-icon class="text-red-500 dark:text-red-400" aria-hidden="true">{{ icon }}</mat-icon>
+        <mat-icon class="text-rose-500 dark:text-rose-400" aria-hidden="true">{{ icon }}</mat-icon>
       </div>
       <h3 class="font-medium text-gray-900 dark:text-white" [class.text-lg]="!compact" [class.text-sm]="compact">{{ title }}</h3>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-md whitespace-pre-line">{{ message }}</p>

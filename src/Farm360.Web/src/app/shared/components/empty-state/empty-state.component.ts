@@ -14,6 +14,8 @@ export class EmptyStateComponent {
   @Input() title: string = 'No Data Available';
   @Input() description: string = 'There is currently no data to display here.';
   @Input() actionLabel?: string;
+  /** Icon on the action button; 'add' by default, empty for none. */
+  @Input() actionIcon: string = 'add';
   
   @Output() action = new EventEmitter<void>();
 

@@ -1,6 +1,6 @@
 <div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
   <!-- The title keeps a readable width; when the actions don't fit beside it they wrap below. -->
-  <div class="min-w-0 flex-1 basis-[26rem]">
+  <div class="min-w-0 flex-1 basis-full sm:basis-[26rem]">
     <app-breadcrumb [customLastNode]="breadcrumbActiveNode"></app-breadcrumb>
     <h1 class="text-[22px] font-bold text-gray-900 dark:text-white mt-1 tracking-tight leading-tight">
       {{ title }}
@@ -12,11 +12,11 @@
   
   <div class="flex flex-wrap items-center gap-2 max-w-full">
     <ng-content select="[actions]"></ng-content>
-    <button *ngIf="secondaryActionLabel" mat-stroked-button (click)="onSecondaryAction()" class="!rounded-md shadow-sm !font-semibold !border-gray-300 dark:!border-gray-600">
+    <button *ngIf="secondaryActionLabel" mat-stroked-button (click)="onSecondaryAction()" class="!rounded-xl shadow-sm !font-semibold !border-gray-300 dark:!border-gray-600">
       <mat-icon *ngIf="secondaryActionIcon" class="mr-2">{{ secondaryActionIcon }}</mat-icon>
       {{ secondaryActionLabel }}
     </button>
-    <button *ngIf="primaryActionLabel" mat-flat-button color="primary" (click)="onPrimaryAction()" class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-md shadow-sm !font-semibold">
+    <button *ngIf="primaryActionLabel" mat-flat-button color="primary" (click)="onPrimaryAction()" class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-xl shadow-sm !font-semibold">
       <mat-icon *ngIf="primaryActionIcon" class="mr-2">{{ primaryActionIcon }}</mat-icon>
       {{ primaryActionLabel }}
     </button>

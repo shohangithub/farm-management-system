@@ -6,7 +6,6 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,7 +15,6 @@ import { DailyFeedingEntry, DailyFeedingEntryStatus } from '../../models/feeding
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { AdjustFeedingEntryDialogComponent } from '../../components/dialogs/adjust-feeding-entry-dialog/adjust-feeding-entry-dialog.component';
 import { ManualFeedingEntryDialogComponent, ManualFeedingDialogData } from '../../components/dialogs/manual-feeding-entry-dialog/manual-feeding-entry-dialog.component';
 import { ManualFeedingResult } from '../../models/feeding.models';
@@ -55,646 +53,642 @@ interface ShedGroup {
   progressPct: number;
 }
 
+type ViewMode = 'cows' | 'grouped' | 'list';
+
 @Component({
   selector: 'app-today-feeding-dashboard',
   standalone: true,
-  imports: [RouterLink, ErrorStateComponent, MoneyPipe, 
+  imports: [RouterLink, ErrorStateComponent, MoneyPipe,
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
     FormsModule,
     MatButtonModule,
     MatIconModule,
-    MatMenuModule,
     MatDialogModule,
     MatTooltipModule,
     PageHeaderComponent,
-    EmptyStateComponent,
-    LoadingComponent
+    EmptyStateComponent
   ],
   template: `
     <app-page-header
       title="Confirm Planned Feed · পরিকল্পিত খাবার নিশ্চিত"
       description="Entries made automatically from your feeding plans. Confirm, adjust or skip them. To record feed without a plan, use Record Daily Feed."
       breadcrumbActiveNode="Confirm Planned Feed">
-      <div actions class="flex flex-wrap items-center gap-2.5">
-        <!-- Date Stepper / Picker Controls -->
-        <div class="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-sm">
-          <button type="button" (click)="previousDay()" matTooltip="Previous Day"
-            class="p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Previous Day">
-            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_left</mat-icon>
-          </button>
-
-          <button type="button" (click)="setToday()"
-            [class.bg-emerald-50]="isToday()"
-            [class.text-emerald-700]="isToday()"
-            [class.dark:bg-emerald-950/60]="isToday()"
-            [class.dark:text-emerald-400]="isToday()"
-            class="px-2.5 py-1 text-xs font-bold text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            Today
-          </button>
-
-          <button type="button" (click)="nextDay()" matTooltip="Next Day"
-            class="p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Next Day">
-            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
-          </button>
-
-          <div class="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
-
-          <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateSelect($event)"
-            class="text-xs font-semibold bg-transparent border-none text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer pr-1" />
-        </div>
-
-        <!-- SAP Daily Workflow Report Button -->
-        <a routerLink="/reports/feeding.daily-workflow"
-          [queryParams]="{ period: selectedDate() + '..' + selectedDate(), autoRun: 'true' }"
-          matTooltip="Open enterprise SAP Daily Feeding & Nutrition Workflow Report for Selected Date"
-          class="h-9 px-3.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">fact_check</mat-icon>
-          <span>Daily Workflow (SAP)</span>
-        </a>
-
+      <div actions class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <!-- Generate Entries On-Demand -->
-        <button (click)="generateEntries()" [disabled]="isGenerating()"
-          class="h-9 px-3.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [class.animate-spin]="isGenerating()">auto_awesome</mat-icon>
-          {{ isGenerating() ? 'Generating...' : (isPast() ? 'Generate Missed Day' : 'Generate Entries') }}
+        <button type="button" (click)="generateEntries()" [disabled]="isGenerating()"
+          class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0" [class.animate-spin]="isGenerating()">auto_awesome</mat-icon>
+          <span>{{ isGenerating() ? 'Generating...' : (isPast() ? 'Generate Missed Day' : 'Generate Entries') }}</span>
         </button>
 
         <!-- Feed given outside the plan -->
-        <button (click)="openManualEntry()" [disabled]="!currentFarmId"
+        <button type="button" (click)="openManualEntry()" [disabled]="!currentFarmId"
           matTooltip="Record feed actually given outside the plan — a missed or extra feed, or a cow with no ration"
-          class="h-9 px-3.5 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">edit_note</mat-icon> Manual Feed Entry
+          class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0">edit_note</mat-icon>
+          <span>Manual Feed Entry</span>
         </button>
 
+        <!-- SAP Daily Workflow Report -->
+        <a routerLink="/reports/feeding.daily-workflow"
+          [queryParams]="{ period: selectedDate() + '..' + selectedDate(), autoRun: 'true' }"
+          matTooltip="Open enterprise SAP Daily Feeding & Nutrition Workflow Report for Selected Date"
+          class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0 text-emerald-600 dark:text-emerald-400">fact_check</mat-icon>
+          <span>Daily Workflow (SAP)</span>
+        </a>
+
         <!-- Refresh Data -->
-        <button (click)="loadEntries()"
-          class="h-9 px-3.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">refresh</mat-icon> Refresh
+        <button type="button" (click)="loadEntries()"
+          class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0" [class.animate-spin]="isLoading()">refresh</mat-icon>
+          <span>Refresh</span>
         </button>
       </div>
     </app-page-header>
 
     <div class="px-0"><app-feeding-subnav></app-feeding-subnav></div>
 
-    <!-- Global Toolbar / Filter Bar -->
-    <div class="mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-      <!-- Search Box -->
-      <div class="relative flex-1 max-w-md">
-        <mat-icon class="absolute left-3.5 top-1/2 -translate-y-1/2 !text-[18px] !w-[18px] !h-[18px] text-gray-400">search</mat-icon>
-        <input
-          [ngModel]="searchTerm()"
-          (ngModelChange)="searchTerm.set($event)"
-          placeholder="Search by animal tag, formula, shed, or pen..."
-          class="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm" />
-      </div>
+    <div>
 
-      <!-- View Switcher & Status Filter Chips -->
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Status Filter Pills -->
-        <div class="flex items-center bg-gray-100/80 dark:bg-gray-800/80 p-1 rounded-xl border border-gray-200/50 dark:border-gray-700/50 text-xs">
-          <button type="button" (click)="statusFilter.set('all')"
-            [class.bg-white]="statusFilter() === 'all'"
-            [class.dark:bg-gray-700]="statusFilter() === 'all'"
-            [class.text-emerald-700]="statusFilter() === 'all'"
-            [class.dark:text-emerald-400]="statusFilter() === 'all'"
-            [class.shadow-sm]="statusFilter() === 'all'"
-            class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 dark:text-gray-300 transition-all">
-            All ({{ allEntries().length }})
+    <!-- ═══════════════════ Day overview: date, progress and KPI tiles ═══════════════════ -->
+    <section aria-label="Day overview"
+      class="mb-4 rounded-2xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-800 shadow-sm p-4 space-y-4">
+
+      <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+        <!-- Date navigation: prev / date / next / Today -->
+        <div role="group" aria-label="Choose feeding date"
+          class="flex items-center gap-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-1 w-full md:w-auto">
+          <button type="button" (click)="previousDay()" matTooltip="Previous Day" aria-label="Previous Day"
+            class="h-11 w-11 sm:h-10 sm:w-10 shrink-0 inline-flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+            <mat-icon>chevron_left</mat-icon>
           </button>
-          <button type="button" (click)="statusFilter.set('Pending')"
-            [class.bg-white]="statusFilter() === 'Pending'"
-            [class.dark:bg-gray-700]="statusFilter() === 'Pending'"
-            [class.text-amber-600]="statusFilter() === 'Pending'"
-            [class.shadow-sm]="statusFilter() === 'Pending'"
-            class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 dark:text-gray-300 transition-all">
-            Pending ({{ countPending() }})
+
+          <label class="flex-1 md:flex-none min-w-0 flex flex-col items-center justify-center px-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-11 sm:h-10 focus-within:ring-2 focus-within:ring-emerald-500">
+            <span class="text-[10px] font-bold uppercase tracking-wider leading-none text-gray-500 dark:text-gray-400">{{ selectedDate() | date:'EEEE' }}</span>
+            <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateSelect($event)" aria-label="Select date"
+              class="w-full min-w-0 text-center text-sm font-bold leading-tight bg-transparent border-none p-0 text-gray-900 dark:text-white focus:outline-none cursor-pointer" />
+          </label>
+
+          <button type="button" (click)="nextDay()" matTooltip="Next Day" aria-label="Next Day"
+            class="h-11 w-11 sm:h-10 sm:w-10 shrink-0 inline-flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+            <mat-icon>chevron_right</mat-icon>
           </button>
-          <button type="button" (click)="statusFilter.set('Confirmed')"
-            [class.bg-white]="statusFilter() === 'Confirmed'"
-            [class.dark:bg-gray-700]="statusFilter() === 'Confirmed'"
-            [class.text-emerald-600]="statusFilter() === 'Confirmed'"
-            [class.shadow-sm]="statusFilter() === 'Confirmed'"
-            class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 dark:text-gray-300 transition-all">
-            Confirmed
-          </button>
-          <button type="button" (click)="statusFilter.set('Adjusted')"
-            [class.bg-white]="statusFilter() === 'Adjusted'"
-            [class.dark:bg-gray-700]="statusFilter() === 'Adjusted'"
-            [class.text-blue-600]="statusFilter() === 'Adjusted'"
-            [class.shadow-sm]="statusFilter() === 'Adjusted'"
-            class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 dark:text-gray-300 transition-all">
-            Adjusted
-          </button>
-          <button type="button" (click)="statusFilter.set('Skipped')"
-            [class.bg-white]="statusFilter() === 'Skipped'"
-            [class.dark:bg-gray-700]="statusFilter() === 'Skipped'"
-            [class.text-red-600]="statusFilter() === 'Skipped'"
-            [class.shadow-sm]="statusFilter() === 'Skipped'"
-            class="px-2.5 py-1 rounded-lg font-semibold text-gray-600 dark:text-gray-300 transition-all">
-            Skipped
+
+          <button type="button" (click)="setToday()" [attr.aria-pressed]="isToday()"
+            [ngClass]="isToday()
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+              : 'text-emerald-700 dark:text-emerald-300 hover:bg-white dark:hover:bg-gray-700'"
+            class="h-11 sm:h-10 px-4 shrink-0 rounded-lg text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1">
+            Today
           </button>
         </div>
 
-        <!-- View Mode Switcher -->
-        <div class="flex items-center bg-gray-100/80 dark:bg-gray-800/80 p-1 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-          <button type="button" (click)="viewMode.set('cows')"
-            [class.bg-white]="viewMode() === 'cows'"
-            [class.dark:bg-gray-700]="viewMode() === 'cows'"
-            [class.text-emerald-700]="viewMode() === 'cows'"
-            [class.dark:text-emerald-400]="viewMode() === 'cows'"
-            [class.shadow-sm]="viewMode() === 'cows'"
-            matTooltip="Grouped by Cow / Animal"
-            class="px-3 py-1 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all flex items-center gap-1.5">
-            <mat-icon class="!w-4 !h-4 !text-[16px]">pets</mat-icon> By Cow
-          </button>
-          <button type="button" (click)="viewMode.set('grouped')"
-            [class.bg-white]="viewMode() === 'grouped'"
-            [class.dark:bg-gray-700]="viewMode() === 'grouped'"
-            [class.text-emerald-700]="viewMode() === 'grouped'"
-            [class.dark:text-emerald-400]="viewMode() === 'grouped'"
-            [class.shadow-sm]="viewMode() === 'grouped'"
-            matTooltip="Grouped by Shed and Pen"
-            class="px-3 py-1 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all flex items-center gap-1.5">
-            <mat-icon class="!w-4 !h-4 !text-[16px]">view_agenda</mat-icon> By Pen
-          </button>
-          <button type="button" (click)="viewMode.set('list')"
-            [class.bg-white]="viewMode() === 'list'"
-            [class.dark:bg-gray-700]="viewMode() === 'list'"
-            [class.text-emerald-700]="viewMode() === 'list'"
-            [class.dark:text-emerald-400]="viewMode() === 'list'"
-            [class.shadow-sm]="viewMode() === 'list'"
-            matTooltip="Table List of All Entries"
-            class="px-3 py-1 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all flex items-center gap-1.5">
-            <mat-icon class="!w-4 !h-4 !text-[16px]">table_rows</mat-icon> List View
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Content Container -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[500px]">
-      <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
-      <app-error-state *ngIf="!isLoading() && loadError()" [message]="loadError()!" (retry)="loadEntries()"></app-error-state>
-
-      <!-- Dashboard Header Stats -->
-      <div class="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div>
-          <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Planned Feed</div>
-          <div class="text-xl md:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
-            {{ totalExpectedKg() | number:'1.2-2' }} <span class="text-xs font-normal text-gray-500">kg</span>
+        <!-- Workflow progress -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="text-[11px] uppercase font-bold tracking-wider text-gray-500 dark:text-gray-400">Workflow Progress</span>
+            <span class="text-sm font-extrabold text-emerald-700 dark:text-emerald-400 tabular-nums">{{ progressRounded() }}%</span>
+          </div>
+          <div class="mt-1 text-base font-bold text-gray-900 dark:text-white">
+            {{ completedCount() }} of {{ filteredEntries().length }} done
+          </div>
+          <div class="mt-2 h-3 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden"
+            role="progressbar" aria-label="Feeding entries done" aria-valuemin="0" aria-valuemax="100"
+            [attr.aria-valuenow]="progressRounded()"
+            [attr.aria-valuetext]="completedCount() + ' of ' + filteredEntries().length + ' done'">
+            <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-500"
+              [style.width.%]="progressPct()"></div>
+          </div>
+          <div class="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between gap-2">
+            <span class="inline-flex items-center gap-1">
+              <span class="h-2 w-2 rounded-full bg-amber-500"></span>{{ countPending() }} pending
+            </span>
+            <span class="tabular-nums">{{ selectedDate() | date:'d MMM y' }}</span>
           </div>
         </div>
-        <div>
-          <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Feed Consumed</div>
-          <div class="text-xl md:text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">
-            {{ totalActualKg() | number:'1.2-2' }} <span class="text-xs font-normal text-gray-500">kg</span>
+      </div>
+
+      <!-- KPI tiles -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+        <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Total Planned Feed</div>
+          <div class="text-lg sm:text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 mt-1 tabular-nums break-words">
+            {{ totalExpectedKg() | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500 dark:text-gray-400">kg</span>
           </div>
         </div>
-        <div>
-          <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Feed Cost</div>
-          <div class="text-xl md:text-2xl font-extrabold text-teal-600 dark:text-teal-400 mt-1">
+        <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Feed Consumed</div>
+          <div class="text-lg sm:text-2xl font-extrabold text-blue-700 dark:text-blue-400 mt-1 tabular-nums break-words">
+            {{ totalActualKg() | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500 dark:text-gray-400">kg</span>
+          </div>
+        </div>
+        <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Total Feed Cost</div>
+          <div class="text-lg sm:text-2xl font-extrabold text-teal-700 dark:text-teal-400 mt-1 tabular-nums break-words">
             {{ totalFeedCost() | money:2 }}
           </div>
-          <div class="text-[11px] text-gray-400 mt-0.5">
+          <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 tabular-nums">
             Avg {{ averageBlendedCost() | money:2 }}/kg
           </div>
         </div>
-        <div>
-          <div class="text-xs uppercase font-bold text-gray-400 tracking-wider">Total Feeding Entries</div>
-          <div class="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-white mt-1">
+        <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Total Feeding Entries</div>
+          <div class="text-lg sm:text-2xl font-extrabold text-gray-900 dark:text-white mt-1 tabular-nums">
             {{ filteredEntries().length }}
-            <span class="text-xs font-normal text-gray-500" *ngIf="filteredEntries().length !== allEntries().length">
-              (of {{ allEntries().length }})
-            </span>
-          </div>
-        </div>
-        <div class="col-span-2 sm:col-span-1">
-          <div class="text-xs uppercase font-bold text-gray-400 tracking-wider flex items-center justify-between">
-            <span>Workflow Progress</span>
-            <span class="text-emerald-600 font-extrabold">{{ progressPct() | number:'1.0-0' }}%</span>
-          </div>
-          <div class="mt-2 w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 overflow-hidden">
-            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500" [style.width]="progressPct() + '%'"></div>
-          </div>
-          <div class="text-[11px] font-medium text-gray-500 mt-1.5 flex items-center justify-between">
-            <span>{{ countPending() }} pending</span>
-            <span>{{ selectedDate() }}</span>
+            @if (filteredEntries().length !== allEntries().length) {
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">(of {{ allEntries().length }})</span>
+            }
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- ═══════════════════ Toolbar: search, view switch, status filter ═══════════════════ -->
+    <section aria-label="Search and filters" class="mb-4 space-y-2">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+        <!-- Search Box -->
+        <div class="relative w-full lg:max-w-md">
+          <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 !text-[20px] !w-[20px] !h-[20px] text-gray-400 pointer-events-none">search</mat-icon>
+          <input type="search"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+            aria-label="Search entries"
+            placeholder="Search by animal tag, formula, shed, or pen..."
+            class="w-full h-11 pl-10 pr-4 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-shadow shadow-sm" />
+        </div>
+
+        <!-- View Mode Switcher -->
+        <div role="group" aria-label="Choose view"
+          class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200/70 dark:border-gray-700/70 w-full lg:w-auto">
+          @for (v of viewOptions; track v.value) {
+            <button type="button" (click)="viewMode.set(v.value)"
+              [matTooltip]="v.tooltip"
+              [attr.aria-pressed]="viewMode() === v.value"
+              [ngClass]="segmentClass(viewMode() === v.value)"
+              class="h-10 sm:h-9 px-3 text-xs font-bold rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+              <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">{{ v.icon }}</mat-icon> {{ v.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Status Filter Chips (scroll sideways on a phone) -->
+      <div class="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div role="group" aria-label="Filter by status"
+          class="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200/70 dark:border-gray-700/70">
+          @for (s of statusOptions; track s) {
+            <button type="button" (click)="statusFilter.set(s)"
+              [attr.aria-pressed]="statusFilter() === s"
+              [ngClass]="segmentClass(statusFilter() === s)"
+              class="h-10 sm:h-9 px-3 text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-2 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+              @if (s !== 'all') {
+                <span class="h-2 w-2 rounded-full shrink-0" [ngClass]="statusDotClass(s)"></span>
+              }
+              {{ filterLabel(s) }}
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ Main content ═══════════════════ -->
+    <div class="relative min-h-[320px]">
+
+      <!-- Loading skeleton -->
+      @if (isLoading()) {
+        <div class="space-y-4" aria-busy="true" aria-live="polite">
+          <span class="sr-only">Loading feeding entries…</span>
+          @for (s of skeletonRows; track s) {
+            <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-800 p-4 animate-pulse">
+              <div class="flex items-center gap-4">
+                <div class="h-10 w-10 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700"></div>
+                  <div class="h-3 w-48 max-w-full rounded bg-gray-100 dark:bg-gray-700/60"></div>
+                </div>
+                <div class="hidden sm:block h-10 w-28 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
+              </div>
+              <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                <div class="h-32 rounded-xl bg-gray-100 dark:bg-gray-700/50"></div>
+                <div class="hidden sm:block h-32 rounded-xl bg-gray-100 dark:bg-gray-700/50"></div>
+                <div class="hidden xl:block h-32 rounded-xl bg-gray-100 dark:bg-gray-700/50"></div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (!isLoading() && loadError()) {
+        <app-error-state [message]="loadError()!" (retry)="loadEntries()"></app-error-state>
+      }
 
       <!-- Empty State -->
-      <app-empty-state
-        *ngIf="!isLoading() && !loadError() && filteredEntries().length === 0"
-        icon="restaurant_menu"
-        [title]="allEntries().length === 0 ? 'No Feeding Entries for Selected Date' : 'No Matching Feeding Entries'"
-        [description]="allEntries().length === 0 ? 'No daily feeding entries were found for ' + selectedDate() + '. Click \\'Generate Entries\\' to automatically create today\\'s feeding logs from active plans.' : 'No entries matched your current search or status filters.'"
-        [actionLabel]="allEntries().length === 0 ? 'Generate Entries Now' : 'Reset Filters'"
-        (action)="allEntries().length === 0 ? generateEntries() : resetFilters()">
-      </app-empty-state>
+      @if (!isLoading() && !loadError() && filteredEntries().length === 0) {
+        <app-empty-state
+          icon="restaurant_menu"
+          [title]="allEntries().length === 0 ? 'No Feeding Entries for Selected Date' : 'No Matching Feeding Entries'"
+          [description]="allEntries().length === 0
+            ? 'Nothing to confirm for ' + (selectedDate() | date:'EEEE, d MMM y') + ' yet. Tap \\'' + (isPast() ? 'Generate Missed Day' : 'Generate Entries') + '\\' to build the feeding list from your active feeding plans.'
+            : 'No entries match your search or status filter. Clear them to see every entry for this day.'"
+          [actionLabel]="allEntries().length === 0 ? 'Generate Entries Now' : 'Reset Filters'"
+          (action)="allEntries().length === 0 ? generateEntries() : resetFilters()">
+        </app-empty-state>
+      }
 
       <!-- ══════════════════════════════════════════════════════════════════════════ -->
       <!-- VIEW MODE: GROUPED BY COW (ANIMAL-WISE)                                   -->
       <!-- ══════════════════════════════════════════════════════════════════════════ -->
-      <div *ngIf="!isLoading() && filteredEntries().length > 0 && viewMode() === 'cows'" class="p-6 space-y-6">
-        <div *ngFor="let cow of cowGroups()" 
-          class="border border-gray-200 dark:border-gray-700/80 rounded-2xl bg-white dark:bg-gray-800/90 shadow-xs overflow-hidden transition-all hover:shadow-md">
-          
-          <!-- Cow Header Banner: wraps cleanly at any card width -->
-          <div class="px-4 py-3.5 md:px-5 bg-gradient-to-r from-gray-50 via-emerald-50/20 to-teal-50/20 dark:from-gray-900/60 dark:via-gray-800/80 dark:to-emerald-950/20 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-            <div class="flex items-center gap-3 min-w-0 flex-1 basis-60">
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
-                <mat-icon class="!text-[22px] !w-[22px] !h-[22px]">pets</mat-icon>
-              </div>
-              <div class="min-w-0">
-                <div class="flex items-center gap-2 min-w-0">
-                  <h3 class="m-0 text-base font-extrabold text-gray-900 dark:text-white leading-tight truncate" [title]="cow.animalTag">{{ cow.animalTag }}</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 whitespace-nowrap shrink-0">
-                    {{ cow.entries.length }} {{ cow.entries.length === 1 ? 'ration' : 'rations' }}
-                  </span>
-                </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                  {{ cow.shedName || 'Unassigned Shed' }} / {{ cow.penName || 'Unassigned Pen' }}
-                </div>
-              </div>
-            </div>
+      @if (!isLoading() && filteredEntries().length > 0 && viewMode() === 'cows') {
+        <div class="space-y-4">
+          @for (cow of cowGroups(); track cow.animalTag) {
+            <article
+              class="rounded-2xl border bg-white dark:bg-gray-800 shadow-sm overflow-hidden transition-shadow"
+              [ngClass]="cow.hasPending ? 'border-gray-200 dark:border-gray-700' : 'border-gray-200/70 dark:border-gray-700/50'">
 
-            <!-- Fed vs planned, cost, and actions -->
-            <div class="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 ml-auto">
-              <div class="flex items-center gap-4">
-                <div class="text-right whitespace-nowrap">
-                  <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Fed / Planned</div>
-                  <div class="text-sm font-extrabold tabular-nums">
-                    <span class="text-emerald-600 dark:text-emerald-400">{{ cow.totalActualKg | number:'1.2-2' }}</span>
-                    <span class="text-gray-400 font-medium"> / {{ cow.totalExpectedKg | number:'1.2-2' }} kg</span>
+              <!-- Cow header -->
+              <header class="px-4 py-4 border-b border-gray-100 dark:border-gray-700/60 flex flex-wrap items-center justify-between gap-x-4 gap-y-4"
+                [ngClass]="cow.hasPending ? 'bg-gradient-to-r from-emerald-50/60 to-transparent dark:from-emerald-950/20 dark:to-transparent' : 'bg-gray-50/60 dark:bg-gray-900/30'">
+                <div class="flex items-center gap-4 min-w-0 flex-1 basis-56">
+                  <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                    [ngClass]="cow.hasPending ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'">
+                    <mat-icon class="!text-[22px] !w-[22px] !h-[22px]">{{ cow.hasPending ? 'pets' : 'check' }}</mat-icon>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <h3 class="m-0 text-lg font-extrabold text-gray-900 dark:text-white leading-tight truncate" [title]="cow.animalTag">{{ cow.animalTag }}</h3>
+                      <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 whitespace-nowrap shrink-0">
+                        {{ cow.entries.length }} {{ cow.entries.length === 1 ? 'ration' : 'rations' }}
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                      {{ cow.shedName || 'Unassigned Shed' }} / {{ cow.penName || 'Unassigned Pen' }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="text-right whitespace-nowrap border-l border-gray-200 dark:border-gray-700 pl-4">
-                  <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Est. Cost</div>
-                  <div class="text-sm font-extrabold text-teal-600 dark:text-teal-400 tabular-nums">
-                    {{ cow.totalCostBdt | money:2 }}
+                <!-- Fed vs planned, cost, and actions -->
+                <div class="flex flex-wrap items-center justify-between sm:justify-end gap-x-4 gap-y-2 w-full sm:w-auto">
+                  <div class="flex items-center gap-4">
+                    <div class="whitespace-nowrap">
+                      <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Fed / Planned</div>
+                      <div class="text-sm font-extrabold tabular-nums">
+                        <span class="text-emerald-700 dark:text-emerald-400">{{ cow.totalActualKg | number:'1.2-2' }}</span>
+                        <span class="text-gray-500 dark:text-gray-400 font-semibold"> / {{ cow.totalExpectedKg | number:'1.2-2' }} kg</span>
+                      </div>
+                    </div>
+                    <div class="whitespace-nowrap border-l border-gray-200 dark:border-gray-700 pl-4">
+                      <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Est. Cost</div>
+                      <div class="text-sm font-extrabold text-teal-700 dark:text-teal-400 tabular-nums">
+                        {{ cow.totalCostBdt | money:2 }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button type="button" (click)="openManualEntry([cow.animalId])" matTooltip="Record extra feed given to this cow"
+                      class="h-11 sm:h-10 px-4 flex-1 sm:flex-none text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
+                      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add Feed
+                    </button>
+
+                    @if (cow.hasPending) {
+                      <button type="button" (click)="confirmCow(cow)"
+                        [matTooltip]="'Confirm all ' + getPendingCountForCow(cow) + ' pending rations for this cow'"
+                        [attr.aria-label]="'Confirm (' + getPendingCountForCow(cow) + ') pending rations for ' + cow.animalTag"
+                        class="h-11 sm:h-10 px-4 flex-1 sm:flex-none text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
+                        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon>
+                        Confirm ({{ getPendingCountForCow(cow) }})
+                      </button>
+                    }
+
+                    @if (cow.allConfirmed) {
+                      <span class="h-11 sm:h-10 px-4 flex-1 sm:flex-none rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 inline-flex items-center justify-center gap-1 whitespace-nowrap">
+                        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon> All Confirmed
+                      </span>
+                    }
                   </div>
                 </div>
+              </header>
+
+              <!-- Rations for this cow -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-4 p-2 sm:p-4">
+                @for (entry of cow.entries; track entry.id) {
+                  <ng-container *ngTemplateOutlet="entryCard; context: { $implicit: entry, showAnimal: false }"></ng-container>
+                }
               </div>
-
-              <div class="flex items-center gap-2">
-                <button type="button" (click)="openManualEntry([cow.animalId])" matTooltip="Record extra feed given to this cow"
-                  class="h-8 px-3 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-lg inline-flex items-center gap-1 whitespace-nowrap transition-colors">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Add Feed
-                </button>
-
-                <button *ngIf="cow.hasPending" type="button" (click)="confirmCow(cow)"
-                  [matTooltip]="'Confirm all ' + getPendingCountForCow(cow) + ' pending rations for this cow'"
-                  class="h-8 px-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1.5 whitespace-nowrap">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">done_all</mat-icon>
-                  Confirm ({{ getPendingCountForCow(cow) }})
-                </button>
-
-                <span *ngIf="cow.allConfirmed"
-                  class="h-8 px-3 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1 whitespace-nowrap">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon> All Confirmed
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Rations for this cow -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-gray-50/30 dark:bg-gray-900/20">
-            <div *ngFor="let entry of cow.entries" 
-              class="border border-gray-200/80 dark:border-gray-700/60 rounded-xl p-3 bg-white dark:bg-gray-800/80 relative overflow-hidden group hover:border-emerald-500/50 transition-all shadow-2xs">
-              
-              <!-- Status Ribbon Indicator -->
-              <div class="absolute top-0 right-0 w-14 h-14 pointer-events-none">
-                <div class="absolute transform rotate-45 text-[8px] font-extrabold text-white text-center w-20 py-0.5 right-[-22px] top-[10px]"
-                     [ngClass]="{
-                       'bg-amber-500 shadow-amber-500/50 shadow-xs': entry.status === 'Pending',
-                       'bg-emerald-500 shadow-emerald-500/50 shadow-xs': entry.status === 'Confirmed',
-                       'bg-blue-500 shadow-blue-500/50 shadow-xs': entry.status === 'Adjusted',
-                       'bg-red-500 shadow-red-500/50 shadow-xs': entry.status === 'Skipped'
-                     }">
-                  {{ entry.status }}
-                </div>
-              </div>
-
-              <!-- Ration Formula -->
-              <div class="text-xs font-bold text-gray-900 dark:text-white pr-8 truncate" [matTooltip]="entry.formulaName || 'Base Ration'">
-                {{ entry.formulaName || 'Base Ration' }}
-              </div>
-
-              <!-- Quantity & Cost -->
-              <div class="flex items-baseline justify-between mt-2 mb-1">
-                <div class="text-xl font-extrabold text-gray-900 dark:text-white">
-                  {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : entry.expectedKg) | number:'1.2-2' }}
-                  <span class="text-xs font-normal text-gray-400">kg</span>
-                </div>
-
-                <button type="button" (click)="openCostBreakdown(entry)"
-                  [matTooltip]="entry.unitCostBdt != null ? 'Snapshotted cost: ৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg' : 'Click to inspect planned cost breakdown.'"
-                  class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60">
-                  <mat-icon class="!w-3 !h-3 !text-[12px] text-emerald-600">payments</mat-icon>
-                  <span>{{ entry.unitCostBdt != null ? '৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg' : 'Cost' }}</span>
-                </button>
-              </div>
-
-              <!-- Entry Cost -->
-              <div *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-[11px] text-gray-500 flex justify-between items-center mb-2 pb-1 border-b border-gray-100 dark:border-gray-700/40">
-                <span>Ration Cost:</span>
-                <span class="font-bold text-teal-700 dark:text-teal-300 font-mono">
-                  {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
-                </span>
-              </div>
-
-              <!-- Actions for Pending -->
-              <div class="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700/40" *ngIf="entry.status === 'Pending'">
-                <button (click)="confirmEntry(entry)"
-                  class="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 px-2 py-0.5 rounded font-semibold text-xs flex items-center transition-colors">
-                  <mat-icon class="!w-3.5 !h-3.5 !text-[14px] mr-1">check</mat-icon> Confirm
-                </button>
-                <button mat-icon-button [matMenuTriggerFor]="cowEntryMenu" class="!w-6 !h-6 flex items-center justify-center text-gray-400 hover:text-gray-600" aria-label="More actions">
-                  <mat-icon class="!w-3.5 !h-3.5 !text-[16px]">more_vert</mat-icon>
-                </button>
-                <mat-menu #cowEntryMenu="matMenu" class="!rounded-xl shadow-xl">
-                  <button mat-menu-item (click)="openAdjustDialog(entry, 'adjust')">
-                    <mat-icon class="text-orange-500">tune</mat-icon>
-                    <span>Adjust Amount</span>
-                  </button>
-                  <button mat-menu-item (click)="openAdjustDialog(entry, 'skip')">
-                    <mat-icon class="text-red-500">block</mat-icon>
-                    <span>Skip Feeding</span>
-                  </button>
-                </mat-menu>
-              </div>
-
-              <!-- Note / State for Processed -->
-              <div class="text-[11px] text-gray-500 italic pt-2 border-t border-gray-100 dark:border-gray-700/40" *ngIf="entry.status !== 'Pending'">
-                <span *ngIf="entry.status === 'Confirmed'" class="text-emerald-600 font-semibold">✓ Confirmed</span>
-                <span *ngIf="entry.status === 'Adjusted'" class="text-blue-600">⚖ {{ entry.notes || 'Adjusted' }}</span>
-                <span *ngIf="entry.status === 'Skipped'" class="text-rose-600">✕ {{ entry.notes || 'Skipped' }}</span>
-              </div>
-            </div>
-          </div>
+            </article>
+          }
         </div>
-      </div>
+      }
 
       <!-- ══════════════════════════════════════════════════════════════════════════ -->
       <!-- VIEW MODE 2: GROUPED BY SHED & PEN                                      -->
       <!-- ══════════════════════════════════════════════════════════════════════════ -->
-      <div *ngIf="!isLoading() && filteredEntries().length > 0 && viewMode() === 'grouped'" class="p-6 space-y-8">
-        
-        <div *ngFor="let shed of groupedEntries()" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-          
-          <!-- Shed Header -->
-          <div class="px-5 py-4 bg-gray-50/80 dark:bg-gray-900/60 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
-                <mat-icon class="!w-5 !h-5 !text-[20px]">home_work</mat-icon>
-              </div>
-              <div>
-                <h2 class="text-base font-bold text-gray-900 dark:text-white leading-tight">{{ shed.shedName }}</h2>
-                <div class="text-xs text-gray-500">{{ shed.pens.length }} pens • {{ getShedEntriesCount(shed) }} total entries</div>
-              </div>
-            </div>
-            <div class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-              <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ shed.totalActualKg | number:'1.2-2' }}kg</span> / {{ shed.totalExpectedKg | number:'1.2-2' }}kg Confirmed
-            </div>
-          </div>
+      @if (!isLoading() && filteredEntries().length > 0 && viewMode() === 'grouped') {
+        <div class="space-y-4">
+          @for (shed of groupedEntries(); track shed.shedName) {
+            <article class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
 
-          <!-- Pens -->
-          <div class="divide-y divide-gray-100 dark:divide-gray-800">
-            <div *ngFor="let pen of shed.pens" class="p-5">
-              
-              <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center gap-2">
-                  <mat-icon class="text-gray-400 !w-5 !h-5 !text-[20px]">fence</mat-icon>
-                  <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ pen.penName }}</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                    {{ pen.entries.length }} entries
-                  </span>
+              <!-- Shed Header -->
+              <header class="px-4 py-4 bg-gray-50/80 dark:bg-gray-900/40 border-b border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-x-4 gap-y-2">
+                <div class="flex items-center gap-4 min-w-0">
+                  <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                    <mat-icon class="!w-[22px] !h-[22px] !text-[22px]">home_work</mat-icon>
+                  </div>
+                  <div class="min-w-0">
+                    <h2 class="m-0 text-lg font-extrabold text-gray-900 dark:text-white leading-tight truncate">{{ shed.shedName }}</h2>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ shed.pens.length }} pens • {{ getShedEntriesCount(shed) }} total entries</div>
+                  </div>
                 </div>
-                
-                <button (click)="confirmPen(pen)" *ngIf="hasPending(pen)"
-                  class="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1">
-                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">done_all</mat-icon> Confirm All ({{ getPendingPenCount(pen) }})
-                </button>
+                <div class="text-sm font-semibold text-gray-600 dark:text-gray-300 tabular-nums">
+                  <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">{{ shed.totalActualKg | number:'1.2-2' }}kg</span> / {{ shed.totalExpectedKg | number:'1.2-2' }}kg Confirmed
+                </div>
+              </header>
+
+              <!-- Pens -->
+              <div class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                @for (pen of shed.pens; track pen.penName) {
+                  <div class="p-2 sm:p-4">
+                    <div class="flex flex-wrap justify-between items-center gap-2 mb-2 sm:mb-4 px-2 pt-2 sm:p-0">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <mat-icon class="text-gray-400 !w-5 !h-5 !text-[20px] shrink-0">fence</mat-icon>
+                        <h3 class="m-0 text-base font-bold text-gray-900 dark:text-gray-100 truncate">{{ pen.penName }}</h3>
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                          {{ pen.entries.length }} entries
+                        </span>
+                      </div>
+
+                      @if (hasPending(pen)) {
+                        <button type="button" (click)="confirmPen(pen)"
+                          [attr.aria-label]="'Confirm All (' + getPendingPenCount(pen) + ') pending entries in ' + pen.penName"
+                          class="h-11 sm:h-10 px-4 w-full sm:w-auto text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
+                          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> Confirm All ({{ getPendingPenCount(pen) }})
+                        </button>
+                      }
+                    </div>
+
+                    <!-- Entries Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-4">
+                      @for (entry of pen.entries; track entry.id) {
+                        <ng-container *ngTemplateOutlet="entryCard; context: { $implicit: entry, showAnimal: true }"></ng-container>
+                      }
+                    </div>
+                  </div>
+                }
               </div>
+            </article>
+          }
+        </div>
+      }
 
-              <!-- Entries Grid -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <div *ngFor="let entry of pen.entries" class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50/50 dark:bg-gray-900/50 relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
-                  
-                  <!-- Status Ribbon Indicator -->
-                  <div class="absolute top-0 right-0 w-16 h-16 pointer-events-none">
-                    <div class="absolute transform rotate-45 text-[9px] font-bold text-white text-center w-24 py-0.5 right-[-26px] top-[14px]"
-                         [ngClass]="{
-                           'bg-amber-500 shadow-amber-500/50 shadow-sm': entry.status === 'Pending',
-                           'bg-emerald-500 shadow-emerald-500/50 shadow-sm': entry.status === 'Confirmed',
-                           'bg-blue-500 shadow-blue-500/50 shadow-sm': entry.status === 'Adjusted',
-                           'bg-red-500 shadow-red-500/50 shadow-sm': entry.status === 'Skipped'
-                         }">
-                      {{ entry.status }}
-                    </div>
-                  </div>
+      <!-- ══════════════════════════════════════════════════════════════════════════ -->
+      <!-- VIEW MODE 3: FLAT LIST / TABLE VIEW                                     -->
+      <!-- ══════════════════════════════════════════════════════════════════════════ -->
+      @if (!isLoading() && filteredEntries().length > 0 && viewMode() === 'list') {
+        <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[960px] text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 text-[11px] uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400">
+                  <th scope="col" class="py-3 px-4">Animal Tag</th>
+                  <th scope="col" class="py-3 px-4">Location (Shed / Pen)</th>
+                  <th scope="col" class="py-3 px-4">Ration Formula</th>
+                  <th scope="col" class="py-3 px-4">Planned (kg)</th>
+                  <th scope="col" class="py-3 px-4">Consumed (kg)</th>
+                  <th scope="col" class="py-3 px-4">Unit Cost</th>
+                  <th scope="col" class="py-3 px-4">Total Cost</th>
+                  <th scope="col" class="py-3 px-4">Status</th>
+                  <th scope="col" class="py-3 px-4">Notes / Reason</th>
+                  <th scope="col" class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60 text-sm">
+                @for (entry of filteredEntries(); track entry.id) {
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                    [class.opacity-70]="entry.status !== 'Pending'">
+                    <!-- Animal Tag -->
+                    <td class="py-2 px-4">
+                      <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                          <mat-icon class="!w-4 !h-4 !text-[16px]">pets</mat-icon>
+                        </div>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ entry.animalTag }}</span>
+                      </div>
+                    </td>
 
-                  <!-- Animal Tag Header -->
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-                      <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">pets</mat-icon>
-                    </div>
-                    <span class="font-bold text-gray-900 dark:text-white text-sm">{{ entry.animalTag }}</span>
-                  </div>
-                  
-                  <!-- Ration Formula Badge -->
-                  <div class="text-xs text-gray-600 dark:text-gray-300 mt-1 mb-2 font-medium bg-gray-100 dark:bg-gray-800 rounded px-2 py-0.5 inline-block">
-                    {{ entry.formulaName || 'Base Ration' }}
-                  </div>
+                    <!-- Location -->
+                    <td class="py-2 px-4 text-gray-600 dark:text-gray-300 font-medium">
+                      {{ entry.shedName || 'Unassigned Shed' }} / {{ entry.penName || 'Unassigned Pen' }}
+                    </td>
 
-                  <!-- Quantity & Cost Metrics -->
-                  <div class="flex items-baseline justify-between mb-1">
-                    <div class="text-2xl font-extrabold text-gray-900 dark:text-white">
-                      {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : entry.expectedKg) | number:'1.2-2' }} <span class="text-xs font-normal text-gray-400">kg</span>
-                      <span *ngIf="entry.status === 'Adjusted' && entry.actualKg !== entry.expectedKg" class="text-xs font-medium text-gray-400 line-through ml-1.5">
-                        {{ entry.expectedKg | number:'1.2-2' }}kg
+                    <!-- Ration Formula -->
+                    <td class="py-2 px-4 font-semibold text-emerald-700 dark:text-emerald-400">
+                      {{ entry.formulaName || 'Base Ration' }}
+                    </td>
+
+                    <!-- Planned (kg) -->
+                    <td class="py-2 px-4 font-semibold text-gray-800 dark:text-gray-200 tabular-nums whitespace-nowrap">
+                      {{ entry.expectedKg | number:'1.2-2' }} kg
+                    </td>
+
+                    <!-- Actual (kg) -->
+                    <td class="py-2 px-4 font-bold tabular-nums whitespace-nowrap"
+                      [ngClass]="entry.actualKg !== null && entry.actualKg !== undefined ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-400'">
+                      {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : '-') }} {{ entry.actualKg !== null && entry.actualKg !== undefined ? 'kg' : '' }}
+                    </td>
+
+                    <!-- Unit Cost -->
+                    <td class="py-2 px-4 text-xs tabular-nums whitespace-nowrap">
+                      @if (entry.unitCostBdt != null) {
+                        <span class="font-semibold text-emerald-700 dark:text-emerald-400">{{ entry.unitCostBdt | money:2 }}/kg</span>
+                      } @else {
+                        <span class="text-gray-400">-</span>
+                      }
+                    </td>
+
+                    <!-- Total Cost -->
+                    <td class="py-2 px-4 text-xs font-bold tabular-nums whitespace-nowrap">
+                      @if (entry.totalCostBdt != null || entry.unitCostBdt != null) {
+                        <span class="text-teal-700 dark:text-teal-300">
+                          {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
+                        </span>
+                      } @else {
+                        <span class="text-gray-400">-</span>
+                      }
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td class="py-2 px-4">
+                      <span class="h-6 px-2 rounded-full border text-[11px] font-bold inline-flex items-center gap-1 whitespace-nowrap"
+                        [ngClass]="statusPillClass(entry.status)">
+                        <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">{{ statusIcon(entry.status) }}</mat-icon>
+                        {{ entry.status }}
                       </span>
-                    </div>
+                    </td>
 
-                    <!-- Blended Unit Cost Badge & Drill-down -->
-                    <button type="button" (click)="openCostBreakdown(entry)"
-                      [matTooltip]="entry.unitCostBdt != null ? 'Snapshotted cost: ৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg. Click for breakdown.' : 'Click to inspect planned cost breakdown.'"
-                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold transition-all shadow-2xs"
-                      [ngClass]="entry.unitCostBdt != null 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/80' 
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'">
-                      <mat-icon class="!w-3.5 !h-3.5 !text-[14px] text-emerald-600 dark:text-emerald-400">payments</mat-icon>
-                      <span>{{ entry.unitCostBdt != null ? '৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg' : 'Breakdown' }}</span>
-                    </button>
-                  </div>
+                    <!-- Notes -->
+                    <td class="py-2 px-4 text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                      {{ entry.notes || '-' }}
+                    </td>
 
-                  <!-- Total Entry Cost if available -->
-                  <div *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-[11px] font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between mb-2 pb-1 border-b border-gray-100 dark:border-gray-800">
-                    <span>Entry Cost:</span>
-                    <span class="font-bold text-teal-700 dark:text-teal-300 font-mono">
-                      {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
-                    </span>
-                  </div>
+                    <!-- Actions -->
+                    <td class="py-2 px-4 text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button type="button" (click)="openCostBreakdown(entry)" matTooltip="Cost Breakdown" aria-label="Cost Breakdown"
+                          class="h-10 w-10 inline-flex items-center justify-center text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
+                          <mat-icon class="!w-5 !h-5 !text-[20px]">payments</mat-icon>
+                        </button>
 
-                  <!-- Actions for Pending -->
-                  <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/50" *ngIf="entry.status === 'Pending'">
-                    <button (click)="confirmEntry(entry)"
-                      class="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 px-2.5 py-1 rounded-lg font-semibold text-xs flex items-center transition-colors">
-                      <mat-icon class="!w-4 !h-4 !text-[16px] mr-1">check</mat-icon> Confirm
-                    </button>
-                    
-                    <button mat-icon-button [matMenuTriggerFor]="menu" class="!w-6 !h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="More actions">
-                      <mat-icon class="!w-4 !h-4 !text-[18px]">more_vert</mat-icon>
-                    </button>
-                    <mat-menu #menu="matMenu" class="!rounded-xl shadow-xl">
-                      <button mat-menu-item (click)="openAdjustDialog(entry, 'adjust')">
-                        <mat-icon class="text-orange-500">tune</mat-icon>
-                        <span>Adjust Amount</span>
-                      </button>
-                      <button mat-menu-item (click)="openAdjustDialog(entry, 'skip')">
-                        <mat-icon class="text-red-500">block</mat-icon>
-                        <span>Skip Feeding</span>
-                      </button>
-                    </mat-menu>
-                  </div>
-                  
-                  <!-- Note / State for Processed -->
-                  <div class="text-xs text-gray-500 italic mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/50" *ngIf="entry.status !== 'Pending'">
-                    <span *ngIf="entry.status === 'Confirmed'">✓ Confirmed</span>
-                    <span *ngIf="entry.status === 'Adjusted'">⚖ Adjusted: {{ entry.notes || 'Amount modified' }}</span>
-                    <span *ngIf="entry.status === 'Skipped'">✕ Skipped: {{ entry.notes || 'Feed omitted' }}</span>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
+                        @if (entry.status === 'Pending') {
+                          <button type="button" (click)="confirmEntry(entry)" matTooltip="Confirm Planned Amount"
+                            [attr.aria-label]="'Confirm planned amount for ' + entry.animalTag"
+                            class="h-10 w-10 inline-flex items-center justify-center text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1">
+                            <mat-icon class="!w-5 !h-5 !text-[20px]">check</mat-icon>
+                          </button>
+                          <button type="button" (click)="openAdjustDialog(entry, 'adjust')" matTooltip="Adjust Amount"
+                            [attr.aria-label]="'Adjust Amount for ' + entry.animalTag"
+                            class="h-10 w-10 inline-flex items-center justify-center text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                            <mat-icon class="!w-5 !h-5 !text-[20px]">tune</mat-icon>
+                          </button>
+                          <button type="button" (click)="openAdjustDialog(entry, 'skip')" matTooltip="Skip Entry"
+                            [attr.aria-label]="'Skip Feeding for ' + entry.animalTag"
+                            class="h-10 w-10 inline-flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400">
+                            <mat-icon class="!w-5 !h-5 !text-[20px]">block</mat-icon>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
+      }
+    </div>
 
+    <!-- ═══════════════════ Phone: sticky progress + pending shortcut ═══════════════════ -->
+    @if (!isLoading() && allEntries().length > 0) {
+      <div class="md:hidden sticky bottom-2 z-20 mt-4">
+        <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-lg shadow-gray-900/10 p-2 flex items-center gap-2">
+          <div class="flex-1 min-w-0 px-2">
+            <div class="text-sm font-bold text-gray-900 dark:text-white truncate">
+              {{ completedCount() }} of {{ filteredEntries().length }} done
+            </div>
+            <div class="mt-1 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden" aria-hidden="true">
+              <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-500"
+                [style.width.%]="progressPct()"></div>
+            </div>
+          </div>
+          @if (statusFilter() !== 'Pending' && countPending() > 0) {
+            <button type="button" (click)="statusFilter.set('Pending')"
+              class="h-11 px-4 shrink-0 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
+              <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+              {{ filterLabel('Pending') }}
+            </button>
+          } @else if (statusFilter() !== 'all') {
+            <button type="button" (click)="statusFilter.set('all')"
+              class="h-11 px-4 shrink-0 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+              {{ filterLabel('all') }}
+            </button>
+          }
+        </div>
       </div>
-
-      <!-- ══════════════════════════════════════════════════════════════════════════ -->
-      <!-- VIEW MODE 2: FLAT LIST / TABLE VIEW                                     -->
-      <!-- ══════════════════════════════════════════════════════════════════════════ -->
-      <div *ngIf="!isLoading() && filteredEntries().length > 0 && viewMode() === 'list'" class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-800 text-[11px] uppercase tracking-wider font-bold text-gray-400">
-              <th class="py-3.5 px-4">Animal Tag</th>
-              <th class="py-3.5 px-4">Location (Shed / Pen)</th>
-              <th class="py-3.5 px-4">Ration Formula</th>
-              <th class="py-3.5 px-4">Planned (kg)</th>
-              <th class="py-3.5 px-4">Consumed (kg)</th>
-              <th class="py-3.5 px-4">Unit Cost</th>
-              <th class="py-3.5 px-4">Total Cost</th>
-              <th class="py-3.5 px-4">Status</th>
-              <th class="py-3.5 px-4">Notes / Reason</th>
-              <th class="py-3.5 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
-            <tr *ngFor="let entry of filteredEntries()" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-              <!-- Animal Tag -->
-              <td class="py-3.5 px-4">
-                <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-                    <mat-icon class="!w-4 !h-4 !text-[16px]">pets</mat-icon>
-                  </div>
-                  <span class="font-bold text-gray-900 dark:text-white">{{ entry.animalTag }}</span>
-                </div>
-              </td>
-
-              <!-- Location -->
-              <td class="py-3.5 px-4 text-gray-600 dark:text-gray-300 font-medium">
-                {{ entry.shedName || 'Unassigned Shed' }} / {{ entry.penName || 'Unassigned Pen' }}
-              </td>
-
-              <!-- Ration Formula -->
-              <td class="py-3.5 px-4 font-semibold text-emerald-700 dark:text-emerald-400">
-                {{ entry.formulaName || 'Base Ration' }}
-              </td>
-
-              <!-- Planned (kg) -->
-              <td class="py-3.5 px-4 font-semibold text-gray-800 dark:text-gray-200">
-                {{ entry.expectedKg | number:'1.2-2' }} kg
-              </td>
-
-              <!-- Actual (kg) -->
-              <td class="py-3.5 px-4 font-bold"
-                [class.text-gray-400]="entry.actualKg === null || entry.actualKg === undefined"
-                [class.text-emerald-600]="entry.actualKg !== null && entry.actualKg !== undefined">
-                {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : '-') }} {{ entry.actualKg !== null && entry.actualKg !== undefined ? 'kg' : '' }}
-              </td>
-
-              <!-- Unit Cost -->
-              <td class="py-3.5 px-4 font-mono text-xs">
-                <span *ngIf="entry.unitCostBdt != null" class="font-semibold text-emerald-600 dark:text-emerald-400">
-                  {{ entry.unitCostBdt | money:2 }}/kg
-                </span>
-                <span *ngIf="entry.unitCostBdt == null" class="text-gray-400">-</span>
-              </td>
-
-              <!-- Total Cost -->
-              <td class="py-3.5 px-4 font-mono text-xs font-bold">
-                <span *ngIf="entry.totalCostBdt != null || entry.unitCostBdt != null" class="text-teal-700 dark:text-teal-300">
-                  {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
-                </span>
-                <span *ngIf="entry.totalCostBdt == null && entry.unitCostBdt == null" class="text-gray-400">-</span>
-              </td>
-
-              <!-- Status Badge -->
-              <td class="py-3.5 px-4">
-                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1"
-                  [ngClass]="{
-                    'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800': entry.status === 'Pending',
-                    'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800': entry.status === 'Confirmed',
-                    'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-200 dark:border-blue-800': entry.status === 'Adjusted',
-                    'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800': entry.status === 'Skipped'
-                  }">
-                  {{ entry.status }}
-                </span>
-              </td>
-
-              <!-- Notes -->
-              <td class="py-3.5 px-4 text-xs text-gray-500 max-w-xs truncate">
-                {{ entry.notes || '-' }}
-              </td>
-
-              <!-- Actions -->
-              <td class="py-3.5 px-4 text-right">
-                <div class="flex items-center justify-end gap-1.5">
-                  <button (click)="openCostBreakdown(entry)" matTooltip="Cost Breakdown"
-                    class="p-1.5 text-xs font-semibold text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-colors" aria-label="Cost Breakdown">
-                    <mat-icon class="!w-4 !h-4 !text-[16px]">payments</mat-icon>
-                  </button>
-
-                  <ng-container *ngIf="entry.status === 'Pending'">
-                    <button (click)="confirmEntry(entry)" matTooltip="Confirm Planned Amount"
-                      class="p-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-colors" aria-label="Confirm Planned Amount">
-                      <mat-icon class="!w-4 !h-4 !text-[16px]">check</mat-icon>
-                    </button>
-                    <button (click)="openAdjustDialog(entry, 'adjust')" matTooltip="Adjust Amount"
-                      class="p-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-lg transition-colors" aria-label="Adjust Amount">
-                      <mat-icon class="!w-4 !h-4 !text-[16px]">tune</mat-icon>
-                    </button>
-                    <button (click)="openAdjustDialog(entry, 'skip')" matTooltip="Skip Entry"
-                      class="p-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors" aria-label="Skip Entry">
-                      <mat-icon class="!w-4 !h-4 !text-[16px]">block</mat-icon>
-                    </button>
-                  </ng-container>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    }
 
     </div>
+
+    <!-- ═══════════════════ Shared entry card (By Cow and By Pen) ═══════════════════ -->
+    <ng-template #entryCard let-entry let-showAnimal="showAnimal">
+      <div class="flex flex-col h-full rounded-xl border p-4 transition-colors"
+        [ngClass]="entry.status === 'Pending'
+          ? 'bg-white dark:bg-gray-800 border-amber-200 dark:border-amber-800/60 shadow-sm'
+          : 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-700/60'">
+
+        <!-- Tag / ration + status pill -->
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            @if (showAnimal) {
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <mat-icon class="!w-4 !h-4 !text-[16px]">pets</mat-icon>
+                </span>
+                <span class="text-base font-extrabold text-gray-900 dark:text-white truncate" [title]="entry.animalTag">{{ entry.animalTag }}</span>
+              </div>
+            }
+            <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate" [class.mt-1]="showAnimal"
+              [matTooltip]="entry.formulaName || 'Base Ration'">
+              {{ entry.formulaName || 'Base Ration' }}
+            </div>
+          </div>
+          <span class="h-6 px-2 shrink-0 rounded-full border text-[11px] font-bold inline-flex items-center gap-1 whitespace-nowrap"
+            [ngClass]="statusPillClass(entry.status)">
+            <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">{{ statusIcon(entry.status) }}</mat-icon>
+            {{ entry.status }}
+          </span>
+        </div>
+
+        <!-- Quantity & unit cost -->
+        <div class="mt-2 flex items-end justify-between gap-2">
+          <div class="text-2xl font-extrabold tabular-nums leading-none"
+            [ngClass]="entry.status === 'Pending' ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'">
+            {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : entry.expectedKg) | number:'1.2-2' }}
+            <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">kg</span>
+            @if (entry.status === 'Adjusted' && entry.actualKg !== entry.expectedKg) {
+              <span class="text-xs font-medium text-gray-400 line-through ml-1">{{ entry.expectedKg | number:'1.2-2' }}kg</span>
+            }
+          </div>
+
+          <button type="button" (click)="openCostBreakdown(entry)"
+            [matTooltip]="entry.unitCostBdt != null ? 'Snapshotted cost: ৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg. Click for breakdown.' : 'Click to inspect planned cost breakdown.'"
+            [attr.aria-label]="'Cost breakdown for ' + entry.animalTag"
+            class="h-8 px-2 shrink-0 inline-flex items-center gap-1 rounded-lg text-xs font-semibold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            [ngClass]="entry.unitCostBdt != null
+              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border-emerald-200/80 dark:border-emerald-800/80'
+              : 'bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600'">
+            <mat-icon class="!w-4 !h-4 !text-[16px]">payments</mat-icon>
+            <span>{{ entry.unitCostBdt != null ? '৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg' : 'Cost' }}</span>
+          </button>
+        </div>
+
+        <!-- Entry cost -->
+        @if (entry.totalCostBdt != null || entry.unitCostBdt != null) {
+          <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center gap-2">
+            <span>Ration Cost</span>
+            <span class="font-bold text-teal-700 dark:text-teal-300 tabular-nums">
+              {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
+            </span>
+          </div>
+        }
+
+        <!-- Actions for Pending: Confirm is the big primary; Adjust / Skip are secondary -->
+        @if (entry.status === 'Pending') {
+          <div class="mt-auto pt-4 space-y-2">
+            <button type="button" (click)="confirmEntry(entry)"
+              [attr.aria-label]="'Confirm ' + (entry.expectedKg | number:'1.2-2') + ' kg for ' + entry.animalTag"
+              class="w-full h-12 rounded-xl text-base font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
+              <mat-icon class="!w-5 !h-5 !text-[20px]">check</mat-icon> Confirm
+            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" (click)="openAdjustDialog(entry, 'adjust')"
+                [attr.aria-label]="'Adjust Amount for ' + entry.animalTag"
+                class="h-11 px-2 rounded-xl text-xs font-bold text-blue-800 dark:text-blue-200 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800/70 inline-flex items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">tune</mat-icon> Adjust Amount
+              </button>
+              <button type="button" (click)="openAdjustDialog(entry, 'skip')"
+                [attr.aria-label]="'Skip Feeding for ' + entry.animalTag"
+                class="h-11 px-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 inline-flex items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400">
+                <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">block</mat-icon> Skip Feeding
+              </button>
+            </div>
+          </div>
+        } @else if (entry.notes) {
+          <p class="mt-auto pt-2 mb-0 text-xs italic text-gray-500 dark:text-gray-400 break-words">{{ entry.notes }}</p>
+        }
+      </div>
+    </ng-template>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -713,9 +707,18 @@ export class TodayFeedingDashboardComponent implements OnInit {
   readonly selectedDate = signal<string>(toLocalIsoDate());
   readonly searchTerm = signal<string>('');
   readonly statusFilter = signal<string>('all');
-  readonly viewMode = signal<'cows' | 'grouped' | 'list'>('cows');
+  readonly viewMode = signal<ViewMode>('cows');
 
   protected currentFarmId: string | null = null;
+
+  // Presentation-only option lists (labels unchanged from the user guide)
+  readonly viewOptions: ReadonlyArray<{ value: ViewMode; label: string; icon: string; tooltip: string }> = [
+    { value: 'cows', label: 'By Cow', icon: 'pets', tooltip: 'Grouped by Cow / Animal' },
+    { value: 'grouped', label: 'By Pen', icon: 'view_agenda', tooltip: 'Grouped by Shed and Pen' },
+    { value: 'list', label: 'List View', icon: 'table_rows', tooltip: 'Table List of All Entries' }
+  ];
+  readonly statusOptions: ReadonlyArray<string> = ['all', 'Pending', 'Confirmed', 'Adjusted', 'Skipped'];
+  readonly skeletonRows: ReadonlyArray<number> = [1, 2, 3];
 
   // Filtered entries computed signal
   readonly filteredEntries = computed<DailyFeedingEntry[]>(() => {
@@ -800,6 +803,11 @@ export class TodayFeedingDashboardComponent implements OnInit {
     const completed = entries.filter(e => e.status !== 'Pending').length;
     return (completed / entries.length) * 100;
   });
+
+  /** Entries no longer pending (confirmed, adjusted or skipped) — the numerator of progressPct. */
+  readonly completedCount = computed(() => this.filteredEntries().filter(e => e.status !== 'Pending').length);
+
+  readonly progressRounded = computed(() => Math.round(this.progressPct()));
 
   readonly countPending = computed(() => {
     return this.allEntries().filter(e => e.status === 'Pending').length;
@@ -1034,6 +1042,50 @@ export class TodayFeedingDashboardComponent implements OnInit {
   resetFilters(): void {
     this.searchTerm.set('');
     this.statusFilter.set('all');
+  }
+
+  // Presentation helpers
+  filterLabel(status: string): string {
+    if (status === 'all') return `All (${this.allEntries().length})`;
+    if (status === 'Pending') return `Pending (${this.countPending()})`;
+    return status;
+  }
+
+  segmentClass(active: boolean): string {
+    return active
+      ? 'bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-300 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-700/50';
+  }
+
+  statusPillClass(status: string): string {
+    switch (status) {
+      case 'Pending':
+        return 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/70';
+      case 'Confirmed':
+        return 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/70';
+      case 'Adjusted':
+        return 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800/70';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700/60 dark:text-gray-300 dark:border-gray-600';
+    }
+  }
+
+  statusDotClass(status: string): string {
+    switch (status) {
+      case 'Pending': return 'bg-amber-500';
+      case 'Confirmed': return 'bg-emerald-500';
+      case 'Adjusted': return 'bg-blue-500';
+      default: return 'bg-gray-400';
+    }
+  }
+
+  statusIcon(status: string): string {
+    switch (status) {
+      case 'Pending': return 'schedule';
+      case 'Confirmed': return 'check_circle';
+      case 'Adjusted': return 'tune';
+      default: return 'block';
+    }
   }
 
   // Helpers

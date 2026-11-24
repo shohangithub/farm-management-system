@@ -74,6 +74,14 @@ public sealed class ClosedXmlReportRenderer : IReportRenderer
         sheet.Cell(row, 1).Style.Font.SetBold().Font.SetFontSize(13);
         row++;
 
+        // The organisation's address · phone · e-mail, so a forwarded spreadsheet still says whose it is.
+        if (!string.IsNullOrWhiteSpace(data.Meta.ContactLine))
+        {
+            sheet.Cell(row, 1).Value = data.Meta.ContactLine;
+            sheet.Cell(row, 1).Style.Font.SetFontColor(XLColor.FromHtml("#555555"));
+            row++;
+        }
+
         if (!string.IsNullOrWhiteSpace(data.Meta.FarmName))
         {
             sheet.Cell(row, 1).Value = data.Meta.FarmName;

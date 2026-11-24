@@ -142,6 +142,9 @@ public static class InfrastructureServiceExtensions
         services.AddSingleton<Farm360.Application.Reporting.Abstractions.IReportRenderer, Farm360.Infrastructure.Reporting.Excel.ClosedXmlReportRenderer>();
         services.AddSingleton<Farm360.Application.Reporting.Abstractions.IReportRenderer, Farm360.Infrastructure.Reporting.Csv.CsvReportRenderer>();
 
+        // Customer documents (sale invoice, payment receipt, purchase order) share the report letterhead.
+        services.AddSingleton<Farm360.Application.Documents.ICustomerDocumentRenderer, Farm360.Infrastructure.Documents.QuestPdfCustomerDocumentRenderer>();
+
         return services;
     }
 }

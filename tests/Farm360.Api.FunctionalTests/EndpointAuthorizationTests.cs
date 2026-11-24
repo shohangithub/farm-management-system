@@ -188,6 +188,9 @@ public class EndpointAuthorizationTests
     [InlineData("POST /api/v1/users/invitations/{invitationId:guid}/revoke", "users.invite")]
     [InlineData("GET /api/v1/settings/business-rules", "settings.view")]
     [InlineData("PUT /api/v1/settings/business-rules", "settings.edit")]
+    [InlineData("GET /api/v1/documents/sale-invoice/{animalId:guid}", "animals.view")]
+    [InlineData("GET /api/v1/documents/payment-receipt/{id:guid}", "finance.view")]
+    [InlineData("GET /api/v1/documents/purchase-order/{id:guid}", "inventory.view")]
     public void ModuleRoutesRequireExpectedPermission(string key, string permission)
     {
         var endpoint = RouteEndpoints().Where(x => x.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).ToList();

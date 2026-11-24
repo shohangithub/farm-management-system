@@ -90,6 +90,10 @@ export interface ReportMetaHeader {
   generatedAtLocal?: string | null;
   generatedAtDisplay?: string | null;
   timeZoneLabel?: string | null;
+  /** Organisation address · phone · e-mail, whichever are on file. */
+  contactLine?: string | null;
+  /** Relative URL of the organisation logo (e.g. /uploads/organizations/…png). */
+  logoUrl?: string | null;
 }
 
 export interface PageSetup {

@@ -131,6 +131,22 @@ public sealed record ReportMetaHeader(
     /// <summary>Generation time in the farm's local zone, for file names and "as at" lines.</summary>
     public DateTime? GeneratedAtLocalTime { get; init; }
 
+    /// <summary>
+    /// The organisation's contact line printed under its name — address, phone, e-mail, whichever
+    /// are on file — e.g. "Savar, Dhaka · 01711-000000 · info@rahmanagro.com".
+    /// </summary>
+    public string? ContactLine { get; init; }
+
+    /// <summary>Relative URL of the organisation logo, for the on-screen paper.</summary>
+    public string? LogoUrl { get; init; }
+
+    /// <summary>
+    /// The logo itself, for the PDF letterhead. Never serialised: the on-screen viewer loads
+    /// <see cref="LogoUrl"/> instead of receiving the image inside every dataset.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public byte[]? Logo { get; init; }
+
     /// <summary>The local generation stamp if resolved, otherwise the UTC one, explicitly labelled.</summary>
     public string GeneratedAtDisplay =>
         GeneratedAtLocal ?? GeneratedAtUtc.ToString("dd-MMM-yyyy HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture);

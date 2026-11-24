@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReportCell, ReportDataSet, ReportLanguage } from '../../models/report.models';
 
@@ -33,14 +33,27 @@ interface RenderBand {
   template: `
     <div class="sheet" [class.landscape]="isLandscape()">
       <!-- Letterhead -->
-      <header class="letterhead">
-        <div class="org">{{ data().meta.organizationName }}</div>
-        @if (data().meta.farmName) {
-          <div class="farm">{{ data().meta.farmName }}</div>
+      <header class="letterhead" [class.with-logo]="showLogo()">
+        @if (showLogo()) {
+          <div class="logo-slot">
+            <img [src]="data().meta.logoUrl" alt="" class="logo" (error)="failedLogo.set(data().meta.logoUrl ?? null)" />
+          </div>
         }
-        <div class="title">{{ data().title }}</div>
-        @if (data().meta.subject) {
-          <div class="subject">{{ data().meta.subject }}</div>
+        <div class="centre">
+          <div class="org">{{ data().meta.organizationName }}</div>
+          @if (data().meta.farmName) {
+            <div class="farm">{{ data().meta.farmName }}</div>
+          }
+          @if (data().meta.contactLine) {
+            <div class="contact">{{ data().meta.contactLine }}</div>
+          }
+          <div class="title">{{ data().title }}</div>
+          @if (data().meta.subject) {
+            <div class="subject">{{ data().meta.subject }}</div>
+          }
+        </div>
+        @if (showLogo()) {
+          <div class="logo-slot" aria-hidden="true"></div>
         }
       </header>
 
@@ -184,8 +197,13 @@ interface RenderBand {
     .sheet.landscape { width: 297mm; min-height: 210mm; }
 
     .letterhead { text-align: center; border-bottom: 1px solid #000; padding-bottom: 4px; }
+    .letterhead.with-logo { display: flex; align-items: center; gap: 4mm; }
+    .letterhead .centre { flex: 1; min-width: 0; }
+    .letterhead .logo-slot { width: 24mm; flex: 0 0 24mm; display: flex; align-items: center; }
+    .letterhead .logo { max-height: 18mm; max-width: 24mm; object-fit: contain; }
     .letterhead .org { font-size: 13pt; font-weight: 700; }
     .letterhead .farm { font-size: 8pt; }
+    .letterhead .contact { font-size: 7.5pt; color: #555; }
     .letterhead .title { font-size: 12pt; font-weight: 700; margin-top: 4px; }
     .letterhead .subject { font-size: 8pt; color: #555; }
 
@@ -253,6 +271,14 @@ export class ReportPaperComponent {
   readonly language = input<ReportLanguage>('en');
 
   protected readonly isLandscape = computed(() => this.data().page.orientation === 'Landscape');
+
+  /** A logo URL that failed to load: the letterhead falls back to text only rather than a broken image. */
+  protected readonly failedLogo = signal<string | null>(null);
+
+  protected readonly showLogo = computed(() => {
+    const url = this.data().meta.logoUrl;
+    return !!url && url !== this.failedLogo();
+  });
 
   protected readonly metaFields = computed(() => this.data().meta.parameters ?? []);
 

@@ -255,8 +255,13 @@ public sealed class ReportExecutionService : IReportExecutionService
                 ? await _environment.DescribeAsync(ReportParameterType.Farm, fid, cancellationToken).ConfigureAwait(false)
                 : null;
 
+            // Logo and contact line for the letterhead. Resolved defensively: a report must print
+            // even when the organisation has no logo or its file has gone missing.
+            var letterhead = await _environment.GetLetterheadAsync(farmId, cancellationToken).ConfigureAwait(false)
+                ?? ReportLetterhead.None;
+
             var meta = new ReportMetaHeader(
-                _tenantService.TenantName,
+                letterhead.OrganizationName ?? _tenantService.TenantName,
                 farmName,
                 definition.Title.For(request.Language),
                 definition.Key,
@@ -269,6 +274,9 @@ public sealed class ReportExecutionService : IReportExecutionService
                 GeneratedAtLocal = ReportTimeZone.FormatStamp(nowUtc, locale.TimeZone),
                 GeneratedAtLocalTime = ReportTimeZone.ToLocal(nowUtc, locale.TimeZone),
                 TimeZoneLabel = ReportTimeZone.Label(locale.TimeZone, nowUtc),
+                ContactLine = letterhead.ContactLine,
+                LogoUrl = letterhead.LogoUrl,
+                Logo = letterhead.Logo,
             };
 
             var dataSet = await definition.ExecuteAsync(context, meta, cancellationToken).ConfigureAwait(false);

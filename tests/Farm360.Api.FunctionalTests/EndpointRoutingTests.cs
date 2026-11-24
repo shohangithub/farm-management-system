@@ -80,6 +80,7 @@ public class EndpointRoutingTests
         app.MapFarmEndpoints();
         app.MapDashboardEndpoints();
         app.MapReportEndpoints();
+        app.MapDocumentEndpoints();
         app.MapShedEndpoints();
         app.MapPenEndpoints();
         app.MapMasterDataEndpoints();

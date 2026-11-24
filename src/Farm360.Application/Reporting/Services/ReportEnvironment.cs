@@ -10,7 +10,9 @@ using Farm360.Domain.Finance.Accounting;
 using Farm360.Domain.Finance.Interfaces;
 using Farm360.Domain.Inventory.Interfaces.Repositories;
 using Farm360.Domain.Livestock.Repositories;
+using Farm360.Domain.Organizations;
 using Farm360.Domain.Organizations.Repositories;
+using Farm360.Domain.Organizations.ValueObjects;
 using Farm360.Domain.Tenancy.Repositories;
 
 namespace Farm360.Application.Reporting.Services;
@@ -22,6 +24,23 @@ public sealed record ReportFarmOption(Guid Id, string Name);
 public sealed record ReportLocale(TimeZoneInfo TimeZone, int FiscalYearStartMonth)
 {
     public static ReportLocale Default { get; } = new(ReportTimeZone.Default, FiscalYear.DefaultStartMonth);
+}
+
+/// <summary>
+/// Who is printing: the organisation's name, contact line and logo, as they appear at the top of
+/// every report and customer document.
+/// </summary>
+/// <param name="OrganizationName">The organisation that owns the farm (null when none is set up).</param>
+/// <param name="ContactLine">Address · phone · e-mail, whichever exist; null when none do.</param>
+/// <param name="LogoUrl">Relative URL of the stored logo, for the browser.</param>
+/// <param name="Logo">The logo bytes for PDFs; null when there is no logo or it could not be read.</param>
+public sealed record ReportLetterhead(
+    string? OrganizationName,
+    string? ContactLine,
+    string? LogoUrl,
+    byte[]? Logo)
+{
+    public static ReportLetterhead None { get; } = new(null, null, null, null);
 }
 
 /// <summary>
@@ -40,6 +59,13 @@ public interface IReportEnvironment
 
     /// <summary>Human name for an entity id (farm name, batch name, animal tag…), or null if not found.</summary>
     Task<string?> DescribeAsync(ReportParameterType type, Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The organisation letterhead for a farm (or, without a farm, the tenant's organisation):
+    /// name, contact line and logo. Never throws for a missing logo; cached for the request.
+    /// </summary>
+    Task<ReportLetterhead> GetLetterheadAsync(Guid? farmId, CancellationToken cancellationToken) =>
+        Task.FromResult(ReportLetterhead.None);
 }
 
 internal sealed class ReportEnvironment : IReportEnvironment
@@ -57,8 +83,11 @@ internal sealed class ReportEnvironment : IReportEnvironment
     private readonly IShedRepository _sheds;
     private readonly IBreedRepository _breeds;
     private readonly IInventoryItemRepository _items;
+    private readonly IFileStorageService? _files;
 
     private IReadOnlyList<ReportFarmOption>? _farmCache;
+    private readonly Dictionary<Guid, ReportLetterhead> _letterheadCache = [];
+    private readonly Dictionary<string, byte[]?> _logoCache = new(StringComparer.OrdinalIgnoreCase);
 
     public ReportEnvironment(
         ITenantService tenant,
@@ -73,7 +102,8 @@ internal sealed class ReportEnvironment : IReportEnvironment
         IAnimalBatchRepository batches,
         IShedRepository sheds,
         IBreedRepository breeds,
-        IInventoryItemRepository items)
+        IInventoryItemRepository items,
+        IFileStorageService? files = null)
     {
         _tenant = tenant;
         _currentUser = currentUser;
@@ -88,6 +118,7 @@ internal sealed class ReportEnvironment : IReportEnvironment
         _sheds = sheds;
         _breeds = breeds;
         _items = items;
+        _files = files;
     }
 
     public async Task<IReadOnlyList<ReportFarmOption>> GetAccessibleFarmsAsync(CancellationToken cancellationToken)
@@ -209,5 +240,139 @@ internal sealed class ReportEnvironment : IReportEnvironment
             default:
                 return null;
         }
+    }
+
+    private const long LogoMaxBytes = 2 * 1024 * 1024;
+
+    public async Task<ReportLetterhead> GetLetterheadAsync(Guid? farmId, CancellationToken cancellationToken)
+    {
+        var cacheKey = farmId ?? Guid.Empty;
+        if (_letterheadCache.TryGetValue(cacheKey, out var cached))
+        {
+            return cached;
+        }
+
+        Organization? organization = null;
+        Branch? branch = null;
+
+        if (farmId is { } id)
+        {
+            var farm = await _farms.GetByIdAsync(_tenant.TenantId, id, cancellationToken).ConfigureAwait(false);
+            if (farm is not null)
+            {
+                branch = await _branches.GetByIdAsync(_tenant.TenantId, farm.BranchId, cancellationToken).ConfigureAwait(false);
+                if (branch is not null)
+                {
+                    organization = await _organizations.GetByIdAsync(branch.OrganizationId, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
+        if (organization is null)
+        {
+            // No farm, or a farm without a branch: the tenant's own (oldest) organisation, if any.
+            var all = await _organizations.GetAllByTenantAsync(_tenant.TenantId, cancellationToken).ConfigureAwait(false);
+            organization = all
+                .OrderBy(o => o.CreatedAtUtc)
+                .ThenBy(o => o.Name, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+        }
+
+        ReportLetterhead letterhead;
+        if (organization is null && branch is null)
+        {
+            letterhead = ReportLetterhead.None;
+        }
+        else
+        {
+            var logoUrl = string.IsNullOrWhiteSpace(organization?.LogoUrl) ? null : organization.LogoUrl;
+            letterhead = new ReportLetterhead(
+                string.IsNullOrWhiteSpace(organization?.Name) ? null : organization.Name.Trim(),
+                BuildContactLine(organization, branch),
+                logoUrl,
+                await LoadLogoAsync(logoUrl, cancellationToken).ConfigureAwait(false));
+        }
+
+        _letterheadCache[cacheKey] = letterhead;
+        return letterhead;
+    }
+
+    /// <summary>"Road 4, Savar, Dhaka · 01711-000000 · info@farm.com" — whichever parts exist.</summary>
+    internal static string? BuildContactLine(Organization? organization, Branch? branch)
+    {
+        var parts = new List<string>(3);
+
+        var address = FormatAddress(branch?.Address) ?? FormatAddress(organization?.Address);
+        if (address is not null)
+        {
+            parts.Add(address);
+        }
+
+        var phone = FirstNonBlank(branch?.ContactPhone, organization?.ContactPhone);
+        if (phone is not null)
+        {
+            parts.Add(phone);
+        }
+
+        var email = FirstNonBlank(organization?.ContactEmail, branch?.ContactEmail);
+        if (email is not null)
+        {
+            parts.Add(email);
+        }
+
+        return parts.Count == 0 ? null : string.Join(" · ", parts);
+    }
+
+    private static string? FormatAddress(Address? address)
+    {
+        if (address is null)
+        {
+            return null;
+        }
+
+        string?[] candidates = [address.Street, address.City, address.State, address.ZipCode, address.Country];
+        var parts = new List<string>(candidates.Length);
+        foreach (var part in candidates)
+        {
+            if (!string.IsNullOrWhiteSpace(part))
+            {
+                parts.Add(part.Trim());
+            }
+        }
+
+        return parts.Count == 0 ? null : string.Join(", ", parts);
+    }
+
+    private static string? FirstNonBlank(string? first, string? second)
+    {
+        if (!string.IsNullOrWhiteSpace(first))
+        {
+            return first.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(second) ? null : second.Trim();
+    }
+
+    private async Task<byte[]?> LoadLogoAsync(string? logoUrl, CancellationToken cancellationToken)
+    {
+        if (_files is null || string.IsNullOrWhiteSpace(logoUrl))
+        {
+            return null;
+        }
+
+        if (_logoCache.TryGetValue(logoUrl, out var cached))
+        {
+            return cached;
+        }
+
+        // Only a file the app itself stored under /uploads/organizations — never a remote URL.
+        byte[]? bytes = null;
+        if (logoUrl.TrimStart('/').StartsWith("uploads/organizations/", StringComparison.OrdinalIgnoreCase))
+        {
+            bytes = await _files.ReadFileAsync(logoUrl, LogoMaxBytes, cancellationToken).ConfigureAwait(false);
+        }
+
+        _logoCache[logoUrl] = bytes;
+        return bytes;
     }
 }

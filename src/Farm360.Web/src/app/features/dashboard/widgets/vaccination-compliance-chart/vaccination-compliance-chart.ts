@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges, SimpleChanges, ViewChild, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterModule } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { VaccinationCompliance } from '../../models/dashboard.model';
@@ -8,17 +9,17 @@ import { VaccinationCompliance } from '../../models/dashboard.model';
 @Component({
   selector: 'app-vaccination-compliance-chart',
   standalone: true,
-  imports: [CommonModule, MatIconModule, BaseChartDirective],
+  imports: [CommonModule, MatIconModule, BaseChartDirective, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-full">
       <!-- Top Compliance Badge Header -->
-      <div class="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 dark:border-gray-800/60">
-        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Health Status:</span>
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-gray-100 dark:border-gray-700/60">
+        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Health status</span>
         <div 
           class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
           [ngClass]="getComplianceBadgeClass()">
-          <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getComplianceDotClass()"></span>
+          <span class="w-1.5 h-1.5 rounded-full" aria-hidden="true" [ngClass]="getComplianceDotClass()"></span>
           {{ compliancePercentage() }}% Compliance Rate
         </div>
       </div>
@@ -36,52 +37,56 @@ import { VaccinationCompliance } from '../../models/dashboard.model';
           <!-- Center Stat Overlay -->
           <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span 
-              class="text-3xl font-extrabold tracking-tight leading-none"
+              class="text-3xl font-semibold tabular-nums tracking-tight leading-none"
               [ngClass]="getComplianceTextClass()">
               {{ compliancePercentage() }}%
             </span>
-            <span class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-1">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">
               Protected
             </span>
           </div>
         </div>
 
         <!-- Metric Breakdown Badges -->
-        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-gray-800/60">
-          <div class="flex flex-col items-center p-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-800/30">
-            <div class="flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-              <mat-icon class="text-[14px] w-[14px] h-[14px]">check_circle</mat-icon>
+        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/60">
+          <div class="flex flex-col items-center p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 min-w-0">
+            <div class="flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 text-center">
+              <mat-icon class="text-[14px] w-[14px] h-[14px] shrink-0" aria-hidden="true">check_circle</mat-icon>
               Completed
             </div>
-            <span class="text-base font-bold text-gray-900 dark:text-white mt-0.5">{{ completedCount() }}</span>
+            <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white mt-0.5">{{ completedCount() }}</span>
           </div>
 
-          <div class="flex flex-col items-center p-2 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-100/60 dark:border-amber-800/30">
-            <div class="flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
-              <mat-icon class="text-[14px] w-[14px] h-[14px]">schedule</mat-icon>
+          <div class="flex flex-col items-center p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 min-w-0">
+            <div class="flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400 text-center">
+              <mat-icon class="text-[14px] w-[14px] h-[14px] shrink-0" aria-hidden="true">schedule</mat-icon>
               Due Soon
             </div>
-            <span class="text-base font-bold text-gray-900 dark:text-white mt-0.5">{{ dueCount() }}</span>
+            <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white mt-0.5">{{ dueCount() }}</span>
           </div>
 
-          <div class="flex flex-col items-center p-2 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100/60 dark:border-rose-800/30">
-            <div class="flex items-center gap-1 text-[11px] font-medium text-rose-700 dark:text-rose-400">
-              <mat-icon class="text-[14px] w-[14px] h-[14px]">warning</mat-icon>
+          <div class="flex flex-col items-center p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 min-w-0">
+            <div class="flex items-center gap-1 text-xs font-medium text-rose-700 dark:text-rose-400 text-center">
+              <mat-icon class="text-[14px] w-[14px] h-[14px] shrink-0" aria-hidden="true">warning</mat-icon>
               Overdue
             </div>
-            <span class="text-base font-bold text-gray-900 dark:text-white mt-0.5">{{ overdueCount() }}</span>
+            <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white mt-0.5">{{ overdueCount() }}</span>
           </div>
         </div>
       </div>
 
       <!-- Empty State -->
       <ng-template #emptyState>
-        <div class="flex flex-col items-center justify-center flex-1 py-12 text-center text-gray-400 dark:text-gray-500">
-          <div class="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50 flex items-center justify-center mb-3">
-            <mat-icon class="text-2xl text-gray-400">health_and_safety</mat-icon>
+        <div class="flex flex-col items-center justify-center flex-1 py-10 text-center">
+          <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 flex items-center justify-center mb-3" aria-hidden="true">
+            <mat-icon>health_and_safety</mat-icon>
           </div>
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No vaccination schedules</p>
-          <p class="text-xs text-gray-400 max-w-[220px]">Schedule vaccination events or protocols to monitor compliance.</p>
+          <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">No vaccination schedules</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">Schedule vaccination events or protocols to monitor compliance.</p>
+          <a routerLink="/health/vaccinations" class="mt-4 inline-flex items-center gap-1 min-h-[44px] px-3 rounded-lg text-sm font-semibold text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+            Open vaccinations
+            <mat-icon class="text-[18px] w-[18px] h-[18px]" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
         </div>
       </ng-template>
     </div>
@@ -113,8 +118,8 @@ export class VaccinationComplianceChartComponent implements OnChanges {
     datasets: [{
       data: [],
       backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
-      borderWidth: 2,
-      borderColor: '#ffffff',
+      borderWidth: 0,
+      spacing: 2,
       hoverOffset: 4
     }]
   };
@@ -155,8 +160,8 @@ export class VaccinationComplianceChartComponent implements OnChanges {
           datasets: [{
             data: [this.data.completed, this.data.due, this.data.overdue],
             backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
-            borderWidth: 2,
-            borderColor: '#ffffff',
+            borderWidth: 0,
+            spacing: 2,
             hoverOffset: 4
           }]
         };
@@ -167,9 +172,9 @@ export class VaccinationComplianceChartComponent implements OnChanges {
 
   public getComplianceBadgeClass(): string {
     const rate = this.compliancePercentage();
-    if (rate >= 80) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/50';
-    if (rate >= 50) return 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/50';
-    return 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/50';
+    if (rate >= 80) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400';
+    if (rate >= 50) return 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400';
+    return 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400';
   }
 
   public getComplianceDotClass(): string {
@@ -181,8 +186,8 @@ export class VaccinationComplianceChartComponent implements OnChanges {
 
   public getComplianceTextClass(): string {
     const rate = this.compliancePercentage();
-    if (rate >= 80) return 'text-emerald-600 dark:text-emerald-400';
-    if (rate >= 50) return 'text-amber-600 dark:text-amber-400';
-    return 'text-rose-600 dark:text-rose-400';
+    if (rate >= 80) return 'text-emerald-700 dark:text-emerald-400';
+    if (rate >= 50) return 'text-amber-700 dark:text-amber-400';
+    return 'text-rose-700 dark:text-rose-400';
   }
 }

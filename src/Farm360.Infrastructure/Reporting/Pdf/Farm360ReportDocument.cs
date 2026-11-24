@@ -24,7 +24,6 @@ internal sealed class Farm360ReportDocument : IDocument
     private const float BodyFontSize = 8f;
     private const float HeaderFontSize = 8f;
     private const float TitleFontSize = 12f;
-    private const float OrgFontSize = 13f;
     private const float FooterFontSize = 7f;
     private const float CellPadding = 2.5f;
     private const float RuleWidth = 0.5f;
@@ -76,26 +75,19 @@ internal sealed class Farm360ReportDocument : IDocument
     // Repeats on every page: a page that escapes the stapler must still identify itself.
 
     private void ComposeLetterhead(IContainer container) =>
-        container.Column(col =>
-        {
-            col.Item().AlignCenter().Text(_data.Meta.OrganizationName)
-                .FontSize(OrgFontSize).Bold();
-
-            if (!string.IsNullOrWhiteSpace(_data.Meta.FarmName))
+        LetterheadComposer.Compose(
+            container,
+            new LetterheadContent(_data.Meta.OrganizationName, _data.Meta.FarmName, _data.Meta.ContactLine, _data.Meta.Logo),
+            col =>
             {
-                col.Item().AlignCenter().Text(_data.Meta.FarmName!).FontSize(HeaderFontSize);
-            }
+                col.Item().PaddingTop(3).AlignCenter().Text(_data.Title)
+                    .FontSize(TitleFontSize).Bold();
 
-            col.Item().PaddingTop(3).AlignCenter().Text(_data.Title)
-                .FontSize(TitleFontSize).Bold();
-
-            if (!string.IsNullOrWhiteSpace(_data.Meta.Subject))
-            {
-                col.Item().AlignCenter().Text(_data.Meta.Subject!).FontSize(HeaderFontSize).FontColor(Muted);
-            }
-
-            col.Item().PaddingTop(3).BorderBottom(1).BorderColor(Colors.Black);
-        });
+                if (!string.IsNullOrWhiteSpace(_data.Meta.Subject))
+                {
+                    col.Item().AlignCenter().Text(_data.Meta.Subject!).FontSize(HeaderFontSize).FontColor(Muted);
+                }
+            });
 
     private void ComposeBody(IContainer container) =>
         container.Column(col =>

@@ -89,4 +89,40 @@ public partial class LocalFileStorageService : IFileStorageService
 
         return Task.CompletedTask;
     }
+
+    public async Task<byte[]?> ReadFileAsync(string filePath, long maxBytes = 2 * 1024 * 1024, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return null;
+
+        try
+        {
+            // Only a relative "/uploads/..." path this service wrote; never an absolute URL or a
+            // path that climbs out of wwwroot/uploads.
+            if (filePath.Contains("://", StringComparison.Ordinal))
+                return null;
+
+            var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var uploadsRoot = Path.GetFullPath(Path.Combine(webRoot, "uploads"));
+            var relativePath = filePath.Split('?', '#')[0].TrimStart('/', '\\');
+            var fullPath = Path.GetFullPath(Path.Combine(webRoot, relativePath));
+
+            if (!fullPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Refused to read file outside the uploads folder: {Path}", filePath);
+                return null;
+            }
+
+            var info = new FileInfo(fullPath);
+            if (!info.Exists || info.Length == 0 || info.Length > maxBytes)
+                return null;
+
+            return await File.ReadAllBytesAsync(fullPath, cancellationToken);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or System.Security.SecurityException)
+        {
+            _logger.LogWarning(ex, "Could not read stored file {Path}", filePath);
+            return null;
+        }
+    }
 }

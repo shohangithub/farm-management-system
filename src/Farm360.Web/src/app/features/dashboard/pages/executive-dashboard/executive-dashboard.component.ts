@@ -10,9 +10,9 @@ import { Router, RouterModule } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ExecutiveDashboardData, InsightSeverity, InsightType, ActionableInsight } from '../../models/dashboard.model';
 import { FarmGuidelinesDialogComponent } from '../../../../shared/components/farm-guidelines-dialog/farm-guidelines-dialog';
 import { HerdCompositionChartComponent } from '../../widgets/herd-composition-chart/herd-composition-chart';
@@ -24,6 +24,38 @@ import { RecentActivityFeedComponent } from '../../widgets/recent-activity-feed/
 import { SetupChecklistComponent } from '../../widgets/setup-checklist/setup-checklist';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
+/** Visual tone of a KPI: neutral (brand), or a state colour only when the meaning is clear. */
+type KpiTone = 'neutral' | 'good' | 'warn' | 'bad';
+
+interface KpiCard {
+  label: string;
+  icon: string;
+  value: number;
+  /** Format the value as money instead of a plain count. */
+  money?: boolean;
+  /** Tint of the icon circle. */
+  tone: KpiTone;
+  hint: string;
+  hintIcon?: string;
+  hintTone: KpiTone;
+  /** Net profit card: show income / expense instead of a hint line. */
+  split?: { income: number; expense: number };
+}
+
+const KPI_ICON_CLASS: Record<KpiTone, string> = {
+  neutral: 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400',
+  good: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  warn: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+  bad: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400',
+};
+
+const KPI_HINT_CLASS: Record<KpiTone, string> = {
+  neutral: 'text-gray-500 dark:text-gray-400',
+  good: 'text-emerald-700 dark:text-emerald-400',
+  warn: 'text-amber-700 dark:text-amber-400',
+  bad: 'text-rose-700 dark:text-rose-400',
+};
+
 @Component({
   selector: 'app-executive-dashboard',
   standalone: true,
@@ -32,7 +64,6 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     MatIconModule,
     MatButtonModule,
     PageHeaderComponent,
-    LoadingComponent,
     ErrorStateComponent,
     RouterModule,
     HerdCompositionChartComponent,
@@ -129,6 +160,74 @@ export class ExecutiveDashboardComponent {
     };
   });
 
+  /** Placeholder count for the KPI skeleton while the dashboard loads. */
+  public readonly kpiSkeletons = [0, 1, 2, 3, 4, 5, 6, 7];
+
+  private readonly authService = inject(AuthService);
+  private readonly farmName = toSignal(this.contextService.currentFarm$.pipe(map(farm => farm?.name ?? null)), { initialValue: null });
+
+  /** "Good morning, Rafiul. Here's Green Acres today." Built from data already in memory. */
+  public readonly greeting = computed(() => {
+    const hour = new Date().getHours();
+    const salutation = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const firstName = (this.authService.currentUserSignal()?.fullName ?? '').trim().split(/\s+/)[0];
+    const farm = this.farmName();
+    return `${salutation}${firstName ? ', ' + firstName : ''}. Here's ${farm ? farm : 'your farm'} today.`;
+  });
+
+  /** Count of KPI signals that need someone to act (sick, deaths, low stock, due vaccinations). */
+  public readonly attentionCount = computed(() => {
+    const d = this.data();
+    if (!d) return 0;
+    return [d.sickAnimals, d.deathsThisMonth, d.feedLowStockCount, d.dueVaccinations].filter(v => v > 0).length;
+  });
+
+  public readonly kpis = computed<KpiCard[]>(() => {
+    const d = this.data();
+    if (!d) return [];
+    const net = d.currentMonthIncome - d.currentMonthExpense;
+    return [
+      {
+        label: 'Animals on Farm', icon: 'pets', value: d.totalAnimals, tone: 'neutral',
+        hint: 'Active + quarantined head', hintTone: 'neutral'
+      },
+      d.sickAnimals > 0
+        ? { label: 'Sick Animals', icon: 'medical_services', value: d.sickAnimals, tone: 'bad', hint: 'Needs attention', hintIcon: 'warning', hintTone: 'bad' }
+        : { label: 'Sick Animals', icon: 'medical_services', value: d.sickAnimals, tone: 'neutral', hint: 'All healthy', hintIcon: 'check_circle', hintTone: 'good' },
+      d.feedLowStockCount > 0
+        ? { label: 'Low Stock Items', icon: 'inventory_2', value: d.feedLowStockCount, tone: 'warn', hint: 'Reorder required', hintIcon: 'shopping_cart', hintTone: 'warn' }
+        : { label: 'Low Stock Items', icon: 'inventory_2', value: d.feedLowStockCount, tone: 'neutral', hint: 'Stock healthy', hintIcon: 'check_circle', hintTone: 'good' },
+      {
+        label: 'Net Profit (MTD)', icon: 'account_balance_wallet', value: net, money: true,
+        tone: net < 0 ? 'bad' : 'neutral', hint: '', hintTone: 'neutral',
+        split: { income: d.currentMonthIncome, expense: d.currentMonthExpense }
+      },
+      {
+        label: 'Births (MTD)', icon: 'child_care', value: d.birthsThisMonth, tone: 'neutral',
+        hint: 'New arrivals this month', hintTone: 'neutral'
+      },
+      d.deathsThisMonth > 0
+        ? { label: 'Deaths (MTD)', icon: 'heart_broken', value: d.deathsThisMonth, tone: 'bad', hint: 'Attention needed', hintIcon: 'warning', hintTone: 'bad' }
+        : { label: 'Deaths (MTD)', icon: 'heart_broken', value: d.deathsThisMonth, tone: 'neutral', hint: 'No mortalities', hintIcon: 'check_circle', hintTone: 'good' },
+      d.dueVaccinations > 0
+        ? { label: 'Due Vaccinations', icon: 'vaccines', value: d.dueVaccinations, tone: 'warn', hint: 'Action required', hintIcon: 'schedule', hintTone: 'warn' }
+        : { label: 'Due Vaccinations', icon: 'vaccines', value: d.dueVaccinations, tone: 'neutral', hint: 'Up to date', hintIcon: 'check_circle', hintTone: 'good' },
+      {
+        label: 'Pregnant Animals', icon: 'favorite', value: d.pregnantAnimals, tone: 'neutral',
+        hint: d.pregnantAnimals > 0 ? 'Active pregnancies' : 'No active pregnancies',
+        hintIcon: d.pregnantAnimals > 0 ? 'monitor_heart' : undefined, hintTone: 'neutral'
+      }
+    ];
+  });
+
+  public kpiIconClass(tone: KpiTone): string {
+    return KPI_ICON_CLASS[tone];
+  }
+
+  public kpiHintClass(tone: KpiTone): string {
+    return KPI_HINT_CLASS[tone];
+  }
+
   public openGuidelines(): void {
     this.dialog.open(FarmGuidelinesDialogComponent, { disableClose: true,
       width: '90vw',
@@ -149,11 +248,11 @@ export class ExecutiveDashboardComponent {
 
   public getSeverityColorClass(severity: InsightSeverity): string {
     switch (severity) {
-      case InsightSeverity.Critical: return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20';
-      case InsightSeverity.High: return 'text-orange-500 bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20';
-      case InsightSeverity.Medium: return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20';
-      case InsightSeverity.Low: return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20';
-      default: return 'text-gray-500 bg-gray-50 dark:bg-gray-500/10 border-gray-200 dark:border-gray-500/20';
+      case InsightSeverity.Critical: return 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10';
+      case InsightSeverity.High: return 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10';
+      case InsightSeverity.Medium: return 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/10';
+      case InsightSeverity.Low: return 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10';
+      default: return 'text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-500/10';
     }
   }
   

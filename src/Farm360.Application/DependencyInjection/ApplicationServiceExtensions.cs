@@ -69,6 +69,9 @@ public static class ApplicationServiceExtensions
         // ── Reporting platform (docs/32): registry + execution service ────────
         services.AddReportingServices();
 
+        // ── Customer documents: invoices, receipts, purchase orders (share the report letterhead) ──
+        services.AddScoped<Farm360.Application.Documents.IDocumentHeaderBuilder, Farm360.Application.Documents.DocumentHeaderBuilder>();
+
         // ── AutoMapper (auto-discover all mapping profiles in assembly) ────────
         services.AddAutoMapper(assembly);
 

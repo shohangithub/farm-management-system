@@ -28,7 +28,13 @@
   @if (notice()) {
     <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-sm flex items-center gap-2">
       <mat-icon class="text-base">task_alt</mat-icon> <span class="flex-1">{{ notice() }}</span>
-      <button type="button" (click)="notice.set(null)" aria-label="Dismiss" class="text-emerald-700 dark:text-emerald-300"><mat-icon class="text-base">close</mat-icon></button>
+      @if (lastPaymentId(); as paymentId) {
+        <button type="button" (click)="printReceipt(paymentId)" [disabled]="printing() === paymentId"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-emerald-800 dark:text-emerald-100 bg-white/70 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 hover:bg-white dark:hover:bg-emerald-900 disabled:opacity-60">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === paymentId ? 'hourglass_top' : 'receipt_long' }}</mat-icon> Print receipt
+        </button>
+      }
+      <button type="button" (click)="notice.set(null); lastPaymentId.set(null)" aria-label="Dismiss" class="text-emerald-700 dark:text-emerald-300"><mat-icon class="text-base">close</mat-icon></button>
     </div>
   }
 
@@ -231,6 +237,10 @@
                         {{ b.kind === 'Payable' ? 'Pay' : 'Collect' }}
                       </button>
                     }
+                    @if (isAnimalSale(b)) {
+                      <button type="button" (click)="printSaleInvoice(b)" [disabled]="printing() === b.id" title="Sale invoice (PDF)" aria-label="Sale invoice"
+                        class="ml-1 p-1 rounded-lg text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-50"><mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === b.id ? 'hourglass_top' : 'description' }}</mat-icon></button>
+                    }
                     <button type="button" (click)="open('terms', b)" title="Edit party / due date"
                       class="ml-1 p-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><mat-icon class="!w-4 !h-4 !text-[16px]">edit_calendar</mat-icon></button>
                     @if (b.outstandingBdt > 0.01) {
@@ -256,7 +266,12 @@
                                 <td class="py-1.5 w-24">{{ p.method }}</td>
                                 <td class="py-1.5 text-gray-500">{{ p.reference }} {{ p.notes }}</td>
                                 <td class="py-1.5 text-right font-mono font-bold w-32">{{ p.amountBdt | money:2 }}</td>
-                                <td class="py-1.5 text-right w-16">
+                                <td class="py-1.5 text-right w-28 whitespace-nowrap">
+                                  <button type="button" (click)="printReceipt(p.id)" [disabled]="printing() === p.id"
+                                    [title]="b.kind === 'Payable' ? 'Payment voucher (PDF)' : 'Money receipt (PDF)'" aria-label="Receipt"
+                                    class="mr-2 p-0.5 rounded text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 align-middle disabled:opacity-50">
+                                    <mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === p.id ? 'hourglass_top' : 'receipt_long' }}</mat-icon>
+                                  </button>
                                   <button type="button" (click)="voidPayment(b, p)" class="text-rose-500 hover:underline">Void</button>
                                 </td>
                               </tr>

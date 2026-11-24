@@ -8,23 +8,24 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
   standalone: true,
   imports: [MoneyPipe, CommonModule],
   template: `
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div *ngFor="let card of data" class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-        <h3 class="text-gray-500 text-sm font-medium">{{card.farmName}}</h3>
-        <div class="mt-2 space-y-1">
-          <div class="flex justify-between">
-            <span class="text-sm text-gray-600">Animals on Farm</span>
-            <span class="text-sm font-semibold text-gray-900">{{card.animalCount}}</span>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div *ngFor="let card of data" class="bg-white dark:bg-gray-800/80 p-5 rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-700/60 min-w-0">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white m-0 truncate">{{card.farmName}}</h3>
+        <dl class="mt-3 mb-0 space-y-2">
+          <div class="flex justify-between gap-3">
+            <dt class="text-sm text-gray-600 dark:text-gray-400">Animals on Farm</dt>
+            <dd class="m-0 text-sm font-semibold tabular-nums text-gray-900 dark:text-white">{{card.animalCount}}</dd>
           </div>
-          <div class="flex justify-between">
-            <span class="text-sm text-gray-600">Sick</span>
-            <span class="text-sm font-semibold text-red-600">{{card.sickCount}}</span>
+          <div class="flex justify-between gap-3">
+            <dt class="text-sm text-gray-600 dark:text-gray-400">Sick</dt>
+            <dd class="m-0 text-sm font-semibold tabular-nums"
+                [ngClass]="card.sickCount > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-gray-900 dark:text-white'">{{card.sickCount}}</dd>
           </div>
-          <div class="flex justify-between">
-            <span class="text-sm text-gray-600">Revenue</span>
-            <span class="text-sm font-semibold text-emerald-600">{{card.monthlyRevenue | money:2 }}</span>
+          <div class="flex justify-between gap-3">
+            <dt class="text-sm text-gray-600 dark:text-gray-400">Revenue</dt>
+            <dd class="m-0 text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">{{card.monthlyRevenue | money:2 }}</dd>
           </div>
-        </div>
+        </dl>
       </div>
     </div>
   `
