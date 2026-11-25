@@ -12,6 +12,8 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { ConfirmService } from '../../../shared/services/confirm.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -19,7 +21,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
 @Component({
   selector: 'app-shed-detail',
   standalone: true,
-  imports: [ErrorStateComponent, 
+  imports: [TranslatePipe, ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -34,6 +36,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShedDetailComponent {
+  private readonly i18n = inject(I18nService);
   private readonly confirmService = inject(ConfirmService);
   private readonly shedService = inject(ShedService);
   private readonly penService = inject(PenService);
@@ -74,7 +77,7 @@ export class ShedDetailComponent {
         pens: this.penService.getPensByShed(shedId).pipe(catchError(() => of([])))
       }).pipe(
         tap(res => {
-          if (!res.shed && !this.error()) this.error.set('Failed to load shed details.');
+          if (!res.shed && !this.error()) this.error.set(this.i18n.t('Failed to load shed details.'));
         }),
         catchError(err => {
           this.error.set(parseApiError(err, 'Failed to load shed details.'));
@@ -135,7 +138,7 @@ export class ShedDetailComponent {
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
         },
         error: (err) => {
-          this.error.set(err?.error?.detail || 'Failed to delete shed.');
+          this.error.set(err?.error?.detail || this.i18n.t('Failed to delete shed.'));
           console.error('Failed to delete shed', err);
         }
       });

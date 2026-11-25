@@ -16,6 +16,7 @@ import {
 } from '../../models/finance.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export type ShareActionType = 'purchase' | 'sell' | 'transfer' | 'valuation';
 
@@ -32,7 +33,7 @@ export interface BuySellSharesDialogData {
   selector: 'app-buy-sell-shares-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MoneyPipe, 
+  imports: [TranslatePipe, MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -49,14 +50,14 @@ export interface BuySellSharesDialogData {
           </div>
           <div>
             <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">
-              {{ getHeaderTitle() }}
+              {{ getHeaderTitle() | t }}
             </h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-              {{ getHeaderSubtitle() }}
+              {{ getHeaderSubtitle() | t }}
             </p>
           </div>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -66,17 +67,17 @@ export interface BuySellSharesDialogData {
         <button type="button" (click)="setActionType('purchase')"
                 [class]="actionType() === 'purchase' ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white shadow-sm' : 'px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'">
           <mat-icon class="!text-[14px] !w-[14px] !h-[14px] inline -mt-0.5 mr-1">add_shopping_cart</mat-icon>
-          Purchase Shares
+          {{ 'Purchase Shares' | t }}
         </button>
         <button type="button" (click)="setActionType('sell')"
                 [class]="actionType() === 'sell' ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white shadow-sm' : 'px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'">
           <mat-icon class="!text-[14px] !w-[14px] !h-[14px] inline -mt-0.5 mr-1">remove_shopping_cart</mat-icon>
-          Redeem / Sell Back
+          {{ 'Redeem / Sell Back' | t }}
         </button>
         <button type="button" (click)="setActionType('transfer')"
                 [class]="actionType() === 'transfer' ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm' : 'px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'">
           <mat-icon class="!text-[14px] !w-[14px] !h-[14px] inline -mt-0.5 mr-1">swap_horiz</mat-icon>
-          Transfer Shares
+          {{ 'Transfer Shares' | t }}
         </button>
       </div>
 
@@ -95,16 +96,16 @@ export interface BuySellSharesDialogData {
           <!-- Info Banner -->
           <div *ngIf="actionType() === 'purchase'" class="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-800/40 flex items-center justify-between text-xs">
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">Available Pool</span>
-              <span class="text-sm font-bold text-teal-800 dark:text-teal-200">{{ data.config.availableShareCount | number }} shares</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Available Pool' | t }}</span>
+              <span class="text-sm font-bold text-teal-800 dark:text-teal-200">{{ '{count} shares' | t: { count: (data.config.availableShareCount | number) } }}</span>
             </div>
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">Current Valuation Price</span>
-              <span class="text-sm font-bold text-emerald-700 dark:text-emerald-300">{{ data.config.sharePriceBdt | money }} / share</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Current Valuation Price' | t }}</span>
+              <span class="text-sm font-bold text-emerald-700 dark:text-emerald-300">{{ '{price} / share' | t: { price: (data.config.sharePriceBdt | money) } }}</span>
             </div>
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">Min Purchase</span>
-              <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ data.config.minimumPurchaseShares }} shares</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Min Purchase' | t }}</span>
+              <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ '{count} shares' | t: { count: data.config.minimumPurchaseShares } }}</span>
             </div>
           </div>
 
@@ -112,28 +113,28 @@ export interface BuySellSharesDialogData {
           <div *ngIf="actionType() === 'valuation'" class="space-y-4">
             <div class="p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/40 flex items-center justify-between text-xs">
               <div>
-                <span class="text-gray-500 dark:text-gray-400 block font-medium">Current Share Price</span>
+                <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Current Share Price' | t }}</span>
                 <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ data.config.sharePriceBdt | money }}</span>
               </div>
               <div>
-                <span class="text-gray-500 dark:text-gray-400 block font-medium">Current Farm Valuation</span>
+                <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Current Farm Valuation' | t }}</span>
                 <span class="text-sm font-bold text-indigo-700 dark:text-indigo-300">{{ data.config.totalValuationBdt | money }}</span>
               </div>
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                New Price Per Share (BDT) <span class="text-red-500">*</span>
+                {{ 'New Price Per Share (BDT)' | t }} <span class="text-red-500">*</span>
               </label>
-              <input type="number" formControlName="newSharePriceBdt" placeholder="e.g. 5500" min="1" step="0.01"
+              <input type="number" formControlName="newSharePriceBdt" [placeholder]="'e.g. 5500' | t" min="1" step="0.01"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                Reason for Revaluation
+                {{ 'Reason for Revaluation' | t }}
               </label>
-              <textarea formControlName="valuationNotes" rows="3" placeholder="e.g. Annual farm performance review: herd expanded by 30%, revenue up 22%."
+              <textarea formControlName="valuationNotes" rows="3" [placeholder]="'e.g. Annual farm performance review: herd expanded by 30%, revenue up 22%.' | t"
                         class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"></textarea>
             </div>
           </div>
@@ -144,11 +145,11 @@ export interface BuySellSharesDialogData {
             <!-- Primary Investor Selector -->
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                {{ actionType() === 'transfer' ? 'From Investor (Transferor)' : 'Investor' }} <span class="text-red-500">*</span>
+                {{ (actionType() === 'transfer' ? 'From Investor (Transferor)' : 'Investor') | t }} <span class="text-red-500">*</span>
               </label>
               <select formControlName="investorId" (change)="onInvestorChanged()"
                       class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-                <option value="" disabled>Select an investor</option>
+                <option value="" disabled>{{ 'Select an investor' | t }}</option>
                 <option *ngFor="let inv of data.investors" [value]="inv.id">
                   {{ inv.name }} {{ inv.phone ? '(' + inv.phone + ')' : '' }}
                 </option>
@@ -158,11 +159,11 @@ export interface BuySellSharesDialogData {
             <!-- Target Investor (Transfer Mode Only) -->
             <div *ngIf="actionType() === 'transfer'" class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                To Investor (Recipient) <span class="text-red-500">*</span>
+                {{ 'To Investor (Recipient)' | t }} <span class="text-red-500">*</span>
               </label>
               <select formControlName="toInvestorId"
                       class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-                <option value="" disabled>Select recipient investor</option>
+                <option value="" disabled>{{ 'Select recipient investor' | t }}</option>
                 <option *ngFor="let inv of recipientInvestors()" [value]="inv.id">
                   {{ inv.name }} {{ inv.phone ? '(' + inv.phone + ')' : '' }}
                 </option>
@@ -173,15 +174,15 @@ export interface BuySellSharesDialogData {
             <div *ngIf="(actionType() === 'sell' || actionType() === 'transfer') && selectedInvestorHolding()"
                  class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 flex items-center justify-between text-xs">
               <div>
-                <span class="text-gray-500 dark:text-gray-400 block font-medium">Currently Owned</span>
-                <span class="text-sm font-bold text-amber-800 dark:text-amber-200">{{ selectedInvestorHolding()?.shareCount | number }} shares</span>
+                <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Currently Owned' | t }}</span>
+                <span class="text-sm font-bold text-amber-800 dark:text-amber-200">{{ '{count} shares' | t: { count: (selectedInvestorHolding()?.shareCount | number) } }}</span>
               </div>
               <div>
-                <span class="text-gray-500 dark:text-gray-400 block font-medium">Avg Purchase Price</span>
+                <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Avg Purchase Price' | t }}</span>
                 <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ selectedInvestorHolding()?.averagePurchasePriceBdt | money }}</span>
               </div>
               <div>
-                <span class="text-gray-500 dark:text-gray-400 block font-medium">Total Value</span>
+                <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Total Value' | t }}</span>
                 <span class="text-sm font-bold text-teal-700 dark:text-teal-300">{{ (selectedInvestorHolding()?.shareCount || 0) * data.config.sharePriceBdt | money }}</span>
               </div>
             </div>
@@ -190,15 +191,15 @@ export interface BuySellSharesDialogData {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                  Number of Shares <span class="text-red-500">*</span>
+                  {{ 'Number of Shares' | t }} <span class="text-red-500">*</span>
                 </label>
-                <input type="number" formControlName="shareCount" placeholder="e.g. 50" min="1" step="1"
+                <input type="number" formControlName="shareCount" [placeholder]="'e.g. 50' | t" min="1" step="1"
                        class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
               </div>
 
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                  Price Per Share (BDT) <span class="text-red-500">*</span>
+                  {{ 'Price Per Share (BDT)' | t }} <span class="text-red-500">*</span>
                 </label>
                 <input type="number" formControlName="pricePerShareBdt" min="1" step="0.01"
                        class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
@@ -209,16 +210,16 @@ export interface BuySellSharesDialogData {
             <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <div>
                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block">
-                  {{ actionType() === 'sell' ? 'Redemption Payout to Investor' : 'Total Investment Amount' }}
+                  {{ (actionType() === 'sell' ? 'Redemption Payout to Investor' : 'Total Investment Amount') | t }}
                 </span>
                 <span class="text-lg font-extrabold text-teal-700 dark:text-teal-300">
                   {{ computedTotalAmount() | money }}
                 </span>
               </div>
               <div class="text-right">
-                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block">Ownership Share</span>
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block">{{ 'Ownership Share' | t }}</span>
                 <span class="text-sm font-bold text-gray-800 dark:text-gray-200">
-                  {{ computedPercentage() | number:'1.2-2' }}% of farm
+                  {{ '{percent}% of farm' | t: { percent: (computedPercentage() | number:'1.2-2') } }}
                 </span>
               </div>
             </div>
@@ -227,7 +228,7 @@ export interface BuySellSharesDialogData {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                  Transaction Date
+                  {{ 'Transaction Date' | t }}
                 </label>
                 <input type="date" formControlName="transactionDate"
                        class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
@@ -235,9 +236,9 @@ export interface BuySellSharesDialogData {
 
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                  Reference / Receipt #
+                  {{ 'Reference / Receipt #' | t }}
                 </label>
-                <input type="text" formControlName="referenceId" placeholder="e.g. TXN-7890"
+                <input type="text" formControlName="referenceId" [placeholder]="'e.g. TXN-7890' | t"
                        class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
               </div>
             </div>
@@ -245,9 +246,9 @@ export interface BuySellSharesDialogData {
             <!-- Notes -->
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                Notes
+                {{ 'Notes' | t }}
               </label>
-              <input type="text" formControlName="notes" placeholder="Optional transaction memo"
+              <input type="text" formControlName="notes" [placeholder]="'Optional transaction memo' | t"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
             </div>
 
@@ -259,12 +260,12 @@ export interface BuySellSharesDialogData {
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-end gap-3 shrink-0">
           <button mat-dialog-close type="button"
                   class="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
                   class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-teal-500/20 flex items-center gap-2 transition-all">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
-            <span>{{ isSubmitting() ? 'Processing...' : getSubmitButtonText() }}</span>
+            <span>{{ (isSubmitting() ? 'Processing...' : getSubmitButtonText()) | t }}</span>
           </button>
         </div>
       </form>

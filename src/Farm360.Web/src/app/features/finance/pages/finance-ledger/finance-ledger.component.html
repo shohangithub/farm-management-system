@@ -1,7 +1,7 @@
 <app-page-header
-  title="General Ledger & Transactions"
-  description="Real-time multi-module financial journal, expense tracking, and cash-flow ledger."
-  breadcrumbActiveNode="General Ledger">
+  [title]="'General Ledger & Transactions' | t"
+  [description]="'Real-time multi-module financial journal, expense tracking, and cash-flow ledger.' | t"
+  [breadcrumbActiveNode]="'General Ledger' | t">
   <div actions class="flex flex-wrap items-center gap-3">
     <button mat-stroked-button 
       class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2"
@@ -9,26 +9,26 @@
       (click)="exportCsv()">
       <mat-icon *ngIf="!isExporting()" class="text-emerald-600">file_download</mat-icon>
       <mat-spinner *ngIf="isExporting()" diameter="18" class="mr-1"></mat-spinner>
-      <span>{{ isExporting() ? 'Exporting...' : 'Export CSV' }}</span>
+      <span>{{ (isExporting() ? 'Exporting...' : 'Export CSV') | t }}</span>
     </button>
     <button mat-flat-button 
       class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-4 py-2 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50"
       [disabled]="isExportingPdf() || isLoading() || transactions().length === 0"
       (click)="exportPdf()">
       <mat-icon class="text-sm">{{ isExportingPdf() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ isExportingPdf() ? 'Exporting...' : 'Export PDF' }}</span>
+      <span>{{ (isExportingPdf() ? 'Exporting...' : 'Export PDF') | t }}</span>
     </button>
     <button mat-flat-button color="accent" 
       class="rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-4 py-2" 
       (click)="openIncomeDialog()">
       <mat-icon>arrow_downward</mat-icon>
-      <span>Record Income</span>
+      <span>{{ 'Record Income' | t }}</span>
     </button>
     <button mat-flat-button color="warn" 
       class="rounded-xl shadow-md bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 px-4 py-2" 
       (click)="openExpenseDialog()">
       <mat-icon>arrow_upward</mat-icon>
-      <span>Record Expense</span>
+      <span>{{ 'Record Expense' | t }}</span>
     </button>
   </div>
 </app-page-header>
@@ -40,11 +40,11 @@
     <!-- Total Income -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
-        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Cash In (filtered)</p>
+        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Cash In (filtered)' | t }}</p>
         <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
           {{ totalIncome() | money }}
         </h3>
-        <p class="text-xs text-gray-400 mt-1">Money received — non-cash entries excluded</p>
+        <p class="text-xs text-gray-400 mt-1">{{ 'Money received — non-cash entries excluded' | t }}</p>
       </div>
       <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
         <mat-icon class="text-2xl">trending_up</mat-icon>
@@ -55,11 +55,11 @@
     <!-- Total Expense -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
-        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Cash Out (filtered)</p>
+        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Cash Out (filtered)' | t }}</p>
         <h3 class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
           {{ totalExpense() | money }}
         </h3>
-        <p class="text-xs text-gray-400 mt-1">Money paid — stock used from inventory excluded</p>
+        <p class="text-xs text-gray-400 mt-1">{{ 'Money paid — stock used from inventory excluded' | t }}</p>
       </div>
       <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
         <mat-icon class="text-2xl">trending_down</mat-icon>
@@ -70,12 +70,12 @@
     <!-- Net Cash Flow -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
-        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Net Cash Flow</p>
+        <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Net Cash Flow' | t }}</p>
         <h3 class="text-2xl font-bold mt-1"
           [ngClass]="netCashFlow() >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
           {{ netCashFlow() | money }}
         </h3>
-        <p class="text-xs text-gray-400 mt-1">{{ totalCount() }} transactions matched</p>
+        <p class="text-xs text-gray-400 mt-1">{{ '{count} transactions matched' | t: { count: totalCount() } }}</p>
       </div>
       <div class="w-12 h-12 rounded-xl flex items-center justify-center"
         [ngClass]="netCashFlow() >= 0 ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'">
@@ -94,7 +94,7 @@
         <mat-icon class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xl">search</mat-icon>
         <input 
           type="text" 
-          placeholder="Search notes, category, reference..." 
+          [placeholder]="'Search notes, category, reference...' | t" 
           [value]="searchTerm()"
           (input)="onSearchChange($event)"
           (keydown.enter)="onSearchEnter($event)"
@@ -108,21 +108,21 @@
           (click)="onTypeChange('')" 
           class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all"
           [ngClass]="selectedType() === '' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">
-          All Types
+          {{ 'All Types' | t }}
         </button>
         <button 
           type="button" 
           (click)="onTypeChange('Income')" 
           class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all"
           [ngClass]="selectedType() === 'Income' ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'">
-          Income
+          {{ 'Income' | t }}
         </button>
         <button 
           type="button" 
           (click)="onTypeChange('Expense')" 
           class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all"
           [ngClass]="selectedType() === 'Expense' ? 'bg-rose-600 text-white shadow-sm' : 'text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30'">
-          Expense
+          {{ 'Expense' | t }}
         </button>
       </div>
 
@@ -133,7 +133,7 @@
           (click)="onOriginChange('')" 
           class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all"
           [ngClass]="selectedOrigin() === '' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">
-          All Origins
+          {{ 'All Origins' | t }}
         </button>
         <button 
           type="button" 
@@ -141,7 +141,7 @@
           class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1"
           [ngClass]="selectedOrigin() === 'automated' ? 'bg-sky-600 text-white shadow-sm' : 'text-sky-700 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30'">
           <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">smart_toy</mat-icon>
-          Auto
+          {{ 'Auto' | t }}
         </button>
         <button 
           type="button" 
@@ -149,7 +149,7 @@
           class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1"
           [ngClass]="selectedOrigin() === 'manual' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'">
           <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_note</mat-icon>
-          Manual
+          {{ 'Manual' | t }}
         </button>
       </div>
 
@@ -159,7 +159,7 @@
           [value]="selectedCategory()"
           (change)="onCategoryChange($any($event.target).value)"
           class="w-full py-2.5 px-3 bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-          <option value="">All Categories</option>
+          <option value="">{{ 'All Categories' | t }}</option>
           <option *ngFor="let cat of allCategories()" [value]="cat">{{ label(cat) }}</option>
         </select>
       </div>
@@ -169,7 +169,7 @@
         <button *ngIf="hasActiveFilters()"
           type="button"
           (click)="clearFilters()"
-          title="Reset all filters"
+          [title]="'Reset all filters' | t"
           class="inline-flex items-center justify-center p-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
           <mat-icon class="text-base">clear_all</mat-icon>
         </button>
@@ -179,14 +179,14 @@
 
     <!-- Date Range Row -->
     <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-      <span class="font-medium text-gray-600 dark:text-gray-400">Date Range:</span>
+      <span class="font-medium text-gray-600 dark:text-gray-400">{{ 'Date Range:' | t }}</span>
       <div class="flex items-center gap-2">
         <input 
           type="date" 
           [value]="startDate()" 
           (change)="onStartDateChange($any($event.target).value)"
           class="px-2.5 py-1.5 bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-lg text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
-        <span>to</span>
+        <span>{{ 'to' | t }}</span>
         <input 
           type="date" 
           [value]="endDate()" 
@@ -203,7 +203,7 @@
 
     <app-error-state
       *ngIf="!isLoading() && loadError() as err"
-      title="Couldn't load transactions"
+      [title]="couldNotLoadTitle"
       [message]="err"
       (retry)="refresh()">
     </app-error-state>
@@ -211,9 +211,9 @@
     <app-empty-state
       *ngIf="!isLoading() && !loadError() && transactions().length === 0"
       icon="receipt_long"
-      title="No Transactions Matched"
-      description="No financial ledger entries match your filter criteria. Try clearing search filters or record a new transaction."
-      actionLabel="Record Income"
+      [title]="'No Transactions Matched' | t"
+      [description]="'No financial ledger entries match your filter criteria. Try clearing search filters or record a new transaction.' | t"
+      [actionLabel]="'Record Income' | t"
       (action)="openIncomeDialog()">
     </app-empty-state>
 
@@ -221,25 +221,25 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-gray-50/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-gray-800/50">
-            <th class="py-4 px-6 font-medium">Date</th>
-            <th class="py-4 px-6 font-medium">Type</th>
-            <th class="py-4 px-6 font-medium">Origin</th>
-            <th class="py-4 px-6 font-medium">Category</th>
-            <th class="py-4 px-6 font-medium">Reference</th>
-            <th class="py-4 px-6 font-medium">Notes</th>
-            <th class="py-4 px-6 font-medium text-right">Amount (BDT)</th>
-            <th class="py-4 px-6 font-medium text-center no-print">Actions</th>
+            <th class="py-4 px-6 font-medium">{{ 'Date' | t }}</th>
+            <th class="py-4 px-6 font-medium">{{ 'Type' | t }}</th>
+            <th class="py-4 px-6 font-medium">{{ 'Origin' | t }}</th>
+            <th class="py-4 px-6 font-medium">{{ 'Category' | t }}</th>
+            <th class="py-4 px-6 font-medium">{{ 'Reference' | t }}</th>
+            <th class="py-4 px-6 font-medium">{{ 'Notes' | t }}</th>
+            <th class="py-4 px-6 font-medium text-right">{{ 'Amount (BDT)' | t }}</th>
+            <th class="py-4 px-6 font-medium text-center no-print">{{ 'Actions' | t }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <tr *ngFor="let txn of transactions()" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer" (click)="openTransactionDetails(txn)" role="button" tabindex="0" [attr.aria-label]="'View transaction details'" (keydown.enter)="openTransactionDetails(txn)" (keydown.space)="$event.preventDefault(); openTransactionDetails(txn)">
+          <tr *ngFor="let txn of transactions()" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer" (click)="openTransactionDetails(txn)" role="button" tabindex="0" [attr.aria-label]="'View transaction details' | t" (keydown.enter)="openTransactionDetails(txn)" (keydown.space)="$event.preventDefault(); openTransactionDetails(txn)">
             <td class="py-4 px-6 text-sm text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
               {{ txn.transactionDate | date:'mediumDate' }}
             </td>
             <td class="py-4 px-6 text-sm">
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
                 [ngClass]="txn.type === 'Income' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'">
-                {{ txn.type }}
+                {{ txn.type | t }}
               </span>
             </td>
             <td class="py-4 px-6 text-sm whitespace-nowrap">
@@ -247,13 +247,13 @@
                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
                       [ngClass]="getSourceModuleBadge(txn.sourceModule).bgClass">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px] leading-none">{{ getSourceModuleBadge(txn.sourceModule).icon }}</mat-icon>
-                  Auto: {{ getSourceModuleBadge(txn.sourceModule).label }}
+                  {{ 'Auto: {source}' | t: { source: (getSourceModuleBadge(txn.sourceModule).label | t) } }}
                 </span>
               </div>
               <ng-template #manualBadge>
                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700/60">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px] leading-none">edit_note</mat-icon>
-                  Manual
+                  {{ 'Manual' | t }}
                 </span>
               </ng-template>
             </td>
@@ -262,28 +262,28 @@
               <div class="flex flex-wrap gap-1 mt-0.5">
                 <span *ngIf="txn.accountCode" class="text-[11px] font-mono text-gray-400">{{ txn.accountCode }}</span>
                 <span *ngIf="txn.affectsCash === false && !isOnCredit(txn)"
-                      title="No cash moved: stock or an animal was used, sold or lost. It is a real cost but not a cash payment."
+                      [title]="'No cash moved: stock or an animal was used, sold or lost. It is a real cost but not a cash payment.' | t"
                       class="inline-flex px-1.5 rounded text-[11px] font-semibold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50">
-                  Non-cash · {{ txn.settlement }}
+                  {{ 'Non-cash' | t }} · {{ txn.settlement | t }}
                 </span>
                 <a *ngIf="isOnCredit(txn)" routerLink="/finance/credit" (click)="$event.stopPropagation()"
-                      [title]="txn.settlement === 'Payable' ? 'Bought on credit: owed to the supplier until paid in Payables & Receivables' : 'Sold on credit: owed by the customer until collected in Payables & Receivables'"
+                      [title]="(txn.settlement === 'Payable' ? 'Bought on credit: owed to the supplier until paid in Payables & Receivables' : 'Sold on credit: owed by the customer until collected in Payables & Receivables') | t"
                       class="inline-flex px-1.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
-                  On credit · {{ txn.settlement === 'Payable' ? 'owed to supplier' : 'owed by customer' }}
+                  {{ 'On credit' | t }} · {{ (txn.settlement === 'Payable' ? 'owed to supplier' : 'owed by customer') | t }}
                 </a>
                 <span *ngIf="txn.accountGroup && txn.accountGroup !== 'Operating'"
-                      title="Not profit or loss: an asset bought, capital, or loan money"
+                      [title]="'Not profit or loss: an asset bought, capital, or loan money' | t"
                       class="inline-flex px-1.5 rounded text-[11px] font-semibold bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/50">
-                  {{ txn.accountGroup }}
+                  {{ txn.accountGroup | t }}
                 </span>
               </div>
             </td>
             <td class="py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
               <span *ngIf="txn.animalId" class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
-                <mat-icon class="text-xs">pets</mat-icon> Animal
+                <mat-icon class="text-xs">pets</mat-icon> {{ 'Animal' | t }}
               </span>
               <span *ngIf="txn.batchId" class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded text-xs ml-1">
-                <mat-icon class="text-xs">layers</mat-icon> Batch
+                <mat-icon class="text-xs">layers</mat-icon> {{ 'Batch' | t }}
               </span>
               <span *ngIf="!txn.animalId && !txn.batchId" class="text-gray-400">-</span>
             </td>
@@ -295,39 +295,39 @@
               {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | money:2 }}
             </td>
             <td class="py-4 px-6 text-sm text-center no-print" (click)="$event.stopPropagation()">
-              <button mat-icon-button [matMenuTriggerFor]="actionMenu" aria-label="Transaction actions" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <button mat-icon-button [matMenuTriggerFor]="actionMenu" [attr.aria-label]="'Transaction actions' | t" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #actionMenu="matMenu" class="rounded-xl shadow-lg border border-gray-100 dark:border-gray-800">
                 <button mat-menu-item (click)="openTransactionDetails(txn)">
                   <mat-icon class="text-blue-600">visibility</mat-icon>
-                  <span>View Details</span>
+                  <span>{{ 'View Details' | t }}</span>
                 </button>
                 <button mat-menu-item *ngIf="creditable(txn)" (click)="putOnCredit(txn)">
                   <mat-icon class="text-amber-600">schedule</mat-icon>
-                  <span>Put on credit (বাকি)</span>
+                  <span>{{ 'Put on credit (বাকি)' | t }}</span>
                 </button>
                 <a mat-menu-item *ngIf="isOnCredit(txn)" routerLink="/finance/credit">
                   <mat-icon class="text-amber-600">request_quote</mat-icon>
-                  <span>Open in Payables &amp; Receivables</span>
+                  <span>{{ 'Open in Payables & Receivables' | t }}</span>
                 </a>
                 <ng-container *ngIf="!txn.isAutomated; else lockedEntry">
                   <button mat-menu-item *hasPermission="'finance.edit'" (click)="openEditDialog(txn)">
                     <mat-icon class="text-amber-600">edit</mat-icon>
-                    <span>Edit Transaction</span>
+                    <span>{{ 'Edit Transaction' | t }}</span>
                   </button>
                   <ng-container *hasPermission="'finance.delete'">
                     <mat-divider></mat-divider>
                     <button mat-menu-item (click)="voidTransaction(txn)" class="text-rose-600">
                       <mat-icon class="text-rose-600">delete_outline</mat-icon>
-                      <span>Void / Delete</span>
+                      <span>{{ 'Void / Delete' | t }}</span>
                     </button>
                   </ng-container>
                 </ng-container>
                 <ng-template #lockedEntry>
                   <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 max-w-[240px] leading-snug">
                     <mat-icon class="!text-[14px] !w-[14px] !h-[14px] align-middle mr-1">lock</mat-icon>
-                    Posted by {{ getSourceModuleBadge(txn.sourceModule).label }}. Correct the original record there and this entry updates itself.
+                    {{ 'Posted by {source}. Correct the original record there and this entry updates itself.' | t: { source: (getSourceModuleBadge(txn.sourceModule).label | t) } }}
                   </div>
                 </ng-template>
               </mat-menu>

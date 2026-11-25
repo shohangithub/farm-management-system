@@ -20,6 +20,8 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { HasUnsavedChanges } from '../../../../shared/utils/unsaved-changes.guard';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-purchase-order-form',
   standalone: true,
@@ -31,21 +33,22 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatButtonModule,
     MatIconModule,
     PageHeaderComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Create Purchase Order"
-      description="Create a new purchase order to request items from a supplier."
-      breadcrumbActiveNode="Create PO">
+      [title]="'Create Purchase Order' | t"
+      [description]="'Create a new purchase order to request items from a supplier.' | t"
+      [breadcrumbActiveNode]="'Create PO' | t">
       <div actions class="flex items-center gap-3">
         <button [routerLink]="['/inventory/purchase-orders']"
           class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon> Cancel
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon> {{ 'Cancel' | t }}
         </button>
         <button (click)="onSubmit()" [disabled]="form.invalid || loading() || items.length === 0"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">save</mat-icon> Submit PO
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">save</mat-icon> {{ 'Submit PO' | t }}
         </button>
       </div>
     </app-page-header>
@@ -64,31 +67,31 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <!-- Master Data Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div>
-            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Supplier <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">{{ 'Supplier' | t }} <span class="text-red-500">*</span></label>
             <select formControlName="supplierId"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-              <option value="" disabled selected>Select a supplier</option>
+              <option value="" disabled selected>{{ 'Select a supplier' | t }}</option>
               <option *ngFor="let s of suppliers()" [value]="s.id">{{ s.name }}</option>
             </select>
 <p *ngIf="form.get('supplierId')?.invalid && form.get('supplierId')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'supplierId') }}</p>
           </div>
           
           <div>
-            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Order Date <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">{{ 'Order Date' | t }} <span class="text-red-500">*</span></label>
             <input type="date" formControlName="orderDate"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
 <p *ngIf="form.get('orderDate')?.invalid && form.get('orderDate')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'orderDate') }}</p>
           </div>
 
           <div>
-            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Expected Delivery Date</label>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">{{ 'Expected Delivery Date' | t }}</label>
             <input type="date" formControlName="expectedDeliveryDate"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
           </div>
 
           <div class="md:col-span-2">
-            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">Notes / Terms</label>
-            <textarea formControlName="notes" rows="3" placeholder="Additional details..."
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">{{ 'Notes / Terms' | t }}</label>
+            <textarea formControlName="notes" rows="3" [placeholder]="'Additional details...' | t"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"></textarea>
           </div>
         </div>
@@ -96,10 +99,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <!-- Line Items Section -->
         <div>
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Order Items <span class="text-red-500">*</span></h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Order Items' | t }} <span class="text-red-500">*</span></h3>
             <button type="button" (click)="addItem()"
               class="px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1">
-              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Add Row
+              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> {{ 'Add Row' | t }}
             </button>
           </div>
 
@@ -107,12 +110,12 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead class="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[40%]">Item</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
-                  <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[18%]">Unit</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cost per unit (৳)</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total (৳)</th>
-                  <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[60px]">Action</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[40%]">{{ 'Item' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Quantity' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[18%]">{{ 'Unit' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Cost per unit (৳)' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Total (৳)' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-[60px]">{{ 'Action' | t }}</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700" formArrayName="items">
@@ -120,7 +123,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                   <td class="px-4 py-3">
                     <select formControlName="inventoryItemId"
                       class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-                      <option value="" disabled selected>Select an item...</option>
+                      <option value="" disabled selected>{{ 'Select an item...' | t }}</option>
                       <option *ngFor="let inv of inventoryItems()" [value]="inv.id">{{ inv.name }} ({{ inv.unitOfMeasure }})</option>
                     </select>
                   </td>
@@ -141,20 +144,20 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                     {{ calculateRowTotal(i) | number:'1.2-2' }}
                   </td>
                   <td class="px-4 py-3 text-center align-middle">
-                    <button aria-label="Delete" type="button" (click)="removeItem(i)" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30">
+                    <button [attr.aria-label]="'Delete' | t" type="button" (click)="removeItem(i)" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30">
                       <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">delete</mat-icon>
                     </button>
                   </td>
                 </tr>
                 <tr *ngIf="items.length === 0">
                   <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No items added yet. Click "Add Row" to request items.
+                    {{ 'No items added yet. Click “Add Row” to request items.' | t }}
                   </td>
                 </tr>
               </tbody>
               <tfoot *ngIf="items.length > 0" class="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <td colspan="3" class="px-4 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-300 uppercase">Grand Total:</td>
+                  <td colspan="3" class="px-4 py-3 text-right text-sm font-bold text-gray-700 dark:text-gray-300 uppercase">{{ 'Grand Total:' | t }}</td>
                   <td class="px-4 py-3 text-right text-base font-black text-emerald-600 dark:text-emerald-400">{{ grandTotal() | money:2 }}</td>
                   <td></td>
                 </tr>
@@ -178,6 +181,7 @@ export class PurchaseOrderForm implements OnInit, HasUnsavedChanges {
   private readonly contextService = inject(WorkingContextService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
 
   readonly initLoading = signal(true);
   readonly loading = signal(false);
@@ -226,7 +230,7 @@ export class PurchaseOrderForm implements OnInit, HasUnsavedChanges {
           suppliers: this.inventoryService.getSuppliers({ pageSize: 1000 })
         }).pipe(
           catchError(err => {
-            this.error.set('Failed to load master data for the form.');
+            this.error.set(this.i18n.t('Failed to load master data for the form.'));
             return of(null);
           })
         );
@@ -298,7 +302,7 @@ export class PurchaseOrderForm implements OnInit, HasUnsavedChanges {
 
     const farmId = this.contextService.currentFarmValue?.id;
     if (!farmId) {
-      this.error.set('No active farm context selected.');
+      this.error.set(this.i18n.t('No active farm context selected.'));
       return;
     }
 
@@ -332,7 +336,7 @@ export class PurchaseOrderForm implements OnInit, HasUnsavedChanges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(parseApiError(err, 'Failed to create purchase order.'));
+        this.error.set(parseApiError(err, this.i18n.t('Failed to create purchase order.')));
       }
     });
   }
@@ -341,13 +345,13 @@ export class PurchaseOrderForm implements OnInit, HasUnsavedChanges {
   fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
     const e = group.get(name)?.errors;
     if (!e) return '';
-    if (e['required']) return 'This field is required.';
-    if (e['min']) return `Must be at least ${e['min'].min}.`;
-    if (e['max']) return `Must be at most ${e['max'].max}.`;
-    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
-    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
-    if (e['email']) return 'Enter a valid email address.';
-    if (e['pattern']) return 'Invalid format.';
-    return 'Invalid value.';
+    if (e['required']) return this.i18n.t('This field is required.');
+    if (e['min']) return this.i18n.t('Must be at least {n}.', { n: e['min'].min });
+    if (e['max']) return this.i18n.t('Must be at most {n}.', { n: e['max'].max });
+    if (e['maxlength']) return this.i18n.t('Must be {n} characters or fewer.', { n: e['maxlength'].requiredLength });
+    if (e['minlength']) return this.i18n.t('Must be at least {n} characters.', { n: e['minlength'].requiredLength });
+    if (e['email']) return this.i18n.t('Enter a valid email address.');
+    if (e['pattern']) return this.i18n.t('Invalid format.');
+    return this.i18n.t('Invalid value.');
   }
 }

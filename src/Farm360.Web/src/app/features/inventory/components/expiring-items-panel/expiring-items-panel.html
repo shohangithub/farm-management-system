@@ -7,11 +7,11 @@
         <mat-icon>warning_amber</mat-icon>
       </div>
       <div>
-        <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0">Expiring Soon</h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Next {{ daysThreshold }} days</p>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Expiring Soon' | t }}</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ 'Next {n} days' | t: { n: daysThreshold } }}</p>
       </div>
     </div>
-    <button aria-label="Refresh" mat-icon-button (click)="refresh()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+    <button [attr.aria-label]="'Refresh' | t" mat-icon-button (click)="refresh()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
       <mat-icon>refresh</mat-icon>
     </button>
   </div>
@@ -24,8 +24,8 @@
     <app-empty-state 
       *ngIf="!isLoading() && items().length === 0"
       icon="check_circle_outline"
-      title="All Good!"
-      description="No items are expiring within {{ daysThreshold }} days.">
+      [title]="'All Good!' | t"
+      [description]="'No items are expiring within {n} days.' | t: { n: daysThreshold }">
     </app-empty-state>
 
     <div *ngIf="items().length > 0" class="divide-y divide-gray-100 dark:divide-gray-700/50 overflow-y-auto custom-scrollbar max-h-[300px]">
@@ -35,13 +35,13 @@
           <div class="flex items-center gap-2 mb-1">
             <span class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.itemName }}</span>
             <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-              {{ item.category }}
+              {{ item.category | t }}
             </span>
           </div>
           <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
             <span class="flex items-center gap-1">
               <mat-icon class="text-[14px] w-[14px] h-[14px]">tag</mat-icon>
-              {{ item.batchNumber || 'N/A' }}
+              {{ item.batchNumber || ('N/A' | t) }}
             </span>
             <span class="flex items-center gap-1" [ngClass]="item.daysUntilExpiry <= 7 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-amber-600 dark:text-amber-500'">
               <mat-icon class="text-[14px] w-[14px] h-[14px]">event</mat-icon>
@@ -52,7 +52,7 @@
         
         <div class="shrink-0 text-right">
           <div class="text-sm font-bold" [ngClass]="item.daysUntilExpiry <= 7 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-500'">
-            {{ item.daysUntilExpiry === 0 ? 'Today' : 'In ' + item.daysUntilExpiry + ' days' }}
+            {{ item.daysUntilExpiry === 0 ? ('Today' | t) : ('In {n} days' | t: { n: item.daysUntilExpiry }) }}
           </div>
         </div>
 

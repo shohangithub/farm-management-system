@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-page-header',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, BreadcrumbComponent],
+  imports: [CommonModule, MatButtonModule, MatIconModule, BreadcrumbComponent, TranslatePipe],
   templateUrl: './page-header.component.html'
 })
 export class PageHeaderComponent {

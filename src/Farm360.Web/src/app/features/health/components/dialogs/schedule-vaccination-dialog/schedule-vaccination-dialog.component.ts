@@ -13,6 +13,8 @@ import { AnimalPickerComponent } from '../../../../../shared/components/animal-p
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-schedule-vaccination-dialog',
@@ -25,7 +27,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    AnimalPickerComponent
+    AnimalPickerComponent,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -34,11 +37,11 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">vaccines</mat-icon>
-            Schedule Vaccination
+            {{ 'Schedule Vaccination' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Plan upcoming animal vaccinations</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Plan upcoming animal vaccinations' | t }}</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [attr.aria-label]="'Close' | t">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -55,17 +58,17 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
           
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animal <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Select Animal' | t }} <span class="text-red-500">*</span></label>
             <app-animal-picker formControlName="animalId"></app-animal-picker>
-            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5 md:col-span-1">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Inventory Item</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Inventory Item' | t }}</label>
               <select formControlName="inventoryItemId"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-                <option [value]="null">-- Select (Optional) --</option>
+                <option [value]="null">{{ '-- Select (Optional) --' | t }}</option>
                 @for (item of inventoryItems(); track item.id) {
                   <option [value]="item.id">{{ item.name }} ({{ item.currentStock }} {{ item.unitOfMeasure }})</option>
                 }
@@ -73,38 +76,38 @@ import { NotificationService } from '../../../../../shared/services/notification
             </div>
 
             <div class="space-y-1.5 md:col-span-2">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Vaccine Name <span class="text-red-500">*</span></label>
-              <input type="text" formControlName="vaccineName" placeholder="e.g. FMD Vaccine"
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Vaccine Name' | t }} <span class="text-red-500">*</span></label>
+              <input type="text" formControlName="vaccineName" [placeholder]="'e.g. FMD Vaccine' | t"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <p *ngIf="form.get('vaccineName')?.touched && form.get('vaccineName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('vaccineName')?.touched && form.get('vaccineName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
             </div>
             
             <div class="space-y-1.5 md:col-span-1">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Dosage Qty</label>
-              <input type="number" formControlName="dosageQuantity" min="0" step="0.1" placeholder="Qty"
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Dosage Qty' | t }}</label>
+              <input type="number" formControlName="dosageQuantity" min="0" step="0.1" [placeholder]="'Qty' | t"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <p *ngIf="form.get('dosageQuantity')?.touched && form.get('dosageQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+              <p *ngIf="form.get('dosageQuantity')?.touched && form.get('dosageQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-2 md:col-span-2">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Batch Number</label>
-              <input type="text" formControlName="batchNumber" placeholder="Optional batch #"
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Batch Number' | t }}</label>
+              <input type="text" formControlName="batchNumber" [placeholder]="'Optional batch #' | t"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Scheduled Date <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Scheduled Date' | t }} <span class="text-red-500">*</span></label>
               <input type="date" formControlName="scheduledDate"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <p *ngIf="form.get('scheduledDate')?.touched && form.get('scheduledDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('scheduledDate')?.touched && form.get('scheduledDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
             </div>
           </div>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes</label>
-            <textarea formControlName="notes" rows="3" placeholder="Booster details or special instructions..."
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Notes' | t }}</label>
+            <textarea formControlName="notes" rows="3" [placeholder]="'Booster details or special instructions...' | t"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
         </div>
@@ -113,12 +116,12 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
                   class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isSubmitting() ? 'Scheduling...' : 'Schedule' }}</span>
+            <span>{{ (isSubmitting() ? 'Scheduling...' : 'Schedule Vaccination') | t }}</span>
           </button>
         </div>
       </form>
@@ -147,6 +150,7 @@ export class ScheduleVaccinationDialog {
   private inventoryService = inject(InventoryService);
   private dialogRef = inject(MatDialogRef<ScheduleVaccinationDialog>);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   form: FormGroup;
   isSubmitting = signal(false);
@@ -183,7 +187,7 @@ export class ScheduleVaccinationDialog {
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.notify.error('Please select an animal and enter the vaccine name.');
+      this.notify.error(this.i18n.t('Please select an animal and enter the vaccine name.'));
       return;
     }
 
@@ -205,7 +209,7 @@ export class ScheduleVaccinationDialog {
     ).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success('Vaccination scheduled successfully!');
+        this.notify.success(this.i18n.t('Vaccination scheduled successfully!'));
         this.dialogRef.close(true);
       },
       error: (err) => {

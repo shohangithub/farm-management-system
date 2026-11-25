@@ -9,7 +9,7 @@
     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
   </svg>
   <div>
-    <h3 class="text-sm font-semibold">Submission Failed</h3>
+    <h3 class="text-sm font-semibold">{{ 'Submission Failed' | t }}</h3>
     <p class="text-xs mt-0.5">{{ error() }}</p>
   </div>
 </div>
@@ -19,15 +19,15 @@
   <!-- ── Section 1: Basic Information ──────────────────────────── -->
   <div class="p-6 sm:p-8 space-y-6">
     <div>
-      <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Basic Information</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Core identification details for this pen.</p>
+      <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Basic Information' | t }}</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ 'Core identification details for this pen.' | t }}</p>
     </div>
     
     <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
       <!-- Pen Number -->
       <div class="sm:col-span-2 space-y-1.5">
         <label for="penNumber" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Pen Number <span class="text-red-500">*</span>
+          {{ 'Pen Number' | t }} <span class="text-red-500">*</span>
         </label>
         <input type="text" formControlName="penNumber" id="penNumber" 
                placeholder="e.g. P-01"
@@ -38,59 +38,59 @@
                       [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
         <p *ngIf="getError('penNumber')" class="text-xs text-red-500 mt-1 flex items-center gap-1">
           <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-          {{ getError('penNumber') }}
+          {{ getError('penNumber') | t }}
         </p>
-        <p *ngIf="isEditMode() && !getError('penNumber')" class="text-[11px] text-gray-400 mt-1 italic">Pen number cannot be changed after creation.</p>
+        <p *ngIf="isEditMode() && !getError('penNumber')" class="text-[11px] text-gray-400 mt-1 italic">{{ 'Pen number cannot be changed after creation.' | t }}</p>
       </div>
 
       <!-- Pen Name -->
       <div class="sm:col-span-4 space-y-1.5">
         <label for="penName" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Pen Name <span class="text-red-500">*</span>
+          {{ 'Pen Name' | t }} <span class="text-red-500">*</span>
         </label>
         <input type="text" formControlName="penName" id="penName" 
-               placeholder="e.g. Nursery Pen A"
+               [placeholder]="'e.g. Nursery Pen A' | t"
                class="block w-full px-3 py-2.5 border rounded-lg text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white
                       border-gray-300 dark:border-gray-600 placeholder-gray-400
                       [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
         <p *ngIf="getError('penName')" class="text-xs text-red-500 mt-1 flex items-center gap-1">
           <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-          {{ getError('penName') }}
+          {{ getError('penName') | t }}
         </p>
       </div>
 
       <!-- Capacity -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="capacity" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Capacity (Headcount) <span class="text-red-500">*</span>
+          {{ 'Capacity (Headcount)' | t }} <span class="text-red-500">*</span>
         </label>
         <input type="number" min="1" step="1" formControlName="capacity" id="capacity" 
                placeholder="e.g. 50"
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                       [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
-        <p *ngIf="getError('capacity')" class="text-xs text-red-500 mt-1">{{ getError('capacity') }}</p>
+        <p *ngIf="getError('capacity')" class="text-xs text-red-500 mt-1">{{ getError('capacity') | t }}</p>
       </div>
 
       <!-- Designated Group / Purpose -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="animalGroup" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Designated Group / Purpose
+          {{ 'Designated Group / Purpose' | t }}
         </label>
         <input type="text" formControlName="animalGroup" id="animalGroup" 
-               placeholder="e.g. Calves, Weaners"
+               [placeholder]="'e.g. Calves, Weaners' | t"
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-        <p *ngIf="getError('animalGroup')" class="text-xs text-red-500 mt-1">{{ getError('animalGroup') }}</p>
+        <p *ngIf="getError('animalGroup')" class="text-xs text-red-500 mt-1">{{ getError('animalGroup') | t }}</p>
       </div>
       
       <!-- Status (Edit Mode Only) -->
       <div *ngIf="isEditMode()" class="sm:col-span-6 space-y-1.5">
-        <label for="status" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Status</label>
+        <label for="status" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Status' | t }}</label>
         <select formControlName="status" id="status"
                 class="block w-full sm:w-1/2 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-          <option value="UnderMaintenance">Maintenance</option>
+          <option value="Active">{{ 'Active' | t }}</option>
+          <option value="Inactive">{{ 'Inactive' | t }}</option>
+          <option value="UnderMaintenance">{{ 'Maintenance' | t }}</option>
         </select>
       </div>
     </div>
@@ -99,17 +99,17 @@
   <!-- ── Section 2: Notes ──────────────────────────── -->
   <div class="p-6 sm:p-8 space-y-6">
     <div>
-      <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Additional Information</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Any specific details or notes about this pen.</p>
+      <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Additional Information' | t }}</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ 'Any specific details or notes about this pen.' | t }}</p>
     </div>
     
     <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-1">
       
       <!-- Notes -->
       <div class="space-y-1.5">
-        <label for="notes" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</label>
+        <label for="notes" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Notes' | t }}</label>
         <textarea formControlName="notes" id="notes" rows="4"
-               placeholder="Write any relevant notes about this pen here..."
+               [placeholder]="'Write any relevant notes about this pen here...' | t"
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
       </div>
       
@@ -120,7 +120,7 @@
   <div class="p-6 sm:p-8 bg-gray-50/50 dark:bg-gray-800/10 rounded-b-2xl flex items-center justify-between gap-3">
     <button type="button" [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shedId(), 'pens']"
             class="px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
-      Cancel
+      {{ 'Cancel' | t }}
     </button>
     <button type="submit" [disabled]="penForm.invalid || isSubmitting()"
             class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -128,7 +128,7 @@
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
       </svg>
-      {{ isSubmitting() ? 'Saving...' : (isEditMode() ? 'Update Pen' : 'Create Pen') }}
+      {{ (isSubmitting() ? 'Saving...' : (isEditMode() ? 'Update Pen' : 'Create Pen')) | t }}
     </button>
   </div>
 </form>

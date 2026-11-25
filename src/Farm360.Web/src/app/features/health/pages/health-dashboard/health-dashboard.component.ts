@@ -20,11 +20,12 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-health-dashboard',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent],
+  imports: [MoneyPipe, CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent, TranslatePipe],
   templateUrl: './health-dashboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

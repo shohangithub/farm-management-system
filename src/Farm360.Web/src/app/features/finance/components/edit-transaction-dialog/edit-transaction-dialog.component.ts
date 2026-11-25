@@ -6,13 +6,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FinanceService } from '../../services/finance.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
-import { FinancialTransaction, MANUAL_TRANSACTION_CATEGORIES as TRANSACTION_CATEGORIES } from '../../models/finance.model';
+import { FinancialTransaction, MANUAL_TRANSACTION_CATEGORIES as TRANSACTION_CATEGORIES, categoryLabel } from '../../models/finance.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-edit-transaction-dialog',
   standalone: true,
   imports: [
-    CommonModule,
+    TranslatePipe, CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
@@ -27,11 +29,11 @@ import { FinancialTransaction, MANUAL_TRANSACTION_CATEGORIES as TRANSACTION_CATE
             <mat-icon>edit</mat-icon>
           </div>
           <div>
-            <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">Edit Transaction</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Update ledger record</p>
+            <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ 'Edit Transaction' | t }}</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Update ledger record' | t }}</p>
           </div>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -48,37 +50,37 @@ import { FinancialTransaction, MANUAL_TRANSACTION_CATEGORIES as TRANSACTION_CATE
         <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
           <!-- Category -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Category <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Category' | t }} <span class="text-red-500">*</span></label>
             <select formControlName="category" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none">
-              <option *ngFor="let cat of availableCategories" [value]="cat">{{ cat }}</option>
+              <option *ngFor="let cat of availableCategories" [value]="cat">{{ catLabel(cat) }}</option>
             </select>
           </div>
 
           <!-- Amount -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Amount (BDT) <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Amount (BDT)' | t }} <span class="text-red-500">*</span></label>
             <input type="number" formControlName="amountBdt" step="0.01" min="0.01"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none">
           </div>
 
           <!-- Date -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Transaction Date <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Transaction Date' | t }} <span class="text-red-500">*</span></label>
             <input type="date" formControlName="transactionDate"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none">
           </div>
 
           <!-- Description -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Description</label>
-            <input type="text" formControlName="description" placeholder="Brief note"
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Description' | t }}</label>
+            <input type="text" formControlName="description" [placeholder]="'Brief note' | t"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none">
           </div>
 
           <!-- Notes -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Notes</label>
-            <textarea formControlName="notes" rows="2" placeholder="Additional details..."
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Notes' | t }}</label>
+            <textarea formControlName="notes" rows="2" [placeholder]="'Additional details...' | t"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none resize-none"></textarea>
           </div>
         </div>
@@ -86,12 +88,12 @@ import { FinancialTransaction, MANUAL_TRANSACTION_CATEGORIES as TRANSACTION_CATE
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex justify-end gap-3 shrink-0">
           <button mat-button mat-dialog-close type="button" class="!rounded-xl !px-4 text-gray-600 dark:text-gray-400">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || isSubmitting()"
                   class="!rounded-xl !px-6 !py-2 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2">
             <span *ngIf="isSubmitting()" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            <span>Save Changes</span>
+            <span>{{ 'Save Changes' | t }}</span>
           </button>
         </div>
       </form>
@@ -103,6 +105,7 @@ export class EditTransactionDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<EditTransactionDialogComponent>);
   private financeService = inject(FinanceService);
+  private readonly i18n = inject(I18nService);
 
   readonly data: FinancialTransaction = inject(MAT_DIALOG_DATA);
   readonly isSubmitting = signal(false);
@@ -110,6 +113,11 @@ export class EditTransactionDialogComponent implements OnInit {
 
   form!: FormGroup;
   availableCategories: string[] = [];
+
+  /** Bangla shows the head's Bangla name; English keeps the head code as before. */
+  catLabel(cat: string): string {
+    return categoryLabel(cat);
+  }
 
   ngOnInit(): void {
     const isIncome = this.data.type === 'Income';

@@ -19,11 +19,13 @@ import { Investor } from '../../models/finance.model';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-investor-list',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent, 
+  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent, 
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -38,23 +40,23 @@ import { parseApiError } from '../../../../core/utils/error-parser';
   ],
   template: `
     <app-page-header 
-      title="Investors & Equity" 
-      description="Manage farm equity partners, track capital injections, profit distributions, and share ratios."
-      breadcrumbActiveNode="Investors">
+      [title]="'Investors & Equity' | t" 
+      [description]="'Manage farm equity partners, track capital injections, profit distributions, and share ratios.' | t"
+      [breadcrumbActiveNode]="'Investors' | t">
       <div actions class="flex items-center gap-2">
         <a routerLink="/finance/shares" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-teal-300 dark:!border-teal-700 !text-teal-700 dark:!text-teal-300 hover:!bg-teal-50 dark:hover:!bg-teal-950/40 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">pie_chart</mat-icon>
-          <span>Share Market</span>
+          <span>{{ 'Share Market' | t }}</span>
         </a>
 
         <a routerLink="/finance/investors/pnl" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-teal-300 dark:!border-teal-700 !text-teal-700 dark:!text-teal-300 hover:!bg-teal-50 dark:hover:!bg-teal-950/40 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">query_stats</mat-icon>
-          <span>Profit & Loss Sharing</span>
+          <span>{{ 'Profit & Loss Sharing' | t }}</span>
         </a>
 
         <button mat-flat-button color="primary" (click)="openInvestorDialog()" class="!rounded-xl !px-5 !py-2 !bg-gradient-to-r !from-teal-600 !to-emerald-600 hover:!from-teal-700 hover:!to-emerald-700 !text-white flex items-center gap-2 shadow-sm shadow-teal-500/30 transition-all">
           <mat-icon class="!text-[20px]">person_add</mat-icon>
-          <span>New Investor</span>
+          <span>{{ 'New Investor' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -65,7 +67,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load investors" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="!isLoading() && loadError() as err" [title]="couldNotLoadTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Content -->
       <div *ngIf="!isLoading() && !loadError()" class="space-y-6">
@@ -76,20 +78,20 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Active Investors</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Active Investors' | t }}</p>
                 <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ totalActiveInvestors() }}</h3>
               </div>
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
                 <mat-icon>groups</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Equity partners in this farm</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Equity partners in this farm' | t }}</p>
           </div>
 
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Capital Pool</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Total Capital Pool' | t }}</p>
                 <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                   {{ totalActiveCapital() | money }}
                 </h3>
@@ -98,13 +100,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>account_balance</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Active net invested capital</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Active net invested capital' | t }}</p>
           </div>
 
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Profit Distributed</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Profit Distributed' | t }}</p>
                 <h3 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
                   {{ totalProfitPaid() | money }}
                 </h3>
@@ -113,13 +115,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>payments</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Paid dividends to date</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Paid dividends to date' | t }}</p>
           </div>
 
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Capital Withdrawn</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Capital Withdrawn' | t }}</p>
                 <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
                   {{ totalCapitalWithdrawn() | money }}
                 </h3>
@@ -128,7 +130,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>money_off</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Capital returned to investors</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Capital returned to investors' | t }}</p>
           </div>
 
         </div>
@@ -138,7 +140,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="relative w-full sm:w-80">
             <mat-icon class="absolute left-3 top-2.5 text-gray-400 !text-[20px]">search</mat-icon>
             <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-                   placeholder="Search by name, phone, or email..."
+                   [placeholder]="'Search by name, phone, or email...' | t"
                    class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-900 dark:text-white transition-all">
           </div>
 
@@ -146,7 +148,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-600 dark:text-gray-300 select-none">
               <input type="checkbox" [checked]="showInactive()" (change)="toggleShowInactive()"
                      class="rounded border-gray-300 text-teal-600 focus:ring-teal-500 h-4 w-4">
-              <span>Show Inactive</span>
+              <span>{{ 'Show Inactive' | t }}</span>
             </label>
           </div>
         </div>
@@ -155,8 +157,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <app-empty-state 
           *ngIf="!filteredInvestors() || filteredInvestors().length === 0"
           icon="groups"
-          title="No Investors Found"
-          description="There are no equity investors registered for this farm yet. Add an investor to track capital and profit sharing."
+          [title]="'No Investors Found' | t"
+          [description]="'There are no equity investors registered for this farm yet. Add an investor to track capital and profit sharing.' | t"
           actionText="Register First Investor"
           (action)="openInvestorDialog()">
         </app-empty-state>
@@ -182,21 +184,21 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                     <h3 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ investor.name }}</h3>
                     <p class="text-xs text-gray-400 dark:text-gray-500 m-0 mt-0.5 flex items-center gap-1">
                       <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">calendar_today</mat-icon>
-                      Joined {{ investor.investmentDate | date:'mediumDate' }}
+                      {{ 'Joined {date}' | t: { date: (investor.investmentDate | date:'mediumDate') } }}
                     </p>
                   </div>
                 </div>
 
                 <div class="flex items-center gap-1.5">
-                  <button (click)="openEditInvestorDialog(investor)" title="Edit Investor"
+                  <button (click)="openEditInvestorDialog(investor)" [title]="'Edit Investor' | t"
                           class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                   </button>
 
-                  <button (click)="toggleInvestorStatus(investor)" [title]="investor.isActive ? 'Deactivate Investor' : 'Activate Investor'"
+                  <button (click)="toggleInvestorStatus(investor)" [title]="(investor.isActive ? 'Deactivate Investor' : 'Activate Investor') | t"
                           class="px-2.5 py-1 text-xs font-semibold rounded-full transition-colors"
                           [ngClass]="investor.isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'">
-                    {{ investor.isActive ? 'Active' : 'Inactive' }}
+                    {{ (investor.isActive ? 'Active' : 'Inactive') | t }}
                   </button>
                 </div>
               </div>
@@ -216,26 +218,26 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <!-- Metrics Section -->
               <div class="space-y-3 pt-2 pb-4 border-t border-b border-gray-100 dark:border-gray-700/50">
                 <div class="flex justify-between items-center">
-                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Current Capital</span>
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Current Capital' | t }}</span>
                   <span class="text-base font-bold text-emerald-600 dark:text-emerald-400">
                     {{ investor.currentCapitalBdt | money }}
                   </span>
                 </div>
 
                 <div class="flex justify-between items-center">
-                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Profit Share Ratio</span>
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Profit Share Ratio' | t }}</span>
                   <div class="text-right">
                     <span class="text-sm font-bold text-teal-700 dark:text-teal-300">
                       {{ investor.effectiveSharePercentage }}%
                     </span>
                     <span class="text-[11px] text-gray-400 block">
-                      {{ investor.agreedProfitSharePercentage ? 'Contract Agreed' : 'Proportional Capital' }}
+                      {{ (investor.agreedProfitSharePercentage ? 'Contract Agreed' : 'Proportional Capital') | t }}
                     </span>
                   </div>
                 </div>
 
                 <div class="flex justify-between items-center text-xs">
-                  <span class="text-gray-400">Total Invested / Withdrawn</span>
+                  <span class="text-gray-400">{{ 'Total Invested / Withdrawn' | t }}</span>
                   <span class="text-gray-600 dark:text-gray-300">
                     {{ investor.totalInvestedBdt | money }} / 
                     <span class="text-amber-600">{{ investor.totalWithdrawnBdt | money }}</span>
@@ -243,7 +245,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 </div>
 
                 <div class="flex justify-between items-center text-xs">
-                  <span class="text-gray-400">Total Profit Paid</span>
+                  <span class="text-gray-400">{{ 'Total Profit Paid' | t }}</span>
                   <span class="font-semibold text-indigo-600 dark:text-indigo-400">
                     {{ investor.totalProfitPaidBdt | money }}
                   </span>
@@ -261,7 +263,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                         class="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 flex items-center justify-between w-full py-1">
                   <span class="flex items-center gap-1">
                     <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">history</mat-icon>
-                    Transactions ({{ investor.transactions?.length || 0 }})
+                    {{ 'Transactions ({count})' | t: { count: investor.transactions?.length || 0 } }}
                   </span>
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px] transition-transform"
                             [ngClass]="expandedHistoryId() === investor.id ? 'rotate-180' : ''">
@@ -273,13 +275,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div *ngIf="expandedHistoryId() === investor.id" 
                      class="mt-2 space-y-2 max-h-48 overflow-y-auto custom-scrollbar p-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-xs">
                   <div *ngIf="!investor.transactions || investor.transactions.length === 0" class="text-center py-2 text-gray-400">
-                    No transactions recorded
+                    {{ 'No transactions recorded' | t }}
                   </div>
 
                   <div *ngFor="let tx of investor.transactions" 
                        class="flex items-center justify-between py-1.5 border-b border-gray-200/50 dark:border-gray-800 last:border-0">
                     <div>
-                      <span class="font-bold block" [ngClass]="getTxColor(tx.type)">{{ formatTxType(tx.type) }}</span>
+                      <span class="font-bold block" [ngClass]="getTxColor(tx.type)">{{ formatTxType(tx.type) | t }}</span>
                       <span class="text-[11px] text-gray-400">{{ tx.transactionDate | date:'mediumDate' }}</span>
                       <span *ngIf="tx.referenceId" class="text-[11px] text-gray-400 ml-1">#{{ tx.referenceId }}</span>
                     </div>
@@ -296,20 +298,20 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <button (click)="openTransactionDialog(investor, 'CapitalContribution')"
                       class="flex-1 py-2 px-2.5 text-xs font-bold text-white bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl hover:from-teal-600 hover:to-emerald-700 transition-all shadow-sm shadow-teal-500/20 flex items-center justify-center gap-1">
                 <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">add</mat-icon>
-                <span>Capital</span>
+                <span>{{ 'Capital' | t }}</span>
               </button>
 
               <button (click)="openTransactionDialog(investor, 'CapitalWithdrawal')"
                       [disabled]="investor.currentCapitalBdt <= 0"
                       class="py-2 px-2.5 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1">
                 <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">remove</mat-icon>
-                <span>Withdraw</span>
+                <span>{{ 'Withdraw' | t }}</span>
               </button>
 
               <button (click)="openTransactionDialog(investor, 'ProfitDistribution')"
                       class="py-2 px-2.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all flex items-center justify-center gap-1">
                 <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">payments</mat-icon>
-                <span>Distribute</span>
+                <span>{{ 'Distribute' | t }}</span>
               </button>
             </div>
 
@@ -327,6 +329,8 @@ export class InvestorListComponent {
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load investors");
 
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
   private showInactiveSubject$ = new BehaviorSubject<boolean>(false);
@@ -345,7 +349,7 @@ export class InvestorListComponent {
       if (!farm) return of([] as Investor[]);
       return this.financeService.getInvestors(farm.id, includeInactive).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load investors.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load investors.')));
           return of([] as Investor[]);
         })
       );

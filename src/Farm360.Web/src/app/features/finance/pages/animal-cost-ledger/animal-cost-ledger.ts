@@ -16,6 +16,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-animal-cost-ledger',
@@ -27,46 +29,47 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatButtonModule,
     PageHeaderComponent,
     LoadingComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header 
-      title="Unit Economics & Cost Ledger" 
-      [description]="'Individual unit cost accumulation, break-even price, and profit margin targets for ' + (breakEvenData()?.tagId || animalId() || 'Animal')"
-      breadcrumbActiveNode="Cost Ledger">
+      [title]="'Unit Economics & Cost Ledger' | t"
+      [description]="'Individual unit cost accumulation, break-even price, and profit margin targets for {animal}' | t: { animal: (breakEvenData()?.tagId || animalId() || ('Animal' | t)) }"
+      [breadcrumbActiveNode]="'Cost Ledger' | t">
       <div actions class="flex items-center gap-3">
         <a mat-stroked-button routerLink="/livestock"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2 text-xs">
           <mat-icon class="text-sm">pets</mat-icon>
-          <span>Back to Livestock</span>
+          <span>{{ 'Back to Livestock' | t }}</span>
         </a>
         <a mat-stroked-button routerLink="/finance/transactions"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2 text-xs">
           <mat-icon class="text-sm">receipt_long</mat-icon>
-          <span>View Ledger</span>
+          <span>{{ 'View Ledger' | t }}</span>
         </a>
         <a mat-stroked-button [routerLink]="['/reports/finance.animal-cost-ledger']" [queryParams]="{ animalId: animalId() }"
           matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>SAP Report</span>
+          <span>{{ 'SAP Report' | t }}</span>
         </a>
         <a mat-stroked-button [routerLink]="['/reports/finance.animal-daily-cost']" [queryParams]="{ animalId: animalId() }"
           matTooltip="What this animal cost each day: feed, vet, labour and overhead"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">calendar_month</mat-icon>
-          <span>Daily Cost</span>
+          <span>{{ 'Daily Cost' | t }}</span>
         </a>
         <a mat-stroked-button routerLink="/reports/finance.herd-daily-cost"
           matTooltip="What all animals cost each day, with head count and cost per head"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">groups</mat-icon>
-          <span>Herd Daily Cost</span>
+          <span>{{ 'Herd Daily Cost' | t }}</span>
         </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !ledgerData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
         </button>
         <button mat-stroked-button (click)="exportExcel()" [disabled]="!ledgerData()"
           class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
@@ -80,13 +83,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
     <div *ngIf="!isLoading()" class="px-6 py-4 mx-auto max-w-7xl space-y-6">
       
-      <app-error-state *ngIf="loadError() as err" title="Couldn't load the cost ledger" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="loadError() as err" [title]="loadErrorTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <app-empty-state
         *ngIf="!ledgerData() && !loadError()"
         icon="request_quote"
-        title="No Cost Ledger Found"
-        description="Cost ledger for this animal has not been initialized or no costs exist.">
+        [title]="'No Cost Ledger Found' | t"
+        [description]="'Cost ledger for this animal has not been initialized or no costs exist.' | t">
       </app-empty-state>
 
       <!-- Main Ledger View -->
@@ -102,13 +105,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <div>
               <div class="flex items-center gap-3">
                 <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full uppercase">
-                  Tag: {{ breakEvenData()?.tagId || 'N/A' }}
+                  {{ 'Tag: {tag}' | t: { tag: (breakEvenData()?.tagId || ('N/A' | t)) } }}
                 </span>
                 <span *ngIf="breakEvenData()?.currentWeightKg as weight" class="px-3 py-1 bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 font-bold text-xs rounded-full">
-                  Weight: {{ weight }} Kg
+                  {{ 'Weight: {weight} Kg' | t: { weight: weight } }}
                 </span>
               </div>
-              <p class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mt-3">Total Accumulated Cost of Ownership</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mt-3">{{ 'Total Accumulated Cost of Ownership' | t }}</p>
               <h2 class="text-4xl font-black text-gray-900 dark:text-white mt-1">
                 {{ ledger.totalCostBdt | money }}
               </h2>
@@ -119,23 +122,23 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon class="text-3xl">scale</mat-icon>
               </div>
               <div>
-                <p class="text-xs font-bold uppercase text-emerald-100 tracking-wider">Break-Even Price</p>
-                <p class="text-3xl font-black">{{ be.breakEvenPricePerKgBdt | money:2 }} <span class="text-sm font-medium text-emerald-100">/ live kg</span></p>
-                <p class="text-[11px] text-emerald-100/80 mt-0.5">Minimum price per kg of live weight to recover all costs</p>
+                <p class="text-xs font-bold uppercase text-emerald-100 tracking-wider">{{ 'Break-Even Price' | t }}</p>
+                <p class="text-3xl font-black">{{ be.breakEvenPricePerKgBdt | money:2 }} <span class="text-sm font-medium text-emerald-100">{{ '/ live kg' | t }}</span></p>
+                <p class="text-[11px] text-emerald-100/80 mt-0.5">{{ 'Minimum price per kg of live weight to recover all costs' | t }}</p>
               </div>
             </div>
           </div>
 
           <!-- Cost Breakdown Component Grid -->
           <div class="mt-6">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">Cost Center Allocation</h3>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">{{ 'Cost Center Allocation' | t }}</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               
               <div class="p-4 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/50">
                 <div class="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center mb-2">
                   <mat-icon class="text-lg">shopping_cart</mat-icon>
                 </div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Acquisition</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ 'Acquisition' | t }}</p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.acquisitionCostBdt | money }}</p>
               </div>
 
@@ -143,7 +146,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center mb-2">
                   <mat-icon class="text-lg">grass</mat-icon>
                 </div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Feed Consumed</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ 'Feed Consumed' | t }}</p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.totalFeedCostBdt | money }}</p>
               </div>
 
@@ -151,7 +154,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div class="w-9 h-9 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center mb-2">
                   <mat-icon class="text-lg">medical_services</mat-icon>
                 </div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Veterinary & Meds</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ 'Veterinary & Meds' | t }}</p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.totalVetCostBdt | money }}</p>
               </div>
 
@@ -159,7 +162,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center mb-2">
                   <mat-icon class="text-lg">build</mat-icon>
                 </div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Labor & Overhead</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ 'Labor & Overhead' | t }}</p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ (ledger.totalLaborCostBdt + ledger.totalOverheadBdt) | money }}</p>
               </div>
 
@@ -168,15 +171,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
           <!-- Realized Profit/Loss if sold -->
           <div *ngIf="ledger.saleRevenueBdt" class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/50">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">Realized Financial Outcome</h3>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">{{ 'Realized Financial Outcome' | t }}</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="p-5 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Realized Sale Revenue</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ 'Realized Sale Revenue' | t }}</p>
                 <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.saleRevenueBdt | money }}</p>
               </div>
               <div class="p-5 rounded-xl border" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'border-emerald-200 bg-emerald-50/70 dark:bg-emerald-950/30' : 'border-red-200 bg-red-50/70 dark:bg-red-950/30'">
                 <p class="text-xs font-bold uppercase tracking-wider" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
-                  {{ (ledger.profitLossBdt || 0) >= 0 ? 'Net Realized Profit' : 'Net Realized Loss' }}
+                  {{ ((ledger.profitLossBdt || 0) >= 0 ? 'Net Realized Profit' : 'Net Realized Loss') | t }}
                 </p>
                 <p class="text-2xl font-black mt-1" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
                   {{ Math.abs(ledger.profitLossBdt || 0) | money }}
@@ -191,8 +194,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <div *ngIf="breakEvenData() as be" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 md:p-8">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Target Selling Price Tiers</h3>
-              <p class="text-xs text-gray-400">Market pricing model calculated based on current live weight and accumulated cost</p>
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Target Selling Price Tiers' | t }}</h3>
+              <p class="text-xs text-gray-400">{{ 'Market pricing model calculated based on current live weight and accumulated cost' | t }}</p>
             </div>
             <mat-icon class="text-emerald-600">price_check</mat-icon>
           </div>
@@ -203,15 +206,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <div class="p-5 rounded-xl border border-teal-100 dark:border-teal-900/50 bg-teal-50/40 dark:bg-teal-950/20">
               <div class="flex items-center justify-between">
                 <span class="px-2 py-0.5 bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300 text-xs font-bold rounded">
-                  +10% Margin
+                  {{ '+10% Margin' | t }}
                 </span>
-                <span class="text-xs text-teal-700 dark:text-teal-400 font-medium">Conservative</span>
+                <span class="text-xs text-teal-700 dark:text-teal-400 font-medium">{{ 'Conservative' | t }}</span>
               </div>
               <p class="text-2xl font-black text-teal-950 dark:text-teal-100 mt-3">
-                {{ be.targetPrice10PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">/ Kg</span>
+                {{ be.targetPrice10PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">{{ '/ Kg' | t }}</span>
               </p>
               <p *ngIf="be.currentWeightKg as weight" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Est. Total: <strong>{{ ((be.targetPrice10PercentMarginPerKg ?? 0) * weight) | money }}</strong>
+                {{ 'Est. Total:' | t }} <strong>{{ ((be.targetPrice10PercentMarginPerKg ?? 0) * weight) | money }}</strong>
               </p>
             </div>
 
@@ -219,15 +222,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <div class="p-5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/30 relative overflow-hidden">
               <div class="flex items-center justify-between">
                 <span class="px-2 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded">
-                  +20% Margin (Recommended)
+                  {{ '+20% Margin (Recommended)' | t }}
                 </span>
-                <span class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Optimal</span>
+                <span class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">{{ 'Optimal' | t }}</span>
               </div>
               <p class="text-2xl font-black text-emerald-950 dark:text-emerald-100 mt-3">
-                {{ be.targetPrice20PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">/ Kg</span>
+                {{ be.targetPrice20PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">{{ '/ Kg' | t }}</span>
               </p>
               <p *ngIf="be.currentWeightKg as weight" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Est. Total: <strong>{{ ((be.targetPrice20PercentMarginPerKg ?? 0) * weight) | money }}</strong>
+                {{ 'Est. Total:' | t }} <strong>{{ ((be.targetPrice20PercentMarginPerKg ?? 0) * weight) | money }}</strong>
               </p>
             </div>
 
@@ -235,15 +238,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <div class="p-5 rounded-xl border border-purple-100 dark:border-purple-900/50 bg-purple-50/40 dark:bg-purple-950/20">
               <div class="flex items-center justify-between">
                 <span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 text-xs font-bold rounded">
-                  +30% Margin
+                  {{ '+30% Margin' | t }}
                 </span>
-                <span class="text-xs text-purple-700 dark:text-purple-400 font-medium">Qurbani / Premium</span>
+                <span class="text-xs text-purple-700 dark:text-purple-400 font-medium">{{ 'Qurbani / Premium' | t }}</span>
               </div>
               <p class="text-2xl font-black text-purple-950 dark:text-purple-100 mt-3">
-                {{ be.targetPrice30PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">/ Kg</span>
+                {{ be.targetPrice30PercentMarginPerKg | money:2 }} <span class="text-xs font-normal">{{ '/ Kg' | t }}</span>
               </p>
               <p *ngIf="be.currentWeightKg as weight" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Est. Total: <strong>{{ ((be.targetPrice30PercentMarginPerKg ?? 0) * weight) | money }}</strong>
+                {{ 'Est. Total:' | t }} <strong>{{ ((be.targetPrice30PercentMarginPerKg ?? 0) * weight) | money }}</strong>
               </p>
             </div>
 
@@ -261,6 +264,8 @@ export class AnimalCostLedgerComponent implements OnInit {
   private readonly pdfExportService = inject(PdfExportService);
   private readonly reportService = inject(ReportService);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(I18nService);
+  readonly loadErrorTitle = this.i18n.t("Couldn't load the cost ledger");
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -292,7 +297,7 @@ export class AnimalCostLedgerComponent implements OnInit {
       }
       return combineLatest({
         ledger: this.financeService.getAnimalCostLedger(farm.id, animalId).pipe(catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the animal cost ledger.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the animal cost ledger.')));
           return of(null);
         })),
         breakEven: this.financeService.getBreakEven(farm.id, animalId).pipe(catchError(() => of(null)))
@@ -339,15 +344,15 @@ export class AnimalCostLedgerComponent implements OnInit {
               filename: `Farm360_Cost_Ledger_${tag}`,
               orientation: 'landscape',
               header: {
-                title: 'Unit Economics & Cost Ledger',
-                subtitle: `Animal Tag: ${tag} | Weight: ${be?.currentWeightKg ?? 'N/A'} kg`,
+                title: this.i18n.t('Unit Economics & Cost Ledger'),
+                subtitle: this.i18n.t('Animal Tag: {tag} | Weight: {weight} kg', { tag, weight: be?.currentWeightKg ?? this.i18n.t('N/A') }),
                 farmName: farm?.name || 'Primary Farm',
                 orgName: org?.name || 'Farm360 Enterprise',
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Accumulated Cost', value: `${formatMoney((ledger?.totalCostBdt || 0))}` },
-                  { label: 'Break-Even Price', value: `৳ ${(be?.breakEvenPricePerKgBdt || 0).toFixed(2)}/live kg` },
-                  { label: 'Target +20% Margin', value: `৳ ${(be?.targetPrice20PercentMarginPerKg || 0).toFixed(2)}/kg` }
+                  { label: this.i18n.t('Total Accumulated Cost'), value: `${formatMoney((ledger?.totalCostBdt || 0))}` },
+                  { label: this.i18n.t('Break-Even Price'), value: `৳ ${(be?.breakEvenPricePerKgBdt || 0).toFixed(2)}` + this.i18n.t('/live kg') },
+                  { label: this.i18n.t('Target +20% Margin'), value: `৳ ${(be?.targetPrice20PercentMarginPerKg || 0).toFixed(2)}` + this.i18n.t('/kg') }
                 ]
               },
               showSignatures: true

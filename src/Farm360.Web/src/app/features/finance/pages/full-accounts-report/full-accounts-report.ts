@@ -17,6 +17,8 @@ import { FinanceService } from '../../services/finance.service';
 import { FullAccountsReport } from '../../models/finance.model';
 import { ACCOUNTS_PAPER_CSS, RANGE_PRESETS, printPaper, toIsoDate } from '../../utils/accounts-report-print';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /** Sections the user can include or leave out of the statement (and therefore the print-out). */
 type SectionKey =
@@ -31,7 +33,7 @@ type SectionKey =
 @Component({
   selector: 'app-full-accounts-report',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe, TranslatePipe],
   templateUrl: './full-accounts-report.html',
   styles: [ACCOUNTS_PAPER_CSS],
   encapsulation: ViewEncapsulation.None,
@@ -42,6 +44,7 @@ export class FullAccountsReportComponent {
   private readonly context = inject(WorkingContextService);
   private readonly reports = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly i18n = inject(I18nService);
 
   private readonly paper = viewChild<ElementRef<HTMLElement>>('paper');
 
@@ -147,7 +150,7 @@ export class FullAccountsReportComponent {
           this.orgName.set(this.context.currentOrgValue?.name ?? '');
           return this.finance.getFullAccountsReport(farm.id, req.from, req.to).pipe(
             catchError(err => {
-              this.error.set(parseApiError(err, 'Failed to load the full accounts statement.'));
+              this.error.set(parseApiError(err, this.i18n.t('Failed to load the full accounts statement.')));
               return of(null);
             }),
           );
@@ -188,7 +191,7 @@ export class FullAccountsReportComponent {
 
   run(): void {
     if (this.fromDate() > this.toDate()) {
-      this.error.set('The start date must not be after the end date.');
+      this.error.set(this.i18n.t('The start date must not be after the end date.'));
       return;
     }
     this.request$.next({ from: this.fromDate(), to: this.toDate() });
@@ -196,7 +199,7 @@ export class FullAccountsReportComponent {
 
   print(): void {
     const el = this.paper()?.nativeElement;
-    if (el) printPaper(el, `Full Accounts Statement — ${this.periodLabel()}`);
+    if (el) printPaper(el, `${this.i18n.t('Full Accounts Statement')} — ${this.periodLabel()}`);
   }
 
   export(format: ReportExportFormat): void {
@@ -214,7 +217,7 @@ export class FullAccountsReportComponent {
           this.exporting.set(null);
         },
         error: err => {
-          this.error.set(parseApiError(err, `Export to ${format.toUpperCase()} failed.`));
+          this.error.set(parseApiError(err, this.i18n.t('Export to {format} failed.', { format: format.toUpperCase() })));
           this.exporting.set(null);
         },
       });

@@ -1,3 +1,5 @@
+import { translate } from '../../../core/i18n/i18n.service';
+
 export interface FinancialTransaction {
   id: string;
   farmId: string;
@@ -321,7 +323,10 @@ export function canBeOnCredit(t: Pick<FinancialTransaction, 'type' | 'category' 
   return list.includes(t.category);
 }
 
-/** Display names (English / বাংলা) for every head. */
+/**
+ * Display names (English / বাংলা) for every head. `en` is also the translation key: in Bangla mode
+ * categoryLabel() shows the Bangla name only (see core/i18n/bn/finance.ts).
+ */
 export const CATEGORY_LABELS: Readonly<Record<string, { en: string; bn: string; hint?: string }>> = {
   FeedCost: { en: 'Feed & Nutrition', bn: 'খাদ্য খরচ', hint: 'Feed bought and used directly (not via stock)' },
   VeterinaryCost: { en: 'Veterinary & Healthcare', bn: 'পশু চিকিৎসা খরচ' },
@@ -354,8 +359,9 @@ export const CATEGORY_LABELS: Readonly<Record<string, { en: string; bn: string; 
   OtherIncome: { en: 'Other Farm Income', bn: 'অন্যান্য আয়' },
 };
 
+/** The head's display name in the interface language; the category value itself never changes. */
 export function categoryLabel(category: string): string {
-  return CATEGORY_LABELS[category]?.en ?? category.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return translate(CATEGORY_LABELS[category]?.en ?? category.replace(/([a-z])([A-Z])/g, '$1 $2'));
 }
 
 // ── Investor & Profit Sharing Models ─────────────────────────────────────────

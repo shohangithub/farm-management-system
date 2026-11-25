@@ -20,6 +20,8 @@ import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /** One feed on the sheet, as edited on screen. `source` is "f:<formulaId>" or "i:<itemId>". */
 interface SheetLine {
@@ -48,7 +50,7 @@ interface AnimalGroup {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule,
-    UnitPickerComponent, PageHeaderComponent, FeedingSubnavComponent, MoneyPipe],
+    UnitPickerComponent, PageHeaderComponent, FeedingSubnavComponent, MoneyPipe, TranslatePipe],
   styles: [`
     .field { width: 100%; padding: 0.45rem 0.65rem; border-radius: 0.6rem; border: 1px solid rgb(209 213 219); background: white; font-size: 0.8125rem; color: rgb(17 24 39); outline: none; }
     .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(16, 185, 129, .15); }
@@ -57,52 +59,52 @@ interface AnimalGroup {
     :host-context(.dark) .card { background: rgb(31 41 55); border-color: rgb(55 65 81); }
   `],
   template: `
-    <app-page-header title="Record Daily Feed · দৈনিক খাবার লিখুন"
-      description="Record what your animals actually ate today: any mix of feeds, no feeding plan needed. Stock, cost and reports update when you save."
-      breadcrumbActiveNode="Record Daily Feed">
+    <app-page-header [title]="'Record Daily Feed · দৈনিক খাবার লিখুন' | t"
+      [description]="'Record what your animals actually ate today: any mix of feeds, no feeding plan needed. Stock, cost and reports update when you save.' | t"
+      [breadcrumbActiveNode]="'Record Daily Feed' | t">
     </app-page-header>
 
     <div class="px-4 sm:px-6 py-4 mx-auto max-w-7xl space-y-4">
       <app-feeding-subnav></app-feeding-subnav>
 
-      <div *ngIf="!farmId()" class="card p-6 text-sm text-gray-500">Choose a farm at the top of the page to start.</div>
+      <div *ngIf="!farmId()" class="card p-6 text-sm text-gray-500">{{ 'Choose a farm at the top of the page to start.' | t }}</div>
 
       <ng-container *ngIf="farmId()">
         <!-- Date -->
         <div class="card p-3 flex flex-wrap items-center gap-2 text-xs">
-          <button mat-icon-button (click)="shiftDay(-1)" aria-label="Previous day"><mat-icon>chevron_left</mat-icon></button>
+          <button mat-icon-button (click)="shiftDay(-1)" [attr.aria-label]="'Previous day' | t"><mat-icon>chevron_left</mat-icon></button>
           <input type="date" class="field !w-44" [max]="today" [ngModel]="date()" (ngModelChange)="setDate($event)" />
-          <button mat-icon-button (click)="shiftDay(1)" [disabled]="date() >= today" aria-label="Next day"><mat-icon>chevron_right</mat-icon></button>
-          <button mat-stroked-button class="!rounded-xl" (click)="setDate(today)" [disabled]="date() === today">Today</button>
-          <span class="ml-auto text-gray-500">{{ animals().length }} animals on the farm · {{ fedCount() }} already fed this day</span>
+          <button mat-icon-button (click)="shiftDay(1)" [disabled]="date() >= today" [attr.aria-label]="'Next day' | t"><mat-icon>chevron_right</mat-icon></button>
+          <button mat-stroked-button class="!rounded-xl" (click)="setDate(today)" [disabled]="date() === today">{{ 'Today' | t }}</button>
+          <span class="ml-auto text-gray-500">{{ '{n} animals on the farm · {fed} already fed this day' | t: { n: animals().length, fed: fedCount() } }}</span>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <!-- ── Animals ─────────────────────────────────────────── -->
           <section class="card p-4 lg:col-span-2 flex flex-col min-h-[420px]">
             <div class="flex items-center justify-between gap-2 mb-3">
-              <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">1. Animals <span class="font-normal text-gray-400">· পশু</span></h3>
-              <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">{{ selected().size }} selected</span>
+              <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">1. {{ 'Animals' | t }} @if (!i18n.isBangla) {<span class="font-normal text-gray-400">· পশু</span>}</h3>
+              <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">{{ '{n} selected' | t: { n: selected().size } }}</span>
             </div>
 
             <div class="flex flex-wrap gap-2 mb-2 text-xs">
-              <input type="search" class="field flex-1 min-w-[8rem]" placeholder="Search tag…" [ngModel]="search()" (ngModelChange)="search.set($event)" />
-              <select class="field !w-auto" [ngModel]="groupBy()" (ngModelChange)="groupBy.set($event)" aria-label="Group animals by">
-                <option value="shed">By shed</option>
-                <option value="batch">By batch</option>
-                <option value="none">No groups</option>
+              <input type="search" class="field flex-1 min-w-[8rem]" [placeholder]="'Search tag…' | t" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+              <select class="field !w-auto" [ngModel]="groupBy()" (ngModelChange)="groupBy.set($event)" [attr.aria-label]="'Group animals by' | t">
+                <option value="shed">{{ 'By shed' | t }}</option>
+                <option value="batch">{{ 'By batch' | t }}</option>
+                <option value="none">{{ 'No groups' | t }}</option>
               </select>
             </div>
             <div class="flex gap-2 mb-2 text-xs">
-              <button class="text-emerald-700 dark:text-emerald-300 font-semibold hover:underline" (click)="selectAll(true)">Select all</button>
+              <button class="text-emerald-700 dark:text-emerald-300 font-semibold hover:underline" (click)="selectAll(true)">{{ 'Select all' | t }}</button>
               <span class="text-gray-300">|</span>
-              <button class="text-gray-500 font-semibold hover:underline" (click)="selectAll(false)">Clear</button>
+              <button class="text-gray-500 font-semibold hover:underline" (click)="selectAll(false)">{{ 'Clear' | t }}</button>
               <span class="text-gray-300">|</span>
-              <button class="text-gray-500 font-semibold hover:underline" (click)="selectNotFed()" matTooltip="Select every animal with nothing recorded yet this day">Not fed yet</button>
+              <button class="text-gray-500 font-semibold hover:underline" (click)="selectNotFed()" [matTooltip]="'Select every animal with nothing recorded yet this day' | t">{{ 'Not fed yet' | t }}</button>
             </div>
 
-            <div *ngIf="loading()" class="text-xs text-gray-400 py-6 text-center">Loading…</div>
-            <div *ngIf="!loading() && animals().length === 0" class="text-xs text-gray-400 py-6 text-center">No animals were on the farm on this day.</div>
+            <div *ngIf="loading()" class="text-xs text-gray-400 py-6 text-center">{{ 'Loading…' | t }}</div>
+            <div *ngIf="!loading() && animals().length === 0" class="text-xs text-gray-400 py-6 text-center">{{ 'No animals were on the farm on this day.' | t }}</div>
 
             <div class="overflow-y-auto max-h-[60vh] -mx-1 px-1 space-y-3">
               <div *ngFor="let g of groups()">
@@ -116,10 +118,10 @@ interface AnimalGroup {
                   <input type="checkbox" class="accent-emerald-600 mt-0.5" [checked]="selected().has(a.animalId)" (change)="toggle(a.animalId)" />
                   <span class="flex-1 min-w-0">
                     <span class="font-semibold text-gray-900 dark:text-white">{{ a.tagId }}</span>
-                    <span class="text-gray-500"> · {{ a.breed }} · {{ a.weightKg ? (a.weightKg | number:'1.0-0') + ' kg' : 'no weight' }}</span>
-                    <span class="block text-[11px] text-gray-400 truncate" *ngIf="a.activePlans.length">On plan: {{ a.activePlans.join(', ') }}</span>
+                    <span class="text-gray-500"> · {{ a.breed }} · {{ a.weightKg ? (a.weightKg | number:'1.0-0') + ' ' + ('kg' | t) : ('no weight' | t) }}</span>
+                    <span class="block text-[11px] text-gray-400 truncate" *ngIf="a.activePlans.length">{{ 'On plan: {plans}' | t: { plans: a.activePlans.join(', ') } }}</span>
                   </span>
-                  <span *ngIf="fedTotal(a) as t" class="shrink-0 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300" matTooltip="Already recorded this day">
+                  <span *ngIf="fedTotal(a) as t" class="shrink-0 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300" [matTooltip]="'Already recorded this day' | t">
                     ✓ {{ t | money }}
                   </span>
                 </label>
@@ -130,89 +132,89 @@ interface AnimalGroup {
           <!-- ── Feeds ───────────────────────────────────────────── -->
           <section class="card p-4 lg:col-span-3 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">2. What they ate <span class="font-normal text-gray-400">· কী খেয়েছে</span></h3>
+              <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">2. {{ 'What they ate' | t }} @if (!i18n.isBangla) {<span class="font-normal text-gray-400">· কী খেয়েছে</span>}</h3>
               <div class="flex gap-2">
                 <button mat-stroked-button class="!rounded-xl !text-xs" (click)="copyLastDay()" [disabled]="selected().size === 0 || copying()"
-                  matTooltip="Fill the sheet with what these animals ate on their last fed day">
-                  <mat-icon class="!text-[16px] !w-4 !h-4">content_copy</mat-icon> {{ copying() ? 'Copying…' : 'Same as last day' }}
+                  [matTooltip]="'Fill the sheet with what these animals ate on their last fed day' | t">
+                  <mat-icon class="!text-[16px] !w-4 !h-4">content_copy</mat-icon> {{ (copying() ? 'Copying…' : 'Same as last day') | t }}
                 </button>
                 <button mat-stroked-button class="!rounded-xl !text-xs" (click)="addLine()">
-                  <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon> Add feed
+                  <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon> {{ 'Add feed' | t }}
                 </button>
               </div>
             </div>
 
-            <p *ngIf="copiedFrom()" class="text-[11px] text-gray-500 m-0">Copied from {{ copiedFrom() | date:'EEE dd MMM yyyy' }}. Feeds every animal got the same amount of are "each"; feeds that varied by animal are a "total" split by weight again (scaled to the animals selected now). Change anything that was different today.</p>
+            <p *ngIf="copiedFrom()" class="text-[11px] text-gray-500 m-0">{{ 'Copied from {date}. Feeds every animal got the same amount of are "each"; feeds that varied by animal are a "total" split by weight again (scaled to the animals selected now). Change anything that was different today.' | t: { date: (copiedFrom() | date:'EEE dd MMM yyyy') } }}</p>
 
             <div *ngFor="let line of lines(); let i = index" class="rounded-xl border border-gray-100 dark:border-gray-700 p-3 grid grid-cols-12 gap-2 items-end text-xs">
               <label class="col-span-12 sm:col-span-5">
-                <span class="text-gray-500">Feed</span>
+                <span class="text-gray-500">{{ 'Feed' | t }}</span>
                 <select class="field mt-1" [ngModel]="line.source" (ngModelChange)="patch(i, { source: $event, unit: null })">
-                  <option value="">— choose —</option>
-                  <optgroup label="Recipes">
+                  <option value="">{{ '— choose —' | t }}</option>
+                  <optgroup [label]="'Recipes' | t">
                     <option *ngFor="let f of formulas()" [value]="'f:' + f.id">{{ f.title }}</option>
                   </optgroup>
-                  <optgroup label="Stock items (fed as they are)">
+                  <optgroup [label]="'Stock items (fed as they are)' | t">
                     <option *ngFor="let it of feedItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }}</option>
                   </optgroup>
-                  <optgroup label="Supplements & medicines">
+                  <optgroup [label]="'Supplements & medicines' | t">
                     <option *ngFor="let it of supplementItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }}</option>
                   </optgroup>
                 </select>
               </label>
               <label class="col-span-4 sm:col-span-2">
-                <span class="text-gray-500">Quantity</span>
+                <span class="text-gray-500">{{ 'Quantity' | t }}</span>
                 <input type="number" min="0" step="0.01" class="field mt-1" [ngModel]="line.quantity" (ngModelChange)="patch(i, { quantity: $event })" />
               </label>
               <div class="col-span-4 sm:col-span-2">
-                <span class="text-gray-500">Unit</span>
+                <span class="text-gray-500">{{ 'Unit' | t }}</span>
                 <div class="mt-1">
                   <app-unit-picker *ngIf="isItem(line); else kg" [itemId]="itemId(line)" [quantity]="line.quantity" [useDefault]="false"
                     (selectionChange)="patch(i, { unit: $event })"></app-unit-picker>
-                  <ng-template #kg><div class="field text-gray-500">kg</div></ng-template>
+                  <ng-template #kg><div class="field text-gray-500">{{ 'kg' | t }}</div></ng-template>
                 </div>
               </div>
               <label class="col-span-3 sm:col-span-2">
-                <span class="text-gray-500">Amount is</span>
+                <span class="text-gray-500">{{ 'Amount is' | t }}</span>
                 <select class="field mt-1" [ngModel]="line.mode" (ngModelChange)="patch(i, { mode: $event })">
-                  <option value="PerHead">each</option>
-                  <option value="GroupTotal">total</option>
+                  <option value="PerHead">{{ 'each' | t }}</option>
+                  <option value="GroupTotal">{{ 'total' | t }}</option>
                 </select>
               </label>
               <div class="col-span-1 flex justify-end">
-                <button mat-icon-button (click)="removeLine(i)" aria-label="Remove feed"><mat-icon class="text-gray-400">delete</mat-icon></button>
+                <button mat-icon-button (click)="removeLine(i)" [attr.aria-label]="'Remove feed' | t"><mat-icon class="text-gray-400">delete</mat-icon></button>
               </div>
               <p *ngIf="lineSummary(line) as s" class="col-span-12 m-0 text-[11px] text-gray-500">{{ s }}</p>
             </div>
 
             <div *ngIf="hasGroupTotal()" class="flex flex-wrap items-center gap-3 text-xs rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3">
-              <span class="font-semibold text-gray-700 dark:text-gray-200">Split totals</span>
-              <label class="flex items-center gap-1"><input type="radio" class="accent-emerald-600" name="split" value="ByWeight" [ngModel]="split()" (ngModelChange)="split.set($event)" /> by body weight (heavier eat more)</label>
-              <label class="flex items-center gap-1"><input type="radio" class="accent-emerald-600" name="split" value="Equal" [ngModel]="split()" (ngModelChange)="split.set($event)" /> equally</label>
+              <span class="font-semibold text-gray-700 dark:text-gray-200">{{ 'Split totals' | t }}</span>
+              <label class="flex items-center gap-1"><input type="radio" class="accent-emerald-600" name="split" value="ByWeight" [ngModel]="split()" (ngModelChange)="split.set($event)" /> {{ 'by body weight (heavier eat more)' | t }}</label>
+              <label class="flex items-center gap-1"><input type="radio" class="accent-emerald-600" name="split" value="Equal" [ngModel]="split()" (ngModelChange)="split.set($event)" /> {{ 'equally' | t }}</label>
             </div>
 
             <!-- Plans -->
             <div *ngIf="selectedOnPlan().length" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-2">
               <div>
-                <b>{{ selectedOnPlan().length }}</b> selected animal(s) are on a feeding plan. When you save, their planned feed for this day is skipped, so nothing is counted twice.
+                {{ '{n} selected animal(s) are on a feeding plan. When you save, their planned feed for this day is skipped, so nothing is counted twice.' | t: { n: selectedOnPlan().length } }}
               </div>
               <div *ngIf="selectedWithOwnPlan().length" class="flex flex-wrap items-center gap-2">
-                <span>Feeding them by sheet from now on?</span>
+                <span>{{ 'Feeding them by sheet from now on?' | t }}</span>
                 <button mat-stroked-button class="!rounded-xl !text-xs" (click)="endPlans()" [disabled]="busy()">
-                  End their own plans ({{ selectedWithOwnPlan().length }})
+                  {{ 'End their own plans ({n})' | t: { n: selectedWithOwnPlan().length } }}
                 </button>
               </div>
             </div>
 
             <label class="block text-xs">
-              <span class="text-gray-500">Note (optional)</span>
-              <input type="text" class="field mt-1" maxlength="200" placeholder="e.g. Green grass ran out, gave extra straw" [ngModel]="notes()" (ngModelChange)="notes.set($event)" />
+              <span class="text-gray-500">{{ 'Note (optional)' | t }}</span>
+              <input type="text" class="field mt-1" maxlength="200" [placeholder]="'e.g. Green grass ran out, gave extra straw' | t" [ngModel]="notes()" (ngModelChange)="notes.set($event)" />
             </label>
 
             <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
               <span class="text-xs text-gray-500">{{ saveHint() }}</span>
               <button mat-flat-button color="primary" class="!rounded-xl" (click)="save()" [disabled]="!canSave() || busy()">
-                <mat-icon>task_alt</mat-icon> {{ busy() ? 'Saving…' : 'Save & confirm' }}
+                <mat-icon>task_alt</mat-icon> {{ (busy() ? 'Saving…' : 'Save & confirm') | t }}
               </button>
             </div>
           </section>
@@ -220,22 +222,22 @@ interface AnimalGroup {
 
         <!-- ── Already recorded ─────────────────────────────────── -->
         <section class="card p-4" *ngIf="recorded().length">
-          <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0 mb-1">Recorded for {{ date() | date:'EEE dd MMM yyyy' }} <span class="font-normal text-gray-400">· যা রেকর্ড হয়েছে</span></h3>
-          <p class="text-[11px] text-gray-500 m-0 mb-3">To correct a feed, remove it here and add the right one above. The stock is returned and the cost is reversed.{{ selected().size ? ' Showing the selected animals.' : '' }}</p>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0 mb-1">{{ 'Recorded for {date}' | t: { date: (date() | date:'EEE dd MMM yyyy') } }} @if (!i18n.isBangla) {<span class="font-normal text-gray-400">· যা রেকর্ড হয়েছে</span>}</h3>
+          <p class="text-[11px] text-gray-500 m-0 mb-3">{{ 'To correct a feed, remove it here and add the right one above. The stock is returned and the cost is reversed.' | t }}{{ selected().size ? ' ' + ('Showing the selected animals.' | t) : '' }}</p>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead class="text-gray-500 text-left">
-                <tr><th class="py-1 pr-3">Animal</th><th class="py-1 pr-3">Feed</th><th class="py-1 pr-3 text-right">Quantity</th><th class="py-1 pr-3 text-right">Cost</th><th class="py-1 pr-3">From</th><th></th></tr>
+                <tr><th class="py-1 pr-3">{{ 'Animal' | t }}</th><th class="py-1 pr-3">{{ 'Feed' | t }}</th><th class="py-1 pr-3 text-right">{{ 'Quantity' | t }}</th><th class="py-1 pr-3 text-right">{{ 'Cost' | t }}</th><th class="py-1 pr-3">{{ 'From' | t }}</th><th></th></tr>
               </thead>
               <tbody>
                 <tr *ngFor="let r of recorded()" class="border-t border-gray-100 dark:border-gray-700">
                   <td class="py-1.5 pr-3 font-semibold">{{ r.tag }}</td>
-                  <td class="py-1.5 pr-3">{{ r.fed.feed }} <span *ngIf="!r.fed.confirmed" class="text-amber-600">(planned, not confirmed)</span></td>
+                  <td class="py-1.5 pr-3">{{ r.fed.feed }} <span *ngIf="!r.fed.confirmed" class="text-amber-600">{{ '(planned, not confirmed)' | t }}</span></td>
                   <td class="py-1.5 pr-3 text-right">{{ r.fed.quantity | number:'1.0-3' }} {{ r.fed.unit }}</td>
                   <td class="py-1.5 pr-3 text-right">{{ r.fed.costBdt | money:2 }}</td>
-                  <td class="py-1.5 pr-3 text-gray-500">{{ r.fed.source }}</td>
+                  <td class="py-1.5 pr-3 text-gray-500">{{ r.fed.source | t }}</td>
                   <td class="py-1.5 text-right">
-                    <button *ngIf="r.fed.canRemove" mat-icon-button (click)="removeRecorded(r.tag, r.fed)" [disabled]="busy()" matTooltip="Remove this feed and return its stock">
+                    <button *ngIf="r.fed.canRemove" mat-icon-button (click)="removeRecorded(r.tag, r.fed)" [disabled]="busy()" [matTooltip]="'Remove this feed and return its stock' | t">
                       <mat-icon class="!text-[18px] text-red-500">undo</mat-icon>
                     </button>
                   </td>
@@ -255,6 +257,7 @@ export class DailyFeedSheetComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly confirmService = inject(ConfirmService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly i18n = inject(I18nService);
 
   readonly today = toLocalIsoDate();
   readonly farmId = signal<string | null>(null);
@@ -285,12 +288,12 @@ export class DailyFeedSheetComponent implements OnInit {
     const term = this.search().trim().toLowerCase();
     const list = this.animals().filter(a => !term || a.tagId.toLowerCase().includes(term));
     const by = this.groupBy();
-    if (by === 'none') return [{ key: 'all', label: 'All animals', animals: list }];
+    if (by === 'none') return [{ key: 'all', label: this.i18n.t('All animals'), animals: list }];
     const map = new Map<string, AnimalGroup>();
     for (const a of list) {
       const key = (by === 'shed' ? a.shedId : a.batchId) ?? 'none';
-      const label = (by === 'shed' ? (a.shedName ? `Shed ${a.shedName}` : null) : (a.batchName ? `Batch ${a.batchName}` : null))
-        ?? (by === 'shed' ? 'No shed' : 'No batch');
+      const label = (by === 'shed' ? (a.shedName ? this.i18n.t('Shed {name}', { name: a.shedName }) : null) : (a.batchName ? this.i18n.t('Batch {name}', { name: a.batchName }) : null))
+        ?? this.i18n.t(by === 'shed' ? 'No shed' : 'No batch');
       if (!map.has(key)) map.set(key, { key, label, animals: [] });
       map.get(key)!.animals.push(a);
     }
@@ -308,9 +311,9 @@ export class DailyFeedSheetComponent implements OnInit {
   readonly saveHint = computed(() => {
     const n = this.selected().size;
     const f = this.validLines().length;
-    if (!n) return 'Choose the animals that were fed.';
-    if (!f) return 'Add what they ate.';
-    return `${f} feed${f === 1 ? '' : 's'} for ${n} animal${n === 1 ? '' : 's'}. Stock is checked first; if anything is short, nothing is saved.`;
+    if (!n) return this.i18n.t('Choose the animals that were fed.');
+    if (!f) return this.i18n.t('Add what they ate.');
+    return this.i18n.t('{f} feed(s) for {n} animal(s). Stock is checked first; if anything is short, nothing is saved.', { f, n });
   });
 
   readonly recorded = computed(() => {
@@ -354,7 +357,7 @@ export class DailyFeedSheetComponent implements OnInit {
       },
       error: err => {
         this.loading.set(false);
-        this.notify.error(parseApiError(err, 'Could not load the animals.'));
+        this.notify.error(parseApiError(err, this.i18n.t('Could not load the animals.')));
       }
     });
   }
@@ -441,10 +444,12 @@ export class DailyFeedSheetComponent implements OnInit {
     const q = Number(line.quantity) || 0;
     const n = this.selected().size;
     if (!line.source || q <= 0 || n === 0) return null;
-    const unit = this.unitOf(line);
-    if (line.mode === 'PerHead') return `${n} × ${q} = ${this.fmt(q * n)} ${unit} in all.`;
-    const how = this.split() === 'Equal' ? 'equally' : 'by body weight';
-    return `${this.fmt(q)} ${unit} shared ${how} by ${n} animals (about ${this.fmt(q / n)} ${unit} each).`;
+    const unit = this.isItem(line) ? this.unitOf(line) : this.i18n.t('kg');
+    if (line.mode === 'PerHead') return this.i18n.t('{n} × {q} = {total} {unit} in all.', { n, q, total: this.fmt(q * n), unit });
+    return this.i18n.t(this.split() === 'Equal'
+      ? '{q} {unit} shared equally by {n} animals (about {each} {unit} each).'
+      : '{q} {unit} shared by body weight by {n} animals (about {each} {unit} each).',
+      { q: this.fmt(q), unit, n, each: this.fmt(q / n) });
   }
 
   private fmt(v: number): string {
@@ -459,7 +464,7 @@ export class DailyFeedSheetComponent implements OnInit {
       next: copy => {
         this.copying.set(false);
         if (!copy.fromDate || copy.lines.length === 0) {
-          this.notify.info('No earlier feeding found for these animals in the last 60 days.');
+          this.notify.info(this.i18n.t('No earlier feeding found for these animals in the last 60 days.'));
           return;
         }
         this.copiedFrom.set(copy.fromDate);
@@ -476,7 +481,7 @@ export class DailyFeedSheetComponent implements OnInit {
       },
       error: err => {
         this.copying.set(false);
-        this.notify.error(parseApiError(err, 'Could not copy the last day.'));
+        this.notify.error(parseApiError(err, this.i18n.t('Could not copy the last day.')));
       }
     });
   }
@@ -512,23 +517,24 @@ export class DailyFeedSheetComponent implements OnInit {
       },
       error: err => {
         this.busy.set(false);
-        this.notify.error(parseApiError(err, 'The feed sheet could not be saved.'));
+        this.notify.error(parseApiError(err, this.i18n.t('The feed sheet could not be saved.')));
       }
     });
   }
 
   private resultMessage(res: DailyFeedSheetResult): string {
-    const skipped = res.plannedEntriesSkipped ? ` ${res.plannedEntriesSkipped} planned entr${res.plannedEntriesSkipped === 1 ? 'y' : 'ies'} replaced.` : '';
-    return `Saved: ${res.animalsFed} animal(s) fed, ${res.entriesRecorded} feed record(s), cost ৳${res.totalCostBdt.toFixed(2)}.${skipped}`;
+    const skipped = res.plannedEntriesSkipped ? ' ' + this.i18n.t('{n} planned entry(ies) replaced.', { n: res.plannedEntriesSkipped }) : '';
+    return this.i18n.t('Saved: {animals} animal(s) fed, {records} feed record(s), cost ৳{cost}.', { animals: res.animalsFed, records: res.entriesRecorded, cost: res.totalCostBdt.toFixed(2) }) + skipped;
   }
 
   removeRecorded(tag: string, fed: FeedSheetFed): void {
     const farmId = this.farmId();
     if (!farmId) return;
     this.confirmService.confirm({
-      title: 'Remove this feed?',
-      message: `${fed.feed} (${fed.quantity} ${fed.unit}) for ${tag} on ${this.date()}. ${fed.confirmed ? 'The stock is returned and the cost reversed.' : 'The planned feed is skipped.'}`,
-      confirmText: 'Remove',
+      title: this.i18n.t('Remove this feed?'),
+      message: this.i18n.t('{feed} ({qty} {unit}) for {tag} on {date}.', { feed: fed.feed, qty: fed.quantity, unit: fed.unit, tag, date: this.date() })
+        + ' ' + this.i18n.t(fed.confirmed ? 'The stock is returned and the cost reversed.' : 'The planned feed is skipped.'),
+      confirmText: this.i18n.t('Remove'),
       destructive: true,
     }).subscribe(ok => {
       if (!ok) return;
@@ -536,12 +542,12 @@ export class DailyFeedSheetComponent implements OnInit {
       this.feeding.removeFeedSheetEntry(farmId, fed.entryId).subscribe({
         next: () => {
           this.busy.set(false);
-          this.notify.success('Feed removed.');
+          this.notify.success(this.i18n.t('Feed removed.'));
           this.load();
         },
         error: err => {
           this.busy.set(false);
-          this.notify.error(parseApiError(err, 'Could not remove the feed.'));
+          this.notify.error(parseApiError(err, this.i18n.t('Could not remove the feed.')));
         }
       });
     });
@@ -552,9 +558,9 @@ export class DailyFeedSheetComponent implements OnInit {
     const ids = this.selectedWithOwnPlan().map(a => a.animalId);
     if (!farmId || ids.length === 0) return;
     this.confirmService.confirm({
-      title: 'Feed these animals by sheet?',
-      message: `Their own feeding plans (${ids.length}) end today, so no planned feed is created for them any more. You can assign a plan again at any time.`,
-      confirmText: 'End plans',
+      title: this.i18n.t('Feed these animals by sheet?'),
+      message: this.i18n.t('Their own feeding plans ({n}) end today, so no planned feed is created for them any more. You can assign a plan again at any time.', { n: ids.length }),
+      confirmText: this.i18n.t('End plans'),
     }).subscribe(ok => {
       if (!ok) return;
       this.busy.set(true);
@@ -562,14 +568,14 @@ export class DailyFeedSheetComponent implements OnInit {
         next: res => {
           this.busy.set(false);
           const groups = res.groupPlansStillCovering.length
-            ? ` Still fed by group plan(s): ${res.groupPlansStillCovering.join(', ')}. Pause or stop those in Feeding → Feeding Plans if needed.`
+            ? ' ' + this.i18n.t('Still fed by group plan(s): {plans}. Pause or stop those in Feeding → Feeding Plans if needed.', { plans: res.groupPlansStillCovering.join(', ') })
             : '';
-          this.notify.success(`${res.plansEnded} plan(s) ended.${groups}`, groups ? { duration: 10000 } : undefined);
+          this.notify.success(this.i18n.t('{n} plan(s) ended.', { n: res.plansEnded }) + groups, groups ? { duration: 10000 } : undefined);
           this.load();
         },
         error: err => {
           this.busy.set(false);
-          this.notify.error(parseApiError(err, 'Could not end the plans.'));
+          this.notify.error(parseApiError(err, this.i18n.t('Could not end the plans.')));
         }
       });
     });

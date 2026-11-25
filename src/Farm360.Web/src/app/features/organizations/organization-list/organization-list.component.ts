@@ -14,6 +14,8 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, tap, map } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -22,11 +24,12 @@ import { NotificationService } from '../../../shared/services/notification.servi
 @Component({
   selector: 'app-organization-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, LoadingComponent],
+  imports: [TranslatePipe, ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, LoadingComponent],
   templateUrl: './organization-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrganizationListComponent {
+  private readonly i18n = inject(I18nService);
   private readonly notify = inject(NotificationService);
   private readonly organizationService = inject(OrganizationService);
   private readonly router = inject(Router);
@@ -94,7 +97,7 @@ export class OrganizationListComponent {
     {
       def: 'type',
       header: 'Type',
-      cell: (row: Organization) => this.businessTypeLabels[row.businessType] ?? 'Unknown',
+      cell: (row: Organization) => this.i18n.t(this.businessTypeLabels[row.businessType] ?? 'Unknown'),
       isAction: false
     },
     {
@@ -102,7 +105,7 @@ export class OrganizationListComponent {
       header: 'Status',
       cell: (row: Organization) => {
         const isActive = row.status === 'Active';
-        return `<span class="px-2 py-0.5 inline-flex text-[11px] leading-5 font-bold rounded-md uppercase tracking-wider ${isActive ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}">${isActive ? 'Active' : 'Inactive'}</span>`;
+        return `<span class="px-2 py-0.5 inline-flex text-[11px] leading-5 font-bold rounded-md uppercase tracking-wider ${isActive ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}">${this.i18n.t(isActive ? 'Active' : 'Inactive')}</span>`;
       },
       isAction: false
     },

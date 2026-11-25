@@ -11,6 +11,8 @@ import { debounceTime, distinctUntilChanged, switchMap, catchError, map, filter,
 import { of, forkJoin } from 'rxjs';
 import { AnimalListItemDto } from '../../../features/livestock/models/animal.models';
 import { InventoryItem } from '../../../features/inventory/models/inventory.models';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface SearchResultGroup {
   name: string;
@@ -21,13 +23,13 @@ interface SearchResultGroup {
   selector: 'app-global-search',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatIconModule, TranslatePipe],
   template: `
     <div class="relative w-full group" (clickOutside)="close()">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <mat-icon class="text-gray-400 dark:text-gray-500 text-[20px] h-5 w-5 group-focus-within:text-primary-500 transition-colors">search</mat-icon>
       </div>
-      <input #searchInput type="text" [formControl]="searchControl" placeholder="Search everywhere..." 
+      <input #searchInput type="text" [formControl]="searchControl" [placeholder]="'Search everywhere...' | t" 
              (focus)="isOpen.set(true)"
              class="block w-full pl-10 pr-12 py-1.5 border border-gray-200 dark:border-gray-700/80 rounded-md text-[13px] leading-5 bg-gray-50/50 dark:bg-gray-800/50 placeholder-gray-400 focus:outline-none focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-gray-900 dark:text-white transition-all duration-200">
       
@@ -43,16 +45,16 @@ interface SearchResultGroup {
            class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
         
         <div *ngIf="isLoading()" class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          Searching...
+          {{ 'Searching...' | t }}
         </div>
 
         <div *ngIf="!isLoading() && !hasResults() && searchControl.value" class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          No results found for "{{ searchControl.value }}"
+          {{ 'No results found for "{term}"' | t: { term: searchControl.value } }}
         </div>
 
         <ng-container *ngIf="!isLoading() && hasResults()">
           <div *ngFor="let group of results()" class="py-2">
-            <h3 class="px-4 py-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{{ group.name }}</h3>
+            <h3 class="px-4 py-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{{ group.name | t }}</h3>
             <ul>
               <li *ngFor="let item of group.items">
                 <a (click)="navigate(item.route)" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
@@ -80,6 +82,7 @@ export class GlobalSearchComponent implements OnInit {
   private readonly animalSvc = inject(AnimalService);
   private readonly inventorySvc = inject(InventoryService);
   private readonly contextService = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
 
   readonly searchControl = new FormControl('');
   readonly isOpen = signal(false);
@@ -151,9 +154,9 @@ export class GlobalSearchComponent implements OnInit {
           name: 'Animals',
           items: data.animals.map((a: AnimalListItemDto) => ({
             id: a.id,
-            title: `Tag: ${a.tagId}`,
+            title: this.i18n.t('Tag: {tag}', { tag: a.tagId }),
             // Global search keeps all animals (incl. Sold/Dead) but always shows the status.
-            subtitle: `${a.species} - ${a.breedName} · ${a.status}`,
+            subtitle: `${this.i18n.t(a.species)} - ${a.breedName} · ${this.i18n.t(a.status)}`,
             icon: 'pets',
             route: `/livestock/${a.id}`
           }))
@@ -166,7 +169,7 @@ export class GlobalSearchComponent implements OnInit {
           items: data.inventory.map((i: InventoryItem) => ({
             id: i.id,
             title: i.name,
-            subtitle: `Category: ${i.category}`,
+            subtitle: this.i18n.t('Category: {category}', { category: this.i18n.t(i.category) }),
             icon: 'inventory_2',
             route: `/inventory/items/${i.id}`
           }))

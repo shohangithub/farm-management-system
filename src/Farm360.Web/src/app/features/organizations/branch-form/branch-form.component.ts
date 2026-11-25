@@ -8,16 +8,19 @@ import { CreateBranchCommand, UpdateBranchCommand } from '../models/branch.model
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-branch-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
+  imports: [TranslatePipe, CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './branch-form.html'
 })
 export class BranchFormComponent implements OnInit, HasUnsavedChanges {
+  private readonly i18n = inject(I18nService);
   /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
   private saved = false;
 
@@ -109,7 +112,7 @@ export class BranchFormComponent implements OnInit, HasUnsavedChanges {
         this.branchForm.get('branchCode')?.disable();
       },
       error: (err) => {
-        this.error.set('Failed to load branch details.');
+        this.error.set(this.i18n.t('Failed to load branch details.'));
         console.error(err);
       }
     });
@@ -130,7 +133,7 @@ export class BranchFormComponent implements OnInit, HasUnsavedChanges {
   onSubmit(): void {
     if (this.branchForm.invalid) {
       this.branchForm.markAllAsTouched();
-      this.notify.error('Please fix the validation errors before submitting.');
+      this.notify.error(this.i18n.t('Please fix the validation errors before submitting.'));
       return;
     }
 
@@ -155,12 +158,12 @@ export class BranchFormComponent implements OnInit, HasUnsavedChanges {
       this.branchService.updateBranch(this.branchId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Branch updated successfully!');
+          this.notify.success(this.i18n.t('Branch updated successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations', this.orgId(), 'branches']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to update branch. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to update branch. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);
@@ -174,12 +177,12 @@ export class BranchFormComponent implements OnInit, HasUnsavedChanges {
       this.branchService.createBranch(this.orgId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Branch created successfully!');
+          this.notify.success(this.i18n.t('Branch created successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations', this.orgId(), 'branches']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to create branch. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to create branch. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);

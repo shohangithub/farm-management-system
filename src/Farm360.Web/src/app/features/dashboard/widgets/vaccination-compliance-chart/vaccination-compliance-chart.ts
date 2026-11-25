@@ -5,22 +5,26 @@ import { RouterModule } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { VaccinationCompliance } from '../../models/dashboard.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { translate } from '../../../../core/i18n/i18n.service';
+
+const SEGMENT_LABELS = ['Completed', 'Due Soon (7 Days)', 'Overdue'];
 
 @Component({
   selector: 'app-vaccination-compliance-chart',
   standalone: true,
-  imports: [CommonModule, MatIconModule, BaseChartDirective, RouterModule],
+  imports: [CommonModule, MatIconModule, BaseChartDirective, RouterModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-full">
       <!-- Top Compliance Badge Header -->
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-gray-100 dark:border-gray-700/60">
-        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Health status</span>
+        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Health status' | t }}</span>
         <div 
           class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
           [ngClass]="getComplianceBadgeClass()">
           <span class="w-1.5 h-1.5 rounded-full" aria-hidden="true" [ngClass]="getComplianceDotClass()"></span>
-          {{ compliancePercentage() }}% Compliance Rate
+          {{ '{rate}% Compliance Rate' | t: { rate: compliancePercentage() } }}
         </div>
       </div>
 
@@ -42,7 +46,7 @@ import { VaccinationCompliance } from '../../models/dashboard.model';
               {{ compliancePercentage() }}%
             </span>
             <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">
-              Protected
+              {{ 'Protected' | t }}
             </span>
           </div>
         </div>
@@ -52,7 +56,7 @@ import { VaccinationCompliance } from '../../models/dashboard.model';
           <div class="flex flex-col items-center p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 min-w-0">
             <div class="flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 text-center">
               <mat-icon class="text-[14px] w-[14px] h-[14px] shrink-0" aria-hidden="true">check_circle</mat-icon>
-              Completed
+              {{ 'Completed' | t }}
             </div>
             <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white mt-0.5">{{ completedCount() }}</span>
           </div>
@@ -60,7 +64,7 @@ import { VaccinationCompliance } from '../../models/dashboard.model';
           <div class="flex flex-col items-center p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 min-w-0">
             <div class="flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400 text-center">
               <mat-icon class="text-[14px] w-[14px] h-[14px] shrink-0" aria-hidden="true">schedule</mat-icon>
-              Due Soon
+              {{ 'Due Soon' | t }}
             </div>
             <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white mt-0.5">{{ dueCount() }}</span>
           </div>
@@ -68,7 +72,7 @@ import { VaccinationCompliance } from '../../models/dashboard.model';
           <div class="flex flex-col items-center p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 min-w-0">
             <div class="flex items-center gap-1 text-xs font-medium text-rose-700 dark:text-rose-400 text-center">
               <mat-icon class="text-[14px] w-[14px] h-[14px] shrink-0" aria-hidden="true">warning</mat-icon>
-              Overdue
+              {{ 'Overdue' | t }}
             </div>
             <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white mt-0.5">{{ overdueCount() }}</span>
           </div>
@@ -81,10 +85,10 @@ import { VaccinationCompliance } from '../../models/dashboard.model';
           <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 flex items-center justify-center mb-3" aria-hidden="true">
             <mat-icon>health_and_safety</mat-icon>
           </div>
-          <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">No vaccination schedules</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">Schedule vaccination events or protocols to monitor compliance.</p>
+          <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">{{ 'No vaccination schedules' | t }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">{{ 'Schedule vaccination events or protocols to monitor compliance.' | t }}</p>
           <a routerLink="/health/vaccinations" class="mt-4 inline-flex items-center gap-1 min-h-[44px] px-3 rounded-lg text-sm font-semibold text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-            Open vaccinations
+            {{ 'Open vaccinations' | t }}
             <mat-icon class="text-[18px] w-[18px] h-[18px]" aria-hidden="true">arrow_forward</mat-icon>
           </a>
         </div>
@@ -114,7 +118,7 @@ export class VaccinationComplianceChartComponent implements OnChanges {
   });
 
   public chartData: ChartData<'doughnut'> = {
-    labels: ['Completed', 'Due Soon (7 Days)', 'Overdue'],
+    labels: SEGMENT_LABELS.map(l => translate(l)),
     datasets: [{
       data: [],
       backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
@@ -144,7 +148,7 @@ export class VaccinationComplianceChartComponent implements OnChanges {
             const value = (context.raw as number) || 0;
             const total = this.totalEvents();
             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-            return ` ${label}: ${value} doses (${percentage}%)`;
+            return ` ${label}: ${translate('{value} doses ({percentage}%)', { value, percentage })}`;
           }
         }
       }
@@ -156,7 +160,7 @@ export class VaccinationComplianceChartComponent implements OnChanges {
       this.rawData.set(this.data);
       if (this.data) {
         this.chartData = {
-          labels: ['Completed', 'Due Soon (7 Days)', 'Overdue'],
+          labels: SEGMENT_LABELS.map(l => translate(l)),
           datasets: [{
             data: [this.data.completed, this.data.due, this.data.overdue],
             backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],

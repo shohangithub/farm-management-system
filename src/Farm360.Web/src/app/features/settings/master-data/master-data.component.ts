@@ -19,10 +19,12 @@ import { ErrorStateComponent } from '../../../shared/components/error-state/erro
 import { parseApiError } from '../../../core/utils/error-parser';
 
 import { NotificationService } from '../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-master-data',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent, MatIconModule, MatButtonModule, PageHeaderComponent, LoadingComponent, ErrorStateComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, MatIconModule, MatButtonModule, PageHeaderComponent, LoadingComponent, ErrorStateComponent, TranslatePipe],
   templateUrl: './master-data.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -30,6 +32,7 @@ export class MasterDataComponent {
   private masterDataService = inject(MasterDataService);
   private dialog = inject(MatDialog);
   private notify = inject(NotificationService);
+  private i18n = inject(I18nService);
   readonly isSaving = signal(false);
 
   types = [
@@ -64,7 +67,7 @@ export class MasterDataComponent {
       tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
       switchMap(({ type }) => this.masterDataService.getByType(type, true).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load master data.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load master data.')));
           return of([] as MasterDataEntry[]);
         })
       )),
@@ -91,11 +94,11 @@ export class MasterDataComponent {
   displayedColumns = ['code', 'name', 'order', 'status', 'actions'];
 
   columns: TableColumn[] = [
-    { def: 'code', header: 'Code', cell: (row: MasterDataEntry) => `<span class="font-mono text-sm text-gray-600 dark:text-gray-400">${row.code}</span>`, isAction: false },
-    { def: 'name', header: 'Name', cell: (row: MasterDataEntry) => `<span class="font-medium text-gray-900 dark:text-white">${row.name}</span>`, isAction: false },
-    { def: 'order', header: 'Order', cell: (row: MasterDataEntry) => `<span class="text-gray-500">${row.displayOrder}</span>`, isAction: false },
-    { def: 'status', header: 'Status', cell: (row: MasterDataEntry) => row.isActive ? '<span class="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">Active</span>' : '<span class="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">Inactive</span>', isAction: false },
-    { def: 'actions', header: 'Actions', cell: () => '', isAction: true }
+    { def: 'code', header: this.i18n.t('Code'), cell: (row: MasterDataEntry) => `<span class="font-mono text-sm text-gray-600 dark:text-gray-400">${row.code}</span>`, isAction: false },
+    { def: 'name', header: this.i18n.t('Name'), cell: (row: MasterDataEntry) => `<span class="font-medium text-gray-900 dark:text-white">${row.name}</span>`, isAction: false },
+    { def: 'order', header: this.i18n.t('Order'), cell: (row: MasterDataEntry) => `<span class="text-gray-500">${row.displayOrder}</span>`, isAction: false },
+    { def: 'status', header: this.i18n.t('Status'), cell: (row: MasterDataEntry) => row.isActive ? '<span class="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">' + this.i18n.t('Active') + '</span>' : '<span class="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">' + this.i18n.t('Inactive') + '</span>', isAction: false },
+    { def: 'actions', header: this.i18n.t('Actions'), cell: () => '', isAction: true }
   ];
 
   selectType(type: MasterDataType): void {
@@ -131,7 +134,7 @@ export class MasterDataComponent {
     const data = this.formData();
     this.isSaving.set(true);
     const done = { next: () => { this.isSaving.set(false); this.closeModal(); this.loadEntries(); },
-                   error: (err: unknown) => { this.isSaving.set(false); this.notify.error(parseApiError(err, 'Could not save the entry.')); } };
+                   error: (err: unknown) => { this.isSaving.set(false); this.notify.error(parseApiError(err, this.i18n.t('Could not save the entry.'))); } };
     const id = this.editingId();
     
     if (id) {
@@ -159,10 +162,10 @@ export class MasterDataComponent {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, { maxWidth: '95vw', disableClose: true,
       width: '450px',
       data: {
-        title: 'Delete Master Data',
-        message: `Are you sure you want to delete ${entry.name}? This action cannot be undone.`,
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
+        title: this.i18n.t('Delete Master Data'),
+        message: this.i18n.t('Are you sure you want to delete {name}? This action cannot be undone.', { name: entry.name }),
+        confirmButtonText: this.i18n.t('Delete'),
+        cancelButtonText: this.i18n.t('Cancel'),
         isDestructive: true
       }
     });
@@ -171,7 +174,7 @@ export class MasterDataComponent {
       if (result) {
         this.masterDataService.delete(entry.id, this.selectedType()).subscribe({
           next: () => this.loadEntries(),
-          error: err => this.notify.error(parseApiError(err, 'Could not delete the entry.'))
+          error: err => this.notify.error(parseApiError(err, this.i18n.t('Could not delete the entry.')))
         });
       }
     });

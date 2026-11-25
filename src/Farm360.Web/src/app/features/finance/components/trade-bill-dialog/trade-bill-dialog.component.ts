@@ -10,6 +10,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinancialTransaction, PAYMENT_METHODS, TradeBill, categoryLabel } from '../../models/finance.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export type TradeBillDialogMode = 'payment' | 'write-off' | 'terms' | 'open';
 
@@ -28,7 +29,7 @@ export interface TradeBillDialogData {
 @Component({
   selector: 'app-trade-bill-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [TranslatePipe, MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -36,11 +37,11 @@ export interface TradeBillDialogData {
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px]" [ngClass]="accent">{{ icon }}</mat-icon>
-            {{ title }}
+            {{ title | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ subtitle }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ subtitle | t }}</p>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -64,11 +65,11 @@ export interface TradeBillDialogData {
                   <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ b.referenceNo }} · {{ b.description }}</div>
                 </div>
                 <div class="text-right">
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Outstanding</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Outstanding' | t }}</div>
                   <div class="text-base font-black" [ngClass]="isPayable ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-300'">
                     {{ b.outstandingBdt | money:2 }}
                   </div>
-                  <div class="text-[11px] text-gray-500">of {{ b.amountBdt | money:2 }}</div>
+                  <div class="text-[11px] text-gray-500">{{ 'of {amount}' | t: { amount: (b.amountBdt | money:2) } }}</div>
                 </div>
               </div>
             </div>
@@ -78,8 +79,9 @@ export interface TradeBillDialogData {
               <div class="text-sm font-bold text-gray-900 dark:text-white">{{ label(t.category) }} · {{ t.amountBdt | money:2 }}</div>
               <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ t.transactionDate | date: 'dd MMM yyyy' }} · {{ t.description }}</div>
               <p class="text-[11px] text-amber-700 dark:text-amber-300 mt-2 mb-0">
-                This entry is booked as {{ t.type === 'Income' ? 'received' : 'paid' }} in cash. Putting it on credit removes it from the cash book
-                and records it as {{ t.type === 'Income' ? 'owed by the customer' : 'owed to the supplier' }} until settled.
+                {{ (t.type === 'Income'
+                  ? 'This entry is booked as received in cash. Putting it on credit removes it from the cash book and records it as owed by the customer until settled.'
+                  : 'This entry is booked as paid in cash. Putting it on credit removes it from the cash book and records it as owed to the supplier until settled.') | t }}
               </p>
             </div>
           }
@@ -88,82 +90,82 @@ export interface TradeBillDialogData {
             @case ('payment') {
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Amount (BDT) <span class="text-red-500">*</span></label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Amount (BDT)' | t }} <span class="text-red-500">*</span></label>
                   <input type="number" formControlName="amountBdt" min="0.01" step="0.01" [class]="input">
                   <button type="button" (click)="payAll()" class="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200">
-                    Full balance
+                    {{ 'Full balance' | t }}
                   </button>
                 </div>
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Date <span class="text-red-500">*</span></label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Date' | t }} <span class="text-red-500">*</span></label>
                   <input type="date" formControlName="paymentDate" [max]="today" [class]="input">
                 </div>
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Method</label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Method' | t }}</label>
                   <select formControlName="method" [class]="input">
-                    @for (m of methods; track m) { <option [value]="m">{{ m }}</option> }
+                    @for (m of methods; track m) { <option [value]="m">{{ m | t }}</option> }
                   </select>
                 </div>
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Receipt / Txn No.</label>
-                  <input type="text" formControlName="reference" placeholder="Optional" [class]="input">
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Receipt / Txn No.' | t }}</label>
+                  <input type="text" formControlName="reference" [placeholder]="'Optional' | t" [class]="input">
                 </div>
               </div>
               <div class="space-y-1">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Notes</label>
-                <input type="text" formControlName="notes" placeholder="Optional" [class]="input">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Notes' | t }}</label>
+                <input type="text" formControlName="notes" [placeholder]="'Optional' | t" [class]="input">
               </div>
             }
             @case ('write-off') {
               <p class="text-xs text-gray-600 dark:text-gray-300 m-0">
-                {{ isPayable
+                {{ (isPayable
                   ? 'Use this when the supplier has agreed you need not pay the rest (a discount or waiver). It is booked as other income.'
-                  : 'Use this when the customer will not pay. The amount is booked as a bad-debt expense, so profit and assets are no longer overstated.' }}
+                  : 'Use this when the customer will not pay. The amount is booked as a bad-debt expense, so profit and assets are no longer overstated.') | t }}
               </p>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Amount (BDT)</label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Amount (BDT)' | t }}</label>
                   <input type="number" formControlName="amountBdt" min="0.01" step="0.01" [class]="input">
                 </div>
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Date <span class="text-red-500">*</span></label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Date' | t }} <span class="text-red-500">*</span></label>
                   <input type="date" formControlName="date" [class]="input">
                 </div>
               </div>
               <div class="space-y-1">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Reason</label>
-                <input type="text" formControlName="reason" placeholder="e.g. Buyer left the area" [class]="input">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Reason' | t }}</label>
+                <input type="text" formControlName="reason" [placeholder]="'e.g. Buyer left the area' | t" [class]="input">
               </div>
             }
             @default {
               <!-- terms & open -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ isPayable ? 'Supplier' : 'Customer' }} <span class="text-red-500">*</span></label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ (isPayable ? 'Supplier' : 'Customer') | t }} <span class="text-red-500">*</span></label>
                   <input type="text" formControlName="partyName" [class]="input">
                 </div>
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Phone</label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Phone' | t }}</label>
                   <input type="tel" formControlName="partyPhone" [class]="input">
                 </div>
                 <div class="space-y-1">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Due date</label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Due date' | t }}</label>
                   <input type="date" formControlName="dueDate" [class]="input">
                 </div>
                 @if (data.mode === 'open') {
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ isPayable ? 'Paid on the day' : 'Received on the day' }}</label>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ (isPayable ? 'Paid on the day' : 'Received on the day') | t }}</label>
                     <div class="flex gap-2">
                       <input type="number" formControlName="paidNowBdt" min="0" step="0.01" [class]="input">
                       <select formControlName="paymentMethod" class="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                        @for (m of methods; track m) { <option [value]="m">{{ m }}</option> }
+                        @for (m of methods; track m) { <option [value]="m">{{ m | t }}</option> }
                       </select>
                     </div>
                   </div>
                 }
               </div>
               <div class="space-y-1">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Notes</label>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Notes' | t }}</label>
                 <input type="text" formControlName="notes" [class]="input">
               </div>
             }
@@ -173,13 +175,13 @@ export interface TradeBillDialogData {
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="busy()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || busy()"
             class="px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
             [ngClass]="data.mode === 'write-off' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'">
             @if (busy()) { <mat-icon class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon> }
-            <span>{{ busy() ? 'Saving…' : action }}</span>
+            <span>{{ (busy() ? 'Saving…' : action) | t }}</span>
           </button>
         </div>
       </form>

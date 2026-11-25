@@ -417,10 +417,10 @@ public static class FinanceEndpoints
             Guid farmId,
             [FromQuery] DateTime? asOfDate,
             [FromQuery] DateTime? compareDate,
-            [FromQuery] bool noComparative,
+            [FromQuery] bool? noComparative,
             IMediator mediator) =>
         {
-            var result = await mediator.Send(new GetBalanceSheetQuery(farmId, asOfDate, noComparative ? DateTime.MinValue : compareDate));
+            var result = await mediator.Send(new GetBalanceSheetQuery(farmId, asOfDate, noComparative == true ? DateTime.MinValue : compareDate));
             return Results.Ok(result);
         }).Produces<BalanceSheetDto>();
 

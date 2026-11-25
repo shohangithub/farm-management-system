@@ -8,12 +8,14 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { Investor, CreateInvestorRequest, UpdateInvestorRequest } from '../../models/finance.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-investor-form-dialog',
   standalone: true,
   imports: [
-    CommonModule,
+    TranslatePipe, CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule
@@ -27,13 +29,13 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-teal-600 dark:text-teal-400">
               {{ isEditMode ? 'edit' : 'person_add' }}
             </mat-icon>
-            {{ isEditMode ? 'Edit Investor' : 'Register New Investor' }}
+            {{ (isEditMode ? 'Edit Investor' : 'Register New Investor') | t }}
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-            {{ isEditMode ? 'Update investor details and agreed profit share' : 'Add an equity investor and record their starting capital' }}
+            {{ (isEditMode ? 'Update investor details and agreed profit share' : 'Add an equity investor and record their starting capital') | t }}
           </p>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -53,9 +55,9 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           <!-- Investor Name -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Investor Full Name <span class="text-red-500">*</span>
+              {{ 'Investor Full Name' | t }} <span class="text-red-500">*</span>
             </label>
-            <input type="text" formControlName="name" placeholder="e.g. Tariq Ahmed"
+            <input type="text" formControlName="name" [placeholder]="'e.g. Tariq Ahmed' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
           </div>
 
@@ -63,15 +65,15 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           <div *ngIf="!isEditMode" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Initial Capital (BDT) <span class="text-red-500">*</span>
+                {{ 'Initial Capital (BDT)' | t }} <span class="text-red-500">*</span>
               </label>
-              <input type="number" formControlName="initialInvestmentBdt" step="1000" min="0" placeholder="e.g. 500000"
+              <input type="number" formControlName="initialInvestmentBdt" step="1000" min="0" [placeholder]="'e.g. 500000' | t"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Investment Date <span class="text-red-500">*</span>
+                {{ 'Investment Date' | t }} <span class="text-red-500">*</span>
               </label>
               <input type="date" formControlName="investmentDate"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
@@ -81,9 +83,9 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           <!-- Reference ID (For Initial Investment) -->
           <div *ngIf="!isEditMode" class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Receipt / Cheque / Ref No. (Optional)
+              {{ 'Receipt / Cheque / Ref No. (Optional)' | t }}
             </label>
-            <input type="text" formControlName="referenceId" placeholder="e.g. CHQ-98124 or BANK-TRF"
+            <input type="text" formControlName="referenceId" [placeholder]="'e.g. CHQ-98124 or BANK-TRF' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
           </div>
 
@@ -91,14 +93,14 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Agreed Profit Share % (Optional)
+                {{ 'Agreed Profit Share % (Optional)' | t }}
               </label>
-              <span class="text-[11px] text-teal-600 dark:text-teal-400 font-medium">Leave blank for dynamic capital share</span>
+              <span class="text-[11px] text-teal-600 dark:text-teal-400 font-medium">{{ 'Leave blank for dynamic capital share' | t }}</span>
             </div>
-            <input type="number" formControlName="agreedProfitSharePercentage" step="0.1" min="0" max="100" placeholder="e.g. 25.0 (Optional)"
+            <input type="number" formControlName="agreedProfitSharePercentage" step="0.1" min="0" max="100" [placeholder]="'e.g. 25.0 (Optional)' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             <p class="text-[11px] text-gray-400 dark:text-gray-500 m-0">
-              If left blank, profit/loss will be allocated automatically based on this investor's share of total farm capital pool.
+              {{ "If left blank, profit/loss will be allocated automatically based on this investor's share of total farm capital pool." | t }}
             </p>
           </div>
 
@@ -106,17 +108,17 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Phone Number (Optional)
+                {{ 'Phone Number (Optional)' | t }}
               </label>
-              <input type="text" formControlName="phone" placeholder="e.g. +880 1711 000000"
+              <input type="text" formControlName="phone" [placeholder]="'e.g. +880 1711 000000' | t"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Email Address (Optional)
+                {{ 'Email Address (Optional)' | t }}
               </label>
-              <input type="email" formControlName="email" placeholder="e.g. investor@example.com"
+              <input type="email" formControlName="email" [placeholder]="'e.g. investor@example.com' | t"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             </div>
           </div>
@@ -124,18 +126,18 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           <!-- National ID -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              National ID / NID / Passport (Optional)
+              {{ 'National ID / NID / Passport (Optional)' | t }}
             </label>
-            <input type="text" formControlName="nationalId" placeholder="e.g. 198545892301"
+            <input type="text" formControlName="nationalId" [placeholder]="'e.g. 198545892301' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
           </div>
 
           <!-- Notes -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Terms & Notes (Optional)
+              {{ 'Terms & Notes (Optional)' | t }}
             </label>
-            <textarea formControlName="notes" rows="2" placeholder="Partnership terms, contract notes, payout agreements..."
+            <textarea formControlName="notes" rows="2" [placeholder]="'Partnership terms, contract notes, payout agreements...' | t"
                       class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow"></textarea>
           </div>
 
@@ -145,13 +147,13 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-end gap-3 shrink-0">
           <button mat-dialog-close type="button"
                   class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           
           <button type="submit" [disabled]="form.invalid || isLoading()"
                   class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shadow-teal-500/20 flex items-center gap-2">
             <mat-icon *ngIf="isLoading()" class="!text-[18px] !w-[18px] !h-[18px] animate-spin">sync</mat-icon>
-            <span>{{ isEditMode ? 'Save Changes' : 'Register Investor' }}</span>
+            <span>{{ (isEditMode ? 'Save Changes' : 'Register Investor') | t }}</span>
           </button>
         </div>
 
@@ -165,6 +167,7 @@ export class InvestorFormDialogComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<InvestorFormDialogComponent>);
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
   readonly data: Investor | null = inject(MAT_DIALOG_DATA, { optional: true });
 
   readonly isEditMode = !!this.data;
@@ -194,7 +197,7 @@ export class InvestorFormDialogComponent implements OnInit {
 
     const farmId = this.workingContextService.currentFarmValue?.id;
     if (!farmId) {
-      this.error.set('No active farm selected in context.');
+      this.error.set(this.i18n.t('No active farm selected in context.'));
       return;
     }
 

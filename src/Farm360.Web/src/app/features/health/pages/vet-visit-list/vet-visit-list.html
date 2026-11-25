@@ -1,16 +1,16 @@
 <app-page-header 
-  title="Veterinary Visits" 
-  description="Log and manage professional vet visits, costs, and recommendations."
+  [title]="'Veterinary Visits' | t"
+  [description]="'Log and manage professional vet visits, costs, and recommendations.' | t"
   icon="local_hospital" 
   iconColor="text-teal-600">
   <div actions class="flex items-center gap-2">
     <button mat-stroked-button (click)="exportPdf()" [disabled]="isExporting() || !dataSource().length"
       class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 !border-none">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+      <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
     </button>
     <button (click)="openScheduleVisitDialog()" class="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Log Visit
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Log Visit' | t }}
     </button>
   </div>
 </app-page-header>
@@ -44,9 +44,9 @@
                   'bg-emerald-50 text-emerald-700 border-emerald-200': element.visitType === 'VaccinationDrive',
                   'bg-indigo-50 text-indigo-700 border-indigo-200': element.visitType === 'Surgery'
                 }">
-            {{ element.visitType === 'RoutineCheckup' ? 'Routine Checkup' : 
+            {{ (element.visitType === 'RoutineCheckup' ? 'Routine Checkup' : 
                element.visitType === 'VaccinationDrive' ? 'Vaccination Drive' : 
-               element.visitType }}
+               element.visitType) | t }}
           </span>
         </div>
         
@@ -63,13 +63,13 @@
       <!-- Card Body -->
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="mb-4">
-          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-1">Purpose of Visit</div>
-          <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" [matTooltip]="element.purpose">{{ element.purpose || 'No purpose recorded' }}</p>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-1">{{ 'Purpose of Visit' | t }}</div>
+          <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" [matTooltip]="element.purpose">{{ element.purpose || ('No purpose recorded' | t) }}</p>
         </div>
 
         <div class="grid grid-cols-2 gap-y-4 gap-x-2 border-t border-gray-100 dark:border-gray-700/50 pt-4 mt-auto">
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Cost</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Cost' | t }}</div>
             <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">
               <span *ngIf="element.costBdt">{{ element.costBdt | money:2 }}</span>
               <span *ngIf="!element.costBdt" class="text-gray-400 font-medium">—</span>
@@ -77,7 +77,7 @@
           </div>
           
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Next Visit</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Next Visit' | t }}</div>
             <div class="text-sm font-semibold" [ngClass]="element.nextVisitDate ? 'text-gray-900 dark:text-white' : 'text-gray-400'">
               {{ element.nextVisitDate ? (element.nextVisitDate | date:'mediumDate') : '—' }}
             </div>
@@ -88,7 +88,7 @@
       <!-- Card Footer Actions -->
       <div class="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10 no-print">
         <button (click)="viewVisitDetails(element)" class="flex-1 px-4 py-2 text-sm font-semibold text-teal-700 bg-white dark:bg-gray-800 hover:bg-teal-50 dark:hover:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1.5">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> View Details
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> {{ 'View Details' | t }}
         </button>
       </div>
     </div>
@@ -97,9 +97,9 @@
     <app-empty-state 
       *ngIf="!isLoading() && dataSource().length === 0 && !loadError()"
       icon="local_hospital"
-      title="No veterinary visits found"
-      description="Log professional vet visits to track your farm's health history."
-      actionLabel="Log Visit"
+      [title]="'No veterinary visits found' | t"
+      [description]="emptyDescription | t"
+      [actionLabel]="'Log Visit' | t"
       (action)="openScheduleVisitDialog()">
     </app-empty-state>
 
@@ -109,7 +109,7 @@
                    [pageSizeOptions]="[5, 10, 25, 100]"
                    [pageIndex]="pageIndex()"
                    (page)="onPageChange($event)"
-                   aria-label="Select page"
+                   [attr.aria-label]="'Select page' | t"
                    class="!bg-transparent">
     </mat-paginator>
   </div>

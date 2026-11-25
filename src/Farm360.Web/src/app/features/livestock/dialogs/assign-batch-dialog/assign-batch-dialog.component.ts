@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { BatchService } from '../../services/batch.service';
 import { BatchDto } from '../../models/batch.models';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface AssignBatchDialogData {
   animalId: string;
@@ -19,13 +21,14 @@ export interface AssignBatchDialogData {
   selector: 'app-assign-batch-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './assign-batch-dialog.component.html'
 })
 export class AssignBatchDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<AssignBatchDialogComponent>);
   public readonly data = inject<AssignBatchDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly batchSvc = inject(BatchService);
   private readonly destroy$ = new Subject<void>();
 
@@ -59,7 +62,7 @@ export class AssignBatchDialogComponent {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            this.error.set(err.error?.detail || err.error?.title || 'Batch assignment failed.');
+            this.error.set(err.error?.detail || err.error?.title || this.i18n.t('Batch assignment failed.'));
         }
       }
     });

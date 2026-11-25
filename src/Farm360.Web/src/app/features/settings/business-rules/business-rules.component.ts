@@ -16,6 +16,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { parseApiError } from '../../../core/utils/error-parser';
 import { FarmService } from '../../farms/services/farm.service';
 import { FarmList } from '../../farms/models/farm.model';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import {
   BusinessRulesOverrides,
   BusinessRulesService,
@@ -35,23 +37,23 @@ interface Option<T extends string> { value: T; label: string; }
   selector: 'app-business-rules',
   standalone: true,
   imports: [CommonModule, DatePipe, ReactiveFormsModule, MatIconModule, MatButtonModule,
-            PageHeaderComponent, ErrorStateComponent, HasPermissionDirective, MoneyPipe],
+            PageHeaderComponent, ErrorStateComponent, HasPermissionDirective, MoneyPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-header
-      title="Farm rules"
-      description="How your farm values animals and shares feed, labour and overhead costs between them."
-      breadcrumbActiveNode="Farm rules">
+      [title]="'Farm rules' | t"
+      [description]="'How your farm values animals and shares feed, labour and overhead costs between them.' | t"
+      [breadcrumbActiveNode]="'Farm rules' | t">
       <div actions class="flex gap-2" *hasPermission="editPermission">
         <button mat-stroked-button type="button" (click)="resetToDefaults()"
                 [disabled]="saving() || loading() || !settings()?.isCustomized" class="!rounded-xl">
-          <mat-icon class="mr-1">restart_alt</mat-icon> Reset to defaults
+          <mat-icon class="mr-1">restart_alt</mat-icon> {{ 'Reset to defaults' | t }}
         </button>
         <button mat-flat-button type="button" (click)="save()"
                 [disabled]="saving() || loading() || !!loadError() || form.pristine"
                 class="!rounded-xl !bg-emerald-600 !text-white">
           <mat-icon class="mr-1">{{ saving() ? 'hourglass_top' : 'save' }}</mat-icon>
-          {{ saving() ? 'Saving…' : 'Save changes' }}
+          {{ (saving() ? 'Saving…' : 'Save changes') | t }}
         </button>
       </div>
     </app-page-header>
@@ -60,20 +62,20 @@ interface Option<T extends string> { value: T; label: string; }
       <app-error-state *ngIf="loadError() as msg" [message]="msg" (retry)="load()"></app-error-state>
 
       <div *ngIf="loading()" class="text-sm text-gray-500 flex items-center gap-2">
-        <mat-icon class="animate-spin !text-[18px]">progress_activity</mat-icon> Loading farm rules…
+        <mat-icon class="animate-spin !text-[18px]">progress_activity</mat-icon> {{ 'Loading farm rules…' | t }}
       </div>
 
       <div *ngIf="farms().length > 1" class="card !flex-row !items-center flex-wrap !gap-3">
-        <label for="scope" class="text-sm font-semibold">Rules for</label>
+        <label for="scope" class="text-sm font-semibold">{{ 'Rules for' | t }}</label>
         <select id="scope" class="field" [value]="farmId() ?? ''" (change)="changeScope($any($event.target))"
                 [disabled]="saving() || loading()">
-          <option value="">Whole organisation (all farms)</option>
-          <option *ngFor="let f of farms()" [value]="f.id">{{ f.farmName }} only</option>
+          <option value="">{{ 'Whole organisation (all farms)' | t }}</option>
+          <option *ngFor="let f of farms()" [value]="f.id">{{ '{farm} only' | t: { farm: f.farmName } }}</option>
         </select>
         <p class="help w-full !mt-0">
-          {{ farmId()
+          {{ (farmId()
             ? 'Only this farm uses these values. Anything you leave at the organisation value keeps following the organisation.'
-            : 'Every farm uses these unless a farm has its own value.' }}
+            : 'Every farm uses these unless a farm has its own value.') | t }}
         </p>
       </div>
 
@@ -81,126 +83,125 @@ interface Option<T extends string> { value: T; label: string; }
         <div class="p-3 rounded-xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 text-sm text-sky-800 dark:text-sky-200 flex gap-2">
           <mat-icon class="!text-[18px] shrink-0">info</mat-icon>
           <span>
-            Changes apply to <b>future calculations only</b>. Feed and overhead costs already recorded keep the method and
-            prices they were worked out with, so reports you have already issued will not change.
-            <span *ngIf="s.lastModifiedAtUtc" class="block text-xs mt-1 opacity-80">Last changed {{ s.lastModifiedAtUtc | date:'d MMM yyyy, h:mm a' }}.</span>
+            <span [innerHTML]="'Changes apply to <b>future calculations only</b>. Feed and overhead costs already recorded keep the method and prices they were worked out with, so reports you have already issued will not change.' | t"></span>
+            <span *ngIf="s.lastModifiedAtUtc" class="block text-xs mt-1 opacity-80">{{ 'Last changed {date}.' | t: { date: (s.lastModifiedAtUtc | date:'d MMM yyyy, h:mm a') } }}</span>
           </span>
         </div>
 
         <div *ngIf="!canEdit()" class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-200 flex gap-2">
           <mat-icon class="!text-[18px] shrink-0">lock</mat-icon>
-          <span>You can view these rules but not change them. Ask your organisation owner or an administrator.</span>
+          <span>{{ 'You can view these rules but not change them. Ask your organisation owner or an administrator.' | t }}</span>
         </div>
 
         <form [formGroup]="form" class="space-y-6" (ngSubmit)="save()">
           <!-- ── Valuation & prices ─────────────────────────────────────── -->
           <section class="card">
-            <h3 class="section-title"><mat-icon>sell</mat-icon> Valuation &amp; prices</h3>
+            <h3 class="section-title"><mat-icon>sell</mat-icon> {{ 'Valuation & prices' | t }}</h3>
 
             <div class="row">
-              <label for="valuation">How an animal is valued <span *ngIf="isCustom('valuation')" class="chip">Custom</span></label>
+              <label for="valuation">{{ 'How an animal is valued' | t }} <span *ngIf="isCustom('valuation')" class="chip">{{ 'Custom' | t }}</span></label>
               <select id="valuation" formControlName="valuation" class="field">
-                <option *ngFor="let o of valuationOptions" [value]="o.value">{{ o.label }}</option>
+                <option *ngFor="let o of valuationOptions" [value]="o.value">{{ o.label | t }}</option>
               </select>
-              <p class="help">Sets the "current value" shown for each animal and herd on dashboards, projections and the balance sheet. Default: {{ label(valuationOptions, s.inherited.valuation) }}.</p>
+              <p class="help">{{ 'Sets the "current value" shown for each animal and herd on dashboards, projections and the balance sheet. Default: {value}.' | t: { value: (label(valuationOptions, s.inherited.valuation) | t) } }}</p>
             </div>
 
             <div class="row">
-              <label for="dressing">Dressing percentage (%) <span *ngIf="isCustom('defaultDressingPercentage')" class="chip">Custom</span></label>
+              <label for="dressing">{{ 'Dressing percentage (%)' | t }} <span *ngIf="isCustom('defaultDressingPercentage')" class="chip">{{ 'Custom' | t }}</span></label>
               <input id="dressing" type="number" step="0.5" min="30" max="70" formControlName="dressingPercent" class="field w-40" />
-              <p *ngIf="invalid('dressingPercent')" class="err">Enter a percentage between 30 and 70.</p>
-              <p class="help">How much of a live animal's weight becomes saleable meat, for breeds that don't state their own. Used by the meat-yield valuation. Default: {{ s.inherited.defaultDressingPercentage * 100 | number:'1.0-1' }}%.</p>
+              <p *ngIf="invalid('dressingPercent')" class="err">{{ 'Enter a percentage between 30 and 70.' | t }}</p>
+              <p class="help">{{ "How much of a live animal's weight becomes saleable meat, for breeds that don't state their own. Used by the meat-yield valuation. Default: {value}%." | t: { value: (s.inherited.defaultDressingPercentage * 100 | number:'1.0-1') } }}</p>
             </div>
 
             <div class="row">
-              <label for="meatPrice">Meat price per kg (৳) <span *ngIf="isCustom('defaultMeatPricePerKgBdt')" class="chip">Custom</span></label>
+              <label for="meatPrice">{{ 'Meat price per kg (৳)' | t }} <span *ngIf="isCustom('defaultMeatPricePerKgBdt')" class="chip">{{ 'Custom' | t }}</span></label>
               <input id="meatPrice" type="number" step="1" min="1" formControlName="defaultMeatPricePerKgBdt" class="field w-40" />
-              <p *ngIf="invalid('defaultMeatPricePerKgBdt')" class="err">Enter a price greater than zero (up to ৳ 1,00,000).</p>
-              <p class="help">The meat price used to value animals when no market price is recorded for the farm. Default: {{ s.inherited.defaultMeatPricePerKgBdt | money }}.</p>
+              <p *ngIf="invalid('defaultMeatPricePerKgBdt')" class="err">{{ 'Enter a price greater than zero (up to ৳ 1,00,000).' | t }}</p>
+              <p class="help">{{ 'The meat price used to value animals when no market price is recorded for the farm. Default: {value}.' | t: { value: (s.inherited.defaultMeatPricePerKgBdt | money) } }}</p>
             </div>
 
             <div class="row">
-              <label for="livePrice">Live-weight price per kg (৳) <span *ngIf="isCustom('defaultLiveWeightPricePerKgBdt')" class="chip">Custom</span></label>
+              <label for="livePrice">{{ 'Live-weight price per kg (৳)' | t }} <span *ngIf="isCustom('defaultLiveWeightPricePerKgBdt')" class="chip">{{ 'Custom' | t }}</span></label>
               <input id="livePrice" type="number" step="1" min="1" formControlName="defaultLiveWeightPricePerKgBdt" class="field w-40" />
-              <p *ngIf="invalid('defaultLiveWeightPricePerKgBdt')" class="err">Enter a price greater than zero (up to ৳ 1,00,000).</p>
-              <p class="help">What a buyer pays per kg of live animal. Only used when animals are valued by live weight. Default: {{ s.inherited.defaultLiveWeightPricePerKgBdt | money }}.</p>
+              <p *ngIf="invalid('defaultLiveWeightPricePerKgBdt')" class="err">{{ 'Enter a price greater than zero (up to ৳ 1,00,000).' | t }}</p>
+              <p class="help">{{ 'What a buyer pays per kg of live animal. Only used when animals are valued by live weight. Default: {value}.' | t: { value: (s.inherited.defaultLiveWeightPricePerKgBdt | money) } }}</p>
             </div>
           </section>
 
           <!-- ── Feed allocation ────────────────────────────────────────── -->
           <section class="card">
-            <h3 class="section-title"><mat-icon>grass</mat-icon> Feed allocation</h3>
+            <h3 class="section-title"><mat-icon>grass</mat-icon> {{ 'Feed allocation' | t }}</h3>
 
             <div class="row">
-              <label for="feedAllocation">How shared feed is split <span *ngIf="isCustom('feedAllocation')" class="chip">Custom</span></label>
+              <label for="feedAllocation">{{ 'How shared feed is split' | t }} <span *ngIf="isCustom('feedAllocation')" class="chip">{{ 'Custom' | t }}</span></label>
               <select id="feedAllocation" formControlName="feedAllocation" class="field">
-                <option *ngFor="let o of feedAllocationOptions" [value]="o.value">{{ o.label }}</option>
+                <option *ngFor="let o of feedAllocationOptions" [value]="o.value">{{ o.label | t }}</option>
               </select>
-              <p class="help">When a batch, shed or pen is fed together, decides how much of that feed's cost each animal carries. Default: {{ label(feedAllocationOptions, s.inherited.feedAllocation) }}.</p>
+              <p class="help">{{ "When a batch, shed or pen is fed together, decides how much of that feed's cost each animal carries. Default: {value}." | t: { value: (label(feedAllocationOptions, s.inherited.feedAllocation) | t) } }}</p>
             </div>
 
             <div class="row" *ngIf="form.controls.feedAllocation.value === 'MetabolicWeight'">
-              <label for="exponent">Metabolic weight exponent <span *ngIf="isCustom('metabolicWeightExponent')" class="chip">Custom</span></label>
+              <label for="exponent">{{ 'Metabolic weight exponent' | t }} <span *ngIf="isCustom('metabolicWeightExponent')" class="chip">{{ 'Custom' | t }}</span></label>
               <input id="exponent" type="number" step="0.01" min="0.5" max="1" formControlName="metabolicWeightExponent" class="field w-40" />
-              <p *ngIf="invalid('metabolicWeightExponent')" class="err">Enter a value between 0.50 and 1.00.</p>
-              <p class="help">How strongly heavier animals get a bigger share. 0.75 is the standard in cattle nutrition; 1.00 means strictly by weight. Default: {{ s.inherited.metabolicWeightExponent }}.</p>
+              <p *ngIf="invalid('metabolicWeightExponent')" class="err">{{ 'Enter a value between 0.50 and 1.00.' | t }}</p>
+              <p class="help">{{ 'How strongly heavier animals get a bigger share. 0.75 is the standard in cattle nutrition; 1.00 means strictly by weight. Default: {value}.' | t: { value: s.inherited.metabolicWeightExponent } }}</p>
             </div>
 
             <div class="row">
-              <label for="basis">Group plan quantities are <span *ngIf="isCustom('groupPlanQuantityBasis')" class="chip">Custom</span></label>
+              <label for="basis">{{ 'Group plan quantities are' | t }} <span *ngIf="isCustom('groupPlanQuantityBasis')" class="chip">{{ 'Custom' | t }}</span></label>
               <select id="basis" formControlName="groupPlanQuantityBasis" class="field">
-                <option *ngFor="let o of basisOptions" [value]="o.value">{{ o.label }}</option>
+                <option *ngFor="let o of basisOptions" [value]="o.value">{{ o.label | t }}</option>
               </select>
-              <p class="help">Whether the quantity on a group feeding plan is one animal's ration (multiplied by head count) or the whole group's total. Default: {{ label(basisOptions, s.inherited.groupPlanQuantityBasis) }}.</p>
+              <p class="help">{{ "Whether the quantity on a group feeding plan is one animal's ration (multiplied by head count) or the whole group's total. Default: {value}." | t: { value: (label(basisOptions, s.inherited.groupPlanQuantityBasis) | t) } }}</p>
             </div>
 
             <div class="row">
-              <label for="fallbackWeight">Weight for unweighed animals (kg) <span *ngIf="isCustom('fallbackAnimalWeightKg')" class="chip">Custom</span></label>
+              <label for="fallbackWeight">{{ 'Weight for unweighed animals (kg)' | t }} <span *ngIf="isCustom('fallbackAnimalWeightKg')" class="chip">{{ 'Custom' | t }}</span></label>
               <input id="fallbackWeight" type="number" step="1" min="1" max="2000" formControlName="fallbackAnimalWeightKg" class="field w-40" />
-              <p *ngIf="invalid('fallbackAnimalWeightKg')" class="err">Enter a weight between 1 and 2,000 kg.</p>
-              <p class="help">Assumed weight for an animal that has never been weighed, so it still carries a fair share of the feed. Default: {{ s.inherited.fallbackAnimalWeightKg }} kg.</p>
+              <p *ngIf="invalid('fallbackAnimalWeightKg')" class="err">{{ 'Enter a weight between 1 and 2,000 kg.' | t }}</p>
+              <p class="help">{{ 'Assumed weight for an animal that has never been weighed, so it still carries a fair share of the feed. Default: {value} kg.' | t: { value: s.inherited.fallbackAnimalWeightKg } }}</p>
             </div>
           </section>
 
           <!-- ── Overhead allocation ────────────────────────────────────── -->
           <section class="card">
-            <h3 class="section-title"><mat-icon>account_balance_wallet</mat-icon> Overhead allocation</h3>
+            <h3 class="section-title"><mat-icon>account_balance_wallet</mat-icon> {{ 'Overhead allocation' | t }}</h3>
 
             <div class="row">
-              <label for="overhead">How labour and overheads are shared <span *ngIf="isCustom('overheadAllocation')" class="chip">Custom</span></label>
+              <label for="overhead">{{ 'How labour and overheads are shared' | t }} <span *ngIf="isCustom('overheadAllocation')" class="chip">{{ 'Custom' | t }}</span></label>
               <select id="overhead" formControlName="overheadAllocation" class="field">
-                <option *ngFor="let o of overheadOptions" [value]="o.value">{{ o.label }}</option>
+                <option *ngFor="let o of overheadOptions" [value]="o.value">{{ o.label | t }}</option>
               </select>
-              <p class="help">Decides how wages, utilities and other farm-wide costs are added to each animal's cost. Default: {{ label(overheadOptions, s.inherited.overheadAllocation) }}.</p>
+              <p class="help">{{ "Decides how wages, utilities and other farm-wide costs are added to each animal's cost. Default: {value}." | t: { value: (label(overheadOptions, s.inherited.overheadAllocation) | t) } }}</p>
             </div>
 
             <div class="row">
-              <label for="period">A farm-wide expense covers <span *ngIf="isCustom('overheadCostPeriod')" class="chip">Custom</span></label>
+              <label for="period">{{ 'A farm-wide expense covers' | t }} <span *ngIf="isCustom('overheadCostPeriod')" class="chip">{{ 'Custom' | t }}</span></label>
               <select id="period" formControlName="overheadCostPeriod" class="field">
-                <option *ngFor="let o of periodOptions" [value]="o.value">{{ o.label }}</option>
+                <option *ngFor="let o of periodOptions" [value]="o.value">{{ o.label | t }}</option>
               </select>
-              <p class="help">Which animals share an expense: those on the farm during its whole month (good for salaries and bills) or only on the day it was paid. Default: {{ label(periodOptions, s.inherited.overheadCostPeriod) }}.</p>
+              <p class="help">{{ 'Which animals share an expense: those on the farm during its whole month (good for salaries and bills) or only on the day it was paid. Default: {value}.' | t: { value: (label(periodOptions, s.inherited.overheadCostPeriod) | t) } }}</p>
             </div>
           </section>
 
           <!-- ── Reports & language ─────────────────────────────────────── -->
           <section class="card">
-            <h3 class="section-title"><mat-icon>translate</mat-icon> Reports &amp; language</h3>
+            <h3 class="section-title"><mat-icon>translate</mat-icon> {{ 'Reports & language' | t }}</h3>
 
             <div class="row">
-              <label for="language">Default report language <span *ngIf="isCustom('defaultReportLanguage')" class="chip">Custom</span></label>
+              <label for="language">{{ 'Default report language' | t }} <span *ngIf="isCustom('defaultReportLanguage')" class="chip">{{ 'Custom' | t }}</span></label>
               <select id="language" formControlName="defaultReportLanguage" class="field">
-                <option *ngFor="let o of languageOptions" [value]="o.value">{{ o.label }}</option>
+                <option *ngFor="let o of languageOptions" [value]="o.value">{{ o.label | t }}</option>
               </select>
-              <p class="help">The language printed reports start in. You can still pick another language when running a report. Default: {{ label(languageOptions, s.inherited.defaultReportLanguage) }}.</p>
+              <p class="help">{{ 'The language printed reports start in. You can still pick another language when running a report. Default: {value}.' | t: { value: (label(languageOptions, s.inherited.defaultReportLanguage) | t) } }}</p>
             </div>
 
             <div class="row">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" formControlName="bengaliNumeralsByDefault" />
-                Print Bengali numerals (০-৯) <span *ngIf="isCustom('bengaliNumeralsByDefault')" class="chip">Custom</span>
+                {{ 'Print Bengali numerals (০-৯)' | t }} <span *ngIf="isCustom('bengaliNumeralsByDefault')" class="chip">{{ 'Custom' | t }}</span>
               </label>
-              <p class="help">Shows numbers in reports as ০১২৩ instead of 0123. Default: {{ s.inherited.bengaliNumeralsByDefault ? 'on' : 'off' }}.</p>
+              <p class="help">{{ 'Shows numbers in reports as ০১২৩ instead of 0123. Default: {value}.' | t: { value: ((s.inherited.bengaliNumeralsByDefault ? 'on' : 'off') | t) } }}</p>
             </div>
           </section>
         </form>
@@ -231,6 +232,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly farmService = inject(FarmService);
+  private readonly i18n = inject(I18nService);
 
   /** null = organisation-wide rules; otherwise the farm whose overrides are being edited. */
   readonly farmId = signal<string | null>(null);
@@ -302,9 +304,9 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
     const go = () => { this.farmId.set(next); this.load(); };
     if (!this.form.dirty) { go(); return; }
     this.confirm.confirm({
-      title: 'Discard unsaved changes?',
-      message: 'You have changes that are not saved yet. Switching will discard them.',
-      confirmText: 'Discard and switch',
+      title: this.i18n.t('Discard unsaved changes?'),
+      message: this.i18n.t('You have changes that are not saved yet. Switching will discard them.'),
+      confirmText: this.i18n.t('Discard and switch'),
       destructive: true,
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(ok => {
       if (ok) go();
@@ -323,7 +325,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
       .pipe(finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: s => this.apply(s),
-        error: err => this.loadError.set(parseApiError(err, 'Could not load your farm rules.')),
+        error: err => this.loadError.set(parseApiError(err, this.i18n.t('Could not load your farm rules.'))),
       });
   }
 
@@ -331,24 +333,23 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
     if (!this.canEdit() || this.saving()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.notify.warning('Please fix the highlighted fields before saving.');
+      this.notify.warning(this.i18n.t('Please fix the highlighted fields before saving.'));
       return;
     }
-    this.persist(this.toOverrides(), 'Farm rules saved. New calculations will use them.');
+    this.persist(this.toOverrides(), this.i18n.t('Farm rules saved. New calculations will use them.'));
   }
 
   resetToDefaults(): void {
     if (!this.canEdit() || this.saving()) return;
     this.confirm.confirm({
-      title: this.farmId() ? 'Use the organisation rules for this farm?' : 'Reset farm rules to defaults?',
-      message: (this.farmId()
-                 ? 'This farm’s own values will be removed and it will follow the organisation rules again. '
-                 : 'All your custom prices and allocation choices will be replaced by the standard Farm360 defaults. ') +
-               'Costs and reports already recorded will not change.',
-      confirmText: 'Reset to defaults',
+      title: this.i18n.t(this.farmId() ? 'Use the organisation rules for this farm?' : 'Reset farm rules to defaults?'),
+      message: this.i18n.t(this.farmId()
+                 ? 'This farm’s own values will be removed and it will follow the organisation rules again. Costs and reports already recorded will not change.'
+                 : 'All your custom prices and allocation choices will be replaced by the standard Farm360 defaults. Costs and reports already recorded will not change.'),
+      confirmText: this.i18n.t('Reset to defaults'),
       destructive: true,
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(ok => {
-      if (ok) this.persist(this.emptyOverrides(), 'Farm rules reset to the defaults.');
+      if (ok) this.persist(this.emptyOverrides(), this.i18n.t('Farm rules reset to the defaults.'));
     });
   }
 
@@ -375,7 +376,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
           this.apply(s);
           this.notify.success(message);
         },
-        error: err => this.notify.error(parseApiError(err, 'Could not save your farm rules.')),
+        error: err => this.notify.error(parseApiError(err, this.i18n.t('Could not save your farm rules.'))),
       });
   }
 

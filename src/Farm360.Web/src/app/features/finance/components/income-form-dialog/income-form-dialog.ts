@@ -10,11 +10,13 @@ import { AnimalPickerComponent } from '../../../../shared/components/animal-pick
 import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../credit-terms-fields/credit-terms-fields.component';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-income-form-dialog',
   standalone: true,
   imports: [
-    CommonModule,
+    TranslatePipe, CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
@@ -28,11 +30,11 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-emerald-500">arrow_downward</mat-icon>
-            Record Income
+            {{ 'Record Income' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Log revenue to the farm ledger</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Log revenue to the farm ledger' | t }}</p>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -51,31 +53,30 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
           
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Category <span class="text-red-500">*</span>
+              {{ 'Category' | t }} <span class="text-red-500">*</span>
             </label>
             <select formControlName="category" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <option value="MilkSale">Milk &amp; Dairy Sale (দুধ বিক্রয়)</option>
-              <option value="ByproductSale">By-product / Manure Sale (উপজাত বিক্রয়)</option>
-              <option value="OtherIncome">Other Farm Income (অন্যান্য আয়)</option>
-              <option value="OwnerCapital">Owner's Capital - money put in (মালিকের মূলধন)</option>
+              <option value="MilkSale">{{ 'Milk & Dairy Sale (দুধ বিক্রয়)' | t }}</option>
+              <option value="ByproductSale">{{ 'By-product / Manure Sale (উপজাত বিক্রয়)' | t }}</option>
+              <option value="OtherIncome">{{ 'Other Farm Income (অন্যান্য আয়)' | t }}</option>
+              <option value="OwnerCapital">{{ "Owner's Capital - money put in (মালিকের মূলধন)" | t }}</option>
             </select>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug pt-1">
-              Animal sales are recorded by selling the animal in <b>Livestock</b> (that also books its cost).
-              Loans and investor money are recorded on the <b>Loans</b> and <b>Investors</b> pages.
+              {{ 'Animal sales are recorded by selling the animal in Livestock (that also books its cost). Loans and investor money are recorded on the Loans and Investors pages.' | t }}
             </p>
           </div>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Amount (BDT) <span class="text-red-500">*</span>
+              {{ 'Amount (BDT)' | t }} <span class="text-red-500">*</span>
             </label>
-            <input type="number" formControlName="amountBdt" step="0.01" min="0" placeholder="e.g. 50000"
+            <input type="number" formControlName="amountBdt" step="0.01" min="0" [placeholder]="'e.g. 50000' | t"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           </div>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Transaction Date <span class="text-red-500">*</span>
+              {{ 'Transaction Date' | t }} <span class="text-red-500">*</span>
             </label>
             <input type="date" formControlName="transactionDate"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
@@ -88,25 +89,25 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Description <span class="text-red-500">*</span>
+              {{ 'Description' | t }} <span class="text-red-500">*</span>
             </label>
-            <input type="text" formControlName="description" placeholder="Brief description of income"
+            <input type="text" formControlName="description" [placeholder]="'Brief description of income' | t"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           </div>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Link to Animal (Optional)
+              {{ 'Link to Animal (Optional)' | t }}
             </label>
             <app-animal-picker [includeExited]="true" formControlName="animalId"></app-animal-picker>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">If this income is related to a specific animal.</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ 'If this income is related to a specific animal.' | t }}</p>
           </div>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Notes / Reference (Optional)
+              {{ 'Notes / Reference (Optional)' | t }}
             </label>
-            <textarea formControlName="notes" rows="2" placeholder="Any additional notes..."
+            <textarea formControlName="notes" rows="2" [placeholder]="'Any additional notes...' | t"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"></textarea>
           </div>
 
@@ -116,12 +117,12 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isLoading()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isLoading()"
                   class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isLoading()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isLoading() ? 'Saving...' : 'Save Income' }}</span>
+            <span>{{ (isLoading() ? 'Saving...' : 'Save Income') | t }}</span>
           </button>
         </div>
       </form>
@@ -140,6 +141,7 @@ export class IncomeFormDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
 
   form!: FormGroup;
   isLoading = signal(false);
@@ -179,7 +181,7 @@ export class IncomeFormDialogComponent implements OnInit {
 
     const farmId = this.workingContextService.currentFarmValue?.id;
     if (!farmId) {
-      this.error.set('No active farm selected.');
+      this.error.set(this.i18n.t('No active farm selected.'));
       return;
     }
 

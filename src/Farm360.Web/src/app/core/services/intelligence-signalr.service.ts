@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, Injector, inject, signal } from '@angular/core';
+import { AuthService } from './auth.service';
 import * as signalR from '@microsoft/signalr';
 import { ActionableInsight } from '../../features/livestock/components/intelligence-panel/intelligence-panel.component';
 import { NotificationService } from '../../shared/services/notification.service';
@@ -7,6 +8,7 @@ import { NotificationService } from '../../shared/services/notification.service'
   providedIn: 'root'
 })
 export class IntelligenceSignalRService {
+  private readonly injector = inject(Injector);
   private hubConnection: signalR.HubConnection | null = null;
   public readonly latestInsight = signal<ActionableInsight | null>(null);
   public readonly notifications = signal<ActionableInsight[]>([]);
@@ -21,8 +23,10 @@ export class IntelligenceSignalRService {
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl('/hubs/farm-notifications', {
-        // Typically, we pass the JWT token here. For this phase, we assume cookie auth or interceptor works
-        // if interceptor doesn't apply to WebSockets, we'd add accessTokenFactory
+        // The HTTP interceptor doesn't cover SignalR, so the sign-in token is passed here: as a
+        // header for negotiate and as ?access_token= for the WebSocket, which the API reads.
+        // Looked up lazily to avoid a circular dependency with AuthService.
+        accessTokenFactory: () => this.injector.get(AuthService).accessToken ?? ''
       })
       .withAutomaticReconnect()
       .build();

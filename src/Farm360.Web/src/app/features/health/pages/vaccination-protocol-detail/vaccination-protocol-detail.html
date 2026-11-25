@@ -1,15 +1,15 @@
 <app-page-header 
-  title="Protocol Details" 
-  description="View comprehensive information about the vaccination protocol."
-  [breadcrumbActiveNode]="protocol()?.title || 'Protocol Details'"
+  [title]="'Protocol Details' | t"
+  [description]="'View comprehensive information about the vaccination protocol.' | t"
+  [breadcrumbActiveNode]="protocol()?.title || ('Protocol Details' | t)"
   icon="library_books" 
   iconColor="text-blue-600">
   <div actions class="flex gap-2">
     <button routerLink=".." class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Back to List
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> {{ 'Back to List' | t }}
     </button>
     <button *ngIf="protocol()" (click)="openAssignDialog()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">group_add</mat-icon> Assign Protocol
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">group_add</mat-icon> {{ 'Assign Protocol' | t }}
     </button>
   </div>
 </app-page-header>
@@ -26,17 +26,17 @@
           <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ protocol()?.title }}</h1>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                 [ngClass]="protocol()?.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'">
-            {{ protocol()?.isActive ? 'Active' : 'Inactive' }}
+            {{ (protocol()?.isActive ? 'Active' : 'Inactive') | t }}
           </span>
         </div>
         <p class="text-gray-600 dark:text-gray-400 flex items-center">
           <mat-icon class="mr-1 scale-75">pets</mat-icon>
-          Target Species: <strong class="ml-1 text-gray-900 dark:text-white">{{ protocol()?.targetSpecies }}</strong>
+          {{ 'Target Species:' | t }} <strong class="ml-1 text-gray-900 dark:text-white">{{ protocol()?.targetSpecies | t }}</strong>
         </p>
       </div>
       
       <button (click)="openEditDialog()" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
-        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon> Edit Protocol
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon> {{ 'Edit Protocol' | t }}
       </button>
     </div>
 
@@ -46,7 +46,7 @@
           <mat-icon>vaccines</mat-icon>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Required Doses</p>
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ 'Required Doses' | t }}</p>
           <p class="text-2xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ protocol()?.steps?.length || 0 }}</p>
         </div>
       </div>
@@ -56,15 +56,15 @@
           <mat-icon>calendar_month</mat-icon>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Schedule Duration</p>
-          <p class="text-2xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ totalDurationDays() }} <span class="text-sm font-medium text-gray-500">Days</span></p>
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ 'Schedule Duration' | t }}</p>
+          <p class="text-2xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ totalDurationDays() }} <span class="text-sm font-medium text-gray-500">{{ 'Days' | t }}</span></p>
         </div>
       </div>
     </div>
 
     <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 overflow-hidden mb-6" *ngIf="protocol()?.description">
       <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50">
-        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Description</h3>
+        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{{ 'Description' | t }}</h3>
       </div>
       <div class="p-6">
         <p class="text-gray-600 dark:text-gray-400 leading-relaxed">{{ protocol()?.description }}</p>
@@ -74,7 +74,7 @@
     <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50 flex justify-between items-center">
         <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center">
-          <mat-icon class="mr-2 text-gray-400 scale-75">format_list_numbered</mat-icon> Protocol Steps
+          <mat-icon class="mr-2 text-gray-400 scale-75">format_list_numbered</mat-icon> {{ 'Protocol Steps' | t }}
         </h3>
       </div>
       
@@ -86,16 +86,16 @@
           <div class="flex-1">
             <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ step.stepName }}</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm text-gray-600 dark:text-gray-400 mt-3">
-              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">event</mat-icon> <span class="font-medium mr-1">Target Age:</span> {{ step.targetAgeDays }} days</div>
-              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">science</mat-icon> <span class="font-medium mr-1">Vaccine:</span> {{ step.vaccineName }}</div>
-              <div class="flex items-center md:col-span-2"><mat-icon class="scale-[0.6] mr-1 opacity-70">info</mat-icon> <span class="font-medium mr-1">Dosage:</span> {{ step.dosageInstruction }}</div>
+              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">event</mat-icon> <span class="font-medium mr-1">{{ 'Target Age:' | t }}</span> {{ '{days} days' | t: { days: step.targetAgeDays } }}</div>
+              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">science</mat-icon> <span class="font-medium mr-1">{{ 'Vaccine:' | t }}</span> {{ step.vaccineName }}</div>
+              <div class="flex items-center md:col-span-2"><mat-icon class="scale-[0.6] mr-1 opacity-70">info</mat-icon> <span class="font-medium mr-1">{{ 'Dosage:' | t }}</span> {{ step.dosageInstruction }}</div>
             </div>
           </div>
         </div>
 
         <div *ngIf="!(protocol()?.steps?.length)" class="p-12 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50">
           <mat-icon class="text-4xl mb-2 opacity-50">inventory_2</mat-icon>
-          <p class="font-medium">No steps defined for this protocol.</p>
+          <p class="font-medium">{{ 'No steps defined for this protocol.' | t }}</p>
         </div>
       </div>
     </div>

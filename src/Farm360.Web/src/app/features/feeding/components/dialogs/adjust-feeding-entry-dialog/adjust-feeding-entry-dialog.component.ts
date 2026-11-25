@@ -9,6 +9,8 @@ import { FeedingService } from '../../../services/feeding.service';
 import { DailyFeedingEntry } from '../../../models/feeding.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 export interface AdjustDialogData {
   entry: DailyFeedingEntry;
@@ -24,7 +26,8 @@ export interface AdjustDialogData {
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
-    MatInputModule
+    MatInputModule,
+    TranslatePipe
   ],
   template: `
     <div class="p-0 flex flex-col h-full bg-gray-50 dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
@@ -37,12 +40,12 @@ export interface AdjustDialogData {
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">
-              {{ data.action === 'adjust' ? 'Adjust' : 'Skip' }} Feed Entry
+              {{ (data.action === 'adjust' ? 'Adjust Feed Entry' : 'Skip Feed Entry') | t }}
             </h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Animal: <span class="font-bold text-gray-800 dark:text-gray-200">{{ data.entry.animalTag }}</span></p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Animal:' | t }} <span class="font-bold text-gray-800 dark:text-gray-200">{{ data.entry.animalTag }}</span></p>
           </div>
         </div>
-        <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors" aria-label="Close">
+        <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors" [attr.aria-label]="'Close' | t">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -52,26 +55,26 @@ export interface AdjustDialogData {
         <div class="bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6 flex gap-3">
           <mat-icon class="text-blue-500 mt-0.5">info</mat-icon>
           <div>
-            <p class="text-sm font-semibold">Expected Amount: {{ data.entry.expectedKg }} kg</p>
-            <p class="text-xs mt-1" *ngIf="data.action === 'adjust'">Please enter the actual amount provided and the reason for adjustment.</p>
-            <p class="text-xs mt-1" *ngIf="data.action === 'skip'">Please provide a reason why this feeding is being skipped entirely.</p>
+            <p class="text-sm font-semibold">{{ 'Expected Amount: {kg} kg' | t: { kg: data.entry.expectedKg } }}</p>
+            <p class="text-xs mt-1" *ngIf="data.action === 'adjust'">{{ 'Please enter the actual amount provided and the reason for adjustment.' | t }}</p>
+            <p class="text-xs mt-1" *ngIf="data.action === 'skip'">{{ 'Please provide a reason why this feeding is being skipped entirely.' | t }}</p>
           </div>
         </div>
 
         <div class="space-y-4">
           <div *ngIf="data.action === 'adjust'">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-              Actual Quantity (kg) <span class="text-red-500">*</span>
+              {{ 'Actual Quantity (kg)' | t }} <span class="text-red-500">*</span>
             </label>
-            <input [(ngModel)]="actualKg" type="number" step="0.01" min="0" placeholder="e.g. 5.5"
+            <input [(ngModel)]="actualKg" type="number" step="0.01" min="0" [placeholder]="'e.g. 5.5' | t"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm font-medium placeholder-gray-400 dark:placeholder-gray-500" />
           </div>
 
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-              Reason / Notes <span class="text-red-500">*</span>
+              {{ 'Reason / Notes' | t }} <span class="text-red-500">*</span>
             </label>
-            <textarea [(ngModel)]="notes" rows="3" placeholder="Provide a detailed reason..."
+            <textarea [(ngModel)]="notes" rows="3" [placeholder]="'Provide a detailed reason...' | t"
               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm font-medium placeholder-gray-400 dark:placeholder-gray-500"></textarea>
           </div>
         </div>
@@ -81,13 +84,13 @@ export interface AdjustDialogData {
       <div class="px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3 shadow-sm shrink-0 mt-auto">
         <button type="button" (click)="close()" [disabled]="isSubmitting()"
           class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          Cancel
+          {{ 'Cancel' | t }}
         </button>
         <button type="button" (click)="submit()" [disabled]="!isValid() || isSubmitting()"
           class="px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm inline-flex items-center justify-center min-w-[120px]"
           [ngClass]="data.action === 'adjust' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'">
           <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-5 !h-5 !text-[20px] mr-2">refresh</mat-icon>
-          {{ data.action === 'adjust' ? 'Submit Adjustment' : 'Skip Entry' }}
+          {{ (data.action === 'adjust' ? 'Submit Adjustment' : 'Skip Entry') | t }}
         </button>
       </div>
     </div>
@@ -99,6 +102,7 @@ export class AdjustFeedingEntryDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<AdjustFeedingEntryDialogComponent>);
   private readonly feedingService = inject(FeedingService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   actualKg = this.data.entry.expectedKg;
   notes = '';
@@ -124,22 +128,22 @@ export class AdjustFeedingEntryDialogComponent {
     if (this.data.action === 'adjust') {
       this.feedingService.adjustEntry(this.data.entry.id, this.actualKg, this.notes).subscribe({
         next: () => {
-          this.notify.success('Entry adjusted successfully');
+          this.notify.success(this.i18n.t('Entry adjusted successfully'));
           this.dialogRef.close(true);
         },
         error: (err) => {
-          this.notify.error(parseApiError(err, 'Failed to adjust entry'));
+          this.notify.error(parseApiError(err, this.i18n.t('Failed to adjust entry')));
           this.isSubmitting.set(false);
         }
       });
     } else {
       this.feedingService.skipEntry(this.data.entry.id, this.notes).subscribe({
         next: () => {
-          this.notify.success('Entry skipped successfully');
+          this.notify.success(this.i18n.t('Entry skipped successfully'));
           this.dialogRef.close(true);
         },
         error: (err) => {
-          this.notify.error(parseApiError(err, 'Failed to skip entry'));
+          this.notify.error(parseApiError(err, this.i18n.t('Failed to skip entry')));
           this.isSubmitting.set(false);
         }
       });

@@ -1,18 +1,18 @@
 <app-page-header 
-  title="Medical Treatments" 
-  description="Log and track medication, dosages, and withdrawal periods."
+  [title]="'Medical Treatments' | t"
+  [description]="'Log and track medication, dosages, and withdrawal periods.' | t"
   icon="healing" 
   iconColor="text-purple-600">
   <div actions class="flex items-center gap-2">
     <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !dataSource().length"
       class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
       <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+      <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
     </button>
     <button mat-flat-button (click)="openLogTreatmentDialog()"
       class="rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-purple-600/20">
       <mat-icon class="text-sm">add</mat-icon>
-      <span>Log Treatment</span>
+      <span>{{ 'Log Treatment' | t }}</span>
     </button>
   </div>
 </app-page-header>
@@ -24,9 +24,9 @@
   <app-empty-state 
     *ngIf="!isLoading() && (!dataSource() || dataSource().length === 0) && !loadError()"
     icon="medical_services"
-    title="No treatments found"
-    description="Log a new treatment to start tracking animal health."
-    actionLabel="Log Treatment"
+    [title]="'No treatments found' | t"
+    [description]="'Log a new treatment to start tracking animal health.' | t"
+    [actionLabel]="'Log Treatment' | t"
     (action)="openLogTreatmentDialog()">
   </app-empty-state>
 
@@ -55,7 +55,7 @@
           <button type="button" 
                   (click)="openEditTreatmentDialog(element)"
                   class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
-                  title="Edit Treatment Details" aria-label="Edit">
+                  [title]="'Edit Treatment Details' | t" [attr.aria-label]="'Edit' | t">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
           </button>
           
@@ -66,7 +66,7 @@
                   'bg-red-50 text-red-700 border-red-200': element.status === treatmentStatus.Failed,
                   'bg-gray-50 text-gray-700 border-gray-200': element.status === treatmentStatus.Discontinued
                 }">
-            {{ element.status }}
+            {{ element.status | t }}
           </span>
         </div>
       </div>
@@ -75,18 +75,18 @@
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="grid grid-cols-2 gap-y-4 gap-x-2">
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Medication</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Medication' | t }}</div>
             <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ element.medicationName }}</div>
             <div class="text-xs text-gray-500">{{ element.dosageAmount }} {{ element.dosageUnit }}</div>
           </div>
           
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Start Date</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Start Date' | t }}</div>
             <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ element.startDate | date:'mediumDate' }}</div>
           </div>
 
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">Cost</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Cost' | t }}</div>
             <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ element.costBdt | money:2 }}</div>
           </div>
         </div>
@@ -96,14 +96,14 @@
       <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10 no-print">
         <ng-container *ngIf="element.status === treatmentStatus.Ongoing">
           <button class="flex-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1" (click)="updateStatus(element, treatmentStatus.Completed)">
-            <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">check_circle</mat-icon> Complete
+            <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">check_circle</mat-icon> {{ 'Complete' | t }}
           </button>
           <button class="flex-1 px-3 py-1.5 text-xs font-semibold text-red-700 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1" (click)="updateStatus(element, treatmentStatus.Failed)">
-            <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">cancel</mat-icon> Failed
+            <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">cancel</mat-icon> {{ 'Failed' | t }}
           </button>
         </ng-container>
         <button class="px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1" (click)="openEditTreatmentDialog(element)">
-          <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">edit</mat-icon> Edit
+          <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">edit</mat-icon> {{ 'Edit' | t }}
         </button>
       </div>
     </div>
@@ -115,7 +115,7 @@
                      [pageSizeOptions]="[5, 10, 25, 100]"
                      [pageIndex]="pageIndex()"
                      (page)="onPageChange($event)"
-                     aria-label="Select page"
+                     [attr.aria-label]="'Select page' | t"
                      class="!bg-transparent">
       </mat-paginator>
     </div>

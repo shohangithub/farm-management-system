@@ -20,6 +20,8 @@ import { CreateProtocolDialogComponent } from '../../components/dialogs/create-p
 import { AssignProtocolDialog } from '../../components/dialogs/assign-protocol-dialog/assign-protocol-dialog.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-vaccination-protocol-detail',
@@ -31,7 +33,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatIconModule,
     PageHeaderComponent,
     LoadingComponent,
-    MatDialogModule
+    MatDialogModule,
+    TranslatePipe
   ],
   templateUrl: './vaccination-protocol-detail.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -40,6 +43,7 @@ export class VaccinationProtocolDetailComponent {
   private healthService = inject(HealthService);
   private route = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   // --- Reactive State (Signals) ---
   isLoading = signal(true);
@@ -67,7 +71,7 @@ export class VaccinationProtocolDetailComponent {
       }),
       switchMap(({ id }) => {
         if (!id) {
-          this.error.set('Invalid protocol ID');
+          this.error.set(this.i18n.t('Invalid protocol ID'));
           this.isLoading.set(false);
           return of(null);
         }

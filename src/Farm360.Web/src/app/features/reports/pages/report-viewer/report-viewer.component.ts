@@ -17,6 +17,8 @@ import {
   ReportLanguage,
   RunReportRequest,
 } from '../../models/report.models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * Runs one report and shows it as an A4 sheet, with print and export.
@@ -30,18 +32,19 @@ import {
   imports: [
     CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule,
     MatProgressBarModule, MatSidenavModule, ReportPaperComponent, ReportParameterPanelComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="viewer">
       <aside class="params no-print">
         <a mat-button routerLink="/reports" class="back">
-          <mat-icon>arrow_back</mat-icon> All reports
+          <mat-icon>arrow_back</mat-icon> {{ 'All reports' | t }}
         </a>
 
-        <h2 class="name">{{ definition()?.title ?? 'Report' }}</h2>
-        @if (definition()?.description) {
-          <p class="desc">{{ definition()?.description }}</p>
+        <h2 class="name">{{ reportTitle() }}</h2>
+        @if (reportDescription(); as desc) {
+          <p class="desc">{{ desc }}</p>
         }
 
         @if (definition(); as def) {
@@ -58,11 +61,11 @@ import {
       <main class="canvas">
         <div class="toolbar no-print">
           @if (data(); as d) {
-            <span class="meta">{{ d.totalRowCount }} {{ d.totalRowCount === 1 ? 'row' : 'rows' }} · run {{ d.meta.runId.slice(0, 8) }}</span>
+            <span class="meta">{{ (d.totalRowCount === 1 ? '{n} row · run {id}' : '{n} rows · run {id}') | t: { n: d.totalRowCount, id: d.meta.runId.slice(0, 8) } }}</span>
           }
           <span class="spacer"></span>
           <button mat-stroked-button [disabled]="!data() || running()" (click)="print()">
-            <mat-icon>print</mat-icon> Print
+            <mat-icon>print</mat-icon> {{ 'Print' | t }}
           </button>
           @if (canExport()) {
             <!-- Disabled while anything is generating: an export of a half-finished run, or a
@@ -70,7 +73,7 @@ import {
             <button mat-flat-button color="primary" [disabled]="!data() || exporting() || running()"
                     [matMenuTriggerFor]="exportMenu">
               <mat-icon>{{ exporting() ? 'hourglass_top' : 'download' }}</mat-icon>
-              {{ exporting() ? 'Exporting…' : 'Export' }}
+              {{ (exporting() ? 'Exporting…' : 'Export') | t }}
             </button>
           }
           <mat-menu #exportMenu="matMenu">
@@ -102,15 +105,15 @@ import {
           @if (d.totalRowCount === 0) {
             <div class="state empty no-print">
               <mat-icon>inbox</mat-icon>
-              <p class="title">{{ language() === 'bn' ? 'কোনো তথ্য পাওয়া যায়নি' : 'Nothing to show for these choices' }}</p>
-              <p>{{ language() === 'bn' ? 'সময়কাল বা ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।' : 'Try a wider period or fewer filters, then run the report again.' }}</p>
+              <p class="title">{{ (language() === 'bn' ? 'কোনো তথ্য পাওয়া যায়নি' : 'Nothing to show for these choices') | t }}</p>
+              <p>{{ (language() === 'bn' ? 'সময়কাল বা ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।' : 'Try a wider period or fewer filters, then run the report again.') | t }}</p>
             </div>
           }
           <app-report-paper [data]="d" [language]="language()" />
         } @else if (!running() && !error()) {
           <div class="state no-print">
             <mat-icon>description</mat-icon>
-            <p>Set the parameters and run the report.</p>
+            <p>{{ 'Set the parameters and run the report.' | t }}</p>
           </div>
         }
       </main>
@@ -164,17 +167,19 @@ export class ReportViewerComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly reports = inject(ReportService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly i18n = inject(I18nService);
 
   protected readonly definition = signal<ReportCatalogItem | null>(null);
   protected readonly data = signal<ReportDataSet | null>(null);
   protected readonly running = signal(false);
   protected readonly exporting = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly language = signal<ReportLanguage>('en');
+  /** A Bangla interface defaults the report to Bangla until the user picks a language. */
+  protected readonly language = signal<ReportLanguage>(this.i18n.isBangla ? 'bn' : 'en');
   protected readonly lastParameters = signal<Record<string, string | null>>({});
   protected readonly bengaliNumerals = signal(false);
   protected readonly canExport = signal(false);
-  protected readonly errorTitle = signal('The report could not be run');
+  protected readonly errorTitle = signal(this.i18n.t('The report could not be run'));
 
   /** A past run handed over by "Run again" in the Report Center. */
   private readonly rerun: ReportRerun | null =
@@ -194,8 +199,8 @@ export class ReportViewerComponent implements OnInit {
         this.definition.set(found);
 
         if (!found) {
-          this.errorTitle.set('Report not available');
-          this.error.set('This report does not exist, or your role does not include permission to run it.');
+          this.errorTitle.set(this.i18n.t('Report not available'));
+          this.error.set(this.i18n.t('This report does not exist, or your role does not include permission to run it.'));
           return;
         }
 
@@ -235,8 +240,8 @@ export class ReportViewerComponent implements OnInit {
         }
       },
       error: () => {
-        this.errorTitle.set('Could not reach the server');
-        this.error.set('The report list could not be loaded. Check your connection and refresh the page.');
+        this.errorTitle.set(this.i18n.t('Could not reach the server'));
+        this.error.set(this.i18n.t('The report list could not be loaded. Check your connection and refresh the page.'));
       },
     });
   }
@@ -247,15 +252,15 @@ export class ReportViewerComponent implements OnInit {
     const serverMessage = e?.error?.message ?? e?.error?.detail;
     switch (e?.status) {
       case 400:
-        return { title: 'Check the parameters', message: serverMessage ?? 'One of the parameters is not valid.' };
+        return { title: this.i18n.t('Check the parameters'), message: serverMessage ?? this.i18n.t('One of the parameters is not valid.') };
       case 403:
-        return { title: 'Not permitted', message: 'Your role does not include permission to run or export this report. Ask the farm owner to grant it.' };
+        return { title: this.i18n.t('Not permitted'), message: this.i18n.t('Your role does not include permission to run or export this report. Ask the farm owner to grant it.') };
       case 404:
-        return { title: 'Report not available', message: serverMessage ?? 'This report no longer exists.' };
+        return { title: this.i18n.t('Report not available'), message: serverMessage ?? this.i18n.t('This report no longer exists.') };
       case 0:
-        return { title: 'No connection', message: 'The server could not be reached. Check your connection and try again.' };
+        return { title: this.i18n.t('No connection'), message: this.i18n.t('The server could not be reached. Check your connection and try again.') };
       default:
-        return { title: 'Something went wrong', message: 'The report could not be produced. Try again; if it keeps failing, tell your administrator.' };
+        return { title: this.i18n.t('Something went wrong'), message: this.i18n.t('The report could not be produced. Try again; if it keeps failing, tell your administrator.') };
     }
   }
 
@@ -299,10 +304,23 @@ export class ReportViewerComponent implements OnInit {
         this.exporting.set(false);
       },
       error: err => {
-        this.snackBar.open(`Export failed: ${this.describeError(err).message}`, 'Dismiss', { duration: 6000 });
+        this.snackBar.open(this.i18n.t('Export failed: {message}', { message: this.describeError(err).message }), this.i18n.t('Dismiss'), { duration: 6000 });
         this.exporting.set(false);
       },
     });
+  }
+
+  /** In Bangla the catalogue's Bangla title and description lead. */
+  protected reportTitle(): string {
+    const def = this.definition();
+    if (!def) return this.i18n.t('Report');
+    return this.i18n.isBangla && def.titleBn ? def.titleBn : def.title;
+  }
+
+  protected reportDescription(): string {
+    const def = this.definition();
+    if (!def) return '';
+    return this.i18n.isBangla && def.descriptionBn ? def.descriptionBn : def.description;
   }
 
   protected print(): void {

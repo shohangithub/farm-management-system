@@ -12,7 +12,8 @@ public record UserProfileDto(
     IReadOnlyList<string> Permissions,
     string? FullName,
     string? Email,
-    string? Phone);
+    string? Phone,
+    bool IsDemo = false);
 
 public record GetCurrentUserQuery() : IRequest<UserProfileDto>;
 
@@ -43,7 +44,9 @@ internal sealed class GetCurrentUserQueryHandler(
             Permissions: permissions,
             FullName: details.FullName,
             Email: details.Email,
-            Phone: details.PhoneNumber
+            Phone: details.PhoneNumber,
+            // The shared, read-only "Try the demo" account: the web app shows the demo banner.
+            IsDemo: Farm360.Application.Demo.DemoConstants.IsDemoViewer(userId)
         );
     }
 }

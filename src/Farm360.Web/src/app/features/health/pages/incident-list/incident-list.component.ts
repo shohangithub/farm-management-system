@@ -15,20 +15,21 @@ import { switchMap, catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-incident-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe],
   template: `
 <app-page-header 
-  title="Disease Incidents" 
-  description="Track and manage disease outbreaks and incidents."
+  [title]="'Disease Incidents' | t"
+  [description]="'Track and manage disease outbreaks and incidents.' | t"
   icon="coronavirus" 
   iconColor="text-rose-600">
   <div actions class="flex gap-2">
     <button (click)="reportIncident()" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Report Incident
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Report Incident' | t }}
     </button>
   </div>
 </app-page-header>
@@ -41,12 +42,12 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     <table class="w-full text-sm text-left" *ngIf="incidents().length > 0">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
         <tr>
-          <th scope="col" class="px-6 py-4">Date</th>
-          <th scope="col" class="px-6 py-4">Disease</th>
-          <th scope="col" class="px-6 py-4">Severity</th>
-          <th scope="col" class="px-6 py-4">Affected Animals</th>
-          <th scope="col" class="px-6 py-4">Status</th>
-          <th scope="col" class="px-6 py-4 text-right">Actions</th>
+          <th scope="col" class="px-6 py-4">{{ 'Date' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Disease' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Severity' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Affected Animals' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Status' | t }}</th>
+          <th scope="col" class="px-6 py-4 text-right">{{ 'Actions' | t }}</th>
         </tr>
       </thead>
       <tbody>
@@ -59,26 +60,26 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           </td>
           <td class="px-6 py-4">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [ngClass]="getSeverityClass(incident.severity)">
-              {{ getSeverityName(incident.severity) }}
+              {{ getSeverityName(incident.severity) | t }}
             </span>
           </td>
           <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
             {{ incident.affectedAnimalCount }}
           </td>
           <td class="px-6 py-4">
-            <label [for]="'status-' + incident.id" class="sr-only">Status</label>
+            <label [for]="'status-' + incident.id" class="sr-only">{{ 'Status' | t }}</label>
             <select [id]="'status-' + incident.id"
               class="text-xs font-medium rounded-full border-0 px-2.5 py-1 cursor-pointer disabled:opacity-50"
               [ngClass]="getStatusClass(incident.status)"
               [disabled]="savingId() === incident.id"
               (change)="changeStatus(incident, $any($event.target).value, $event)">
-              <option *ngFor="let s of statusOptions" [value]="s" [selected]="s === incident.status">{{ getStatusName(s) }}</option>
+              <option *ngFor="let s of statusOptions" [value]="s" [selected]="s === incident.status">{{ getStatusName(s) | t }}</option>
             </select>
             <p *ngIf="statusErrorId() === incident.id && statusError()" class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ statusError() }}</p>
           </td>
           <td class="px-6 py-4 text-right space-x-2">
             <a [routerLink]="['/health/incidents', incident.id]" class="px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors shadow-sm inline-block">
-              Details
+              {{ 'Details' | t }}
             </a>
           </td>
         </tr>
@@ -88,9 +89,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     <app-empty-state 
       *ngIf="!isLoading() && incidents().length === 0 && !loadError()"
       icon="health_and_safety"
-      title="No Incidents"
-      description="No disease incidents have been reported."
-      actionLabel="Report Incident"
+      [title]="'No Incidents' | t"
+      [description]="'No disease incidents have been reported.' | t"
+      [actionLabel]="'Report Incident' | t"
       (action)="reportIncident()">
     </app-empty-state>
   </div>

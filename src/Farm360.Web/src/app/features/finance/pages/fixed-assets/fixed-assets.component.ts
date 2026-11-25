@@ -15,6 +15,8 @@ import { AccountingSettings, FixedAsset, FixedAssetSchedule, SaveFixedAssetReque
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface AssetForm extends SaveFixedAssetRequest {
   supplierName: string;
@@ -31,15 +33,15 @@ interface AssetForm extends SaveFixedAssetRequest {
 @Component({
   selector: 'app-fixed-assets',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
   template: `
     <app-page-header
-      title="Fixed Assets"
-      description="Sheds, machinery, vehicles and land — at cost less depreciation, with the auditor's fixed-asset schedule."
-      breadcrumbActiveNode="Fixed Assets">
+      [title]="'Fixed Assets' | t"
+      [description]="pageDescription"
+      [breadcrumbActiveNode]="'Fixed Assets' | t">
       <div actions>
         <button mat-flat-button (click)="newAsset()" class="!rounded-xl !bg-emerald-600 !text-white">
-          <mat-icon>add</mat-icon> New Asset
+          <mat-icon>add</mat-icon> {{ 'New Asset' | t }}
         </button>
       </div>
     </app-page-header>
@@ -48,129 +50,129 @@ interface AssetForm extends SaveFixedAssetRequest {
       <app-finance-subnav></app-finance-subnav>
 
       <div *ngIf="error()" class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300 flex justify-between">
-        <span>{{ error() }}</span><button type="button" aria-label="Dismiss error" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
+        <span>{{ error() }}</span><button type="button" [attr.aria-label]="'Dismiss error' | t" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
       </div>
       <div *ngIf="notice()" class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300">{{ notice() }}</div>
       <div *ngIf="settings() && !settings()!.booksStartDate" class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
-        To register assets the farm owned before using Farm360, first set the books start date in
-        <a routerLink="/finance/accounts-setup" class="underline font-semibold">Accounts setup</a>.
+        {{ 'To register assets the farm owned before using Farm360, first set the books start date in' | t }}
+        <a routerLink="/finance/accounts-setup" class="underline font-semibold">{{ 'Accounts setup' | t }}</a>.
       </div>
 
       <!-- Summary -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-4">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Assets in use</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Assets in use' | t }}</p>
           <h3 class="text-xl font-black mt-1">{{ totals().count }}</h3>
         </div>
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-4">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Cost</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Cost' | t }}</p>
           <h3 class="text-xl font-black mt-1">{{ totals().cost | money }}</h3>
         </div>
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-4">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Accumulated depreciation</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Accumulated depreciation' | t }}</p>
           <h3 class="text-xl font-black mt-1 text-amber-600">{{ totals().depreciation | money }}</h3>
         </div>
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-4">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Written-down value</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Written-down value' | t }}</p>
           <h3 class="text-xl font-black mt-1 text-emerald-600">{{ totals().wdv | money }}</h3>
         </div>
       </div>
 
       <!-- Form -->
       <div *ngIf="form() as f" class="bg-white dark:bg-gray-800 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 p-5 space-y-4">
-        <h3 class="text-sm font-black">{{ editingId() ? 'Edit asset' : 'Register an asset' }}</h3>
+        <h3 class="text-sm font-black">{{ (editingId() ? 'Edit asset' : 'Register an asset') | t }}</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <label class="flex flex-col gap-1">Name
-            <input [(ngModel)]="f.name" class="field" placeholder="e.g. Cattle shed 2" />
+          <label class="flex flex-col gap-1">{{ 'Name' | t }}
+            <input [(ngModel)]="f.name" class="field" [placeholder]="'e.g. Cattle shed 2' | t" />
           </label>
-          <label class="flex flex-col gap-1">Category
+          <label class="flex flex-col gap-1">{{ 'Category' | t }}
             <select [(ngModel)]="f.category" class="field">
-              <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+              <option *ngFor="let c of categories" [value]="c.value">{{ c.label | t }}</option>
             </select>
           </label>
-          <label class="flex flex-col gap-1">How acquired
+          <label class="flex flex-col gap-1">{{ 'How acquired' | t }}
             <select [(ngModel)]="f.acquisition" class="field" [disabled]="!!editingId()">
-              <option value="Cash">Bought — paid in cash</option>
-              <option value="Credit">Bought on credit (supplier bill)</option>
-              <option value="OwnerContributed">Brought in by the owner</option>
-              <option value="Opening">Owned before the books start (opening)</option>
+              <option value="Cash">{{ 'Bought — paid in cash' | t }}</option>
+              <option value="Credit">{{ 'Bought on credit (supplier bill)' | t }}</option>
+              <option value="OwnerContributed">{{ 'Brought in by the owner' | t }}</option>
+              <option value="Opening">{{ 'Owned before the books start (opening)' | t }}</option>
             </select>
           </label>
           <label class="flex flex-col gap-1">
-            {{ f.acquisition === 'Opening' ? 'Written-down value at books start (BDT)' : 'Cost (BDT)' }}
+            {{ (f.acquisition === 'Opening' ? 'Written-down value at books start (BDT)' : 'Cost (BDT)') | t }}
             <input type="number" min="0" [(ngModel)]="f.costBdt" class="field" />
           </label>
-          <label *ngIf="f.acquisition !== 'Opening'" class="flex flex-col gap-1">Purchase date
+          <label *ngIf="f.acquisition !== 'Opening'" class="flex flex-col gap-1">{{ 'Purchase date' | t }}
             <input type="date" [(ngModel)]="f.acquisitionDate" class="field" />
           </label>
           <div *ngIf="f.acquisition === 'Opening'" class="flex flex-col gap-1 justify-end text-gray-500">
-            Dated {{ settings()?.booksStartDate | date:'d MMM yyyy' }} (books start)
+            {{ 'Dated {date} (books start)' | t: { date: (settings()?.booksStartDate | date:'d MMM yyyy') } }}
           </div>
-          <label class="flex flex-col gap-1">Location
+          <label class="flex flex-col gap-1">{{ 'Location' | t }}
             <input [(ngModel)]="f.location" class="field" />
           </label>
           <ng-container *ngIf="f.category !== 'Land'">
-            <label class="flex flex-col gap-1">Depreciation method
+            <label class="flex flex-col gap-1">{{ 'Depreciation method' | t }}
               <select [(ngModel)]="f.method" class="field">
-                <option value="ReducingBalance">Reducing balance (% per year)</option>
-                <option value="StraightLine">Straight line (over useful life)</option>
+                <option value="ReducingBalance">{{ 'Reducing balance (% per year)' | t }}</option>
+                <option value="StraightLine">{{ 'Straight line (over useful life)' | t }}</option>
               </select>
             </label>
-            <label *ngIf="f.method === 'ReducingBalance'" class="flex flex-col gap-1">Rate % per year
+            <label *ngIf="f.method === 'ReducingBalance'" class="flex flex-col gap-1">{{ 'Rate % per year' | t }}
               <input type="number" min="0" max="100" [(ngModel)]="f.ratePercent" class="field" />
             </label>
             <ng-container *ngIf="f.method === 'StraightLine'">
-              <label class="flex flex-col gap-1">Useful life (years)
+              <label class="flex flex-col gap-1">{{ 'Useful life (years)' | t }}
                 <input type="number" min="0" [(ngModel)]="f.usefulLifeYears" class="field" />
               </label>
-              <label class="flex flex-col gap-1">Residual value (BDT)
+              <label class="flex flex-col gap-1">{{ 'Residual value (BDT)' | t }}
                 <input type="number" min="0" [(ngModel)]="f.residualValueBdt" class="field" />
               </label>
             </ng-container>
           </ng-container>
-          <div *ngIf="f.category === 'Land'" class="flex items-end text-gray-500">Land is not depreciated.</div>
+          <div *ngIf="f.category === 'Land'" class="flex items-end text-gray-500">{{ 'Land is not depreciated.' | t }}</div>
           <ng-container *ngIf="f.acquisition === 'Credit' && !editingId()">
-            <label class="flex flex-col gap-1">Supplier
+            <label class="flex flex-col gap-1">{{ 'Supplier' | t }}
               <input [(ngModel)]="f.supplierName" class="field" />
             </label>
-            <label class="flex flex-col gap-1">Supplier phone
+            <label class="flex flex-col gap-1">{{ 'Supplier phone' | t }}
               <input [(ngModel)]="f.supplierPhone" class="field" />
             </label>
-            <label class="flex flex-col gap-1">Due date
+            <label class="flex flex-col gap-1">{{ 'Due date' | t }}
               <input type="date" [(ngModel)]="f.dueDate" class="field" />
             </label>
-            <label class="flex flex-col gap-1">Paid now (BDT)
+            <label class="flex flex-col gap-1">{{ 'Paid now (BDT)' | t }}
               <input type="number" min="0" [(ngModel)]="f.paidNowBdt" class="field" />
             </label>
           </ng-container>
-          <label class="flex flex-col gap-1 md:col-span-3">Notes
+          <label class="flex flex-col gap-1 md:col-span-3">{{ 'Notes' | t }}
             <input [(ngModel)]="f.notes" class="field" />
           </label>
         </div>
         <div class="flex gap-2 justify-end">
-          <button mat-stroked-button (click)="form.set(null)" class="!rounded-xl">Cancel</button>
-          <button mat-flat-button (click)="save(f)" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">Save</button>
+          <button mat-stroked-button (click)="form.set(null)" class="!rounded-xl">{{ 'Cancel' | t }}</button>
+          <button mat-flat-button (click)="save(f)" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">{{ 'Save' | t }}</button>
         </div>
       </div>
 
       <!-- Dispose panel -->
       <div *ngIf="disposing() as d" class="bg-white dark:bg-gray-800 rounded-2xl border border-amber-200 dark:border-amber-800/60 p-5 space-y-3 text-xs">
-        <h3 class="text-sm font-black">Sell / scrap {{ d.asset.name }}</h3>
-        <p class="text-gray-500">The written-down value on the day is removed from the books; the difference to the sale price is a gain or loss on disposal. Enter 0 if scrapped.</p>
+        <h3 class="text-sm font-black">{{ 'Sell / scrap {name}' | t: { name: d.asset.name } }}</h3>
+        <p class="text-gray-500">{{ 'The written-down value on the day is removed from the books; the difference to the sale price is a gain or loss on disposal. Enter 0 if scrapped.' | t }}</p>
         <div class="flex gap-3 flex-wrap">
-          <label class="flex flex-col gap-1">Date <input type="date" [(ngModel)]="d.date" class="field" /></label>
-          <label class="flex flex-col gap-1">Sale proceeds (BDT) <input type="number" min="0" [(ngModel)]="d.proceeds" class="field" /></label>
+          <label class="flex flex-col gap-1">{{ 'Date' | t }} <input type="date" [(ngModel)]="d.date" class="field" /></label>
+          <label class="flex flex-col gap-1">{{ 'Sale proceeds (BDT)' | t }} <input type="number" min="0" [(ngModel)]="d.proceeds" class="field" /></label>
         </div>
         <div class="flex gap-2 justify-end">
-          <button mat-stroked-button (click)="disposing.set(null)" class="!rounded-xl">Cancel</button>
-          <button mat-flat-button (click)="dispose()" [disabled]="busy()" class="!rounded-xl !bg-amber-600 !text-white">Record disposal</button>
+          <button mat-stroked-button (click)="disposing.set(null)" class="!rounded-xl">{{ 'Cancel' | t }}</button>
+          <button mat-flat-button (click)="dispose()" [disabled]="busy()" class="!rounded-xl !bg-amber-600 !text-white">{{ 'Record disposal' | t }}</button>
         </div>
       </div>
 
       <!-- Tabs -->
       <div class="flex gap-2 text-xs font-semibold">
-        <button (click)="tab.set('register')" class="px-3 py-1.5 rounded-lg" [ngClass]="tab() === 'register' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800'">Register</button>
-        <button (click)="tab.set('schedule')" class="px-3 py-1.5 rounded-lg" [ngClass]="tab() === 'schedule' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800'">Fixed asset schedule</button>
+        <button (click)="tab.set('register')" class="px-3 py-1.5 rounded-lg" [ngClass]="tab() === 'register' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800'">{{ 'Register' | t }}</button>
+        <button (click)="tab.set('schedule')" class="px-3 py-1.5 rounded-lg" [ngClass]="tab() === 'schedule' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800'">{{ 'Fixed asset schedule' | t }}</button>
       </div>
 
       <!-- Register -->
@@ -178,13 +180,13 @@ interface AssetForm extends SaveFixedAssetRequest {
         <table class="w-full text-sm">
           <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
-              <th class="text-left px-4 py-2">Code</th><th class="text-left px-3 py-2">Asset</th><th class="text-left px-3 py-2">Acquired</th>
-              <th class="text-left px-3 py-2">Depreciation</th><th class="text-right px-3 py-2">Cost</th>
-              <th class="text-right px-3 py-2">Acc. dep.</th><th class="text-right px-3 py-2">WDV</th><th class="px-3 py-2"></th>
+              <th class="text-left px-4 py-2">{{ 'Code' | t }}</th><th class="text-left px-3 py-2">{{ 'Asset' | t }}</th><th class="text-left px-3 py-2">{{ 'Acquired' | t }}</th>
+              <th class="text-left px-3 py-2">{{ 'Depreciation' | t }}</th><th class="text-right px-3 py-2">{{ 'Cost' | t }}</th>
+              <th class="text-right px-3 py-2">{{ 'Acc. dep.' | t }}</th><th class="text-right px-3 py-2">{{ 'WDV' | t }}</th><th class="px-3 py-2"></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngIf="!assets().length"><td colspan="8" class="px-4 py-8 text-center text-gray-400">No fixed assets registered yet.</td></tr>
+            <tr *ngIf="!assets().length"><td colspan="8" class="px-4 py-8 text-center text-gray-400">{{ 'No fixed assets registered yet.' | t }}</td></tr>
             <tr *ngFor="let a of assets()" class="border-t border-gray-100 dark:border-gray-700/60" [class.opacity-60]="a.disposalDate">
               <td class="px-4 py-2 font-mono text-xs text-gray-500">{{ a.code }}</td>
               <td class="px-3 py-2">
@@ -194,17 +196,17 @@ interface AssetForm extends SaveFixedAssetRequest {
               <td class="px-3 py-2 text-xs">
                 {{ a.acquisitionDate | date:'d MMM yyyy' }}
                 <span class="block text-[11px] text-gray-500">{{ acquisitionLabel(a.acquisition) }}</span>
-                <span *ngIf="a.disposalDate" class="block text-[11px] text-amber-600">Disposed {{ a.disposalDate | date:'d MMM yyyy' }} for {{ a.disposalProceedsBdt | money }}</span>
+                <span *ngIf="a.disposalDate" class="block text-[11px] text-amber-600">{{ 'Disposed {date} for {amount}' | t: { date: (a.disposalDate | date:'d MMM yyyy'), amount: (a.disposalProceedsBdt | money) } }}</span>
               </td>
-              <td class="px-3 py-2 text-xs">{{ a.category === 'Land' ? '—' : (a.method === 'StraightLine' ? a.usefulLifeYears + ' yrs straight line' : a.ratePercent + '% reducing') }}</td>
+              <td class="px-3 py-2 text-xs">{{ a.category === 'Land' ? '—' : (a.method === 'StraightLine' ? ('{n} yrs straight line' | t: { n: a.usefulLifeYears }) : ('{n}% reducing' | t: { n: a.ratePercent })) }}</td>
               <td class="px-3 py-2 text-right font-mono">{{ a.costBdt | money }}</td>
               <td class="px-3 py-2 text-right font-mono text-amber-600">{{ a.accumulatedDepreciationBdt | money }}</td>
               <td class="px-3 py-2 text-right font-mono font-bold">{{ a.writtenDownValueBdt | money }}</td>
               <td class="px-3 py-2 text-right whitespace-nowrap">
-                <button *ngIf="!a.disposalDate" (click)="edit(a)" title="Edit" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
-                <button *ngIf="!a.disposalDate" (click)="startDispose(a)" title="Sell / scrap" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">sell</mat-icon></button>
-                <button *ngIf="a.disposalDate" (click)="cancelDisposal(a)" title="Undo disposal" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">undo</mat-icon></button>
-                <button (click)="remove(a)" title="Delete" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+                <button *ngIf="!a.disposalDate" (click)="edit(a)" [title]="'Edit' | t" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
+                <button *ngIf="!a.disposalDate" (click)="startDispose(a)" [title]="'Sell / scrap' | t" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">sell</mat-icon></button>
+                <button *ngIf="a.disposalDate" (click)="cancelDisposal(a)" [title]="'Undo disposal' | t" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">undo</mat-icon></button>
+                <button (click)="remove(a)" [title]="'Delete' | t" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
               </td>
             </tr>
           </tbody>
@@ -214,25 +216,25 @@ interface AssetForm extends SaveFixedAssetRequest {
       <!-- Schedule -->
       <div *ngIf="tab() === 'schedule'" class="space-y-3">
         <div class="flex items-center gap-2 text-xs">
-          <span class="text-gray-500">Period</span>
+          <span class="text-gray-500">{{ 'Period' | t }}</span>
           <input type="date" [(ngModel)]="scheduleFrom" (change)="loadSchedule()" class="field" />
-          <span>to</span>
+          <span>{{ 'to' | t }}</span>
           <input type="date" [(ngModel)]="scheduleTo" (change)="loadSchedule()" class="field" />
-          <span class="text-gray-400">(blank start = financial year start)</span>
-          <a routerLink="/reports/finance.fixed-asset-schedule" class="ml-auto underline text-emerald-700">Open as report (PDF / Excel)</a>
+          <span class="text-gray-400">{{ '(blank start = financial year start)' | t }}</span>
+          <a routerLink="/reports/finance.fixed-asset-schedule" class="ml-auto underline text-emerald-700">{{ 'Open as report (PDF / Excel)' | t }}</a>
         </div>
         <div *ngIf="schedule() as sc" class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 overflow-x-auto">
           <table class="w-full text-xs">
             <thead class="bg-gray-50 dark:bg-gray-900/40 uppercase tracking-wider text-gray-500">
               <tr>
-                <th class="text-left px-3 py-2" rowspan="2">Asset</th>
-                <th class="text-center px-3 py-1 border-b border-gray-200 dark:border-gray-700" colspan="4">Cost</th>
-                <th class="text-center px-3 py-1 border-b border-gray-200 dark:border-gray-700" colspan="4">Depreciation</th>
-                <th class="text-right px-3 py-2" rowspan="2">WDV {{ sc.toDate | date:'d MMM yy' }}</th>
+                <th class="text-left px-3 py-2" rowspan="2">{{ 'Asset' | t }}</th>
+                <th class="text-center px-3 py-1 border-b border-gray-200 dark:border-gray-700" colspan="4">{{ 'Cost' | t }}</th>
+                <th class="text-center px-3 py-1 border-b border-gray-200 dark:border-gray-700" colspan="4">{{ 'Depreciation' | t }}</th>
+                <th class="text-right px-3 py-2" rowspan="2">{{ 'WDV {date}' | t: { date: (sc.toDate | date:'d MMM yy') } }}</th>
               </tr>
               <tr>
-                <th class="text-right px-2 py-1">b/f</th><th class="text-right px-2 py-1">Additions</th><th class="text-right px-2 py-1">Disposals</th><th class="text-right px-2 py-1">c/f</th>
-                <th class="text-right px-2 py-1">b/f</th><th class="text-right px-2 py-1">Charge</th><th class="text-right px-2 py-1">On disposal</th><th class="text-right px-2 py-1">c/f</th>
+                <th class="text-right px-2 py-1">{{ 'b/f' | t }}</th><th class="text-right px-2 py-1">{{ 'Additions' | t }}</th><th class="text-right px-2 py-1">{{ 'Disposals' | t }}</th><th class="text-right px-2 py-1">{{ 'c/f' | t }}</th>
+                <th class="text-right px-2 py-1">{{ 'b/f' | t }}</th><th class="text-right px-2 py-1">{{ 'Charge' | t }}</th><th class="text-right px-2 py-1">{{ 'On disposal' | t }}</th><th class="text-right px-2 py-1">{{ 'c/f' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -249,7 +251,7 @@ interface AssetForm extends SaveFixedAssetRequest {
                 <td class="px-3 py-1.5 text-right font-mono font-bold">{{ l.writtenDownValueBdt | number:'1.0-0' }}</td>
               </tr>
               <tr class="border-t-2 border-gray-800 dark:border-gray-200 font-black">
-                <td class="px-3 py-2">Total ({{ sc.fromDate | date:'d MMM yy' }} – {{ sc.toDate | date:'d MMM yy' }})</td>
+                <td class="px-3 py-2">{{ 'Total ({from} – {to})' | t: { from: (sc.fromDate | date:'d MMM yy'), to: (sc.toDate | date:'d MMM yy') } }}</td>
                 <td class="px-2 py-2 text-right font-mono">{{ sc.totals.costOpeningBdt | number:'1.0-0' }}</td>
                 <td class="px-2 py-2 text-right font-mono">{{ sc.totals.additionsBdt | number:'1.0-0' }}</td>
                 <td class="px-2 py-2 text-right font-mono">{{ sc.totals.disposalsBdt | number:'1.0-0' }}</td>
@@ -278,6 +280,8 @@ export class FixedAssetsComponent {
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly pageDescription = this.i18n.t("Sheds, machinery, vehicles and land — at cost less depreciation, with the auditor's fixed-asset schedule.");
 
   readonly categories = [
     { value: 'BuildingAndShed', label: 'Building & shed' },
@@ -319,7 +323,7 @@ export class FixedAssetsComponent {
       switchMap(([, farm]) => !farm ? of(null) : forkJoin({
         assets: this.finance.getFixedAssets(farm.id),
         settings: this.finance.getAccountingSettings(farm.id),
-      }).pipe(catchError(err => { this.error.set(parseApiError(err, 'Failed to load fixed assets.')); return of(null); }))),
+      }).pipe(catchError(err => { this.error.set(parseApiError(err, this.i18n.t('Failed to load fixed assets.'))); return of(null); }))),
       tap(() => this.loadSchedule()),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(r => {
@@ -338,11 +342,11 @@ export class FixedAssetsComponent {
   }
 
   categoryLabel(value: string): string {
-    return this.categories.find(c => c.value === value)?.label ?? value;
+    return this.i18n.t(this.categories.find(c => c.value === value)?.label ?? value);
   }
 
   acquisitionLabel(value: string): string {
-    return ({ Cash: 'Paid in cash', Credit: 'On credit', OwnerContributed: 'From owner', Opening: 'Opening (before books start)' } as Record<string, string>)[value] ?? value;
+    return this.i18n.t(({ Cash: 'Paid in cash', Credit: 'On credit', OwnerContributed: 'From owner', Opening: 'Opening (before books start)' } as Record<string, string>)[value] ?? value);
   }
 
   newAsset(): void {
@@ -379,8 +383,8 @@ export class FixedAssetsComponent {
     const id = this.editingId();
     this.busy.set(true);
     (id ? this.finance.updateFixedAsset(farmId, id, body) : this.finance.createFixedAsset(farmId, body)).subscribe({
-      next: a => this.done(`${a.code} ${a.name} saved.`, () => this.form.set(null)),
-      error: err => this.fail(err, 'Could not save the asset.'),
+      next: a => this.done(this.i18n.t('{code} {name} saved.', { code: a.code, name: a.name }), () => this.form.set(null)),
+      error: err => this.fail(err, this.i18n.t('Could not save the asset.')),
     });
   }
 
@@ -394,28 +398,28 @@ export class FixedAssetsComponent {
     if (!d || !farmId) return;
     this.busy.set(true);
     this.finance.disposeFixedAsset(farmId, d.asset.id, { disposalDate: d.date, proceedsBdt: +d.proceeds || 0 }).subscribe({
-      next: () => this.done(`${d.asset.name} disposed.`, () => this.disposing.set(null)),
-      error: err => this.fail(err, 'Could not record the disposal.'),
+      next: () => this.done(this.i18n.t('{name} disposed.', { name: d.asset.name }), () => this.disposing.set(null)),
+      error: err => this.fail(err, this.i18n.t('Could not record the disposal.')),
     });
   }
 
   async cancelDisposal(a: FixedAsset): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !(await this.confirmService.confirmAsync({ message: `Undo the disposal of ${a.name}? The sale posting is removed.`, confirmText: 'Undo', destructive: true }))) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: this.i18n.t('Undo the disposal of {name}? The sale posting is removed.', { name: a.name }), confirmText: this.i18n.t('Undo'), destructive: true }))) return;
     this.busy.set(true);
     this.finance.cancelFixedAssetDisposal(farmId, a.id).subscribe({
-      next: () => this.done('Disposal undone.'),
-      error: err => this.fail(err, 'Could not undo the disposal.'),
+      next: () => this.done(this.i18n.t('Disposal undone.')),
+      error: err => this.fail(err, this.i18n.t('Could not undo the disposal.')),
     });
   }
 
   async remove(a: FixedAsset): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !(await this.confirmService.confirmAsync({ message: `Delete ${a.code} ${a.name}? Its purchase and sale postings are removed from the ledger.`, confirmText: 'Delete', destructive: true }))) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: this.i18n.t('Delete {code} {name}? Its purchase and sale postings are removed from the ledger.', { code: a.code, name: a.name }), confirmText: this.i18n.t('Delete'), destructive: true }))) return;
     this.busy.set(true);
     this.finance.deleteFixedAsset(farmId, a.id).subscribe({
-      next: () => this.done('Asset deleted.'),
-      error: err => this.fail(err, 'Could not delete the asset.'),
+      next: () => this.done(this.i18n.t('Asset deleted.')),
+      error: err => this.fail(err, this.i18n.t('Could not delete the asset.')),
     });
   }
 
@@ -424,7 +428,7 @@ export class FixedAssetsComponent {
     if (!farmId) return;
     this.finance.getFixedAssetSchedule(farmId, this.scheduleFrom || null, this.scheduleTo || null).subscribe({
       next: s => this.schedule.set(s),
-      error: err => this.error.set(parseApiError(err, 'Failed to load the fixed-asset schedule.')),
+      error: err => this.error.set(parseApiError(err, this.i18n.t('Failed to load the fixed-asset schedule.'))),
     });
   }
 

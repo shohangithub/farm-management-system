@@ -80,7 +80,10 @@ internal sealed class AssignProtocolToAnimalsCommandHandler : IRequestHandler<As
                     step.VaccineName,
                     string.Empty,
                     scheduledDate,
-                    $"Scheduled from protocol '{protocol.Title}' - Step '{step.StepName}'");
+                    $"Scheduled from protocol '{protocol.Title}' - Step '{step.StepName}'",
+                    // The step's vaccine stock item and dose, so giving the dose deducts the stock and books its cost.
+                    step.InventoryItemId,
+                    step.DosageQuantity);
 
                 events.Add(@event);
             }

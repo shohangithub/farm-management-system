@@ -11,6 +11,8 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-assign-protocol-dialog',
@@ -23,7 +25,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatButtonModule, 
     MatIconModule,
     MatSnackBarModule,
-    AnimalMultiPickerComponent
+    AnimalMultiPickerComponent,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -32,11 +35,11 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">assignment</mat-icon>
-            Assign Protocol
+            {{ 'Assign Protocol' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Apply {{ data?.protocol?.title }} to animals</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Apply {title} to animals' | t: { title: data?.protocol?.title } }}</p>
         </div>
-        <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
+        <button mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [attr.aria-label]="'Close' | t">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -56,27 +59,27 @@ import { NotificationService } from '../../../../../shared/services/notification
                <mat-icon class="!text-primary-600 dark:!text-primary-400">vaccines</mat-icon>
             </div>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wider opacity-80 mb-0.5">Selected Protocol</div>
+              <div class="text-xs font-bold uppercase tracking-wider opacity-80 mb-0.5">{{ 'Selected Protocol' | t }}</div>
               <div class="text-base font-bold">{{ data?.protocol?.title }}</div>
             </div>
           </div>
           
           <!-- Animals -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animals <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Select Animals' | t }} <span class="text-red-500">*</span></label>
             <app-animal-multi-picker formControlName="animalIds"></app-animal-multi-picker>
             <p class="text-xs text-red-500 mt-1" *ngIf="form.get('animalIds')?.touched && form.get('animalIds')?.invalid">
-              At least one animal must be selected.
+              {{ 'At least one animal must be selected.' | t }}
             </p>
           </div>
 
           <!-- Date Row -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Start Date <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Start Date' | t }} <span class="text-red-500">*</span></label>
             <input type="date" formControlName="startDate"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <p *ngIf="form.get('startDate')?.touched && form.get('startDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-            <p class="text-xs text-gray-500 mt-1">The date to begin calculating scheduled events.</p>
+            <p *ngIf="form.get('startDate')?.touched && form.get('startDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ 'The date to begin calculating scheduled events.' | t }}</p>
           </div>
           
         </div>
@@ -85,12 +88,12 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
           <button type="button" mat-dialog-close [disabled]="isSubmitting()" 
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
                   class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-            <span *ngIf="!isSubmitting()">Assign Protocol</span>
-            <span *ngIf="isSubmitting()">Assigning...</span>
+            <span *ngIf="!isSubmitting()">{{ 'Assign Protocol' | t }}</span>
+            <span *ngIf="isSubmitting()">{{ 'Assigning...' | t }}</span>
           </button>
         </div>
       </form>
@@ -118,6 +121,7 @@ export class AssignProtocolDialog {
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<AssignProtocolDialog>);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
   data = inject(MAT_DIALOG_DATA);
 
   form: FormGroup;
@@ -134,7 +138,7 @@ export class AssignProtocolDialog {
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.notify.error('Please select at least one animal and start date.');
+      this.notify.error(this.i18n.t('Please select at least one animal and start date.'));
       return;
     }
 
@@ -145,7 +149,7 @@ export class AssignProtocolDialog {
     const farmId = this.contextService.currentFarmValue?.id || '';
 
     if (!farmId) {
-      const msg = 'No farm context available.';
+      const msg = this.i18n.t('No farm context available.');
       this.error.set(msg);
       this.notify.error(msg);
       this.isSubmitting.set(false);
@@ -155,7 +159,7 @@ export class AssignProtocolDialog {
     const animalIdArray = val.animalIds;
       
     if (!animalIdArray || animalIdArray.length === 0) {
-      const msg = 'Please select at least one animal.';
+      const msg = this.i18n.t('Please select at least one animal.');
       this.error.set(msg);
       this.notify.error(msg);
       this.isSubmitting.set(false);
@@ -172,7 +176,7 @@ export class AssignProtocolDialog {
     this.healthService.assignProtocolToAnimals(request).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success('Protocol assigned successfully!');
+        this.notify.success(this.i18n.t('Protocol assigned successfully!'));
         this.dialogRef.close(true);
       },
       error: (err) => {

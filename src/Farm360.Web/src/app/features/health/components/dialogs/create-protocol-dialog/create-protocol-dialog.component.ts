@@ -12,6 +12,8 @@ import { InventoryItem, InventoryCategory } from '../../../../inventory/models/i
 import { AnimalSpecies, SPECIES_LABELS } from '../../../../livestock/models/animal.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-create-protocol-dialog',
@@ -24,7 +26,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatButtonModule, 
     MatIconModule, 
     MatTooltipModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -33,11 +36,11 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">list_alt</mat-icon>
-            {{ isEditMode ? 'Edit Vaccination Protocol' : 'Create Vaccination Protocol' }}
+            {{ (isEditMode ? 'Edit Vaccination Protocol' : 'Create Vaccination Protocol') | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Define standardized vaccination schedule by target age</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Define standardized vaccination schedule by target age' | t }}</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [attr.aria-label]="'Close' | t">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -55,27 +58,27 @@ import { NotificationService } from '../../../../../shared/services/notification
           
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5 md:col-span-2">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Protocol Title <span class="text-red-500">*</span></label>
-              <input type="text" formControlName="title" placeholder="e.g. Standard Cattle Vaccination Schedule"
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Protocol Title' | t }} <span class="text-red-500">*</span></label>
+              <input type="text" formControlName="title" [placeholder]="'e.g. Standard Cattle Vaccination Schedule' | t"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <p *ngIf="form.get('title')?.touched && form.get('title')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-              <p *ngIf="form.get('title')?.touched && form.get('title')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 200 characters or fewer.</p>
+              <p *ngIf="form.get('title')?.touched && form.get('title')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+              <p *ngIf="form.get('title')?.touched && form.get('title')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be {max} characters or fewer.' | t: { max: 200 } }}</p>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Target Species <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Target Species' | t }} <span class="text-red-500">*</span></label>
               <select formControlName="targetSpecies"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-                <option [ngValue]="null" disabled>-- Select Species --</option>
-                <option *ngFor="let s of speciesOptions" [ngValue]="s.value">{{ s.label }}</option>
+                <option [ngValue]="null" disabled>{{ '-- Select Species --' | t }}</option>
+                <option *ngFor="let s of speciesOptions" [ngValue]="s.value">{{ s.label | t }}</option>
               </select>
-              <p *ngIf="form.get('targetSpecies')?.touched && form.get('targetSpecies')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('targetSpecies')?.touched && form.get('targetSpecies')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Description</label>
-            <textarea formControlName="description" rows="2" placeholder="Brief summary of protocol goals..."
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Description' | t }}</label>
+            <textarea formControlName="description" rows="2" [placeholder]="'Brief summary of protocol goals...' | t"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
 
@@ -83,18 +86,18 @@ import { NotificationService } from '../../../../../shared/services/notification
             <input type="checkbox" id="isDeworming" formControlName="isDeworming"
                    class="w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600">
             <label for="isDeworming" class="text-sm font-medium text-blue-900 dark:text-blue-300 cursor-pointer">
-              This is a Deworming Protocol
+              {{ 'This is a Deworming Protocol' | t }}
             </label>
           </div>
 
           <!-- Protocol Steps Section -->
           <div class="pt-2 border-t border-gray-100 dark:border-gray-800">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider m-0">Protocol Steps</h3>
+              <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider m-0">{{ 'Protocol Steps' | t }}</h3>
               <button type="button" (click)="addStep()"
                       class="text-xs font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-400 flex items-center gap-1">
                 <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon>
-                Add Step
+                {{ 'Add Step' | t }}
               </button>
             </div>
 
@@ -103,59 +106,59 @@ import { NotificationService } from '../../../../../shared/services/notification
                    class="p-4 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-xl relative">
                 
                 <button *ngIf="steps.length > 1" type="button" (click)="removeStep(i)"
-                        class="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors">
+                        class="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors" [attr.aria-label]="'Remove step' | t">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete_outline</mat-icon>
                 </button>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500">Step Name <span class="text-red-500">*</span></label>
-                    <input type="text" formControlName="stepName" placeholder="e.g. Primary Dose"
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ 'Step Name' | t }} <span class="text-red-500">*</span></label>
+                    <input type="text" formControlName="stepName" [placeholder]="'e.g. Primary Dose' | t"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
-                    <p *ngIf="step.get('stepName')?.touched && step.get('stepName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-                    <p *ngIf="step.get('stepName')?.touched && step.get('stepName')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 100 characters or fewer.</p>
+                    <p *ngIf="step.get('stepName')?.touched && step.get('stepName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+                    <p *ngIf="step.get('stepName')?.touched && step.get('stepName')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be {max} characters or fewer.' | t: { max: 100 } }}</p>
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500">Target Age (Days) <span class="text-red-500">*</span></label>
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ 'Target Age (Days)' | t }} <span class="text-red-500">*</span></label>
                     <input type="number" formControlName="targetAgeDays" min="0" placeholder="30"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
-                    <p *ngIf="step.get('targetAgeDays')?.touched && step.get('targetAgeDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-                    <p *ngIf="step.get('targetAgeDays')?.touched && step.get('targetAgeDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+                    <p *ngIf="step.get('targetAgeDays')?.touched && step.get('targetAgeDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+                    <p *ngIf="step.get('targetAgeDays')?.touched && step.get('targetAgeDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500">Link Inventory Item</label>
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ 'Link Inventory Item' | t }}</label>
                     <select formControlName="inventoryItemId" (change)="onInventoryItemChange(i)"
                             class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
-                      <option [ngValue]="null">-- Not Tracked / Custom --</option>
+                      <option [ngValue]="null">{{ '-- Not Tracked / Custom --' | t }}</option>
                       <option *ngFor="let item of inventoryItems()" [ngValue]="item.id">
-                        {{ item.name }} ({{ item.categoryName }})
+                        {{ item.name }} ({{ item.categoryName | t }})
                       </option>
                     </select>
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500">{{ form.get('isDeworming')?.value ? 'Medicine Name' : 'Vaccine Name' }} <span class="text-red-500">*</span></label>
-                    <input type="text" formControlName="vaccineName" placeholder="e.g. {{ form.get('isDeworming')?.value ? 'Ivermectin' : 'Anthrax Vaccine' }}"
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ (form.get('isDeworming')?.value ? 'Medicine Name' : 'Vaccine Name') | t }} <span class="text-red-500">*</span></label>
+                    <input type="text" formControlName="vaccineName" [placeholder]="(form.get('isDeworming')?.value ? 'e.g. Ivermectin' : 'e.g. Anthrax Vaccine') | t"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
-                    <p *ngIf="step.get('vaccineName')?.touched && step.get('vaccineName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-                    <p *ngIf="step.get('vaccineName')?.touched && step.get('vaccineName')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be 100 characters or fewer.</p>
+                    <p *ngIf="step.get('vaccineName')?.touched && step.get('vaccineName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+                    <p *ngIf="step.get('vaccineName')?.touched && step.get('vaccineName')?.hasError('maxlength')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be {max} characters or fewer.' | t: { max: 100 } }}</p>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500">Dosage Instructions</label>
-                    <input type="text" formControlName="dosageInstruction" placeholder="e.g. 2ml Subcutaneous"
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ 'Dosage Instructions' | t }}</label>
+                    <input type="text" formControlName="dosageInstruction" [placeholder]="'e.g. 2ml Subcutaneous' | t"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
                   </div>
                   
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500" title="Quantity deducted from inventory per administration">Deduct Quantity</label>
-                    <input type="number" formControlName="dosageQuantity" step="0.01" min="0" placeholder="e.g. 2"
+                    <label class="block text-[11px] font-semibold text-gray-500" [title]="'Quantity deducted from inventory per administration' | t">{{ 'Deduct Quantity' | t }}</label>
+                    <input type="number" formControlName="dosageQuantity" step="0.01" min="0" [placeholder]="'e.g. 2' | t"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 disabled:opacity-50">
-                    <p *ngIf="step.get('dosageQuantity')?.touched && step.get('dosageQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+                    <p *ngIf="step.get('dosageQuantity')?.touched && step.get('dosageQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
                   </div>
                 </div>
               </div>
@@ -167,12 +170,12 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || steps.length === 0 || isSubmitting()"
                   class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isSubmitting() ? 'Saving...' : (isEditMode ? 'Update Protocol' : 'Create Protocol') }}</span>
+            <span>{{ (isSubmitting() ? 'Saving...' : (isEditMode ? 'Update Protocol' : 'Create Protocol')) | t }}</span>
           </button>
         </div>
       </form>
@@ -200,6 +203,7 @@ export class CreateProtocolDialogComponent {
   private inventoryService = inject(InventoryService);
   private dialogRef = inject(MatDialogRef<CreateProtocolDialogComponent>);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   form: FormGroup;
   isSubmitting = signal(false);
@@ -281,7 +285,7 @@ export class CreateProtocolDialogComponent {
   onSubmit() {
     if (this.form.invalid || this.steps.length === 0) {
       this.form.markAllAsTouched();
-      this.notify.error('Please fill in all protocol fields and add at least one step.');
+      this.notify.error(this.i18n.t('Please fill in all protocol fields and add at least one step.'));
       return;
     }
 
@@ -306,7 +310,7 @@ export class CreateProtocolDialogComponent {
       this.healthService.updateVaccinationProtocol(this.protocolId!, request).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Protocol updated successfully!');
+          this.notify.success(this.i18n.t('Protocol updated successfully!'));
           this.dialogRef.close(true);
         },
         error: (err) => {
@@ -320,7 +324,7 @@ export class CreateProtocolDialogComponent {
       this.healthService.createVaccinationProtocol(request).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Protocol created successfully!');
+          this.notify.success(this.i18n.t('Protocol created successfully!'));
           this.dialogRef.close(true);
         },
         error: (err) => {

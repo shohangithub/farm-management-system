@@ -5,6 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { FormulaListComponent } from '../formula-list/formula-list.component';
 import { IngredientListComponent } from '../ingredient-list/ingredient-list.component';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 type RecipeTab = 'recipes' | 'ingredients';
 
@@ -12,21 +14,21 @@ type RecipeTab = 'recipes' | 'ingredients';
 @Component({
   selector: 'app-recipes',
   standalone: true,
-  imports: [CommonModule, MatIconModule, FeedingSubnavComponent, FormulaListComponent, IngredientListComponent],
+  imports: [CommonModule, MatIconModule, FeedingSubnavComponent, FormulaListComponent, IngredientListComponent, TranslatePipe],
   template: `
     <div class="px-6 pt-4 mx-auto max-w-7xl">
       <app-feeding-subnav></app-feeding-subnav>
       <div class="flex items-center gap-2 text-xs font-semibold">
         <button (click)="show('recipes')" class="px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5"
           [ngClass]="tab() === 'recipes' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'">
-          <mat-icon class="!text-[16px] !w-4 !h-4">blender</mat-icon> Recipes · রেসিপি
+          <mat-icon class="!text-[16px] !w-4 !h-4">blender</mat-icon> {{ i18n.isBangla ? ('Recipes' | t) : 'Recipes · রেসিপি' }}
         </button>
         <button (click)="show('ingredients')" class="px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5"
           [ngClass]="tab() === 'ingredients' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'">
-          <mat-icon class="!text-[16px] !w-4 !h-4">grain</mat-icon> Ingredients · উপকরণ
+          <mat-icon class="!text-[16px] !w-4 !h-4">grain</mat-icon> {{ i18n.isBangla ? ('Ingredients' | t) : 'Ingredients · উপকরণ' }}
         </button>
         <span class="text-gray-500 font-normal ml-2">
-          {{ tab() === 'recipes' ? 'A recipe is a mix of ingredients by %, priced per kg.' : 'Ingredients link to stock items, so feeding deducts stock.' }}
+          {{ (tab() === 'recipes' ? 'A recipe is a mix of ingredients by %, priced per kg.' : 'Ingredients link to stock items, so feeding deducts stock.') | t }}
         </span>
       </div>
     </div>
@@ -38,6 +40,7 @@ type RecipeTab = 'recipes' | 'ingredients';
 export class RecipesComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
 
   readonly tab = signal<RecipeTab>(this.route.snapshot.queryParamMap.get('tab') === 'ingredients' ? 'ingredients' : 'recipes');
 

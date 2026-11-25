@@ -10,6 +10,8 @@ import { AnimalService } from '../../services/animal.service';
 import { AnimalListItemDto, RecordWeightRequest } from '../../models/animal.models';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface BatchWeightDialogData {
   animals: AnimalListItemDto[];
@@ -30,7 +32,8 @@ interface AnimalWeightInput {
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -42,11 +45,11 @@ interface AnimalWeightInput {
             <mat-icon>scale</mat-icon>
           </div>
           <div>
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0">Batch Weight Record</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Record new weights for {{ inputs().length }} selected animals</p>
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0">{{ 'Batch Weight Record' | t }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ 'Record new weights for {n} selected animals' | t: { n: inputs().length } }}</p>
           </div>
         </div>
-        <button aria-label="Close" mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <button [attr.aria-label]="'Close' | t" mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -56,9 +59,9 @@ interface AnimalWeightInput {
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700/50">
           <thead class="bg-gray-50 dark:bg-gray-800/50 sticky top-0 z-10">
             <tr>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider rounded-tl-lg">Animal Tag</th>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Weight (kg)</th>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider rounded-tr-lg">Notes</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider rounded-tl-lg">{{ 'Animal Tag' | t }}</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{{ 'Weight (kg)' | t }}</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider rounded-tr-lg">{{ 'Notes' | t }}</th>
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
@@ -70,14 +73,14 @@ interface AnimalWeightInput {
                 </div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
-                <input type="number" min="0" step="0.1" [(ngModel)]="inputs()[i].weightKg" [attr.aria-label]="'Weight (kg) for ' + item.animal.tagId"
+                <input type="number" min="0" step="0.1" [(ngModel)]="inputs()[i].weightKg" [attr.aria-label]="'Weight (kg) for {tag}' | t: { tag: item.animal.tagId }"
                        class="block w-24 pl-3 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-inner"
-                       placeholder="e.g. 50">
+                       [placeholder]="'e.g. 50' | t">
               </td>
               <td class="px-4 py-3">
                 <input type="text" [(ngModel)]="inputs()[i].notes"
                        class="block w-full pl-3 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-inner"
-                       placeholder="Optional notes">
+                       [placeholder]="'Optional notes' | t">
               </td>
             </tr>
           </tbody>
@@ -86,20 +89,20 @@ interface AnimalWeightInput {
       
       <!-- Date Picker for all -->
       <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Recording Date (For all)</label>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ 'Recording Date (For all)' | t }}</label>
         <input type="date" [(ngModel)]="recordedDate"
                class="block w-full sm:w-64 pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm">
       </div>
 
       <!-- Footer Actions -->
       <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-        <button mat-button (click)="close()" [disabled]="isSubmitting()">Cancel</button>
+        <button mat-button (click)="close()" [disabled]="isSubmitting()">{{ 'Cancel' | t }}</button>
         <button mat-flat-button color="primary" class="!px-6 !py-1"
                 [disabled]="isSubmitting() || !isValid()"
                 (click)="submit()">
           <span class="flex items-center gap-2">
             <mat-spinner *ngIf="isSubmitting()" diameter="18" class="text-white"></mat-spinner>
-            <span>{{ isSubmitting() ? 'Saving...' : 'Save Weights' }}</span>
+            <span>{{ (isSubmitting() ? 'Saving...' : 'Save Weights') | t }}</span>
           </span>
         </button>
       </div>
@@ -116,6 +119,7 @@ export class BatchWeightDialogComponent {
   private dialogRef = inject(MatDialogRef<BatchWeightDialogComponent>);
   private data = inject<BatchWeightDialogData>(MAT_DIALOG_DATA);
   private svc = inject(AnimalService);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   
@@ -159,7 +163,7 @@ export class BatchWeightDialogComponent {
         next: () => this.dialogRef.close(true),
         error: (err) => {
           console.error(err);
-          this.notify.error('Failed to save some weights. Please try again.');
+          this.notify.error(this.i18n.t('Failed to save some weights. Please try again.'));
         }
       });
   }

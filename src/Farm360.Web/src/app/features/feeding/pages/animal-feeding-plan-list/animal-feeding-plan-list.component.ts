@@ -25,6 +25,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 export interface RuleSetGroup {
   ruleSet: FeedingRuleSet;
@@ -48,7 +50,8 @@ export interface RuleSetGroup {
     MatTooltipModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   styles: [`
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -58,9 +61,9 @@ export interface RuleSetGroup {
   `],
   template: `
     <app-page-header
-      title="Plan History · পরিকল্পনার ইতিহাস"
-      description="View and manage animal feeding allocations grouped by rule sets, edit formulas, and enroll cattle."
-      breadcrumbActiveNode="Plan History">
+      [title]="i18n.isBangla ? ('Plan History' | t) : 'Plan History · পরিকল্পনার ইতিহাস'"
+      [description]="'View and manage animal feeding allocations grouped by rule sets, edit formulas, and enroll cattle.' | t"
+      [breadcrumbActiveNode]="'Plan History' | t">
       <div actions class="flex items-center gap-2 flex-wrap xl:flex-nowrap shrink-0">
         <!-- View Mode Switcher -->
         <div class="inline-flex items-center h-9 rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200/80 dark:border-gray-700/80 shrink-0">
@@ -72,7 +75,7 @@ export interface RuleSetGroup {
             [class.shadow-xs]="viewMode() === 'grouped'"
             class="h-7 px-2.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
             <mat-icon class="!w-3.5 !h-3.5 !text-[15px]">view_agenda</mat-icon>
-            <span>Grouped</span>
+            <span>{{ 'Grouped' | t }}</span>
           </button>
           <button type="button" (click)="viewMode.set('table')"
             [class.bg-white]="viewMode() === 'table'"
@@ -82,7 +85,7 @@ export interface RuleSetGroup {
             [class.shadow-xs]="viewMode() === 'table'"
             class="h-7 px-2.5 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-300 transition-all inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
             <mat-icon class="!w-3.5 !h-3.5 !text-[15px]">table_rows</mat-icon>
-            <span>Table</span>
+            <span>{{ 'Table' | t }}</span>
           </button>
         </div>
 
@@ -90,7 +93,7 @@ export interface RuleSetGroup {
         <button [matMenuTriggerFor]="reportsMenu"
           class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200/80 dark:border-emerald-800/80 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">assessment</mat-icon>
-          <span>Reports</span>
+          <span>{{ 'Reports' | t }}</span>
           <mat-icon class="!text-[14px] !w-[14px] !h-[14px] text-emerald-600/70 -mr-0.5">expand_more</mat-icon>
         </button>
 
@@ -98,22 +101,22 @@ export interface RuleSetGroup {
           <a mat-menu-item routerLink="/reports/feeding.daily-workflow" class="!rounded-xl">
             <mat-icon class="text-teal-600">fact_check</mat-icon>
             <div class="flex flex-col text-left py-0.5">
-              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">Daily Feeding & Workflow (SAP)</span>
-              <span class="text-[11px] text-gray-400">Animal-wise daily history, DM, Protein, Cost & Status</span>
+              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">{{ 'Daily Feeding & Workflow (SAP)' | t }}</span>
+              <span class="text-[11px] text-gray-400">{{ 'Animal-wise daily history, DM, Protein, Cost & Status' | t }}</span>
             </div>
           </a>
           <a mat-menu-item routerLink="/reports/feeding.plans-cost-projection" class="!rounded-xl">
             <mat-icon class="text-emerald-600">assessment</mat-icon>
             <div class="flex flex-col text-left py-0.5">
-              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">Plans & Cost Projections (SAP)</span>
-              <span class="text-[11px] text-gray-400">Ration allocations and 30-day cost forecasts</span>
+              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">{{ 'Plans & Cost Projections (SAP)' | t }}</span>
+              <span class="text-[11px] text-gray-400">{{ 'Ration allocations and 30-day cost forecasts' | t }}</span>
             </div>
           </a>
           <button mat-menu-item (click)="openFeedsCostReportDialog()" class="!rounded-xl">
             <mat-icon class="text-blue-600">picture_as_pdf</mat-icon>
             <div class="flex flex-col text-left py-0.5">
-              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">Quick Feeds Modal</span>
-              <span class="text-[11px] text-gray-400">Printable modal overview dialog</span>
+              <span class="font-semibold text-xs text-gray-800 dark:text-gray-200">{{ 'Quick Feeds Modal' | t }}</span>
+              <span class="text-[11px] text-gray-400">{{ 'Printable modal overview dialog' | t }}</span>
             </div>
           </button>
         </mat-menu>
@@ -122,23 +125,23 @@ export interface RuleSetGroup {
         <button (click)="openCreateRuleSetDialog()"
           class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-500">tune</mat-icon>
-          <span>New Rule Set</span>
+          <span>{{ 'New Rule Set' | t }}</span>
         </button>
 
         <!-- Sync Weights Button -->
         <button (click)="syncPlanWeights()"
           [disabled]="isSyncing()"
-          matTooltip="Synchronize all active plans with animals' latest recorded weights"
+          [matTooltip]="syncTooltip | t"
           class="h-9 px-3 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50">
           <mat-icon [class.animate-spin]="isSyncing()" class="!text-[16px] !w-[16px] !h-[16px] text-teal-600 dark:text-teal-400">sync</mat-icon>
-          <span>{{ isSyncing() ? 'Syncing...' : 'Sync Weights' }}</span>
+          <span>{{ (isSyncing() ? 'Syncing...' : 'Sync Weights') | t }}</span>
         </button>
 
         <!-- Assign Plan Primary Button -->
         <button (click)="openAssignDialog()"
           class="h-9 px-3.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm shadow-emerald-500/20 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon>
-          <span>Assign Plan</span>
+          <span>{{ 'Assign Plan' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -153,7 +156,7 @@ export interface RuleSetGroup {
         <input
           [ngModel]="searchTerm()"
           (ngModelChange)="searchTerm.set($event)"
-          placeholder="Filter by animal tag, rule set name, or species..."
+          [placeholder]="'Filter by animal tag, rule set name, or species...' | t"
           class="w-full pl-10 pr-4 py-2 text-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm" />
       </div>
 
@@ -161,15 +164,15 @@ export interface RuleSetGroup {
       <div class="flex items-center gap-3 text-xs">
         <div class="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 font-medium shadow-sm flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span><strong>{{ totalActivePlans() }}</strong> Active Enrolled</span>
+          <span><strong>{{ totalActivePlans() }}</strong> {{ 'Active Enrolled' | t }}</span>
         </div>
         <div class="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 font-medium shadow-sm flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-          <span><strong>{{ ruleSetGroups().length }}</strong> Configured Rules</span>
+          <span><strong>{{ ruleSetGroups().length }}</strong> {{ 'Configured Rules' | t }}</span>
         </div>
         <button *ngIf="viewMode() === 'grouped'" (click)="toggleAllGroups()"
           class="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors">
-          {{ areAllCollapsed() ? 'Expand All' : 'Collapse All' }}
+          {{ (areAllCollapsed() ? 'Expand All' : 'Collapse All') | t }}
         </button>
       </div>
     </div>
@@ -183,9 +186,9 @@ export interface RuleSetGroup {
       <app-empty-state
         *ngIf="!isLoading() && !loadError() && plans().length === 0 && ruleSets().length === 0"
         icon="assignment"
-        title="No Feeding Plans or Rules Found"
-        description="Get started by configuring a feeding rule set or assigning animals."
-        actionLabel="Assign Plan"
+        [title]="'No Feeding Plans or Rules Found' | t"
+        [description]="'Get started by configuring a feeding rule set or assigning animals.' | t"
+        [actionLabel]="'Assign Plan' | t"
         (action)="openAssignDialog()">
       </app-empty-state>
 
@@ -211,23 +214,23 @@ export interface RuleSetGroup {
                     </h3>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                       [ngClass]="group.ruleSet.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' : 'bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
-                      {{ group.ruleSet.isActive ? 'Active' : 'Inactive' }}
+                      {{ (group.ruleSet.isActive ? 'Active' : 'Inactive') | t }}
                     </span>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
-                      {{ formatPlanType(group.ruleSet.planType) }}
+                      {{ formatPlanType(group.ruleSet.planType) | t }}
                     </span>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                      {{ formatAnimalType(group.ruleSet.targetAnimalType) }}
+                      {{ formatAnimalType(group.ruleSet.targetAnimalType) | t }}
                     </span>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">
-                      {{ formatPurpose(group.ruleSet.feedingPurpose) }}
+                      {{ formatPurpose(group.ruleSet.feedingPurpose) | t }}
                     </span>
                   </div>
 
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0 flex items-center gap-3">
-                    <span><strong>{{ group.plans.length }}</strong> animals assigned</span>
+                    <span [innerHTML]="'{n} animals assigned' | t: { n: '<strong>' + group.plans.length + '</strong>' }"></span>
                     <span class="text-gray-300 dark:text-gray-600">•</span>
-                    <span>Expected: <strong class="text-emerald-600 dark:text-emerald-400 font-bold">{{ group.totalDailyFeedKg | number:'1.2-2' }} kg/day</strong></span>
+                    <span>{{ 'Expected:' | t }} <strong class="text-emerald-600 dark:text-emerald-400 font-bold">{{ '{kg} kg/day' | t: { kg: (group.totalDailyFeedKg | number:'1.2-2') } }}</strong></span>
                     <span *ngIf="group.ruleSet.baseNotes" class="text-gray-300 dark:text-gray-600">•</span>
                     <span *ngIf="group.ruleSet.baseNotes" class="italic">{{ group.ruleSet.baseNotes }}</span>
                   </p>
@@ -238,21 +241,21 @@ export interface RuleSetGroup {
               <div class="flex items-center gap-2 self-end md:self-center shrink-0">
                 <!-- Edit Rule Set Button -->
                 <button (click)="openEditRuleDialog(group.ruleSet, $event)"
-                  matTooltip="Edit rule set formulas, weight stages, and feed rations"
+                  [matTooltip]="'Edit rule set formulas, weight stages, and feed rations' | t"
                   class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-300 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl border border-gray-200 dark:border-gray-700 transition-all shadow-sm inline-flex items-center gap-1.5">
-                  <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-emerald-600 dark:text-emerald-400">edit_note</mat-icon> Edit Rule
+                  <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-emerald-600 dark:text-emerald-400">edit_note</mat-icon> {{ 'Edit Rule' | t }}
                 </button>
 
                 <!-- Assign Animals Button -->
                 <button (click)="openAssignDialog(group.ruleSet.id, $event)"
-                  matTooltip="Assign more cattle to this specific rule set"
+                  [matTooltip]="'Assign more cattle to this specific rule set' | t"
                   class="px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-xl border border-emerald-200 dark:border-emerald-800/60 transition-all shadow-sm inline-flex items-center gap-1.5">
-                  <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">person_add</mat-icon> Assign Animals
+                  <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">person_add</mat-icon> {{ 'Assign Animals' | t }}
                 </button>
 
                 <!-- Expand/Collapse Chevron -->
                 <button (click)="toggleGroup(group.ruleSet.id)"
-                  class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Expand">
+                  class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [attr.aria-label]="'Expand' | t">
                   <mat-icon class="!text-[20px] !w-[20px] !h-[20px] transition-transform duration-200"
                     [class.rotate-180]="!isCollapsed(group.ruleSet.id)">expand_more</mat-icon>
                 </button>
@@ -262,12 +265,12 @@ export interface RuleSetGroup {
             <!-- Configured Rule Tiers Quick Preview (Chips) -->
             <div *ngIf="group.ruleSet.rules && group.ruleSet.rules.length > 0"
               class="px-6 py-2.5 bg-gray-50/40 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-2 text-xs">
-              <span class="text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider text-[11px]">Rule Tiers:</span>
+              <span class="text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider text-[11px]">{{ 'Rule Tiers:' | t }}</span>
               @for (rule of group.ruleSet.rules; track rule.id) {
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 shadow-xs text-[11px]">
                   <span class="text-gray-500 dark:text-gray-400">{{ formatRuleCondition(group.ruleSet.planType, rule) }}</span>
                   <span class="text-gray-300 dark:text-gray-600">→</span>
-                  <strong class="text-emerald-600 dark:text-emerald-400">{{ rule.quantityValue }}{{ group.ruleSet.planType === 'WeightPercentage' ? '%' : ' kg' }}</strong>
+                  <strong class="text-emerald-600 dark:text-emerald-400">{{ rule.quantityValue }}{{ group.ruleSet.planType === 'WeightPercentage' ? '%' : ' ' + ('kg' | t) }}</strong>
                   <span class="text-gray-500 dark:text-gray-400 font-medium">({{ rule.feedType }})</span>
                 </span>
               }
@@ -280,11 +283,11 @@ export interface RuleSetGroup {
               <table *ngIf="group.plans.length > 0" class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-gray-50/50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-100 dark:border-gray-800">
-                    <th class="px-6 py-3">Animal ID / Tag</th>
-                    <th class="px-6 py-3">Status</th>
-                    <th class="px-6 py-3 text-right">Expected Daily Feed</th>
-                    <th class="px-6 py-3 text-center">Assigned On</th>
-                    <th class="px-6 py-3 text-right">Actions</th>
+                    <th class="px-6 py-3">{{ 'Animal ID / Tag' | t }}</th>
+                    <th class="px-6 py-3">{{ 'Status' | t }}</th>
+                    <th class="px-6 py-3 text-right">{{ 'Expected Daily Feed' | t }}</th>
+                    <th class="px-6 py-3 text-center">{{ 'Assigned On' | t }}</th>
+                    <th class="px-6 py-3 text-right">{{ 'Actions' | t }}</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
@@ -297,18 +300,18 @@ export interface RuleSetGroup {
                           </div>
                           <div>
                             <span class="font-bold">{{ plan.animalTag }}</span>
-                            <span *ngIf="!plan.isActive" class="text-xs text-gray-400 block font-normal">Plan canceled</span>
+                            <span *ngIf="!plan.isActive" class="text-xs text-gray-400 block font-normal">{{ 'Plan canceled' | t }}</span>
                           </div>
                         </div>
                       </td>
                       <td class="px-6 py-3.5">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-xs"
                           [ngClass]="plan.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'">
-                          {{ plan.isActive ? 'Active' : 'Canceled' }}
+                          {{ (plan.isActive ? 'Active' : 'Canceled') | t }}
                         </span>
                       </td>
                       <td class="px-6 py-3.5 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                        {{ plan.expectedDailyFeedKg | number:'1.2-2' }} kg
+                        {{ plan.expectedDailyFeedKg | number:'1.2-2' }} {{ 'kg' | t }}
                       </td>
                       <td class="px-6 py-3.5 text-center text-gray-500 dark:text-gray-400 text-xs">
                         {{ plan.assignedOn | date:'mediumDate' }}
@@ -316,7 +319,7 @@ export interface RuleSetGroup {
                       <td class="px-6 py-3.5 text-right">
                         <button *ngIf="plan.isActive" (click)="cancelPlan(plan)"
                           class="px-2.5 py-1 text-xs font-semibold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg border border-red-200 transition-all shadow-xs inline-flex items-center gap-1">
-                          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> Cancel
+                          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> {{ 'Cancel' | t }}
                         </button>
                       </td>
                     </tr>
@@ -328,11 +331,11 @@ export interface RuleSetGroup {
               <div *ngIf="group.plans.length === 0" class="p-8 text-center bg-gray-50/20 dark:bg-gray-900/20">
                 <mat-icon class="!text-[32px] !w-[32px] !h-[32px] text-gray-300 dark:text-gray-600 mb-2">assignment_late</mat-icon>
                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-                  No animals are currently enrolled in this rule set.
+                  {{ 'No animals are currently enrolled in this rule set.' | t }}
                 </p>
                 <button (click)="openAssignDialog(group.ruleSet.id)"
                   class="px-3.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-all inline-flex items-center gap-1">
-                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon> Assign Animals Now
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon> {{ 'Assign Animals Now' | t }}
                 </button>
               </div>
 
@@ -350,12 +353,12 @@ export interface RuleSetGroup {
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-gray-50/80 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-200 dark:border-gray-700">
-                <th class="px-6 py-4">Animal Tag</th>
-                <th class="px-6 py-4">Rule Set</th>
-                <th class="px-6 py-4">Status</th>
-                <th class="px-6 py-4 text-right">Expected Daily Feed</th>
-                <th class="px-6 py-4 text-center">Assigned On</th>
-                <th class="px-6 py-4 text-right">Actions</th>
+                <th class="px-6 py-4">{{ 'Animal Tag' | t }}</th>
+                <th class="px-6 py-4">{{ 'Rule Set' | t }}</th>
+                <th class="px-6 py-4">{{ 'Status' | t }}</th>
+                <th class="px-6 py-4 text-right">{{ 'Expected Daily Feed' | t }}</th>
+                <th class="px-6 py-4 text-center">{{ 'Assigned On' | t }}</th>
+                <th class="px-6 py-4 text-right">{{ 'Actions' | t }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
@@ -373,8 +376,8 @@ export interface RuleSetGroup {
                     <div class="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                       <span>{{ plan.ruleSetName }}</span>
                       <button *ngIf="getRuleSetForPlan(plan)" (click)="openEditRuleDialog(getRuleSetForPlan(plan)!, $event)"
-                        matTooltip="Edit this rule set"
-                        class="text-gray-400 hover:text-emerald-600 transition-colors" aria-label="Edit this rule set">
+                        [matTooltip]="'Edit this rule set' | t"
+                        class="text-gray-400 hover:text-emerald-600 transition-colors" [attr.aria-label]="'Edit this rule set' | t">
                         <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">edit_note</mat-icon>
                       </button>
                     </div>
@@ -382,11 +385,11 @@ export interface RuleSetGroup {
                   <td class="px-6 py-4">
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                       [ngClass]="plan.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'">
-                      {{ plan.isActive ? 'Active' : 'Canceled' }}
+                      {{ (plan.isActive ? 'Active' : 'Canceled') | t }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                    {{ plan.expectedDailyFeedKg | number:'1.2-2' }} kg
+                    {{ plan.expectedDailyFeedKg | number:'1.2-2' }} {{ 'kg' | t }}
                   </td>
                   <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                     {{ plan.assignedOn | date:'mediumDate' }}
@@ -394,7 +397,7 @@ export interface RuleSetGroup {
                   <td class="px-6 py-4 text-right">
                     <button *ngIf="plan.isActive" (click)="cancelPlan(plan)"
                       class="px-3 py-1.5 text-xs font-semibold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg border border-red-200 transition-all shadow-sm inline-flex items-center gap-1">
-                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> Cancel
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> {{ 'Cancel' | t }}
                     </button>
                   </td>
                 </tr>
@@ -413,6 +416,8 @@ export class AnimalFeedingPlanListComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18nService);
+  readonly syncTooltip = "Synchronize all active plans with animals' latest recorded weights";
 
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -482,7 +487,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
         groups.push({
           ruleSet: {
             id: 'unassigned-ruleset',
-            name: orphanPlans[0]?.ruleSetName || 'Other Feeding Plans',
+            name: orphanPlans[0]?.ruleSetName || this.i18n.t('Other Feeding Plans'),
             planType: FeedingPlanType.FixedQuantity,
             targetAnimalType: TargetAnimalType.Cattle,
             feedingPurpose: FeedingPurpose.Maintenance,
@@ -534,7 +539,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
             ruleSets: this.feedingService.getRuleSets()
           }).pipe(
             catchError(err => {
-              this.loadError.set(parseApiError(err, 'Could not load feeding plans.'));
+              this.loadError.set(parseApiError(err, this.i18n.t('Could not load feeding plans.')));
               return of({ plans: [] as AnimalFeedingPlan[], ruleSets: [] as FeedingRuleSet[] });
             })
           );
@@ -555,12 +560,12 @@ export class AnimalFeedingPlanListComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.isSyncing.set(false);
-          this.notify.success(`Synchronized ${res.updatedPlans} of ${res.totalActivePlans} feeding plans (${res.updatedEntriesCount} pending daily entries updated)`);
+          this.notify.success(this.i18n.t('Synchronized {updated} of {total} feeding plans ({entries} pending daily entries updated)', { updated: res.updatedPlans, total: res.totalActivePlans, entries: res.updatedEntriesCount }));
           this.loadData();
         },
         error: (err) => {
           this.isSyncing.set(false);
-          this.notify.error(err.error?.message || 'Failed to sync feeding plan weights');
+          this.notify.error(err.error?.message || this.i18n.t('Failed to sync feeding plan weights'));
         }
       });
   }
@@ -584,7 +589,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.loadError.set(parseApiError(err, 'Could not load feeding plans.'));
+        this.loadError.set(parseApiError(err, this.i18n.t('Could not load feeding plans.')));
         this.isLoading.set(false);
       }
     });
@@ -674,7 +679,7 @@ export class AnimalFeedingPlanListComponent implements OnInit {
       maxWidth: '1200px',
       data: {
         plans: this.plans(),
-        farmName: activeFarm?.name || 'Current Farm',
+        farmName: activeFarm?.name || this.i18n.t('Current Farm'),
         orgName: currentOrg?.name || 'Farm360 Enterprise'
       }
     });
@@ -686,10 +691,10 @@ export class AnimalFeedingPlanListComponent implements OnInit {
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
-        title: 'Cancel Feeding Plan',
-        message: `Are you sure you want to cancel the feeding plan for ${plan.animalTag}? Future daily entries will no longer be generated.`,
-        confirmButtonText: 'Cancel Plan',
-        cancelButtonText: 'Keep Plan',
+        title: this.i18n.t('Cancel Feeding Plan'),
+        message: this.i18n.t('Are you sure you want to cancel the feeding plan for {tag}? Future daily entries will no longer be generated.', { tag: plan.animalTag }),
+        confirmButtonText: this.i18n.t('Cancel Plan'),
+        cancelButtonText: this.i18n.t('Keep Plan'),
         isDestructive: true
       }
     });
@@ -698,11 +703,11 @@ export class AnimalFeedingPlanListComponent implements OnInit {
       if (confirmed) {
         this.feedingService.cancelPlan(plan.id).subscribe({
           next: () => {
-            this.notify.info('Feeding plan canceled');
+            this.notify.info(this.i18n.t('Feeding plan canceled'));
             this.loadData();
           },
           error: (err) => {
-            this.notify.error(err.error?.detail || 'Failed to cancel plan');
+            this.notify.error(err.error?.detail || this.i18n.t('Failed to cancel plan'));
           }
         });
       }
@@ -724,17 +729,19 @@ export class AnimalFeedingPlanListComponent implements OnInit {
 
   formatRuleCondition(planType: string, rule: any): string {
     if (planType === 'WeightPercentage' || planType === 'WeightQuantity') {
-      if (rule.minWeightKg && rule.maxWeightKg) return `${rule.minWeightKg} - ${rule.maxWeightKg} kg`;
-      if (rule.minWeightKg) return `> ${rule.minWeightKg} kg`;
-      if (rule.maxWeightKg) return `< ${rule.maxWeightKg} kg`;
-      return 'All Weights';
+      const kg = this.i18n.t('kg');
+      if (rule.minWeightKg && rule.maxWeightKg) return `${rule.minWeightKg} - ${rule.maxWeightKg} ${kg}`;
+      if (rule.minWeightKg) return `> ${rule.minWeightKg} ${kg}`;
+      if (rule.maxWeightKg) return `< ${rule.maxWeightKg} ${kg}`;
+      return this.i18n.t('All Weights');
     } else if (planType === 'AgeBased') {
-      if (rule.minAgeDays && rule.maxAgeDays) return `${rule.minAgeDays} - ${rule.maxAgeDays} days`;
-      if (rule.minAgeDays) return `> ${rule.minAgeDays} days`;
-      if (rule.maxAgeDays) return `< ${rule.maxAgeDays} days`;
-      return 'All Ages';
+      const days = this.i18n.t('days');
+      if (rule.minAgeDays && rule.maxAgeDays) return `${rule.minAgeDays} - ${rule.maxAgeDays} ${days}`;
+      if (rule.minAgeDays) return `> ${rule.minAgeDays} ${days}`;
+      if (rule.maxAgeDays) return `< ${rule.maxAgeDays} ${days}`;
+      return this.i18n.t('All Ages');
     }
-    return 'Fixed Ration';
+    return this.i18n.t('Fixed Ration');
   }
 }
 

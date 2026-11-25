@@ -6,6 +6,8 @@ import { AccountService, InvitationPreview, PASSWORD_HINT, PASSWORD_PATTERN } fr
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { parseApiError } from '../../../core/utils/error-parser';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   return group.get('password')?.value === group.get('confirmPassword')?.value ? null : { mismatch: true };
@@ -18,7 +20,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-accept-invitation',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, TranslatePipe],
   templateUrl: './accept-invitation.component.html',
   styleUrls: ['../login/login.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,6 +32,7 @@ export class AcceptInvitationComponent implements OnInit {
   private readonly account = inject(AccountService);
   private readonly auth = inject(AuthService);
   private readonly notify = inject(NotificationService);
+  readonly i18n = inject(I18nService);
 
   readonly passwordHint = PASSWORD_HINT;
   readonly loading = signal(true);
@@ -57,7 +60,7 @@ export class AcceptInvitationComponent implements OnInit {
     this.token = this.route.snapshot.queryParamMap.get('token') ?? '';
     if (!this.token) {
       this.loading.set(false);
-      this.invalidMessage.set('This invitation link is incomplete. Open the link from your SMS or email again.');
+      this.invalidMessage.set(this.i18n.t('This invitation link is incomplete. Open the link from your SMS or email again.'));
       return;
     }
 
@@ -69,7 +72,7 @@ export class AcceptInvitationComponent implements OnInit {
       },
       error: err => {
         this.loading.set(false);
-        this.invalidMessage.set(parseApiError(err, 'This invitation link is invalid or has expired.'));
+        this.invalidMessage.set(parseApiError(err, this.i18n.t('This invitation link is invalid or has expired.')));
       }
     });
   }
@@ -103,15 +106,15 @@ export class AcceptInvitationComponent implements OnInit {
     this.account.acceptInvitation(request).subscribe({
       next: result => {
         this.notify.success(result.alreadyMember
-          ? `You're already a member of ${result.tenantName}.`
-          : `You've joined ${result.tenantName}. Sign in to continue.`);
+          ? this.i18n.t("You're already a member of {organization}.", { organization: result.tenantName })
+          : this.i18n.t("You've joined {organization}. Sign in to continue.", { organization: result.tenantName }));
         // A signed-in session belongs to the previous membership; signing in again picks up the new one.
         if (this.auth.isAuthenticated) this.auth.clearSession();
         this.router.navigate(['/auth/login']);
       },
       error: err => {
         this.saving.set(false);
-        this.error.set(parseApiError(err, 'Could not accept the invitation.'));
+        this.error.set(parseApiError(err, this.i18n.t('Could not accept the invitation.')));
       }
     });
   }

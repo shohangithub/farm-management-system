@@ -111,3 +111,19 @@ Uploads (`api_uploads` volume) are not in the database. Back them up with the sa
 - Seq: set `Serilog__Seq__ServerUrl`.
 - OpenTelemetry: set `OpenTelemetry__Endpoint` (OTLP gRPC, for example `http://otel-collector:4317`, or `OpenTelemetry__Protocol=httpprotobuf` on port 4318).
 - Probes: liveness `/health/live` and readiness `/health/ready`. Do not use readiness as the liveness probe, or a database outage will restart every pod.
+
+## 6. Public demo farm ("Try the demo")
+
+Off by default (`Demo:Enabled=false`). To turn it on in production, set the environment variable
+`Demo__Enabled=true` (or `FARM360_Demo__Enabled=true`) on the API and restart it. Nothing else is needed:
+
+- Right after start-up a background Hangfire job builds the demo tenant "Shapla Agro Farm (Demo)" (about
+  1-2 minutes) by sending the real commands as a throwaway owner account whose random password is never stored.
+  Until it is ready, `GET /api/v1/auth/demo-status` returns `ready=false` and the sign-in page hides the button.
+- The sign-in page then shows "Explore the demo farm", which calls `POST /api/v1/auth/demo-login` and signs in the
+  shared, read-only demo Viewer. Every write (including password, profile, onboarding and billing routes) is refused.
+- The recurring job `demo-tenant-weekly-rebuild` (Friday 03:00 Asia/Dhaka) builds a fresh demo with dates relative to
+  that day, moves the demo login to it and retires (cancels) the previous demo tenant. Data is never hard-deleted.
+- A platform admin can rebuild now with `POST /api/v1/admin/demo/rebuild` (202 Accepted; runs in the background).
+
+To turn it off again, set `Demo__Enabled=false` and restart: the demo login returns 404 immediately.

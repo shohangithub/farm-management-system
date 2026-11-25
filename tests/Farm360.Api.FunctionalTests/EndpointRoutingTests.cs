@@ -16,6 +16,7 @@ using Farm360.Api.Endpoints.MasterData;
 using Farm360.Api.Endpoints.Organizations;
 using Farm360.Api.Endpoints.Tenants;
 using Farm360.Api.Endpoints.Subscriptions;
+using Farm360.Api.Endpoints.Admin;
 using Farm360.Api.Authorization;
 using Farm360.Api.Configuration;
 using FluentAssertions;
@@ -92,6 +93,7 @@ public class EndpointRoutingTests
         app.MapIntelligenceEndpoints();
         app.MapFinanceEndpoints();
         app.MapAnalyticsEndpoints();
+        app.MapDemoAdminEndpoints();
         app.MapFarm360HealthChecks();
 
         // Read the builder's own data sources. Resolving EndpointDataSource from the container

@@ -115,6 +115,55 @@ public sealed class AnimalCommandHandlerTests
         result.Species.Should().Be(AnimalSpecies.Goat);
     }
 
+    private async Task<Animal> RegisterPlacedAnimalAsync(DateOnly acquisitionDate)
+    {
+        Animal? added = null;
+        _repo.When(r => r.Add(Arg.Any<Animal>())).Do(c => added = c.Arg<Animal>());
+
+        var handler = new RegisterAnimalCommandHandler(_repo, _tenantRepo, _uow, _tenantSvc, _currentUser, _publisher);
+        await handler.Handle(new RegisterAnimalCommand(
+            FarmId:              Guid.NewGuid(),
+            TagId:               "B-PAST",
+            TagType:             TagType.EarTag,
+            Species:             AnimalSpecies.CattleBeef,
+            BreedId:             Guid.NewGuid(),
+            Sex:                 AnimalSex.Male,
+            DateOfBirth:         acquisitionDate.AddYears(-1),
+            AcquisitionType:     AcquisitionType.Purchased,
+            AcquisitionDate:     acquisitionDate,
+            AcquisitionPriceBdt: 50_000m,
+            Notes:               null,
+            ShedId:              Guid.NewGuid(),
+            PenId:               Guid.NewGuid()), CancellationToken.None);
+
+        return added ?? throw new InvalidOperationException("The handler did not add the animal.");
+    }
+
+    [Fact]
+    public async Task RegisterAnimal_BackDatedWithPen_PlacesAnimalFromAcquisitionDate()
+    {
+        var acquired = DateOnly.FromDateTime(DateTime.Today).AddDays(-30);
+
+        var animal = await RegisterPlacedAnimalAsync(acquired);
+
+        animal.CurrentMovement.Should().NotBeNull();
+        DateOnly.FromDateTime(animal.CurrentMovement!.PlacedAtUtc).Should().Be(acquired);
+    }
+
+    [Fact]
+    public async Task RegisterAnimal_BackDatedWithPen_ThenSaleBetweenAcquisitionAndToday_Succeeds()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var animal = await RegisterPlacedAnimalAsync(today.AddDays(-30));
+        _repo.GetByIdAsync(animal.Id, Arg.Any<CancellationToken>()).Returns(animal);
+
+        var sell = new SellAnimalCommandHandler(_repo, _uow, _currentUser, _publisher);
+        await sell.Handle(new SellAnimalCommand(animal.Id, 80_000m, today.AddDays(-10), null, null), CancellationToken.None);
+
+        animal.Status.Should().Be(AnimalStatus.Sold);
+        animal.SaleDate.Should().Be(today.AddDays(-10));
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // RecordWeightCommandHandler
     // ══════════════════════════════════════════════════════════════════════════

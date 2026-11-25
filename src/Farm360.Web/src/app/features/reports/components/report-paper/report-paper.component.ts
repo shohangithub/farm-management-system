@@ -179,7 +179,7 @@ interface RenderBand {
       }
 
       <footer class="foot">
-        <span>{{ data().meta.reportKey }} · run {{ shortRunId() }}</span>
+        <span>{{ data().meta.reportKey }} · {{ t('run', 'রান') }} {{ shortRunId() }}</span>
         <span>{{ data().totalRowCount }} {{ data().totalRowCount === 1 ? t('row', 'সারি') : t('rows', 'সারি') }}</span>
       </footer>
     </div>

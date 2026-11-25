@@ -16,6 +16,8 @@ import {
 } from '../../../models/inventory.models';
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 export interface CreatePurchaseReturnDialogData {
   purchaseOrderId: string;
@@ -31,7 +33,8 @@ export interface CreatePurchaseReturnDialogData {
     ReactiveFormsModule,
     MatDialogModule,
     MatIconModule,
-    MatButtonModule
+    MatButtonModule,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] w-full max-w-4xl">
@@ -40,13 +43,13 @@ export interface CreatePurchaseReturnDialogData {
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[22px] !w-[22px] !h-[22px] text-amber-500">assignment_return</mat-icon>
-            Return Items to Supplier
+            {{ 'Return Items to Supplier' | t }}
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-            Purchase Order: <span class="font-semibold text-gray-700 dark:text-gray-200">#{{ data.poNumber }}</span>
+            {{ 'Purchase Order:' | t }} <span class="font-semibold text-gray-700 dark:text-gray-200">#{{ data.poNumber }}</span>
           </p>
         </div>
-        <button aria-label="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button [attr.aria-label]="'Close' | t" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -64,7 +67,7 @@ export interface CreatePurchaseReturnDialogData {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Return Date <span class="text-red-500">*</span>
+                {{ 'Return Date' | t }} <span class="text-red-500">*</span>
               </label>
               <input type="date" formControlName="returnDate"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
@@ -73,28 +76,28 @@ export interface CreatePurchaseReturnDialogData {
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Reason <span class="text-red-500">*</span>
+                {{ 'Reason' | t }} <span class="text-red-500">*</span>
               </label>
               <select formControlName="reason"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                <option *ngFor="let r of reasonOptions" [value]="r.value">{{ r.label }}</option>
+                <option *ngFor="let r of reasonOptions" [value]="r.value">{{ r.label | t }}</option>
               </select>
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Credit Note / Ref #
+                {{ 'Credit Note / Ref #' | t }}
               </label>
-              <input type="text" formControlName="creditNoteNumber" placeholder="e.g. CN-8821"
+              <input type="text" formControlName="creditNoteNumber" [placeholder]="'e.g. CN-8821' | t"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
             </div>
           </div>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Notes / Remarks
+              {{ 'Notes / Remarks' | t }}
             </label>
-            <textarea formControlName="notes" rows="2" placeholder="Describe the reason for returning goods..."
+            <textarea formControlName="notes" rows="2" [placeholder]="'Describe the reason for returning goods...' | t"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></textarea>
           </div>
 
@@ -102,34 +105,34 @@ export interface CreatePurchaseReturnDialogData {
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                Items to Return
+                {{ 'Items to Return' | t }}
               </label>
-              <span class="text-xs text-gray-500">Enter quantity for the items you want to return</span>
+              <span class="text-xs text-gray-500">{{ 'Enter quantity for the items you want to return' | t }}</span>
             </div>
 
             <div *ngIf="isLoadingItems()" class="py-12 flex justify-center items-center text-gray-500">
               <mat-icon class="animate-spin mr-2">autorenew</mat-icon>
-              <span>Loading returnable items...</span>
+              <span>{{ 'Loading returnable items...' | t }}</span>
             </div>
 
             <div *ngIf="!isLoadingItems() && items().length === 0" class="p-6 text-center text-gray-500 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
               <mat-icon class="text-gray-400 !text-32px !w-8 !h-8 mb-1">info</mat-icon>
-              <p class="text-sm font-medium">No items are available to return for this purchase order.</p>
-              <p class="text-xs text-gray-400">All items may have already been returned or current stock is zero.</p>
+              <p class="text-sm font-medium">{{ 'No items are available to return for this purchase order.' | t }}</p>
+              <p class="text-xs text-gray-400">{{ 'All items may have already been returned or current stock is zero.' | t }}</p>
             </div>
 
             <div *ngIf="!isLoadingItems() && items().length > 0" class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                 <thead class="bg-gray-50 dark:bg-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider">
                   <tr>
-                    <th class="px-3 py-2.5 text-left">Item</th>
-                    <th class="px-3 py-2.5 text-right">Ordered</th>
-                    <th class="px-3 py-2.5 text-right">Returned</th>
-                    <th class="px-3 py-2.5 text-right">Stock</th>
-                    <th class="px-3 py-2.5 text-right">Max Return</th>
-                    <th class="px-3 py-2.5 text-center w-32">Return Qty</th>
-                    <th class="px-3 py-2.5 text-right">Unit Price</th>
-                    <th class="px-3 py-2.5 text-right">Subtotal</th>
+                    <th class="px-3 py-2.5 text-left">{{ 'Item' | t }}</th>
+                    <th class="px-3 py-2.5 text-right">{{ 'Ordered' | t }}</th>
+                    <th class="px-3 py-2.5 text-right">{{ 'Returned' | t }}</th>
+                    <th class="px-3 py-2.5 text-right">{{ 'Stock' | t }}</th>
+                    <th class="px-3 py-2.5 text-right">{{ 'Max Return' | t }}</th>
+                    <th class="px-3 py-2.5 text-center w-32">{{ 'Return Qty' | t }}</th>
+                    <th class="px-3 py-2.5 text-right">{{ 'Unit Price' | t }}</th>
+                    <th class="px-3 py-2.5 text-right">{{ 'Subtotal' | t }}</th>
                   </tr>
                 </thead>
                 <tbody formArrayName="items" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
@@ -169,7 +172,7 @@ export interface CreatePurchaseReturnDialogData {
                 <tfoot class="bg-gray-50/80 dark:bg-gray-900/40 border-t border-gray-200 dark:border-gray-700">
                   <tr>
                     <td colspan="7" class="px-3 py-2.5 text-right font-bold text-xs uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                      Total Refund / Credit:
+                      {{ 'Total Refund / Credit:' | t }}
                     </td>
                     <td class="px-3 py-2.5 text-right font-black text-amber-600 dark:text-amber-400 text-base">
                       {{ calculatedTotal() | money:2 }}
@@ -184,22 +187,22 @@ export interface CreatePurchaseReturnDialogData {
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between shrink-0">
           <div class="text-xs text-gray-500">
-            Selected for return: <span class="font-bold text-gray-700 dark:text-gray-300">{{ selectedItemsCount() }} item(s)</span>
+            {{ 'Selected for return:' | t }} <span class="font-bold text-gray-700 dark:text-gray-300">{{ '{n} item(s)' | t: { n: selectedItemsCount() } }}</span>
           </div>
 
           <div class="flex items-center gap-3">
             <button type="button" mat-dialog-close [disabled]="isLoading()"
               class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-              Cancel
+              {{ 'Cancel' | t }}
             </button>
             <button type="button" (click)="onSubmit(false)" [disabled]="isSubmitDisabled()"
               class="px-4 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-              Save Draft
+              {{ 'Save Draft' | t }}
             </button>
             <button type="button" (click)="onSubmit(true)" [disabled]="isSubmitDisabled()"
               class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-sm shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
               <mat-icon *ngIf="isLoading()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-              <span>{{ isLoading() ? 'Processing...' : 'Complete Return' }}</span>
+              <span>{{ (isLoading() ? 'Processing...' : 'Complete Return') | t }}</span>
             </button>
           </div>
         </div>
@@ -220,6 +223,7 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<CreatePurchaseReturnDialogComponent>);
   readonly data: CreatePurchaseReturnDialogData = inject(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
 
   readonly isLoading = signal(false);
   readonly isLoadingItems = signal(true);
@@ -268,7 +272,7 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
           this.isLoadingItems.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.detail || err?.message || 'Failed to load returnable items.');
+          this.error.set(err?.error?.detail || err?.message || this.i18n.t('Failed to load returnable items.'));
           this.isLoadingItems.set(false);
         }
       });
@@ -367,7 +371,7 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
                 },
                 error: (err) => {
                   this.isLoading.set(false);
-                  this.error.set(err?.error?.detail || err?.message || 'Return was created as draft, but completing it failed.');
+                  this.error.set(err?.error?.detail || err?.message || this.i18n.t('Return was created as draft, but completing it failed.'));
                 }
               });
           } else {
@@ -377,7 +381,7 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.error.set(err?.error?.detail || err?.message || 'Failed to create purchase return.');
+          this.error.set(err?.error?.detail || err?.message || this.i18n.t('Failed to create purchase return.'));
         }
       });
   }
@@ -386,13 +390,13 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
   fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
     const e = group.get(name)?.errors;
     if (!e) return '';
-    if (e['required']) return 'This field is required.';
-    if (e['min']) return `Must be at least ${e['min'].min}.`;
-    if (e['max']) return `Must be at most ${e['max'].max}.`;
-    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
-    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
-    if (e['email']) return 'Enter a valid email address.';
-    if (e['pattern']) return 'Invalid format.';
-    return 'Invalid value.';
+    if (e['required']) return this.i18n.t('This field is required.');
+    if (e['min']) return this.i18n.t('Must be at least {n}.', { n: e['min'].min });
+    if (e['max']) return this.i18n.t('Must be at most {n}.', { n: e['max'].max });
+    if (e['maxlength']) return this.i18n.t('Must be {n} characters or fewer.', { n: e['maxlength'].requiredLength });
+    if (e['minlength']) return this.i18n.t('Must be at least {n} characters.', { n: e['minlength'].requiredLength });
+    if (e['email']) return this.i18n.t('Enter a valid email address.');
+    if (e['pattern']) return this.i18n.t('Invalid format.');
+    return this.i18n.t('Invalid value.');
   }
 }

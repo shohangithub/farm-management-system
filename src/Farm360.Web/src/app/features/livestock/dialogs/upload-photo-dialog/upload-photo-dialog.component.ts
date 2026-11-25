@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface UploadPhotoDialogData {
   animalId: string;
@@ -18,13 +20,14 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
   selector: 'app-upload-photo-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './upload-photo-dialog.component.html'
 })
 export class UploadPhotoDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<UploadPhotoDialogComponent>);
   public readonly data = inject<UploadPhotoDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly animalSvc = inject(AnimalService);
   private readonly destroy$ = new Subject<void>();
 
@@ -50,7 +53,7 @@ export class UploadPhotoDialogComponent {
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
       if (file.size > MAX_FILE_SIZE) {
-        this.error.set(`File size exceeds the 5MB limit. (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+        this.error.set(this.i18n.t('File size exceeds the 5MB limit. ({size}MB)', { size: (file.size / 1024 / 1024).toFixed(1) }));
         input.value = '';
         this.selectedFile.set(null);
         return;
@@ -83,7 +86,7 @@ export class UploadPhotoDialogComponent {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            this.error.set(err.error?.detail || err.error?.title || 'Photo upload failed.');
+            this.error.set(err.error?.detail || err.error?.title || this.i18n.t('Photo upload failed.'));
         }
       }
     });

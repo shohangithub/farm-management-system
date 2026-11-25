@@ -87,7 +87,8 @@ public sealed class SyncFeedingPlanWeightsCommandHandler : IRequestHandler<SyncF
                 continue;
 
             var ageDays = FeedingRuleMatcher.AgeInDays(animal.DateOfBirth, _clock.Today);
-            var matchingRule = FeedingRuleMatcher.Match(ruleSet, latestWeight, ageDays).Primary;
+            var match = FeedingRuleMatcher.Match(ruleSet, latestWeight, ageDays);
+            var matchingRule = match.Primary;
 
             if (matchingRule == null)
                 continue;
@@ -111,12 +112,21 @@ public sealed class SyncFeedingPlanWeightsCommandHandler : IRequestHandler<SyncF
             }
 
             // Sync today's pending daily feeding entries
+            // Each entry follows the band's line for its own recipe (a band can feed concentrate AND
+            // roughage); collapsing them onto the primary line would break the (plan, line, day) key.
             var pendingEntries = await _entryRepository.GetPendingEntriesByPlanIdAndDateAsync(tenantId, plan.Id, today, cancellationToken);
+            var usedLines = new HashSet<Guid>();
             foreach (var entry in pendingEntries)
             {
-                if (entry.ExpectedKg != expectedKg || entry.RuleLineId != matchingRule.Id)
+                var line = match.Lines.FirstOrDefault(l => l.FormulaId == entry.FormulaId && !usedLines.Contains(l.Id));
+                if (line is null)
+                    continue;
+
+                usedLines.Add(line.Id);
+                var lineKg = FeedingRuleMatcher.ExpectedKg(ruleSet, line, latestWeight);
+                if (entry.ExpectedKg != lineKg || entry.RuleLineId != line.Id)
                 {
-                    entry.UpdateExpectedQuantity(expectedKg, matchingRule.Id);
+                    entry.UpdateExpectedQuantity(lineKg, line.Id);
                     _entryRepository.Update(entry);
                     updatedEntries++;
                 }

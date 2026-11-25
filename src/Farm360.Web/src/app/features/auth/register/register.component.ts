@@ -5,17 +5,20 @@ import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/services/auth.service';
 import { PASSWORD_HINT, PASSWORD_PATTERN } from '../../../core/services/account.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, TranslatePipe],
   templateUrl: './register.component.html'
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  readonly i18n = inject(I18nService);
 
   trialOptions = [
     { days: 3, label: '3 Days', desc: 'Quick test' },
@@ -69,7 +72,7 @@ export class RegisterComponent {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.error.set(err.error?.detail || err.error?.message || err.message || 'Registration failed. Please try again.');
+        this.error.set(err.error?.detail || err.error?.message || err.message || this.i18n.t('Registration failed. Please try again.'));
       }
     });
   }

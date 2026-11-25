@@ -25,6 +25,14 @@ export interface UserProfile {
   fullName?: string | null;
   email?: string | null;
   phone?: string | null;
+  /** True for the shared, read-only "Try the demo" account. */
+  isDemo?: boolean;
+}
+
+/** Whether the sign-in page can offer the demo farm. */
+export interface DemoStatus {
+  enabled: boolean;
+  ready: boolean;
 }
 
 export interface UpdateProfileRequest {
@@ -137,6 +145,22 @@ export class AuthService {
     );
   }
 
+  /** Is the demo farm switched on and built? Errors count as "not available". */
+  getDemoStatus(): Observable<DemoStatus> {
+    return this.http.get<DemoStatus>('/api/v1/auth/demo-status').pipe(
+      catchError(() => [{ enabled: false, ready: false }])
+    );
+  }
+
+  /** Signs in as the read-only demo account; the session is stored exactly like a normal sign-in. */
+  demoLogin(): Observable<UserProfile> {
+    return this.http.post<LoginResponse>('/api/v1/auth/demo-login', {}).pipe(
+      tap(response => this.setSession(response)),
+      switchMap(() => this.fetchProfile()),
+      tap(user => this.setUserData(user))
+    );
+  }
+
   refresh(): Observable<LoginResponse> {
     const token = this.refreshToken;
     if (!token) {
@@ -169,7 +193,7 @@ export class AuthService {
    * If the API call fails (network error, etc.), we still clear the local session — the server-side
    * session will eventually expire naturally, but the user is immediately logged out locally.
    */
-  logout(): void {
+  logout(redirectTo: string = '/login'): void {
     const token = this.refreshToken;
 
     // Clear local state immediately to prevent further API calls with this token
@@ -185,7 +209,7 @@ export class AuthService {
       });
     }
 
-    this.router.navigate(['/login']);
+    this.router.navigateByUrl(redirectTo);
   }
 
   // ── Authorization ─────────────────────────────────────────────────────────

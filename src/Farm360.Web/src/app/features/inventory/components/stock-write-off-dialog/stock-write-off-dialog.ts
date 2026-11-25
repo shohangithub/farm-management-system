@@ -12,6 +12,7 @@ import { InventoryService } from '../../services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { InventoryItem } from '../../models/inventory.models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 export interface StockWriteOffDialogData {
@@ -30,7 +31,8 @@ export interface StockWriteOffDialogData {
     MatButtonModule,
     MatIconModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    TranslatePipe
   ],
   templateUrl: './stock-write-off-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush

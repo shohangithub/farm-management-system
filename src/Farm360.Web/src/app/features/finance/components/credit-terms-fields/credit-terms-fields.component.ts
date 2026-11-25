@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { CreditTerms, PAYMENT_METHODS } from '../../models/finance.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * The form group behind {@link CreditTermsFieldsComponent}.
@@ -52,7 +53,7 @@ export function toCreditTerms(value: Record<string, unknown> | null | undefined)
 @Component({
   selector: 'app-credit-terms-fields',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div [formGroup]="group" class="space-y-3">
@@ -60,56 +61,58 @@ export function toCreditTerms(value: Record<string, unknown> | null | undefined)
         <button type="button" (click)="set(false)"
           class="py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
           [ngClass]="!onCredit ? 'bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-300 shadow-sm' : 'text-gray-500 dark:text-gray-400'">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">payments</mat-icon> {{ kind === 'Payable' ? 'Paid in full now' : 'Received in full now' }}
+          <mat-icon class="!w-4 !h-4 !text-[16px]">payments</mat-icon> {{ (kind === 'Payable' ? 'Paid in full now' : 'Received in full now') | t }}
         </button>
         <button type="button" (click)="set(true)"
           class="py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
           [ngClass]="onCredit ? 'bg-white dark:bg-gray-700 text-amber-700 dark:text-amber-300 shadow-sm' : 'text-gray-500 dark:text-gray-400'">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">schedule</mat-icon> On credit (বাকি)
+          <mat-icon class="!w-4 !h-4 !text-[16px]">schedule</mat-icon> {{ 'On credit (বাকি)' | t }}
         </button>
       </div>
 
       @if (onCredit) {
         <div class="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 space-y-3">
           <p class="text-[11px] text-amber-800 dark:text-amber-200 m-0 leading-snug">
-            {{ kind === 'Payable'
+            {{ (kind === 'Payable'
               ? 'The cost is booked today; the unpaid balance is owed to the supplier (Accounts Payable) until you pay it in Finance → Payables & Receivables.'
-              : 'The sale is booked today; the unpaid balance is owed by the customer (Accounts Receivable) until you collect it in Finance → Payables & Receivables.' }}
+              : 'The sale is booked today; the unpaid balance is owed by the customer (Accounts Receivable) until you collect it in Finance → Payables & Receivables.') | t }}
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                {{ kind === 'Payable' ? 'Supplier' : 'Customer' }} @if (requireParty) { <span class="text-red-500">*</span> }
+                {{ (kind === 'Payable' ? 'Supplier' : 'Customer') | t }} @if (requireParty) { <span class="text-red-500">*</span> }
               </label>
-              <input type="text" formControlName="partyName" [placeholder]="partyPlaceholder"
+              <input type="text" formControlName="partyName" [placeholder]="partyPlaceholder | t"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
             </div>
             <div class="space-y-1">
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Phone</label>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Phone' | t }}</label>
               <input type="tel" formControlName="partyPhone" placeholder="01XXXXXXXXX"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
             </div>
             <div class="space-y-1">
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Due date</label>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Due date' | t }}</label>
               <input type="date" formControlName="dueDate"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-              <p class="text-[11px] text-gray-500 m-0">Leave empty for 30 days.</p>
+              <p class="text-[11px] text-gray-500 m-0">{{ 'Leave empty for 30 days.' | t }}</p>
             </div>
             <div class="space-y-1">
               <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                {{ kind === 'Payable' ? 'Paid now (advance)' : 'Received now (advance)' }}
+                {{ (kind === 'Payable' ? 'Paid now (advance)' : 'Received now (advance)') | t }}
               </label>
               <div class="flex gap-2">
                 <input type="number" formControlName="paidNowBdt" min="0" step="1"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <select formControlName="paymentMethod"
                   class="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                  @for (m of methods; track m) { <option [value]="m">{{ m }}</option> }
+                  @for (m of methods; track m) { <option [value]="m">{{ m | t }}</option> }
                 </select>
               </div>
               @if (total && balance !== null) {
                 <p class="text-[11px] m-0" [ngClass]="balance <= 0 ? 'text-rose-600' : 'text-gray-500'">
-                  {{ balance <= 0 ? 'Paid in full — choose “' + (kind === 'Payable' ? 'Paid' : 'Received') + ' in full now” instead.' : 'Balance on credit: ৳ ' + (balance | number: '1.0-2') }}
+                  {{ balance <= 0
+                    ? ((kind === 'Payable' ? 'Paid in full — choose “Paid in full now” instead.' : 'Paid in full — choose “Received in full now” instead.') | t)
+                    : ('Balance on credit: ৳ {amount}' | t: { amount: (balance | number: '1.0-2') }) }}
                 </p>
               }
             </div>

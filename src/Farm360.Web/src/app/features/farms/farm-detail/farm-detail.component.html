@@ -2,9 +2,9 @@
   [title]="farm() ? farm()!.farmName : 'Farm Details'"
   [description]="farm() ? 'Farm Code: ' + farm()!.farmCode : ''"
   [breadcrumbActiveNode]="farm()?.farmName || 'Farm Details'"
-  primaryActionLabel="Edit Farm"
+  [primaryActionLabel]="'Edit Farm' | t"
   primaryActionIcon="edit"
-  secondaryActionLabel="Back"
+  [secondaryActionLabel]="'Back' | t"
   secondaryActionIcon="arrow_back"
   (primaryAction)="onEdit()"
   (secondaryAction)="onBack()">
@@ -30,7 +30,7 @@
           <div class="flex items-center gap-2 flex-wrap">
             <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{{ farm()?.farmName }}</h2>
             <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
-              {{ farmTypeLabel() }}
+              {{ farmTypeLabel() | t }}
             </span>
           </div>
           <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 font-mono">{{ farm()?.farmCode }}</p>
@@ -40,7 +40,7 @@
             [ngClass]="statusClass()">
         <span class="w-2 h-2 rounded-full mr-2"
               [ngClass]="{'bg-emerald-500': farm()?.status === 'Active', 'bg-gray-400': farm()?.status === 'Inactive', 'bg-amber-500': farm()?.status === 'UnderMaintenance', 'bg-red-500': farm()?.status === 'Closed'}"></span>
-        {{ statusLabel() }}
+        {{ statusLabel() | t }}
       </span>
     </div>
 
@@ -51,7 +51,7 @@
           <mat-icon class="!text-blue-600 dark:!text-blue-400 !text-[20px] !w-[20px] !h-[20px]">pets</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Total Animals</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Total Animals' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ farm()?.currentAnimalCount | number }}</div>
         </div>
       </div>
@@ -60,7 +60,7 @@
           <mat-icon class="!text-indigo-600 dark:!text-indigo-400 !text-[20px] !w-[20px] !h-[20px]">warehouse</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Capacity</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Capacity' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ farm()?.capacity ? (farm()?.capacity | number) : 'Unlimited' }}</div>
         </div>
       </div>
@@ -69,7 +69,7 @@
           <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[20px] !w-[20px] !h-[20px]">landscape</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Farm Size</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Farm Size' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
             {{ farm()?.farmSize ? (farm()?.farmSize | number:'1.0-2') + ' acres' : '—' }}
           </div>
@@ -80,7 +80,7 @@
           <mat-icon class="!text-amber-600 dark:!text-amber-400 !text-[20px] !w-[20px] !h-[20px]">pie_chart</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Utilization</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Utilization' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
             {{ farm()?.capacity ? ((farm()!.currentAnimalCount / farm()!.capacity!) * 100 | number:'1.0-0') + '%' : 'N/A' }}
           </div>
@@ -94,7 +94,7 @@
     <mat-tab-group animationDuration="200ms" class="farm-tab-group">
 
       <!-- ─── Overview Tab ─────────────────────────────────────────── -->
-      <mat-tab label="Overview">
+      <mat-tab [label]="'Overview' | t">
         <div class="p-6 sm:p-8">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
@@ -102,10 +102,10 @@
             <div class="md:col-span-2">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">description</mat-icon>
-                Description
+                {{ 'Description' | t }}
               </dt>
               <dd class="text-sm text-gray-800 dark:text-gray-200 font-medium whitespace-pre-line leading-relaxed">
-                {{ farm()?.description || 'No description provided.' }}
+                {{ farm()?.description || ('No description provided.' | t) }}
               </dd>
             </div>
 
@@ -113,13 +113,13 @@
             <div>
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">gps_fixed</mat-icon>
-                GPS Coordinates
+                {{ 'GPS Coordinates' | t }}
               </dt>
               <dd class="text-sm font-mono text-gray-800 dark:text-gray-200">
                 <ng-container *ngIf="farm()?.latitude || farm()?.longitude">
                   {{ farm()?.latitude | number:'1.4-6' }}, {{ farm()?.longitude | number:'1.4-6' }}
                 </ng-container>
-                <span *ngIf="!farm()?.latitude && !farm()?.longitude" class="font-sans text-gray-400 italic">Not set</span>
+                <span *ngIf="!farm()?.latitude && !farm()?.longitude" class="font-sans text-gray-400 italic">{{ 'Not set' | t }}</span>
               </dd>
             </div>
 
@@ -127,7 +127,7 @@
             <div>
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">map</mat-icon>
-                Land Area
+                {{ 'Land Area' | t }}
               </dt>
               <dd class="text-sm text-gray-800 dark:text-gray-200 font-medium">
                 {{ farm()?.landArea ? (farm()?.landArea | number:'1.0-2') + ' sq ft' : '—' }}
@@ -138,16 +138,16 @@
             <div class="md:col-span-2 pt-4 border-t border-gray-100 dark:border-gray-800/50">
                <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">manage_accounts</mat-icon>
-                Management
+                {{ 'Management' | t }}
               </dt>
               <dd class="grid grid-cols-2 gap-4">
                  <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4">
-                    <p class="text-xs text-gray-500 mb-1">Farm Owner</p>
-                    <p class="text-sm font-semibold">{{ farm()?.ownerId || 'Not Assigned' }}</p>
+                    <p class="text-xs text-gray-500 mb-1">{{ 'Farm Owner' | t }}</p>
+                    <p class="text-sm font-semibold">{{ farm()?.ownerId || ('Not Assigned' | t) }}</p>
                  </div>
                  <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4">
-                    <p class="text-xs text-gray-500 mb-1">Farm Manager</p>
-                    <p class="text-sm font-semibold">{{ farm()?.managerId || 'Not Assigned' }}</p>
+                    <p class="text-xs text-gray-500 mb-1">{{ 'Farm Manager' | t }}</p>
+                    <p class="text-sm font-semibold">{{ farm()?.managerId || ('Not Assigned' | t) }}</p>
                  </div>
               </dd>
             </div>
@@ -156,11 +156,11 @@
             <div class="md:col-span-2 pt-4 mt-4 border-t border-red-100 dark:border-red-900/30">
                <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-red-500 mb-3">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">warning</mat-icon>
-                Danger Zone
+                {{ 'Danger Zone' | t }}
               </dt>
               <dd>
                  <button mat-flat-button color="warn" (click)="deleteFarm()" class="!rounded-lg shadow-sm">
-                   Delete Farm
+                   {{ 'Delete Farm' | t }}
                  </button>
               </dd>
             </div>
@@ -169,17 +169,17 @@
       </mat-tab>
 
       <!-- ─── Sheds & Pens Tab ─────────────────────────────────────────────── -->
-      <mat-tab label="Sheds & Pens">
+      <mat-tab [label]="'Sheds & Pens' | t">
         <div class="p-6 sm:p-8">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white">Sheds in this Farm</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Physical infrastructure for housing animals.</p>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Sheds in this Farm' | t }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Physical infrastructure for housing animals.' | t }}</p>
             </div>
             <button mat-flat-button (click)="onManageSheds()"
                     class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-xl !text-sm !font-semibold shadow-sm">
               <mat-icon class="!mr-1 !text-[18px] !w-[18px] !h-[18px]">add</mat-icon>
-              New Shed
+              {{ 'New Shed' | t }}
             </button>
           </div>
 
@@ -189,20 +189,20 @@
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
               <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">house_siding</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No Sheds Yet</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">Click "New Shed" to add a shed to this farm.</p>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ 'No Sheds Yet' | t }}</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">{{ 'Click "New Shed" to add a shed to this farm.' | t }}</p>
           </div>
 
           <div *ngIf="!isLoading() && sheds().length > 0" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-800/50 border-y border-gray-100 dark:border-gray-800">
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Shed No.</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Shed Name</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">Animal Type</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">Occupancy</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">Status</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">Action</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Shed No.' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Shed Name' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">{{ 'Animal Type' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">{{ 'Occupancy' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">{{ 'Status' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">{{ 'Action' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -211,7 +211,7 @@
                   <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-white">{{ s.shedName }}</td>
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="px-2 py-0.5 text-[11px] uppercase font-bold rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-                      {{ s.animalType || 'Mixed' }}
+                      {{ (s.animalType || 'Mixed') | t }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-sm font-semibold text-right text-gray-700 dark:text-gray-300">
@@ -220,13 +220,13 @@
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border"
                           [ngClass]="s.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
-                      {{ s.status }}
+                      {{ s.status | t }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right">
                     <a [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', s.id]"
                        class="text-primary-600 hover:text-primary-700 font-semibold text-sm">
-                      View
+                      {{ 'View' | t }}
                     </a>
                   </td>
                 </tr>
@@ -237,14 +237,14 @@
       </mat-tab>
 
       <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
-      <mat-tab label="Audit Info">
+      <mat-tab [label]="'Audit Info' | t">
         <div class="p-6 sm:p-8">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_circle_outline</mat-icon>
-                Created At
+                {{ 'Created At' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (farm()?.createdAtUtc | date:'MMM d, y, h:mm a') || '—' }}
@@ -254,7 +254,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon>
-                Created By
+                {{ 'Created By' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ farm()?.createdBy || '—' }}
@@ -264,7 +264,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_calendar</mat-icon>
-                Last Modified
+                {{ 'Last Modified' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (farm()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || 'Never modified' }}
@@ -274,7 +274,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">manage_accounts</mat-icon>
-                Last Modified By
+                {{ 'Last Modified By' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ farm()?.modifiedBy || '—' }}

@@ -8,16 +8,19 @@ import { CreateFarmCommand, UpdateFarmCommand } from '../models/farm.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-farm-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
+  imports: [TranslatePipe, CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './farm-form.component.html'
 })
 export class FarmFormComponent implements OnInit, HasUnsavedChanges {
+  private readonly i18n = inject(I18nService);
   /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
   private saved = false;
 
@@ -101,7 +104,7 @@ export class FarmFormComponent implements OnInit, HasUnsavedChanges {
         this.farmForm.get('farmCode')?.disable();
       },
       error: (err) => {
-        this.error.set('Failed to load farm details.');
+        this.error.set(this.i18n.t('Failed to load farm details.'));
         console.error(err);
       }
     });
@@ -116,10 +119,10 @@ export class FarmFormComponent implements OnInit, HasUnsavedChanges {
       return `Maximum ${max} characters allowed.`;
     }
     if (control.hasError('min')) {
-      return `Value must be at least ${control.getError('min').min}.`;
+      return this.i18n.t('Value must be at least {min}.', { min: control.getError('min').min });
     }
     if (control.hasError('max')) {
-      return `Value must be at most ${control.getError('max').max}.`;
+      return this.i18n.t('Value must be at most {max}.', { max: control.getError('max').max });
     }
     return 'Invalid value.';
   }
@@ -127,7 +130,7 @@ export class FarmFormComponent implements OnInit, HasUnsavedChanges {
   onSubmit(): void {
     if (this.farmForm.invalid) {
       this.farmForm.markAllAsTouched();
-      this.notify.error('Please fix the validation errors before submitting.');
+      this.notify.error(this.i18n.t('Please fix the validation errors before submitting.'));
       return;
     }
 
@@ -152,12 +155,12 @@ export class FarmFormComponent implements OnInit, HasUnsavedChanges {
       this.farmService.updateFarm(this.farmId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Farm updated successfully!');
+          this.notify.success(this.i18n.t('Farm updated successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to update farm. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to update farm. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);
@@ -171,12 +174,12 @@ export class FarmFormComponent implements OnInit, HasUnsavedChanges {
       this.farmService.createFarm(this.branchId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Farm created successfully!');
+          this.notify.success(this.i18n.t('Farm created successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to create farm. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to create farm. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);

@@ -22,6 +22,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-consumable-plan-dialog',
   standalone: true,
@@ -35,7 +37,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatInputModule,
     MatSelectModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] w-full max-w-2xl mx-auto">
@@ -47,14 +50,14 @@ import { NotificationService } from '../../../../../shared/services/notification
           </div>
           <div>
             <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white m-0 leading-tight">
-              {{ isEdit ? 'Edit Consumable Plan' : 'Create Daily Consumable Plan' }}
+              {{ (isEdit ? 'Edit Consumable Plan' : 'Create Daily Consumable Plan') | t }}
             </h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-              {{ isEdit ? 'Update recurring daily items and planned usage quantities' : 'Configure recurring daily supplies (shampoo, coils, Dettol, etc.)' }}
+              {{ (isEdit ? 'Update recurring daily items and planned usage quantities' : 'Configure recurring daily supplies (shampoo, coils, Dettol, etc.)') | t }}
             </p>
           </div>
         </div>
-        <button aria-label="Close" mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button [attr.aria-label]="'Close' | t" mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
         </button>
       </div>
@@ -76,25 +79,25 @@ import { NotificationService } from '../../../../../shared/services/notification
           <!-- Plan Basic Details -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <mat-form-field appearance="outline" class="w-full sm:col-span-2">
-              <mat-label>Plan Name</mat-label>
-              <input matInput formControlName="name" placeholder="e.g. Daily Cleaning & Hygiene Supplies" required />
-              <mat-error>Plan name is required</mat-error>
+              <mat-label>{{ 'Plan Name' | t }}</mat-label>
+              <input matInput formControlName="name" [placeholder]="'e.g. Daily Cleaning & Hygiene Supplies' | t" required />
+              <mat-error>{{ 'Plan name is required' | t }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Start Date</mat-label>
+              <mat-label>{{ 'Start Date' | t }}</mat-label>
               <input matInput type="date" formControlName="startDate" required />
-              <mat-error>Start date is required</mat-error>
+              <mat-error>{{ 'Start date is required' | t }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>End Date (Optional)</mat-label>
+              <mat-label>{{ 'End Date (Optional)' | t }}</mat-label>
               <input matInput type="date" formControlName="endDate" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full sm:col-span-2">
-              <mat-label>Description / Notes</mat-label>
-              <textarea matInput formControlName="description" rows="2" placeholder="e.g. Supplies used daily for shed sanitation, mosquito repellent coils, and animal bath shampoo"></textarea>
+              <mat-label>{{ 'Description / Notes' | t }}</mat-label>
+              <textarea matInput formControlName="description" rows="2" [placeholder]="'e.g. Supplies used daily for shed sanitation, mosquito repellent coils, and animal bath shampoo' | t"></textarea>
             </mat-form-field>
           </div>
 
@@ -102,12 +105,12 @@ import { NotificationService } from '../../../../../shared/services/notification
           <div class="border-t border-gray-100 dark:border-gray-800 pt-4">
             <div class="flex items-center justify-between mb-3">
               <div>
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">Daily Consumable Items</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Select stock catalog items and expected daily consumption</p>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">{{ 'Daily Consumable Items' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Select stock catalog items and expected daily consumption' | t }}</p>
               </div>
               <button type="button" (click)="addItemRow()"
                 class="px-3 py-1.5 text-xs font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-lg border border-teal-200 dark:border-teal-800 transition-colors inline-flex items-center gap-1">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> Add Item
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon> {{ 'Add Item' | t }}
               </button>
             </div>
 
@@ -118,12 +121,12 @@ import { NotificationService } from '../../../../../shared/services/notification
                     
                     <!-- Item Selector (col 5) -->
                     <div class="sm:col-span-5">
-                      <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Catalog Item</label>
+                      <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ 'Catalog Item' | t }}</label>
                       <select formControlName="inventoryItemId" (change)="onItemSelect(idx)"
                         class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500">
-                        <option value="" disabled>Select Item</option>
+                        <option value="" disabled>{{ 'Select Item' | t }}</option>
                         @for (inv of availableItems(); track inv.id) {
-                          <option [value]="inv.id">{{ inv.name }} ({{ inv.unitOfMeasure }}) - Stock: {{ inv.currentStock }}</option>
+                          <option [value]="inv.id">{{ inv.name }} ({{ inv.unitOfMeasure }}) - {{ 'Stock: {qty}' | t: { qty: inv.currentStock } }}</option>
                         }
                       </select>
                     </div>
@@ -131,8 +134,8 @@ import { NotificationService } from '../../../../../shared/services/notification
                     <!-- Quantity Per Day + unit (col 4) -->
                     <div class="sm:col-span-4 grid grid-cols-2 gap-2">
                       <div>
-                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Qty / Day</label>
-                        <input type="number" formControlName="plannedQuantityPerDay" step="any" min="0" placeholder="e.g. 2"
+                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ 'Qty / Day' | t }}</label>
+                        <input type="number" formControlName="plannedQuantityPerDay" step="any" min="0" [placeholder]="'e.g. 2' | t"
                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500" />
                       </div>
                       <app-unit-picker label="Unit" [itemId]="itemGroup.value.inventoryItemId" [quantity]="itemGroup.value.plannedQuantityPerDay"
@@ -141,14 +144,14 @@ import { NotificationService } from '../../../../../shared/services/notification
 
                     <!-- Notes / Shift (col 2) -->
                     <div class="sm:col-span-2">
-                      <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Shift / Notes</label>
-                      <input type="text" formControlName="notes" placeholder="e.g. Morning wash"
+                      <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ 'Shift / Notes' | t }}</label>
+                      <input type="text" formControlName="notes" [placeholder]="'e.g. Morning wash' | t"
                         class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500" />
                     </div>
 
                     <!-- Remove Action (col 1) -->
                     <div class="sm:col-span-1 flex items-end justify-center pt-2 sm:pt-4">
-                      <button aria-label="Delete" type="button" (click)="removeItemRow(idx)" [disabled]="itemsFormArray.length <= 1"
+                      <button [attr.aria-label]="'Delete' | t" type="button" (click)="removeItemRow(idx)" [disabled]="itemsFormArray.length <= 1"
                         class="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                       </button>
@@ -165,12 +168,12 @@ import { NotificationService } from '../../../../../shared/services/notification
         <!-- Footer -->
         <div class="px-5 py-3 sm:px-6 sm:py-3.5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 flex items-center justify-end gap-3 shrink-0">
           <button mat-dialog-close type="button" class="px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
             class="px-5 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-md shadow-teal-500/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             <mat-spinner *ngIf="isSubmitting()" diameter="16" class="!stroke-white"></mat-spinner>
-            <span>{{ isEdit ? 'Update Plan' : 'Create Plan' }}</span>
+            <span>{{ (isEdit ? 'Update Plan' : 'Create Plan') | t }}</span>
           </button>
         </div>
       </form>
@@ -200,6 +203,7 @@ export class ConsumablePlanDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -288,7 +292,7 @@ export class ConsumablePlanDialogComponent implements OnInit {
 
       this.inventoryService.updateConsumablePlan(this.data.plan.id, updateReq).subscribe({
         next: () => {
-          this.notify.success('Consumable plan updated successfully.');
+          this.notify.success(this.i18n.t('Consumable plan updated successfully.'));
           this.dialogRef.close(true);
         },
         error: (err: unknown) => {
@@ -308,7 +312,7 @@ export class ConsumablePlanDialogComponent implements OnInit {
 
       this.inventoryService.createConsumablePlan(createReq).subscribe({
         next: () => {
-          this.notify.success('Consumable plan created successfully.');
+          this.notify.success(this.i18n.t('Consumable plan created successfully.'));
           this.dialogRef.close(true);
         },
         error: (err: unknown) => {

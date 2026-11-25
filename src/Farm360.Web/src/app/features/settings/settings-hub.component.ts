@@ -3,17 +3,18 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-settings-hub',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, HasPermissionDirective],
+  imports: [CommonModule, RouterModule, MatIconModule, HasPermissionDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="space-y-6 animate-fade-in-up p-6">
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">System Settings & Setup</h2>
-        <p class="text-gray-500 dark:text-gray-400 mt-1">Manage organizations, master data, and reference tables.</p>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{{ 'System Settings & Setup' | t }}</h2>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">{{ 'Manage organizations, master data, and reference tables.' | t }}</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -27,9 +28,9 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
             <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <mat-icon>business</mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Organizations</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Organizations' | t }}</h3>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Manage multi-tenant organizations, branches, and farm setups.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Manage multi-tenant organizations, branches, and farm setups.' | t }}</p>
         </a>
 
         <!-- Breeds -->
@@ -41,9 +42,9 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
             <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <mat-icon>pets</mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Breeds Setup</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Breeds Setup' | t }}</h3>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Configure animal breeds, genetic traits, and predictive growth metrics.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Configure animal breeds, genetic traits, and predictive growth metrics.' | t }}</p>
         </a>
 
         <!-- Batches -->
@@ -55,9 +56,9 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
             <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 flex items-center justify-center">
               <mat-icon>group_work</mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Batches & Groups</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Batches & Groups' | t }}</h3>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Group livestock into manageable batches for bulk feeding and health operations.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Group livestock into manageable batches for bulk feeding and health operations.' | t }}</p>
         </a>
 
         <!-- Master Data -->
@@ -69,9 +70,9 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
             <div class="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 flex items-center justify-center">
               <mat-icon>settings_applications</mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">General Master Data</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'General Master Data' | t }}</h3>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Configure geographic locations, user permissions and global attributes.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Configure geographic locations, user permissions and global attributes.' | t }}</p>
         </a>
 
         <!-- Farm rules (per-organisation business rules) -->
@@ -83,9 +84,9 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
             <div class="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 flex items-center justify-center">
               <mat-icon>rule</mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Farm rules</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Farm rules' | t }}</h3>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Meat and live-weight prices, how animals are valued, and how feed and overhead costs are shared.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Meat and live-weight prices, how animals are valued, and how feed and overhead costs are shared.' | t }}</p>
         </a>
 
         <!-- Team -->
@@ -97,9 +98,9 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
             <div class="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
               <mat-icon>groups</mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Team</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Team' | t }}</h3>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Invite people, set roles and branches, and deactivate or remove members.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Invite people, set roles and branches, and deactivate or remove members.' | t }}</p>
         </a>
 
         <!-- Subscription & Billing -->
@@ -111,9 +112,9 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
               <mat-icon>workspace_premium</mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Subscription & Plans</h3>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Subscription & Plans' | t }}</h3>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">Manage monthly, yearly, or lifetime plans, free trials, quotas, and invoices.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Manage monthly, yearly, or lifetime plans, free trials, quotas, and invoices.' | t }}</p>
         </a>
 
       </div>

@@ -8,6 +8,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { parseApiError } from '../../../core/utils/error-parser';
 import { AccountService, PASSWORD_HINT, PASSWORD_PATTERN } from '../../../core/services/account.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 function newPasswordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -19,7 +21,7 @@ import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, PageHeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, PageHeaderComponent, TranslatePipe],
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit, HasUnsavedChanges {
@@ -33,6 +35,7 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
+  private i18n = inject(I18nService);
 
   profileForm = this.fb.group({
     role: [{ value: '', disabled: true }],
@@ -98,7 +101,7 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
       },
       error: (err) => {
         this.isSaving.set(false);
-        this.error.set(parseApiError(err, 'Failed to update profile.'));
+        this.error.set(parseApiError(err, this.i18n.t('Failed to update profile.')));
       }
     });
   }
@@ -116,11 +119,11 @@ export class ProfileComponent implements OnInit, HasUnsavedChanges {
       next: () => {
         this.isChangingPassword.set(false);
         this.passwordForm.reset();
-        this.notify.success('Password changed. Other devices have been signed out.');
+        this.notify.success(this.i18n.t('Password changed. Other devices have been signed out.'));
       },
       error: (err) => {
         this.isChangingPassword.set(false);
-        this.passwordError.set(parseApiError(err, 'Failed to change password.'));
+        this.passwordError.set(parseApiError(err, this.i18n.t('Failed to change password.')));
       }
     });
   }

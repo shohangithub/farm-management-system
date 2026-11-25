@@ -10,12 +10,14 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { AnalyticsService, FinanceAnalyticsDto } from '../../../../core/services/analytics.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-finance-dashboard',
   standalone: true,
   imports: [
-    CommonModule, 
+    TranslatePipe, CommonModule, 
     MatIconModule, 
     MatButtonModule, 
     NgxEchartsDirective,
@@ -29,6 +31,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 export class FinanceDashboardComponent {
   private analyticsService = inject(AnalyticsService);
   private workingContext = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
 
   public currentYear = signal(new Date().getFullYear());
   public isLoading = signal(true);
@@ -44,7 +47,9 @@ export class FinanceDashboardComponent {
     const data = this.data() as FinanceAnalyticsDto | undefined;
     if (!data || !data.monthlyData) return {};
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => this.i18n.t(m));
+    const revenueName = this.i18n.t('Revenue (BDT)');
+    const expenseName = this.i18n.t('Expense (BDT)');
     const revenues = data.monthlyData.map(m => m.totalRevenueBdt);
     const expenses = data.monthlyData.map(m => m.totalExpenseBdt);
 
@@ -54,7 +59,7 @@ export class FinanceDashboardComponent {
         axisPointer: { type: 'shadow' }
       },
       legend: {
-        data: ['Revenue (BDT)', 'Expense (BDT)']
+        data: [revenueName, expenseName]
       },
       grid: {
         left: '3%',
@@ -72,12 +77,12 @@ export class FinanceDashboardComponent {
       color: ['#10b981', '#ef4444'], // Green for revenue, Red for expense
       series: [
         {
-          name: 'Revenue (BDT)',
+          name: revenueName,
           type: 'bar',
           data: revenues
         },
         {
-          name: 'Expense (BDT)',
+          name: expenseName,
           type: 'bar',
           data: expenses
         }

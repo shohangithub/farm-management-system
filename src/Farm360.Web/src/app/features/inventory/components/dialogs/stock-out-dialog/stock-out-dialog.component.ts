@@ -15,6 +15,8 @@ import { UnitPickerComponent, UnitSelection } from '../../unit-picker/unit-picke
 
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-stock-out-dialog',
   standalone: true,
@@ -28,7 +30,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatSelectModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    UnitPickerComponent
+    UnitPickerComponent,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl flex flex-col max-h-[90vh]">
@@ -38,9 +41,9 @@ import { NotificationService } from '../../../../../shared/services/notification
           <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">remove_shopping_cart</mat-icon>
           </div>
-          <span>Record Stock Out / Write-Off</span>
+          <span>{{ 'Record Stock Out / Write-Off' | t }}</span>
         </h2>
-        <button aria-label="Close" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button [attr.aria-label]="'Close' | t" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -55,30 +58,30 @@ import { NotificationService } from '../../../../../shared/services/notification
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Inventory Item</mat-label>
+            <mat-label>{{ 'Inventory Item' | t }}</mat-label>
             <mat-select formControlName="inventoryItemId" required>
               @for (item of availableItems(); track item.id) {
-                <mat-option [value]="item.id">{{ item.name }} (Available: {{ item.currentStock }} {{ item.unitOfMeasure }})</mat-option>
+                <mat-option [value]="item.id">{{ item.name }} ({{ 'Available: {qty} {unit}' | t: { qty: item.currentStock, unit: item.unitOfMeasure } }})</mat-option>
               }
             </mat-select>
-            <mat-error>Item selection is required</mat-error>
+            <mat-error>{{ 'Item selection is required' | t }}</mat-error>
           </mat-form-field>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Deduction Type</mat-label>
+              <mat-label>{{ 'Deduction Type' | t }}</mat-label>
               <mat-select formControlName="transactionType" required>
-                <mat-option [value]="StockTransactionType.ManualStockOut">Manual Stock Out</mat-option>
-                <mat-option [value]="StockTransactionType.WriteOff">Stock Write-Off (Damaged/Expired)</mat-option>
-                <mat-option [value]="StockTransactionType.Adjustment">Stock Adjustment</mat-option>
+                <mat-option [value]="StockTransactionType.ManualStockOut">{{ 'Manual Stock Out' | t }}</mat-option>
+                <mat-option [value]="StockTransactionType.WriteOff">{{ 'Stock Write-Off (Damaged/Expired)' | t }}</mat-option>
+                <mat-option [value]="StockTransactionType.Adjustment">{{ 'Stock Adjustment' | t }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <div class="grid grid-cols-2 gap-3 items-start">
               <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Quantity</mat-label>
+                <mat-label>{{ 'Quantity' | t }}</mat-label>
                 <input matInput type="number" formControlName="quantity" step="any" min="0" required />
-                <mat-error>Quantity is required</mat-error>
+                <mat-error>{{ 'Quantity is required' | t }}</mat-error>
               </mat-form-field>
               <app-unit-picker appearance="material" label="Unit" [itemId]="form.value.inventoryItemId" [quantity]="form.value.quantity" [useDefault]="false"
                 (selectionChange)="unit.set($event)"></app-unit-picker>
@@ -86,13 +89,13 @@ import { NotificationService } from '../../../../../shared/services/notification
           </div>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Transaction Date</mat-label>
+            <mat-label>{{ 'Transaction Date' | t }}</mat-label>
             <input matInput type="date" formControlName="transactionDate" required />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Reason / Comments</mat-label>
-            <textarea matInput formControlName="reason" rows="2" placeholder="e.g. Expired batch discarded or damaged bag"></textarea>
+            <mat-label>{{ 'Reason / Comments' | t }}</mat-label>
+            <textarea matInput formControlName="reason" rows="2" [placeholder]="'e.g. Expired batch discarded or damaged bag' | t"></textarea>
           </mat-form-field>
         </form>
       </div>
@@ -100,11 +103,11 @@ import { NotificationService } from '../../../../../shared/services/notification
       <!-- Actions -->
       <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2 shrink-0">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
-          Cancel
+          {{ 'Cancel' | t }}
         </button>
         <button class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50" [disabled]="form.invalid || isSubmitting()" (click)="onSubmit()">
           <mat-spinner *ngIf="isSubmitting()" diameter="16"></mat-spinner>
-          <span>Deduct Stock</span>
+          <span>{{ 'Deduct Stock' | t }}</span>
         </button>
       </div>
     </div>
@@ -117,6 +120,7 @@ export class StockOutDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -158,7 +162,7 @@ export class StockOutDialogComponent implements OnInit {
     this.inventoryService.recordStockOut(request as any).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success('Stock deduction recorded successfully.');
+        this.notify.success(this.i18n.t('Stock deduction recorded successfully.'));
         this.dialogRef.close(true);
       },
       error: (err: any) => {

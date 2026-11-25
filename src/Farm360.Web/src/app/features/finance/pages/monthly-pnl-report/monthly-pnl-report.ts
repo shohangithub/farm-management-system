@@ -17,6 +17,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-monthly-pnl-report',
@@ -29,37 +31,38 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatButtonModule,
     PageHeaderComponent,
     LoadingComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header 
-      title="Monthly Profit & Loss" 
-      description="Detailed breakdown of income and expenses by category for a specific month."
-      breadcrumbActiveNode="Monthly P&L">
+      [title]="'Monthly Profit & Loss' | t" 
+      [description]="'Detailed breakdown of income and expenses by category for a specific month.' | t"
+      [breadcrumbActiveNode]="'Monthly P&L' | t">
       <div actions class="flex items-center gap-3">
         <a mat-stroked-button routerLink="/finance"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>Overview</span>
+          <span>{{ 'Overview' | t }}</span>
         </a>
         <form [formGroup]="filterForm" class="flex items-center gap-2">
           <select formControlName="year" class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 outline-none">
             <option *ngFor="let y of years" [value]="y">{{ y }}</option>
           </select>
           <select formControlName="month" class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 outline-none">
-            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+            <option *ngFor="let m of months" [value]="m.value">{{ m.label | t }}</option>
           </select>
         </form>
         <a mat-stroked-button routerLink="/reports/finance.monthly-pnl"
           matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>SAP Report</span>
+          <span>{{ 'SAP Report' | t }}</span>
         </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
         </button>
         <button mat-stroked-button (click)="exportExcel()" [disabled]="!reportData()"
           class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
@@ -73,13 +76,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
     <div *ngIf="!isLoading()" class="p-6 max-w-6xl mx-auto space-y-6">
       
-      <app-error-state *ngIf="loadError() as err" title="Couldn't load the report" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="loadError() as err" [title]="loadErrorTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <app-empty-state
         *ngIf="!reportData() && !loadError()"
         icon="event_note"
-        title="No Data Available"
-        description="There are no financial records for the selected month.">
+        [title]="'No Data Available' | t"
+        [description]="'There are no financial records for the selected month.' | t">
       </app-empty-state>
 
       <!-- Main Report View -->
@@ -89,7 +92,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
             <div>
-              <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Total Income</p>
+              <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Total Income' | t }}</p>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                 {{ report.totalIncomeBdt | money }}
               </h2>
@@ -101,7 +104,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
             <div>
-              <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Total Expense</p>
+              <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Total Expense' | t }}</p>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                 {{ report.totalExpenseBdt | money }}
               </h2>
@@ -114,10 +117,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between relative overflow-hidden"
                [ngClass]="report.netProfitBdt >= 0 ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10' : 'bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/10 dark:to-red-900/10'">
             <div class="relative z-10">
-              <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Net Profit</p>
+              <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Net Profit' | t }}</p>
               <h2 class="text-2xl font-bold mt-1" [ngClass]="report.netProfitBdt >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
                 {{ Math.abs(report.netProfitBdt) | money }}
-                <span *ngIf="report.netProfitBdt < 0" class="text-sm font-normal">Loss</span>
+                <span *ngIf="report.netProfitBdt < 0" class="text-sm font-normal">{{ 'Loss' | t }}</span>
               </h2>
             </div>
             <div class="absolute right-[-10px] bottom-[-10px] opacity-20">
@@ -136,11 +139,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <mat-icon class="!w-4 !h-4 !text-[16px]">add</mat-icon>
               </div>
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Income by Category</h3>
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Income by Category' | t }}</h3>
             </div>
             
             <div class="space-y-4">
-              <div *ngIf="getCategoryKeys(report.incomeByCategory).length === 0" class="text-sm text-gray-500 italic">No income recorded.</div>
+              <div *ngIf="getCategoryKeys(report.incomeByCategory).length === 0" class="text-sm text-gray-500 italic">{{ 'No income recorded.' | t }}</div>
               <div *ngFor="let key of getCategoryKeys(report.incomeByCategory)" class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ formatCategory(key) }}</span>
                 <span class="text-sm font-bold text-gray-900 dark:text-white">{{ report.incomeByCategory[key] | money }}</span>
@@ -154,11 +157,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <div class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                 <mat-icon class="!w-4 !h-4 !text-[16px]">remove</mat-icon>
               </div>
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Expense by Category</h3>
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Expense by Category' | t }}</h3>
             </div>
             
             <div class="space-y-4">
-              <div *ngIf="getCategoryKeys(report.expenseByCategory).length === 0" class="text-sm text-gray-500 italic">No expenses recorded.</div>
+              <div *ngIf="getCategoryKeys(report.expenseByCategory).length === 0" class="text-sm text-gray-500 italic">{{ 'No expenses recorded.' | t }}</div>
               <div *ngFor="let key of getCategoryKeys(report.expenseByCategory)" class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ formatCategory(key) }}</span>
                 <span class="text-sm font-bold text-gray-900 dark:text-white">{{ report.expenseByCategory[key] | money }}</span>
@@ -180,6 +183,8 @@ export class MonthlyPnlReportComponent implements OnInit {
   private readonly reportService = inject(ReportService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly loadErrorTitle = this.i18n.t("Couldn't load the report");
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -221,7 +226,7 @@ export class MonthlyPnlReportComponent implements OnInit {
       }
       return this.financeService.getMonthlyPnL(farm.id, filters.year, filters.month).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the monthly P&L report.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the monthly P&L report.')));
           return of(null);
         })
       );
@@ -260,7 +265,7 @@ export class MonthlyPnlReportComponent implements OnInit {
 
   formatCategory(key: string): string {
     // Convert CamelCase to Space Case
-    return key.replace(/([A-Z])/g, ' $1').trim();
+    return this.i18n.t(key.replace(/([A-Z])/g, ' $1').trim());
   }
 
   async exportPdf(): Promise<void> {
@@ -298,16 +303,16 @@ export class MonthlyPnlReportComponent implements OnInit {
               filename: `Farm360_Monthly_PnL_${year}_${monthLabel}`,
               orientation: 'landscape',
               header: {
-                title: 'Monthly Profit & Loss Statement',
-                subtitle: `Income & Expense Breakdown for ${monthLabel} ${year}`,
+                title: this.i18n.t('Monthly Profit & Loss Statement'),
+                subtitle: this.i18n.t('Income & Expense Breakdown for {month} {year}', { month: this.i18n.t(monthLabel), year }),
                 farmName: farm?.name || 'Primary Farm',
                 orgName: org?.name || 'Farm360 Enterprise',
-                dateRange: `Period: ${monthLabel} ${year}`,
+                dateRange: this.i18n.t('Period: {month} {year}', { month: this.i18n.t(monthLabel), year }),
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Income', value: `${formatMoney((report?.totalIncomeBdt || 0))}` },
-                  { label: 'Total Expense', value: `${formatMoney((report?.totalExpenseBdt || 0))}` },
-                  { label: 'Net Profit', value: `${formatMoney((report?.netProfitBdt || 0))}` }
+                  { label: this.i18n.t('Total Income'), value: `${formatMoney((report?.totalIncomeBdt || 0))}` },
+                  { label: this.i18n.t('Total Expense'), value: `${formatMoney((report?.totalExpenseBdt || 0))}` },
+                  { label: this.i18n.t('Net Profit'), value: `${formatMoney((report?.netProfitBdt || 0))}` }
                 ]
               },
               showSignatures: true

@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { catchError, debounceTime, filter, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { of, Subject } from 'rxjs';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /** Generic assumptions (the reference spreadsheet's) used only if the animal's defaults can't be loaded. */
 function fallbackDefaults(): ProjectionDefaults {
@@ -82,6 +83,7 @@ function fallbackDefaults(): ProjectionDefaults {
 })
 export class CattleProfitProjectionComponent {
   private intelligenceService = inject(IntelligenceService);
+  private readonly i18n = inject(I18nService);
 
   animalId = input.required<string>();
   isLoading = signal<boolean>(false);
@@ -95,7 +97,7 @@ export class CattleProfitProjectionComponent {
       tap(() => this.defaultsWarning.set(null)),
       switchMap(id => this.intelligenceService.getProjectionDefaults(id).pipe(
         catchError(() => {
-          this.defaultsWarning.set('Could not load this animal\'s figures — showing generic assumptions. Enter its weight and cost to date manually.');
+          this.defaultsWarning.set(this.i18n.t("Could not load this animal's figures — showing generic assumptions. Enter its weight and cost to date manually."));
           return of(fallbackDefaults());
         })
       ))
@@ -118,7 +120,7 @@ export class CattleProfitProjectionComponent {
         return this.intelligenceService.calculateProfitProjection(inputs).pipe(
           map(res => res as ProfitProjectionResponse | null),
           catchError((err: HttpErrorResponse) => {
-            this.calcError.set(err?.error?.detail || err?.error?.title || 'Projection could not be calculated. Check the inputs and try again.');
+            this.calcError.set(err?.error?.detail || err?.error?.title || this.i18n.t('Projection could not be calculated. Check the inputs and try again.'));
             return of(null);
           }),
           finalize(() => this.isLoading.set(false))

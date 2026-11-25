@@ -15,6 +15,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-formula-list',
@@ -29,17 +31,18 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Feed Formulas & Ration Builder"
-      description="Formulate custom rations with calculated crude protein, dry matter, and metabolizable energy profiles."
-      breadcrumbActiveNode="Ration Formulas">
+      [title]="'Feed Formulas & Ration Builder' | t"
+      [description]="'Formulate custom rations with calculated crude protein, dry matter, and metabolizable energy profiles.' | t"
+      [breadcrumbActiveNode]="'Ration Formulas' | t">
       <div actions>
         <button (click)="openCreateFormulaDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Build New Formula
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Build New Formula' | t }}
         </button>
       </div>
     </app-page-header>
@@ -53,7 +56,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <div class="relative w-full sm:w-80">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
-            placeholder="Search formulas by title..."
+            [placeholder]="'Search formulas by title...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
         </div>
       </div>
@@ -62,9 +65,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
       <app-empty-state
         *ngIf="!isLoading() && formulas().length === 0 && !loadError()"
         icon="science"
-        title="No formulas configured"
-        description="Build your first custom feed formula to start assigning rations."
-        actionLabel="Build Formula"
+        [title]="'No formulas configured' | t"
+        [description]="'Build your first custom feed formula to start assigning rations.' | t"
+        [actionLabel]="'Build Formula' | t"
         (action)="openCreateFormulaDialog()">
       </app-empty-state>
 
@@ -83,13 +86,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div>
                   <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-teal-600 transition-colors">{{ formula.title }}</h3>
                   <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-                    {{ formula.targetSpeciesName }} {{ formula.targetStage ? '• ' + formula.targetStage : '' }}
+                    {{ formula.targetSpeciesName | t }} {{ formula.targetStage ? '• ' + (formula.targetStage | t) : '' }}
                   </span>
                 </div>
               </div>
 
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                {{ formula.statusName }}
+                {{ formula.statusName | t }}
               </span>
             </div>
 
@@ -105,13 +108,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                   <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">{{ formula.crudeProteinPct }}%</div>
                 </div>
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Cost / kg</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Cost / kg' | t }}</div>
                   <div class="font-bold text-gray-900 dark:text-white text-sm mt-0.5">{{ formula.totalCostPerKgBdt | money:2 }}</div>
                 </div>
               </div>
 
               <div class="space-y-1.5">
-                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ingredients ({{ formula.ingredients.length }}):</div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ 'Ingredients ({n}):' | t: { n: formula.ingredients.length } }}</div>
                 @for (ing of formula.ingredients; track ing.id) {
                   <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
                     <span>{{ ing.ingredientName }}</span>
@@ -123,9 +126,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
             <!-- Footer Action -->
             <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between relative z-10">
-              <span class="text-xs text-gray-400 font-medium">ME: {{ formula.metabolizableEnergyMjPerKg }} MJ/kg</span>
+              <span class="text-xs text-gray-400 font-medium">{{ 'ME: {n} MJ/kg' | t: { n: formula.metabolizableEnergyMjPerKg } }}</span>
               <button (click)="openEditDialog(formula)" class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors shadow-sm inline-flex items-center gap-1">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Edit Formula
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Edit Formula' | t }}
               </button>
             </div>
           </div>
@@ -138,6 +141,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 export class FormulaListComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -158,7 +162,7 @@ export class FormulaListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.loadError.set(parseApiError(err, 'Could not load feed formulas.'));
+        this.loadError.set(parseApiError(err, this.i18n.t('Could not load feed formulas.')));
         this.isLoading.set(false);
       }
     });

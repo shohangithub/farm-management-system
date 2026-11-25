@@ -90,7 +90,7 @@ html.dark .cdk-overlay-container {
   --text-inverse:   #ffffff;
 
   /* Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family: 'Inter', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-xs:   0.75rem;
   --font-size-sm:   0.875rem;
   --font-size-base: 1rem;
@@ -513,3 +513,8 @@ html.dark {
   }
 }
 
+
+/* Bangla interface: Bengali letters need a little more line height to stay readable. */
+html.lang-bn body {
+  line-height: 1.6;
+}

@@ -7,11 +7,12 @@ import { BreedService } from '../../../services/breed.service';
 import { BreedDto } from '../../../models/breed.models';
 import { LoadingComponent } from '../../../../../shared/components/loading/loading.component';
 import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dialog.component';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-breed-detail-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatIconModule, MatButtonModule, LoadingComponent],
+  imports: [CommonModule, MatDialogModule, MatIconModule, MatButtonModule, LoadingComponent, TranslatePipe],
   template: `
     <div class="flex flex-col h-full max-h-[85vh]">
       <!-- Header -->
@@ -22,12 +23,12 @@ import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dia
           </div>
           <div>
             <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0 leading-tight">
-              {{ breed()?.name ?? 'Loading...' }}
+              {{ breed()?.name ?? ('Loading...' | t) }}
             </h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Breed Profile & Intelligence Config</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 m-0">{{ 'Breed Profile & Intelligence Config' | t }}</p>
           </div>
         </div>
-        <button aria-label="Close" mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600">
+        <button [attr.aria-label]="'Close' | t" mat-icon-button mat-dialog-close class="text-gray-400 hover:text-gray-600">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -49,22 +50,22 @@ import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dia
                   <mat-icon>category</mat-icon>
                 </div>
                 <div>
-                  <div class="text-xs text-gray-500 font-bold uppercase tracking-wider">Classification</div>
-                  <div class="font-bold text-gray-900 dark:text-white">{{ b.category }}</div>
+                  <div class="text-xs text-gray-500 font-bold uppercase tracking-wider">{{ 'Classification' | t }}</div>
+                  <div class="font-bold text-gray-900 dark:text-white">{{ b.category | t }}</div>
                 </div>
               </div>
               <div class="space-y-4 relative z-10">
                 <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
-                  <span class="text-sm text-gray-500">Origin</span>
-                  <span class="font-semibold text-gray-900 dark:text-white">{{ b.origin || 'Unknown' }}</span>
+                  <span class="text-sm text-gray-500">{{ 'Origin' | t }}</span>
+                  <span class="font-semibold text-gray-900 dark:text-white">{{ b.origin || ('Unknown' | t) }}</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
-                  <span class="text-sm text-gray-500">Main Purpose</span>
-                  <span class="font-semibold text-gray-900 dark:text-white">{{ b.mainPurpose }}</span>
+                  <span class="text-sm text-gray-500">{{ 'Main Purpose' | t }}</span>
+                  <span class="font-semibold text-gray-900 dark:text-white">{{ b.mainPurpose | t }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-500">Best For</span>
-                  <span class="font-semibold text-gray-900 dark:text-white text-right max-w-[150px] truncate" [title]="b.bestFor">{{ b.bestFor || 'General' }}</span>
+                  <span class="text-sm text-gray-500">{{ 'Best For' | t }}</span>
+                  <span class="font-semibold text-gray-900 dark:text-white text-right max-w-[150px] truncate" [title]="b.bestFor">{{ b.bestFor || ('General' | t) }}</span>
                 </div>
               </div>
             </div>
@@ -77,17 +78,17 @@ import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dia
                   <mat-icon>trending_up</mat-icon>
                 </div>
                 <div>
-                  <div class="text-xs text-gray-500 font-bold uppercase tracking-wider">Standard Growth</div>
-                  <div class="font-bold text-gray-900 dark:text-white">Baselines</div>
+                  <div class="text-xs text-gray-500 font-bold uppercase tracking-wider">{{ 'Standard Growth' | t }}</div>
+                  <div class="font-bold text-gray-900 dark:text-white">{{ 'Baselines' | t }}</div>
                 </div>
               </div>
               <div class="space-y-4 relative z-10">
                 <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
-                  <span class="text-sm text-gray-500">Standard ADG</span>
-                  <span class="font-bold text-emerald-600">{{ b.standardAdgMin }} - {{ b.standardAdgMax }} kg/day</span>
+                  <span class="text-sm text-gray-500">{{ 'Standard ADG' | t }}</span>
+                  <span class="font-bold text-emerald-600">{{ b.standardAdgMin }} - {{ b.standardAdgMax }} {{ 'kg/day' | t }}</span>
                 </div>
                 <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
-                  <span class="text-sm text-gray-500">Target FCR</span>
+                  <span class="text-sm text-gray-500">{{ 'Target FCR' | t }}</span>
                   <span class="font-bold text-emerald-600">{{ b.fcrMin }} - {{ b.fcrMax }}</span>
                 </div>
               </div>
@@ -101,17 +102,17 @@ import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dia
                   <mat-icon>water_drop</mat-icon>
                 </div>
                 <div>
-                  <div class="text-xs text-gray-500 font-bold uppercase tracking-wider">Yield Targets</div>
-                  <div class="font-bold text-gray-900 dark:text-white">Dairy Specific</div>
+                  <div class="text-xs text-gray-500 font-bold uppercase tracking-wider">{{ 'Yield Targets' | t }}</div>
+                  <div class="font-bold text-gray-900 dark:text-white">{{ 'Dairy Specific' | t }}</div>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-4 relative z-10">
                 <div class="flex flex-col pb-3 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700/50">
-                  <span class="text-sm text-gray-500">Milk Yield</span>
-                  <span class="font-semibold text-gray-900 dark:text-white text-lg">{{ b.milkYieldMinLiters }} - {{ b.milkYieldMaxLiters }} L/day</span>
+                  <span class="text-sm text-gray-500">{{ 'Milk Yield' | t }}</span>
+                  <span class="font-semibold text-gray-900 dark:text-white text-lg">{{ b.milkYieldMinLiters }} - {{ b.milkYieldMaxLiters }} {{ 'L/day' | t }}</span>
                 </div>
                 <div class="flex flex-col pb-3 border-b md:border-b-0 border-gray-100 dark:border-gray-700/50 pl-0 md:pl-4">
-                  <span class="text-sm text-gray-500">Fat Percentage</span>
+                  <span class="text-sm text-gray-500">{{ 'Fat Percentage' | t }}</span>
                   <span class="font-semibold text-gray-900 dark:text-white text-lg">{{ b.fatPercentageMin }}% - {{ b.fatPercentageMax }}%</span>
                 </div>
               </div>
@@ -125,30 +126,30 @@ import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dia
                 <mat-icon>speed</mat-icon>
               </div>
               <div>
-                <h3 class="font-bold text-gray-900 dark:text-white text-lg">Growth by Farming Condition</h3>
-                <p class="text-xs text-gray-500">Expected Average Daily Gain (ADG) mapped to farm management levels.</p>
+                <h3 class="font-bold text-gray-900 dark:text-white text-lg">{{ 'Growth by Farming Condition' | t }}</h3>
+                <p class="text-xs text-gray-500">{{ 'Expected Average Daily Gain (ADG) mapped to farm management levels.' | t }}</p>
               </div>
             </div>
             
             <div class="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800/50">
               <div class="p-4 text-center hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">Poor</div>
-                <div class="text-xl font-extrabold text-red-600">{{ b.adgPoorManagement }} <span class="text-xs font-medium">kg/d</span></div>
+                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">{{ 'Poor' | t }}</div>
+                <div class="text-xl font-extrabold text-red-600">{{ b.adgPoorManagement }} <span class="text-xs font-medium">{{ 'kg/d' | t }}</span></div>
               </div>
 
               <div class="p-4 text-center hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">Average</div>
-                <div class="text-xl font-extrabold text-amber-600">{{ b.adgAverageFarm }} <span class="text-xs font-medium">kg/d</span></div>
+                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">{{ 'Average' | t }}</div>
+                <div class="text-xl font-extrabold text-amber-600">{{ b.adgAverageFarm }} <span class="text-xs font-medium">{{ 'kg/d' | t }}</span></div>
               </div>
 
               <div class="p-4 text-center hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">Good</div>
-                <div class="text-xl font-extrabold text-blue-600">{{ b.adgGoodCommercialFarm }} <span class="text-xs font-medium">kg/d</span></div>
+                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">{{ 'Good' | t }}</div>
+                <div class="text-xl font-extrabold text-blue-600">{{ b.adgGoodCommercialFarm }} <span class="text-xs font-medium">{{ 'kg/d' | t }}</span></div>
               </div>
 
               <div class="p-4 text-center hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">Intensive</div>
-                <div class="text-xl font-extrabold text-emerald-600">{{ b.adgIntensiveFattening }} <span class="text-xs font-medium">kg/d</span></div>
+                <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">{{ 'Intensive' | t }}</div>
+                <div class="text-xl font-extrabold text-emerald-600">{{ b.adgIntensiveFattening }} <span class="text-xs font-medium">{{ 'kg/d' | t }}</span></div>
               </div>
             </div>
           </div>
@@ -159,10 +160,10 @@ import { BreedSetupDialogComponent } from '../breed-setup-dialog/breed-setup-dia
       <!-- Footer -->
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 shrink-0 flex items-center justify-end gap-3 rounded-b-2xl">
         <button mat-button (click)="onEdit()" class="!rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors font-semibold px-4 py-2">
-          Edit
+          {{ 'Edit' | t }}
         </button>
         <button mat-flat-button mat-dialog-close class="!rounded-xl !bg-emerald-600 hover:!bg-emerald-700 !text-white">
-          Close
+          {{ 'Close' | t }}
         </button>
       </div>
     </div>

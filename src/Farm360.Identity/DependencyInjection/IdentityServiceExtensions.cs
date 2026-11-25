@@ -111,7 +111,11 @@ public static class IdentityServiceExtensions
         services.AddAuthorization();
 
         // ── Application Service Implementations ───────────────────────────────
+        services.AddScoped<CurrentUserOverride>();
+        services.AddScoped<ICurrentUserOverride>(sp => sp.GetRequiredService<CurrentUserOverride>());
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<Farm360.Application.Demo.IDemoAccountService, DemoAccountService>();
+        services.AddScoped<Farm360.Application.Demo.IDemoAccountCleanup, DemoAccountCleanup>();
         services.AddScoped<ITenantService, TenantService>();
         services.AddSingleton<IDateTimeService, DateTimeService>();
         services.AddScoped<ITokenService, JwtTokenService>();

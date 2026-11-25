@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface FeedingNavLink {
   path: string;
@@ -28,27 +30,27 @@ interface FeedingNavGroup {
 @Component({
   selector: 'app-feeding-subnav',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive, MatIconModule, MatTooltipModule, TranslatePipe],
   template: `
-    <nav aria-label="Feeding menu"
+    <nav [attr.aria-label]="'Feeding menu' | t"
          class="mb-6 rounded-2xl border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900/40 shadow-xs print:hidden
                 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800">
       <section *ngFor="let group of groups" class="p-3 min-w-0">
         <h2 class="m-0 mb-2 px-1 flex items-baseline gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-          {{ group.title }}
-          <span class="normal-case tracking-normal font-medium text-gray-400/80 dark:text-gray-500/80">{{ group.titleBn }}</span>
+          {{ group.title | t }}
+          <span *ngIf="!i18n.isBangla" class="normal-case tracking-normal font-medium text-gray-400/80 dark:text-gray-500/80">{{ group.titleBn }}</span>
         </h2>
         <div class="flex flex-wrap gap-1.5">
           <a *ngFor="let link of group.links"
              [routerLink]="link.path"
-             [matTooltip]="link.labelBn + ' — ' + link.hint"
+             [matTooltip]="i18n.isBangla ? (link.hint | t) : link.labelBn + ' — ' + link.hint"
              matTooltipShowDelay="300"
              routerLinkActive="!bg-emerald-600 !text-white !border-emerald-600 dark:!bg-emerald-600 dark:!text-white shadow-sm"
              class="h-8 px-2.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap transition-colors
                     text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/60
                     hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300">
             <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">{{ link.icon }}</mat-icon>
-            {{ link.label }}
+            {{ link.label | t }}
           </a>
         </div>
       </section>
@@ -57,6 +59,8 @@ interface FeedingNavGroup {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FeedingSubnavComponent {
+  protected readonly i18n = inject(I18nService);
+
   readonly groups: FeedingNavGroup[] = [
     {
       title: 'Daily work',

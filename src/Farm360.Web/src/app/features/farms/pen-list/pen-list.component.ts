@@ -9,6 +9,8 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -16,11 +18,12 @@ import { parseApiError } from '../../../core/utils/error-parser';
 @Component({
   selector: 'app-pen-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent],
+  imports: [TranslatePipe, ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent],
   templateUrl: './pen-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PenListComponent {
+  private readonly i18n = inject(I18nService);
   private readonly penService = inject(PenService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

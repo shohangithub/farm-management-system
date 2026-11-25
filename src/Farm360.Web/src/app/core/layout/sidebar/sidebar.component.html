@@ -19,7 +19,7 @@
          routerLinkActive="active-menu-item"
          [class.opacity-50]="item.disabled"
          [class.cursor-not-allowed]="item.disabled"
-         [matTooltip]="isCollapsed ? item.label : ''"
+         [matTooltip]="isCollapsed ? (item.label | t) : ''"
          matTooltipPosition="right"
          class="sidebar-nav-item rounded-xl mb-1 text-sm font-medium transition-all duration-200 group">
         
@@ -27,7 +27,7 @@
           <mat-icon matListItemIcon [class.mr-0]="isCollapsed" class="sidebar-nav-icon !w-5 !h-5 !text-[20px] transition-colors">{{ item.icon }}</mat-icon>
           
           <div *ngIf="!isCollapsed" class="flex items-center justify-between flex-1 ml-3 truncate">
-            <span class="truncate sidebar-nav-label font-medium">{{ item.label }}</span>
+            <span class="truncate sidebar-nav-label font-medium">{{ item.label | t }}</span>
             <span *ngIf="item.badge" class="ml-2 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-accent-700 bg-accent-50 rounded-sm dark:bg-accent-900/30 dark:text-accent-400">
               {{ item.badge }}
             </span>
@@ -45,13 +45,13 @@
         <a mat-list-item
            [routerLink]="item.route"
            routerLinkActive="active-menu-item"
-           [matTooltip]="isCollapsed ? item.label : ''"
+           [matTooltip]="isCollapsed ? (item.label | t) : ''"
            matTooltipPosition="right"
            class="sidebar-nav-item rounded-xl mb-1 text-sm font-medium transition-all duration-200 group">
           
           <div class="flex items-center w-full h-full" [class.justify-center]="isCollapsed">
             <mat-icon matListItemIcon [class.mr-0]="isCollapsed" class="sidebar-nav-icon !w-5 !h-5 !text-[20px] transition-colors">{{ item.icon }}</mat-icon>
-            <span *ngIf="!isCollapsed" class="ml-3 truncate sidebar-nav-label font-medium">{{ item.label }}</span>
+            <span *ngIf="!isCollapsed" class="ml-3 truncate sidebar-nav-label font-medium">{{ item.label | t }}</span>
           </div>
         </a>
       </ng-container>

@@ -7,11 +7,12 @@ import { AnimalService } from '../../../../livestock/services/animal.service';
 import { AnimalDto } from '../../../../livestock/models/animal.models';
 import { signal, inject } from '@angular/core';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-mortality-detail-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, MatDialogModule, MatIconModule],
+  imports: [MoneyPipe, CommonModule, MatDialogModule, MatIconModule, TranslatePipe],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col">
       <!-- Header -->
@@ -19,11 +20,11 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-red-500">warning</mat-icon>
-            Mortality Details
+            {{ 'Mortality Details' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Review details of the animal loss record</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Review details of the animal loss record' | t }}</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [attr.aria-label]="'Close' | t">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -35,29 +36,29 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
           <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-red-50 to-transparent dark:from-red-900/10 rounded-bl-full pointer-events-none"></div>
           
           <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400">info</mat-icon> General Information
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400">info</mat-icon> {{ 'General Information' | t }}
           </h3>
           
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Animal Tag</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{{ 'Animal Tag' | t }}</span>
               <span class="text-sm font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md inline-flex items-center gap-1.5">
                 <mat-icon *ngIf="isLoadingAnimal()" class="!w-[14px] !h-[14px] !text-[14px] animate-spin text-gray-400">autorenew</mat-icon>
-                {{ isLoadingAnimal() ? 'Loading...' : (animal()?.tagId || data.animalId) }}
+                {{ isLoadingAnimal() ? ('Loading...' | t) : (animal()?.tagId || data.animalId) }}
               </span>
             </div>
             <div>
-              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Date of Death</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{{ 'Date of Death' | t }}</span>
               <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ data.deathDate | date:'fullDate' }}</span>
             </div>
             <div>
-              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Cause of Death</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{{ 'Cause of Death' | t }}</span>
               <span class="text-sm font-semibold text-gray-900 dark:text-white inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-100 dark:border-red-500/20">
-                {{ getCauseName(data.causeOfDeath) }}
+                {{ getCauseName(data.causeOfDeath) | t }}
               </span>
             </div>
             <div *ngIf="data.diseaseName">
-              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Disease Name</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{{ 'Disease Name' | t }}</span>
               <span class="text-sm font-bold text-red-600 dark:text-red-400">{{ data.diseaseName }}</span>
             </div>
           </div>
@@ -69,10 +70,10 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">payments</mat-icon>
             </div>
             <div>
-              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Economic Loss (BDT)</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">{{ 'Economic Loss (BDT)' | t }}</span>
               <div class="text-lg font-bold text-gray-900 dark:text-white">
                 <span *ngIf="data.estimatedEconomicLossBdt">{{ data.estimatedEconomicLossBdt | money }}</span>
-                <span *ngIf="!data.estimatedEconomicLossBdt" class="text-gray-400 text-sm">Not Specified</span>
+                <span *ngIf="!data.estimatedEconomicLossBdt" class="text-gray-400 text-sm">{{ 'Not Specified' | t }}</span>
               </div>
             </div>
           </div>
@@ -82,9 +83,9 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">person</mat-icon>
             </div>
             <div>
-              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Recorded By</span>
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">{{ 'Recorded By' | t }}</span>
               <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 break-all flex items-center gap-2">
-                System Administrator
+                {{ 'System Administrator' | t }}
               </div>
             </div>
           </div>
@@ -92,13 +93,13 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
           <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-            <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400">description</mat-icon> Post Mortem Notes
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400">description</mat-icon> {{ 'Post Mortem Notes' | t }}
           </h3>
           <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700/50" *ngIf="data.postMortemNotes">
             {{ data.postMortemNotes }}
           </div>
           <div class="text-sm text-gray-400 italic py-2" *ngIf="!data.postMortemNotes">
-            No notes were provided for this record.
+            {{ 'No notes were provided for this record.' | t }}
           </div>
         </div>
       </div>
@@ -107,7 +108,7 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end shrink-0">
         <button type="button" mat-dialog-close
           class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-          Close
+          {{ 'Close' | t }}
         </button>
       </div>
     </div>

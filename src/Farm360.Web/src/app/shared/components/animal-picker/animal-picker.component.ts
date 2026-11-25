@@ -16,6 +16,7 @@ import { WorkingContextService } from '../../../core/services/working-context.se
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, filter, startWith, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-animal-picker',
@@ -26,7 +27,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     MatAutocompleteModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatButtonModule
+    MatButtonModule,
+    TranslatePipe
   ],
   providers: [
     {
@@ -38,10 +40,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   template: `
     <div class="flex flex-col gap-4">
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Shed (Optional)</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Shed (Optional)' | t }}</label>
         <select [formControl]="shedControl"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-          <option [ngValue]="null">-- All Sheds --</option>
+          <option [ngValue]="null">{{ '-- All Sheds --' | t }}</option>
           <option *ngFor="let shed of sheds$ | async" [value]="shed.id">
             {{ shed.shedName }}
           </option>
@@ -50,12 +52,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
       <!-- Animal Autocomplete -->
       <div class="space-y-1.5 relative w-full">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Search Animal (Tag, Breed)</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Search Animal (Tag, Breed)' | t }}</label>
         
         <div class="relative flex items-center min-h-[42px] border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-shadow">
           <input type="text"
                  class="outline-none bg-transparent text-sm w-full h-full px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 rounded-lg"
-                 placeholder="Type tag or breed..."
+                 [placeholder]="'Type tag or breed...' | t"
                  [formControl]="searchControl" 
                  [matAutocomplete]="auto">
                  
@@ -70,9 +72,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <div class="flex flex-col">
               <span class="font-medium text-gray-900 dark:text-white text-sm">{{ animal.tagId }} — {{ animal.breedName }}</span>
               <span class="text-xs text-gray-500 flex gap-2 mt-0.5">
-                <span>{{ getSexLabel(animal.sex) }}</span>
-                <span *ngIf="animal.shedId"> • Shed ID: {{ animal.shedId | slice:0:8 }}</span>
-                <span *ngIf="animal.status !== 'Active'" class="font-semibold text-amber-600"> • {{ animal.status }}</span>
+                <span>{{ getSexLabel(animal.sex) | t }}</span>
+                <span *ngIf="animal.shedId"> • {{ 'Shed ID: {id}' | t: { id: (animal.shedId | slice:0:8) } }}</span>
+                <span *ngIf="animal.status !== 'Active'" class="font-semibold text-amber-600"> • {{ animal.status | t }}</span>
               </span>
             </div>
           </mat-option>
@@ -89,7 +91,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               <span class="font-bold text-primary-900 dark:text-primary-100 text-sm">{{ animal.tagId }}</span>
             </div>
           </div>
-          <button type="button" (click)="removeAnimal(animal)" title="Remove"
+          <button type="button" (click)="removeAnimal(animal)" [title]="'Remove' | t"
                   class="w-6 h-6 flex items-center justify-center rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
             <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">close</mat-icon>
           </button>

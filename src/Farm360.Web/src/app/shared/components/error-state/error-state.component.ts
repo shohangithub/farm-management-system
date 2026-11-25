@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * Shown when a page's primary data load fails, so a failure never looks like "no data".
@@ -10,7 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 @Component({
   selector: 'app-error-state',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div role="alert"
@@ -21,12 +22,12 @@ import { MatButtonModule } from '@angular/material/button';
            [class.h-10]="compact" [class.w-10]="compact" [class.mb-2]="compact">
         <mat-icon class="text-rose-500 dark:text-rose-400" aria-hidden="true">{{ icon }}</mat-icon>
       </div>
-      <h3 class="font-medium text-gray-900 dark:text-white" [class.text-lg]="!compact" [class.text-sm]="compact">{{ title }}</h3>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-md whitespace-pre-line">{{ message }}</p>
+      <h3 class="font-medium text-gray-900 dark:text-white" [class.text-lg]="!compact" [class.text-sm]="compact">{{ title | t }}</h3>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-md whitespace-pre-line">{{ message | t }}</p>
       <div [class.mt-6]="!compact" [class.mt-3]="compact" *ngIf="showRetry">
         <button mat-stroked-button color="primary" type="button" (click)="retry.emit()">
           <mat-icon class="mr-2" aria-hidden="true">refresh</mat-icon>
-          {{ retryLabel }}
+          {{ retryLabel | t }}
         </button>
       </div>
     </div>

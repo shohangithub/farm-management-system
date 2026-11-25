@@ -23,6 +23,8 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 interface DirectRationRow {
   /** "f:<formulaId>" or "i:<inventoryItemId>" */
   source: string;
@@ -49,7 +51,7 @@ type Who = 'animals' | 'group';
 @Component({
   selector: 'app-assign-feeding-plan-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent, TranslatePipe],
   styles: [`
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.4); border-radius: 20px; }
@@ -67,11 +69,11 @@ type Who = 'animals' | 'group';
               <mat-icon class="!w-5 !h-5 !text-[20px]">restaurant</mat-icon>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">Set Ration <span class="text-sm font-normal text-gray-400">· খাবার নির্ধারণ</span></h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Who eats, what they eat, and a check before saving</p>
+              <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">{{ 'Set Ration' | t }} <span *ngIf="!i18n.isBangla" class="text-sm font-normal text-gray-400">· খাবার নির্ধারণ</span></h2>
+              <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ 'Who eats, what they eat, and a check before saving' | t }}</p>
             </div>
           </div>
-          <button mat-icon-button (click)="close()" class="text-gray-400" aria-label="Close"><mat-icon>close</mat-icon></button>
+          <button mat-icon-button (click)="close()" class="text-gray-400" [attr.aria-label]="'Close' | t"><mat-icon>close</mat-icon></button>
         </div>
         <div class="flex items-center gap-2 mt-3 text-xs font-semibold">
           <ng-container *ngFor="let s of steps; let i = index">
@@ -79,7 +81,7 @@ type Who = 'animals' | 'group';
               class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg disabled:opacity-40"
               [ngClass]="step() === i ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
               <span class="w-5 h-5 rounded-full flex items-center justify-center text-[11px]" [ngClass]="step() === i ? 'bg-white/25' : 'bg-gray-200 dark:bg-gray-700'">{{ i + 1 }}</span>
-              {{ s }}
+              {{ s | t }}
             </button>
             <mat-icon *ngIf="i < steps.length - 1" class="!text-[16px] !w-4 !h-4 text-gray-300">chevron_right</mat-icon>
           </ng-container>
@@ -89,7 +91,7 @@ type Who = 'animals' | 'group';
       <div *ngIf="errorMessage()" class="mx-6 mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-start gap-2">
         <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0 mt-0.5">error</mat-icon>
         <div class="flex-1">{{ errorMessage() }}</div>
-        <button type="button" (click)="errorMessage.set(null)" aria-label="Close"><mat-icon class="!w-4 !h-4 !text-[16px]">close</mat-icon></button>
+        <button type="button" (click)="errorMessage.set(null)" [attr.aria-label]="'Close' | t"><mat-icon class="!w-4 !h-4 !text-[16px]">close</mat-icon></button>
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar p-6" [formGroup]="form">
@@ -100,34 +102,34 @@ type Who = 'animals' | 'group';
             <button type="button" (click)="who.set('animals')" class="p-3.5 rounded-xl border-2 text-left flex gap-3"
               [ngClass]="who() === 'animals' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'">
               <mat-icon [ngClass]="who() === 'animals' ? 'text-emerald-600' : 'text-gray-400'">pets</mat-icon>
-              <span><b class="block text-sm">Selected animals</b><span class="text-xs text-gray-500">Each animal gets its own amount by its weight or age.</span></span>
+              <span><b class="block text-sm">{{ 'Selected animals' | t }}</b><span class="text-xs text-gray-500">{{ 'Each animal gets its own amount by its weight or age.' | t }}</span></span>
             </button>
             <button type="button" (click)="who.set('group')" class="p-3.5 rounded-xl border-2 text-left flex gap-3"
               [ngClass]="who() === 'group' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'">
               <mat-icon [ngClass]="who() === 'group' ? 'text-emerald-600' : 'text-gray-400'">holiday_village</mat-icon>
-              <span><b class="block text-sm">A whole shed, pen or batch</b><span class="text-xs text-gray-500">Same amount per head. Animals that move in later are fed too.</span></span>
+              <span><b class="block text-sm">{{ 'A whole shed, pen or batch' | t }}</b><span class="text-xs text-gray-500">{{ 'Same amount per head. Animals that move in later are fed too.' | t }}</span></span>
             </button>
           </div>
 
           <div *ngIf="who() === 'animals'">
             <app-animal-picker formControlName="animalIds" [multiSelect]="true"></app-animal-picker>
-            <p class="text-[11px] text-gray-500 mt-1">{{ animalIds().length }} selected</p>
+            <p class="text-[11px] text-gray-500 mt-1">{{ '{n} selected' | t: { n: animalIds().length } }}</p>
           </div>
 
           <div *ngIf="who() === 'group'" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            <label class="font-semibold">Shed
+            <label class="font-semibold">{{ 'Shed' | t }}
               <select class="field mt-1" [ngModel]="shedId()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="selectShed($event)">
                 <option [ngValue]="null">—</option>
                 <option *ngFor="let s of sheds()" [ngValue]="s.id">{{ s.shedNumber }}{{ s.shedName ? ' · ' + s.shedName : '' }} ({{ s.currentOccupancy }})</option>
               </select>
             </label>
-            <label class="font-semibold">Pen (optional)
+            <label class="font-semibold">{{ 'Pen (optional)' | t }}
               <select class="field mt-1" [ngModel]="penId()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="penId.set($event)" [disabled]="!shedId()">
-                <option [ngValue]="null">Whole shed</option>
+                <option [ngValue]="null">{{ 'Whole shed' | t }}</option>
                 <option *ngFor="let p of pens()" [ngValue]="p.id">{{ p.penName || p.penNumber }} ({{ p.currentOccupancy }})</option>
               </select>
             </label>
-            <label class="font-semibold">or Batch
+            <label class="font-semibold">{{ 'or Batch' | t }}
               <select class="field mt-1" [ngModel]="batchId()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="batchId.set($event)">
                 <option [ngValue]="null">—</option>
                 <option *ngFor="let b of batches()" [ngValue]="b.id">{{ b.name }}</option>
@@ -140,9 +142,9 @@ type Who = 'animals' | 'group';
         <section *ngIf="step() === 1" class="space-y-5">
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold m-0">Feed chart <span class="font-normal text-xs text-gray-500">— amount changes with weight or age</span></h3>
+              <h3 class="text-sm font-bold m-0">{{ 'Feed chart' | t }} <span class="font-normal text-xs text-gray-500">— {{ 'amount changes with weight or age' | t }}</span></h3>
               <a href="/feeding/rules" target="_blank" class="text-xs text-emerald-700 dark:text-emerald-300 font-semibold inline-flex items-center gap-1">
-                <mat-icon class="!text-[14px] !w-4 !h-4">open_in_new</mat-icon> New chart
+                <mat-icon class="!text-[14px] !w-4 !h-4">open_in_new</mat-icon> {{ 'New chart' | t }}
               </a>
             </div>
             <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700/60 max-h-56 overflow-y-auto custom-scrollbar">
@@ -150,48 +152,48 @@ type Who = 'animals' | 'group';
                 <input type="checkbox" class="accent-emerald-600 w-4 h-4" [checked]="selectedRuleSetIds().includes(r.id)" (change)="toggleRuleSet(r.id)" />
                 <span class="flex-1">
                   <span class="font-semibold text-gray-900 dark:text-white">{{ r.name }}</span>
-                  <span class="block text-[11px] text-gray-500">{{ planTypeLabel(r.planType) }} · {{ r.rules.length }} row(s)</span>
+                  <span class="block text-[11px] text-gray-500">{{ planTypeLabel(r.planType) | t }} · {{ '{n} row(s)' | t: { n: r.rules.length } }}</span>
                 </span>
               </label>
-              <div *ngIf="!charts().length" class="px-3 py-4 text-xs text-gray-400 text-center">No active feed charts yet.</div>
+              <div *ngIf="!charts().length" class="px-3 py-4 text-xs text-gray-400 text-center">{{ 'No active feed charts yet.' | t }}</div>
             </div>
             <label *ngIf="who() === 'animals' && selectedRuleSetIds().length" class="flex items-start gap-2 text-xs p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 cursor-pointer">
               <input type="checkbox" class="accent-amber-600 mt-0.5" [checked]="replace()" (change)="replace.set(!replace())" />
-              <span><b>Switch</b> — stop the animals' other feed charts and use this one instead. Extras (add-ons) are kept.</span>
+              <span><b>{{ 'Switch' | t }}</b> — {{ switchHint | t }}</span>
             </label>
           </div>
 
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold m-0">Fixed amount / extras <span class="font-normal text-xs text-gray-500">— a recipe (kg) or stock item (in any of its units) a day</span></h3>
+              <h3 class="text-sm font-bold m-0">{{ 'Fixed amount / extras' | t }} <span class="font-normal text-xs text-gray-500">— {{ 'a recipe (kg) or stock item (in any of its units) a day' | t }}</span></h3>
               <button type="button" (click)="addDirect()" class="px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1">
-                <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon> Add
+                <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon> {{ 'Add' | t }}
               </button>
             </div>
-            <p class="text-[11px] text-gray-500 m-0">e.g. <b>Extra Mineral 0.1 kg/day</b> on top of the chart, or <b>Liver Tonic 20 ml/day</b> for some days (set the end date in step 3). Stock items are given in their own unit.</p>
+            <p class="text-[11px] text-gray-500 m-0">{{ 'e.g.' | t }} <b>{{ 'Extra Mineral 0.1 kg/day' | t }}</b> {{ 'on top of the chart, or' | t }} <b>{{ 'Liver Tonic 20 ml/day' | t }}</b> {{ 'for some days (set the end date in step 3). Stock items are given in their own unit.' | t }}</p>
             <div *ngFor="let d of directRows(); let i = index" class="flex items-center gap-2">
               <select class="field flex-1" [ngModel]="d.source" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateDirect(i, { source: $event })">
-                <option value="">— choose —</option>
-                <optgroup label="Recipes">
+                <option value="">— {{ 'choose' | t }} —</option>
+                <optgroup [label]="'Recipes' | t">
                   <option *ngFor="let f of formulas()" [value]="'f:' + f.id">{{ f.title }}</option>
                 </optgroup>
-                <optgroup label="Stock items (fed as they are)">
-                  <option *ngFor="let it of feedItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+                <optgroup [label]="'Stock items (fed as they are)' | t">
+                  <option *ngFor="let it of feedItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} {{ 'in stock' | t }}</option>
                 </optgroup>
-                <optgroup label="Supplements & medicines (liver tonic, zinc…)">
-                  <option *ngFor="let it of supplementItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+                <optgroup [label]="'Supplements & medicines (liver tonic, zinc…)' | t">
+                  <option *ngFor="let it of supplementItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} {{ 'in stock' | t }}</option>
                 </optgroup>
               </select>
               <div class="relative w-28 shrink-0">
                 <input type="number" step="0.01" min="0" class="field pr-12" placeholder="0" [ngModel]="d.kgPerDay" [ngModelOptions]="{ standalone: true }" (ngModelChange)="updateDirect(i, { kgPerDay: $event })" />
-                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">{{ who() === 'group' ? '/head' : '/day' }}</span>
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">{{ (who() === 'group' ? '/head' : '/day') | t }}</span>
               </div>
               <div class="w-44 shrink-0">
                 <app-unit-picker *ngIf="d.source.startsWith('i:'); else kgUnit" [itemId]="d.source.slice(2)" [quantity]="d.kgPerDay" [useDefault]="false"
                   (selectionChange)="onDirectUnit(i, $event)"></app-unit-picker>
-                <ng-template #kgUnit><div class="field text-gray-500">kg</div></ng-template>
+                <ng-template #kgUnit><div class="field text-gray-500">{{ 'kg' | t }}</div></ng-template>
               </div>
-              <button type="button" (click)="removeDirect(i)" class="p-1 text-gray-400 hover:text-red-600" aria-label="Delete"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+              <button type="button" (click)="removeDirect(i)" class="p-1 text-gray-400 hover:text-red-600" [attr.aria-label]="'Delete' | t"><mat-icon class="!text-[18px]">delete</mat-icon></button>
             </div>
           </div>
         </section>
@@ -199,39 +201,39 @@ type Who = 'animals' | 'group';
         <!-- STEP 3: CHECK -->
         <section *ngIf="step() === 2" class="space-y-4">
           <div class="grid grid-cols-2 gap-3 text-xs">
-            <label class="font-semibold">Start date
+            <label class="font-semibold">{{ 'Start date' | t }}
               <input type="date" formControlName="startDate" class="field mt-1" />
             </label>
-            <label class="font-semibold">End date (optional)
+            <label class="font-semibold">{{ 'End date (optional)' | t }}
               <input type="date" formControlName="endDate" class="field mt-1" />
             </label>
           </div>
 
-          <div *ngIf="previewLoading()" class="text-xs text-gray-500 py-6 text-center">Calculating…</div>
+          <div *ngIf="previewLoading()" class="text-xs text-gray-500 py-6 text-center">{{ 'Calculating…' | t }}</div>
           <ng-container *ngIf="preview() as pv">
             <div class="grid grid-cols-3 gap-3 text-xs">
-              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">Animals<b class="block text-lg">{{ pv.animals.length }}</b></div>
-              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">Feed a day<b class="block text-lg">{{ pv.totalKgPerDay | number:'1.0-2' }} kg</b></div>
-              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">Cost a day<b class="block text-lg">{{ pv.totalCostPerDayBdt | money }}</b></div>
+              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">{{ 'Animals' | t }}<b class="block text-lg">{{ pv.animals.length }}</b></div>
+              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">{{ 'Feed a day' | t }}<b class="block text-lg">{{ pv.totalKgPerDay | number:'1.0-2' }} {{ 'kg' | t }}</b></div>
+              <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">{{ 'Cost a day' | t }}<b class="block text-lg">{{ pv.totalCostPerDayBdt | money }}</b></div>
             </div>
-            <p *ngIf="who() === 'group'" class="text-[11px] text-gray-500 m-0">Group plan: each head gets the amount below; {{ pv.groupHeadCount }} animal(s) are in it today.</p>
+            <p *ngIf="who() === 'group'" class="text-[11px] text-gray-500 m-0">{{ 'Group plan: each head gets the amount below; {n} animal(s) are in it today.' | t: { n: pv.groupHeadCount } }}</p>
 
             <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-x-auto">
               <table class="w-full text-xs">
                 <thead class="bg-gray-50 dark:bg-gray-900/50 text-[11px] uppercase tracking-wider text-gray-500">
-                  <tr><th class="text-left px-3 py-2">Animal</th><th class="text-left px-3 py-2">Weight · age</th><th class="text-left px-3 py-2">Gets</th><th class="text-right px-3 py-2">kg/day</th><th class="text-right px-3 py-2">৳/day</th></tr>
+                  <tr><th class="text-left px-3 py-2">{{ 'Animal' | t }}</th><th class="text-left px-3 py-2">{{ 'Weight · age' | t }}</th><th class="text-left px-3 py-2">{{ 'Gets' | t }}</th><th class="text-right px-3 py-2">{{ 'kg/day' | t }}</th><th class="text-right px-3 py-2">{{ '৳/day' | t }}</th></tr>
                 </thead>
                 <tbody>
-                  <tr *ngIf="!pv.animals.length"><td colspan="5" class="px-3 py-6 text-center text-gray-400">No animals in this selection.</td></tr>
+                  <tr *ngIf="!pv.animals.length"><td colspan="5" class="px-3 py-6 text-center text-gray-400">{{ 'No animals in this selection.' | t }}</td></tr>
                   <tr *ngFor="let a of pv.animals" class="border-t border-gray-100 dark:border-gray-700/60 align-top">
                     <td class="px-3 py-2 font-semibold">{{ a.tag }}</td>
-                    <td class="px-3 py-2 text-gray-500">{{ a.weightKg ? (a.weightKg | number:'1.0-1') + ' kg' : 'no weight' }}<span *ngIf="a.ageDays !== null && a.ageDays !== undefined"> · {{ a.ageDays }} d</span></td>
+                    <td class="px-3 py-2 text-gray-500">{{ a.weightKg ? (a.weightKg | number:'1.0-1') + ' ' + ('kg' | t) : ('no weight' | t) }}<span *ngIf="a.ageDays !== null && a.ageDays !== undefined"> · {{ '{n} d' | t: { n: a.ageDays } }}</span></td>
                     <td class="px-3 py-2">
                       <div *ngFor="let it of a.items" [class.line-through]="a.alreadyOn.includes(it.name)">
-                        {{ it.name }}: <b>{{ it.kgPerDay | number:'1.0-3' }} {{ it.unit || 'kg' }}</b> <span class="text-gray-400">{{ it.feedName }}</span>
+                        {{ it.name }}: <b>{{ it.kgPerDay | number:'1.0-3' }} {{ it.unit || ('kg' | t) }}</b> <span class="text-gray-400">{{ it.feedName }}</span>
                       </div>
-                      <div *ngFor="let n of a.alreadyOn" class="text-[11px] text-gray-500">Already on "{{ n }}" — kept as it is.</div>
-                      <div *ngFor="let n of a.willEnd" class="text-[11px] text-amber-700 dark:text-amber-400">Ends "{{ n }}".</div>
+                      <div *ngFor="let n of a.alreadyOn" class="text-[11px] text-gray-500">{{ 'Already on "{name}" — kept as it is.' | t: { name: n } }}</div>
+                      <div *ngFor="let n of a.willEnd" class="text-[11px] text-amber-700 dark:text-amber-400">{{ 'Ends "{name}".' | t: { name: n } }}</div>
                       <div *ngFor="let w of a.warnings" class="text-[11px] text-amber-700 dark:text-amber-400">⚠ {{ w }}</div>
                     </td>
                     <td class="px-3 py-2 text-right font-mono">{{ a.totalKgPerDay | number:'1.0-3' }}</td>
@@ -250,14 +252,14 @@ type Who = 'animals' | 'group';
         <div class="flex gap-3">
           <button type="button" (click)="step() === 0 ? close() : goTo(step() - 1)" [disabled]="isSubmitting()"
             class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl">
-            {{ step() === 0 ? 'Cancel' : 'Back' }}
+            {{ (step() === 0 ? 'Cancel' : 'Back') | t }}
           </button>
           <button *ngIf="step() < 2" type="button" (click)="goTo(step() + 1)" [disabled]="!!stepIssue()"
-            class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl">Next</button>
+            class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl">{{ 'Next' | t }}</button>
           <button *ngIf="step() === 2" type="button" (click)="submit()" [disabled]="isSubmitting() || previewLoading() || !preview()?.animals?.length"
             class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl inline-flex items-center min-w-[120px] justify-center">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-5 !h-5 !text-[20px] mr-2">refresh</mat-icon>
-            Save ration
+            {{ 'Save ration' | t }}
           </button>
         </div>
       </div>
@@ -277,6 +279,8 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18nService);
+  readonly switchHint = "stop the animals' other feed charts and use this one instead. Extras (add-ons) are kept.";
 
   readonly steps = ['Who', 'What', 'Check & save'];
   readonly step = signal(0);
@@ -319,14 +323,14 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
   readonly validDirect = computed(() => this.directRows().filter(d => d.source && (d.kgPerDay ?? 0) > 0));
 
   readonly whoIssue = computed(() => {
-    if (this.who() === 'animals') return this.animalIds().length ? '' : 'Choose at least one animal.';
-    return this.shedId() || this.batchId() ? '' : 'Choose a shed or a batch.';
+    if (this.who() === 'animals') return this.animalIds().length ? '' : this.i18n.t('Choose at least one animal.');
+    return this.shedId() || this.batchId() ? '' : this.i18n.t('Choose a shed or a batch.');
   });
 
   readonly whatIssue = computed(() => {
-    if (!this.selectedRuleSetIds().length && !this.validDirect().length) return 'Choose a feed chart or add a fixed amount.';
+    if (!this.selectedRuleSetIds().length && !this.validDirect().length) return this.i18n.t('Choose a feed chart or add a fixed amount.');
     if (this.directRows().some(d => (d.source && !((d.kgPerDay ?? 0) > 0)) || (!d.source && (d.kgPerDay ?? 0) > 0)))
-      return 'Each fixed amount needs both a feed and kg.';
+      return this.i18n.t('Each fixed amount needs both a feed and kg.');
     return '';
   });
 
@@ -432,7 +436,7 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
     this.preview.set(null);
     this.feedingService.previewRation(this.request(farmId)).subscribe({
       next: p => { this.preview.set(p); this.previewLoading.set(false); },
-      error: err => { this.errorMessage.set(err.error?.detail || 'Could not calculate the preview.'); this.previewLoading.set(false); }
+      error: err => { this.errorMessage.set(err.error?.detail || this.i18n.t('Could not calculate the preview.')); this.previewLoading.set(false); }
     });
   }
 
@@ -463,11 +467,11 @@ export class AssignFeedingPlanDialogComponent implements OnInit {
       replaceExistingCharts: req.replaceExistingCharts,
     }).subscribe({
       next: () => {
-        this.notify.success('Ration saved');
+        this.notify.success(this.i18n.t('Ration saved'));
         this.dialogRef.close(true);
       },
       error: (err) => {
-        let msg = 'Failed to save the ration';
+        let msg = this.i18n.t('Failed to save the ration');
         if (err.error?.errors) msg = Object.values(err.error.errors).flat().join(' ');
         else if (err.error?.detail) msg = err.error.detail;
         else if (err.error?.title) msg = err.error.title;

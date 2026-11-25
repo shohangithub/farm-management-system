@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 interface MenuItem {
   icon: string;
@@ -16,7 +17,7 @@ interface MenuItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatListModule, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, RouterModule, MatListModule, MatIconModule, MatTooltipModule, TranslatePipe],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush

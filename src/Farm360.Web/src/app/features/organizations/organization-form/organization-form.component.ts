@@ -7,16 +7,19 @@ import { OrganizationService } from '../services/organization.service';
 import { CreateOrganizationCommand, UpdateOrganizationCommand } from '../models/organization.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-organization-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, PageHeaderComponent],
+  imports: [TranslatePipe, CommonModule, ReactiveFormsModule, RouterModule, MatIconModule, PageHeaderComponent],
   templateUrl: './organization-form.html'
 })
 export class OrganizationFormComponent implements OnInit, HasUnsavedChanges {
+  private readonly i18n = inject(I18nService);
   /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
   private saved = false;
 
@@ -99,7 +102,7 @@ export class OrganizationFormComponent implements OnInit, HasUnsavedChanges {
         }
       },
       error: (err) => {
-        const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to load organization details.';
+        const message = err?.error?.detail ?? err?.error?.title ?? this.i18n.t('Failed to load organization details.');
         this.error.set(message);
         console.error('[OrganizationForm] loadOrganization error:', err);
       }
@@ -154,13 +157,13 @@ export class OrganizationFormComponent implements OnInit, HasUnsavedChanges {
         next: () => {
           handleLogoUpload(this.orgId()!, () => {
             this.isSubmitting.set(false);
-            this.successMessage.set('Organization updated successfully.');
+            this.successMessage.set(this.i18n.t('Organization updated successfully.'));
             this.saved = true;
             setTimeout(() => this.router.navigate(['/organizations']), 500);
           });
         },
         error: (err) => {
-          const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to update organization. Please check the inputs.';
+          const message = err?.error?.detail ?? err?.error?.title ?? this.i18n.t('Failed to update organization. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error('[OrganizationForm] update error:', err);
@@ -172,7 +175,7 @@ export class OrganizationFormComponent implements OnInit, HasUnsavedChanges {
         next: (response) => {
           handleLogoUpload(response.id, () => {
             this.isSubmitting.set(false);
-            this.successMessage.set('Organization created successfully.');
+            this.successMessage.set(this.i18n.t('Organization created successfully.'));
             
             const isNewTenant = this.authService.currentUserSignal()?.tenantId === '00000000-0000-0000-0000-000000000000';
             if (isNewTenant) {
@@ -187,7 +190,7 @@ export class OrganizationFormComponent implements OnInit, HasUnsavedChanges {
           });
         },
         error: (err) => {
-          const message = err?.error?.detail ?? err?.error?.title ?? 'Failed to create organization. Please check the inputs.';
+          const message = err?.error?.detail ?? err?.error?.title ?? this.i18n.t('Failed to create organization. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error('[OrganizationForm] create error:', err);

@@ -10,7 +10,7 @@
         <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">কমপ্লিট এসওপি ও বিস্তারিত নির্দেশিকা (ড. মেহদি হাসান কাজল)</p>
       </div>
     </div>
-    <button mat-icon-button (click)="dialogRef.close()" aria-label="Close" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+    <button mat-icon-button (click)="dialogRef.close()" [attr.aria-label]="'Close' | t" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -142,6 +142,6 @@
 
   <!-- Footer -->
   <div class="p-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-end shrink-0">
-    <button mat-flat-button color="primary" class="!rounded-lg !px-6" (click)="dialogRef.close()">Got it</button>
+    <button mat-flat-button color="primary" class="!rounded-lg !px-6" (click)="dialogRef.close()">{{ 'Got it' | t }}</button>
   </div>
 </div>

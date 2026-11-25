@@ -17,6 +17,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-reconciliation-list',
   standalone: true,
@@ -28,22 +30,23 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatIconModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Feeding Reconciliations"
-      description="Review and approve daily feed consumption variances to maintain accurate inventory."
-      breadcrumbActiveNode="Reconciliations">
+      [title]="'Feeding Reconciliations' | t"
+      [description]="'Review and approve daily feed consumption variances to maintain accurate inventory.' | t"
+      [breadcrumbActiveNode]="'Reconciliations' | t">
       <div actions class="flex items-center gap-2 no-print">
         <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || reconciliations().length === 0"
           class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
-          {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+          {{ (isExporting() ? 'Exporting PDF...' : 'Export PDF') | t }}
         </button>
         <button (click)="loadReconciliations()"
           class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> Refresh
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> {{ 'Refresh' | t }}
         </button>
       </div>
     </app-page-header>
@@ -58,9 +61,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
       <app-empty-state
         *ngIf="!isLoading() && reconciliations().length === 0 && !loadError()"
         icon="fact_check"
-        title="No Reconciliations Found"
-        description="There are no pending or past feeding reconciliations to review."
-        actionLabel="Refresh Data"
+        [title]="'No Reconciliations Found' | t"
+        [description]="'There are no pending or past feeding reconciliations to review.' | t"
+        [actionLabel]="'Refresh Data' | t"
         (action)="loadReconciliations()">
       </app-empty-state>
 
@@ -69,12 +72,12 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-gray-50/80 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-200 dark:border-gray-700">
-              <th class="px-6 py-4">Cycle Date</th>
-              <th class="px-6 py-4">Status</th>
-              <th class="px-6 py-4 text-right">Expected Total (kg)</th>
-              <th class="px-6 py-4 text-right">Actual Total (kg)</th>
-              <th class="px-6 py-4 text-right">Variance (kg)</th>
-              <th class="px-6 py-4 text-right no-print">Actions</th>
+              <th class="px-6 py-4">{{ 'Cycle Date' | t }}</th>
+              <th class="px-6 py-4">{{ 'Status' | t }}</th>
+              <th class="px-6 py-4 text-right">{{ 'Expected Total (kg)' | t }}</th>
+              <th class="px-6 py-4 text-right">{{ 'Actual Total (kg)' | t }}</th>
+              <th class="px-6 py-4 text-right">{{ 'Variance (kg)' | t }}</th>
+              <th class="px-6 py-4 text-right no-print">{{ 'Actions' | t }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
@@ -91,32 +94,32 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                       'bg-emerald-50 text-emerald-700 border border-emerald-200': rec.status === 'Approved',
                       'bg-red-50 text-red-700 border border-red-200': rec.status === 'Rejected'
                     }">
-                    {{ rec.status }}
+                    {{ rec.status | t }}
                   </span>
                 </td>
                 <td class="px-6 py-4 text-right text-gray-600 dark:text-gray-300">
-                  {{ rec.totalExpectedKg | number:'1.2-2' }} kg
+                  {{ rec.totalExpectedKg | number:'1.2-2' }} {{ 'kg' | t }}
                 </td>
                 <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
-                  {{ rec.totalActualKg | number:'1.2-2' }} kg
+                  {{ rec.totalActualKg | number:'1.2-2' }} {{ 'kg' | t }}
                 </td>
                 <td class="px-6 py-4 text-right font-extrabold"
                   [ngClass]="getVarianceColor(rec.varianceKg)">
-                  {{ rec.varianceKg > 0 ? '+' : '' }}{{ rec.varianceKg | number:'1.2-2' }} kg
+                  {{ rec.varianceKg > 0 ? '+' : '' }}{{ rec.varianceKg | number:'1.2-2' }} {{ 'kg' | t }}
                 </td>
                 <td class="px-6 py-4 text-right no-print">
                   <div class="flex items-center justify-end gap-2" *ngIf="rec.status === 'Pending' || rec.status === 'Reviewed'">
                     <button (click)="approve(rec)"
                       class="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-lg border border-emerald-200 transition-all shadow-sm inline-flex items-center gap-1">
-                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon> Approve
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check_circle</mat-icon> {{ 'Approve' | t }}
                     </button>
                     <button (click)="reject(rec)"
                       class="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 transition-all shadow-sm inline-flex items-center gap-1">
-                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> Reject
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> {{ 'Reject' | t }}
                     </button>
                   </div>
                   <div *ngIf="rec.status === 'Approved' || rec.status === 'Rejected'" class="text-xs text-gray-500 italic">
-                    Processed by Manager
+                    {{ 'Processed by Manager' | t }}
                   </div>
                 </td>
               </tr>
@@ -134,6 +137,7 @@ export class ReconciliationListComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly pdfService = inject(PdfExportService);
+  private readonly i18n = inject(I18nService);
 
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -162,7 +166,7 @@ export class ReconciliationListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.loadError.set(parseApiError(err, 'Could not load reconciliations.'));
+        this.loadError.set(parseApiError(err, this.i18n.t('Could not load reconciliations.')));
         this.isLoading.set(false);
       }
     });
@@ -176,36 +180,36 @@ export class ReconciliationListComponent implements OnInit {
   }
 
   async approve(rec: FeedingCycleReconciliation): Promise<void> {
-    if (!(await this.confirmService.confirmAsync({ message: `Are you sure you want to approve the reconciliation for ${rec.cycleDate}? This will deduct ${rec.totalActualKg} kg from inventory.`, confirmText: 'Approve' }))) {
+    if (!(await this.confirmService.confirmAsync({ message: this.i18n.t('Are you sure you want to approve the reconciliation for {date}? This will deduct {kg} kg from inventory.', { date: rec.cycleDate, kg: rec.totalActualKg }), confirmText: this.i18n.t('Approve') }))) {
       return;
     }
 
     this.feedingService.approveReconciliation(rec.id).subscribe({
       next: () => {
-        this.notify.success('Reconciliation approved');
+        this.notify.success(this.i18n.t('Reconciliation approved'));
         this.loadReconciliations();
       },
       error: (err) => {
-        this.notify.error(err.error?.detail || 'Failed to approve');
+        this.notify.error(err.error?.detail || this.i18n.t('Failed to approve'));
       }
     });
   }
 
   reject(rec: FeedingCycleReconciliation): void {
-    const reason = prompt('Please enter a reason for rejection:');
+    const reason = prompt(this.i18n.t('Please enter a reason for rejection:'));
     if (reason === null) return;
     if (reason.trim() === '') {
-      this.notify.warning('A reason is required to reject a reconciliation');
+      this.notify.warning(this.i18n.t('A reason is required to reject a reconciliation'));
       return;
     }
 
     this.feedingService.rejectReconciliation(rec.id, reason).subscribe({
       next: () => {
-        this.notify.info('Reconciliation rejected');
+        this.notify.info(this.i18n.t('Reconciliation rejected'));
         this.loadReconciliations();
       },
       error: (err) => {
-        this.notify.error(err.error?.detail || 'Failed to reject');
+        this.notify.error(err.error?.detail || this.i18n.t('Failed to reject'));
       }
     });
   }

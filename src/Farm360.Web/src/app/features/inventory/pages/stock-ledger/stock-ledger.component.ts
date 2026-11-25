@@ -23,6 +23,8 @@ import { PdfExportService } from '../../../../shared/services/pdf-export.service
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-stock-ledger',
   standalone: true,
@@ -36,26 +38,27 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Stock Transaction Audit Ledger"
-      description="Immutable history of all receipts, issues, auto-feed deductions, adjustments, and write-offs."
-      breadcrumbActiveNode="Stock Ledger">
+      [title]="'Stock Transaction Audit Ledger' | t"
+      [description]="'Immutable history of all receipts, issues, auto-feed deductions, adjustments, and write-offs.' | t"
+      [breadcrumbActiveNode]="'Stock Ledger' | t">
       <div actions class="flex items-center gap-2 no-print">
         <button (click)="exportPdf()" [disabled]="isExporting() || loading() || !result()?.items?.length"
           class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
-          {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+          {{ (isExporting() ? 'Exporting PDF...' : 'Export PDF') | t }}
         </button>
         <button (click)="openStockInDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_business</mat-icon> Record Stock In
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_business</mat-icon> {{ 'Record Stock In' | t }}
         </button>
         <button (click)="openStockOutDialog()"
           class="px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">remove_shopping_cart</mat-icon> Deduct Stock
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">remove_shopping_cart</mat-icon> {{ 'Deduct Stock' | t }}
         </button>
       </div>
     </app-page-header>
@@ -69,26 +72,26 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
-            placeholder="Search by item, invoice or supplier..."
+            [placeholder]="'Search by item, invoice or supplier...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
         </div>
 
         <select [ngModel]="params().transactionType ?? null" (ngModelChange)="onTypeChange($event)"
           class="w-full sm:w-56 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option [ngValue]="null">All Movement Types</option>
-          <option [ngValue]="StockTransactionType.StockIn">Stock In (Receipt)</option>
-          <option [ngValue]="StockTransactionType.ManualStockOut">Stock Out (Issue)</option>
-          <option [ngValue]="StockTransactionType.Adjustment">Adjustment</option>
-          <option [ngValue]="StockTransactionType.WriteOff">Write-Off</option>
-          <option [ngValue]="StockTransactionType.PurchaseReturn">Purchase Return</option>
+          <option [ngValue]="null">{{ 'All Movement Types' | t }}</option>
+          <option [ngValue]="StockTransactionType.StockIn">{{ 'Stock In (Receipt)' | t }}</option>
+          <option [ngValue]="StockTransactionType.ManualStockOut">{{ 'Stock Out (Issue)' | t }}</option>
+          <option [ngValue]="StockTransactionType.Adjustment">{{ 'Adjustment' | t }}</option>
+          <option [ngValue]="StockTransactionType.WriteOff">{{ 'Write-Off' | t }}</option>
+          <option [ngValue]="StockTransactionType.PurchaseReturn">{{ 'Purchase Return' | t }}</option>
         </select>
 
         <select [ngModel]="currentSortKey()" (ngModelChange)="onSortChange($event)"
           class="w-full sm:w-52 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option value="date_desc">Sort: Newest First</option>
-          <option value="date_asc">Sort: Oldest First</option>
-          <option value="cost_desc">Sort: Highest Total Cost</option>
-          <option value="qty_desc">Sort: Highest Quantity</option>
+          <option value="date_desc">{{ 'Sort: Newest First' | t }}</option>
+          <option value="date_asc">{{ 'Sort: Oldest First' | t }}</option>
+          <option value="cost_desc">{{ 'Sort: Highest Total Cost' | t }}</option>
+          <option value="qty_desc">{{ 'Sort: Highest Quantity' | t }}</option>
         </select>
       </div>
 
@@ -96,9 +99,9 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <app-empty-state
         *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="receipt_long"
-        title="No transactions logged"
-        description="Transactions are created when stock is received or issued."
-        actionLabel="Record Stock In"
+        [title]="'No transactions logged' | t"
+        [description]="'Transactions are created when stock is received or issued.' | t"
+        [actionLabel]="'Record Stock In' | t"
         (action)="openStockInDialog()">
       </app-empty-state>
 
@@ -107,14 +110,14 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
           <thead class="text-xs uppercase bg-gray-50/80 dark:bg-gray-900/50 text-gray-400 font-bold border-b border-gray-100 dark:border-gray-800">
             <tr>
-              <th class="py-3.5 px-4">Date</th>
-              <th class="py-3.5 px-4">Item Name</th>
-              <th class="py-3.5 px-4">Movement Type</th>
-              <th class="py-3.5 px-4 text-right">Quantity</th>
-              <th class="py-3.5 px-4 text-right">Unit Cost</th>
-              <th class="py-3.5 px-4 text-right">Total Cost</th>
-              <th class="py-3.5 px-4 text-right">Balance After</th>
-              <th class="py-3.5 px-4">Supplier / Reference</th>
+              <th class="py-3.5 px-4">{{ 'Date' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Item Name' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Movement Type' | t }}</th>
+              <th class="py-3.5 px-4 text-right">{{ 'Quantity' | t }}</th>
+              <th class="py-3.5 px-4 text-right">{{ 'Unit Cost' | t }}</th>
+              <th class="py-3.5 px-4 text-right">{{ 'Total Cost' | t }}</th>
+              <th class="py-3.5 px-4 text-right">{{ 'Balance After' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Supplier / Reference' | t }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -132,7 +135,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                       'bg-emerald-50 text-emerald-700 border border-emerald-200': isStockIn(tx.transactionType),
                       'bg-amber-50 text-amber-700 border border-amber-200': !isStockIn(tx.transactionType)
                     }">
-                    {{ tx.transactionTypeName }}
+                    {{ tx.transactionTypeName | t }}
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-right font-extrabold"
@@ -155,12 +158,12 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <!-- Pagination Footer -->
       <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10 no-print">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-          Showing <span class="font-bold text-gray-900 dark:text-white">{{ pageStart() }}</span> to <span class="font-bold text-gray-900 dark:text-white">{{ pageEnd() }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ result()?.totalCount }}</span> transactions
+          {{ 'Showing {from} to {to} of {total} transactions' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>
         <div class="flex items-center gap-4">
           <!-- Page Size Filter -->
           <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-500 dark:text-gray-400">Rows per page:</label>
+            <label class="text-sm text-gray-500 dark:text-gray-400">{{ 'Rows per page:' | t }}</label>
             <select [ngModel]="params().pageSize" (ngModelChange)="onPageSizeChange($event)"
               class="px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
               <option [ngValue]="10">10</option>
@@ -171,11 +174,11 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           </div>
           
           <div class="flex items-center gap-2">
-            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button [attr.aria-label]="'Previous' | t" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button [attr.aria-label]="'Next' | t" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -193,6 +196,7 @@ export class StockLedgerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly pdfService = inject(PdfExportService);
+  private readonly i18n = inject(I18nService);
 
   readonly loading = signal(true);
   readonly isExporting = signal(false);
@@ -278,7 +282,7 @@ export class StockLedgerComponent {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ params }) => this.inventoryService.getTransactions(params).pipe(
         catchError(e => {
-          this.error.set(parseApiError(e, 'Could not load stock transactions.'));
+          this.error.set(parseApiError(e, this.i18n.t('Could not load stock transactions.')));
           return of(null);
         })
       )),
@@ -357,15 +361,15 @@ export class StockLedgerComponent {
 
     this.isExporting.set(true);
     try {
-      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
+      const farmName = this.contextService.currentFarmValue?.name || this.i18n.t('All Units');
       await this.pdfService.exportElement(element, {
         filename: `Stock_Transaction_Ledger_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Stock Transaction Audit Ledger',
-          subtitle: 'Immutable history of receipts, issues, adjustments, and write-offs',
+          title: this.i18n.t('Stock Transaction Audit Ledger'),
+          subtitle: this.i18n.t('Immutable history of receipts, issues, adjustments, and write-offs'),
           farmName,
-          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
+          dateRange: this.i18n.t('Generated: {date}', { date: new Date().toLocaleDateString('en-GB') }),
           currency: 'BDT (৳)'
         },
         showSignatures: true

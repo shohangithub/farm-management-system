@@ -12,6 +12,8 @@ import { FeedingService } from '../../services/feeding.service';
 import { AnimalNutrition, NutritionDay } from '../../models/feeding.models';
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * Nutrition & Growth for one animal: protein, energy and dry matter it actually ate against what
@@ -20,15 +22,15 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-nutrition-growth',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, AnimalPickerComponent, FeedingSubnavComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, AnimalPickerComponent, FeedingSubnavComponent, TranslatePipe],
   template: `
-    <app-page-header title="Nutrition & Growth · পুষ্টি ও বৃদ্ধি"
-      description="What a cow ate — protein, energy, dry matter, minerals — against what its weight needs, and how well it grew."
-      breadcrumbActiveNode="Nutrition & Growth">
+    <app-page-header [title]="'Nutrition & Growth · পুষ্টি ও বৃদ্ধি' | t"
+      [description]="'What a cow ate — protein, energy, dry matter, minerals — against what its weight needs, and how well it grew.' | t"
+      [breadcrumbActiveNode]="'Nutrition & Growth' | t">
       <div actions class="flex gap-2">
         <button mat-stroked-button (click)="export('pdf')" [disabled]="!data()" class="!rounded-xl !text-xs"><mat-icon class="!text-[16px]">picture_as_pdf</mat-icon> PDF</button>
         <button mat-stroked-button (click)="export('xlsx')" [disabled]="!data()" class="!rounded-xl !text-xs"><mat-icon class="!text-[16px]">file_download</mat-icon> Excel</button>
-        <button mat-stroked-button (click)="print()" [disabled]="!data()" class="!rounded-xl !text-xs"><mat-icon class="!text-[16px]">print</mat-icon> Print</button>
+        <button mat-stroked-button (click)="print()" [disabled]="!data()" class="!rounded-xl !text-xs"><mat-icon class="!text-[16px]">print</mat-icon> {{ 'Print' | t }}</button>
       </div>
     </app-page-header>
 
@@ -38,73 +40,73 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
       <!-- Inputs -->
       <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 flex flex-wrap items-end gap-4 print:hidden">
         <div class="w-72">
-          <p class="text-xs font-bold text-gray-600 dark:text-gray-300 m-0 mb-1.5">Animal</p>
+          <p class="text-xs font-bold text-gray-600 dark:text-gray-300 m-0 mb-1.5">{{ 'Animal' | t }}</p>
           <app-animal-picker [includeExited]="true" [(ngModel)]="animalId" (ngModelChange)="run()"></app-animal-picker>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-600 dark:text-gray-300 m-0 mb-1.5">Period</p>
+          <p class="text-xs font-bold text-gray-600 dark:text-gray-300 m-0 mb-1.5">{{ 'Period' | t }}</p>
           <div class="flex items-center gap-1.5">
             <button *ngFor="let d of presets" (click)="setDays(d)" class="px-3 py-2 rounded-xl text-xs font-bold border"
-              [ngClass]="days === d ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600'">{{ d }} days</button>
+              [ngClass]="days === d ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600'">{{ '{n} days' | t: { n: d } }}</button>
             <input type="date" [(ngModel)]="from" (change)="days = 0; run()" class="field" />
-            <span class="text-xs text-gray-500">to</span>
+            <span class="text-xs text-gray-500">{{ 'to' | t }}</span>
             <input type="date" [(ngModel)]="to" (change)="days = 0; run()" class="field" />
           </div>
         </div>
       </div>
 
       <div *ngIf="error()" class="mt-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 text-sm text-rose-700">{{ error() }}</div>
-      <div *ngIf="loading()" class="py-10 text-center text-sm text-gray-500">Calculating…</div>
-      <div *ngIf="!animalId && !loading()" class="py-10 text-center text-sm text-gray-400">Choose an animal to see its nutrition and growth.</div>
+      <div *ngIf="loading()" class="py-10 text-center text-sm text-gray-500">{{ 'Calculating…' | t }}</div>
+      <div *ngIf="!animalId && !loading()" class="py-10 text-center text-sm text-gray-400">{{ 'Choose an animal to see its nutrition and growth.' | t }}</div>
 
       <ng-container *ngIf="data() as d">
         <!-- Verdict -->
         <div class="mt-5 p-4 rounded-2xl border flex items-start gap-3" [ngClass]="verdictClass(d.summary.verdict)">
           <mat-icon class="shrink-0">{{ d.summary.verdict === 'Well balanced' ? 'verified' : d.summary.verdict === 'No data' ? 'help' : 'warning' }}</mat-icon>
           <div class="text-sm">
-            <b>{{ d.tag }} — {{ d.summary.verdict }}</b>
-            <span class="text-xs opacity-80"> · {{ d.from | date:'d MMM' }} – {{ d.to | date:'d MMM yyyy' }}, fed {{ d.summary.fedDays }} of {{ d.summary.days }} days</span>
+            <b>{{ d.tag }} — {{ d.summary.verdict | t }}</b>
+            <span class="text-xs opacity-80"> · {{ d.from | date:'d MMM' }} – {{ d.to | date:'d MMM yyyy' }}, {{ 'fed {fed} of {days} days' | t: { fed: d.summary.fedDays, days: d.summary.days } }}</span>
             <ul class="mt-1 mb-0 pl-4 text-xs space-y-0.5">
-              <li *ngFor="let a of d.summary.advice">{{ a }}</li>
+              <li *ngFor="let a of d.summary.advice">{{ a | t }}</li>
             </ul>
           </div>
         </div>
 
         <!-- Growth -->
-        <h3 class="mt-6 mb-2 text-xs font-black uppercase tracking-wider text-gray-500">Growth</h3>
+        <h3 class="mt-6 mb-2 text-xs font-black uppercase tracking-wider text-gray-500">{{ 'Growth' | t }}</h3>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div class="card"><p class="lbl">Weight</p><h3 class="val">{{ d.summary.startWeightKg ?? '—' }} → {{ d.summary.endWeightKg ?? '—' }} <small>kg</small></h3></div>
-          <div class="card"><p class="lbl">Gain</p><h3 class="val" [class.text-rose-600]="(d.summary.gainKg ?? 0) < 0">{{ d.summary.gainKg ?? '—' }} <small>kg</small></h3></div>
-          <div class="card"><p class="lbl">Daily gain (ADG)</p><h3 class="val">{{ d.summary.adgKgPerDay != null ? (d.summary.adgKgPerDay | number:'1.2-2') : '—' }} <small>kg/day</small></h3>
-            <p class="sub" *ngIf="d.summary.expectedAdgFromEnergy != null">energy eaten supports ~{{ d.summary.expectedAdgFromEnergy | number:'1.2-2' }}</p></div>
-          <div class="card"><p class="lbl">Feed conversion</p><h3 class="val">{{ d.summary.feedConversionKgDmPerKgGain ?? '—' }} <small>kg DM / kg gain</small></h3><p class="sub">good fattening: 6–8</p></div>
-          <div class="card"><p class="lbl">Total feed</p><h3 class="val">{{ d.summary.totalFeedKg | number:'1.0-1' }} <small>kg</small></h3><p class="sub">{{ d.summary.totalDryMatterKg | number:'1.0-1' }} kg dry matter</p></div>
+          <div class="card"><p class="lbl">{{ 'Weight' | t }}</p><h3 class="val">{{ d.summary.startWeightKg ?? '—' }} → {{ d.summary.endWeightKg ?? '—' }} <small>{{ 'kg' | t }}</small></h3></div>
+          <div class="card"><p class="lbl">{{ 'Gain' | t }}</p><h3 class="val" [class.text-rose-600]="(d.summary.gainKg ?? 0) < 0">{{ d.summary.gainKg ?? '—' }} <small>{{ 'kg' | t }}</small></h3></div>
+          <div class="card"><p class="lbl">{{ 'Daily gain (ADG)' | t }}</p><h3 class="val">{{ d.summary.adgKgPerDay != null ? (d.summary.adgKgPerDay | number:'1.2-2') : '—' }} <small>{{ 'kg/day' | t }}</small></h3>
+            <p class="sub" *ngIf="d.summary.expectedAdgFromEnergy != null">{{ 'energy eaten supports ~{n}' | t: { n: (d.summary.expectedAdgFromEnergy | number:'1.2-2') } }}</p></div>
+          <div class="card"><p class="lbl">{{ 'Feed conversion' | t }}</p><h3 class="val">{{ d.summary.feedConversionKgDmPerKgGain ?? '—' }} <small>{{ 'kg DM / kg gain' | t }}</small></h3><p class="sub">{{ 'good fattening: 6–8' | t }}</p></div>
+          <div class="card"><p class="lbl">{{ 'Total feed' | t }}</p><h3 class="val">{{ d.summary.totalFeedKg | number:'1.0-1' }} <small>{{ 'kg' | t }}</small></h3><p class="sub">{{ '{n} kg dry matter' | t: { n: (d.summary.totalDryMatterKg | number:'1.0-1') } }}</p></div>
         </div>
 
         <!-- Daily nutrition vs need -->
-        <h3 class="mt-6 mb-2 text-xs font-black uppercase tracking-wider text-gray-500">Daily nutrition (average)</h3>
+        <h3 class="mt-6 mb-2 text-xs font-black uppercase tracking-wider text-gray-500">{{ 'Daily nutrition (average)' | t }}</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div class="card">
-            <p class="lbl">Protein</p>
-            <h3 class="val">{{ d.summary.avgProteinGPerDay | number:'1.0-0' }} <small>g/day</small></h3>
+            <p class="lbl">{{ 'Protein' | t }}</p>
+            <h3 class="val">{{ d.summary.avgProteinGPerDay | number:'1.0-0' }} <small>{{ 'g/day' | t }}</small></h3>
             <div class="bar"><div [style.width.%]="cap(d.summary.avgProteinPercentOfNeed)" [ngClass]="barClass(d.summary.avgProteinPercentOfNeed)"></div></div>
-            <p class="sub">{{ d.summary.avgProteinPercentOfNeed ?? '—' }}% of need · diet {{ d.summary.dietProteinPercent }}% CP</p>
+            <p class="sub">{{ '{pct}% of need · diet {cp}% CP' | t: { pct: d.summary.avgProteinPercentOfNeed ?? '—', cp: d.summary.dietProteinPercent } }}</p>
           </div>
           <div class="card">
-            <p class="lbl">Energy</p>
-            <h3 class="val">{{ d.summary.avgEnergyMjPerDay | number:'1.0-1' }} <small>MJ/day</small></h3>
+            <p class="lbl">{{ 'Energy' | t }}</p>
+            <h3 class="val">{{ d.summary.avgEnergyMjPerDay | number:'1.0-1' }} <small>{{ 'MJ/day' | t }}</small></h3>
             <div class="bar"><div [style.width.%]="cap(d.summary.avgEnergyPercentOfNeed)" [ngClass]="barClass(d.summary.avgEnergyPercentOfNeed)"></div></div>
-            <p class="sub">{{ d.summary.avgEnergyPercentOfNeed ?? '—' }}% of need · {{ d.summary.dietEnergyMjPerKgDm }} MJ/kg DM</p>
+            <p class="sub">{{ '{pct}% of need · {me} MJ/kg DM' | t: { pct: d.summary.avgEnergyPercentOfNeed ?? '—', me: d.summary.dietEnergyMjPerKgDm } }}</p>
           </div>
           <div class="card">
-            <p class="lbl">Dry matter</p>
-            <h3 class="val">{{ d.summary.avgDryMatterKgPerDay | number:'1.0-2' }} <small>kg/day</small></h3>
-            <p class="sub">{{ d.summary.dryMatterPercentOfBodyWeight != null ? (d.summary.dryMatterPercentOfBodyWeight + '% of body weight (aim 2.2–3%)') : '—' }}</p>
+            <p class="lbl">{{ 'Dry matter' | t }}</p>
+            <h3 class="val">{{ d.summary.avgDryMatterKgPerDay | number:'1.0-2' }} <small>{{ 'kg/day' | t }}</small></h3>
+            <p class="sub">{{ d.summary.dryMatterPercentOfBodyWeight != null ? ('{pct}% of body weight (aim 2.2–3%)' | t: { pct: d.summary.dryMatterPercentOfBodyWeight }) : '—' }}</p>
           </div>
           <div class="card">
-            <p class="lbl">Fed (as given)</p>
-            <h3 class="val">{{ d.summary.avgFeedKgPerDay | number:'1.0-2' }} <small>kg/day</small></h3>
-            <p class="sub">{{ totals().ca | number:'1.0-1' }} g Ca · {{ totals().p | number:'1.0-1' }} g P a day</p>
+            <p class="lbl">{{ 'Fed (as given)' | t }}</p>
+            <h3 class="val">{{ d.summary.avgFeedKgPerDay | number:'1.0-2' }} <small>{{ 'kg/day' | t }}</small></h3>
+            <p class="sub">{{ '{ca} g Ca · {p} g P a day' | t: { ca: (totals().ca | number:'1.0-1'), p: (totals().p | number:'1.0-1') } }}</p>
           </div>
         </div>
 
@@ -112,14 +114,14 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
         <!-- Day by day -->
         <div class="mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-x-auto">
-          <h3 class="px-5 py-3 text-sm font-black m-0 border-b border-gray-100 dark:border-gray-700">Day by day</h3>
+          <h3 class="px-5 py-3 text-sm font-black m-0 border-b border-gray-100 dark:border-gray-700">{{ 'Day by day' | t }}</h3>
           <table class="w-full text-xs">
             <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
               <tr>
-                <th class="text-left px-3 py-2">Date</th><th class="text-right px-2 py-2">Weight</th><th class="text-right px-2 py-2">Feed kg</th>
-                <th class="text-right px-2 py-2">DM kg</th><th class="text-right px-2 py-2">Protein g</th><th class="text-right px-2 py-2">Need</th>
-                <th class="text-right px-2 py-2">Energy MJ</th><th class="text-right px-2 py-2">Need</th><th class="text-right px-2 py-2">Ca g</th>
-                <th class="text-right px-2 py-2">P g</th><th class="text-left px-3 py-2">Recipes</th>
+                <th class="text-left px-3 py-2">{{ 'Date' | t }}</th><th class="text-right px-2 py-2">{{ 'Weight' | t }}</th><th class="text-right px-2 py-2">{{ 'Feed kg' | t }}</th>
+                <th class="text-right px-2 py-2">{{ 'DM kg' | t }}</th><th class="text-right px-2 py-2">{{ 'Protein g' | t }}</th><th class="text-right px-2 py-2">{{ 'Need' | t }}</th>
+                <th class="text-right px-2 py-2">{{ 'Energy MJ' | t }}</th><th class="text-right px-2 py-2">{{ 'Need' | t }}</th><th class="text-right px-2 py-2">{{ 'Ca g' | t }}</th>
+                <th class="text-right px-2 py-2">{{ 'P g' | t }}</th><th class="text-left px-3 py-2">{{ 'Recipes' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -127,7 +129,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
                 <td class="px-3 py-1.5 whitespace-nowrap">{{ r.date | date:'d MMM' }}</td>
                 <td class="px-2 py-1.5 text-right font-mono">
                   <span [class.font-bold]="r.weightIsMeasured">{{ r.weightKg != null ? (r.weightKg | number:'1.0-1') : '—' }}</span>
-                  <mat-icon *ngIf="r.weightIsMeasured" class="!text-[12px] !w-3 !h-3 text-emerald-600 align-middle" title="Weighed this day">scale</mat-icon>
+                  <mat-icon *ngIf="r.weightIsMeasured" class="!text-[12px] !w-3 !h-3 text-emerald-600 align-middle" [title]="'Weighed this day' | t">scale</mat-icon>
                 </td>
                 <td class="px-2 py-1.5 text-right font-mono">{{ r.feedKg | number:'1.0-2' }}</td>
                 <td class="px-2 py-1.5 text-right font-mono">{{ r.dryMatterKg | number:'1.0-2' }}</td>
@@ -142,9 +144,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
             </tbody>
           </table>
           <p class="px-5 py-2 text-[11px] text-gray-500 m-0 border-t border-gray-100 dark:border-gray-700">
-            Needs are field guides for growing cattle: dry matter 2.5% of body weight; energy = maintenance (≈35 MJ at 300 kg) + 35 MJ per kg of gain;
-            protein 14% of dry matter under 250 kg, 12% to 400 kg, 11% above. Ingredient protein and energy are read per kg of dry matter.
-            Weights between weighings are estimated (bold = weighed).
+            {{ nutritionFootnote | t }}
           </p>
         </div>
       </ng-container>
@@ -168,6 +168,9 @@ export class NutritionGrowthComponent {
   private readonly feeding = inject(FeedingService);
   private readonly reports = inject(ReportService);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(I18nService);
+
+  readonly nutritionFootnote = 'Needs are field guides for growing cattle: dry matter 2.5% of body weight; energy = maintenance (≈35 MJ at 300 kg) + 35 MJ per kg of gain; protein 14% of dry matter under 250 kg, 12% to 400 kg, 11% above. Ingredient protein and energy are read per kg of dry matter. Weights between weighings are estimated (bold = weighed).';
 
   readonly presets = [30, 60, 90];
   days = 30;
@@ -207,7 +210,7 @@ export class NutritionGrowthComponent {
     this.error.set(null);
     this.feeding.getAnimalNutrition(id, this.from, this.to).subscribe({
       next: d => { this.data.set(d); this.loading.set(false); },
-      error: err => { this.error.set(parseApiError(err, 'Could not load the nutrition report.')); this.loading.set(false); },
+      error: err => { this.error.set(parseApiError(err, this.i18n.t('Could not load the nutrition report.'))); this.loading.set(false); },
     });
   }
 

@@ -22,6 +22,8 @@ import {
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-stock-in-dialog',
   standalone: true,
@@ -36,7 +38,8 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
     MatIconModule,
     MatProgressSpinnerModule,
     CreditTermsFieldsComponent,
-    UnitPickerComponent
+    UnitPickerComponent,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl flex flex-col max-h-[90vh]">
@@ -46,9 +49,9 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
           <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">add_business</mat-icon>
           </div>
-          <span>Record Stock In Receipt</span>
+          <span>{{ 'Record Stock In Receipt' | t }}</span>
         </h2>
-        <button aria-label="Close" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button [attr.aria-label]="'Close' | t" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -63,20 +66,20 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Inventory Item</mat-label>
+            <mat-label>{{ 'Inventory Item' | t }}</mat-label>
             <mat-select formControlName="inventoryItemId" required>
               @for (item of availableItems(); track item.id) {
-                <mat-option [value]="item.id">{{ item.name }} (Current: {{ item.currentStock }} {{ item.unitOfMeasure }})</mat-option>
+                <mat-option [value]="item.id">{{ item.name }} ({{ 'Current: {qty} {unit}' | t: { qty: item.currentStock, unit: item.unitOfMeasure } }})</mat-option>
               }
             </mat-select>
-            <mat-error>Item selection is required</mat-error>
+            <mat-error>{{ 'Item selection is required' | t }}</mat-error>
           </mat-form-field>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Quantity</mat-label>
+              <mat-label>{{ 'Quantity' | t }}</mat-label>
               <input matInput type="number" formControlName="quantity" step="any" min="0" required />
-              <mat-error>Quantity is required</mat-error>
+              <mat-error>{{ 'Quantity is required' | t }}</mat-error>
             </mat-form-field>
 
             <!-- Bought in bags, bottles…: stock is kept in the item's base unit -->
@@ -84,18 +87,18 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
               (selectionChange)="onUnit($event)"></app-unit-picker>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Cost / {{ unit()?.name || 'unit' }} (৳)</mat-label>
+              <mat-label>{{ 'Cost / {unit} (৳)' | t: { unit: unit()?.name || ('unit' | t) } }}</mat-label>
               <input matInput type="number" formControlName="unitCostBdt" step="any" min="0" required />
-              <mat-hint *ngIf="purchaseTotal() as t">Total {{ t | money:2 }}</mat-hint>
-              <mat-error>Unit cost is required</mat-error>
+              <mat-hint *ngIf="purchaseTotal() as total">{{ 'Total' | t }} {{ total | money:2 }}</mat-hint>
+              <mat-error>{{ 'Unit cost is required' | t }}</mat-error>
             </mat-form-field>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Supplier</mat-label>
+              <mat-label>{{ 'Supplier' | t }}</mat-label>
               <mat-select formControlName="supplierId">
-                <mat-option [value]="null">None / Direct Purchase</mat-option>
+                <mat-option [value]="null">{{ 'None / Direct Purchase' | t }}</mat-option>
                 @for (sup of suppliers(); track sup.id) {
                   <mat-option [value]="sup.id">{{ sup.name }}</mat-option>
                 }
@@ -103,24 +106,24 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Purchase Date</mat-label>
+              <mat-label>{{ 'Purchase Date' | t }}</mat-label>
               <input matInput type="date" formControlName="transactionDate" required />
             </mat-form-field>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Invoice #</mat-label>
+              <mat-label>{{ 'Invoice #' | t }}</mat-label>
               <input matInput formControlName="invoiceNumber" placeholder="INV-9910" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Batch / Lot #</mat-label>
+              <mat-label>{{ 'Batch / Lot #' | t }}</mat-label>
               <input matInput formControlName="batchNumber" placeholder="LOT-2026A" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Expiry Date</mat-label>
+              <mat-label>{{ 'Expiry Date' | t }}</mat-label>
               <input matInput type="date" formControlName="expiryDate" />
             </mat-form-field>
           </div>
@@ -128,21 +131,21 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
           <!-- Decides the accounting entry: a paid purchase moves cash into stock; opening or
                owner-supplied stock is the owner's capital. Neither is an expense until used. -->
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>How was this stock paid for?</mat-label>
+            <mat-label>{{ 'How was this stock paid for?' | t }}</mat-label>
             <mat-select formControlName="fundingSource">
-              <mat-option value="CashPurchase">Bought by the farm (paid now or on credit)</mat-option>
-              <mat-option value="OwnerContribution">Opening stock / brought in by owner (no farm payment)</mat-option>
+              <mat-option value="CashPurchase">{{ 'Bought by the farm (paid now or on credit)' | t }}</mat-option>
+              <mat-option value="OwnerContribution">{{ 'Opening stock / brought in by owner (no farm payment)' | t }}</mat-option>
             </mat-select>
-            <mat-hint>Stock is an asset in the books; it becomes a cost when it is fed, used or written off.</mat-hint>
+            <mat-hint>{{ 'Stock is an asset in the books; it becomes a cost when it is fed, used or written off.' | t }}</mat-hint>
           </mat-form-field>
 
           @if (form.value.fundingSource === 'CashPurchase') {
             <app-credit-terms-fields [group]="credit" kind="Payable" [total]="purchaseTotal()"
-              [requireParty]="false" partyPlaceholder="Selected supplier"></app-credit-terms-fields>
+              [requireParty]="false" [partyPlaceholder]="'Selected supplier' | t"></app-credit-terms-fields>
           }
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Notes / Comments</mat-label>
+            <mat-label>{{ 'Notes / Comments' | t }}</mat-label>
             <textarea matInput formControlName="notes" rows="2"></textarea>
           </mat-form-field>
         </form>
@@ -151,11 +154,11 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
       <!-- Actions -->
       <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2 shrink-0">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
-          Cancel
+          {{ 'Cancel' | t }}
         </button>
         <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50" [disabled]="form.invalid || isSubmitting()" (click)="onSubmit()">
           <mat-spinner *ngIf="isSubmitting()" diameter="16"></mat-spinner>
-          <span>Record Stock In</span>
+          <span>{{ 'Record Stock In' | t }}</span>
         </button>
       </div>
     </div>
@@ -168,6 +171,7 @@ export class StockInDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -249,12 +253,12 @@ export class StockInDialogComponent implements OnInit {
     const credit = formVal.fundingSource === 'CashPurchase' ? toCreditTerms(this.credit.getRawValue()) : null;
     if (credit && !credit.partyName && !formVal.supplierId) {
       this.isSubmitting.set(false);
-      this.error.set('Choose the supplier (or enter their name) for a purchase on credit.');
+      this.error.set(this.i18n.t('Choose the supplier (or enter their name) for a purchase on credit.'));
       return;
     }
     if (credit && (credit.paidNowBdt ?? 0) >= (this.purchaseTotal() ?? 0)) {
       this.isSubmitting.set(false);
-      this.error.set('The amount paid now covers the whole purchase — choose “Paid in full now” instead.');
+      this.error.set(this.i18n.t('The amount paid now covers the whole purchase — choose “Paid in full now” instead.'));
       return;
     }
 
@@ -273,7 +277,7 @@ export class StockInDialogComponent implements OnInit {
     this.inventoryService.recordStockIn(request as any).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success('Stock In transaction recorded successfully.');
+        this.notify.success(this.i18n.t('Stock In transaction recorded successfully.'));
         this.dialogRef.close(true);
       },
       error: (err: any) => {

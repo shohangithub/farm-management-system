@@ -1,0 +1,100 @@
+/** Bangla text for the auth screens. Key = the English text exactly as shown; value = Bangla. */
+export const BN_AUTH: Record<string, string> = {
+  // Shared by the sign-in pages
+  'Phone Number': 'ফোন নম্বর',
+  'Phone number is required.': 'ফোন নম্বর দেওয়া আবশ্যক।',
+  'Password': 'পাসওয়ার্ড',
+  'Forgot password?': 'পাসওয়ার্ড ভুলে গেছেন?',
+  'Back to sign in': 'সাইন ইনে ফিরে যান',
+  "Passwords don't match.": 'পাসওয়ার্ড দুটি মিলছে না।',
+  'At least 8 characters with an uppercase letter, a lowercase letter, a digit and a symbol.':
+    'কমপক্ষে 8 অক্ষর, যার মধ্যে একটি বড় হাতের অক্ষর, একটি ছোট হাতের অক্ষর, একটি সংখ্যা ও একটি চিহ্ন থাকতে হবে।',
+
+  // Login
+  'Enterprise Livestock Management Platform': 'আধুনিক গবাদিপশু খামার ব্যবস্থাপনা প্ল্যাটফর্ম',
+  'Enter your password': 'আপনার পাসওয়ার্ড লিখুন',
+  'Password is required.': 'পাসওয়ার্ড দেওয়া আবশ্যক।',
+  'Signing in…': 'সাইন ইন হচ্ছে…',
+  'Sign In': 'সাইন ইন করুন',
+  "Don't have an account for your farm?": 'আপনার খামারের জন্য অ্যাকাউন্ট নেই?',
+  'Start Free Trial / Sign Up': 'ফ্রি ট্রায়াল শুরু করুন / সাইন আপ',
+  'Enterprise Edition': 'এন্টারপ্রাইজ সংস্করণ',
+  '🎉 Your account and farm trial have been created successfully! Please sign in.':
+    '🎉 আপনার অ্যাকাউন্ট ও খামারের ট্রায়াল সফলভাবে তৈরি হয়েছে! অনুগ্রহ করে সাইন ইন করুন।',
+  'Invalid credentials. Please try again.': 'ফোন নম্বর বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।',
+
+  // Try the demo
+  'Explore the demo farm': 'ডেমো খামার ঘুরে দেখুন',
+  'Opening the demo farm…': 'ডেমো খামার খোলা হচ্ছে…',
+  'A sample farm with real-looking data. No sign-up needed.': 'বাস্তবের মতো তথ্যসহ একটি নমুনা খামার। সাইন আপ লাগবে না।',
+  'The demo is being prepared, please try again in a minute.': 'ডেমো প্রস্তুত করা হচ্ছে, এক মিনিট পরে আবার চেষ্টা করুন।',
+
+  // Register
+  'Create your account': 'আপনার অ্যাকাউন্ট তৈরি করুন',
+  'Or': 'অথবা',
+  'sign in to an existing account': 'আগের অ্যাকাউন্টে সাইন ইন করুন',
+  'Full Name': 'পুরো নাম',
+  'John Doe': 'যেমন: রহিম উদ্দিন',
+  'Email Address': 'ইমেইল ঠিকানা',
+  'Farm Name': 'খামারের নাম',
+  'Green Valley Farm': 'যেমন: সবুজ বাংলা অ্যাগ্রো',
+  'Select Free Trial Duration': 'ফ্রি ট্রায়ালের মেয়াদ বেছে নিন',
+  'Rec': 'প্রস্তাবিত',
+  '3 Days': '3 দিন',
+  '7 Days': '7 দিন',
+  '10 Days': '10 দিন',
+  'Quick test': 'দ্রুত দেখা',
+  'Recommended': 'প্রস্তাবিত',
+  'Full trial': 'পূর্ণ ট্রায়াল',
+  'Create Account': 'অ্যাকাউন্ট তৈরি করুন',
+  'Creating...': 'তৈরি হচ্ছে...',
+  'Registration failed. Please try again.': 'নিবন্ধন হয়নি। আবার চেষ্টা করুন।',
+
+  // Forgot / reset password
+  'Forgot password': 'পাসওয়ার্ড ভুলে গেছেন',
+  "We'll text a verification code to your mobile number.": 'আপনার মোবাইল নম্বরে একটি যাচাই কোড SMS করে পাঠানো হবে।',
+  'Sending…': 'পাঠানো হচ্ছে…',
+  'Send code': 'কোড পাঠান',
+  'I already have a code': 'আমার কাছে কোড আছে',
+  'Could not send the code. Please try again.': 'কোড পাঠানো যায়নি। আবার চেষ্টা করুন।',
+  'Reset password': 'পাসওয়ার্ড রিসেট করুন',
+  'Enter the code we texted you and choose a new password.': 'SMS-এ পাওয়া কোডটি লিখুন এবং নতুন পাসওয়ার্ড দিন।',
+  'If an account exists for this number, a 6-digit code has been sent. It expires in 5 minutes.':
+    'এই নম্বরে অ্যাকাউন্ট থাকলে একটি 6 অঙ্কের কোড পাঠানো হয়েছে। কোডটি 5 মিনিট পর্যন্ত কাজ করবে।',
+  'Verification code': 'যাচাই কোড',
+  'Enter the 6-digit code.': '6 অঙ্কের কোডটি লিখুন।',
+  'New password': 'নতুন পাসওয়ার্ড',
+  'Confirm new password': 'নতুন পাসওয়ার্ড আবার লিখুন',
+  'Saving…': 'সংরক্ষণ হচ্ছে…',
+  'Set new password': 'নতুন পাসওয়ার্ড সেট করুন',
+  'Send a new code': 'নতুন কোড পাঠান',
+  'Password changed. Sign in with your new password.': 'পাসওয়ার্ড বদলানো হয়েছে। নতুন পাসওয়ার্ড দিয়ে সাইন ইন করুন।',
+  'Could not reset the password.': 'পাসওয়ার্ড রিসেট করা যায়নি।',
+
+  // Accept invitation
+  'Join your team': 'আপনার দলে যোগ দিন',
+  'Farm360 AI invitation': 'Farm360 AI আমন্ত্রণ',
+  'Checking your invitation…': 'আপনার আমন্ত্রণ যাচাই করা হচ্ছে…',
+  'Go to sign in': 'সাইন ইনে যান',
+  "You've been invited to {organization} as {role}.": 'আপনাকে {organization}-এ {role} হিসেবে আমন্ত্রণ জানানো হয়েছে।',
+  'Sent to {recipient} · valid until {date}': '{recipient}-এ পাঠানো হয়েছে · {date} পর্যন্ত বৈধ',
+  'You already have a Farm360 account. Enter its password to add this organisation to it.':
+    'আপনার আগে থেকেই একটি Farm360 অ্যাকাউন্ট আছে। এই প্রতিষ্ঠানটি যোগ করতে সেই অ্যাকাউন্টের পাসওয়ার্ড দিন।',
+  'Your Farm360 password': 'আপনার Farm360 পাসওয়ার্ড',
+  'Enter your password.': 'আপনার পাসওয়ার্ড লিখুন।',
+  'Joining…': 'যোগ দেওয়া হচ্ছে…',
+  'Accept invitation': 'আমন্ত্রণ গ্রহণ করুন',
+  'Your name': 'আপনার নাম',
+  'Enter your name.': 'আপনার নাম লিখুন।',
+  'Mobile number (your sign-in ID)': 'মোবাইল নম্বর (সাইন ইনের আইডি)',
+  'Enter a valid mobile number.': 'সঠিক মোবাইল নম্বর লিখুন।',
+  'Confirm password': 'পাসওয়ার্ড আবার লিখুন',
+  'Creating account…': 'অ্যাকাউন্ট তৈরি হচ্ছে…',
+  'Create account & join': 'অ্যাকাউন্ট তৈরি করে যোগ দিন',
+  'This invitation link is incomplete. Open the link from your SMS or email again.':
+    'আমন্ত্রণের লিংকটি অসম্পূর্ণ। SMS বা ইমেইল থেকে লিংকটি আবার খুলুন।',
+  'This invitation link is invalid or has expired.': 'আমন্ত্রণের লিংকটি সঠিক নয় অথবা মেয়াদ শেষ হয়ে গেছে।',
+  "You're already a member of {organization}.": 'আপনি আগে থেকেই {organization}-এর সদস্য।',
+  "You've joined {organization}. Sign in to continue.": 'আপনি {organization}-এ যোগ দিয়েছেন। চালিয়ে যেতে সাইন ইন করুন।',
+  'Could not accept the invitation.': 'আমন্ত্রণ গ্রহণ করা যায়নি।',
+};

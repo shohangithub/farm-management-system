@@ -1,4 +1,10 @@
 <div class="login-page">
+<!-- Language switch: shows the language you can switch to -->
+<button type="button" (click)="i18n.toggle()"
+  [attr.aria-label]="(i18n.isBangla ? 'Switch to English' : 'Switch to Bangla') | t"
+  class="fixed top-4 right-4 z-50 h-9 px-4 rounded-full text-sm font-semibold border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+  {{ i18n.isBangla ? 'English' : 'বাংলা' }}
+</button>
   <div class="login-card">
 
     <!-- Brand Header -->
@@ -7,19 +13,19 @@
         <span class="material-icons">agriculture</span>
       </div>
       <h1 class="login-title">Farm360 AI</h1>
-      <p class="login-subtitle">Enterprise Livestock Management Platform</p>
+      <p class="login-subtitle">{{ 'Enterprise Livestock Management Platform' | t }}</p>
     </div>
 
     <!-- Success Alert -->
     <div *ngIf="successMessage()" class="login-success" role="alert" style="display: flex; align-items: flex-start; gap: 8px; padding: 12px 16px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); color: #10b981; font-size: var(--font-size-sm); margin-bottom: var(--space-4);">
       <span class="material-icons" style="font-size: 18px; margin-top: 1px;">check_circle</span>
-      <span>{{ successMessage() }}</span>
+      <span>{{ successMessage() | t }}</span>
     </div>
 
     <!-- Error Alert -->
     <div *ngIf="errorMessage()" class="login-error" role="alert">
       <span class="material-icons">error_outline</span>
-      <span>{{ errorMessage() }}</span>
+      <span>{{ errorMessage() | t }}</span>
     </div>
 
     <!-- Login Form -->
@@ -27,7 +33,7 @@
 
       <!-- Phone Number -->
       <div class="form-group">
-        <label for="phone" class="form-label">Phone Number</label>
+        <label for="phone" class="form-label">{{ 'Phone Number' | t }}</label>
         <input
           id="phone"
           type="tel"
@@ -40,31 +46,31 @@
           *ngIf="loginForm.get('phone')?.touched && loginForm.get('phone')?.invalid"
           class="field-error"
           role="alert">
-          Phone number is required.
+          {{ 'Phone number is required.' | t }}
         </span>
       </div>
 
       <!-- Password -->
       <div class="form-group">
-        <label for="password" class="form-label">Password</label>
+        <label for="password" class="form-label">{{ 'Password' | t }}</label>
         <input
           id="password"
           type="password"
           formControlName="password"
           class="form-control"
-          placeholder="Enter your password"
+          [placeholder]="'Enter your password' | t"
           autocomplete="current-password"
           [attr.aria-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
         <span
           *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
           class="field-error"
           role="alert">
-          Password is required.
+          {{ 'Password is required.' | t }}
         </span>
       </div>
 
       <div style="text-align: right; margin-top: -8px; margin-bottom: 12px;">
-        <a routerLink="/auth/forgot-password" [queryParams]="{ phone: loginForm.get('phone')?.value || null }" style="font-size: 13px;">Forgot password?</a>
+        <a routerLink="/auth/forgot-password" [queryParams]="{ phone: loginForm.get('phone')?.value || null }" style="font-size: 13px;">{{ 'Forgot password?' | t }}</a>
       </div>
 
       <!-- Submit Button -->
@@ -75,24 +81,42 @@
         [disabled]="isLoading()">
         <span *ngIf="isLoading()" class="login-spinner"></span>
         <span class="material-icons" *ngIf="!isLoading()" style="font-size:18px;">login</span>
-        {{ isLoading() ? 'Signing in…' : 'Sign In' }}
+        {{ (isLoading() ? 'Signing in…' : 'Sign In') | t }}
       </button>
 
     </form>
 
+    <!-- Try the demo: shown only when the demo farm is switched on and ready -->
+    <div *ngIf="demoAvailable()" style="margin-top: 12px;">
+      <button
+        id="btn-explore-demo"
+        type="button"
+        class="btn-explore-demo"
+        (click)="exploreDemo()"
+        [disabled]="isDemoLoading() || isLoading()"
+        style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px 16px; border: 1.5px solid var(--border-subtle); background: transparent; color: var(--text-primary, inherit); border-radius: var(--radius-md); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;">
+        <span *ngIf="isDemoLoading()" class="login-spinner"></span>
+        <span class="material-icons" *ngIf="!isDemoLoading()" style="font-size: 18px;">visibility</span>
+        {{ (isDemoLoading() ? 'Opening the demo farm…' : 'Explore the demo farm') | t }}
+      </button>
+      <p style="margin: 6px 0 0; font-size: 11px; color: var(--text-muted); text-align: center;">
+        {{ 'A sample farm with real-looking data. No sign-up needed.' | t }}
+      </p>
+    </div>
+
     <!-- Footer & Sign Up Prompt -->
     <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle); text-align: center;">
       <p style="margin: 0 0 12px 0; font-size: 13px; color: var(--text-muted);">
-        Don't have an account for your farm?
+        {{ "Don't have an account for your farm?" | t }}
       </p>
       <a routerLink="/auth/register"
          style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px 16px; border: 1.5px solid var(--color-primary); color: var(--color-primary); border-radius: var(--radius-md); font-weight: 600; font-size: 13px; text-decoration: none; transition: all 0.2s;"
          class="btn-signup-cta">
         <span class="material-icons" style="font-size: 16px;">bolt</span>
-        Start Free Trial / Sign Up
+        {{ 'Start Free Trial / Sign Up' | t }}
       </a>
       <p style="margin-top: 16px; margin-bottom: 0; font-size: 11px; color: var(--text-muted);">
-        Farm360 AI &copy; {{ currentYear }} &middot; Enterprise Edition
+        Farm360 AI &copy; {{ currentYear }} &middot; {{ 'Enterprise Edition' | t }}
       </p>
     </div>
 

@@ -18,6 +18,8 @@ import { FinanceService } from '../../services/finance.service';
 import { AccountHeadSummary, IncomeExpenseReport } from '../../models/finance.model';
 import { ACCOUNTS_PAPER_CSS, RANGE_PRESETS, addDays, printPaper, toIsoDate } from '../../utils/accounts-report-print';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 type ReportMode = 'daily' | 'range';
 
@@ -44,7 +46,7 @@ interface SummaryCell {
   standalone: true,
   imports: [MoneyPipe, 
     CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, MatTooltipModule,
-    PageHeaderComponent, DecimalPipe, DatePipe,
+    PageHeaderComponent, DecimalPipe, DatePipe, TranslatePipe,
   ],
   templateUrl: './income-expense-report.html',
   styles: [ACCOUNTS_PAPER_CSS],
@@ -56,6 +58,9 @@ export class IncomeExpenseReportComponent {
   private readonly context = inject(WorkingContextService);
   private readonly reports = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly i18n = inject(I18nService);
+
+  readonly capitalNote = 'Heads marked Asset (stock and animals bought), Capital or Financing (investor and owner money, loans) or Trade (paying supplier bills, collecting customer dues) move cash but are not income or expense — they are excluded from the operating cash result (Operating cash received {received} − operating cash paid {paid}). Stock bought becomes a cost when it is used; see the Full Accounts statement for profit & loss.';
 
   private readonly paper = viewChild<ElementRef<HTMLElement>>('paper');
 
@@ -138,7 +143,7 @@ export class IncomeExpenseReportComponent {
           this.orgName.set(this.context.currentOrgValue?.name ?? '');
           return this.finance.getIncomeExpenseReport(farm.id, req.from, req.to).pipe(
             catchError(err => {
-              this.error.set(parseApiError(err, 'Failed to load the income & expense report.'));
+              this.error.set(parseApiError(err, this.i18n.t('Failed to load the income & expense report.')));
               return of(null);
             }),
           );
@@ -189,7 +194,7 @@ export class IncomeExpenseReportComponent {
   run(): void {
     const range = this.currentRange();
     if (range.from > range.to) {
-      this.error.set('The start date must not be after the end date.');
+      this.error.set(this.i18n.t('The start date must not be after the end date.'));
       return;
     }
     this.request$.next(range);
@@ -206,7 +211,7 @@ export class IncomeExpenseReportComponent {
 
   print(): void {
     const el = this.paper()?.nativeElement;
-    if (el) printPaper(el, `Income & Expense Statement — ${this.periodLabel()}`);
+    if (el) printPaper(el, `${this.i18n.t('Income & Expense Statement')} — ${this.periodLabel()}`);
   }
 
   export(format: ReportExportFormat): void {
@@ -224,7 +229,7 @@ export class IncomeExpenseReportComponent {
           this.exporting.set(null);
         },
         error: err => {
-          this.error.set(parseApiError(err, `Export to ${format.toUpperCase()} failed.`));
+          this.error.set(parseApiError(err, this.i18n.t('Export to {format} failed.', { format: format.toUpperCase() })));
           this.exporting.set(null);
         },
       });

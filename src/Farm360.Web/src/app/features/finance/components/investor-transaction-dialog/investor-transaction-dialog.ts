@@ -9,6 +9,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { Investor, RecordInvestorTransactionRequest } from '../../models/finance.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 export interface InvestorTransactionDialogData {
   investor: Investor;
@@ -18,7 +20,7 @@ export interface InvestorTransactionDialogData {
 @Component({
   selector: 'app-investor-transaction-dialog',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [TranslatePipe, MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -31,11 +33,11 @@ export interface InvestorTransactionDialogData {
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-teal-600 dark:text-teal-400">price_change</mat-icon>
-            Record Investor Transaction
+            {{ 'Record Investor Transaction' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Record capital contribution, withdrawal, or profit distribution</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Record capital contribution, withdrawal, or profit distribution' | t }}</p>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -61,22 +63,22 @@ export interface InvestorTransactionDialogData {
               <div>
                 <p class="text-sm font-bold text-gray-900 dark:text-white m-0">{{ data.investor.name }}</p>
                 <p class="text-xs text-teal-700 dark:text-teal-300 m-0">
-                  Share: {{ data.investor.effectiveSharePercentage }}% 
-                  <span *ngIf="data.investor.agreedProfitSharePercentage" class="text-[11px] text-gray-500">(agreed)</span>
-                  <span *ngIf="!data.investor.agreedProfitSharePercentage" class="text-[11px] text-gray-500">(capital proportional)</span>
+                  {{ 'Share: {percent}%' | t: { percent: data.investor.effectiveSharePercentage } }}
+                  <span *ngIf="data.investor.agreedProfitSharePercentage" class="text-[11px] text-gray-500">{{ '(agreed)' | t }}</span>
+                  <span *ngIf="!data.investor.agreedProfitSharePercentage" class="text-[11px] text-gray-500">{{ '(capital proportional)' | t }}</span>
                 </p>
               </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
               <div class="bg-white/70 dark:bg-gray-800/70 rounded-lg p-2.5 text-center">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">Current Capital</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">{{ 'Current Capital' | t }}</p>
                 <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 m-0 mt-0.5">
                   {{ data.investor.currentCapitalBdt | money }}
                 </p>
               </div>
               <div class="bg-white/70 dark:bg-gray-800/70 rounded-lg p-2.5 text-center">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">Total Profit Paid</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">{{ 'Total Profit Paid' | t }}</p>
                 <p class="text-sm font-bold text-indigo-600 dark:text-indigo-400 m-0 mt-0.5">
                   {{ data.investor.totalProfitPaidBdt | money }}
                 </p>
@@ -87,28 +89,28 @@ export interface InvestorTransactionDialogData {
           <!-- Transaction Type Selector -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Transaction Action <span class="text-red-500">*</span>
+              {{ 'Transaction Action' | t }} <span class="text-red-500">*</span>
             </label>
             <div class="grid grid-cols-3 gap-2">
               <button type="button" (click)="setType('CapitalContribution')"
                       [ngClass]="selectedType() === 'CapitalContribution' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
                       class="py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1">
                 <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_circle</mat-icon>
-                <span>Add Capital</span>
+                <span>{{ 'Add Capital' | t }}</span>
               </button>
 
               <button type="button" (click)="setType('CapitalWithdrawal')"
                       [ngClass]="selectedType() === 'CapitalWithdrawal' ? 'bg-amber-600 text-white shadow-md shadow-amber-500/20 ring-2 ring-amber-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
                       class="py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1">
                 <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">remove_circle</mat-icon>
-                <span>Withdraw Capital</span>
+                <span>{{ 'Withdraw Capital' | t }}</span>
               </button>
 
               <button type="button" (click)="setType('ProfitDistribution')"
                       [ngClass]="selectedType() === 'ProfitDistribution' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 ring-2 ring-indigo-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
                       class="py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1">
                 <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">payments</mat-icon>
-                <span>Pay Profit</span>
+                <span>{{ 'Pay Profit' | t }}</span>
               </button>
             </div>
           </div>
@@ -117,27 +119,27 @@ export interface InvestorTransactionDialogData {
           <div class="space-y-1.5">
             <div class="flex justify-between items-center">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Amount (BDT) <span class="text-red-500">*</span>
+                {{ 'Amount (BDT)' | t }} <span class="text-red-500">*</span>
               </label>
               <button *ngIf="selectedType() === 'CapitalWithdrawal' && data.investor.currentCapitalBdt > 0"
                       type="button" (click)="setFullCapital()"
                       class="text-[11px] text-amber-600 dark:text-amber-400 font-bold hover:underline">
-                Withdraw Max ({{ data.investor.currentCapitalBdt | money }})
+                {{ 'Withdraw Max ({amount})' | t: { amount: (data.investor.currentCapitalBdt | money) } }}
               </button>
             </div>
-            <input type="number" formControlName="amountBdt" step="100" min="1" placeholder="e.g. 50000"
+            <input type="number" formControlName="amountBdt" step="100" min="1" [placeholder]="'e.g. 50000' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             
             <p *ngIf="selectedType() === 'CapitalWithdrawal' && form.get('amountBdt')?.value > data.investor.currentCapitalBdt"
                class="text-xs text-red-500 font-medium m-0">
-              Withdrawal amount exceeds available capital of {{ data.investor.currentCapitalBdt | money }}.
+              {{ 'Withdrawal amount exceeds available capital of {amount}.' | t: { amount: (data.investor.currentCapitalBdt | money) } }}
             </p>
           </div>
 
           <!-- Transaction Date -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Transaction Date <span class="text-red-500">*</span>
+              {{ 'Transaction Date' | t }} <span class="text-red-500">*</span>
             </label>
             <input type="date" formControlName="transactionDate"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
@@ -146,18 +148,18 @@ export interface InvestorTransactionDialogData {
           <!-- Reference / Receipt No. -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Reference / Receipt / Voucher No. (Optional)
+              {{ 'Reference / Receipt / Voucher No. (Optional)' | t }}
             </label>
-            <input type="text" formControlName="referenceId" placeholder="e.g. BANK-TRF-001 or VOUCHER-45"
+            <input type="text" formControlName="referenceId" [placeholder]="'e.g. BANK-TRF-001 or VOUCHER-45' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
           </div>
 
           <!-- Notes -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Notes / Description (Optional)
+              {{ 'Notes / Description (Optional)' | t }}
             </label>
-            <textarea formControlName="notes" rows="2" placeholder="e.g. Q3 Profit dividend disbursement via bank transfer"
+            <textarea formControlName="notes" rows="2" [placeholder]="'e.g. Q3 Profit dividend disbursement via bank transfer' | t"
                       class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow"></textarea>
           </div>
 
@@ -167,13 +169,13 @@ export interface InvestorTransactionDialogData {
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-end gap-3 shrink-0">
           <button mat-dialog-close type="button"
                   class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           
           <button type="submit" [disabled]="form.invalid || isLoading() || isWithdrawalExceeded()"
                   class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shadow-teal-500/20 flex items-center gap-2">
             <mat-icon *ngIf="isLoading()" class="!text-[18px] !w-[18px] !h-[18px] animate-spin">sync</mat-icon>
-            <span>Record Transaction</span>
+            <span>{{ 'Record Transaction' | t }}</span>
           </button>
         </div>
 
@@ -187,6 +189,7 @@ export class InvestorTransactionDialogComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<InvestorTransactionDialogComponent>);
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
   readonly data: InvestorTransactionDialogData = inject(MAT_DIALOG_DATA);
 
   readonly isLoading = signal(false);
@@ -229,7 +232,7 @@ export class InvestorTransactionDialogComponent implements OnInit {
 
     const farmId = this.workingContextService.currentFarmValue?.id;
     if (!farmId) {
-      this.error.set('No active farm selected in context.');
+      this.error.set(this.i18n.t('No active farm selected in context.'));
       return;
     }
 

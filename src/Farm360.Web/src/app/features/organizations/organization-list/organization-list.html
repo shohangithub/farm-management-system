@@ -1,7 +1,7 @@
 <app-page-header 
-  title="Organizations" 
-  description="Manage your business entities and branches."
-  primaryActionLabel="Add Organization"
+  [title]="'Organizations' | t" 
+  [description]="'Manage your business entities and branches.' | t"
+  [primaryActionLabel]="'Add Organization' | t"
   primaryActionIcon="add"
   (primaryAction)="onAdd()">
 </app-page-header>
@@ -19,17 +19,17 @@
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <mat-icon class="!text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
         </div>
-        <input type="text" (keyup.enter)="onSearch($event)" (blur)="onSearch($event)" placeholder="Search organizations..." class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg leading-5 bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all shadow-sm">
+        <input type="text" (keyup.enter)="onSearch($event)" (blur)="onSearch($event)" [placeholder]="'Search organizations...' | t" class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg leading-5 bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all shadow-sm">
       </div>
       
       <div class="relative flex items-center gap-3">
-        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Filter by:</div>
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Filter by:' | t }}</div>
         <div class="relative">
           <select (change)="onFilterStatus($event)" class="block w-40 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
-            <option value="">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Suspended">Suspended</option>
-            <option value="Inactive">Inactive</option>
+            <option value="">{{ 'All Statuses' | t }}</option>
+            <option value="Active">{{ 'Active' | t }}</option>
+            <option value="Suspended">{{ 'Suspended' | t }}</option>
+            <option value="Inactive">{{ 'Inactive' | t }}</option>
           </select>
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
@@ -42,16 +42,16 @@
   <app-empty-state 
     *ngIf="!isLoading() && organizations().length === 0 && !searchTerm() && !error()"
     icon="domain_disabled"
-    title="No Organizations Found"
-    description="Get started by creating your first business entity to manage farms, branches, and operations."
-    actionLabel="Add Organization"
+    [title]="'No Organizations Found' | t"
+    [description]="'Get started by creating your first business entity to manage farms, branches, and operations.' | t"
+    [actionLabel]="'Add Organization' | t"
     (action)="onAdd()">
   </app-empty-state>
 
   <app-empty-state 
     *ngIf="!isLoading() && organizations().length === 0 && searchTerm() && !error()"
     icon="search_off"
-    title="No matches found"
+    [title]="'No matches found' | t"
     description="We couldn't find any organizations matching your search or filters.">
   </app-empty-state>
 

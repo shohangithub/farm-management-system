@@ -12,6 +12,8 @@ import { WorkingContextService } from '../../../../../core/services/working-cont
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-record-mortality-dialog',
@@ -24,7 +26,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
-    AnimalPickerComponent
+    AnimalPickerComponent,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -33,11 +36,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">sentiment_very_dissatisfied</mat-icon>
-            Record Mortality
+            {{ 'Record Mortality' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Log and track animal mortality</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Log and track animal mortality' | t }}</p>
         </div>
-        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
+        <button mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [attr.aria-label]="'Close' | t">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -54,45 +57,45 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
           
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Select Animal <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Select Animal' | t }} <span class="text-red-500">*</span></label>
             <app-animal-picker formControlName="animalId"></app-animal-picker>
-            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Date of Death <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Date of Death' | t }} <span class="text-red-500">*</span></label>
               <input type="date" formControlName="deathDate"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <p *ngIf="form.get('deathDate')?.touched && form.get('deathDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('deathDate')?.touched && form.get('deathDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Cause of Death <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Cause of Death' | t }} <span class="text-red-500">*</span></label>
               <select formControlName="causeOfDeath"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-                <option *ngFor="let cause of causes" [ngValue]="cause.value">{{ cause.label }}</option>
+                <option *ngFor="let cause of causes" [ngValue]="cause.value">{{ cause.label | t }}</option>
               </select>
             </div>
           </div>
 
           <div *ngIf="form.get('causeOfDeath')?.value === CauseOfDeath.Disease" class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Disease Name <span class="text-red-500">*</span></label>
-            <input type="text" formControlName="diseaseName" placeholder="e.g. Foot and Mouth Disease"
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Disease Name' | t }} <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="diseaseName" [placeholder]="'e.g. Foot and Mouth Disease' | t"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <p *ngIf="form.get('diseaseName')?.touched && form.get('diseaseName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">Disease name is required when the cause is Disease.</p>
+            <p *ngIf="form.get('diseaseName')?.touched && form.get('diseaseName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Disease name is required when the cause is Disease.' | t }}</p>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Estimated Economic Loss (BDT)</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Estimated Economic Loss (BDT)' | t }}</label>
             <input type="number" formControlName="estimatedEconomicLossBdt" min="0" placeholder="0"
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <p *ngIf="form.get('estimatedEconomicLossBdt')?.touched && form.get('estimatedEconomicLossBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+            <p *ngIf="form.get('estimatedEconomicLossBdt')?.touched && form.get('estimatedEconomicLossBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Post-Mortem Notes</label>
-            <textarea formControlName="postMortemNotes" rows="3" placeholder="Any findings or observations..."
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Post-Mortem Notes' | t }}</label>
+            <textarea formControlName="postMortemNotes" rows="3" [placeholder]="'Any findings or observations...' | t"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
         </div>
@@ -101,12 +104,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
                   class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isSubmitting() ? 'Recording...' : 'Record Death' }}</span>
+            <span>{{ (isSubmitting() ? 'Recording...' : 'Record Death') | t }}</span>
           </button>
         </div>
       </form>
@@ -133,6 +136,7 @@ export class RecordMortalityDialog {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<RecordMortalityDialog>);
+  private readonly i18n = inject(I18nService);
   /** Opened from an animal's page: that animal is preselected. */
   private data = inject<{ animalId?: string } | null>(MAT_DIALOG_DATA, { optional: true });
 
@@ -184,7 +188,7 @@ export class RecordMortalityDialog {
     const farmId = this.contextService.currentFarmValue?.id || '';
 
     if (!farmId) {
-      const msg = 'No farm context available.';
+      const msg = this.i18n.t('No farm context available.');
       this.error.set(msg);
       this.isSubmitting.set(false);
       return;

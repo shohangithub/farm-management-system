@@ -22,6 +22,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-vet-visit-list',
@@ -36,7 +38,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   templateUrl: './vet-visit-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -47,6 +50,10 @@ export class VetVisitListComponent {
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
+
+  /** Empty-state text; kept here because the apostrophe cannot sit inside a template string literal. */
+  readonly emptyDescription = "Log professional vet visits to track your farm's health history.";
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -147,14 +154,14 @@ export class VetVisitListComponent {
         filename: `Farm360_Vet_Visits_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Veterinary Visits & Health Log',
-          subtitle: 'Professional Clinical Evaluations & Medical Services',
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('Veterinary Visits & Health Log'),
+          subtitle: this.i18n.t('Professional Clinical Evaluations & Medical Services'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: 'Total Recorded Visits', value: `${total}` },
-            { label: 'Current Page Items', value: `${items.length}` }
+            { label: this.i18n.t('Total Recorded Visits'), value: `${total}` },
+            { label: this.i18n.t('Current Page Items'), value: `${items.length}` }
           ]
         },
         showSignatures: true

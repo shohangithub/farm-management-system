@@ -18,11 +18,13 @@ import { LoanRecord } from '../../models/finance.model';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-loan-list',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -36,13 +38,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
   ],
   template: `
     <app-page-header 
-      title="Loans & Liabilities" 
-      description="Manage farm financing, loans, and track repayments."
-      breadcrumbActiveNode="Loans">
+      [title]="'Loans & Liabilities' | t" 
+      [description]="'Manage farm financing, loans, and track repayments.' | t"
+      [breadcrumbActiveNode]="'Loans' | t">
       <div actions>
         <button mat-flat-button color="primary" (click)="openLoanDialog()" class="!rounded-xl !px-6 !py-2.5 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 shadow-sm shadow-primary-500/30 transition-all">
           <mat-icon class="!text-[20px]">add</mat-icon>
-          <span>New Loan</span>
+          <span>{{ 'New Loan' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -53,15 +55,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load loans" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="!isLoading() && loadError() as err" [title]="couldNotLoadTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <div *ngIf="!isLoading() && !loadError()" class="space-y-6">
       
       <app-empty-state 
         *ngIf="!loans() || loans()!.length === 0"
         icon="account_balance"
-        title="No Active Loans"
-        description="The farm currently has no recorded loans or external investments."
+        [title]="'No Active Loans' | t"
+        [description]="'The farm currently has no recorded loans or external investments.' | t"
         actionText="Add New Loan"
         (action)="openLoanDialog()">
       </app-empty-state>
@@ -81,27 +83,27 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               </div>
               <div>
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ loan.lenderName }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Disbursed: {{ loan.disbursementDate | date:'mediumDate' }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Disbursed: {date}' | t: { date: (loan.disbursementDate | date:'mediumDate') } }}</p>
               </div>
             </div>
             <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="loan.isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'">
-              {{ loan.isActive ? 'Active' : 'Settled' }}
+              {{ (loan.isActive ? 'Active' : 'Settled') | t }}
             </span>
           </div>
 
           <div class="space-y-4">
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
-              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Principal Amount</span>
+              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ 'Principal Amount' | t }}</span>
               <span class="text-sm font-bold text-gray-900 dark:text-white">{{ loan.principalAmountBdt | money }}</span>
             </div>
             
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
-              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Interest Rate</span>
+              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ 'Interest Rate' | t }}</span>
               <span class="text-sm font-bold text-gray-900 dark:text-white">{{ loan.interestRatePercent }}%</span>
             </div>
 
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
-              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding Balance</span>
+              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ 'Outstanding Balance' | t }}</span>
               <span class="text-sm font-bold" [ngClass]="loan.outstandingBalanceBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
                 {{ loan.outstandingBalanceBdt | money }}
               </span>
@@ -111,24 +113,24 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <!-- Progress Bar -->
           <div class="mt-6 pt-2">
             <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-2">
-              <span class="text-gray-500">Repayment Progress</span>
+              <span class="text-gray-500">{{ 'Repayment Progress' | t }}</span>
               <span class="text-emerald-600 dark:text-emerald-400">{{ loan.repaymentProgressPercent }}%</span>
             </div>
             <div class="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
               <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500" [style.width.%]="loan.repaymentProgressPercent"></div>
             </div>
-            <p class="text-xs text-center text-gray-500 mt-2">Total Repaid: {{ loan.totalRepaidBdt | money }}</p>
+            <p class="text-xs text-center text-gray-500 mt-2">{{ 'Total Repaid: {amount}' | t: { amount: (loan.totalRepaidBdt | money) } }}</p>
             <div class="grid grid-cols-3 gap-2 mt-3 text-center">
               <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 px-2 py-1.5">
-                <p class="text-[11px] uppercase tracking-wider text-gray-400 m-0">Principal paid</p>
+                <p class="text-[11px] uppercase tracking-wider text-gray-400 m-0">{{ 'Principal paid' | t }}</p>
                 <p class="text-xs font-bold text-gray-800 dark:text-gray-100 m-0">{{ (loan.principalRepaidBdt ?? 0) | money }}</p>
               </div>
-              <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5" title="Interest is an expense in profit & loss">
-                <p class="text-[11px] uppercase tracking-wider text-amber-600 dark:text-amber-400 m-0">Interest paid</p>
+              <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5" [title]="'Interest is an expense in profit & loss' | t">
+                <p class="text-[11px] uppercase tracking-wider text-amber-600 dark:text-amber-400 m-0">{{ 'Interest paid' | t }}</p>
                 <p class="text-xs font-bold text-amber-700 dark:text-amber-300 m-0">{{ (loan.interestPaidBdt ?? 0) | money }}</p>
               </div>
-              <div class="rounded-lg bg-rose-50 dark:bg-rose-900/20 px-2 py-1.5" title="Principal still owed — the liability on the balance sheet">
-                <p class="text-[11px] uppercase tracking-wider text-rose-500 m-0">Principal due</p>
+              <div class="rounded-lg bg-rose-50 dark:bg-rose-900/20 px-2 py-1.5" [title]="'Principal still owed — the liability on the balance sheet' | t">
+                <p class="text-[11px] uppercase tracking-wider text-rose-500 m-0">{{ 'Principal due' | t }}</p>
                 <p class="text-xs font-bold text-rose-600 dark:text-rose-300 m-0">{{ (loan.outstandingPrincipalBdt ?? 0) | money }}</p>
               </div>
             </div>
@@ -139,7 +141,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <button (click)="openRepaymentDialog(loan)" 
               class="w-full py-2.5 px-4 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-sm shadow-emerald-500/20 flex items-center justify-center gap-2">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">payments</mat-icon>
-              Make Repayment
+              {{ 'Make Repayment' | t }}
             </button>
           </div>
 
@@ -147,7 +149,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div *ngIf="!loan.isActive" class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50">
             <div class="w-full py-2.5 px-4 text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-800/30">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon>
-              Fully Settled
+              {{ 'Fully Settled' | t }}
             </div>
           </div>
 
@@ -163,6 +165,8 @@ export class LoanListComponent implements OnInit {
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load loans");
 
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
 
@@ -177,7 +181,7 @@ export class LoanListComponent implements OnInit {
       }
       return this.financeService.getLoans(farm.id).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load loans.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load loans.')));
           return of([]);
         })
       );

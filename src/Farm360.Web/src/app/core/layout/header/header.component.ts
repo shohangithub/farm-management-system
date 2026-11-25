@@ -16,10 +16,13 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { WorkingContextService } from '../../services/working-context.service';
 import { ContextSelectorDialogComponent } from '../context-selector/context-selector-dialog.component';
 
+import { I18nService } from '../../i18n/i18n.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [
+    TranslatePipe,
     CommonModule,
     RouterModule,
     MatToolbarModule,
@@ -76,6 +79,7 @@ export class HeaderComponent implements OnInit {
   }
 
   private authService = inject(AuthService);
+  readonly i18n = inject(I18nService);
   private dialog = inject(MatDialog);
   readonly signalRService = inject(IntelligenceSignalRService);
   readonly currentOrg$ = inject(WorkingContextService).currentOrg$;

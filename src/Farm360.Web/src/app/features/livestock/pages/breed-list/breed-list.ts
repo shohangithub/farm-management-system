@@ -17,6 +17,8 @@ import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-i
 import { switchMap, catchError, debounceTime, distinctUntilChanged, tap, skip } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-breed-list',
@@ -30,17 +32,18 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    ErrorStateComponent
+    ErrorStateComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Breed Management"
-      description="Manage livestock breeds, growth targets, and intelligence baselines."
-      breadcrumbActiveNode="Breeds">
+      [title]="'Breed Management' | t"
+      [description]="'Manage livestock breeds, growth targets, and intelligence baselines.' | t"
+      [breadcrumbActiveNode]="'Breeds' | t">
       <div actions>
         <button (click)="openSetupDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add Breed
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Breed' | t }}
         </button>
       </div>
     </app-page-header>
@@ -54,32 +57,32 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
-            placeholder="Search breeds..."
+            [placeholder]="'Search breeds...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
         </div>
 
         <select [ngModel]="params().category ?? null" (ngModelChange)="onCategoryChange($event)"
           class="w-full sm:w-48 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option [ngValue]="null">All Categories</option>
-          <option value="Indigenous">Indigenous</option>
-          <option value="Exotic">Exotic</option>
-          <option value="Crossbred">Crossbred</option>
+          <option [ngValue]="null">{{ 'All Categories' | t }}</option>
+          <option value="Indigenous">{{ 'Indigenous' | t }}</option>
+          <option value="Exotic">{{ 'Exotic' | t }}</option>
+          <option value="Crossbred">{{ 'Crossbred' | t }}</option>
         </select>
 
         <select [ngModel]="params().mainPurpose ?? null" (ngModelChange)="onPurposeChange($event)"
           class="w-full sm:w-48 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option [ngValue]="null">All Purposes</option>
-          <option value="Dairy">Dairy</option>
-          <option value="Beef">Beef</option>
-          <option value="Dual-purpose">Dual-purpose</option>
+          <option [ngValue]="null">{{ 'All Purposes' | t }}</option>
+          <option value="Dairy">{{ 'Dairy' | t }}</option>
+          <option value="Beef">{{ 'Beef' | t }}</option>
+          <option value="Dual-purpose">{{ 'Dual-purpose' | t }}</option>
         </select>
 
         <select [ngModel]="currentSortKey()" (ngModelChange)="onSortChange($event)"
           class="w-full sm:w-52 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option value="name_asc">Sort: Name (A-Z)</option>
-          <option value="name_desc">Sort: Name (Z-A)</option>
-          <option value="adg_desc">Sort: Highest ADG</option>
-          <option value="fcr_asc">Sort: Best FCR (Lowest)</option>
+          <option value="name_asc">{{ 'Sort: Name (A-Z)' | t }}</option>
+          <option value="name_desc">{{ 'Sort: Name (Z-A)' | t }}</option>
+          <option value="adg_desc">{{ 'Sort: Highest ADG' | t }}</option>
+          <option value="fcr_asc">{{ 'Sort: Best FCR (Lowest)' | t }}</option>
         </select>
       </div>
 
@@ -87,16 +90,16 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
       <app-empty-state 
         *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="pets"
-        title="No Breeds Found"
-        description="Get started by adding your first livestock breed."
-        actionLabel="Add Breed"
+        [title]="'No Breeds Found' | t"
+        [description]="'Get started by adding your first livestock breed.' | t"
+        [actionLabel]="'Add Breed' | t"
         (action)="openSetupDialog()">
       </app-empty-state>
 
       <!-- Breeds Grid -->
       <div *ngIf="!loading() && result()?.items?.length" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @for (breed of result()?.items; track breed.id) {
-          <div (click)="goToDetails(breed.id)" (keydown.enter)="goToDetails(breed.id)" role="link" tabindex="0" [attr.aria-label]="'Open breed ' + breed.name" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer">
+          <div (click)="goToDetails(breed.id)" (keydown.enter)="goToDetails(breed.id)" role="link" tabindex="0" [attr.aria-label]="'Open breed {name}' | t: { name: breed.name }" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer">
             <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">pets</mat-icon>
 
             <!-- Card Header -->
@@ -108,16 +111,16 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
                 <div>
                   <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-emerald-600 transition-colors">{{ breed.name }}</h3>
                   <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-400">
-                    {{ breed.category }} • {{ breed.mainPurpose }}
+                    {{ breed.category | t }} • {{ breed.mainPurpose | t }}
                   </span>
                 </div>
               </div>
 
               <div class="flex items-center gap-1">
-                <button aria-label="Edit Breed" (click)="openSetupDialog(breed); $event.stopPropagation()" class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="Edit Breed">
+                <button [attr.aria-label]="'Edit Breed' | t" (click)="openSetupDialog(breed); $event.stopPropagation()" class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" [title]="'Edit Breed' | t">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                 </button>
-                <button aria-label="Delete Breed" (click)="onDelete(breed, $event)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Delete Breed">
+                <button [attr.aria-label]="'Delete Breed' | t" (click)="onDelete(breed, $event)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" [title]="'Delete Breed' | t">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                 </button>
               </div>
@@ -125,15 +128,15 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 
             <!-- Card Body -->
             <div class="p-5 flex-1 relative z-10">
-              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ breed.description || 'No description provided.' }}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ breed.description || ('No description provided.' | t) }}</p>
 
               <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 mb-2">
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Standard ADG</div>
-                  <div class="font-extrabold text-gray-900 dark:text-white text-base mt-0.5">{{ breed.standardAdgMin }} - {{ breed.standardAdgMax }} kg</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Standard ADG' | t }}</div>
+                  <div class="font-extrabold text-gray-900 dark:text-white text-base mt-0.5">{{ breed.standardAdgMin }} - {{ breed.standardAdgMax }} {{ 'kg' | t }}</div>
                 </div>
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Target FCR</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Target FCR' | t }}</div>
                   <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">{{ breed.fcrMin }} - {{ breed.fcrMax }}</div>
                 </div>
               </div>
@@ -145,11 +148,11 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
       <!-- Pagination Footer -->
       <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-          Showing <span class="font-bold text-gray-900 dark:text-white">{{ pageStart() }}</span> to <span class="font-bold text-gray-900 dark:text-white">{{ pageEnd() }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ result()?.totalCount }}</span> breeds
+          {{ 'Showing {from} to {to} of {total} breeds' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount } }}
         </div>
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-500 dark:text-gray-400">Rows per page:</label>
+            <label class="text-sm text-gray-500 dark:text-gray-400">{{ 'Rows per page:' | t }}</label>
             <select [ngModel]="params().pageSize" (ngModelChange)="onPageSizeChange($event)"
               class="px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
               <option [ngValue]="10">10</option>
@@ -159,11 +162,11 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
             </select>
           </div>
           <div class="flex items-center gap-2">
-            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button [attr.aria-label]="'Previous' | t" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                   class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
           </button>
-          <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+          <button [attr.aria-label]="'Next' | t" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                   class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
           </button>
@@ -178,6 +181,7 @@ export class BreedList {
   private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -256,7 +260,7 @@ export class BreedList {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ params }) => this.breedService.getBreeds(params).pipe(
         catchError(e => {
-          this.error.set(parseApiError(e, 'Could not load breeds.'));
+          this.error.set(parseApiError(e, this.i18n.t('Could not load breeds.')));
           return of(null);
         })
       )),
@@ -368,10 +372,10 @@ export class BreedList {
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
-        title: 'Delete Breed',
-        message: `Are you sure you want to delete "${breed.name}"? This action cannot be undone.`,
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
+        title: this.i18n.t('Delete Breed'),
+        message: this.i18n.t('Are you sure you want to delete "{name}"? This action cannot be undone.', { name: breed.name }),
+        confirmButtonText: this.i18n.t('Delete'),
+        cancelButtonText: this.i18n.t('Cancel'),
         isDestructive: true
       }
     });

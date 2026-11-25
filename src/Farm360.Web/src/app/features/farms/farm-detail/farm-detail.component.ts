@@ -15,6 +15,8 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { ConfirmService } from '../../../shared/services/confirm.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -22,7 +24,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
 @Component({
   selector: 'app-farm-detail',
   standalone: true,
-  imports: [ErrorStateComponent, 
+  imports: [TranslatePipe, ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -38,6 +40,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FarmDetailComponent {
+  private readonly i18n = inject(I18nService);
   private readonly confirmService = inject(ConfirmService);
   private readonly farmService = inject(FarmService);
   private readonly shedService = inject(ShedService);
@@ -66,7 +69,7 @@ export class FarmDetailComponent {
           sheds: this.shedService.getShedsByFarm(farmId!).pipe(catchError(() => of([])))
         }).pipe(
           tap(res => {
-            if (!res.farm && !this.error()) this.error.set('Failed to load farm details.');
+            if (!res.farm && !this.error()) this.error.set(this.i18n.t('Failed to load farm details.'));
           }),
           catchError(err => {
             this.error.set(parseApiError(err, 'Failed to load farm details.'));
@@ -140,7 +143,7 @@ export class FarmDetailComponent {
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms']);
         },
         error: (err) => {
-          this.error.set(err?.error?.detail || 'Failed to delete farm.');
+          this.error.set(err?.error?.detail || this.i18n.t('Failed to delete farm.'));
           console.error('Failed to delete farm', err);
         }
       });

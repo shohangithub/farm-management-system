@@ -6,6 +6,8 @@ import { RouterModule } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { HerdComposition } from '../../models/dashboard.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { translate } from '../../../../core/i18n/i18n.service';
 
 export type CompositionTab = 'species' | 'sex' | 'status';
 
@@ -19,13 +21,13 @@ interface LegendItem {
 @Component({
   selector: 'app-herd-composition-chart',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, BaseChartDirective, RouterModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, BaseChartDirective, RouterModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-full">
       <!-- Filter Pill Tabs -->
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-gray-100 dark:border-gray-700/60">
-        <span id="herd-group-label" class="text-xs font-medium text-gray-500 dark:text-gray-400">Group by</span>
+        <span id="herd-group-label" class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Group by' | t }}</span>
         <div class="inline-flex p-1 bg-gray-100 dark:bg-gray-900/40 rounded-xl text-xs" role="group" aria-labelledby="herd-group-label">
           <button *ngFor="let tab of tabs"
             type="button"
@@ -35,7 +37,7 @@ interface LegendItem {
               ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-700 dark:text-primary-300'
               : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'"
             class="min-h-[32px] px-3 font-medium rounded-lg transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-            {{ tab.label }}
+            {{ tab.label | t }}
           </button>
         </div>
       </div>
@@ -56,7 +58,7 @@ interface LegendItem {
               {{ totalCount() }}
             </span>
             <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">
-              {{ activeTab() === 'status' ? 'All-time animals' : 'Head on farm' }}
+              {{ (activeTab() === 'status' ? 'All-time animals' : 'Head on farm') | t }}
             </span>
           </div>
         </div>
@@ -80,10 +82,10 @@ interface LegendItem {
           <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 flex items-center justify-center mb-3" aria-hidden="true">
             <mat-icon>donut_large</mat-icon>
           </div>
-          <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">No demographics data</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">Register livestock to view demographic composition and distribution.</p>
+          <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">{{ 'No demographics data' | t }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">{{ 'Register livestock to view demographic composition and distribution.' | t }}</p>
           <a routerLink="/livestock/register" class="mt-4 inline-flex items-center gap-1 min-h-[44px] px-3 rounded-lg text-sm font-semibold text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-            Register animals
+            {{ 'Register animals' | t }}
             <mat-icon class="text-[18px] w-[18px] h-[18px]" aria-hidden="true">arrow_forward</mat-icon>
           </a>
         </div>
@@ -142,7 +144,7 @@ export class HerdCompositionChartComponent implements OnChanges {
             const value = (context.raw as number) || 0;
             const total = (context.chart.data.datasets[0].data as number[]).reduce((a, b) => a + b, 0);
             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-            return ` ${label}: ${value} head (${percentage}%)`;
+            return ` ${label}: ${translate('{value} head ({percentage}%)', { value, percentage })}`;
           }
         }
       }
@@ -229,8 +231,8 @@ export class HerdCompositionChartComponent implements OnChanges {
   }
 
   private formatLabel(raw: string): string {
-    if (raw === '1') return 'Male';
-    if (raw === '2') return 'Female';
-    return raw.replace(/([A-Z])/g, ' $1').trim();
+    if (raw === '1') return translate('Male');
+    if (raw === '2') return translate('Female');
+    return translate(raw.replace(/([A-Z])/g, ' $1').trim());
   }
 }

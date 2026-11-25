@@ -19,6 +19,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ExpiringItemsPanel } from '../../components/expiring-items-panel/expiring-items-panel';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-inventory-dashboard',
@@ -33,21 +35,22 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     EmptyStateComponent,
     ErrorStateComponent,
     LoadingComponent,
-    ExpiringItemsPanel
+    ExpiringItemsPanel,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Inventory & Stock Control Intelligence"
-      description="Real-time stock levels, weighted average valuation, low-stock alerts, and movement ledgers."
-      breadcrumbActiveNode="Inventory Control">
+      [title]="'Inventory & Stock Control Intelligence' | t"
+      [description]="'Real-time stock levels, weighted average valuation, low-stock alerts, and movement ledgers.' | t"
+      [breadcrumbActiveNode]="'Inventory Control' | t">
       <div actions class="flex items-center gap-2">
         <button (click)="openStockInDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_business</mat-icon> Record Stock In
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_business</mat-icon> {{ 'Record Stock In' | t }}
         </button>
         <button (click)="openStockOutDialog()"
           class="px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">remove_shopping_cart</mat-icon> Deduct Stock
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">remove_shopping_cart</mat-icon> {{ 'Deduct Stock' | t }}
         </button>
       </div>
     </app-page-header>
@@ -62,7 +65,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <mat-icon class="!w-6 !h-6 !text-[24px]">account_balance_wallet</mat-icon>
           </div>
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Stock Value</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Total Stock Value' | t }}</div>
             <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
               {{ report()?.totalValuationBdt || 0 | money }}
             </div>
@@ -75,9 +78,9 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <mat-icon class="!w-6 !h-6 !text-[24px]">inventory_2</mat-icon>
           </div>
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Catalog SKUs</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Total Catalog SKUs' | t }}</div>
             <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
-              {{ report()?.totalSkusCount || 0 }} <span class="text-xs font-medium text-gray-400">items</span>
+              {{ report()?.totalSkusCount || 0 }} <span class="text-xs font-medium text-gray-400">{{ 'items' | t }}</span>
             </div>
           </div>
         </div>
@@ -88,7 +91,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <mat-icon class="!w-6 !h-6 !text-[24px]">warning</mat-icon>
           </div>
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Low Stock SKUs</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Low Stock SKUs' | t }}</div>
             <div class="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">
               {{ report()?.lowStockCount || 0 }}
             </div>
@@ -101,7 +104,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <mat-icon class="!w-6 !h-6 !text-[24px]">remove_shopping_cart</mat-icon>
           </div>
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Out of Stock</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Out of Stock' | t }}</div>
             <div class="text-2xl font-extrabold text-red-600 dark:text-red-400 mt-0.5">
               {{ report()?.outOfStockCount || 0 }}
             </div>
@@ -115,77 +118,77 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">today</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Today's Consumables</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ "Today's Consumables" | t }}</span>
         </a>
 
         <a routerLink="../consumable-plans" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-teal-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">cleaning_services</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Consumable Plans</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Consumable Plans' | t }}</span>
         </a>
 
         <a routerLink="../current-stock" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">analytics</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Current Stock</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Current Stock' | t }}</span>
         </a>
 
         <a routerLink="/reports/inventory.daily-consumption" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-amber-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">query_stats</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Daily Consumption</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Daily Consumption' | t }}</span>
         </a>
 
         <a routerLink="../items" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">list_alt</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Stock Catalog</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Stock Catalog' | t }}</span>
         </a>
 
         <a routerLink="../transactions" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-blue-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">receipt_long</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Stock Ledger</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Stock Ledger' | t }}</span>
         </a>
 
         <a routerLink="../suppliers" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-purple-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">local_shipping</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Suppliers</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Suppliers' | t }}</span>
         </a>
 
         <a routerLink="../base-units" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-emerald-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">straighten</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Base Units</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Base Units' | t }}</span>
         </a>
 
         <a routerLink="../unit-conversions" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-teal-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">swap_horiz</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Unit Conversions</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Unit Conversions' | t }}</span>
         </a>
 
         <a routerLink="../purchase-orders" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-indigo-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">request_quote</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Purchase Orders</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Purchase Orders' | t }}</span>
         </a>
 
         <a routerLink="../returns" class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-amber-500 transition-all flex flex-col justify-between group shadow-sm">
           <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">assignment_return</mat-icon>
           </div>
-          <span class="font-semibold text-gray-900 dark:text-white text-xs">Purchase Returns</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-xs">{{ 'Purchase Returns' | t }}</span>
         </a>
       </div>
 
@@ -197,17 +200,17 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
-              <mat-icon class="text-amber-500 !text-[20px] !w-[20px] !h-[20px]">notification_important</mat-icon> Low Stock Alerts
+              <mat-icon class="text-amber-500 !text-[20px] !w-[20px] !h-[20px]">notification_important</mat-icon> {{ 'Low Stock Alerts' | t }}
             </h2>
-            <a routerLink="../items" class="text-xs font-semibold text-emerald-600 hover:underline">View Catalog</a>
+            <a routerLink="../items" class="text-xs font-semibold text-emerald-600 hover:underline">{{ 'View Catalog' | t }}</a>
           </div>
 
           <app-empty-state
             *ngIf="!isLoading() && !loadError() && lowStockItems().length === 0"
             icon="task_alt"
-            title="All stock levels healthy"
-            description="No items are currently below their reorder threshold."
-            actionLabel="Add Stock Item"
+            [title]="'All stock levels healthy' | t"
+            [description]="'No items are currently below their reorder threshold.' | t"
+            [actionLabel]="'Add Stock Item' | t"
             (action)="openCreateItemDialog()">
           </app-empty-state>
 
@@ -217,16 +220,16 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                 <div>
                   <div class="font-semibold text-gray-900 dark:text-white text-sm">{{ item.name }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Category: {{ item.categoryName }} • Reorder at: {{ item.reorderThreshold }} {{ item.unitOfMeasure }}
+                    {{ 'Category: {cat}' | t: { cat: (item.categoryName | t) } }} • {{ 'Reorder at: {qty} {unit}' | t: { qty: item.reorderThreshold, unit: item.unitOfMeasure } }}
                   </div>
                 </div>
                 <div class="text-right flex items-center gap-3">
                   <div>
                     <div class="font-extrabold text-amber-600 dark:text-amber-400 text-sm">{{ item.currentStock }} {{ item.unitOfMeasure }}</div>
-                    <div class="text-[11px] uppercase font-bold text-gray-400">Current</div>
+                    <div class="text-[11px] uppercase font-bold text-gray-400">{{ 'Current' | t }}</div>
                   </div>
                   <button (click)="openStockInDialogForItem(item)" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
-                    Reorder
+                    {{ 'Reorder' | t }}
                   </button>
                 </div>
               </div>
@@ -245,17 +248,17 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
-              <mat-icon class="text-emerald-600 !text-[20px] !w-[20px] !h-[20px]">history</mat-icon> Recent Stock Movements
+              <mat-icon class="text-emerald-600 !text-[20px] !w-[20px] !h-[20px]">history</mat-icon> {{ 'Recent Stock Movements' | t }}
             </h2>
-            <a routerLink="../transactions" class="text-xs font-semibold text-emerald-600 hover:underline">View Ledger</a>
+            <a routerLink="../transactions" class="text-xs font-semibold text-emerald-600 hover:underline">{{ 'View Ledger' | t }}</a>
           </div>
 
           <app-empty-state
             *ngIf="!isLoading() && !loadError() && recentTransactions().length === 0"
             icon="history_toggle_off"
-            title="No transactions recorded"
-            description="Record a stock-in receipt to start logging inventory movements."
-            actionLabel="Record Stock In"
+            [title]="'No transactions recorded' | t"
+            [description]="'Record a stock-in receipt to start logging inventory movements.' | t"
+            [actionLabel]="'Record Stock In' | t"
             (action)="openStockInDialog()">
           </app-empty-state>
 
@@ -267,11 +270,11 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                     <span>{{ tx.itemName }}</span>
                     <span class="text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[11px]"
                       [ngClass]="isStockIn(tx.transactionType) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800'">
-                      {{ tx.transactionTypeName }}
+                      {{ tx.transactionTypeName | t }}
                     </span>
                   </div>
                   <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {{ tx.transactionDate }} {{ tx.supplierName ? '• Supplier: ' + tx.supplierName : '' }}
+                    {{ tx.transactionDate }} {{ tx.supplierName ? '• ' + ('Supplier: {name}' | t: { name: tx.supplierName }) : '' }}
                   </div>
                 </div>
                 <div class="text-right">
@@ -293,6 +296,7 @@ export class InventoryDashboardComponent {
   private readonly inventoryService = inject(InventoryService);
   private readonly contextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -327,7 +331,7 @@ export class InventoryDashboardComponent {
         this.report.set(res);
         this.lowStockItems.set(res.items.filter(i => i.status === InventoryStatus.LowStock || i.status === InventoryStatus.OutOfStock));
       },
-      error: (err) => this.loadError.set(parseApiError(err, 'Could not load the inventory dashboard.'))
+      error: (err) => this.loadError.set(parseApiError(err, this.i18n.t('Could not load the inventory dashboard.')))
     });
 
     this.inventoryService.getTransactions({ farmId, pageSize: 5 }).subscribe({
@@ -337,7 +341,7 @@ export class InventoryDashboardComponent {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.loadError.set(parseApiError(err, 'Could not load the inventory dashboard.'));
+        this.loadError.set(parseApiError(err, this.i18n.t('Could not load the inventory dashboard.')));
       }
     });
   }

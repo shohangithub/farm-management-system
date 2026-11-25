@@ -1,7 +1,7 @@
 <app-page-header 
-  title="Sheds" 
-  description="Manage housing units and physical structures for this farm."
-  primaryActionLabel="Add Shed"
+  [title]="'Sheds' | t" 
+  [description]="'Manage housing units and physical structures for this farm.' | t"
+  [primaryActionLabel]="'Add Shed' | t"
   primaryActionIcon="add"
   (primaryAction)="onAddShed()">
 </app-page-header>
@@ -20,17 +20,17 @@
         </div>
         <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
                class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors" 
-               placeholder="Search sheds by name or number...">
+               [placeholder]="'Search sheds by name or number...' | t">
       </div>
       
       <div class="w-full sm:w-auto flex items-center gap-3">
-        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Filter by:</div>
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Filter by:' | t }}</div>
         <div class="relative">
           <select (change)="onFilterStatus($event)" class="block w-44 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
-            <option value="">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="UnderMaintenance">Maintenance</option>
+            <option value="">{{ 'All Statuses' | t }}</option>
+            <option value="Active">{{ 'Active' | t }}</option>
+            <option value="Inactive">{{ 'Inactive' | t }}</option>
+            <option value="UnderMaintenance">{{ 'Maintenance' | t }}</option>
           </select>
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
@@ -46,9 +46,9 @@
   <app-empty-state 
     *ngIf="!isLoading() && !loadError() && shedsResult().length === 0 && !searchTerm()"
     icon="house_siding"
-    title="No Sheds Found"
+    [title]="'No Sheds Found' | t"
     description="This farm doesn't have any housing units yet. Create your first shed to start managing animals."
-    actionLabel="Add First Shed"
+    [actionLabel]="'Add First Shed' | t"
     (action)="onAddShed()">
   </app-empty-state>
 
@@ -56,7 +56,7 @@
   <app-empty-state 
     *ngIf="!isLoading() && shedsResult().length > 0 && filteredSheds().length === 0"
     icon="search_off"
-    title="No matches found"
+    [title]="'No matches found' | t"
     description="We couldn't find any sheds matching your search or filters.">
   </app-empty-state>
 
@@ -81,20 +81,20 @@
                 {{ shed.shedNumber }}
               </span>
               <span class="text-[11px] font-bold tracking-wider uppercase flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">pets</mat-icon> {{ shed.animalType || 'Mixed' }}
+                <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">pets</mat-icon> {{ (shed.animalType || 'Mixed') | t }}
               </span>
             </div>
           </div>
         </div>
         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider" 
               [ngClass]="getStatusClass(shed.status)">
-          {{ getStatusName(shed.status) }}
+          {{ getStatusName(shed.status) | t }}
         </span>
       </div>
       
       <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
         <div class="flex justify-between items-end mb-1">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Occupancy</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Occupancy' | t }}</span>
           <span class="text-sm font-bold text-gray-900 dark:text-white">{{ shed.currentOccupancy | number }} <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">/ {{ shed.capacity ? (shed.capacity | number) : '∞' }}</span></span>
         </div>
         <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
@@ -107,11 +107,11 @@
       <div class="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10">
         <a [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shed.id]" 
            class="flex-1 px-4 py-2 text-sm font-semibold text-amber-700 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1.5">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> View
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> {{ 'View' | t }}
         </a>
-        <a aria-label="Edit Shed" [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shed.id, 'edit']" 
+        <a [attr.aria-label]="'Edit Shed' | t" [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shed.id, 'edit']" 
            class="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors border border-transparent hover:border-amber-200 dark:hover:border-amber-800 bg-white dark:bg-gray-800 shadow-sm"
-           title="Edit Shed">
+           [title]="'Edit Shed' | t">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
         </a>
       </div>

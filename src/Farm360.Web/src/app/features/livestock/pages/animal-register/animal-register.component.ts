@@ -24,6 +24,8 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { HasUnsavedChanges } from '../../../../shared/utils/unsaved-changes.guard';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-animal-register',
@@ -31,7 +33,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, RouterModule, ReactiveFormsModule,
-    PageHeaderComponent, MatSnackBarModule, MatStepperModule, MatButtonModule, MatIconModule
+    PageHeaderComponent, MatSnackBarModule, MatStepperModule, MatButtonModule, MatIconModule, TranslatePipe
   ],
   templateUrl: './animal-register.component.html'
 })
@@ -49,6 +51,8 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
   private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly breedSvc = inject(BreedService);
+  private readonly i18n = inject(I18nService);
+  readonly addAnimalDescription = this.i18n.t("Add a new animal to your organization's herd.");
   
   readonly submitting  = signal(false);
   readonly error       = signal<string | null>(null);
@@ -142,15 +146,15 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
   getError(formGroup: FormGroup, field: string): string {
     const control = formGroup.get(field);
     if (!control || !control.touched || control.valid) return '';
-    if (control.hasError('required')) return 'This field is required.';
+    if (control.hasError('required')) return this.i18n.t('This field is required.');
     if (control.hasError('maxlength')) {
       const max = control.getError('maxlength').requiredLength;
-      return `Maximum ${max} characters allowed.`;
+      return this.i18n.t('Maximum {max} characters allowed.', { max });
     }
     if (control.hasError('min')) {
-      return 'Value must be zero or positive.';
+      return this.i18n.t('Value must be zero or positive.');
     }
-    return 'Invalid value.';
+    return this.i18n.t('Invalid value.');
   }
 
   onSubmit(): void {
@@ -158,7 +162,7 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
       this.idForm.markAllAsTouched(); 
       this.acquisitionForm.markAllAsTouched();
       this.notesForm.markAllAsTouched();
-      this.notify.error('Please fix the validation errors before submitting.');
+      this.notify.error(this.i18n.t('Please fix the validation errors before submitting.'));
       return; 
     }
     
@@ -172,7 +176,7 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
     const farmId = this.contextSvc.currentFarmValue?.id;
     
     if (!farmId) {
-      this.notify.error('Please select a farm context from the top navigation before registering an animal.');
+      this.notify.error(this.i18n.t('Please select a farm context from the top navigation before registering an animal.'));
       return;
     }
 
@@ -193,11 +197,11 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
     }).subscribe({
       next:  a => {
         this.saved = true;
-        this.notify.success('Animal registered successfully!');
+        this.notify.success(this.i18n.t('Animal registered successfully!'));
         this.router.navigate(['/livestock', a.id]);
       },
       error: e => {
-        this.error.set(parseApiError(e, 'Registration failed. Please try again.'));
+        this.error.set(parseApiError(e, this.i18n.t('Registration failed. Please try again.')));
         this.submitting.set(false);
       }
     });

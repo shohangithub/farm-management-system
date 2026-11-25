@@ -8,16 +8,19 @@ import { CreatePenCommand, UpdatePenCommand } from '../models/pen.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-pen-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
+  imports: [TranslatePipe, CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './pen-form.component.html'
 })
 export class PenFormComponent implements OnInit, HasUnsavedChanges {
+  private readonly i18n = inject(I18nService);
   /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
   private saved = false;
 
@@ -104,7 +107,7 @@ export class PenFormComponent implements OnInit, HasUnsavedChanges {
         this.penForm.get('penNumber')?.disable();
       },
       error: (err) => {
-        this.error.set('Failed to load pen details.');
+        this.error.set(this.i18n.t('Failed to load pen details.'));
         console.error(err);
       }
     });
@@ -127,7 +130,7 @@ export class PenFormComponent implements OnInit, HasUnsavedChanges {
   onSubmit(): void {
     if (this.penForm.invalid) {
       this.penForm.markAllAsTouched();
-      this.notify.error('Please fix the validation errors before submitting.');
+      this.notify.error(this.i18n.t('Please fix the validation errors before submitting.'));
       return;
     }
 
@@ -151,12 +154,12 @@ export class PenFormComponent implements OnInit, HasUnsavedChanges {
       this.penService.updatePen(this.penId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Pen updated successfully!');
+          this.notify.success(this.i18n.t('Pen updated successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to update pen. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to update pen. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);
@@ -170,12 +173,12 @@ export class PenFormComponent implements OnInit, HasUnsavedChanges {
       this.penService.createPen(this.shedId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Pen created successfully!');
+          this.notify.success(this.i18n.t('Pen created successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to create pen. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to create pen. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);

@@ -1,9 +1,11 @@
+import { translate } from '../i18n/i18n.service';
+
 /**
  * Utility to parse all types of API validation & exception responses from ASP.NET Core RFC 7807 ProblemDetails
  * or standard HTTP errors into a clean, human-readable string for display in UI dialogs and forms.
  */
 export function parseApiError(err: any, fallbackMessage = 'An unexpected error occurred. Please try again.'): string {
-  if (!err) return fallbackMessage;
+  if (!err) return translate(fallbackMessage);
 
   const errorObj = err.error || err;
 
@@ -62,5 +64,5 @@ export function parseApiError(err: any, fallbackMessage = 'An unexpected error o
     return err.message;
   }
 
-  return fallbackMessage;
+  return translate(fallbackMessage);
 }

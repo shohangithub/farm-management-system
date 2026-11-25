@@ -2,11 +2,12 @@ import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule, DecimalPipe, PercentPipe } from '@angular/common';
 import { ProfitProjectionResponse } from '../../models/projection.model';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-projection-daily-table',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, PercentPipe, MatIconModule],
+  imports: [CommonModule, DecimalPipe, PercentPipe, MatIconModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6">
@@ -15,7 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center p-2 rounded-lg shadow-md shadow-blue-500/20">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">table_rows</mat-icon>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white m-0">Daily Breakdown</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white m-0">{{ 'Daily Breakdown' | t }}</h3>
         </div>
       </div>
       
@@ -23,17 +24,17 @@ import { MatIconModule } from '@angular/material/icon';
         <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300 relative">
           <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sticky top-0 z-10 shadow-sm">
             <tr>
-              <th scope="col" class="px-4 py-3 rounded-tl-lg">Day</th>
-              <th scope="col" class="px-4 py-3">Weight (kg)</th>
-              <th scope="col" class="px-4 py-3">Meat (kg)</th>
-              <th scope="col" class="px-4 py-3">Feed (kg)</th>
-              <th scope="col" class="px-4 py-3">Feed Cost</th>
-              <th scope="col" class="px-4 py-3" title="Grass + other + labour (monthly ÷ 30)">Fixed Cost</th>
-              <th scope="col" class="px-4 py-3">Day Cost</th>
-              <th scope="col" class="px-4 py-3">Total Inv.</th>
-              <th scope="col" class="px-4 py-3">Meat Val.</th>
-              <th scope="col" class="px-4 py-3">Profit / Loss</th>
-              <th scope="col" class="px-4 py-3 rounded-tr-lg">ROI</th>
+              <th scope="col" class="px-4 py-3 rounded-tl-lg">{{ 'Day' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Weight (kg)' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Meat (kg)' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Feed (kg)' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Feed Cost' | t }}</th>
+              <th scope="col" class="px-4 py-3" [title]="'Grass + other + labour (monthly ÷ 30)' | t">{{ 'Fixed Cost' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Day Cost' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Total Inv.' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Meat Val.' | t }}</th>
+              <th scope="col" class="px-4 py-3">{{ 'Profit / Loss' | t }}</th>
+              <th scope="col" class="px-4 py-3 rounded-tr-lg">{{ 'ROI' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -43,10 +44,10 @@ import { MatIconModule } from '@angular/material/icon';
               <td class="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">
                 {{ day.day }}
                 <span *ngIf="day.day === data()?.summary?.optimalSaleDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
-                  Best
+                  {{ 'Best' | t }}
                 </span>
                 <span *ngIf="day.day === data()?.summary?.breakEvenDay" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-                  Break-Even
+                  {{ 'Break-Even' | t }}
                 </span>
               </td>
               <td class="px-4 py-3">{{ day.liveWeightKg | number:'1.1-2' }}</td>

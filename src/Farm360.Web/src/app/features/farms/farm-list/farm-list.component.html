@@ -1,7 +1,7 @@
 <app-page-header 
-  title="Farms" 
-  description="Manage all farm locations operating under this branch."
-  primaryActionLabel="Add Farm"
+  [title]="'Farms' | t" 
+  [description]="'Manage all farm locations operating under this branch.' | t"
+  [primaryActionLabel]="'Add Farm' | t"
   primaryActionIcon="add"
   (primaryAction)="onAddFarm()">
 </app-page-header>
@@ -20,18 +20,18 @@
         </div>
         <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
                class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors" 
-               placeholder="Search farms by name or code...">
+               [placeholder]="'Search farms by name or code...' | t">
       </div>
       
       <div class="w-full sm:w-auto flex items-center gap-3">
-        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Filter by:</div>
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Filter by:' | t }}</div>
         <div class="relative">
           <select (change)="onFilterStatus($event)" class="block w-44 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
-            <option value="">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="UnderMaintenance">Under Maintenance</option>
-            <option value="Closed">Closed</option>
+            <option value="">{{ 'All Statuses' | t }}</option>
+            <option value="Active">{{ 'Active' | t }}</option>
+            <option value="Inactive">{{ 'Inactive' | t }}</option>
+            <option value="UnderMaintenance">{{ 'Under Maintenance' | t }}</option>
+            <option value="Closed">{{ 'Closed' | t }}</option>
           </select>
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
@@ -48,9 +48,9 @@
   <app-empty-state 
     *ngIf="!isLoading() && !loadError() && farmsResult().length === 0 && !searchTerm()"
     icon="agriculture"
-    title="No Farms Found"
+    [title]="'No Farms Found' | t"
     description="This branch doesn't have any farms yet. Create your first farm to start managing your agricultural operations."
-    actionLabel="Add First Farm"
+    [actionLabel]="'Add First Farm' | t"
     (action)="onAddFarm()">
   </app-empty-state>
 
@@ -58,7 +58,7 @@
   <app-empty-state 
     *ngIf="!isLoading() && farmsResult().length > 0 && filteredFarms().length === 0"
     icon="search_off"
-    title="No matches found"
+    [title]="'No matches found' | t"
     description="We couldn't find any farms matching your search or filters.">
   </app-empty-state>
 

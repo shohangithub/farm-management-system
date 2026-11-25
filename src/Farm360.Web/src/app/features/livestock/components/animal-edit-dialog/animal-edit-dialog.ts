@@ -14,13 +14,15 @@ import { BreedService }           from '../../services/breed.service';
 import { AnimalDto, AnimalSpecies, AnimalSex, AcquisitionType, TagType, SPECIES_LABELS } from '../../models/animal.models';
 import { BreedDto }               from '../../models/breed.models';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-animal-edit-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule
+    CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe
   ],
   templateUrl: './animal-edit-dialog.html'
 })
@@ -30,6 +32,7 @@ export class AnimalEditDialogComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly breedSvc = inject(BreedService);
+  private readonly i18n = inject(I18nService);
   
   readonly submitting  = signal(false);
   readonly error       = signal<string | null>(null);
@@ -77,10 +80,10 @@ export class AnimalEditDialogComponent implements OnInit {
   getError(field: string): string {
     const control = this.form.get(field);
     if (!control || !control.touched || control.valid) return '';
-    if (control.hasError('required')) return 'Required.';
-    if (control.hasError('maxlength')) return 'Too long.';
-    if (control.hasError('min')) return 'Must be >= 0.';
-    return 'Invalid.';
+    if (control.hasError('required')) return this.i18n.t('Required.');
+    if (control.hasError('maxlength')) return this.i18n.t('Too long.');
+    if (control.hasError('min')) return this.i18n.t('Must be >= 0.');
+    return this.i18n.t('Invalid.');
   }
 
   onSubmit(): void {
@@ -110,11 +113,11 @@ export class AnimalEditDialogComponent implements OnInit {
     .pipe(finalize(() => this.submitting.set(false)))
     .subscribe({
       next:  a => {
-        this.notify.success('Animal details updated successfully!');
+        this.notify.success(this.i18n.t('Animal details updated successfully!'));
         this.dialogRef.close(true);
       },
       error: err => {
-        let msg = 'Failed to update animal.';
+        let msg = this.i18n.t('Failed to update animal.');
         if (err.error?.title) msg = err.error.title;
         if (err.error?.detail) msg += ` - ${err.error.detail}`;
         
@@ -134,13 +137,13 @@ export class AnimalEditDialogComponent implements OnInit {
   fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
     const e = group.get(name)?.errors;
     if (!e) return '';
-    if (e['required']) return 'This field is required.';
-    if (e['min']) return `Must be at least ${e['min'].min}.`;
-    if (e['max']) return `Must be at most ${e['max'].max}.`;
-    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
-    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
-    if (e['email']) return 'Enter a valid email address.';
-    if (e['pattern']) return 'Invalid format.';
-    return 'Invalid value.';
+    if (e['required']) return this.i18n.t('This field is required.');
+    if (e['min']) return this.i18n.t('Must be at least {min}.', { min: e['min'].min });
+    if (e['max']) return this.i18n.t('Must be at most {max}.', { max: e['max'].max });
+    if (e['maxlength']) return this.i18n.t('Must be {n} characters or fewer.', { n: e['maxlength'].requiredLength });
+    if (e['minlength']) return this.i18n.t('Must be at least {n} characters.', { n: e['minlength'].requiredLength });
+    if (e['email']) return this.i18n.t('Enter a valid email address.');
+    if (e['pattern']) return this.i18n.t('Invalid format.');
+    return this.i18n.t('Invalid value.');
   }
 }

@@ -9,6 +9,7 @@ import {
   ReportRunHistoryItem,
   RunReportRequest,
 } from '../models/report.models';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 /** A past run handed to the viewer so it can re-open with exactly the same parameters. */
 export interface ReportRerun {
@@ -20,6 +21,8 @@ export interface ReportRerun {
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   private readonly http = inject(HttpClient);
+  /** Reports default to the interface language when the caller does not choose one. */
+  private readonly i18n = inject(I18nService);
   private readonly baseUrl = '/api/v1/reports';
 
   /** Remembers the last parameters used per report, per browser. */
@@ -84,7 +87,7 @@ export class ReportService {
   run(key: string, request?: Partial<RunReportRequest>): Observable<ReportDataSet> {
     const fullRequest: RunReportRequest = {
       parameters: request?.parameters ?? {},
-      language: request?.language ?? 'en',
+      language: request?.language ?? this.i18n.language,
       bengaliNumerals: request?.bengaliNumerals ?? false,
     };
     return this.http
@@ -104,7 +107,7 @@ export class ReportService {
   ): Observable<HttpResponse<Blob>> {
     const fullRequest: RunReportRequest = {
       parameters: request?.parameters ?? {},
-      language: request?.language ?? 'en',
+      language: request?.language ?? this.i18n.language,
       bengaliNumerals: request?.bengaliNumerals ?? false,
     };
     return this.http.post(`${this.baseUrl}/${encodeURIComponent(key)}/export/${format}`, fullRequest, {

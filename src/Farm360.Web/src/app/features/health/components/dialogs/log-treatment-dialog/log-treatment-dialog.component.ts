@@ -23,6 +23,8 @@ import { MedicalTreatmentDto, TreatmentStatus } from "../../../models/health.mod
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 @Component({
   selector: "app-log-treatment-dialog",
   standalone: true,
@@ -39,6 +41,7 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
     MatSnackBarModule,
     AnimalPickerComponent,
     UnitPickerComponent,
+    TranslatePipe,
   ],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -49,20 +52,20 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-600">medical_services</mat-icon>
-            {{ isEditMode() ? "Edit Medical Treatment" : "Log Medical Treatment" }}
+            {{ (isEditMode() ? "Edit Medical Treatment" : "Log Medical Treatment") | t }}
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
             {{
-              isEditMode()
+              (isEditMode()
                 ? "Update diagnosis, medication, dosage, and cost details"
-                : "Record animal medical treatment and medication"
+                : "Record animal medical treatment and medication") | t
             }}
           </p>
         </div>
         <button
           mat-dialog-close
           type="button"
-          class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Close">
+          class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [attr.aria-label]="'Close' | t">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -82,10 +85,10 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
           <!-- Animal Selection -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Selected Animal <span class="text-red-500">*</span>
+              {{ 'Selected Animal' | t }} <span class="text-red-500">*</span>
             </label>
             <app-animal-picker formControlName="animalId"></app-animal-picker>
-            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('animalId')?.touched && form.get('animalId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
           </div>
 
           <!-- Status & End Date (Visible in Edit Mode) -->
@@ -95,21 +98,21 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
           >
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200"
-                >Treatment Status</label
+                >{{ 'Treatment Status' | t }}</label
               >
               <select
                 formControlName="status"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               >
-                <option [value]="treatmentStatus.Ongoing">Ongoing</option>
-                <option [value]="treatmentStatus.Completed">Completed</option>
-                <option [value]="treatmentStatus.Failed">Failed</option>
-                <option [value]="treatmentStatus.Discontinued">Discontinued</option>
+                <option [value]="treatmentStatus.Ongoing">{{ 'Ongoing' | t }}</option>
+                <option [value]="treatmentStatus.Completed">{{ 'Completed' | t }}</option>
+                <option [value]="treatmentStatus.Failed">{{ 'Failed' | t }}</option>
+                <option [value]="treatmentStatus.Discontinued">{{ 'Discontinued' | t }}</option>
               </select>
             </div>
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200"
-                >End Date (Optional)</label
+                >{{ 'End Date (Optional)' | t }}</label
               >
               <input
                 type="date"
@@ -122,25 +125,25 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
           <!-- Diagnosis -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-              >Diagnosis <span class="text-red-500">*</span></label
+              >{{ 'Diagnosis' | t }} <span class="text-red-500">*</span></label
             >
             <input
               type="text"
               formControlName="diagnosis"
-              placeholder="e.g. Mastitis, Foot Rot..."
+              [placeholder]="'e.g. Mastitis, Foot Rot...' | t"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
             />
-            <p *ngIf="form.get('diagnosis')?.touched && form.get('diagnosis')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('diagnosis')?.touched && form.get('diagnosis')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-1.5 md:col-span-1">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Inventory Item</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Inventory Item' | t }}</label>
               <select
                 formControlName="inventoryItemId"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               >
-                <option [value]="null">-- Select (Optional) --</option>
+                <option [value]="null">{{ '-- Select (Optional) --' | t }}</option>
                 @for (item of inventoryItems(); track item.id) {
                   <option [value]="item.id">{{ item.name }} ({{ item.currentStock }} {{ item.unitOfMeasure }})</option>
                 }
@@ -149,28 +152,28 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
             <div class="space-y-1.5 md:col-span-2">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-                >Medication Name <span class="text-red-500">*</span></label
+                >{{ 'Medication Name' | t }} <span class="text-red-500">*</span></label
               >
               <input
                 type="text"
                 formControlName="medicationName"
-                placeholder="e.g. Oxytet 20%"
+                [placeholder]="'e.g. Oxytet 20%' | t"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
-              <p *ngIf="form.get('medicationName')?.touched && form.get('medicationName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('medicationName')?.touched && form.get('medicationName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
             </div>
 
             <div class="space-y-1.5 md:col-span-1">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Consumption Qty</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Consumption Qty' | t }}</label>
               <input
                 type="number"
                 formControlName="consumptionQuantity"
                 min="0"
                 step="any"
-                placeholder="Stock to deduct"
+                [placeholder]="'Stock to deduct' | t"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
-              <p *ngIf="form.get('consumptionQuantity')?.touched && form.get('consumptionQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+              <p *ngIf="form.get('consumptionQuantity')?.touched && form.get('consumptionQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
               <!-- e.g. 1 "Bottle (10 ml)", or the base unit; stock is deducted in the base unit -->
               <app-unit-picker
                 *ngIf="form.value.inventoryItemId"
@@ -184,7 +187,7 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
             <div class="grid grid-cols-2 gap-2 md:col-span-2">
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-                  >Dosage <span class="text-red-500">*</span></label
+                  >{{ 'Dosage' | t }} <span class="text-red-500">*</span></label
                 >
                 <input
                   type="number"
@@ -193,26 +196,26 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
                   step="0.1"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
                 />
-                <p *ngIf="form.get('dosageAmount')?.touched && form.get('dosageAmount')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-                <p *ngIf="form.get('dosageAmount')?.touched && form.get('dosageAmount')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.1.</p>
+                <p *ngIf="form.get('dosageAmount')?.touched && form.get('dosageAmount')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+                <p *ngIf="form.get('dosageAmount')?.touched && form.get('dosageAmount')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0.1 } }}</p>
               </div>
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-                  >Unit <span class="text-red-500">*</span></label
+                  >{{ 'Unit' | t }} <span class="text-red-500">*</span></label
                 >
                 <select
                   formControlName="dosageUnit"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
                 >
-                  <option value="ml">ml</option>
-                  <option value="pack">pack</option>
-                  <option value="psc">psc</option>
-                  <option value="mg">mg</option>
-                  <option value="g">g</option>
-                  <option value="bolus">bolus</option>
-                  <option value="tablets">tablets</option>
+                  <option value="ml">{{ 'ml' | t }}</option>
+                  <option value="pack">{{ 'pack' | t }}</option>
+                  <option value="psc">{{ 'psc' | t }}</option>
+                  <option value="mg">{{ 'mg' | t }}</option>
+                  <option value="g">{{ 'g' | t }}</option>
+                  <option value="bolus">{{ 'bolus' | t }}</option>
+                  <option value="tablets">{{ 'tablets' | t }}</option>
                 </select>
-                <p *ngIf="form.get('dosageUnit')?.touched && form.get('dosageUnit')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+                <p *ngIf="form.get('dosageUnit')?.touched && form.get('dosageUnit')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
               </div>
             </div>
             <!-- More than on hand: the server records the treatment but takes nothing from stock and books the cost as cash. -->
@@ -223,8 +226,7 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
             >
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-500 shrink-0">warning</mat-icon>
               <span>
-                Only {{ sf.available | number: "1.0-3" }} {{ sf.unit }} in stock — nothing will be taken from stock and the cost
-                will be booked as a cash purchase. Record the Stock In first to keep stock correct.
+                {{ 'Only {qty} {unit} in stock — nothing will be taken from stock and the cost will be booked as a cash purchase. Record the Stock In first to keep stock correct.' | t: { qty: (sf.available | number: '1.0-3'), unit: sf.unit } }}
               </span>
             </div>
           </div>
@@ -232,7 +234,7 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-                >Milk Withdrawal (Days)</label
+                >{{ 'Milk Withdrawal (Days)' | t }}</label
               >
               <input
                 type="number"
@@ -241,13 +243,13 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
                 placeholder="0"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
-              <p *ngIf="form.get('milkWithdrawalDays')?.touched && form.get('milkWithdrawalDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-              <p *ngIf="form.get('milkWithdrawalDays')?.touched && form.get('milkWithdrawalDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+              <p *ngIf="form.get('milkWithdrawalDays')?.touched && form.get('milkWithdrawalDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+              <p *ngIf="form.get('milkWithdrawalDays')?.touched && form.get('milkWithdrawalDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-                >Meat Withdrawal (Days)</label
+                >{{ 'Meat Withdrawal (Days)' | t }}</label
               >
               <input
                 type="number"
@@ -256,26 +258,26 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
                 placeholder="0"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
-              <p *ngIf="form.get('meatWithdrawalDays')?.touched && form.get('meatWithdrawalDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
-              <p *ngIf="form.get('meatWithdrawalDays')?.touched && form.get('meatWithdrawalDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+              <p *ngIf="form.get('meatWithdrawalDays')?.touched && form.get('meatWithdrawalDays')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
+              <p *ngIf="form.get('meatWithdrawalDays')?.touched && form.get('meatWithdrawalDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-                >Start Date <span class="text-red-500">*</span></label
+                >{{ 'Start Date' | t }} <span class="text-red-500">*</span></label
               >
               <input
                 type="date"
                 formControlName="startDate"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
-              <p *ngIf="form.get('startDate')?.touched && form.get('startDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+              <p *ngIf="form.get('startDate')?.touched && form.get('startDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Treatment Cost (BDT)</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Treatment Cost (BDT)' | t }}</label>
               <input
                 type="number"
                 formControlName="costBdt"
@@ -285,27 +287,27 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
               />
               <p *ngIf="stockCost() as sc" class="text-[11px] text-gray-500 dark:text-gray-400 m-0">
-                Medicine from stock: {{ sc.qty }} {{ sc.unit }} × {{ sc.unitCost | money:2 }} =
+                {{ 'Medicine from stock:' | t }} {{ sc.qty }} {{ sc.unit }} × {{ sc.unitCost | money:2 }} =
                 <b>{{ sc.total | money:2 }}</b
-                >. Add any vet fee on top.
+                >. {{ 'Add any vet fee on top.' | t }}
                 <button
                   type="button"
                   *ngIf="form.get('costBdt')?.value !== sc.total"
                   (click)="resetCost()"
                   class="text-primary-600 font-semibold underline ml-1"
                 >
-                  Use {{ sc.total | money:2 }}
+                  {{ 'Use {amount}' | t: { amount: (sc.total | money:2) } }}
                 </button>
               </p>
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Veterinarian Name</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Veterinarian Name' | t }}</label>
             <input
               type="text"
               formControlName="veterinarianName"
-              placeholder="Dr. John Doe"
+              [placeholder]="'Dr. John Doe' | t"
               [matAutocomplete]="autoVet"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"
             />
@@ -318,12 +320,12 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500"
-              >Notes / Administration Route</label
+              >{{ 'Notes / Administration Route' | t }}</label
             >
             <textarea
               formControlName="notes"
               rows="2"
-              placeholder="e.g. IM injection in neck area..."
+              [placeholder]="'e.g. IM injection in neck area...' | t"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"
             ></textarea>
           </div>
@@ -339,7 +341,7 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
             [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
           >
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button
             type="submit"
@@ -347,7 +349,7 @@ import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
             class="px-5 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isSubmitting() ? "Saving..." : isEditMode() ? "Update Treatment" : "Save Treatment" }}</span>
+            <span>{{ (isSubmitting() ? "Saving..." : isEditMode() ? "Update Treatment" : "Save Treatment") | t }}</span>
           </button>
         </div>
       </form>
@@ -378,6 +380,7 @@ export class LogTreatmentDialog implements OnInit {
   private contextService = inject(WorkingContextService);
   private dialogRef = inject(MatDialogRef<LogTreatmentDialog>);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
   private destroyRef = inject(DestroyRef);
   public data: { treatment?: MedicalTreatmentDto } = inject(MAT_DIALOG_DATA, { optional: true }) ?? {};
 
@@ -573,7 +576,7 @@ export class LogTreatmentDialog implements OnInit {
   onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.notify.error("Please fill in all required fields correctly.");
+      this.notify.error(this.i18n.t("Please fill in all required fields correctly."));
       return;
     }
 
@@ -604,7 +607,7 @@ export class LogTreatmentDialog implements OnInit {
       this.healthService.updateTreatment(this.data.treatment!.id, updateRequest).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success("Treatment updated successfully!");
+          this.notify.success(this.i18n.t("Treatment updated successfully!"));
           this.dialogRef.close(true);
         },
         error: (err) => {
@@ -619,7 +622,7 @@ export class LogTreatmentDialog implements OnInit {
 
     const farmId = this.contextService.currentFarmValue?.id || "";
     if (!farmId) {
-      const msg = "No farm context available.";
+      const msg = this.i18n.t("No farm context available.");
       this.error.set(msg);
       this.notify.error(msg);
       this.isSubmitting.set(false);
@@ -647,7 +650,7 @@ export class LogTreatmentDialog implements OnInit {
     this.healthService.logTreatment(createRequest).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success("Treatment logged successfully!");
+        this.notify.success(this.i18n.t("Treatment logged successfully!"));
         this.dialogRef.close(true);
       },
       error: (err) => {

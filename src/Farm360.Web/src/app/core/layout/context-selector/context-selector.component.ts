@@ -5,17 +5,18 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { WorkingContextService } from '../../services/working-context.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { Subject, takeUntil, combineLatest, take } from 'rxjs';
 
 @Component({
   selector: 'app-context-selector',
   standalone: true,
-  imports: [CommonModule, MatSelectModule, MatFormFieldModule, MatIconModule, ReactiveFormsModule],
+  imports: [CommonModule, MatSelectModule, MatFormFieldModule, MatIconModule, ReactiveFormsModule, TranslatePipe],
   template: `
     <div [class]="stacked ? 'flex flex-col gap-3 w-full' : 'flex items-center gap-2 mr-4'">
       <!-- Organization Selector (multi-org dropdown) -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" [class]="stacked ? 'w-full text-sm' : 'w-28 lg:w-36 text-sm'" *ngIf="(organizations$ | async)?.length! > 1">
-        <mat-select [formControl]="orgControl" placeholder="Organization">
+        <mat-select [formControl]="orgControl" [placeholder]="'Organization' | t">
           <mat-option *ngFor="let org of organizations$ | async" [value]="org.id">
             {{ org.name }}
           </mat-option>
@@ -24,7 +25,7 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
 
       <!-- Organization Display (single-org) -->
       <div *ngIf="(organizations$ | async)?.length === 1" [class]="stacked ? 'flex flex-col' : 'hidden lg:flex flex-col mr-2'">
-        <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">Org</span>
+        <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">{{ 'Org' | t }}</span>
         <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight max-w-[120px]">
           {{ (currentOrg$ | async)?.name }}
         </span>
@@ -32,7 +33,7 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
 
       <!-- Branch Selector (multi-branch dropdown) -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" [class]="stacked ? 'w-full text-sm' : 'w-28 lg:w-36 text-sm'" *ngIf="(branches$ | async)?.length! > 1">
-        <mat-select [formControl]="branchControl" placeholder="Branch">
+        <mat-select [formControl]="branchControl" [placeholder]="'Branch' | t">
           <mat-option *ngFor="let branch of branches$ | async" [value]="branch.id">
             {{ branch.name }}
           </mat-option>
@@ -41,7 +42,7 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
 
       <!-- Branch Display (single-branch) -->
       <div *ngIf="(branches$ | async)?.length === 1" [class]="stacked ? 'flex flex-col' : 'hidden lg:flex flex-col mr-2'">
-        <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">Branch</span>
+        <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">{{ 'Branch' | t }}</span>
         <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight w-full">
           {{ (currentBranch$ | async)?.name }}
         </span>
@@ -49,8 +50,8 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
 
       <!-- Farm Selector (multi-farm dropdown) -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" [class]="stacked ? 'w-full text-sm' : 'w-28 lg:w-36 text-sm'" *ngIf="(farms$ | async)?.length! > 1">
-        <mat-select [formControl]="farmControl" placeholder="Farm">
-          <mat-option [value]="null">All Farms</mat-option>
+        <mat-select [formControl]="farmControl" [placeholder]="'Farm' | t">
+          <mat-option [value]="null">{{ 'All Farms' | t }}</mat-option>
           <mat-option *ngFor="let farm of farms$ | async" [value]="farm.id">
             {{ farm.name }}
           </mat-option>
@@ -66,7 +67,7 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
           <mat-icon class="!text-[13px] !w-[13px] !h-[13px] text-white">agriculture</mat-icon>
         </div>
         <div class="flex flex-col min-w-0">
-          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold leading-tight">Active Farm</span>
+          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold leading-tight">{{ 'Active Farm' | t }}</span>
           <span class="text-[13px] font-bold text-emerald-800 dark:text-emerald-200 truncate leading-tight max-w-[110px]">
             {{ (currentFarm$ | async)?.name }}
           </span>

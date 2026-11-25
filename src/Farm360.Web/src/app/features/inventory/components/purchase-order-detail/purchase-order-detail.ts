@@ -20,6 +20,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DocumentService } from '../../../../core/services/document.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-purchase-order-detail',
@@ -30,41 +32,42 @@ import { DocumentService } from '../../../../core/services/document.service';
     MatButtonModule,
     MatIconModule,
     PageHeaderComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Purchase Order Details"
-      description="View and manage the status of your purchase order."
-      breadcrumbActiveNode="PO Details">
+      [title]="'Purchase Order Details' | t"
+      [description]="'View and manage the status of your purchase order.' | t"
+      [breadcrumbActiveNode]="'PO Details' | t">
       <div actions class="flex items-center gap-3">
         <button [routerLink]="['/inventory/purchase-orders']"
           class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Back to List
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> {{ 'Back to List' | t }}
         </button>
         <button *ngIf="po()" type="button" (click)="onPrint()" [disabled]="printing()"
           class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-60">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ printing() ? 'hourglass_top' : 'print' }}</mat-icon> Print PO
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ printing() ? 'hourglass_top' : 'print' }}</mat-icon> {{ 'Print PO' | t }}
         </button>
         <button *ngIf="canCancel()" (click)="onCancel()"
           class="px-4 py-2 text-sm font-semibold text-red-700 bg-white border border-red-300 hover:bg-red-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">cancel</mat-icon> Cancel PO
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">cancel</mat-icon> {{ 'Cancel PO' | t }}
         </button>
         <button *ngIf="po()?.status === PurchaseOrderStatus.Draft" (click)="onSubmit()"
           class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">send</mat-icon> Submit for Approval
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">send</mat-icon> {{ 'Submit for Approval' | t }}
         </button>
         <button *ngIf="po()?.status === PurchaseOrderStatus.PendingApproval" (click)="onApprove()"
           class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon> Approve PO
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon> {{ 'Approve PO' | t }}
         </button>
         <button *ngIf="po()?.status === PurchaseOrderStatus.Approved" (click)="onFulfill()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">inventory</mat-icon> Receive Stock (Fulfill)
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">inventory</mat-icon> {{ 'Receive Stock (Fulfill)' | t }}
         </button>
         <button *ngIf="po()?.status === PurchaseOrderStatus.Fulfilled" (click)="onReturnItems()"
           class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">assignment_return</mat-icon> Return Items
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">assignment_return</mat-icon> {{ 'Return Items' | t }}
         </button>
       </div>
     </app-page-header>
@@ -74,7 +77,7 @@ import { DocumentService } from '../../../../core/services/document.service';
 
       <app-error-state
         *ngIf="error() as err"
-        title="Error loading PO"
+        [title]="'Error loading PO' | t"
         [message]="err"
         (retry)="reload()">
       </app-error-state>
@@ -84,7 +87,7 @@ import { DocumentService } from '../../../../core/services/document.service';
         <div class="p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
             <div class="flex items-center gap-3 mb-2">
-              <h2 class="text-2xl font-black text-gray-900 dark:text-white">PO #{{ data.poNumber }}</h2>
+              <h2 class="text-2xl font-black text-gray-900 dark:text-white">{{ 'PO #{po}' | t: { po: data.poNumber } }}</h2>
               <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="{
                   'bg-gray-100 text-gray-700 border border-gray-200': data.status === PurchaseOrderStatus.Draft,
@@ -93,39 +96,39 @@ import { DocumentService } from '../../../../core/services/document.service';
                   'bg-indigo-50 text-indigo-700 border border-indigo-200': data.status === PurchaseOrderStatus.Fulfilled,
                   'bg-red-50 text-red-700 border border-red-200': data.status === PurchaseOrderStatus.Cancelled
                 }">
-                {{ getStatusName(data.status) }}
+                {{ getStatusName(data.status) | t }}
               </span>
             </div>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-              <p>Supplier ID: <span class="font-semibold text-gray-700 dark:text-gray-300">{{ data.supplierId }}</span></p>
-              <p>Order Date: <span class="font-semibold text-gray-700 dark:text-gray-300">{{ data.orderDate | date:'longDate' }}</span></p>
-              <p *ngIf="data.expectedDeliveryDate">Expected Delivery: <span class="font-semibold text-gray-700 dark:text-gray-300">{{ data.expectedDeliveryDate | date:'longDate' }}</span></p>
+              <p>{{ 'Supplier ID:' | t }} <span class="font-semibold text-gray-700 dark:text-gray-300">{{ data.supplierId }}</span></p>
+              <p>{{ 'Order Date:' | t }} <span class="font-semibold text-gray-700 dark:text-gray-300">{{ data.orderDate | date:'longDate' }}</span></p>
+              <p *ngIf="data.expectedDeliveryDate">{{ 'Expected Delivery:' | t }} <span class="font-semibold text-gray-700 dark:text-gray-300">{{ data.expectedDeliveryDate | date:'longDate' }}</span></p>
             </div>
           </div>
           
           <div class="text-right">
-            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1">Total Amount</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1">{{ 'Total Amount' | t }}</p>
             <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400">{{ data.totalAmountBdt | money:2 }}</p>
           </div>
         </div>
 
         <div *ngIf="data.notes" class="p-6 border-b border-gray-100 dark:border-gray-800">
-          <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-2">Notes</h3>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-2">{{ 'Notes' | t }}</h3>
           <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{{ data.notes }}</p>
         </div>
 
         <!-- PO Items -->
         <div class="p-6">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Order Items ({{ data.items.length || 0 }})</h3>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">{{ 'Order Items ({n})' | t: { n: data.items.length || 0 } }}</h3>
           
           <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead class="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Item ID</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Unit Cost</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Item ID' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Quantity' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Unit Cost' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Total' | t }}</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
@@ -153,27 +156,27 @@ import { DocumentService } from '../../../../core/services/document.service';
         <div *ngIf="returns() && returns()!.length > 0" class="p-6 border-t border-gray-100 dark:border-gray-800 bg-amber-50/20 dark:bg-amber-950/10">
           <h3 class="text-base font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
             <mat-icon class="text-amber-500 !text-[20px] !w-[20px] !h-[20px]">assignment_return</mat-icon>
-            Supplier Returns ({{ returns()!.length }})
+            {{ 'Supplier Returns ({n})' | t: { n: returns()!.length } }}
           </h3>
           <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
               <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs font-bold text-gray-500 uppercase">
                 <tr>
-                  <th class="px-4 py-3 text-left">Return #</th>
-                  <th class="px-4 py-3 text-left">Date</th>
-                  <th class="px-4 py-3 text-left">Reason</th>
-                  <th class="px-4 py-3 text-center">Status</th>
-                  <th class="px-4 py-3 text-right">Refund Amount</th>
+                  <th class="px-4 py-3 text-left">{{ 'Return #' | t }}</th>
+                  <th class="px-4 py-3 text-left">{{ 'Date' | t }}</th>
+                  <th class="px-4 py-3 text-left">{{ 'Reason' | t }}</th>
+                  <th class="px-4 py-3 text-center">{{ 'Status' | t }}</th>
+                  <th class="px-4 py-3 text-right">{{ 'Refund Amount' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                 <tr *ngFor="let ret of returns()" class="hover:bg-gray-50/50">
                   <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
                     {{ ret.returnNumber }}
-                    <span *ngIf="ret.creditNoteNumber" class="text-xs text-gray-400 block font-normal">Ref: {{ ret.creditNoteNumber }}</span>
+                    <span *ngIf="ret.creditNoteNumber" class="text-xs text-gray-400 block font-normal">{{ 'Ref: {ref}' | t: { ref: ret.creditNoteNumber } }}</span>
                   </td>
                   <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ ret.returnDate | date:'mediumDate' }}</td>
-                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ ret.reason }}</td>
+                  <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ ret.reason | t }}</td>
                   <td class="px-4 py-3 text-center">
                     <span class="px-2.5 py-0.5 rounded-full text-xs font-bold"
                           [ngClass]="{
@@ -181,7 +184,7 @@ import { DocumentService } from '../../../../core/services/document.service';
                             'bg-emerald-100 text-emerald-800': ret.status === 'Completed',
                             'bg-red-100 text-red-800': ret.status === 'Cancelled'
                           }">
-                      {{ ret.status }}
+                      {{ ret.status | t }}
                     </span>
                   </td>
                   <td class="px-4 py-3 text-right font-black text-amber-600 dark:text-amber-400">{{ ret.totalAmountBdt | money:2 }}</td>
@@ -201,6 +204,7 @@ export class PurchaseOrderDetail {
   readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly documents = inject(DocumentService);
+  private readonly i18n = inject(I18nService);
 
   readonly loading = signal(true);
   readonly printing = signal(false);
@@ -224,7 +228,7 @@ export class PurchaseOrderDetail {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(p => this.inventoryService.getPurchaseOrderById(p.id!).pipe(
         catchError(e => {
-          this.error.set(parseApiError(e, 'Could not load purchase order details.'));
+          this.error.set(parseApiError(e, this.i18n.t('Could not load purchase order details.')));
           return of(null);
         })
       )),
@@ -267,10 +271,10 @@ export class PurchaseOrderDetail {
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
-        title: 'Approve Purchase Order',
-        message: `Are you sure you want to approve PO #${data.poNumber}? Once approved, it can be fulfilled.`,
-        confirmButtonText: 'Approve',
-        cancelButtonText: 'Cancel'
+        title: this.i18n.t('Approve Purchase Order'),
+        message: this.i18n.t('Are you sure you want to approve PO #{po}? Once approved, it can be fulfilled.', { po: data.poNumber }),
+        confirmButtonText: this.i18n.t('Approve'),
+        cancelButtonText: this.i18n.t('Cancel')
       }
     });
 
@@ -281,7 +285,7 @@ export class PurchaseOrderDetail {
           next: () => this.reload(),
           error: (err) => {
             this.loading.set(false);
-            this.error.set(err?.error?.detail || 'Failed to approve PO');
+            this.error.set(err?.error?.detail || this.i18n.t('Failed to approve PO'));
           }
         });
       }
@@ -304,10 +308,10 @@ export class PurchaseOrderDetail {
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
-        title: 'Submit for Approval',
-        message: `Send PO #${data.poNumber} for approval? Items can still be reviewed before it is approved.`,
-        confirmButtonText: 'Submit',
-        cancelButtonText: 'Back'
+        title: this.i18n.t('Submit for Approval'),
+        message: this.i18n.t('Send PO #{po} for approval? Items can still be reviewed before it is approved.', { po: data.poNumber }),
+        confirmButtonText: this.i18n.t('Submit'),
+        cancelButtonText: this.i18n.t('Back')
       }
     });
 
@@ -318,7 +322,7 @@ export class PurchaseOrderDetail {
           next: () => this.reload(),
           error: (err) => {
             this.loading.set(false);
-            this.error.set(parseApiError(err, 'Failed to submit PO'));
+            this.error.set(parseApiError(err, this.i18n.t('Failed to submit PO')));
           }
         });
       }
@@ -333,10 +337,10 @@ export class PurchaseOrderDetail {
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
-        title: 'Cancel Purchase Order',
-        message: `Cancel PO #${data.poNumber}? It can no longer be approved or received. This cannot be undone.`,
-        confirmButtonText: 'Cancel PO',
-        cancelButtonText: 'Keep PO',
+        title: this.i18n.t('Cancel Purchase Order'),
+        message: this.i18n.t('Cancel PO #{po}? It can no longer be approved or received. This cannot be undone.', { po: data.poNumber }),
+        confirmButtonText: this.i18n.t('Cancel PO'),
+        cancelButtonText: this.i18n.t('Keep PO'),
         isDestructive: true
       }
     });
@@ -348,7 +352,7 @@ export class PurchaseOrderDetail {
           next: () => this.reload(),
           error: (err) => {
             this.loading.set(false);
-            this.error.set(parseApiError(err, 'Failed to cancel PO'));
+            this.error.set(parseApiError(err, this.i18n.t('Failed to cancel PO')));
           }
         });
       }

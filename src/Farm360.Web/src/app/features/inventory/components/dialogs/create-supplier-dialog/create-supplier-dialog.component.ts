@@ -12,6 +12,8 @@ import { InventoryService } from '../../../services/inventory.service';
 import { Supplier } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-create-supplier-dialog',
@@ -24,7 +26,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-xl flex flex-col max-h-[90vh]">
@@ -34,9 +37,9 @@ import { NotificationService } from '../../../../../shared/services/notification
           <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">local_shipping</mat-icon>
           </div>
-          <span>{{ isEdit ? 'Edit Supplier' : 'Add New Supplier' }}</span>
+          <span>{{ (isEdit ? 'Edit Supplier' : 'Add New Supplier') | t }}</span>
         </h2>
-        <button aria-label="Close" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+        <button [attr.aria-label]="'Close' | t" mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -51,36 +54,36 @@ import { NotificationService } from '../../../../../shared/services/notification
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Supplier / Vendor Name</mat-label>
-            <input matInput formControlName="name" placeholder="e.g. ACI Animal Health Ltd." required />
-            <mat-error>Supplier name is required</mat-error>
+            <mat-label>{{ 'Supplier / Vendor Name' | t }}</mat-label>
+            <input matInput formControlName="name" [placeholder]="'e.g. ACI Animal Health Ltd.' | t" required />
+            <mat-error>{{ 'Supplier name is required' | t }}</mat-error>
           </mat-form-field>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Contact Person</mat-label>
-              <input matInput formControlName="contactPerson" placeholder="e.g. Engr. Karim" />
+              <mat-label>{{ 'Contact Person' | t }}</mat-label>
+              <input matInput formControlName="contactPerson" [placeholder]="'e.g. Engr. Karim' | t" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Phone Number</mat-label>
+              <mat-label>{{ 'Phone Number' | t }}</mat-label>
               <input matInput formControlName="phone" placeholder="+8801700000000" />
             </mat-form-field>
           </div>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Email Address</mat-label>
+            <mat-label>{{ 'Email Address' | t }}</mat-label>
             <input matInput type="email" formControlName="email" placeholder="sales@supplier.com" />
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Address</mat-label>
-            <textarea matInput formControlName="address" rows="2" placeholder="Tejgaon Industrial Area, Dhaka"></textarea>
+            <mat-label>{{ 'Address' | t }}</mat-label>
+            <textarea matInput formControlName="address" rows="2" [placeholder]="'Tejgaon Industrial Area, Dhaka' | t"></textarea>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Notes</mat-label>
-            <textarea matInput formControlName="notes" rows="2" placeholder="Payment terms or discount agreement"></textarea>
+            <mat-label>{{ 'Notes' | t }}</mat-label>
+            <textarea matInput formControlName="notes" rows="2" [placeholder]="'Payment terms or discount agreement' | t"></textarea>
           </mat-form-field>
         </form>
       </div>
@@ -88,11 +91,11 @@ import { NotificationService } from '../../../../../shared/services/notification
       <!-- Actions -->
       <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2 shrink-0">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
-          Cancel
+          {{ 'Cancel' | t }}
         </button>
         <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50" [disabled]="form.invalid || isSubmitting()" (click)="onSubmit()">
           <mat-spinner *ngIf="isSubmitting()" diameter="16"></mat-spinner>
-          <span>{{ isEdit ? 'Update Supplier' : 'Save Supplier' }}</span>
+          <span>{{ (isEdit ? 'Update Supplier' : 'Save Supplier') | t }}</span>
         </button>
       </div>
     </div>
@@ -105,6 +108,7 @@ export class CreateSupplierDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -142,7 +146,7 @@ export class CreateSupplierDialogComponent {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success(`Supplier ${this.isEdit ? 'updated' : 'created'} successfully.`);
+        this.notify.success(this.i18n.t(this.isEdit ? 'Supplier updated successfully.' : 'Supplier created successfully.'));
         this.dialogRef.close(true);
       },
       error: (err: any) => {

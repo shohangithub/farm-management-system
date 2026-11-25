@@ -12,6 +12,8 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { ConfirmService } from '../../../shared/services/confirm.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -19,7 +21,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
 @Component({
   selector: 'app-pen-detail',
   standalone: true,
-  imports: [ErrorStateComponent, 
+  imports: [TranslatePipe, ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -34,6 +36,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PenDetailComponent {
+  private readonly i18n = inject(I18nService);
   private readonly confirmService = inject(ConfirmService);
   private readonly penService = inject(PenService);
   private readonly animalService = inject(AnimalService);
@@ -89,7 +92,7 @@ export class PenDetailComponent {
         )
       }).pipe(
         tap(res => {
-          if (!res.pen && !this.error()) this.error.set('Failed to load pen details.');
+          if (!res.pen && !this.error()) this.error.set(this.i18n.t('Failed to load pen details.'));
         }),
         catchError(err => {
           this.error.set(parseApiError(err, 'Failed to load pen details.'));
@@ -144,7 +147,7 @@ export class PenDetailComponent {
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds', this.shedId(), 'pens']);
         },
         error: (err) => {
-          this.error.set(err?.error?.detail || 'Failed to delete pen.');
+          this.error.set(err?.error?.detail || this.i18n.t('Failed to delete pen.'));
           console.error('Failed to delete pen', err);
         }
       });

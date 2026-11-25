@@ -3,6 +3,7 @@ import { HttpClient, HttpContext, HttpErrorResponse, HttpHeaders, HttpParams } f
 import { firstValueFrom } from 'rxjs';
 import { NotificationService } from '../../shared/services/notification.service';
 import { parseApiError } from '../utils/error-parser';
+import { translate } from '../i18n/i18n.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../interceptors/auth.interceptor';
 
 /** Language a printed document is rendered in. Omit to use the farm's "Default report language" rule. */
@@ -60,9 +61,10 @@ export class DocumentService {
     // Open the tab now, inside the click, so popup blockers treat it as user-initiated.
     const tab = window.open('', '_blank');
     if (tab) {
-      tab.document.title = 'Preparing document…';
+      const preparing = translate('Preparing document…');
+      tab.document.title = preparing;
       tab.document.body.innerHTML =
-        '<p style="font-family: system-ui, sans-serif; color: #555; padding: 24px">Preparing document…</p>';
+        `<p style="font-family: system-ui, sans-serif; color: #555; padding: 24px">${preparing}</p>`;
     }
 
     try {
@@ -132,10 +134,10 @@ export class DocumentService {
 
   /** A blob error body is JSON ProblemDetails underneath; read it so the toast says why. */
   private async describeError(err: unknown): Promise<string> {
-    const fallback = 'Could not open the document. Please try again.';
+    const fallback = translate('Could not open the document. Please try again.');
     if (err instanceof HttpErrorResponse) {
       if (err.status === 403) {
-        return 'You do not have permission to open this document.';
+        return translate('You do not have permission to open this document.');
       }
       if (err.error instanceof Blob) {
         try {

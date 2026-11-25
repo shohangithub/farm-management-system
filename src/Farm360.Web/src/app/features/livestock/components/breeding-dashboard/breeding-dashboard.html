@@ -1,11 +1,11 @@
 <app-page-header 
-  title="Breeding Analytics" 
-  description="Insights into conception rates and upcoming calvings."
-  breadcrumbActiveNode="Breeding Analytics">
+  [title]="'Breeding Analytics' | t" 
+  [description]="'Insights into conception rates and upcoming calvings.' | t"
+  [breadcrumbActiveNode]="'Breeding Analytics' | t">
   <div actions>
     <button mat-flat-button color="primary" class="print:hidden" [disabled]="!hasData()" (click)="printReport()">
       <mat-icon>print</mat-icon>
-      Print Report
+      {{ 'Print Report' | t }}
     </button>
   </div>
 </app-page-header>
@@ -16,23 +16,23 @@
   <app-empty-state
     *ngIf="!hasFarm()"
     icon="agriculture"
-    title="Choose a farm at the top"
-    description="Breeding analytics are shown per farm. Pick a farm in the selector at the top of the page.">
+    [title]="'Choose a farm at the top' | t"
+    [description]="'Breeding analytics are shown per farm. Pick a farm in the selector at the top of the page.' | t">
   </app-empty-state>
 
   <app-empty-state
     *ngIf="hasFarm() && !isLoading() && loadFailed()"
     icon="error_outline"
-    title="Could not load breeding analytics"
-    description="Something went wrong while loading the numbers for this farm. Please try again later.">
+    [title]="'Could not load breeding analytics' | t"
+    [description]="'Something went wrong while loading the numbers for this farm. Please try again later.' | t">
   </app-empty-state>
 
   <app-empty-state
     *ngIf="hasFarm() && !isLoading() && !loadFailed() && !hasData()"
     icon="pets"
-    title="No Breeding Data Yet"
-    description="No pregnancies, upcoming calvings or checked matings for this farm. Matings are recorded on a female animal's page, in the Breeding History tab."
-    actionLabel="Go to Animals"
+    [title]="'No Breeding Data Yet' | t"
+    [description]="noDataDescription"
+    [actionLabel]="'Go to Animals' | t"
     (action)="goToAnimals()">
   </app-empty-state>
 
@@ -42,7 +42,7 @@
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
       <div class="flex justify-between items-start mb-4">
         <div>
-          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Active Pregnancies</p>
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Active Pregnancies' | t }}</p>
           <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalConfirmedPregnancies }}</h3>
         </div>
         <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
@@ -51,7 +51,7 @@
       </div>
       <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
         <mat-icon class="text-[14px] w-[14px] h-[14px] mr-1 text-emerald-500">trending_up</mat-icon>
-        Confirmed, not yet calved, dam still on the farm.
+        {{ 'Confirmed, not yet calved, dam still on the farm.' | t }}
       </p>
       <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">favorite</mat-icon>
     </div>
@@ -60,7 +60,7 @@
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
       <div class="flex justify-between items-start mb-4">
         <div>
-          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Calvings (Next 30 Days)</p>
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Calvings (Next 30 Days)' | t }}</p>
           <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.expectedCalvingsNext30Days }}</h3>
         </div>
         <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
@@ -68,15 +68,15 @@
         </div>
       </div>
       <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
-        Upcoming births based on expected calving dates.
+        {{ 'Upcoming births based on expected calving dates.' | t }}
       </p>
       <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">calendar_today</mat-icon>
     </div>
 
     <!-- Chart: Conception Rate -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden col-span-1 lg:col-span-3">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Conception Rate</h3>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Share of checked matings that resulted in a pregnancy. Matings still awaiting a pregnancy check are not counted.</p>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ 'Conception Rate' | t }}</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ 'Share of checked matings that resulted in a pregnancy. Matings still awaiting a pregnancy check are not counted.' | t }}</p>
       <div echarts [options]="chartOptions()" class="w-full h-[300px]"></div>
     </div>
   </div>

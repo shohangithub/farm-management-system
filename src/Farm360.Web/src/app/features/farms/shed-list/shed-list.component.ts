@@ -11,6 +11,8 @@ import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -18,11 +20,12 @@ import { parseApiError } from '../../../core/utils/error-parser';
 @Component({
   selector: 'app-shed-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent, LoadingComponent, EmptyStateComponent],
+  imports: [TranslatePipe, ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, PageHeaderComponent, LoadingComponent, EmptyStateComponent],
   templateUrl: './shed-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShedListComponent {
+  private readonly i18n = inject(I18nService);
   private readonly shedService = inject(ShedService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

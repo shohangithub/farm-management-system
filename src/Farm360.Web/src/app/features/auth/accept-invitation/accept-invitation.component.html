@@ -1,92 +1,98 @@
 <div class="login-page">
+<!-- Language switch: shows the language you can switch to -->
+<button type="button" (click)="i18n.toggle()"
+  [attr.aria-label]="(i18n.isBangla ? 'Switch to English' : 'Switch to Bangla') | t"
+  class="fixed top-4 right-4 z-50 h-9 px-4 rounded-full text-sm font-semibold border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+  {{ i18n.isBangla ? 'English' : 'বাংলা' }}
+</button>
   <div class="login-card">
 
     <div class="login-brand">
       <div class="login-logo">
         <span class="material-icons">group_add</span>
       </div>
-      <h1 class="login-title">Join your team</h1>
-      <p class="login-subtitle">Farm360 AI invitation</p>
+      <h1 class="login-title">{{ 'Join your team' | t }}</h1>
+      <p class="login-subtitle">{{ 'Farm360 AI invitation' | t }}</p>
     </div>
 
-    <p *ngIf="loading()" style="text-align:center; color: var(--text-muted);">Checking your invitation…</p>
+    <p *ngIf="loading()" style="text-align:center; color: var(--text-muted);">{{ 'Checking your invitation…' | t }}</p>
 
     <ng-container *ngIf="!loading() && invalidMessage()">
       <div class="login-error" role="alert">
         <span class="material-icons">link_off</span>
-        <span>{{ invalidMessage() }}</span>
+        <span>{{ invalidMessage() | t }}</span>
       </div>
-      <a routerLink="/auth/login" class="btn-login" style="text-decoration:none; justify-content:center;">Go to sign in</a>
+      <a routerLink="/auth/login" class="btn-login" style="text-decoration:none; justify-content:center;">{{ 'Go to sign in' | t }}</a>
     </ng-container>
 
     <ng-container *ngIf="!loading() && preview() as p">
       <p style="font-size: 14px; color: var(--text-secondary, inherit); margin-bottom: 16px; text-align:center;">
-        You've been invited to <strong>{{ p.tenantName }}</strong> as <strong>{{ p.roleName }}</strong>.
+        {{ "You've been invited to {organization} as {role}." | t: { organization: p.tenantName, role: (p.roleName | t) } }}
         <br>
         <span style="font-size: 12px; color: var(--text-muted);">
-          Sent to {{ p.phoneMasked || p.emailMasked }} · valid until {{ p.expiresAtUtc | date: 'medium' }}
+          {{ 'Sent to {recipient} · valid until {date}' | t: { recipient: p.phoneMasked || p.emailMasked, date: (p.expiresAtUtc | date: 'medium') } }}
         </span>
       </p>
 
       <div *ngIf="error()" class="login-error" role="alert">
         <span class="material-icons">error_outline</span>
-        <span style="white-space: pre-line;">{{ error() }}</span>
+        <span style="white-space: pre-line;">{{ error() | t }}</span>
       </div>
 
       <!-- Existing account: join with one click -->
       <form *ngIf="p.hasAccount" class="login-form" [formGroup]="joinForm" (ngSubmit)="join()" novalidate>
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; text-align:center;">
-          You already have a Farm360 account. Enter its password to add this organisation to it.
+          {{ 'You already have a Farm360 account. Enter its password to add this organisation to it.' | t }}
         </p>
         <div class="form-group">
-          <label for="currentPassword" class="form-label">Your Farm360 password</label>
+          <label for="currentPassword" class="form-label">{{ 'Your Farm360 password' | t }}</label>
           <input id="currentPassword" type="password" formControlName="currentPassword" class="form-control" autocomplete="current-password">
-          <span *ngIf="joinForm.controls.currentPassword.touched && joinForm.controls.currentPassword.invalid" class="field-error" role="alert">Enter your password.</span>
+          <span *ngIf="joinForm.controls.currentPassword.touched && joinForm.controls.currentPassword.invalid" class="field-error" role="alert">{{ 'Enter your password.' | t }}</span>
         </div>
         <div style="text-align:right; margin: -4px 0 12px;">
-          <a routerLink="/auth/forgot-password" style="font-size: 12px;">Forgot password?</a>
+          <a routerLink="/auth/forgot-password" style="font-size: 12px;">{{ 'Forgot password?' | t }}</a>
         </div>
         <button type="submit" class="btn-login" [disabled]="saving()">
           <span *ngIf="saving()" class="login-spinner"></span>
-          {{ saving() ? 'Joining…' : 'Accept invitation' }}
+          {{ (saving() ? 'Joining…' : 'Accept invitation') | t }}
         </button>
       </form>
 
       <!-- New person: create account -->
       <form *ngIf="!p.hasAccount" class="login-form" [formGroup]="form" (ngSubmit)="createAccount()" novalidate>
         <div class="form-group">
-          <label for="fullName" class="form-label">Your name</label>
+          <label for="fullName" class="form-label">{{ 'Your name' | t }}</label>
           <input id="fullName" type="text" formControlName="fullName" class="form-control" autocomplete="name">
-          <span *ngIf="form.controls.fullName.touched && form.controls.fullName.invalid" class="field-error" role="alert">Enter your name.</span>
+          <span *ngIf="form.controls.fullName.touched && form.controls.fullName.invalid" class="field-error" role="alert">{{ 'Enter your name.' | t }}</span>
         </div>
 
         <div class="form-group" *ngIf="p.needsPhone">
-          <label for="phone" class="form-label">Mobile number (your sign-in ID)</label>
+          <label for="phone" class="form-label">{{ 'Mobile number (your sign-in ID)' | t }}</label>
           <input id="phone" type="tel" formControlName="phone" class="form-control" placeholder="+880XXXXXXXXXX" autocomplete="tel">
-          <span *ngIf="form.controls.phone.touched && form.controls.phone.invalid" class="field-error" role="alert">Enter a valid mobile number.</span>
+          <span *ngIf="form.controls.phone.touched && form.controls.phone.invalid" class="field-error" role="alert">{{ 'Enter a valid mobile number.' | t }}</span>
         </div>
 
         <div class="form-group">
-          <label for="password" class="form-label">Password</label>
+          <label for="password" class="form-label">{{ 'Password' | t }}</label>
           <input id="password" type="password" formControlName="password" class="form-control" autocomplete="new-password">
-          <span *ngIf="form.controls.password.touched && form.controls.password.invalid" class="field-error" role="alert">{{ passwordHint }}</span>
+          <span *ngIf="form.controls.password.touched && form.controls.password.invalid" class="field-error" role="alert">{{ passwordHint | t }}</span>
         </div>
 
         <div class="form-group">
-          <label for="confirmPassword" class="form-label">Confirm password</label>
+          <label for="confirmPassword" class="form-label">{{ 'Confirm password' | t }}</label>
           <input id="confirmPassword" type="password" formControlName="confirmPassword" class="form-control" autocomplete="new-password">
-          <span *ngIf="form.controls.confirmPassword.touched && form.errors?.['mismatch']" class="field-error" role="alert">Passwords don't match.</span>
+          <span *ngIf="form.controls.confirmPassword.touched && form.errors?.['mismatch']" class="field-error" role="alert">{{ "Passwords don't match." | t }}</span>
         </div>
 
         <button type="submit" class="btn-login" [disabled]="saving()">
           <span *ngIf="saving()" class="login-spinner"></span>
-          {{ saving() ? 'Creating account…' : 'Create account & join' }}
+          {{ (saving() ? 'Creating account…' : 'Create account & join') | t }}
         </button>
       </form>
     </ng-container>
 
     <div class="login-footer" style="margin-top: 20px; text-align:center;">
-      <a routerLink="/auth/login" style="font-size: 13px;">Back to sign in</a>
+      <a routerLink="/auth/login" style="font-size: 13px;">{{ 'Back to sign in' | t }}</a>
     </div>
   </div>
 </div>

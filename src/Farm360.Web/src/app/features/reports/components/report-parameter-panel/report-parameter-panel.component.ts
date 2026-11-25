@@ -12,6 +12,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { DATE_RANGE_PRESETS, LocalizedText, ReportParameter, localized } from '../../models/report.models';
 import { ReportEntityPickerComponent } from '../report-entity-picker/report-entity-picker.component';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * Renders any report's inputs from its parameter schema alone.
@@ -173,12 +174,13 @@ import { WorkingContextService } from '../../../../core/services/working-context
 })
 export class ReportParameterPanelComponent {
   private readonly workingContext = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
 
   readonly parameters = input.required<ReportParameter[]>();
   readonly initial = input<Record<string, string | null>>({});
   readonly busy = input(false);
   /** Language and numeral choice to start with (the last run's, or a re-run's). */
-  readonly initialLanguage = input<'en' | 'bn'>('en');
+  readonly initialLanguage = input<'en' | 'bn'>(this.i18n.isBangla ? 'bn' : 'en');
   readonly initialBengaliNumerals = input(false);
 
   readonly run = output<{
@@ -188,7 +190,7 @@ export class ReportParameterPanelComponent {
   }>();
 
   protected readonly presets = DATE_RANGE_PRESETS;
-  protected readonly language = signal<'en' | 'bn'>('en');
+  protected readonly language = signal<'en' | 'bn'>(this.i18n.isBangla ? 'bn' : 'en');
   protected readonly bengaliNumerals = signal(false);
 
   private readonly values = signal<Record<string, string | null>>({});
@@ -202,14 +204,14 @@ export class ReportParameterPanelComponent {
     effect(() => this.bengaliNumerals.set(this.initialBengaliNumerals()));
   }
 
-  /** A schema label in the chosen report language. */
+  /** A schema label in the chosen report language (always Bangla when the interface is Bangla). */
   protected L(text: LocalizedText | null | undefined): string {
-    return localized(text, this.language());
+    return localized(text, this.i18n.isBangla ? 'bn' : this.language());
   }
 
-  /** Fixed panel wording in the chosen report language. */
+  /** Fixed panel wording: Bangla when the interface or the chosen report language is Bangla. */
   protected t(en: string, bn: string): string {
-    return this.language() === 'bn' ? bn : en;
+    return this.i18n.isBangla || this.language() === 'bn' ? bn : en;
   }
 
   protected setNumber(name: string, value: unknown): void {

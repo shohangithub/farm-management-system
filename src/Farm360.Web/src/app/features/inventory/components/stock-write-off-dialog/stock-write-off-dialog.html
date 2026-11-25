@@ -12,11 +12,11 @@
         <mat-icon>delete_sweep</mat-icon>
       </div>
       <div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0">Write Off Stock</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Discard expired or damaged inventory</p>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0">{{ 'Write Off Stock' | t }}</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 m-0">{{ 'Discard expired or damaged inventory' | t }}</p>
       </div>
     </div>
-    <button aria-label="Close" mat-icon-button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" (click)="onCancel()" [disabled]="isSubmitting()">
+    <button [attr.aria-label]="'Close' | t" mat-icon-button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" (click)="onCancel()" [disabled]="isSubmitting()">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -33,40 +33,40 @@
     </div>
 
     <div class="mb-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50">
-      <div class="text-sm font-medium text-blue-900 dark:text-blue-100">Item: {{ item.name }}</div>
-      <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">Available Stock: {{ item.currentStock }} {{ item.unitOfMeasure }}</div>
+      <div class="text-sm font-medium text-blue-900 dark:text-blue-100">{{ 'Item: {name}' | t: { name: item.name } }}</div>
+      <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">{{ 'Available Stock: {qty} {unit}' | t: { qty: item.currentStock, unit: item.unitOfMeasure } }}</div>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
 
       <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Write-off Quantity ({{ item.unitOfMeasure }})</mat-label>
-        <input matInput type="number" min="0.01" step="0.01" formControlName="quantity" placeholder="e.g. 5.5">
+        <mat-label>{{ 'Write-off Quantity ({unit})' | t: { unit: item.unitOfMeasure } }}</mat-label>
+        <input matInput type="number" min="0.01" step="0.01" formControlName="quantity" [placeholder]="'e.g. 5.5' | t">
         <mat-icon matPrefix class="text-gray-400 mr-2">balance</mat-icon>
-        <mat-error *ngIf="form.get('quantity')?.hasError('required')">Quantity is required.</mat-error>
-        <mat-error *ngIf="form.get('quantity')?.hasError('min')">Must be greater than 0.</mat-error>
-        <mat-error *ngIf="form.get('quantity')?.hasError('max')">Cannot exceed available stock ({{ item.currentStock }}).</mat-error>
+        <mat-error *ngIf="form.get('quantity')?.hasError('required')">{{ 'Quantity is required.' | t }}</mat-error>
+        <mat-error *ngIf="form.get('quantity')?.hasError('min')">{{ 'Must be greater than 0.' | t }}</mat-error>
+        <mat-error *ngIf="form.get('quantity')?.hasError('max')">{{ 'Cannot exceed available stock ({qty}).' | t: { qty: item.currentStock } }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Reason</mat-label>
-        <input matInput formControlName="reason" placeholder="e.g. Expired, Damaged in transit">
+        <mat-label>{{ 'Reason' | t }}</mat-label>
+        <input matInput formControlName="reason" [placeholder]="'e.g. Expired, Damaged in transit' | t">
         <mat-icon matPrefix class="text-gray-400 mr-2">report_problem</mat-icon>
-        <mat-error *ngIf="form.get('reason')?.hasError('required')">Reason is required.</mat-error>
+        <mat-error *ngIf="form.get('reason')?.hasError('required')">{{ 'Reason is required.' | t }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Transaction Date</mat-label>
+        <mat-label>{{ 'Transaction Date' | t }}</mat-label>
         <input matInput [matDatepicker]="picker" formControlName="transactionDate">
         <mat-hint>MM/DD/YYYY</mat-hint>
         <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
-        <mat-error *ngIf="form.get('transactionDate')?.hasError('required')">Date is required.</mat-error>
+        <mat-error *ngIf="form.get('transactionDate')?.hasError('required')">{{ 'Date is required.' | t }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Notes (Optional)</mat-label>
-        <textarea matInput formControlName="notes" rows="3" placeholder="Additional details..."></textarea>
+        <mat-label>{{ 'Notes (Optional)' | t }}</mat-label>
+        <textarea matInput formControlName="notes" rows="3" [placeholder]="'Additional details...' | t"></textarea>
       </mat-form-field>
 
     </form>
@@ -75,12 +75,12 @@
   <!-- Footer Actions -->
   <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
     <button mat-button class="rounded-xl px-5 text-gray-600 dark:text-gray-300" (click)="onCancel()" [disabled]="isSubmitting()" type="button">
-      Cancel
+      {{ 'Cancel' | t }}
     </button>
     <button mat-flat-button color="warn" class="rounded-xl px-6 py-1 shadow-md bg-rose-600 hover:bg-rose-700 text-white" (click)="onSubmit()" [disabled]="form.invalid || isSubmitting()" type="button">
       <mat-icon class="animate-spin mr-2" *ngIf="isSubmitting()">autorenew</mat-icon>
       <mat-icon *ngIf="!isSubmitting()">delete_sweep</mat-icon>
-      {{ isSubmitting() ? 'Writing Off...' : 'Write Off Stock' }}
+      {{ (isSubmitting() ? 'Writing Off...' : 'Write Off Stock') | t }}
     </button>
   </div>
 

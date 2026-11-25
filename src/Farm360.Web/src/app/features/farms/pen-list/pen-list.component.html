@@ -1,7 +1,7 @@
 <app-page-header 
-  title="Pens" 
-  description="Manage animal enclosures and specific housing groups for this shed."
-  primaryActionLabel="Add Pen"
+  [title]="'Pens' | t" 
+  [description]="'Manage animal enclosures and specific housing groups for this shed.' | t"
+  [primaryActionLabel]="'Add Pen' | t"
   primaryActionIcon="add"
   (primaryAction)="onAddPen()">
 </app-page-header>
@@ -15,18 +15,18 @@
       </div>
       <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
              class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-900/20 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors" 
-             placeholder="Search pens by name or number...">
+             [placeholder]="'Search pens by name or number...' | t">
     </div>
     
     <div class="w-full sm:w-auto flex items-center gap-3">
-      <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Filter by:</div>
+      <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Filter by:' | t }}</div>
       
       <div class="relative">
         <select (change)="onFilterStatus($event)" class="block w-44 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
-          <option value="">All Statuses</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-          <option value="UnderMaintenance">Maintenance</option>
+          <option value="">{{ 'All Statuses' | t }}</option>
+          <option value="Active">{{ 'Active' | t }}</option>
+          <option value="Inactive">{{ 'Inactive' | t }}</option>
+          <option value="UnderMaintenance">{{ 'Maintenance' | t }}</option>
         </select>
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
@@ -51,19 +51,19 @@
   <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 mb-4 shadow-sm border border-primary-100 dark:border-primary-900/30">
     <mat-icon class="!text-[32px] !w-[32px] !h-[32px]">fence</mat-icon>
   </div>
-  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 tracking-tight">No Pens Found</h3>
-  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">This shed doesn't have any pens yet. Create your first pen to start housing animals.</p>
+  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 tracking-tight">{{ 'No Pens Found' | t }}</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">{{ "This shed doesn't have any pens yet. Create your first pen to start housing animals." | t }}</p>
   <button (click)="onAddPen()"
      class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-500/30">
-    <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add First Pen
+    <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add First Pen' | t }}
   </button>
 </div>
 
 <!-- Empty State (Search Filter) -->
 <div *ngIf="!isLoading() && pensResult().length > 0 && filteredPens().length === 0" class="py-16 text-center">
   <mat-icon class="!text-[48px] !w-[48px] !h-[48px] text-gray-300 dark:text-gray-600 mb-4">search_off</mat-icon>
-  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No matches found</h3>
-  <p class="text-sm text-gray-500">We couldn't find any pens matching your search or filters.</p>
+  <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">{{ 'No matches found' | t }}</h3>
+  <p class="text-sm text-gray-500">{{ "We couldn't find any pens matching your search or filters." | t }}</p>
 </div>
 
 <!-- Grid -->
@@ -77,21 +77,21 @@
             {{ pen.penNumber }}
           </span>
           <span class="text-[11px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md border" [ngClass]="getStatusClass(pen.status)">
-            {{ getStatusName(pen.status) }}
+            {{ getStatusName(pen.status) | t }}
           </span>
         </div>
         <h3 class="text-lg font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors tracking-tight">
           <a [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shedId(), 'pens', pen.id]">{{ pen.penName }}</a>
         </h3>
         <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider flex items-center gap-1">
-          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">pets</mat-icon> {{ pen.animalGroup || 'Mixed Group' }}
+          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">pets</mat-icon> {{ (pen.animalGroup || 'Mixed Group') | t }}
         </p>
       </div>
     </div>
     
     <div class="p-5 flex-1">
       <div class="flex justify-between items-end mb-1">
-        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Occupancy</span>
+        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Occupancy' | t }}</span>
         <span class="text-sm font-bold text-gray-900 dark:text-white">{{ pen.currentOccupancy | number }} <span class="text-[11px] font-semibold text-gray-500">/ {{ pen.capacity | number }}</span></span>
       </div>
       <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
@@ -104,11 +104,11 @@
     <div class="px-5 py-4 bg-gray-50/50 dark:bg-gray-800/10 border-t border-gray-100 dark:border-gray-800/50 flex gap-3">
       <a [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shedId(), 'pens', pen.id]" 
          class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-primary-700 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/20 dark:hover:bg-primary-900/40 rounded-xl transition-all shadow-sm">
-        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> View
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> {{ 'View' | t }}
       </a>
-      <a aria-label="Edit Pen" [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shedId(), 'pens', pen.id, 'edit']" 
+      <a [attr.aria-label]="'Edit Pen' | t" [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shedId(), 'pens', pen.id, 'edit']" 
          class="inline-flex items-center justify-center p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-all shadow-sm"
-         title="Edit Pen">
+         [title]="'Edit Pen' | t">
         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
       </a>
     </div>

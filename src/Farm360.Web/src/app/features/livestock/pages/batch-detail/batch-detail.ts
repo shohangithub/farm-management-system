@@ -11,11 +11,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-batch-detail',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, PageHeaderComponent, MatButtonModule, MatIconModule, DatePipe],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, PageHeaderComponent, MatButtonModule, MatIconModule, DatePipe, TranslatePipe],
   templateUrl: './batch-detail.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -23,6 +25,8 @@ export class BatchDetail {
   private readonly svc = inject(BatchService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load batch");
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -41,7 +45,7 @@ export class BatchDetail {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ id }) => this.svc.getBatchDetails(id!).pipe(
         catchError(err => {
-          this.error.set(parseApiError(err, 'Could not load this batch.'));
+          this.error.set(parseApiError(err, this.i18n.t('Could not load this batch.')));
           return of(null);
         })
       )),

@@ -86,7 +86,11 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
         resetRefreshState();
         authService.logout();
       } else if (error.status === 403) {
-        notify.reportGlobalError('Access denied: you do not have permission to perform this action.');
+        // The demo account is read-only everywhere: say so instead of a generic "access denied".
+        const demoReadOnly = (error.error as { type?: string } | null)?.type === 'https://farm360.ai/errors/demo-read-only';
+        notify.reportGlobalError(demoReadOnly
+          ? "You're exploring a demo farm with sample data. Nothing can be changed."
+          : 'Access denied: you do not have permission to perform this action.');
       } else if ((error.status === 0 || error.status >= 500) && !req.context.get(SKIP_GLOBAL_ERROR_TOAST)) {
         const offline = error.status === 0 || (typeof navigator !== 'undefined' && navigator.onLine === false);
         notify.reportGlobalError(offline

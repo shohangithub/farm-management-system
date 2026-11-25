@@ -40,10 +40,12 @@ import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-finance-ledger',
   standalone: true,
-  imports: [MoneyPipe, HasPermissionDirective, 
+  imports: [TranslatePipe, MoneyPipe, HasPermissionDirective, 
     CommonModule,
     FormsModule,
     RouterLink,
@@ -71,6 +73,8 @@ export class FinanceLedgerComponent {
   private readonly pdfExportService = inject(PdfExportService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load transactions");
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExportingPdf = signal(false);
@@ -144,7 +148,7 @@ export class FinanceLedgerComponent {
           tap(() => this.isLoading.set(false)),
           catchError(err => {
             this.isLoading.set(false);
-            this.loadError.set(parseApiError(err, 'Could not load transactions.'));
+            this.loadError.set(parseApiError(err, this.i18n.t('Could not load transactions.')));
             return of<PagedFinancialTransactionsResult>({
               items: [],
               totalCount: 0,
@@ -328,7 +332,7 @@ export class FinanceLedgerComponent {
   }
 
   async voidTransaction(txn: FinancialTransaction): Promise<void> {
-    if (!(await this.confirmService.confirmAsync({ message: `Are you sure you want to void this ${txn.type} transaction of ${txn.amountBdt} BDT? This action cannot be undone.`, confirmText: 'Void', destructive: true }))) {
+    if (!(await this.confirmService.confirmAsync({ message: this.i18n.t(txn.type === 'Income' ? 'Are you sure you want to void this income transaction of {amount} BDT? This action cannot be undone.' : 'Are you sure you want to void this expense transaction of {amount} BDT? This action cannot be undone.', { amount: txn.amountBdt }), confirmText: this.i18n.t('Void'), destructive: true }))) {
       return;
     }
 
@@ -337,7 +341,7 @@ export class FinanceLedgerComponent {
 
     this.financeService.deleteTransaction(farmId, txn.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.refresh(),
-      error: err => this.notify.error(parseApiError(err, 'Failed to void transaction. Please try again.'))
+      error: err => this.notify.error(parseApiError(err, this.i18n.t('Failed to void transaction. Please try again.')))
     });
   }
 
@@ -357,7 +361,7 @@ export class FinanceLedgerComponent {
         this.isExporting.set(false);
       },
       error: () => {
-        this.notify.error('Failed to export CSV.');
+        this.notify.error(this.i18n.t('Failed to export CSV.'));
         this.isExporting.set(false);
       }
     });
@@ -379,15 +383,15 @@ export class FinanceLedgerComponent {
         filename: `Farm360_General_Ledger_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'General Ledger Transactions',
-          subtitle: `Financial Transactions & Journal Records`,
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('General Ledger Transactions'),
+          subtitle: this.i18n.t('Financial Transactions & Journal Records'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
-          currency: 'BDT (৳)',
+          currency: this.i18n.t('BDT (৳)'),
           metaFields: [
-            { label: 'Total Records', value: `${count}` },
-            { label: 'Total Income', value: `${formatMoney(income)}` },
-            { label: 'Total Expense', value: `${formatMoney(expense)}` }
+            { label: this.i18n.t('Total Records'), value: `${count}` },
+            { label: this.i18n.t('Total Income'), value: `${formatMoney(income)}` },
+            { label: this.i18n.t('Total Expense'), value: `${formatMoney(expense)}` }
           ]
         },
         showSignatures: true

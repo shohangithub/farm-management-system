@@ -72,6 +72,11 @@ public static class ApplicationServiceExtensions
         // ── Customer documents: invoices, receipts, purchase orders (share the report letterhead) ──
         services.AddScoped<Farm360.Application.Documents.IDocumentHeaderBuilder, Farm360.Application.Documents.DocumentHeaderBuilder>();
 
+        // ── Public "Try the demo" farm (Demo:Enabled) ────────────────────────
+        services.AddScoped<Farm360.Application.Demo.DemoSeeder>();
+        services.AddScoped<Farm360.Application.Demo.DemoTenantManager>();
+        services.AddScoped<Farm360.Application.Demo.DemoTenantPurger>();
+
         // ── AutoMapper (auto-discover all mapping profiles in assembly) ────────
         services.AddAutoMapper(assembly);
 

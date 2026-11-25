@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface RecordBcsDialogData {
   animalId: string;
@@ -17,13 +19,14 @@ export interface RecordBcsDialogData {
   selector: 'app-record-bcs-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './record-bcs-dialog.component.html'
 })
 export class RecordBcsDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<RecordBcsDialogComponent>);
   public readonly data = inject<RecordBcsDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly animalSvc = inject(AnimalService);
   private readonly destroy$ = new Subject<void>();
 
@@ -60,7 +63,7 @@ export class RecordBcsDialogComponent {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            this.error.set(err.error?.detail || err.error?.title || 'Recording BCS failed.');
+            this.error.set(err.error?.detail || err.error?.title || this.i18n.t('Recording BCS failed.'));
         }
       }
     });

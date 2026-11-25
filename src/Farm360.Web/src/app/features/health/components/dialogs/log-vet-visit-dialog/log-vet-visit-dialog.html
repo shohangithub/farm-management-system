@@ -11,12 +11,12 @@
         <mat-icon>local_hospital</mat-icon>
       </div>
       <div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0 leading-tight">Log Veterinary Visit</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">Record a professional consultation</p>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Log Veterinary Visit' | t }}</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Record a professional consultation' | t }}</p>
       </div>
     </div>
     <button mat-icon-button (click)="cancel()"
-      class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" aria-label="Close">
+      class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 relative z-10" [attr.aria-label]="'Close' | t">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -32,25 +32,25 @@
       <div class="flex flex-col gap-5">
 
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Target Farm <span
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Target Farm' | t }} <span
               class="text-red-500">*</span></label>
           <select formControlName="farmId"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <option [ngValue]="null" disabled>-- Select a Farm --</option>
+            <option [ngValue]="null" disabled>{{ '-- Select a Farm --' | t }}</option>
             <option *ngFor="let farm of farms$ | async" [value]="farm.id">
               {{ farm.name }}
             </option>
           </select>
-          <p *ngIf="form.get('farmId')?.touched && form.get('farmId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+          <p *ngIf="form.get('farmId')?.touched && form.get('farmId')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Veterinarian Name <span
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Veterinarian Name' | t }} <span
                 class="text-red-500">*</span></label>
-            <input type="text" formControlName="vetName" placeholder="Dr. John Doe" [matAutocomplete]="autoVet"
+            <input type="text" formControlName="vetName" [placeholder]="'Dr. John Doe' | t" [matAutocomplete]="autoVet"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <p *ngIf="form.get('vetName')?.touched && form.get('vetName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('vetName')?.touched && form.get('vetName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
             <mat-autocomplete #autoVet="matAutocomplete">
               <mat-option *ngFor="let option of filteredVetNames$ | async" [value]="option">
                 {{ option }}
@@ -59,16 +59,16 @@
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Visit Date <span
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Visit Date' | t }} <span
                 class="text-red-500">*</span></label>
             <input type="date" formControlName="visitDate"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <p *ngIf="form.get('visitDate')?.touched && form.get('visitDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+            <p *ngIf="form.get('visitDate')?.touched && form.get('visitDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
           </div>
         </div>
 
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Visit Type <span
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Visit Type' | t }} <span
               class="text-red-500">*</span></label>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <label
@@ -78,7 +78,7 @@
               <mat-icon class="!text-[28px] !w-[28px] !h-[28px] mb-1"
                 [ngClass]="form.get('visitType')?.value == 1 ? 'text-teal-600' : 'text-gray-400'">health_and_safety</mat-icon>
               <span class="text-xs font-bold text-center"
-                [ngClass]="form.get('visitType')?.value == 1 ? 'text-teal-700' : 'text-gray-500'">Routine Checkup</span>
+                [ngClass]="form.get('visitType')?.value == 1 ? 'text-teal-700' : 'text-gray-500'">{{ 'Routine Checkup' | t }}</span>
             </label>
 
             <label
@@ -88,7 +88,7 @@
               <mat-icon class="!text-[28px] !w-[28px] !h-[28px] mb-1"
                 [ngClass]="form.get('visitType')?.value == 2 ? 'text-red-600' : 'text-gray-400'">emergency</mat-icon>
               <span class="text-xs font-bold text-center"
-                [ngClass]="form.get('visitType')?.value == 2 ? 'text-red-700' : 'text-gray-500'">Emergency</span>
+                [ngClass]="form.get('visitType')?.value == 2 ? 'text-red-700' : 'text-gray-500'">{{ 'Emergency' | t }}</span>
             </label>
 
             <label
@@ -98,7 +98,7 @@
               <mat-icon class="!text-[28px] !w-[28px] !h-[28px] mb-1"
                 [ngClass]="form.get('visitType')?.value == 3 ? 'text-blue-600' : 'text-gray-400'">vaccines</mat-icon>
               <span class="text-xs font-bold text-center"
-                [ngClass]="form.get('visitType')?.value == 3 ? 'text-blue-700' : 'text-gray-500'">Vaccination</span>
+                [ngClass]="form.get('visitType')?.value == 3 ? 'text-blue-700' : 'text-gray-500'">{{ 'Vaccination' | t }}</span>
             </label>
 
             <label
@@ -108,42 +108,42 @@
               <mat-icon class="!text-[28px] !w-[28px] !h-[28px] mb-1"
                 [ngClass]="form.get('visitType')?.value == 4 ? 'text-purple-600' : 'text-gray-400'">content_cut</mat-icon>
               <span class="text-xs font-bold text-center"
-                [ngClass]="form.get('visitType')?.value == 4 ? 'text-purple-700' : 'text-gray-500'">Surgery</span>
+                [ngClass]="form.get('visitType')?.value == 4 ? 'text-purple-700' : 'text-gray-500'">{{ 'Surgery' | t }}</span>
             </label>
           </div>
         </div>
 
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Purpose</label>
-          <input type="text" formControlName="purpose" placeholder="Brief reason for the visit"
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Purpose' | t }}</label>
+          <input type="text" formControlName="purpose" [placeholder]="'Brief reason for the visit' | t"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
         </div>
 
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Findings</label>
-          <textarea formControlName="findings" rows="2" placeholder="Clinical observations..."
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Findings' | t }}</label>
+          <textarea formControlName="findings" rows="2" [placeholder]="'Clinical observations...' | t"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
         </div>
 
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Recommendations</label>
-          <textarea formControlName="recommendations" rows="2" placeholder="Vet's advice or treatment plan..."
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Recommendations' | t }}</label>
+          <textarea formControlName="recommendations" rows="2" [placeholder]="recommendationsPlaceholder | t"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Total Cost (BDT)</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Total Cost (BDT)' | t }}</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-medium">৳</span>
               <input type="number" formControlName="costBdt" min="0" placeholder="0"
                 class="block w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-              <p *ngIf="form.get('costBdt')?.touched && form.get('costBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+              <p *ngIf="form.get('costBdt')?.touched && form.get('costBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Next Visit Date</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Next Visit Date' | t }}</label>
             <input type="date" formControlName="nextVisitDate"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           </div>
@@ -157,13 +157,13 @@
       class="px-6 py-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 shrink-0">
       <button type="button" (click)="cancel()" [disabled]="isSubmitting()"
         class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-        Cancel
+        {{ 'Cancel' | t }}
       </button>
       <button type="submit" [disabled]="form.invalid || isSubmitting()"
         class="px-5 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 shadow-sm">
         <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
         <mat-icon *ngIf="!isSubmitting()" class="!w-[18px] !h-[18px] !text-[18px]">save</mat-icon>
-        {{ isSubmitting() ? 'Saving...' : 'Save Record' }}
+        {{ (isSubmitting() ? 'Saving...' : 'Save Record') | t }}
       </button>
     </div>
   </form>

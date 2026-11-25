@@ -13,6 +13,8 @@ import { FinanceService } from '../../services/finance.service';
 import { AccountingHealth, LedgerRepairResult } from '../../models/finance.model';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * Accounting Health — proves the books. Each balance-sheet account is reconciled against the
@@ -22,7 +24,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 @Component({
   selector: 'app-accounting-health',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [TranslatePipe, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './accounting-health.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -31,6 +33,8 @@ export class AccountingHealthComponent {
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly isBangla = this.i18n.isBangla;
 
   readonly health = signal<AccountingHealth | null>(null);
   readonly isLoading = signal(true);
@@ -57,7 +61,7 @@ export class AccountingHealthComponent {
           if (!farm) return of(null);
           return this.finance.getAccountingHealth(farm.id).pipe(
             catchError(err => {
-              this.error.set(parseApiError(err, 'Failed to check the books.'));
+              this.error.set(parseApiError(err, this.i18n.t('Failed to check the books.')));
               return of(null);
             }),
           );
@@ -79,7 +83,7 @@ export class AccountingHealthComponent {
     const farmId = this.context.currentFarmValue?.id;
     if (!farmId) return;
 
-    if (this.adjustInventory() && !(await this.confirmService.confirmAsync({ message: 'Adjust the books to the stock on hand?\n\nDo this only after a physical stock count. Any difference is posted as opening stock (if you have more than the books) or as shrinkage (if you have less).', confirmText: 'Adjust' }))) {
+    if (this.adjustInventory() && !(await this.confirmService.confirmAsync({ message: this.i18n.t('Adjust the books to the stock on hand?\n\nDo this only after a physical stock count. Any difference is posted as opening stock (if you have more than the books) or as shrinkage (if you have less).'), confirmText: this.i18n.t('Adjust') }))) {
       return;
     }
 
@@ -93,7 +97,7 @@ export class AccountingHealthComponent {
         this.isRepairing.set(false);
       },
       error: err => {
-        this.error.set(parseApiError(err, 'Ledger repair failed.'));
+        this.error.set(parseApiError(err, this.i18n.t('Ledger repair failed.')));
         this.isRepairing.set(false);
       },
     });

@@ -1,4 +1,4 @@
-<app-page-header [title]="animal() ? animal()!.tagId : 'Animal Details'"
+<app-page-header [title]="animal() ? animal()!.tagId : ('Animal Details' | t)"
   [description]="animal() ? speciesLabel(animal()!.species) + (breedName() ? ' · ' + breedName() : '') + ' · ' + sexLabel(animal()!.sex) + ' · ' + ageLabel(animal()!.dateOfBirth) : ''"
   [breadcrumbActiveNode]="animal() ? animal()!.tagId : ''">
   <div actions class="flex flex-wrap items-center gap-2 max-w-full no-print" *ngIf="animal()">
@@ -10,252 +10,252 @@
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400" [class.animate-spin]="isExporting()" aria-hidden="true">
         {{ isExporting() ? 'sync' : 'ios_share' }}
       </mat-icon>
-      <span>{{ isExporting() ? 'Exporting...' : 'Export' }}</span>
+      <span>{{ (isExporting() ? 'Exporting...' : 'Export') | t }}</span>
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400 -mr-1" aria-hidden="true">arrow_drop_down</mat-icon>
     </button>
 
     <mat-menu #exportMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
       <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-        Animal Profile & Dossier
+        {{ 'Animal Profile & Dossier' | t }}
       </div>
       <a mat-menu-item routerLink="/reports/finance.animal-life-history" [queryParams]="{ animalId: animal()?.id, autoRun: 'true' }" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">history</mat-icon>
         <div class="flex flex-col text-left">
-          <span class="font-medium text-xs">Full History & Profit/Loss</span>
-          <span class="text-[11px] text-gray-400 dark:text-gray-500">Every cost, the sale and the profit, from arrival to today</span>
+          <span class="font-medium text-xs">{{ 'Full History & Profit/Loss' | t }}</span>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'Every cost, the sale and the profit, from arrival to today' | t }}</span>
         </div>
       </a>
       <button mat-menu-item [matMenuTriggerFor]="summarySubmenu" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">assessment</mat-icon>
         <div class="flex flex-col text-left">
-          <span class="font-medium text-xs">Animal Comprehensive Summary</span>
-          <span class="text-[11px] text-gray-400 dark:text-gray-500">SAP dossier: Demographics, Weight KPIs & P&L</span>
+          <span class="font-medium text-xs">{{ 'Animal Comprehensive Summary' | t }}</span>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'SAP dossier: Demographics, Weight KPIs & P&L' | t }}</span>
         </div>
       </button>
       <button mat-menu-item (click)="exportDossierPdf()" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
         <div class="flex flex-col text-left">
-          <span class="font-medium text-xs">Visual Dashboard Sheet (PDF)</span>
-          <span class="text-[11px] text-gray-400 dark:text-gray-500">Full visual sheet: KPIs, charts & photo</span>
+          <span class="font-medium text-xs">{{ 'Visual Dashboard Sheet (PDF)' | t }}</span>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'Full visual sheet: KPIs, charts & photo' | t }}</span>
         </div>
       </button>
 
       <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
       <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-        Specialized SAP Reports
+        {{ 'Specialized SAP Reports' | t }}
       </div>
 
       <button mat-menu-item [matMenuTriggerFor]="growthSubmenu" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">show_chart</mat-icon>
-        <span class="text-xs">Weight & Growth Trajectory</span>
+        <span class="text-xs">{{ 'Weight & Growth Trajectory' | t }}</span>
       </button>
 
       <button mat-menu-item [matMenuTriggerFor]="feedingSubmenu" class="!rounded-xl">
         <mat-icon class="!text-amber-600">restaurant</mat-icon>
-        <span class="text-xs">Feeding & Nutrition Ledger</span>
+        <span class="text-xs">{{ 'Feeding & Nutrition Ledger' | t }}</span>
       </button>
 
       <button mat-menu-item [matMenuTriggerFor]="healthSubmenu" class="!rounded-xl">
         <mat-icon class="!text-teal-600">healing</mat-icon>
-        <span class="text-xs">Medical & Health History</span>
+        <span class="text-xs">{{ 'Medical & Health History' | t }}</span>
       </button>
 
       <button mat-menu-item [matMenuTriggerFor]="costSubmenu" class="!rounded-xl">
         <mat-icon class="!text-blue-600">account_balance_wallet</mat-icon>
-        <span class="text-xs">Cost & Investment Ledger</span>
+        <span class="text-xs">{{ 'Cost & Investment Ledger' | t }}</span>
       </button>
 
       <a mat-menu-item routerLink="/reports/finance.animal-daily-cost" [queryParams]="{ animalId: animal()?.id }" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">calendar_month</mat-icon>
-        <span class="text-xs">Daily Cost Report</span>
+        <span class="text-xs">{{ 'Daily Cost Report' | t }}</span>
       </a>
 
       <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
 
       <button mat-menu-item (click)="openInReportCenter('livestock.animal-summary')" class="!rounded-xl">
         <mat-icon class="!text-purple-500">visibility</mat-icon>
-        <span class="text-xs">Open in Report Center</span>
+        <span class="text-xs">{{ 'Open in Report Center' | t }}</span>
       </button>
     </mat-menu>
 
     <!-- Comprehensive Summary Submenu -->
     <mat-menu #summarySubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
-      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Summary Format</div>
+      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Summary Format' | t }}</div>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-summary', 'pdf')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
-        <span class="text-xs">PDF Document</span>
+        <span class="text-xs">{{ 'PDF Document' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-summary', 'xlsx')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">table_chart</mat-icon>
-        <span class="text-xs">Excel Spreadsheet (.xlsx)</span>
+        <span class="text-xs">{{ 'Excel Spreadsheet (.xlsx)' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-summary', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-blue-500">article</mat-icon>
-        <span class="text-xs">CSV Data File</span>
+        <span class="text-xs">{{ 'CSV Data File' | t }}</span>
       </button>
       <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
       <button mat-menu-item (click)="openInReportCenter('livestock.animal-summary')" class="!rounded-xl">
         <mat-icon class="!text-purple-500">open_in_new</mat-icon>
-        <span class="text-xs">Customize in Report Center</span>
+        <span class="text-xs">{{ 'Customize in Report Center' | t }}</span>
       </button>
     </mat-menu>
 
 
     <!-- Growth Submenu -->
     <mat-menu #growthSubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
-      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Growth Report Format</div>
+      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Growth Report Format' | t }}</div>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-growth', 'pdf')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
-        <span class="text-xs">PDF Document</span>
+        <span class="text-xs">{{ 'PDF Document' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-growth', 'xlsx')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">table_chart</mat-icon>
-        <span class="text-xs">Excel Spreadsheet (.xlsx)</span>
+        <span class="text-xs">{{ 'Excel Spreadsheet (.xlsx)' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-growth', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-blue-500">article</mat-icon>
-        <span class="text-xs">CSV Data File</span>
+        <span class="text-xs">{{ 'CSV Data File' | t }}</span>
       </button>
     </mat-menu>
 
     <!-- Feeding Submenu -->
     <mat-menu #feedingSubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
-      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Feeding Report Format</div>
+      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Feeding Report Format' | t }}</div>
       <button mat-menu-item (click)="exportAnimalReport('feeding.animal-feeding', 'pdf')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
-        <span class="text-xs">PDF Document</span>
+        <span class="text-xs">{{ 'PDF Document' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('feeding.animal-feeding', 'xlsx')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">table_chart</mat-icon>
-        <span class="text-xs">Excel Spreadsheet (.xlsx)</span>
+        <span class="text-xs">{{ 'Excel Spreadsheet (.xlsx)' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('feeding.animal-feeding', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-blue-500">article</mat-icon>
-        <span class="text-xs">CSV Data File</span>
+        <span class="text-xs">{{ 'CSV Data File' | t }}</span>
       </button>
     </mat-menu>
 
     <!-- Health Submenu -->
     <mat-menu #healthSubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
-      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Health Report Format</div>
+      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Health Report Format' | t }}</div>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-health', 'pdf')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
-        <span class="text-xs">PDF Document</span>
+        <span class="text-xs">{{ 'PDF Document' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-health', 'xlsx')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">table_chart</mat-icon>
-        <span class="text-xs">Excel Spreadsheet (.xlsx)</span>
+        <span class="text-xs">{{ 'Excel Spreadsheet (.xlsx)' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-health', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-blue-500">article</mat-icon>
-        <span class="text-xs">CSV Data File</span>
+        <span class="text-xs">{{ 'CSV Data File' | t }}</span>
       </button>
     </mat-menu>
 
     <!-- Cost Submenu -->
     <mat-menu #costSubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
-      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Cost Report Format</div>
+      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Cost Report Format' | t }}</div>
       <button mat-menu-item (click)="exportAnimalReport('finance.animal-cost-ledger', 'pdf')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
-        <span class="text-xs">PDF Document</span>
+        <span class="text-xs">{{ 'PDF Document' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('finance.animal-cost-ledger', 'xlsx')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">table_chart</mat-icon>
-        <span class="text-xs">Excel Spreadsheet (.xlsx)</span>
+        <span class="text-xs">{{ 'Excel Spreadsheet (.xlsx)' | t }}</span>
       </button>
       <button mat-menu-item (click)="exportAnimalReport('finance.animal-cost-ledger', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-blue-500">article</mat-icon>
-        <span class="text-xs">CSV Data File</span>
+        <span class="text-xs">{{ 'CSV Data File' | t }}</span>
       </button>
     </mat-menu>
 
     <button type="button" (click)="onEdit()"
       class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-500 dark:text-gray-400" aria-hidden="true">edit</mat-icon>
-      Edit
+      {{ 'Edit' | t }}
     </button>
 
     <!-- Secondary actions: visible as buttons from the sm breakpoint up; on phones they live in the "More actions" menu below. -->
     <div class="hidden sm:contents">
       <button type="button" *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()"
         class="h-9 px-3 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        Quarantine
+        {{ 'Quarantine' | t }}
       </button>
       <button type="button" *ngIf="animal()!.status === AnimalStatus.Quarantined" (click)="onRelease()"
         class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        Release from Quarantine
+        {{ 'Release from Quarantine' | t }}
       </button>
       <button type="button" *ngIf="isOnFarm()" (click)="onTransfer()"
         class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        Assign Location
+        {{ 'Assign Location' | t }}
       </button>
       <button type="button" *ngIf="isOnFarm()" (click)="onAssignBatch()"
         class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        Assign to Batch
+        {{ 'Assign to Batch' | t }}
       </button>
       <button type="button" *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()"
         class="h-9 px-3 text-xs font-semibold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        Record Sale
+        {{ 'Record Sale' | t }}
       </button>
       <button type="button" *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled
-        matTooltip="Release it from quarantine before selling"
+        [matTooltip]="'Release it from quarantine before selling' | t"
         class="h-9 px-3 text-xs font-semibold text-blue-400 dark:text-blue-500 bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/40 rounded-lg cursor-not-allowed inline-flex items-center">
-        Record Sale
+        {{ 'Record Sale' | t }}
       </button>
       <button type="button" *ngIf="isOnFarm()" (click)="onRecordDeath()"
         class="h-9 px-3 text-xs font-semibold text-red-700 dark:text-red-300 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        Record Death
+        {{ 'Record Death' | t }}
       </button>
       <!-- Smart Consultant projects sale scenarios: only meaningful while the animal is on the farm. -->
       <button type="button" *ngIf="isOnFarm()" (click)="onOpenIntelligence()"
         class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/50 dark:hover:to-teal-900/50 border border-emerald-200 dark:border-emerald-800/60 rounded-lg shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
         <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400" aria-hidden="true">psychology</mat-icon>
-        Smart Consultant
+        {{ 'Smart Consultant' | t }}
       </button>
     </div>
 
     <!-- Phones: the same secondary actions (same conditions and handlers) in an overflow menu. -->
     <button type="button" *ngIf="isOnFarm()" [matMenuTriggerFor]="moreActionsMenu"
-      aria-label="More actions" matTooltip="More actions"
+      [attr.aria-label]="'More actions' | t" [matTooltip]="'More actions' | t"
       class="sm:hidden h-9 w-9 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
       <mat-icon class="!text-[20px] !w-[20px] !h-[20px]" aria-hidden="true">more_vert</mat-icon>
     </button>
     <mat-menu #moreActionsMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5">
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onOpenIntelligence()" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">psychology</mat-icon>
-        <span class="text-sm">Smart Consultant</span>
+        <span class="text-sm">{{ 'Smart Consultant' | t }}</span>
       </button>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onTransfer()" class="!rounded-xl">
         <mat-icon>place</mat-icon>
-        <span class="text-sm">Assign Location</span>
+        <span class="text-sm">{{ 'Assign Location' | t }}</span>
       </button>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onAssignBatch()" class="!rounded-xl">
         <mat-icon>group_work</mat-icon>
-        <span class="text-sm">Assign to Batch</span>
+        <span class="text-sm">{{ 'Assign to Batch' | t }}</span>
       </button>
       <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()" class="!rounded-xl">
         <mat-icon class="!text-amber-600">health_and_safety</mat-icon>
-        <span class="text-sm">Quarantine</span>
+        <span class="text-sm">{{ 'Quarantine' | t }}</span>
       </button>
       <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Quarantined" (click)="onRelease()" class="!rounded-xl">
         <mat-icon class="!text-emerald-600">lock_open</mat-icon>
-        <span class="text-sm">Release from Quarantine</span>
+        <span class="text-sm">{{ 'Release from Quarantine' | t }}</span>
       </button>
       <mat-divider class="!my-1"></mat-divider>
       <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()" class="!rounded-xl">
         <mat-icon class="!text-blue-600">sell</mat-icon>
-        <span class="text-sm">Record Sale</span>
+        <span class="text-sm">{{ 'Record Sale' | t }}</span>
       </button>
       <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled class="!rounded-xl">
         <mat-icon>sell</mat-icon>
         <div class="flex flex-col text-left">
-          <span class="text-sm">Record Sale</span>
-          <span class="text-[11px]">Release it from quarantine before selling</span>
+          <span class="text-sm">{{ 'Record Sale' | t }}</span>
+          <span class="text-[11px]">{{ 'Release it from quarantine before selling' | t }}</span>
         </div>
       </button>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onRecordDeath()" class="!rounded-xl">
         <mat-icon class="!text-red-600">heart_broken</mat-icon>
-        <span class="text-sm text-red-700 dark:text-red-300">Record Death</span>
+        <span class="text-sm text-red-700 dark:text-red-300">{{ 'Record Death' | t }}</span>
       </button>
     </mat-menu>
 
@@ -263,13 +263,13 @@
     <button type="button" *ngIf="isOnFarm()" (click)="onRecordWeight()"
       class="order-first sm:order-none h-9 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm shadow-primary-600/20 transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">scale</mat-icon>
-      Record Weight
+      {{ 'Record Weight' | t }}
     </button>
   </div>
 </app-page-header>
 
 <!-- Error State -->
-<app-error-state *ngIf="error() as err" class="block mb-6 no-print" title="Couldn't load animal" [message]="err" (retry)="load()"></app-error-state>
+<app-error-state *ngIf="error() as err" class="block mb-6 no-print" [title]="couldNotLoadTitle" [message]="err" (retry)="load()"></app-error-state>
 
 <!-- Loading State -->
 <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
@@ -286,34 +286,34 @@
     <div class="min-w-0 flex-1 basis-56">
       <p class="text-sm sm:text-base font-semibold leading-snug">
         <ng-container *ngIf="isSold()">
-          Sold<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span><span *ngIf="animal()!.buyerName"> to {{ animal()!.buyerName }}</span><span *ngIf="animal()!.salePriceBdt != null"> for {{ animal()!.salePriceBdt | money }}</span><span *ngIf="animal()!.saleWeightKg"> ({{ animal()!.saleWeightKg | number:'1.0-1' }} kg)</span>
+          {{ 'Sold' | t }}<span *ngIf="exitDate()"> {{ 'on {date}' | t: { date: (exitDate() | date:'d MMM yyyy') } }}</span><span *ngIf="animal()!.buyerName"> {{ 'to {buyer}' | t: { buyer: animal()!.buyerName } }}</span><span *ngIf="animal()!.salePriceBdt != null"> {{ 'for {price}' | t: { price: (animal()!.salePriceBdt | money) } }}</span><span *ngIf="animal()!.saleWeightKg"> ({{ animal()!.saleWeightKg | number:'1.0-1' }} {{ 'kg' | t }})</span>
         </ng-container>
         <ng-container *ngIf="isDead()">
-          Died<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span><span *ngIf="disposalReasonLabel()"> — {{ disposalReasonLabel() }}</span>
+          {{ 'Died' | t }}<span *ngIf="exitDate()"> {{ 'on {date}' | t: { date: (exitDate() | date:'d MMM yyyy') } }}</span><span *ngIf="disposalReasonLabel()"> — {{ disposalReasonLabel() }}</span>
         </ng-container>
         <ng-container *ngIf="!isSold() && !isDead()">
-          {{ statusLabel() }}<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span>
+          {{ statusLabel() }}<span *ngIf="exitDate()"> {{ 'on {date}' | t: { date: (exitDate() | date:'d MMM yyyy') } }}</span>
         </ng-container>
       </p>
       <p *ngIf="isDead() && animal()!.notes" class="text-sm mt-1 opacity-90">{{ animal()!.notes }}</p>
-      <p class="text-xs mt-1 text-gray-600 dark:text-gray-400">This animal has left the farm. Its history is kept below; new weight, health, breeding, feeding or location records cannot be added.</p>
+      <p class="text-xs mt-1 text-gray-600 dark:text-gray-400">{{ 'This animal has left the farm. Its history is kept below; new weight, health, breeding, feeding or location records cannot be added.' | t }}</p>
     </div>
     <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto sm:self-center no-print">
       <a routerLink="/reports/finance.animal-life-history" [queryParams]="{ animalId: animal()!.id, autoRun: 'true' }"
         class="h-9 px-3 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">history</mat-icon>
-        History & profit/loss
+        {{ 'History & profit/loss' | t }}
       </a>
       <button *ngIf="isSold()" type="button" (click)="documents.openSaleInvoice(animal()!.id)"
         class="h-9 px-3 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">receipt_long</mat-icon>
-        Sale invoice
+        {{ 'Sale invoice' | t }}
       </button>
       <ng-container *hasPermission="'animals.delete'">
       <button *ngIf="(isSold() || isDead()) && exitDate()" type="button" (click)="onUndoExit()"
         class="h-9 px-3 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">undo</mat-icon>
-        Undo {{ isSold() ? 'sale' : 'death' }}
+        {{ (isSold() ? 'Undo sale' : 'Undo death') | t }}
       </button>
       </ng-container>
     </div>
@@ -327,12 +327,12 @@
       <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 overflow-hidden flex flex-col h-full">
         <!-- Image Section -->
         <div class="relative w-full h-44 sm:h-56 lg:h-60 shrink-0 bg-gradient-to-br from-emerald-50/70 via-teal-50/50 to-slate-100/80 dark:from-gray-900/60 dark:to-gray-800/40 flex flex-col items-center justify-center overflow-hidden border-b border-gray-100 dark:border-gray-800">
-          <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" [alt]="'Photo of ' + animal()!.tagId" class="absolute inset-0 w-full h-full object-cover" />
+          <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" [alt]="'Photo of {tag}' | t: { tag: animal()!.tagId }" class="absolute inset-0 w-full h-full object-cover" />
           <div *ngIf="!animal()!.primaryPhotoUrl" class="flex flex-col items-center justify-center gap-2 p-6 text-center">
             <div class="w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-emerald-100 dark:border-gray-700 flex items-center justify-center text-3xl" aria-hidden="true">
               {{ speciesEmoji(animal()!.species) }}
             </div>
-            <span class="text-xs text-gray-500 dark:text-gray-400">No profile photo yet</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">{{ 'No profile photo yet' | t }}</span>
           </div>
         </div>
 
@@ -365,17 +365,17 @@
 
           <dl class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
             <div class="min-w-0">
-              <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Location</dt>
+              <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Location' | t }}</dt>
               <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
                 <ng-container *ngIf="shedName() || penName(); else noLocation">
                   <span *ngIf="shedName()" class="text-primary-700 dark:text-primary-400 font-semibold">{{ shedName() }}</span>
                   <span *ngIf="penName()" class="text-gray-500 dark:text-gray-400 font-medium"> &middot; {{ penName() }}</span>
                 </ng-container>
-                <ng-template #noLocation><span class="text-gray-400 italic">Not Assigned</span></ng-template>
+                <ng-template #noLocation><span class="text-gray-400 italic">{{ 'Not Assigned' | t }}</span></ng-template>
               </dd>
             </div>
             <div class="min-w-0">
-              <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tag Type</dt>
+              <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Tag Type' | t }}</dt>
               <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ tagTypeLabel(animal()!.tagType) }}</dd>
             </div>
           </dl>
@@ -391,9 +391,9 @@
         <!-- Latest Weight -->
         <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Latest Weight</p>
-            <p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ animal()!.latestWeightKg ? (animal()!.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" *ngIf="animal()!.latestWeightDate">Recorded {{ animal()!.latestWeightDate | date:'mediumDate' }}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Latest Weight' | t }}</p>
+            <p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ animal()!.latestWeightKg ? (animal()!.latestWeightKg | number:'1.1-1') + ' ' + ('kg' | t) : '—' }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" *ngIf="animal()!.latestWeightDate">{{ 'Recorded {date}' | t: { date: (animal()!.latestWeightDate | date:'mediumDate') } }}</p>
           </div>
           <div class="w-11 h-11 shrink-0 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 rounded-xl" aria-hidden="true">
             <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[24px] !w-[24px] !h-[24px]">scale</mat-icon>
@@ -403,11 +403,11 @@
         <!-- ADG -->
         <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Avg Daily Gain (ADG)</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Avg Daily Gain (ADG)' | t }}</p>
             <p class="text-3xl font-bold tracking-tight mt-2 tabular-nums" [class.text-emerald-600]="(animal()!.adgKgPerDay ?? 0) > 0" [class.dark:text-emerald-400]="(animal()!.adgKgPerDay ?? 0) > 0" [class.text-gray-900]="!(animal()!.adgKgPerDay ?? 0)" [class.dark:text-white]="!(animal()!.adgKgPerDay ?? 0)">
-              {{ animal()!.adgKgPerDay ? (animal()!.adgKgPerDay | number:'1.3-3') + ' kg/d' : '—' }}
+              {{ animal()!.adgKgPerDay ? (animal()!.adgKgPerDay | number:'1.3-3') + ' ' + ('kg/d' | t) : '—' }}
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Growth rate history</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Growth rate history' | t }}</p>
           </div>
           <div class="w-11 h-11 shrink-0 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-xl" aria-hidden="true">
             <mat-icon class="!text-blue-600 dark:!text-blue-400 !text-[24px] !w-[24px] !h-[24px]">trending_up</mat-icon>
@@ -419,28 +419,28 @@
       <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5">
         <div class="flex items-center gap-2 mb-3">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400" aria-hidden="true">payments</mat-icon>
-          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Financial Summary</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Financial Summary' | t }}</p>
         </div>
         <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-4 sm:gap-y-4">
           <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block border-b border-gray-100 dark:border-gray-800 sm:border-0">
-            <dt class="text-xs text-gray-500 dark:text-gray-400">Purchase Cost</dt>
+            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Purchase Cost' | t }}</dt>
             <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ acquisitionCost() | money }}</dd>
           </div>
           <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block border-b border-gray-100 dark:border-gray-800 sm:border-0">
-            <dt class="text-xs text-gray-500 dark:text-gray-400">Health Care Cost</dt>
+            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Health Care Cost' | t }}</dt>
             <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ totalTreatmentCost() | money }}</dd>
           </div>
           <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block border-b border-gray-100 dark:border-gray-800 sm:border-0">
-            <dt class="text-xs text-gray-500 dark:text-gray-400">Feed Cost</dt>
+            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Feed Cost' | t }}</dt>
             <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ totalFeedCost() | money }}</dd>
           </div>
           <div class="flex items-baseline justify-between gap-3 py-2 sm:py-0 sm:block">
-            <dt class="text-xs text-gray-500 dark:text-gray-400">Labour &amp; Overhead</dt>
+            <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Labour & Overhead' | t }}</dt>
             <dd class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white tabular-nums sm:mt-1">{{ laborOverheadCost() | money }}</dd>
           </div>
         </dl>
         <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-baseline justify-between gap-3">
-          <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Investment</p>
+          <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Total Investment' | t }}</p>
           <p class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{{ totalCost() | money }}</p>
         </div>
       </div>
@@ -452,25 +452,25 @@
         <div class="flex flex-wrap justify-between items-start gap-3">
           <div class="min-w-0 flex-1 basis-48">
             <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              {{ isExited() ? 'Final Profit / Loss' : 'Projected Profit / Loss' }}
+              {{ (isExited() ? 'Final Profit / Loss' : 'Projected Profit / Loss') | t }}
             </p>
-            <p *ngIf="!isExited()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">If sold today: latest weight × live rate − total investment</p>
-            <p *ngIf="isExited() && !isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sale revenue − total investment</p>
-            <p *ngIf="isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Died — no revenue; the total investment is lost</p>
+            <p *ngIf="!isExited()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'If sold today: latest weight × live rate − total investment' | t }}</p>
+            <p *ngIf="isExited() && !isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Sale revenue − total investment' | t }}</p>
+            <p *ngIf="isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Died — no revenue; the total investment is lost' | t }}</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
             <!-- Live rate (defaults to the farm's valuation rate; editable) -->
             <div *ngIf="!isExited()" class="h-9 flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg px-2.5 border border-gray-200 dark:border-gray-700 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 no-print"
-                 [title]="'Live-weight rate (BDT/kg) — ' + liveWeightPriceSource()">
-              <span class="text-xs text-gray-500 dark:text-gray-400 mr-1.5">৳/kg</span>
+                 [title]="'Live-weight rate (BDT/kg) — {source}' | t: { source: (liveWeightPriceSource() | t) }">
+              <span class="text-xs text-gray-500 dark:text-gray-400 mr-1.5">{{ '৳/kg' | t }}</span>
               <input type="number" min="0" step="1"
                      [ngModel]="liveWeightPrice()"
                      (ngModelChange)="onLiveWeightPriceChange($event)"
                      class="w-16 bg-transparent border-none text-sm font-semibold text-gray-900 dark:text-white p-0 text-right tabular-nums focus:ring-0 focus:outline-none appearance-none"
-                     aria-label="Live weight price (BDT per kg)">
-              <button aria-label="Reset to farm valuation rate" type="button" *ngIf="liveWeightPriceSource() === 'Manual rate'" (click)="resetLiveWeightPrice()"
-                      class="ml-1 w-6 h-6 inline-flex items-center justify-center rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500" title="Reset to farm valuation rate">
+                     [attr.aria-label]="'Live weight price (BDT per kg)' | t">
+              <button [attr.aria-label]="'Reset to farm valuation rate' | t" type="button" *ngIf="liveWeightPriceSource() === 'Manual rate'" (click)="resetLiveWeightPrice()"
+                      class="ml-1 w-6 h-6 inline-flex items-center justify-center rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500" [title]="'Reset to farm valuation rate' | t">
                 <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">restart_alt</mat-icon>
               </button>
               <mat-icon *ngIf="liveWeightPriceSource() !== 'Manual rate'" class="!text-[14px] !w-[14px] !h-[14px] text-gray-400 ml-1" aria-hidden="true">edit</mat-icon>
@@ -479,7 +479,7 @@
             <!-- Status Badge -->
             <div *ngIf="isExited() || hasValuationWeight()" class="px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider"
                  [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'">
-              {{ netProfit() >= 0 ? 'PROFIT' : 'LOSS' }}
+              {{ (netProfit() >= 0 ? 'PROFIT' : 'LOSS') | t }}
             </div>
           </div>
         </div>
@@ -490,7 +490,7 @@
               {{ netProfit() > 0 ? '+' : '' }}{{ netProfit() | money }}
             </p>
             <p *ngIf="totalCost() > 0" class="text-sm font-semibold" [ngClass]="netProfit() >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
-              ({{ netProfit() / totalCost() | percent:'1.1-1' }} on cost)
+              ({{ '{pct} on cost' | t: { pct: (netProfit() / totalCost() | percent:'1.1-1') } }})
             </p>
           </div>
 
@@ -498,18 +498,18 @@
           <div *ngIf="!isExited()" class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-800">
             <span class="flex items-start gap-1.5 tabular-nums">
               <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mt-px shrink-0 text-gray-400" aria-hidden="true">info</mat-icon>
-              <span>({{ animal()!.latestWeightKg | number:'1.0-1' }} kg × {{ liveWeightPrice() | money:2 }}) = {{ currentEstimatedValue() | money }} − {{ totalCost() | money }} (Total Investment)</span>
+              <span>({{ animal()!.latestWeightKg | number:'1.0-1' }} {{ 'kg' | t }} × {{ liveWeightPrice() | money:2 }}) = {{ currentEstimatedValue() | money }} − {{ totalCost() | money }} ({{ 'Total Investment' | t }})</span>
             </span>
-            <span>Break-even rate: <b class="text-gray-800 dark:text-gray-200 tabular-nums">{{ breakEvenLiveRate() | money:2 }}/kg</b></span>
-            <span class="text-gray-500 dark:text-gray-400">Rate: {{ liveWeightPriceSource() }}</span>
+            <span>{{ 'Break-even rate:' | t }} <b class="text-gray-800 dark:text-gray-200 tabular-nums">{{ breakEvenLiveRate() | money:2 }}/{{ 'kg' | t }}</b></span>
+            <span class="text-gray-500 dark:text-gray-400">{{ 'Rate: {source}' | t: { source: (liveWeightPriceSource() | t) } }}</span>
           </div>
           <div *ngIf="isExited()" class="mt-4 flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-800 tabular-nums">
             <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mt-px shrink-0 text-gray-400" aria-hidden="true">info</mat-icon>
-            <span>{{ realisedRevenue() | money }} ({{ isDead() ? 'no sale — died' : 'Sale' }}) − {{ totalCost() | money }} (Total Investment)</span>
+            <span>{{ realisedRevenue() | money }} ({{ (isDead() ? 'no sale — died' : 'Sale') | t }}) − {{ totalCost() | money }} ({{ 'Total Investment' | t }})</span>
           </div>
         </ng-container>
         <ng-template #noWeightForValuation>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">Record a weight to value this animal. Investment so far: <b class="text-gray-900 dark:text-white">{{ totalCost() | money }}</b>.</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">{{ 'Record a weight to value this animal. Investment so far:' | t }} <b class="text-gray-900 dark:text-white">{{ totalCost() | money }}</b>।</p>
         </ng-template>
       </div>
 
@@ -523,16 +523,16 @@
     <mat-tab-group animationDuration="200ms" mat-stretch-tabs="false" mat-align-tabs="start" class="farm-tab-group animal-detail-tabs">
 
       <!-- ─── Weight History Tab ────────────────────── -->
-      <mat-tab label="Weight History">
+      <mat-tab [label]="'Weight History' | t">
         <div class="p-4 sm:p-6">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div class="min-w-0">
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Weight Progression</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of animal weights.</p>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Weight Progression' | t }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Chronological record of animal weights.' | t }}</p>
             </div>
             <button type="button" *ngIf="isOnFarm()" (click)="onRecordWeight()"
               class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm no-print focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> Add Weight
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> {{ 'Add Weight' | t }}
             </button>
           </div>
 
@@ -541,12 +541,12 @@
             <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
               <mat-icon class="!text-gray-400" aria-hidden="true">scale</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">No weight records</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">Record a weight to start tracking growth and Average Daily Gain (ADG).</p>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ 'No weight records' | t }}</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">{{ 'Record a weight to start tracking growth and Average Daily Gain (ADG).' | t }}</p>
           </div>
 
           <div *ngIf="weightChartOptions()" class="mb-6 bg-white dark:bg-surface-dark rounded-xl border border-gray-200/70 dark:border-gray-800 p-4">
-            <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Growth Trend</h4>
+            <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">{{ 'Growth Trend' | t }}</h4>
             <div echarts [options]="weightChartOptions()!" class="h-56 sm:h-64 w-full"></div>
           </div>
 
@@ -555,16 +555,16 @@
             <table class="min-w-full text-left text-sm">
               <thead class="bg-gray-50 dark:bg-gray-800/60">
                 <tr>
-                  <th scope="col" class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Date</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Weight (kg)</th>
-                  <th scope="col" class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notes</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{{ 'Date' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{{ 'Weight (kg)' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ 'Notes' | t }}</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
                 <tr *ngFor="let w of animal()!.weightRecords"
                   class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                   <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-white">{{ w.recordedDate | date:'mediumDate' }}</td>
-                  <td class="px-4 py-3 whitespace-nowrap text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{{ w.weightKg | number:'1.1-2' }} kg</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{{ w.weightKg | number:'1.1-2' }} {{ 'kg' | t }}</td>
                   <td class="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-[10rem]">{{ w.notes || '-' }}</td>
                 </tr>
               </tbody>
@@ -574,16 +574,16 @@
       </mat-tab>
 
       <!-- ─── Body Condition Score (BCS) ─────────────────────────────── -->
-      <mat-tab label="Body Condition Score">
+      <mat-tab [label]="'Body Condition Score' | t">
         <div class="p-4 sm:p-6">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div class="min-w-0">
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Body Condition Score</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Periodic body condition assessments (1–5 scale).</p>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Body Condition Score' | t }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Periodic body condition assessments (1–5 scale).' | t }}</p>
             </div>
             <button type="button" *ngIf="isOnFarm()" (click)="onRecordBcs()"
               class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm no-print focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> Record BCS
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> {{ 'Record BCS' | t }}
             </button>
           </div>
 
@@ -592,17 +592,17 @@
             <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
               <mat-icon class="!text-gray-400" aria-hidden="true">fitness_center</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">No BCS records</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">Score this animal's body condition to see how it is doing over time.</p>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ 'No BCS records' | t }}</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">{{ "Score this animal's body condition to see how it is doing over time." | t }}</p>
           </div>
 
           <div *ngIf="animal()!.bcsRecords.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
             <table class="min-w-full text-left text-sm">
               <thead class="bg-gray-50 dark:bg-gray-800/60">
                 <tr>
-                  <th scope="col" class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Date</th>
-                  <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Score</th>
-                  <th scope="col" class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Notes</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Date' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Score' | t }}</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Notes' | t }}</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
@@ -623,65 +623,63 @@
 
 
       <!-- ─── Location & Status Tab ────────────────────────────────────── -->
-      <mat-tab label="Location & Status">
+      <mat-tab [label]="'Location & Status' | t">
         <div class="p-4 sm:p-6 space-y-8">
 
           <!-- Current Details Section -->
           <div>
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Current Status</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ 'Current Status' | t }}</h3>
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-6">
               <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-6">
                 <div>
-                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Current Location
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ 'Current Location' | t }}
                   </dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
                     <div class="flex flex-col gap-0.5">
-                      <span class="text-xs text-gray-500">{{ farmName() || 'Loading Farm...' }}</span>
+                      <span class="text-xs text-gray-500">{{ farmName() || ('Loading Farm...' | t) }}</span>
                       <ng-container *ngIf="animal()!.shedId || animal()!.penId; else noLocation">
-                        <span *ngIf="animal()!.shedId" class="text-primary-600 font-semibold">{{ shedName() || 'Loading
-                          Shed...' }}</span>
-                        <span *ngIf="animal()!.penId" class="text-primary-600 font-semibold">Pen: {{ penName() || '...'
+                        <span *ngIf="animal()!.shedId" class="text-primary-600 font-semibold">{{ shedName() || ('Loading Shed...' | t) }}</span>
+                        <span *ngIf="animal()!.penId" class="text-primary-600 font-semibold">{{ 'Pen:' | t }} {{ penName() || '...'
                           }}</span>
                       </ng-container>
-                      <ng-template #noLocation><span class="text-gray-400 italic">No Shed/Pen
-                          Assigned</span></ng-template>
+                      <ng-template #noLocation><span class="text-gray-400 italic">{{ 'No Shed/Pen Assigned' | t }}</span></ng-template>
                     </div>
                   </dd>
                 </div>
                 <div *ngIf="animal()!.batchId">
-                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Batch Assignment
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ 'Batch Assignment' | t }}
                   </dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">
                     <span
                       class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50">
                       <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">group_work</mat-icon>
-                      Assigned to Batch
+                      {{ 'Assigned to Batch' | t }}
                     </span>
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Acquisition</dt>
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ 'Acquisition' | t }}</dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200 flex flex-col gap-0.5">
-                    <span>{{ animal()!.acquisitionType === 'Purchased' ? 'Purchased' : 'Born on Farm' }}</span>
+                    <span>{{ (animal()!.acquisitionType === 'Purchased' ? 'Purchased' : 'Born on Farm') | t }}</span>
                     <span class="text-xs text-gray-500">{{ animal()!.acquisitionDate | date:'mediumDate' }}</span>
                   </dd>
                 </div>
                 <div *ngIf="animal()!.acquisitionPriceBdt">
-                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Purchase Price</dt>
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ 'Purchase Price' | t }}</dt>
                   <dd class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ animal()!.acquisitionPriceBdt | money:2 }}</dd>
                 </div>
                 <div *ngIf="animal()!.status === AnimalStatus.Quarantined && animal()!.quarantineReason">
-                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-amber-500 mb-1">Quarantine Reason
+                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-amber-500 mb-1">{{ 'Quarantine Reason' | t }}
                   </dt>
                   <dd class="text-sm font-medium text-amber-700 dark:text-amber-400">{{ animal()!.quarantineReason }}
                   </dd>
                 </div>
                 <div *ngIf="animal()!.disposalReason">
-                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-red-500 mb-1">Disposal Reason</dt>
-                  <dd class="text-sm font-medium text-red-700 dark:text-red-400">{{ animal()!.disposalReason === 'Sale' ? 'Sale' : animal()!.disposalReason === 'Slaughter' ? 'Slaughter' : animal()!.disposalReason === 'NaturalDeath' ? 'Natural Death' : animal()!.disposalReason === 'Disease' ? 'Disease' : animal()!.disposalReason === 'Accident' ? 'Accident' : 'Unknown' }}</dd>
+                  <dt class="text-[11px] uppercase tracking-wider font-semibold text-red-500 mb-1">{{ 'Disposal Reason' | t }}</dt>
+                  <dd class="text-sm font-medium text-red-700 dark:text-red-400">{{ (animal()!.disposalReason === 'Sale' ? 'Sale' : animal()!.disposalReason === 'Slaughter' ? 'Slaughter' : animal()!.disposalReason === 'NaturalDeath' ? 'Natural Death' : animal()!.disposalReason === 'Disease' ? 'Disease' : animal()!.disposalReason === 'Accident' ? 'Accident' : 'Unknown') | t }}</dd>
                 </div>
                 <div *ngIf="animal()!.notes" class="col-span-1 sm:col-span-2 md:col-span-3">
-                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">Notes</dt>
+                  <dt class="text-xs uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ 'Notes' | t }}</dt>
                   <dd class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ animal()!.notes }}</dd>
                 </div>
               </dl>
@@ -692,9 +690,8 @@
           <div class="border-t border-gray-100 dark:border-gray-800/50 pt-8">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
               <div>
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white">Transfer History</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of all physical location
-                  changes.</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Transfer History' | t }}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Chronological record of all physical location changes.' | t }}</p>
               </div>
             </div>
 
@@ -704,8 +701,8 @@
                 class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 shadow-sm">
                 <mat-icon class="!text-gray-400" aria-hidden="true">route</mat-icon>
               </div>
-              <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">No Transfer History</h4>
-              <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm">Moves between sheds and pens will appear here.</p>
+              <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ 'No Transfer History' | t }}</h4>
+              <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm">{{ 'Moves between sheds and pens will appear here.' | t }}</p>
             </div>
 
             <div *ngIf="resolvedMovements().length" class="relative">
@@ -734,19 +731,19 @@
                           <span
                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 text-xs font-semibold">
                             <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">fence</mat-icon>
-                            Pen {{ m.penName }}
+                            {{ 'Pen {pen}' | t: { pen: m.penName } }}
                           </span>
                         </div>
                         <p class="text-sm font-medium text-gray-900 dark:text-white mt-2">
-                          <span class="text-gray-500 dark:text-gray-400 font-normal">Reason: </span>
-                          {{ m.transferReason || 'Initial Assignment' }}
+                          <span class="text-gray-500 dark:text-gray-400 font-normal">{{ 'Reason:' | t }} </span>
+                          {{ m.transferReason || ('Initial Assignment' | t) }}
                         </p>
                       </div>
 
                       <div class="text-left sm:text-right flex flex-col gap-1">
                         <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                           <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">login</mat-icon>
-                          <span>Placed: <strong class="text-gray-700 dark:text-gray-300">{{ m.placedAtUtc |
+                          <span>{{ 'Placed:' | t }} <strong class="text-gray-700 dark:text-gray-300">{{ m.placedAtUtc |
                               date:'mediumDate' }}</strong></span>
                         </div>
                         <div class="flex items-center gap-1.5 text-xs"
@@ -754,9 +751,9 @@
                           <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">{{ m.removedAtUtc ? 'logout' : 'done'
                             }}</mat-icon>
                           <span>
-                            {{ m.removedAtUtc ? 'Removed: ' : 'Current Status: ' }}
+                            {{ (m.removedAtUtc ? 'Removed:' : 'Current Status:') | t }}
                             <strong [ngClass]="m.removedAtUtc ? 'text-gray-700 dark:text-gray-300' : 'font-bold'">
-                              {{ m.removedAtUtc ? (m.removedAtUtc | date:'mediumDate') : 'Active Here' }}
+                              {{ m.removedAtUtc ? (m.removedAtUtc | date:'mediumDate') : ('Active Here' | t) }}
                             </strong>
                           </span>
                         </div>
@@ -772,16 +769,16 @@
 
 
       <!-- ─── Photo Gallery Tab ────────────────────── -->
-      <mat-tab label="Photo Gallery">
+      <mat-tab [label]="'Photo Gallery' | t">
         <div class="p-4 sm:p-6">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Animal Photos</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Visual record and identification.</p>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Animal Photos' | t }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Visual record and identification.' | t }}</p>
             </div>
             <button type="button" (click)="onUploadPhoto()"
               class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add_a_photo</mat-icon> Add Photo
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add_a_photo</mat-icon> {{ 'Add Photo' | t }}
             </button>
           </div>
 
@@ -791,24 +788,24 @@
               class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
               <mat-icon class="!text-gray-400" aria-hidden="true">photo_library</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">No photos</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">Add a photo to help identify this animal and see it grow.</p>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ 'No photos' | t }}</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">{{ 'Add a photo to help identify this animal and see it grow.' | t }}</p>
           </div>
 
           <div *ngIf="animal()!.photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <div *ngFor="let p of animal()!.photos"
               class="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 aspect-square">
-              <img [src]="p.photoUrl" [alt]="p.caption || 'Animal photo'"
+              <img [src]="p.photoUrl" [alt]="p.caption || ('Animal photo' | t)"
                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <!-- Caption: always visible on touch screens, revealed on hover from sm up. -->
               <div
                 class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-                <p class="text-white text-xs font-medium">{{ p.caption || 'No caption' }}</p>
+                <p class="text-white text-xs font-medium">{{ p.caption || ('No caption' | t) }}</p>
                 <p class="text-gray-300 text-[11px] mt-0.5">{{ p.uploadedAtUtc | date:'shortDate' }}</p>
               </div>
               <div *ngIf="p.isPrimary"
                 class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
-                Primary
+                {{ 'Primary' | t }}
               </div>
             </div>
           </div>
@@ -816,7 +813,7 @@
       </mat-tab>
 
       <!-- ─── Breeding History Tab (Females Only) ────────────────────── -->
-      <mat-tab label="Breeding History" *ngIf="animal()?.sex === AnimalSex.Female">
+      <mat-tab [label]="'Breeding History' | t" *ngIf="animal()?.sex === AnimalSex.Female">
         <div class="p-4 sm:p-6">
           <div *ngIf="animal()!.breedingRecords.length === 0"
             class="py-10 px-4 text-center bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
@@ -824,11 +821,11 @@
               class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-3 mx-auto shadow-sm">
               <mat-icon class="!text-pink-400" aria-hidden="true">favorite_border</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">No breeding records</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">Record a mating to start this animal's breeding history.</p>
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ 'No breeding records' | t }}</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">{{ "Record a mating to start this animal's breeding history." | t }}</p>
             <button type="button" *ngIf="isOnFarm()" (click)="onRecordMating()"
               class="h-9 inline-flex items-center gap-1.5 px-4 text-xs font-semibold text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-              Record Mating
+              {{ 'Record Mating' | t }}
             </button>
           </div>
 
@@ -836,7 +833,7 @@
             <div *ngIf="isOnFarm()" class="flex justify-end mb-4">
               <button type="button" (click)="onRecordMating()"
                 class="h-9 px-3 text-xs font-semibold text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/40 border border-pink-200 dark:border-pink-800/60 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-                Record New Mating
+                {{ 'Record New Mating' | t }}
               </button>
             </div>
           <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
@@ -844,13 +841,13 @@
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-800/60">
                   <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    Mating Date</th>
+                    {{ 'Mating Date' | t }}</th>
                   <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    Method</th>
+                    {{ 'Method' | t }}</th>
                   <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    Sire Details</th>
+                    {{ 'Sire Details' | t }}</th>
                   <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    Pregnancy Status</th>
+                    {{ 'Pregnancy Status' | t }}</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
@@ -861,50 +858,48 @@
                   <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                       [ngClass]="br.isArtificialInsemination ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'">
-                      {{ br.isArtificialInsemination ? 'AI' : 'Natural' }}
+                      {{ (br.isArtificialInsemination ? 'AI' : 'Natural') | t }}
                     </span>
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     <ng-container *ngIf="br.sireAnimalId || br.sireExternalId; else noSire">
                       <div class="flex flex-col">
-                        <span *ngIf="br.sireAnimalId" class="font-medium">Internal: {{ br.sireAnimalId }}</span>
-                        <span *ngIf="br.sireExternalId" class="text-xs text-gray-500">Ext: {{ br.sireExternalId
+                        <span *ngIf="br.sireAnimalId" class="font-medium">{{ 'Internal:' | t }} {{ br.sireAnimalId }}</span>
+                        <span *ngIf="br.sireExternalId" class="text-xs text-gray-500">{{ 'Ext:' | t }} {{ br.sireExternalId
                           }}</span>
                       </div>
                     </ng-container>
-                    <ng-template #noSire><span class="text-gray-400 italic">Unknown Sire</span></ng-template>
+                    <ng-template #noSire><span class="text-gray-400 italic">{{ 'Unknown Sire' | t }}</span></ng-template>
                   </td>
                   <td class="px-4 py-3 text-sm">
                     <ng-container *ngIf="br.isPregnancyConfirmed; else notConfirmed">
                       <div class="flex flex-col gap-1">
                         <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
                           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon>
-                          Confirmed
+                          {{ 'Confirmed' | t }}
                         </span>
-                        <div class="text-xs text-gray-500" *ngIf="br.expectedCalvingDate && (br.actualCalvingDate || !isExited())">Expected: {{
-                          br.expectedCalvingDate | date:'shortDate' }}</div>
+                        <div class="text-xs text-gray-500" *ngIf="br.expectedCalvingDate && (br.actualCalvingDate || !isExited())">{{ 'Expected: {date}' | t: { date: (br.expectedCalvingDate | date:'shortDate') } }}</div>
                         <div *ngIf="!br.actualCalvingDate && isExited()" class="text-xs font-semibold text-gray-500">
-                          Ended — {{ isSold() ? 'sold' : (isDead() ? 'died' : 'left the farm') }}<span *ngIf="exitDate()"> on {{ exitDate() | date:'mediumDate' }}</span> before calving
+                          {{ (isSold() ? 'Ended — sold before calving' : (isDead() ? 'Ended — died before calving' : 'Ended — left the farm before calving')) | t }}<span *ngIf="exitDate()"> ({{ exitDate() | date:'mediumDate' }})</span>
                         </div>
                         <div *ngIf="br.actualCalvingDate"
                           class="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
-                          Calved: {{ br.actualCalvingDate | date:'mediumDate' }} ({{ br.calvingOutcome || 'Live Birth'
-                          }})
+                          {{ 'Calved:' | t }} {{ br.actualCalvingDate | date:'mediumDate' }} ({{ (br.calvingOutcome || 'Live Birth') | t }})
                         </div>
                         <button *ngIf="!br.actualCalvingDate && isOnFarm()" (click)="onRecordCalving(br.id)"
                           class="mt-1 inline-flex items-center gap-1 w-max px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors">
                           <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">child_care</mat-icon>
-                          Record Calving
+                          {{ 'Record Calving' | t }}
                         </button>
                       </div>
                     </ng-container>
                     <ng-template #notConfirmed>
                       <div class="flex flex-col gap-1">
-                        <span class="text-amber-600 dark:text-amber-400 font-medium">Pending Check</span>
+                        <span class="text-amber-600 dark:text-amber-400 font-medium">{{ 'Pending Check' | t }}</span>
                         <button *ngIf="isOnFarm()" (click)="onConfirmPregnancy(br.id)"
                           class="inline-flex items-center gap-1 w-max px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors">
                           <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">done</mat-icon>
-                          Confirm
+                          {{ 'Confirm' | t }}
                         </button>
                       </div>
                     </ng-template>
@@ -918,7 +913,7 @@
       </mat-tab>
 
       <!-- ─── Medical & Health Tab ───────────────────────────────────── -->
-      <mat-tab label="Medical & Health">
+      <mat-tab [label]="'Medical & Health' | t">
         <div class="p-4 sm:p-6 space-y-8">
 
           <div *ngIf="!healthHistory()" class="flex justify-center py-8">
@@ -935,13 +930,13 @@
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-blue-500">vaccines</mat-icon>
-                  Vaccinations
+                  {{ 'Vaccinations' | t }}
                 </h3>
               </div>
 
               <div *ngIf="healthHistory()!.vaccinations.length === 0"
                 class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-6 px-4 text-center">
-                <p class="text-sm text-gray-500 dark:text-gray-400">No vaccinations yet. Vaccines given to this animal will be listed here.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'No vaccinations yet. Vaccines given to this animal will be listed here.' | t }}</p>
               </div>
 
               <div *ngIf="healthHistory()!.vaccinations.length > 0"
@@ -949,10 +944,10 @@
                 <table class="min-w-full text-left text-sm">
                   <thead>
                     <tr class="bg-gray-50 dark:bg-gray-800/60">
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Vaccine</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Batch</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Scheduled</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Status</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Vaccine' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Batch' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Scheduled' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Status' | t }}</th>
                     </tr>
                   </thead>
                   <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
@@ -964,10 +959,9 @@
                       <td class="px-4 py-3 text-sm">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                           [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300')">
-                          {{ v.status }}
+                          {{ v.status | t }}
                         </span>
-                        <div class="text-[11px] text-gray-400 mt-0.5" *ngIf="v.administeredDate">On {{
-                          v.administeredDate | date:'shortDate' }}</div>
+                        <div class="text-[11px] text-gray-400 mt-0.5" *ngIf="v.administeredDate">{{ 'On {date}' | t: { date: (v.administeredDate | date:'shortDate') } }}</div>
                       </td>
                     </tr>
                   </tbody>
@@ -980,13 +974,13 @@
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-amber-500">medical_services</mat-icon>
-                  Medical Treatments
+                  {{ 'Medical Treatments' | t }}
                 </h3>
               </div>
 
               <div *ngIf="healthHistory()!.treatments.length === 0"
                 class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-6 px-4 text-center">
-                <p class="text-sm text-gray-500 dark:text-gray-400">No treatments yet. Treatments and their costs will be listed here.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'No treatments yet. Treatments and their costs will be listed here.' | t }}</p>
               </div>
 
               <div *ngIf="healthHistory()!.treatments.length > 0"
@@ -994,11 +988,11 @@
                 <table class="min-w-full text-left text-sm">
                   <thead>
                     <tr class="bg-gray-50 dark:bg-gray-800/60">
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Diagnosis & Vet</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Medication</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Dates</th>
-                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Cost</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Status</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Diagnosis & Vet' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Medication' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Dates' | t }}</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Cost' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Status' | t }}</th>
                     </tr>
                   </thead>
                   <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
@@ -1023,7 +1017,7 @@
                       <td class="px-4 py-3 text-sm">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                           [ngClass]="t.status === TreatmentStatus.Ongoing ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'">
-                          {{ t.status }}
+                          {{ t.status | t }}
                         </span>
                       </td>
                     </tr>
@@ -1036,7 +1030,7 @@
       </mat-tab>
 
       <!-- ─── Feeding & Nutrition Tab ───────────────────────────────── -->
-      <mat-tab label="Feeding & Nutrition">
+      <mat-tab [label]="'Feeding & Nutrition' | t">
         <div class="p-4 sm:p-6 space-y-8">
 
           <!-- Loading state -->
@@ -1054,9 +1048,9 @@
               <!-- Total Feed Cost -->
               <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Feed Cost</p>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Feed Cost' | t }}</p>
                   <p class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ (feedingSummary()!.totalFeedCostBdt || 0) | money }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Confirmed consumption expenses</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Confirmed consumption expenses' | t }}</p>
                 </div>
                 <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 flex items-center justify-center shrink-0" aria-hidden="true">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">payments</mat-icon>
@@ -1066,9 +1060,9 @@
               <!-- Total Intake in Kg -->
               <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Feed Intake</p>
-                  <p class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ (feedingSummary()!.totalFeedConsumedKg || 0) | number:'1.1-1' }} kg</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Accumulated intake</p>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Feed Intake' | t }}</p>
+                  <p class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ (feedingSummary()!.totalFeedConsumedKg || 0) | number:'1.1-1' }} {{ 'kg' | t }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Accumulated intake' | t }}</p>
                 </div>
                 <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 flex items-center justify-center shrink-0" aria-hidden="true">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">scale</mat-icon>
@@ -1078,9 +1072,9 @@
               <!-- Average Feed Cost / kg -->
               <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Avg Cost / kg</p>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Avg Cost / kg' | t }}</p>
                   <p class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-2 tabular-nums">{{ (feedingSummary()!.averageCostPerKgBdt || 0) | money:2 }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Weighted ration cost</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Weighted ration cost' | t }}</p>
                 </div>
                 <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 flex items-center justify-center shrink-0" aria-hidden="true">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">calculate</mat-icon>
@@ -1090,15 +1084,15 @@
               <!-- Active Feeding Plan & Daily Target -->
               <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 p-4 sm:p-5 flex items-start justify-between gap-4">
                 <div class="min-w-0 pr-2">
-                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Active Plan</p>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white mt-2 truncate" [title]="activeFeedingPlan()?.ruleSetName || 'None'">
-                    {{ activeFeedingPlans().length > 1 ? activeFeedingPlans().length + ' plans' : (activeFeedingPlan()?.ruleSetName || 'No Active Plan') }}
+                  <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Active Plan' | t }}</p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white mt-2 truncate" [title]="activeFeedingPlan()?.ruleSetName || ('None' | t)">
+                    {{ activeFeedingPlans().length > 1 ? ('{n} plans' | t: { n: activeFeedingPlans().length }) : (activeFeedingPlan()?.ruleSetName || ('No Active Plan' | t)) }}
                   </p>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" *ngIf="activeFeedingPlan()">
-                    Target: {{ (activeDailyKg() | number:'1.1-2') || '—' }} kg/day in total
+                    {{ 'Target: {kg} kg/day in total' | t: { kg: ((activeDailyKg() | number:'1.1-2') || '—') } }}
                   </p>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" *ngIf="!activeFeedingPlan()">
-                    Not enrolled in active plan
+                    {{ 'Not enrolled in active plan' | t }}
                   </p>
                 </div>
                 <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 flex items-center justify-center shrink-0" aria-hidden="true">
@@ -1109,9 +1103,9 @@
 
             <!-- No ration yet -->
             <div *ngIf="!activeFeedingPlan() && isOnFarm()" class="rounded-xl p-4 border border-dashed border-rose-200 dark:border-rose-800/60 bg-rose-50/50 dark:bg-rose-950/20 flex flex-wrap items-center justify-between gap-3">
-              <span class="text-sm text-rose-800 dark:text-rose-300 min-w-0 flex-1 basis-56">This animal has no ration — the system is not feeding it or charging it feed cost.</span>
+              <span class="text-sm text-rose-800 dark:text-rose-300 min-w-0 flex-1 basis-56">{{ 'This animal has no ration — the system is not feeding it or charging it feed cost.' | t }}</span>
               <button type="button" *ngIf="isOnFarm()" (click)="openSetRation()" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">restaurant</mat-icon> Set ration
+                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">restaurant</mat-icon> {{ 'Set ration' | t }}
               </button>
             </div>
 
@@ -1123,9 +1117,9 @@
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-2">
-                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">Daily ration</h4>
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">{{ 'Daily ration' | t }}</h4>
                     <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-                      {{ activeFeedingPlans().length }} ACTIVE
+                      {{ '{n} ACTIVE' | t: { n: activeFeedingPlans().length } }}
                     </span>
                   </div>
                   <!-- Every active plan: the base rule set and any direct add-ons (e.g. extra mineral) -->
@@ -1135,30 +1129,30 @@
                         {{ p.ruleSetName.startsWith('Direct · ') ? 'add_circle' : 'grain' }}
                       </mat-icon>
                       <span class="font-semibold">{{ p.ruleSetName.startsWith('Direct · ') ? p.ruleSetName.substring(9) : p.ruleSetName }}</span>
-                      <span><strong>{{ (p.currentConcentrateKgPerDay | number:'1.1-2') || '0' }} kg/day</strong></span>
-                      <span class="text-gray-400">since {{ p.startDate | date:'mediumDate' }}<span *ngIf="p.triggeredByWeightKg"> • at {{ p.triggeredByWeightKg | number:'1.1-1' }} kg</span></span>
+                      <span><strong>{{ (p.currentConcentrateKgPerDay | number:'1.1-2') || '0' }} {{ 'kg/day' | t }}</strong></span>
+                      <span class="text-gray-400">{{ 'since {date}' | t: { date: (p.startDate | date:'mediumDate') } }}<span *ngIf="p.triggeredByWeightKg"> • {{ 'at {kg} kg' | t: { kg: (p.triggeredByWeightKg | number:'1.1-1') } }}</span></span>
                     </div>
                   </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 mb-0">Total: <strong>{{ activeDailyKg() | number:'1.1-2' }} kg/day</strong></p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 mb-0">{{ 'Total:' | t }} <strong>{{ activeDailyKg() | number:'1.1-2' }} {{ 'kg/day' | t }}</strong></p>
                 </div>
               </div>
 
               <div class="flex flex-wrap items-center gap-2 md:justify-end md:self-center">
                 <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('extra')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shadow-sm">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add_circle</mat-icon>
-                  Add extra
+                  {{ 'Add extra' | t }}
                 </button>
                 <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('switch')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors shadow-sm">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">swap_horiz</mat-icon>
-                  Change ration
+                  {{ 'Change ration' | t }}
                 </button>
                 <a routerLink="/feeding/nutrition" [queryParams]="{ animalId: animal()?.id }" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors shadow-sm">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">monitor_heart</mat-icon>
-                  Nutrition &amp; growth
+                  {{ 'Nutrition & growth' | t }}
                 </a>
                 <a routerLink="/feeding/board" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors shadow-sm">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">grid_view</mat-icon>
-                  Who Eats What
+                  {{ 'Who Eats What' | t }}
                 </a>
               </div>
             </div>
@@ -1169,9 +1163,9 @@
                 <div>
                   <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-emerald-600">history_edu</mat-icon>
-                    Feeding Logs & Consumption History ({{ filteredFeedingEntries().length }})
+                    {{ 'Feeding Logs & Consumption History' | t }} ({{ filteredFeedingEntries().length }})
                   </h3>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Chronological record of daily rations, actual intake, and ingredient costs.</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Chronological record of daily rations, actual intake, and ingredient costs.' | t }}</p>
                 </div>
 
                 <!-- Filter Chips -->
@@ -1180,31 +1174,31 @@
                           (click)="feedingStatusFilter.set('ALL')"
                           class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'ALL' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
-                    All ({{ feedingEntries().length }})
+                    {{ 'All' | t }} ({{ feedingEntries().length }})
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Confirmed')"
                           class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Confirmed' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
-                    Confirmed
+                    {{ 'Confirmed' | t }}
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Adjusted')"
                           class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Adjusted' ? 'bg-amber-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
-                    Adjusted
+                    {{ 'Adjusted' | t }}
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Pending')"
                           class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Pending' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
-                    Pending
+                    {{ 'Pending' | t }}
                   </button>
                   <button type="button" 
                           (click)="feedingStatusFilter.set('Skipped')"
                           class="h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-gray-900"
                           [ngClass]="feedingStatusFilter() === 'Skipped' ? 'bg-rose-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'">
-                    Skipped
+                    {{ 'Skipped' | t }}
                   </button>
                 </div>
               </div>
@@ -1215,13 +1209,13 @@
                 <div class="w-12 h-12 mx-auto rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3">
                   <mat-icon class="!text-[24px] !w-[24px] !h-[24px]" aria-hidden="true">restaurant</mat-icon>
                 </div>
-                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">No Feeding Records Found</h4>
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ 'No Feeding Records Found' | t }}</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
-                  {{ feedingStatusFilter() !== 'ALL' ? 'No feeding logs match the "' + feedingStatusFilter() + '" filter.' : 'No feeding logs yet. Once this animal has a ration, its daily feed and cost will appear here.' }}
+                  {{ feedingStatusFilter() !== 'ALL' ? ('No feeding logs match the "{filter}" filter.' | t: { filter: (feedingStatusFilter() | t) }) : ('No feeding logs yet. Once this animal has a ration, its daily feed and cost will appear here.' | t) }}
                 </p>
                 <div class="mt-4" *ngIf="feedingStatusFilter() !== 'ALL'">
                   <button type="button" (click)="feedingStatusFilter.set('ALL')" class="h-9 px-3 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-                    Clear Filter
+                    {{ 'Clear Filter' | t }}
                   </button>
                 </div>
               </div>
@@ -1232,14 +1226,14 @@
                 <table class="min-w-full text-left text-sm">
                   <thead>
                     <tr class="bg-gray-50 dark:bg-gray-800/60">
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Date</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Formula / Ration</th>
-                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Intake Quantity</th>
-                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Unit Cost</th>
-                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Total Cost</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Status</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Location</th>
-                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">Notes</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Date' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Formula / Ration' | t }}</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Intake Quantity' | t }}</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Unit Cost' | t }}</th>
+                      <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Total Cost' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Status' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Location' | t }}</th>
+                      <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Notes' | t }}</th>
                     </tr>
                   </thead>
                   <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
@@ -1253,14 +1247,14 @@
                       </td>
                       <td class="px-4 py-3 text-sm text-right tabular-nums whitespace-nowrap">
                         <div class="font-semibold text-gray-900 dark:text-white">
-                          {{ (entry.actualKg !== null && entry.actualKg !== undefined) ? (entry.actualKg | number:'1.2-2') + ' kg' : '—' }}
+                          {{ (entry.actualKg !== null && entry.actualKg !== undefined) ? (entry.actualKg | number:'1.2-2') + ' ' + ('kg' | t) : '—' }}
                         </div>
                         <div class="text-[11px] text-gray-400" *ngIf="entry.actualKg !== entry.expectedKg">
-                          Plan: {{ entry.expectedKg | number:'1.2-2' }} kg
+                          {{ 'Plan:' | t }} {{ entry.expectedKg | number:'1.2-2' }} {{ 'kg' | t }}
                         </div>
                       </td>
                       <td class="px-4 py-3 text-sm text-right tabular-nums text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                        <span *ngIf="entry.unitCostAtConsumptionBdt">{{ entry.unitCostAtConsumptionBdt | money:2 }}/kg</span>
+                        <span *ngIf="entry.unitCostAtConsumptionBdt">{{ entry.unitCostAtConsumptionBdt | money:2 }}/{{ 'kg' | t }}</span>
                         <span *ngIf="!entry.unitCostAtConsumptionBdt">—</span>
                       </td>
                       <td class="px-4 py-3 text-sm text-right tabular-nums whitespace-nowrap">
@@ -1277,11 +1271,11 @@
                                 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300': entry.status.toString() === 'Pending',
                                 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300': entry.status.toString() === 'Skipped'
                               }">
-                          {{ entry.status }}
+                          {{ entry.status | t }}
                         </span>
                       </td>
                       <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        <span *ngIf="entry.shedName || entry.penName">{{ entry.shedName || 'Shed' }} / {{ entry.penName || 'Pen' }}</span>
+                        <span *ngIf="entry.shedName || entry.penName">{{ entry.shedName || ('Shed' | t) }} / {{ entry.penName || ('Pen' | t) }}</span>
                         <span *ngIf="!entry.shedName && !entry.penName">—</span>
                       </td>
                       <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 max-w-[200px] truncate" [title]="entry.adjustmentReason || ''">
@@ -1299,13 +1293,13 @@
       </mat-tab>
 
       <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
-      <mat-tab label="Audit Info">
+      <mat-tab [label]="'Audit Info' | t">
         <div class="p-4 sm:p-6">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
               <dt
                 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">add_circle_outline</mat-icon> Created At
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">add_circle_outline</mat-icon> {{ 'Created At' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (animal()?.createdAtUtc | date:'MMM d, y, h:mm a') || '—' }}
@@ -1314,7 +1308,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
               <dt
                 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">person_add</mat-icon> Created By
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">person_add</mat-icon> {{ 'Created By' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ animal()?.createdBy || '—' }}
@@ -1323,37 +1317,37 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
               <dt
                 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">edit_calendar</mat-icon> Last Modified
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">edit_calendar</mat-icon> {{ 'Last Modified' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                {{ (animal()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || 'Never modified' }}
+                {{ (animal()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || ('Never modified' | t) }}
               </dd>
             </div>
           </dl>
         </div>
       </mat-tab>
       <!-- ─── Profit Projections Tab ─────────────────────────── -->
-      <mat-tab label="Profit Projections">
+      <mat-tab [label]="'Profit Projections' | t">
         <div class="h-full min-h-[400px] sm:min-h-[500px]">
           <!-- A sold/dead animal is not projected: show the realised result instead. -->
           <app-cattle-profit-projection *ngIf="!isExited()" [animalId]="animal()!.id"></app-cattle-profit-projection>
           <div *ngIf="isExited()" class="p-4 sm:p-6">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Realised Result</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Realised Result' | t }}</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              This animal {{ isDead() ? 'died' : (isSold() ? 'was sold' : 'left the farm') }}<span *ngIf="exitDate()"> on {{ exitDate() | date:'d MMM yyyy' }}</span>, so no projection is made.
+              {{ (isDead() ? 'This animal died, so no projection is made.' : (isSold() ? 'This animal was sold, so no projection is made.' : 'This animal left the farm, so no projection is made.')) | t }}<span *ngIf="exitDate()"> ({{ exitDate() | date:'d MMM yyyy' }})</span>
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
               <div class="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/30 p-4">
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ isDead() ? 'Revenue (none — died)' : 'Sale Revenue' }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ (isDead() ? 'Revenue (none — died)' : 'Sale Revenue') | t }}</p>
                 <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2 tabular-nums">{{ realisedRevenue() | money }}</p>
               </div>
               <div class="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/30 p-4">
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Cost</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Cost' | t }}</p>
                 <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2 tabular-nums">{{ totalCost() | money }}</p>
               </div>
               <div class="rounded-xl border p-4"
                    [ngClass]="netProfit() >= 0 ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'">
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ netProfit() >= 0 ? 'Final Profit' : 'Final Loss' }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ (netProfit() >= 0 ? 'Final Profit' : 'Final Loss') | t }}</p>
                 <p class="text-2xl font-bold mt-2 tabular-nums" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
                   {{ netProfit() > 0 ? '+' : '' }}{{ netProfit() | money }}
                 </p>
@@ -1381,13 +1375,13 @@
       <div>
         <!-- Animal Image or Sleek Badge Avatar -->
         <div class="relative w-full h-48 rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-100 border border-slate-200 flex items-center justify-center">
-          <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" class="w-full h-full object-cover" />
+          <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" [alt]="'Photo of {tag}' | t: { tag: animal()!.tagId }" class="w-full h-full object-cover" />
           <div *ngIf="!animal()!.primaryPhotoUrl" class="flex flex-col items-center justify-center gap-1.5 p-4 text-center">
             <div class="w-16 h-16 rounded-2xl bg-white shadow-sm border border-emerald-100 flex items-center justify-center text-3xl">
               {{ speciesEmoji(animal()!.species) }}
             </div>
             <span class="text-xs font-bold text-slate-700 mt-1">{{ animal()!.tagId }}</span>
-            <span class="text-[11px] font-medium text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">Verified Registered Profile</span>
+            <span class="text-[11px] font-medium text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">{{ 'Verified Registered Profile' | t }}</span>
           </div>
           <!-- Status Pill -->
           <div class="absolute top-3 right-3 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider shadow-sm border"
@@ -1400,40 +1394,40 @@
         <div class="flex items-center gap-2 flex-wrap mb-3">
           <h2 class="text-2xl font-black text-slate-900 tracking-tight">{{ animal()!.tagId }}</h2>
           <span class="px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
-            {{ speciesLabel(animal()!.species) }} &middot; {{ breedName() || 'Standard' }}
+            {{ speciesLabel(animal()!.species) }} &middot; {{ breedName() || ('Standard' | t) }}
           </span>
         </div>
 
         <!-- Demographics Grid -->
         <dl class="grid grid-cols-2 gap-y-3 gap-x-4 text-xs pt-3 border-t border-slate-200">
           <div>
-            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Sex</dt>
+            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">{{ 'Sex' | t }}</dt>
             <dd class="font-semibold text-slate-800 mt-0.5">{{ sexLabel(animal()!.sex) }}</dd>
           </div>
           <div>
-            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Age</dt>
+            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">{{ 'Age' | t }}</dt>
             <dd class="font-semibold text-slate-800 mt-0.5">{{ ageLabel(animal()!.dateOfBirth) }}</dd>
           </div>
           <div>
-            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Housing Location</dt>
+            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">{{ 'Housing Location' | t }}</dt>
             <dd class="font-semibold text-slate-800 mt-0.5">
               <ng-container *ngIf="shedName() || penName(); else noPrintLoc">
                 <span class="text-emerald-700">{{ shedName() }}</span>
                 <span *ngIf="penName()" class="text-slate-500"> &middot; {{ penName() }}</span>
               </ng-container>
-              <ng-template #noPrintLoc><span class="text-slate-400 italic">Not Assigned</span></ng-template>
+              <ng-template #noPrintLoc><span class="text-slate-400 italic">{{ 'Not Assigned' | t }}</span></ng-template>
             </dd>
           </div>
           <div>
-            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Tag Identification</dt>
+            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">{{ 'Tag Identification' | t }}</dt>
             <dd class="font-semibold text-slate-800 mt-0.5">{{ tagTypeLabel(animal()!.tagType) }}</dd>
           </div>
           <div>
-            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Acquisition Date</dt>
+            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">{{ 'Acquisition Date' | t }}</dt>
             <dd class="font-semibold text-slate-800 mt-0.5">{{ animal()!.acquisitionDate | date:'mediumDate' }}</dd>
           </div>
           <div>
-            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Purchase Price</dt>
+            <dt class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">{{ 'Purchase Price' | t }}</dt>
             <dd class="font-semibold text-slate-800 mt-0.5">{{ (animal()!.acquisitionPriceBdt || 0) | money }}</dd>
           </div>
         </dl>
@@ -1448,12 +1442,12 @@
         <!-- Latest Weight -->
         <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 flex items-center justify-between">
           <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Latest Weight</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ 'Latest Weight' | t }}</p>
             <p class="text-2xl font-black text-slate-900 mt-0.5">
-              {{ animal()!.latestWeightKg ? (animal()!.latestWeightKg | number:'1.1-1') + ' kg' : '—' }}
+              {{ animal()!.latestWeightKg ? (animal()!.latestWeightKg | number:'1.1-1') + ' ' + ('kg' | t) : '—' }}
             </p>
             <p class="text-[11px] text-slate-500 mt-0.5" *ngIf="animal()!.latestWeightDate">
-              Recorded {{ animal()!.latestWeightDate | date:'mediumDate' }}
+              {{ 'Recorded {date}' | t: { date: (animal()!.latestWeightDate | date:'mediumDate') } }}
             </p>
           </div>
           <div class="p-2.5 bg-emerald-100/70 text-emerald-700 rounded-xl">
@@ -1464,11 +1458,11 @@
         <!-- ADG -->
         <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 flex items-center justify-between">
           <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Avg Daily Gain (ADG)</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ 'Avg Daily Gain (ADG)' | t }}</p>
             <p class="text-2xl font-black text-emerald-700 mt-0.5">
-              {{ animal()!.adgKgPerDay ? (animal()!.adgKgPerDay | number:'1.3-3') + ' kg/d' : '—' }}
+              {{ animal()!.adgKgPerDay ? (animal()!.adgKgPerDay | number:'1.3-3') + ' ' + ('kg/d' | t) : '—' }}
             </p>
-            <p class="text-[11px] text-slate-500 mt-0.5">Growth trajectory</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">{{ 'Growth trajectory' | t }}</p>
           </div>
           <div class="p-2.5 bg-teal-100/70 text-teal-700 rounded-xl">
             <mat-icon class="!text-[26px] !w-[26px] !h-[26px]">trending_up</mat-icon>
@@ -1479,28 +1473,28 @@
       <!-- Middle Card: Financial Summary -->
       <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
         <div class="flex items-center justify-between mb-2">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Financial Investment Breakdown</p>
-          <span class="text-[11px] font-bold text-slate-700">Cumulative Ledger</span>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ 'Financial Investment Breakdown' | t }}</p>
+          <span class="text-[11px] font-bold text-slate-700">{{ 'Cumulative Ledger' | t }}</span>
         </div>
         <div class="grid grid-cols-5 gap-2 pt-1 border-t border-slate-200/80">
           <div>
-            <p class="text-[11px] text-slate-400 font-medium">Acquisition</p>
+            <p class="text-[11px] text-slate-400 font-medium">{{ 'Acquisition' | t }}</p>
             <p class="text-sm font-bold text-slate-800 mt-0.5">{{ acquisitionCost() | money }}</p>
           </div>
           <div>
-            <p class="text-[11px] text-slate-400 font-medium">Healthcare</p>
+            <p class="text-[11px] text-slate-400 font-medium">{{ 'Healthcare' | t }}</p>
             <p class="text-sm font-bold text-slate-800 mt-0.5">{{ totalTreatmentCost() | money }}</p>
           </div>
           <div>
-            <p class="text-[11px] text-slate-400 font-medium">Feeding</p>
+            <p class="text-[11px] text-slate-400 font-medium">{{ 'Feeding' | t }}</p>
             <p class="text-sm font-bold text-slate-800 mt-0.5">{{ totalFeedCost() | money }}</p>
           </div>
           <div>
-            <p class="text-[11px] text-slate-400 font-medium">Labour &amp; Overhead</p>
+            <p class="text-[11px] text-slate-400 font-medium">{{ 'Labour & Overhead' | t }}</p>
             <p class="text-sm font-bold text-slate-800 mt-0.5">{{ laborOverheadCost() | money }}</p>
           </div>
           <div>
-            <p class="text-[11px] text-emerald-700 font-bold uppercase">Total Cost</p>
+            <p class="text-[11px] text-emerald-700 font-bold uppercase">{{ 'Total Cost' | t }}</p>
             <p class="text-sm font-black text-emerald-800 mt-0.5">{{ totalCost() | money }}</p>
           </div>
         </div>
@@ -1512,19 +1506,19 @@
         <div class="flex items-center justify-between mb-1">
           <div>
             <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {{ isExited() ? 'Realized Profit / Loss' : 'Market Valuation & Projected Margin' }}
+              {{ (isExited() ? 'Realized Profit / Loss' : 'Market Valuation & Projected Margin') | t }}
             </p>
             <p *ngIf="!isExited()" class="text-[11px] text-slate-500 mt-0.5">
-              Live Weight Valuation: {{ (animal()!.latestWeightKg || 0) | number:'1.0-1' }} kg &times; {{ liveWeightPrice() | money:2 }}/kg = {{ currentEstimatedValue() | money }}
+              {{ 'Live Weight Valuation:' | t }} {{ (animal()!.latestWeightKg || 0) | number:'1.0-1' }} {{ 'kg' | t }} &times; {{ liveWeightPrice() | money:2 }}/{{ 'kg' | t }} = {{ currentEstimatedValue() | money }}
             </p>
           </div>
           <div class="flex items-center gap-2">
             <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-200/80 text-slate-700">
-              Rate: {{ liveWeightPrice() | money:2 }}/kg
+              {{ 'Rate: {source}' | t: { source: (liveWeightPrice() | money:2) } }}/{{ 'kg' | t }}
             </span>
             <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase"
                   [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'">
-              {{ netProfit() >= 0 ? 'PROFIT' : 'LOSS' }}
+              {{ (netProfit() >= 0 ? 'PROFIT' : 'LOSS') | t }}
             </span>
           </div>
         </div>
@@ -1534,8 +1528,8 @@
             {{ netProfit() >= 0 ? '+' : '' }}{{ netProfit() | money }}
           </p>
           <span class="text-xs text-slate-500 font-medium">
-            <ng-container *ngIf="!isExited()">(Valuation: {{ currentEstimatedValue() | money }} &minus; Total Cost: {{ totalCost() | money }})</ng-container>
-            <ng-container *ngIf="isExited()">(Revenue: {{ realisedRevenue() | money }} &minus; Total Cost: {{ totalCost() | money }})</ng-container>
+            <ng-container *ngIf="!isExited()">({{ 'Valuation:' | t }} {{ currentEstimatedValue() | money }} &minus; {{ 'Total Cost:' | t }} {{ totalCost() | money }})</ng-container>
+            <ng-container *ngIf="isExited()">({{ 'Revenue:' | t }} {{ realisedRevenue() | money }} &minus; {{ 'Total Cost:' | t }} {{ totalCost() | money }})</ng-container>
           </span>
         </div>
       </div>
@@ -1548,10 +1542,10 @@
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
         <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600">show_chart</mat-icon>
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Weight Progression & Growth Trajectory</h3>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">{{ 'Weight Progression & Growth Trajectory' | t }}</h3>
       </div>
       <span class="text-[11px] text-slate-500 font-medium" *ngIf="animal()!.weightRecords.length > 0">
-        {{ animal()!.weightRecords.length }} weight records tracked
+        {{ '{n} weight records tracked' | t: { n: animal()!.weightRecords.length } }}
       </span>
     </div>
 
@@ -1561,8 +1555,8 @@
       <!-- SVG Trend Visualizer (6 cols) -->
       <div class="col-span-6 bg-white rounded-xl border border-slate-200 p-3 flex flex-col justify-between h-40">
         <div class="flex justify-between items-center text-[11px] font-bold uppercase text-slate-400">
-          <span>Trajectory Curve</span>
-          <span *ngIf="weightChartSvg()">Range: {{ weightChartSvg()?.minW }}kg &ndash; {{ weightChartSvg()?.maxW }}kg</span>
+          <span>{{ 'Trajectory Curve' | t }}</span>
+          <span *ngIf="weightChartSvg()">{{ 'Range:' | t }} {{ weightChartSvg()?.minW }}{{ 'kg' | t }} &ndash; {{ weightChartSvg()?.maxW }}{{ 'kg' | t }}</span>
         </div>
         
         <div *ngIf="weightChartSvg()" class="w-full flex-1 flex items-center justify-center">
@@ -1581,7 +1575,7 @@
             <g *ngFor="let pt of weightChartSvg()!.points">
               <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#ffffff" stroke="#059669" stroke-width="2" />
               <text [attr.x]="pt.x" [attr.y]="pt.y - 8" font-size="9" font-weight="700" fill="#0f172a" text-anchor="middle">
-                {{ pt.weight }}kg
+                {{ pt.weight }}{{ 'kg' | t }}
               </text>
               <text [attr.x]="pt.x" [attr.y]="weightChartSvg()!.height - 1" font-size="8" fill="#64748b" text-anchor="middle">
                 {{ pt.date | date:'d MMM' }}
@@ -1591,7 +1585,7 @@
         </div>
 
         <div *ngIf="!weightChartSvg()" class="flex flex-col items-center justify-center h-full text-slate-400 text-xs">
-          <span>Need 2+ weight recordings to render growth curve</span>
+          <span>{{ 'Need 2+ weight recordings to render growth curve' | t }}</span>
         </div>
       </div>
 
@@ -1600,19 +1594,19 @@
         <table class="w-full text-left text-xs divide-y divide-slate-200">
           <thead class="bg-slate-50 text-[11px] font-bold uppercase text-slate-500">
             <tr>
-              <th class="px-3 py-2">Date</th>
-              <th class="px-3 py-2 text-right">Weight (kg)</th>
-              <th class="px-3 py-2">Notes</th>
+              <th class="px-3 py-2">{{ 'Date' | t }}</th>
+              <th class="px-3 py-2 text-right">{{ 'Weight (kg)' | t }}</th>
+              <th class="px-3 py-2">{{ 'Notes' | t }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
             <tr *ngFor="let w of recentWeightsTable()" class="text-slate-700">
               <td class="px-3 py-1.5 font-medium">{{ w.recordedDate | date:'mediumDate' }}</td>
-              <td class="px-3 py-1.5 text-right font-bold text-emerald-700">{{ w.weightKg | number:'1.1-2' }} kg</td>
-              <td class="px-3 py-1.5 text-slate-500 truncate max-w-[120px]">{{ w.notes || 'Routine weigh-in' }}</td>
+              <td class="px-3 py-1.5 text-right font-bold text-emerald-700">{{ w.weightKg | number:'1.1-2' }} {{ 'kg' | t }}</td>
+              <td class="px-3 py-1.5 text-slate-500 truncate max-w-[120px]">{{ w.notes || ('Routine weigh-in' | t) }}</td>
             </tr>
             <tr *ngIf="recentWeightsTable().length === 0">
-              <td colspan="3" class="px-3 py-4 text-center text-slate-400 italic text-xs">No weight records logged</td>
+              <td colspan="3" class="px-3 py-4 text-center text-slate-400 italic text-xs">{{ 'No weight records logged' | t }}</td>
             </tr>
           </tbody>
         </table>
@@ -1629,10 +1623,10 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-teal-600">health_and_safety</mat-icon>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Health & Medical Profile</h3>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">{{ 'Health & Medical Profile' | t }}</h3>
         </div>
         <span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-          {{ healthHistory()?.treatments?.length || 0 }} Treatments
+          {{ '{n} Treatments' | t: { n: (healthHistory()?.treatments?.length || 0) } }}
         </span>
       </div>
 
@@ -1640,9 +1634,9 @@
         <table class="w-full text-left text-xs divide-y divide-slate-200">
           <thead class="bg-slate-50 text-[11px] font-bold uppercase text-slate-500">
             <tr>
-              <th class="px-3 py-2">Date</th>
-              <th class="px-3 py-2">Diagnosis / Medication</th>
-              <th class="px-3 py-2 text-right">Cost</th>
+              <th class="px-3 py-2">{{ 'Date' | t }}</th>
+              <th class="px-3 py-2">{{ 'Diagnosis / Medication' | t }}</th>
+              <th class="px-3 py-2 text-right">{{ 'Cost' | t }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -1655,7 +1649,7 @@
             </tr>
             <tr *ngIf="!healthHistory()?.treatments || healthHistory()!.treatments.length === 0">
               <td colspan="3" class="px-3 py-4 text-center text-slate-400 italic text-xs">
-                No active health treatments or illnesses logged
+                {{ 'No active health treatments or illnesses logged' | t }}
               </td>
             </tr>
           </tbody>
@@ -1668,27 +1662,27 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-600">restaurant</mat-icon>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Feeding & Nutrition Summary</h3>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">{{ 'Feeding & Nutrition Summary' | t }}</h3>
         </div>
         <span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-          Total Feed: {{ totalFeedCost() | money }}
+          {{ 'Total Feed:' | t }} {{ totalFeedCost() | money }}
         </span>
       </div>
 
       <div class="bg-white rounded-xl border border-slate-200 p-3.5 space-y-2.5">
         <div class="flex items-center justify-between text-xs">
-          <span class="text-slate-500 font-medium">Active Feeding Plan:</span>
-          <span class="font-bold text-slate-800">{{ activeFeedingPlan()?.ruleSetName || 'Standard Herd Ration' }}</span>
+          <span class="text-slate-500 font-medium">{{ 'Active Feeding Plan:' | t }}</span>
+          <span class="font-bold text-slate-800">{{ activeFeedingPlan()?.ruleSetName || ('Standard Herd Ration' | t) }}</span>
         </div>
         <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-          <span class="text-slate-500 font-medium">Target Daily Ration:</span>
+          <span class="text-slate-500 font-medium">{{ 'Target Daily Ration:' | t }}</span>
           <span class="font-bold text-emerald-700">
-            {{ (activeFeedingPlan()?.currentConcentrateKgPerDay || 0) + (activeFeedingPlan()?.currentRoughageKgPerDay || 0) > 0 ? (((activeFeedingPlan()?.currentConcentrateKgPerDay || 0) + (activeFeedingPlan()?.currentRoughageKgPerDay || 0) | number:'1.1-1') + ' kg/day') : 'Auto (based on weight)' }}
+            {{ (activeFeedingPlan()?.currentConcentrateKgPerDay || 0) + (activeFeedingPlan()?.currentRoughageKgPerDay || 0) > 0 ? (((activeFeedingPlan()?.currentConcentrateKgPerDay || 0) + (activeFeedingPlan()?.currentRoughageKgPerDay || 0) | number:'1.1-1') + ' ' + ('kg/day' | t)) : ('Auto (based on weight)' | t) }}
           </span>
         </div>
         <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-          <span class="text-slate-500 font-medium">Current Body Condition (BCS):</span>
-          <span class="font-bold text-slate-800">{{ animal()!.latestBcs ? (animal()!.latestBcs + ' / 5.0') : 'Not Scored' }}</span>
+          <span class="text-slate-500 font-medium">{{ 'Current Body Condition (BCS):' | t }}</span>
+          <span class="font-bold text-slate-800">{{ animal()!.latestBcs ? (animal()!.latestBcs + ' / 5.0') : ('Not Scored' | t) }}</span>
         </div>
       </div>
     </div>

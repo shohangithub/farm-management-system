@@ -1,19 +1,19 @@
 <app-page-header
-  title="Payables & Receivables"
-  description="দেনা-পাওনা — what customers owe the farm, what the farm owes suppliers, and how overdue it is."
-  breadcrumbActiveNode="Payables & Receivables">
+  [title]="'Payables & Receivables' | t"
+  [description]="'দেনা-পাওনা — what customers owe the farm, what the farm owes suppliers, and how overdue it is.' | t"
+  [breadcrumbActiveNode]="'Payables & Receivables' | t">
   <div actions class="flex items-center gap-2 flex-wrap">
     <a mat-stroked-button routerLink="/finance"
       class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-      <mat-icon class="text-sm">arrow_back</mat-icon><span>Overview</span>
+      <mat-icon class="text-sm">arrow_back</mat-icon><span>{{ 'Overview' | t }}</span>
     </a>
     <a mat-stroked-button routerLink="/finance/transactions"
       class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-      <mat-icon class="text-sm">receipt_long</mat-icon><span>Ledger</span>
+      <mat-icon class="text-sm">receipt_long</mat-icon><span>{{ 'Ledger' | t }}</span>
     </a>
     <button mat-stroked-button (click)="reload()" [disabled]="isLoading()"
       class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-      <mat-icon class="text-sm">refresh</mat-icon><span>Refresh</span>
+      <mat-icon class="text-sm">refresh</mat-icon><span>{{ 'Refresh' | t }}</span>
     </button>
   </div>
 </app-page-header>
@@ -31,10 +31,10 @@
       @if (lastPaymentId(); as paymentId) {
         <button type="button" (click)="printReceipt(paymentId)" [disabled]="printing() === paymentId"
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-emerald-800 dark:text-emerald-100 bg-white/70 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 hover:bg-white dark:hover:bg-emerald-900 disabled:opacity-60">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === paymentId ? 'hourglass_top' : 'receipt_long' }}</mat-icon> Print receipt
+          <mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === paymentId ? 'hourglass_top' : 'receipt_long' }}</mat-icon> {{ 'Print receipt' | t }}
         </button>
       }
-      <button type="button" (click)="notice.set(null); lastPaymentId.set(null)" aria-label="Dismiss" class="text-emerald-700 dark:text-emerald-300"><mat-icon class="text-base">close</mat-icon></button>
+      <button type="button" (click)="notice.set(null); lastPaymentId.set(null)" [attr.aria-label]="'Dismiss' | t" class="text-emerald-700 dark:text-emerald-300"><mat-icon class="text-base">close</mat-icon></button>
     </div>
   }
 
@@ -48,13 +48,13 @@
           : 'bg-white dark:bg-gray-800/80 border-gray-100 dark:border-gray-700/60 hover:border-emerald-200'">
         <div class="flex items-center justify-between">
           <div class="text-[11px] uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-            <mat-icon class="!w-4 !h-4 !text-[16px]">call_received</mat-icon> Receivables · পাওনা
+            <mat-icon class="!w-4 !h-4 !text-[16px]">call_received</mat-icon> {{ 'Receivables · পাওনা' | t }}
           </div>
-          <span class="text-[11px] text-gray-500">{{ o.receivables.openBills }} open</span>
+          <span class="text-[11px] text-gray-500">{{ '{count} open' | t: { count: o.receivables.openBills } }}</span>
         </div>
         <div class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ o.receivables.outstandingBdt | money:2 }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Customers owe the farm
-          @if (o.receivables.overdueBdt > 0) { · <b class="text-rose-600">{{ o.receivables.overdueBdt | money:2 }} overdue</b> }
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Customers owe the farm' | t }}
+          @if (o.receivables.overdueBdt > 0) { · <b class="text-rose-600">{{ '{amount} overdue' | t: { amount: (o.receivables.overdueBdt | money:2) } }}</b> }
         </div>
       </button>
       <button type="button" (click)="setTab('Payable')"
@@ -64,13 +64,13 @@
           : 'bg-white dark:bg-gray-800/80 border-gray-100 dark:border-gray-700/60 hover:border-rose-200'">
         <div class="flex items-center justify-between">
           <div class="text-[11px] uppercase tracking-wider font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1">
-            <mat-icon class="!w-4 !h-4 !text-[16px]">call_made</mat-icon> Payables · দেনা
+            <mat-icon class="!w-4 !h-4 !text-[16px]">call_made</mat-icon> {{ 'Payables · দেনা' | t }}
           </div>
-          <span class="text-[11px] text-gray-500">{{ o.payables.openBills }} open</span>
+          <span class="text-[11px] text-gray-500">{{ '{count} open' | t: { count: o.payables.openBills } }}</span>
         </div>
         <div class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ o.payables.outstandingBdt | money:2 }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">The farm owes suppliers
-          @if (o.payables.overdueBdt > 0) { · <b class="text-rose-600">{{ o.payables.overdueBdt | money:2 }} overdue</b> }
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'The farm owes suppliers' | t }}
+          @if (o.payables.overdueBdt > 0) { · <b class="text-rose-600">{{ '{amount} overdue' | t: { amount: (o.payables.overdueBdt | money:2) } }}</b> }
         </div>
       </button>
     </div>
@@ -79,24 +79,24 @@
       <!-- Key figures for the selected side -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="p-4 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/60">
-          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Outstanding</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Outstanding' | t }}</div>
           <div class="text-lg font-black text-gray-900 dark:text-white">{{ s.outstandingBdt | money:2 }}</div>
         </div>
         <div class="p-4 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/60">
-          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Overdue</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Overdue' | t }}</div>
           <div class="text-lg font-black" [ngClass]="s.overdueBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'">{{ s.overdueBdt | money:2 }}</div>
         </div>
         <div class="p-4 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/60">
-          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Due in next 7 days</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Due in next 7 days' | t }}</div>
           <div class="text-lg font-black text-amber-600 dark:text-amber-400">{{ s.dueThisWeekBdt | money:2 }}</div>
         </div>
         <div class="p-4 rounded-2xl border"
           [ngClass]="s.isReconciled ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60'">
-          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ s.kind === 'Payable' ? 'Accounts Payable (2100)' : 'Accounts Receivable (1100)' }}</div>
+          <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ (s.kind === 'Payable' ? 'Accounts Payable (2100)' : 'Accounts Receivable (1100)') | t }}</div>
           <div class="text-lg font-black text-gray-900 dark:text-white">{{ s.ledgerBalanceBdt | money:2 }}</div>
           <div class="text-[11px] flex items-center gap-1" [ngClass]="s.isReconciled ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'">
             <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">{{ s.isReconciled ? 'verified' : 'warning' }}</mat-icon>
-            {{ s.isReconciled ? 'Ledger agrees with the bills' : 'Ledger differs — see Accounting Health' }}
+            {{ (s.isReconciled ? 'Ledger agrees with the bills' : 'Ledger differs — see Accounting Health') | t }}
           </div>
         </div>
       </div>
@@ -104,13 +104,13 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Aging -->
         <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-5">
-          <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">Aging</h3>
-          <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 mb-3">Open balances by days past due</p>
+          <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">{{ 'Aging' | t }}</h3>
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 mb-3">{{ 'Open balances by days past due' | t }}</p>
           <div class="space-y-2.5">
             @for (a of s.aging; track a.key) {
               <div>
                 <div class="flex justify-between text-xs">
-                  <span class="text-gray-700 dark:text-gray-300">{{ a.label }} <span class="text-gray-400">({{ a.count }})</span></span>
+                  <span class="text-gray-700 dark:text-gray-300">{{ a.label | t }} <span class="text-gray-400">({{ a.count }})</span></span>
                   <span class="font-mono font-bold text-gray-900 dark:text-white">{{ a.amountBdt | money }}</span>
                 </div>
                 <div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden mt-1">
@@ -124,19 +124,19 @@
         <!-- By party -->
         <div class="lg:col-span-2 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 overflow-hidden">
           <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
-            <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">{{ s.kind === 'Payable' ? 'By supplier' : 'By customer' }}</h3>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400 m-0 mt-0.5">Click a name to show only their bills.</p>
+            <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">{{ (s.kind === 'Payable' ? 'By supplier' : 'By customer') | t }}</h3>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Click a name to show only their bills.' | t }}</p>
           </div>
           <div class="overflow-x-auto max-h-72">
             <table class="w-full text-sm">
               <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 sticky top-0">
                 <tr>
-                  <th class="text-left px-5 py-2">Name</th>
-                  <th class="text-right px-3 py-2">Bills</th>
-                  <th class="text-right px-3 py-2">Billed</th>
-                  <th class="text-right px-3 py-2">Settled</th>
-                  <th class="text-right px-3 py-2">Outstanding</th>
-                  <th class="text-right px-5 py-2">Overdue</th>
+                  <th class="text-left px-5 py-2">{{ 'Name' | t }}</th>
+                  <th class="text-right px-3 py-2">{{ 'Bills' | t }}</th>
+                  <th class="text-right px-3 py-2">{{ 'Billed' | t }}</th>
+                  <th class="text-right px-3 py-2">{{ 'Settled' | t }}</th>
+                  <th class="text-right px-3 py-2">{{ 'Outstanding' | t }}</th>
+                  <th class="text-right px-5 py-2">{{ 'Overdue' | t }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -154,7 +154,7 @@
                     <td class="px-5 py-2 text-right font-mono" [class.text-rose-600]="p.overdueBdt > 0">{{ p.overdueBdt | number: '1.0-2' }}</td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="6" class="px-5 py-6 text-center text-xs text-gray-500">Nobody {{ s.kind === 'Payable' ? 'is owed money' : 'owes the farm money' }} right now.</td></tr>
+                  <tr><td colspan="6" class="px-5 py-6 text-center text-xs text-gray-500">{{ (s.kind === 'Payable' ? 'Nobody is owed money right now.' : 'Nobody owes the farm money right now.') | t }}</td></tr>
                 }
               </tbody>
             </table>
@@ -167,7 +167,7 @@
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex flex-wrap items-center gap-3">
           <div class="flex-1 min-w-[180px]">
             <h3 class="text-sm font-black text-gray-900 dark:text-white m-0">
-              {{ s.kind === 'Payable' ? 'Supplier bills' : 'Customer invoices' }}
+              {{ (s.kind === 'Payable' ? 'Supplier bills' : 'Customer invoices') | t }}
               @if (party()) {
                 <button type="button" (click)="party.set(null)" class="ml-2 text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
                   {{ party() }} ✕
@@ -175,13 +175,13 @@
               }
             </h3>
           </div>
-          <input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Search name, phone, ref…"
+          <input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" [placeholder]="'Search name, phone, ref…' | t"
             class="px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white w-56 max-w-full">
           <label class="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" [ngModel]="overdueOnly()" (ngModelChange)="overdueOnly.set($event)" class="accent-rose-600"> Overdue only
+            <input type="checkbox" [ngModel]="overdueOnly()" (ngModelChange)="overdueOnly.set($event)" class="accent-rose-600"> {{ 'Overdue only' | t }}
           </label>
           <label class="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" [ngModel]="includeSettled()" (ngModelChange)="toggleSettled($event)" class="accent-emerald-600"> Show settled
+            <input type="checkbox" [ngModel]="includeSettled()" (ngModelChange)="toggleSettled($event)" class="accent-emerald-600"> {{ 'Show settled' | t }}
           </label>
         </div>
 
@@ -189,14 +189,14 @@
           <table class="w-full text-sm">
             <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
               <tr>
-                <th class="text-left px-5 py-2.5">Bill</th>
-                <th class="text-left px-3 py-2.5">{{ s.kind === 'Payable' ? 'Supplier' : 'Customer' }}</th>
-                <th class="text-left px-3 py-2.5">Date / Due</th>
-                <th class="text-right px-3 py-2.5">Amount</th>
-                <th class="text-right px-3 py-2.5">Settled</th>
-                <th class="text-right px-3 py-2.5">Balance</th>
-                <th class="text-center px-3 py-2.5">Status</th>
-                <th class="text-right px-5 py-2.5">Actions</th>
+                <th class="text-left px-5 py-2.5">{{ 'Bill' | t }}</th>
+                <th class="text-left px-3 py-2.5">{{ (s.kind === 'Payable' ? 'Supplier' : 'Customer') | t }}</th>
+                <th class="text-left px-3 py-2.5">{{ 'Date / Due' | t }}</th>
+                <th class="text-right px-3 py-2.5">{{ 'Amount' | t }}</th>
+                <th class="text-right px-3 py-2.5">{{ 'Settled' | t }}</th>
+                <th class="text-right px-3 py-2.5">{{ 'Balance' | t }}</th>
+                <th class="text-center px-3 py-2.5">{{ 'Status' | t }}</th>
+                <th class="text-right px-5 py-2.5">{{ 'Actions' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -208,7 +208,7 @@
                         <mat-icon class="!w-4 !h-4 !text-[16px] text-gray-400">{{ expanded() === b.id ? 'expand_less' : 'expand_more' }}</mat-icon>
                         {{ b.referenceNo }}
                       </div>
-                      <div class="text-[11px] text-gray-500 dark:text-gray-400 max-w-xs">{{ b.categoryName }} · {{ b.description }}</div>
+                      <div class="text-[11px] text-gray-500 dark:text-gray-400 max-w-xs">{{ categoryName(b) }} · {{ b.description }}</div>
                     </button>
                   </td>
                   <td class="px-3 py-3">
@@ -217,12 +217,12 @@
                   </td>
                   <td class="px-3 py-3 text-xs whitespace-nowrap">
                     <div>{{ b.billDate | date: 'dd MMM yyyy' }}</div>
-                    @if (b.dueDate) { <div class="text-gray-500" [class.text-rose-600]="b.daysOverdue > 0">due {{ b.dueDate | date: 'dd MMM yyyy' }}</div> }
+                    @if (b.dueDate) { <div class="text-gray-500" [class.text-rose-600]="b.daysOverdue > 0">{{ 'due {date}' | t: { date: (b.dueDate | date: 'dd MMM yyyy') } }}</div> }
                   </td>
                   <td class="px-3 py-3 text-right font-mono">{{ b.amountBdt | number: '1.2-2' }}</td>
                   <td class="px-3 py-3 text-right font-mono text-gray-600 dark:text-gray-300">
                     {{ b.paidBdt + b.adjustedBdt | number: '1.2-2' }}
-                    @if (b.adjustedBdt > 0) { <div class="text-[11px] text-amber-600">incl. {{ b.adjustedBdt | money:2 }} returned / written off</div> }
+                    @if (b.adjustedBdt > 0) { <div class="text-[11px] text-amber-600">{{ 'incl. {amount} returned / written off' | t: { amount: (b.adjustedBdt | money:2) } }}</div> }
                   </td>
                   <td class="px-3 py-3 text-right font-mono font-black" [ngClass]="b.outstandingBdt < 0 ? 'text-violet-600' : 'text-gray-900 dark:text-white'">
                     {{ b.outstandingBdt | number: '1.2-2' }}
@@ -234,21 +234,21 @@
                     @if (b.outstandingBdt > 0.01) {
                       <button type="button" (click)="open('payment', b)"
                         class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700">
-                        {{ b.kind === 'Payable' ? 'Pay' : 'Collect' }}
+                        {{ (b.kind === 'Payable' ? 'Pay' : 'Collect') | t }}
                       </button>
                     }
                     @if (isAnimalSale(b)) {
-                      <button type="button" (click)="printSaleInvoice(b)" [disabled]="printing() === b.id" title="Sale invoice (PDF)" aria-label="Sale invoice"
+                      <button type="button" (click)="printSaleInvoice(b)" [disabled]="printing() === b.id" [title]="'Sale invoice (PDF)' | t" [attr.aria-label]="'Sale invoice' | t"
                         class="ml-1 p-1 rounded-lg text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-50"><mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === b.id ? 'hourglass_top' : 'description' }}</mat-icon></button>
                     }
-                    <button type="button" (click)="open('terms', b)" title="Edit party / due date"
+                    <button type="button" (click)="open('terms', b)" [title]="'Edit party / due date' | t"
                       class="ml-1 p-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><mat-icon class="!w-4 !h-4 !text-[16px]">edit_calendar</mat-icon></button>
                     @if (b.outstandingBdt > 0.01) {
-                      <button type="button" (click)="open('write-off', b)" [title]="b.kind === 'Payable' ? 'Supplier waived the rest' : 'Write off as bad debt'"
+                      <button type="button" (click)="open('write-off', b)" [title]="(b.kind === 'Payable' ? 'Supplier waived the rest' : 'Write off as bad debt') | t"
                         class="ml-1 p-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30"><mat-icon class="!w-4 !h-4 !text-[16px]">money_off</mat-icon></button>
                     }
                     @if (b.paidBdt === 0 && b.adjustedBdt === 0) {
-                      <button type="button" (click)="cancel(b)" title="Cancel bill — treat as paid in cash"
+                      <button type="button" (click)="cancel(b)" [title]="'Cancel bill — treat as paid in cash' | t"
                         class="ml-1 p-1 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30"><mat-icon class="!w-4 !h-4 !text-[16px]">block</mat-icon></button>
                     }
                   </td>
@@ -256,32 +256,32 @@
                 @if (expanded() === b.id) {
                   <tr class="bg-gray-50/70 dark:bg-gray-900/30">
                     <td colspan="8" class="px-5 py-3">
-                      <div class="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-2">{{ b.kind === 'Payable' ? 'Payments made' : 'Collections received' }}</div>
+                      <div class="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-2">{{ (b.kind === 'Payable' ? 'Payments made' : 'Collections received') | t }}</div>
                       @if (b.payments.length) {
                         <table class="w-full text-xs">
                           <tbody>
                             @for (p of b.payments; track p.id) {
                               <tr class="border-t border-gray-200/60 dark:border-gray-700/60">
                                 <td class="py-1.5 w-32">{{ p.paymentDate | date: 'dd MMM yyyy' }}</td>
-                                <td class="py-1.5 w-24">{{ p.method }}</td>
+                                <td class="py-1.5 w-24">{{ p.method | t }}</td>
                                 <td class="py-1.5 text-gray-500">{{ p.reference }} {{ p.notes }}</td>
                                 <td class="py-1.5 text-right font-mono font-bold w-32">{{ p.amountBdt | money:2 }}</td>
                                 <td class="py-1.5 text-right w-28 whitespace-nowrap">
                                   <button type="button" (click)="printReceipt(p.id)" [disabled]="printing() === p.id"
-                                    [title]="b.kind === 'Payable' ? 'Payment voucher (PDF)' : 'Money receipt (PDF)'" aria-label="Receipt"
+                                    [title]="(b.kind === 'Payable' ? 'Payment voucher (PDF)' : 'Money receipt (PDF)') | t" [attr.aria-label]="'Receipt' | t"
                                     class="mr-2 p-0.5 rounded text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 align-middle disabled:opacity-50">
                                     <mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === p.id ? 'hourglass_top' : 'receipt_long' }}</mat-icon>
                                   </button>
-                                  <button type="button" (click)="voidPayment(b, p)" class="text-rose-500 hover:underline">Void</button>
+                                  <button type="button" (click)="voidPayment(b, p)" class="text-rose-500 hover:underline">{{ 'Void' | t }}</button>
                                 </td>
                               </tr>
                             }
                           </tbody>
                         </table>
                       } @else {
-                        <div class="text-xs text-gray-500">Nothing paid yet.</div>
+                        <div class="text-xs text-gray-500">{{ 'Nothing paid yet.' | t }}</div>
                       }
-                      @if (b.notes) { <div class="text-xs text-gray-500 mt-2">Notes: {{ b.notes }}</div> }
+                      @if (b.notes) { <div class="text-xs text-gray-500 mt-2">{{ 'Notes:' | t }} {{ b.notes }}</div> }
                     </td>
                   </tr>
                 }
@@ -289,7 +289,7 @@
                 <tr>
                   <td colspan="8" class="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                     <mat-icon class="align-middle mr-1 text-emerald-500">task_alt</mat-icon>
-                    {{ s.kind === 'Payable' ? 'No unpaid supplier bills.' : 'No unpaid customer invoices.' }}
+                    {{ (s.kind === 'Payable' ? 'No unpaid supplier bills.' : 'No unpaid customer invoices.') | t }}
                   </td>
                 </tr>
               }
@@ -300,16 +300,13 @@
 
       <!-- How it works -->
       <div class="p-4 rounded-2xl bg-sky-50/60 dark:bg-sky-950/20 border border-sky-200/70 dark:border-sky-800/50 text-xs text-sky-900 dark:text-sky-200 leading-relaxed">
-        <b>How credit is recorded.</b>
-        Choose <b>On credit (বাকি)</b> when you buy (Stock In, Purchase Order receipt, Record Expense) or sell (Sell Animal, Record Income),
-        or use <b>Put on credit</b> on a ledger entry. The cost or sale is booked on the day of the deal, so profit is right;
-        the cash book only moves when you <b>Pay</b> or <b>Collect</b> here. Returns against an unpaid order reduce the supplier's bill.
-        A customer who will never pay is written off as a bad debt.
+        <b>{{ 'How credit is recorded.' | t }}</b>
+        {{ "Choose On credit (বাকি) when you buy (Stock In, Purchase Order receipt, Record Expense) or sell (Sell Animal, Record Income), or use Put on credit on a ledger entry. The cost or sale is booked on the day of the deal, so profit is right; the cash book only moves when you Pay or Collect here. Returns against an unpaid order reduce the supplier's bill. A customer who will never pay is written off as a bad debt." | t }}
       </div>
     }
   } @else if (isLoading()) {
     <div class="py-16 flex flex-col items-center gap-3 text-gray-500 dark:text-gray-400 text-sm">
-      <mat-icon class="animate-spin">autorenew</mat-icon> Loading the credit book…
+      <mat-icon class="animate-spin">autorenew</mat-icon> {{ 'Loading the credit book…' | t }}
     </div>
   }
 </div>

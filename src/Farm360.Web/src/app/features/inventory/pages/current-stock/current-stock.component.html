@@ -1,16 +1,16 @@
 <app-page-header class="print:hidden"
-  title="Current Stock Report"
-  description="Real-time snapshot of current inventory balance and valuation."
-  breadcrumbActiveNode="Current Stock">
+  [title]="'Current Stock Report' | t"
+  [description]="'Real-time snapshot of current inventory balance and valuation.' | t"
+  [breadcrumbActiveNode]="'Current Stock' | t">
   <div actions class="flex items-center gap-2 print:hidden no-print">
     <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || items().length === 0"
       class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
-      {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+      {{ (isExporting() ? 'Exporting PDF...' : 'Export PDF') | t }}
     </button>
     <button (click)="printReport()"
       class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">print</mat-icon> Print Report
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">print</mat-icon> {{ 'Print Report' | t }}
     </button>
   </div>
 </app-page-header>
@@ -20,11 +20,11 @@
   <div class="flex justify-between items-start border-b-2 border-black pb-4 mb-4">
     <div>
       <h1 class="text-2xl font-bold text-black m-0 leading-tight">Farm360 ERP</h1>
-      <div class="text-sm font-semibold text-gray-800 uppercase tracking-widest mt-1">Materials Management</div>
+      <div class="text-sm font-semibold text-gray-800 uppercase tracking-widest mt-1">{{ 'Materials Management' | t }}</div>
     </div>
     <div class="text-right text-sm text-black">
-      <div><strong>Report:</strong> Current Stock Balance</div>
-      <div><strong>Date:</strong> {{ today | date:'medium' }}</div>
+      <div><strong>{{ 'Report:' | t }}</strong> {{ 'Current Stock Balance' | t }}</div>
+      <div><strong>{{ 'Date:' | t }}</strong> {{ today | date:'medium' }}</div>
     </div>
   </div>
 </div>
@@ -43,7 +43,7 @@
         <mat-icon class="!w-6 !h-6 !text-[24px]">category</mat-icon>
       </div>
       <div>
-        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Items</div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Total Items' | t }}</div>
         <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
           {{ data.totalItems }}
         </div>
@@ -56,7 +56,7 @@
         <mat-icon class="!w-6 !h-6 !text-[24px]">account_balance_wallet</mat-icon>
       </div>
       <div>
-        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Total Valuation</div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Total Valuation' | t }}</div>
         <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-0.5">
           {{ data.totalValueBdt | money }}
         </div>
@@ -69,7 +69,7 @@
         <mat-icon class="!w-6 !h-6 !text-[24px]">warning</mat-icon>
       </div>
       <div>
-        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Low Stock SKUs</div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Low Stock SKUs' | t }}</div>
         <div class="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-0.5">
           {{ data.lowStockCount }}
         </div>
@@ -82,7 +82,7 @@
         <mat-icon class="!w-6 !h-6 !text-[24px]">remove_shopping_cart</mat-icon>
       </div>
       <div>
-        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Out of Stock</div>
+        <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Out of Stock' | t }}</div>
         <div class="text-2xl font-extrabold text-red-600 dark:text-red-400 mt-0.5">
           {{ data.outOfStockCount }}
         </div>
@@ -93,19 +93,19 @@
   <!-- Print-only KPI Summary -->
   <div class="hidden print:grid grid-cols-4 gap-4 mb-6 border-b-2 border-black pb-4" *ngIf="summary() as data">
     <div class="text-black">
-      <div class="text-xs uppercase font-bold text-gray-600">Total Items</div>
+      <div class="text-xs uppercase font-bold text-gray-600">{{ 'Total Items' | t }}</div>
       <div class="text-lg font-bold">{{ data.totalItems }}</div>
     </div>
     <div class="text-black">
-      <div class="text-xs uppercase font-bold text-gray-600">Total Valuation</div>
-      <div class="text-lg font-bold">BDT {{ data.totalValueBdt | number:'1.0-0' }}</div>
+      <div class="text-xs uppercase font-bold text-gray-600">{{ 'Total Valuation' | t }}</div>
+      <div class="text-lg font-bold">{{ 'BDT' | t }} {{ data.totalValueBdt | number:'1.0-0' }}</div>
     </div>
     <div class="text-black">
-      <div class="text-xs uppercase font-bold text-gray-600">Low Stock SKUs</div>
+      <div class="text-xs uppercase font-bold text-gray-600">{{ 'Low Stock SKUs' | t }}</div>
       <div class="text-lg font-bold">{{ data.lowStockCount }}</div>
     </div>
     <div class="text-black">
-      <div class="text-xs uppercase font-bold text-gray-600">Out of Stock</div>
+      <div class="text-xs uppercase font-bold text-gray-600">{{ 'Out of Stock' | t }}</div>
       <div class="text-lg font-bold">{{ data.outOfStockCount }}</div>
     </div>
   </div>
@@ -116,9 +116,9 @@
     <app-empty-state
       *ngIf="!isLoading() && !loadError() && items().length === 0"
       icon="inventory_2"
-      title="No inventory items found"
-      description="Start by adding items to your stock catalog."
-      actionLabel="Go to Catalog"
+      [title]="'No inventory items found' | t"
+      [description]="'Start by adding items to your stock catalog.' | t"
+      [actionLabel]="'Go to Catalog' | t"
       [routerLink]="['../items']">
     </app-empty-state>
 
@@ -127,36 +127,36 @@
 
         <!-- Name Column -->
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Item</th>
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">{{ 'Item' | t }}</th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 py-4 print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
             <div class="font-medium text-gray-900 dark:text-white print:text-black">{{ item.name }}</div>
-            <div class="text-xs text-gray-500 mt-0.5">SKU: {{ item.sku }}</div>
+            <div class="text-xs text-gray-500 mt-0.5">{{ 'SKU: {sku}' | t: { sku: item.sku } }}</div>
           </td>
         </ng-container>
 
         <!-- Category Column -->
         <ng-container matColumnDef="category">
-          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Category</th>
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">{{ 'Category' | t }}</th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 print:bg-transparent print:p-0 print:text-black print:font-normal">
-              {{ item.categoryName }}
+              {{ item.categoryName | t }}
             </span>
           </td>
         </ng-container>
 
         <!-- Status Column -->
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Status</th>
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">{{ 'Status' | t }}</th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold print:bg-transparent print:p-0 print:border-none print:text-black print:font-normal" [ngClass]="getStatusClass(item.status)">
-              {{ item.statusName }}
+              {{ item.statusName | t }}
             </span>
           </td>
         </ng-container>
 
         <!-- Current Stock Column -->
         <ng-container matColumnDef="currentStock">
-          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Current Stock</th>
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">{{ 'Current Stock' | t }}</th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 text-right print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
             <div class="font-extrabold text-gray-900 dark:text-white print:text-black print:font-semibold">{{ item.currentStock }}</div>
             <div class="text-[11px] text-gray-500">{{ item.unitOfMeasure }}</div>
@@ -165,7 +165,7 @@
 
         <!-- Valuation Column -->
         <ng-container matColumnDef="valuation">
-          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Valuation (WAC)</th>
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">{{ 'Valuation (WAC)' | t }}</th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 text-right print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
             <div class="font-bold text-emerald-600 dark:text-emerald-400 print:text-black">{{ item.totalValueBdt | money:2 }}</div>
             <div class="text-[11px] text-gray-500">@ {{ item.weightedAverageCostBdt | money:2 }}/{{ item.unitOfMeasure }}</div>
@@ -174,9 +174,9 @@
 
         <!-- Last Updated Column -->
         <ng-container matColumnDef="updated">
-          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">Location</th>
+          <th mat-header-cell *matHeaderCellDef class="!text-gray-500 dark:!text-gray-400 !font-semibold !text-xs uppercase tracking-wider !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 px-6 text-right print:!bg-transparent print:!text-black print:!border-b-2 print:!border-black print:px-2 print:py-2">{{ 'Location' | t }}</th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 px-6 text-right print:px-2 print:py-2 print:!border-b print:!border-gray-400 print:text-black">
-            <div class="text-sm text-gray-600 dark:text-gray-400 print:text-black">{{ item.storageLocation || 'Unassigned' }}</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 print:text-black">{{ item.storageLocation || ('Unassigned' | t) }}</div>
           </td>
         </ng-container>
 
@@ -184,7 +184,7 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="w-16 !bg-gray-50/50 dark:!bg-gray-900/50 !border-b-gray-100 dark:!border-b-gray-800/50 print:hidden no-print"></th>
           <td mat-cell *matCellDef="let item" class="!border-b-gray-50 dark:!border-b-gray-800/30 text-right print:hidden no-print">
-            <button mat-icon-button class="text-gray-400 hover:text-rose-600 dark:hover:text-rose-400" (click)="openStockWriteOffDialog(item)" matTooltip="Write Off Stock" aria-label="Write off stock">
+            <button mat-icon-button class="text-gray-400 hover:text-rose-600 dark:hover:text-rose-400" (click)="openStockWriteOffDialog(item)" [matTooltip]="'Write Off Stock' | t" [attr.aria-label]="'Write off stock' | t">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">delete_sweep</mat-icon>
             </button>
           </td>

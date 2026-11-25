@@ -12,6 +12,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { AnalyticsService, HealthAnalyticsDto } from '../../../../core/services/analytics.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-health-dashboard',
@@ -23,7 +25,8 @@ import { WorkingContextService } from '../../../../core/services/working-context
     NgxEchartsDirective,
     PageHeaderComponent, 
     LoadingComponent, 
-    EmptyStateComponent
+    EmptyStateComponent,
+    TranslatePipe
   ],
   templateUrl: './health-dashboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +35,7 @@ export class HealthDashboardComponent {
   private analyticsService = inject(AnalyticsService);
   private workingContext = inject(WorkingContextService);
   private router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   /** The farm picked in the context selector; the page re-loads whenever it changes. */
   private farm = toSignal(this.workingContext.currentFarm$, { initialValue: this.workingContext.currentFarmValue });
@@ -59,7 +63,7 @@ export class HealthDashboardComponent {
       color: ['#10b981', '#f59e0b'],
       series: [
         {
-          name: 'Vaccination Compliance',
+          name: this.i18n.t('Vaccination Compliance'),
           type: 'pie',
           radius: ['40%', '70%'],
           avoidLabelOverlap: false,
@@ -84,8 +88,8 @@ export class HealthDashboardComponent {
             show: false
           },
           data: [
-            { value: data.vaccinationCompliancePercentage, name: 'Vaccinated (Last 6 Mos)' },
-            { value: 100 - data.vaccinationCompliancePercentage, name: 'Not Vaccinated / Overdue' }
+            { value: data.vaccinationCompliancePercentage, name: this.i18n.t('Vaccinated (Last 6 Mos)') },
+            { value: 100 - data.vaccinationCompliancePercentage, name: this.i18n.t('Not Vaccinated / Overdue') }
           ]
         }
       ]

@@ -31,6 +31,8 @@ import { ShedList } from '../../../farms/models/shed.model';
 import { InventoryService } from '../../../inventory/services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { ReportParameterType } from '../../models/report.models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface PickerOption {
   id: string;
@@ -53,6 +55,7 @@ interface PickerOption {
   imports: [
     CommonModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule,
     MatAutocompleteModule, MatInputModule, MatIconModule, MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -64,11 +67,11 @@ interface PickerOption {
         <input matInput
                [formControl]="searchControl"
                [matAutocomplete]="auto"
-               [placeholder]="scoped() ? 'Type a tag or breed to search' : 'Select a farm first'" />
+               [placeholder]="(scoped() ? 'Type a tag or breed to search' : 'Select a farm first') | t" />
         @if (loading()) {
           <mat-spinner matSuffix diameter="18"></mat-spinner>
         } @else if (selected()) {
-          <button matSuffix type="button" class="clear-btn" (click)="clear($event)" aria-label="Clear">
+          <button matSuffix type="button" class="clear-btn" (click)="clear($event)" [attr.aria-label]="'Clear' | t">
             <mat-icon>close</mat-icon>
           </button>
         }
@@ -86,17 +89,17 @@ interface PickerOption {
           }
           @if (!loading() && scoped() && !searchFailed() && animalOptions().length === 0) {
             <mat-option disabled>
-              <span class="text-xs text-gray-500">No matching animals</span>
+              <span class="text-xs text-gray-500">{{ 'No matching animals' | t }}</span>
             </mat-option>
           }
           @if (searchFailed()) {
             <mat-option disabled class="error-option">
-              <span class="text-xs text-red-500">Could not load animals -- try again</span>
+              <span class="text-xs text-red-500">{{ 'Could not load animals -- try again' | t }}</span>
             </mat-option>
           }
         </mat-autocomplete>
         @if (!scoped()) {
-          <mat-hint>Choose a farm above, or in the top bar, to search its animals.</mat-hint>
+          <mat-hint>{{ 'Choose a farm above, or in the top bar, to search its animals.' | t }}</mat-hint>
         }
       </mat-form-field>
     } @else {
@@ -106,7 +109,7 @@ interface PickerOption {
         <mat-select [value]="value()" [disabled]="!scoped() && needsFarmScope()"
                     (selectionChange)="valueChange.emit($event.value)">
           @if (!required()) {
-            <mat-option [value]="null">-- None --</mat-option>
+            <mat-option [value]="null">{{ '-- None --' | t }}</mat-option>
           }
           @for (option of listOptions(); track option.id) {
             <mat-option [value]="option.id">
@@ -115,11 +118,11 @@ interface PickerOption {
           }
         </mat-select>
         @if (!scoped() && needsFarmScope()) {
-          <mat-hint>Choose a farm above, or in the top bar, first.</mat-hint>
+          <mat-hint>{{ 'Choose a farm above, or in the top bar, first.' | t }}</mat-hint>
         } @else if (listFailed()) {
-          <mat-hint class="error-hint">Could not load the list -- try again.</mat-hint>
+          <mat-hint class="error-hint">{{ 'Could not load the list -- try again.' | t }}</mat-hint>
         } @else if (!loading() && listOptions().length === 0) {
-          <mat-hint>Nothing found for this farm.</mat-hint>
+          <mat-hint>{{ 'Nothing found for this farm.' | t }}</mat-hint>
         }
       </mat-form-field>
     }
@@ -156,6 +159,7 @@ export class ReportEntityPickerComponent {
   private readonly inventoryService = inject(InventoryService);
   private readonly workingContext = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
 
   readonly entityType = input.required<ReportParameterType>();
   readonly value = input<string | null>(null);
@@ -382,7 +386,7 @@ export class ReportEntityPickerComponent {
     // Sold/dead animals stay pickable for reports, but are marked so they're not mistaken for live ones.
     const parts: string[] = [];
     if (animal.breedName) parts.push(animal.breedName);
-    if (!isOnFarm(animal.status)) parts.push(this.leftFarmLabel(animal.status));
+    if (!isOnFarm(animal.status)) parts.push(this.i18n.t(this.leftFarmLabel(animal.status)));
     return { id: animal.id, label: animal.tagId, sublabel: parts.length ? parts.join(' · ') : undefined };
   }
 
@@ -415,7 +419,7 @@ export class ReportEntityPickerComponent {
           return of<PickerOption[]>([]);
         }
         return this.batches.getBatches(farmId, undefined, 1, 200).pipe(
-          map(res => res.items.map((b: BatchDto) => ({ id: b.id, label: b.name, sublabel: `${b.animalCount} head` }))),
+          map(res => res.items.map((b: BatchDto) => ({ id: b.id, label: b.name, sublabel: this.i18n.t('{n} head', { n: b.animalCount }) }))),
           catchError(() => of<PickerOption[]>([])),
         );
 

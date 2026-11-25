@@ -9,6 +9,8 @@ import { AnimalService } from '../../services/animal.service';
 import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../../../finance/components/credit-terms-fields/credit-terms-fields.component';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 export interface RecordSaleDialogData {
   animalId: string;
   animalTag: string;
@@ -19,13 +21,14 @@ export interface RecordSaleDialogData {
   selector: 'app-record-sale-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, CreditTermsFieldsComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, CreditTermsFieldsComponent, TranslatePipe],
   templateUrl: './record-sale-dialog.component.html'
 })
 export class RecordSaleDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<RecordSaleDialogComponent>);
   public readonly data = inject<RecordSaleDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly animalSvc = inject(AnimalService);
   private readonly destroy$ = new Subject<void>();
 
@@ -63,7 +66,7 @@ export class RecordSaleDialogComponent {
     const credit = toCreditTerms(this.credit.getRawValue());
     if (credit && !credit.partyName && !v.buyer) {
       this.submitting.set(false);
-      this.error.set('Enter the buyer name for a sale on credit.');
+      this.error.set(this.i18n.t('Enter the buyer name for a sale on credit.'));
       return;
     }
 
@@ -81,7 +84,7 @@ export class RecordSaleDialogComponent {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            const message: string = err.error?.detail || err.error?.title || 'Recording sale failed.';
+            const message: string = err.error?.detail || err.error?.title || this.i18n.t('Recording sale failed.');
             this.error.set(message);
             this.withdrawalWarning.set(message.includes('confirm the sale anyway'));
         }

@@ -16,6 +16,8 @@ import { InventoryItem, InventoryCategory } from '../../../../inventory/models/i
 import { FeedCategory, FeedCategoryNames, FeedIngredient } from '../../../models/feeding.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-create-ingredient-dialog',
@@ -29,7 +31,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatInputModule,
     MatSelectModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden">
@@ -39,9 +42,9 @@ import { NotificationService } from '../../../../../shared/services/notification
           <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <mat-icon class="!w-5 !h-5 !text-[20px]">restaurant</mat-icon>
           </div>
-          <span>{{ isEdit ? 'Edit Feed Ingredient' : 'New Feed Ingredient' }}</span>
+          <span>{{ (isEdit ? 'Edit Feed Ingredient' : 'New Feed Ingredient') | t }}</span>
         </h2>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Close">
+        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" [attr.aria-label]="'Close' | t">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -57,73 +60,73 @@ import { NotificationService } from '../../../../../shared/services/notification
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Ingredient Name</mat-label>
-              <input matInput formControlName="name" placeholder="e.g. Maize Silage" required />
-              <mat-error>Name is required</mat-error>
+              <mat-label>{{ 'Ingredient Name' | t }}</mat-label>
+              <input matInput formControlName="name" [placeholder]="'e.g. Maize Silage' | t" required />
+              <mat-error>{{ 'Name is required' | t }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Category</mat-label>
+              <mat-label>{{ 'Category' | t }}</mat-label>
               <mat-select formControlName="category" required>
                 @for (cat of categories; track cat.value) {
                   <mat-option [value]="cat.value" class="!h-auto !py-2">
                     <div class="flex flex-col gap-0.5">
-                      <span class="font-medium text-gray-900 dark:text-gray-100 leading-tight">{{ cat.label }}</span>
-                      <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-normal leading-snug">{{ cat.description }}</span>
+                      <span class="font-medium text-gray-900 dark:text-gray-100 leading-tight">{{ cat.label | t }}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-normal leading-snug">{{ cat.description | t }}</span>
                     </div>
                   </mat-option>
                 }
               </mat-select>
-              <mat-error>Category is required</mat-error>
+              <mat-error>{{ 'Category is required' | t }}</mat-error>
             </mat-form-field>
           </div>
 
           <div class="grid grid-cols-3 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label title="Dry Matter %">DM %</mat-label>
+              <mat-label [title]="'Dry Matter %' | t">DM %</mat-label>
               <input matInput type="number" min="0" max="100" formControlName="dryMatterPct" step="0.1" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label title="Crude Protein %">CP %</mat-label>
+              <mat-label [title]="'Crude Protein %' | t">CP %</mat-label>
               <input matInput type="number" min="0" max="100" formControlName="crudeProteinPct" step="0.1" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label title="Metabolizable Energy (MJ/kg)">ME (MJ/kg)</mat-label>
+              <mat-label [title]="'Metabolizable Energy (MJ/kg)' | t">ME (MJ/kg)</mat-label>
               <input matInput type="number" min="0" formControlName="metabolizableEnergyMjPerKg" step="0.1" />
             </mat-form-field>
           </div>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Link Inventory Item (Optional)</mat-label>
+            <mat-label>{{ 'Link Inventory Item (Optional)' | t }}</mat-label>
             <mat-select formControlName="inventoryItemId">
-              <mat-option [value]="null">-- None --</mat-option>
+              <mat-option [value]="null">{{ '-- None --' | t }}</mat-option>
               @for (item of inventoryItems(); track item.id) {
                 <mat-option [value]="item.id">
-                  {{ item.name }} ({{ item.currentStock }} {{ item.unitOfMeasure }} | {{ item.weightedAverageCostBdt }} BDT)
+                  {{ item.name }} ({{ item.currentStock }} {{ item.unitOfMeasure }} | {{ item.weightedAverageCostBdt }} {{ 'BDT' | t }})
                 </mat-option>
               }
             </mat-select>
-            <mat-hint>Links ingredient to inventory for auto-deduction</mat-hint>
+            <mat-hint>{{ 'Links ingredient to inventory for auto-deduction' | t }}</mat-hint>
           </mat-form-field>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Unit Cost</mat-label>
+              <mat-label>{{ 'Unit Cost' | t }}</mat-label>
               <input matInput type="number" min="0" formControlName="unitCostBdt" step="0.5" required />
-              <span matTextSuffix class="text-gray-500 px-2 font-medium">BDT</span>
-              <mat-error>Unit cost is required</mat-error>
+              <span matTextSuffix class="text-gray-500 px-2 font-medium">{{ 'BDT' | t }}</span>
+              <mat-error>{{ 'Unit cost is required' | t }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Unit</mat-label>
-              <input matInput formControlName="unit" placeholder="kg" />
+              <mat-label>{{ 'Unit' | t }}</mat-label>
+              <input matInput formControlName="unit" [placeholder]="'kg' | t" />
             </mat-form-field>
           </div>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Description / Notes</mat-label>
+            <mat-label>{{ 'Description / Notes' | t }}</mat-label>
             <textarea matInput formControlName="description" rows="2"></textarea>
           </mat-form-field>
         </form>
@@ -132,11 +135,11 @@ import { NotificationService } from '../../../../../shared/services/notification
       <!-- Actions -->
       <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
         <button class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" [disabled]="isSubmitting()" (click)="dialogRef.close()">
-          Cancel
+          {{ 'Cancel' | t }}
         </button>
         <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50" [disabled]="form.invalid || isSubmitting()" (click)="onSubmit()">
           <mat-spinner *ngIf="isSubmitting()" diameter="16"></mat-spinner>
-          <span>{{ isEdit ? 'Update Ingredient' : 'Save Ingredient' }}</span>
+          <span>{{ (isEdit ? 'Update Ingredient' : 'Save Ingredient') | t }}</span>
         </button>
       </div>
     </div>
@@ -151,6 +154,7 @@ export class CreateIngredientDialogComponent {
   private readonly feedingService = inject(FeedingService);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -216,7 +220,7 @@ export class CreateIngredientDialogComponent {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success(`Feed ingredient ${this.isEdit ? 'updated' : 'created'} successfully.`);
+        this.notify.success(this.i18n.t(this.isEdit ? 'Feed ingredient updated successfully.' : 'Feed ingredient created successfully.'));
         this.dialogRef.close(true);
       },
       error: (err: any) => {

@@ -15,6 +15,8 @@ import { AccountingSettings, AccountingSetupOptions, BalanceSheetEntry, SaveBala
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * Accounts setup: the financial year, the date the books start from, the opening position on that
@@ -24,43 +26,41 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 @Component({
   selector: 'app-accounts-setup',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
   template: `
     <app-page-header
-      title="Accounts Setup"
-      description="Financial year, books start date, opening balances and year-end adjustments for the balance sheet."
-      breadcrumbActiveNode="Accounts Setup">
+      [title]="'Accounts Setup' | t"
+      [description]="'Financial year, books start date, opening balances and year-end adjustments for the balance sheet.' | t"
+      [breadcrumbActiveNode]="'Accounts Setup' | t">
     </app-page-header>
 
     <div class="px-6 py-4 mx-auto max-w-6xl space-y-6">
       <app-finance-subnav></app-finance-subnav>
 
       <div *ngIf="error()" class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300 flex justify-between">
-        <span>{{ error() }}</span><button type="button" aria-label="Dismiss error" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
+        <span>{{ error() }}</span><button type="button" [attr.aria-label]="'Dismiss error' | t" (click)="error.set(null)"><mat-icon class="!text-[16px]">close</mat-icon></button>
       </div>
       <div *ngIf="notice()" class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-line">{{ notice() }}</div>
 
       <!-- 1. Settings -->
       <section class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-5 space-y-4">
         <div>
-          <h3 class="text-sm font-black">1. Financial year &amp; books start</h3>
+          <h3 class="text-sm font-black">{{ '1. Financial year & books start' | t }}</h3>
           <p class="text-xs text-gray-500 mt-1">
-            The books start date is the day of the opening position (for example the last audited year end). Ledger entries on or
-            before it are replaced by the opening balances below; everything after it is calculated from the ledger.
-            Leave it blank to run the statements from the very first entry.
+            {{ 'The books start date is the day of the opening position (for example the last audited year end). Ledger entries on or before it are replaced by the opening balances below; everything after it is calculated from the ledger. Leave it blank to run the statements from the very first entry.' | t }}
           </p>
         </div>
         <div class="flex flex-wrap gap-4 items-end text-xs">
-          <label class="flex flex-col gap-1">Financial year starts in
+          <label class="flex flex-col gap-1">{{ 'Financial year starts in' | t }}
             <select [(ngModel)]="fyMonth" class="field">
-              <option *ngFor="let m of months; let i = index" [ngValue]="i + 1">{{ m }}</option>
+              <option *ngFor="let m of months; let i = index" [ngValue]="i + 1">{{ m | t }}</option>
             </select>
           </label>
-          <label class="flex flex-col gap-1">Books start date (opening position)
+          <label class="flex flex-col gap-1">{{ 'Books start date (opening position)' | t }}
             <input type="date" [(ngModel)]="booksStart" class="field" />
           </label>
-          <button mat-flat-button (click)="saveSettings()" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">Save settings</button>
-          <span *ngIf="settings() && !settings()!.isConfigured" class="text-amber-600">Not saved yet — the statements use July–June and no opening balances.</span>
+          <button mat-flat-button (click)="saveSettings()" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">{{ 'Save settings' | t }}</button>
+          <span *ngIf="settings() && !settings()!.isConfigured" class="text-amber-600">{{ 'Not saved yet — the statements use July–June and no opening balances.' | t }}</span>
         </div>
       </section>
 
@@ -68,28 +68,28 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <section class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-5 space-y-4">
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h3 class="text-sm font-black">2. Opening balances <span *ngIf="settings()?.booksStartDate" class="font-normal text-gray-500">as at {{ settings()!.booksStartDate | date:'d MMM yyyy' }}</span></h3>
+            <h3 class="text-sm font-black">{{ '2. Opening balances' | t }} <span *ngIf="settings()?.booksStartDate" class="font-normal text-gray-500">{{ 'as at {date}' | t: { date: (settings()!.booksStartDate | date:'d MMM yyyy') } }}</span></h3>
             <p class="text-xs text-gray-500 mt-1">
-              Enter each balance as a positive amount on its normal side (cash you hold, money you owe, capital put in).
-              Fixed assets owned on that date go in the <a routerLink="/finance/fixed-assets" class="underline">fixed-asset register</a> as "opening".
+              {{ 'Enter each balance as a positive amount on its normal side (cash you hold, money you owe, capital put in).' | t }}
+              {{ 'Fixed assets owned on that date go in the' | t }} <a routerLink="/finance/fixed-assets" class="underline">{{ 'fixed-asset register' | t }}</a> {{ 'as "opening".' | t }}
             </p>
           </div>
           <div class="flex gap-2">
             <button mat-stroked-button (click)="generate()" [disabled]="busy() || !settings()?.booksStartDate" class="!rounded-xl !text-xs"
-                    title="Turn every ledger entry up to the books start into opening balances">
-              <mat-icon class="!text-[16px]">auto_fix_high</mat-icon> Generate from ledger
+                    [title]="'Turn every ledger entry up to the books start into opening balances' | t">
+              <mat-icon class="!text-[16px]">auto_fix_high</mat-icon> {{ 'Generate from ledger' | t }}
             </button>
             <button mat-flat-button (click)="startEntry('Opening')" [disabled]="!settings()?.booksStartDate" class="!rounded-xl !text-xs !bg-emerald-600 !text-white">
-              <mat-icon class="!text-[16px]">add</mat-icon> Opening balance
+              <mat-icon class="!text-[16px]">add</mat-icon> {{ 'Opening balance' | t }}
             </button>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">Assets <span class="block font-mono font-bold text-sm">{{ openingTotals().assets | money:2 }}</span></div>
-          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">Liabilities + equity <span class="block font-mono font-bold text-sm">{{ openingTotals().claims | money:2 }}</span></div>
+          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">{{ 'Assets' | t }} <span class="block font-mono font-bold text-sm">{{ openingTotals().assets | money:2 }}</span></div>
+          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">{{ 'Liabilities + equity' | t }} <span class="block font-mono font-bold text-sm">{{ openingTotals().claims | money:2 }}</span></div>
           <div class="p-3 rounded-xl" [ngClass]="openingTotals().difference === 0 ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700' : 'bg-rose-50 dark:bg-rose-950/30 text-rose-700'">
-            Difference (excl. opening fixed assets)
+            {{ 'Difference (excl. opening fixed assets)' | t }}
             <span class="block font-mono font-bold text-sm">{{ openingTotals().difference | money:2 }}</span>
           </div>
         </div>
@@ -101,15 +101,13 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <section class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 p-5 space-y-4">
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h3 class="text-sm font-black">3. Year-end adjustments</h3>
+            <h3 class="text-sm font-black">{{ '3. Year-end adjustments' | t }}</h3>
             <p class="text-xs text-gray-500 mt-1">
-              Accrued expenses (a bill for this year not yet received), prepayments and provisions. Each one moves a balance-sheet line
-              and an income or expense account. Set a reversal date (usually the first day of the next year) so it undoes itself
-              when the real bill is posted.
+              {{ 'Accrued expenses (a bill for this year not yet received), prepayments and provisions. Each one moves a balance-sheet line and an income or expense account. Set a reversal date (usually the first day of the next year) so it undoes itself when the real bill is posted.' | t }}
             </p>
           </div>
           <button mat-flat-button (click)="startEntry('Adjustment')" class="!rounded-xl !text-xs !bg-emerald-600 !text-white">
-            <mat-icon class="!text-[16px]">add</mat-icon> Adjustment
+            <mat-icon class="!text-[16px]">add</mat-icon> {{ 'Adjustment' | t }}
           </button>
         </div>
         <ng-container *ngTemplateOutlet="entryTable; context: { $implicit: adjustments() }"></ng-container>
@@ -118,40 +116,40 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <!-- Entry form -->
       <div *ngIf="entry() as e" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" (click)="entry.set(null)">
         <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 w-full max-w-lg space-y-3 text-xs" (click)="$event.stopPropagation()">
-          <h3 class="text-sm font-black">{{ editingId() ? 'Edit' : 'New' }} {{ e.entryType === 'Opening' ? 'opening balance' : 'adjustment' }}</h3>
-          <label class="flex flex-col gap-1">Balance-sheet line
+          <h3 class="text-sm font-black">{{ (editingId() ? (e.entryType === 'Opening' ? 'Edit opening balance' : 'Edit adjustment') : (e.entryType === 'Opening' ? 'New opening balance' : 'New adjustment')) | t }}</h3>
+          <label class="flex flex-col gap-1">{{ 'Balance-sheet line' | t }}
             <select [(ngModel)]="e.accountCode" class="field">
               <option *ngFor="let a of (e.entryType === 'Opening' ? options()?.openingAccounts : options()?.adjustmentAccounts)" [value]="a.code">
                 {{ a.code }} — {{ a.name }} ({{ a.accountClass }})
               </option>
             </select>
           </label>
-          <label *ngIf="e.entryType === 'Adjustment'" class="flex flex-col gap-1">Income / expense account (other side)
+          <label *ngIf="e.entryType === 'Adjustment'" class="flex flex-col gap-1">{{ 'Income / expense account (other side)' | t }}
             <select [(ngModel)]="e.profitAccountCode" class="field">
               <option *ngFor="let a of options()?.profitAndLossAccounts" [value]="a.code">{{ a.code }} — {{ a.name }}</option>
             </select>
           </label>
           <div class="grid grid-cols-2 gap-3">
-            <label *ngIf="e.entryType === 'Adjustment'" class="flex flex-col gap-1">Date
+            <label *ngIf="e.entryType === 'Adjustment'" class="flex flex-col gap-1">{{ 'Date' | t }}
               <input type="date" [(ngModel)]="e.entryDate" class="field" />
             </label>
-            <label *ngIf="e.entryType === 'Adjustment'" class="flex flex-col gap-1">Reverse on (optional)
+            <label *ngIf="e.entryType === 'Adjustment'" class="flex flex-col gap-1">{{ 'Reverse on (optional)' | t }}
               <input type="date" [(ngModel)]="e.reversalDate" class="field" />
             </label>
-            <label class="flex flex-col gap-1">Amount (BDT)
+            <label class="flex flex-col gap-1">{{ 'Amount (BDT)' | t }}
               <input type="number" step="0.01" [(ngModel)]="e.amountBdt" class="field" />
-              <span class="text-[11px] text-gray-400">Positive increases the line; negative reduces it.</span>
+              <span class="text-[11px] text-gray-400">{{ 'Positive increases the line; negative reduces it.' | t }}</span>
             </label>
           </div>
-          <label class="flex flex-col gap-1">Description
-            <input [(ngModel)]="e.description" class="field" placeholder="e.g. Cash in hand per audited accounts" />
+          <label class="flex flex-col gap-1">{{ 'Description' | t }}
+            <input [(ngModel)]="e.description" class="field" [placeholder]="'e.g. Cash in hand per audited accounts' | t" />
           </label>
-          <label class="flex flex-col gap-1">Notes
+          <label class="flex flex-col gap-1">{{ 'Notes' | t }}
             <input [(ngModel)]="e.notes" class="field" />
           </label>
           <div class="flex justify-end gap-2 pt-2">
-            <button mat-stroked-button (click)="entry.set(null)" class="!rounded-xl">Cancel</button>
-            <button mat-flat-button (click)="saveEntry(e)" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">Save</button>
+            <button mat-stroked-button (click)="entry.set(null)" class="!rounded-xl">{{ 'Cancel' | t }}</button>
+            <button mat-flat-button (click)="saveEntry(e)" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">{{ 'Save' | t }}</button>
           </div>
         </div>
       </div>
@@ -161,27 +159,27 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           <table class="w-full text-sm">
             <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
               <tr>
-                <th class="text-left px-3 py-2">Code</th><th class="text-left px-3 py-2">Date</th><th class="text-left px-3 py-2">Line</th>
-                <th class="text-left px-3 py-2">Description</th><th class="text-right px-3 py-2">Amount</th><th></th>
+                <th class="text-left px-3 py-2">{{ 'Code' | t }}</th><th class="text-left px-3 py-2">{{ 'Date' | t }}</th><th class="text-left px-3 py-2">{{ 'Line' | t }}</th>
+                <th class="text-left px-3 py-2">{{ 'Description' | t }}</th><th class="text-right px-3 py-2">{{ 'Amount' | t }}</th><th></th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngIf="!rows.length"><td colspan="6" class="px-3 py-6 text-center text-xs text-gray-400">Nothing entered.</td></tr>
+              <tr *ngIf="!rows.length"><td colspan="6" class="px-3 py-6 text-center text-xs text-gray-400">{{ 'Nothing entered.' | t }}</td></tr>
               <tr *ngFor="let r of rows" class="border-t border-gray-100 dark:border-gray-700/60">
                 <td class="px-3 py-2 font-mono text-xs text-gray-500">{{ r.code }}</td>
                 <td class="px-3 py-2 text-xs">
                   {{ r.entryDate | date:'d MMM yyyy' }}
-                  <span *ngIf="r.reversalDate" class="block text-[11px] text-gray-400">reverses {{ r.reversalDate | date:'d MMM yyyy' }}</span>
+                  <span *ngIf="r.reversalDate" class="block text-[11px] text-gray-400">{{ 'reverses {date}' | t: { date: (r.reversalDate | date:'d MMM yyyy') } }}</span>
                 </td>
                 <td class="px-3 py-2 text-xs">
                   <span class="font-mono text-gray-400">{{ r.accountCode }}</span> {{ r.accountName }}
-                  <span *ngIf="r.profitAccountName" class="block text-[11px] text-gray-500">against {{ r.profitAccountCode }} {{ r.profitAccountName }}</span>
+                  <span *ngIf="r.profitAccountName" class="block text-[11px] text-gray-500">{{ 'against {code} {name}' | t: { code: r.profitAccountCode, name: r.profitAccountName } }}</span>
                 </td>
                 <td class="px-3 py-2 text-xs">{{ r.description }}</td>
                 <td class="px-3 py-2 text-right font-mono" [class.text-rose-600]="r.amountBdt < 0">{{ r.amountBdt | money:2 }}</td>
                 <td class="px-3 py-2 text-right whitespace-nowrap">
-                  <button type="button" (click)="editEntry(r)" aria-label="Edit entry" title="Edit entry" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
-                  <button type="button" (click)="deleteEntry(r)" aria-label="Delete entry" title="Delete entry" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+                  <button type="button" (click)="editEntry(r)" [attr.aria-label]="'Edit entry' | t" [title]="'Edit entry' | t" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
+                  <button type="button" (click)="deleteEntry(r)" [attr.aria-label]="'Delete entry' | t" [title]="'Delete entry' | t" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
                 </td>
               </tr>
             </tbody>
@@ -190,8 +188,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       </ng-template>
 
       <p class="text-xs text-gray-500">
-        When done, check the <a routerLink="/finance/reports/balance-sheet" class="underline font-semibold">balance sheet</a> —
-        a Difference row means the opening position is incomplete.
+        {{ 'When done, check the' | t }} <a routerLink="/finance/reports/balance-sheet" class="underline font-semibold">{{ 'balance sheet' | t }}</a> —
+        {{ 'a Difference row means the opening position is incomplete.' | t }}
       </p>
     </div>
   `,
@@ -207,6 +205,7 @@ export class AccountsSetupComponent {
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
 
   readonly months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -243,7 +242,7 @@ export class AccountsSetupComponent {
         settings: this.finance.getAccountingSettings(farm.id),
         options: this.finance.getAccountingOptions(farm.id),
         entries: this.finance.getBalanceSheetEntries(farm.id),
-      }).pipe(catchError(err => { this.error.set(parseApiError(err, 'Failed to load the accounts setup.')); return of(null); }))),
+      }).pipe(catchError(err => { this.error.set(parseApiError(err, this.i18n.t('Failed to load the accounts setup.'))); return of(null); }))),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(r => {
       if (!r) return;
@@ -264,18 +263,18 @@ export class AccountsSetupComponent {
     if (!farmId) return;
     this.busy.set(true);
     this.finance.saveAccountingSettings(farmId, { fiscalYearStartMonth: +this.fyMonth, booksStartDate: this.booksStart || null }).subscribe({
-      next: () => this.done('Settings saved. Opening balances and opening fixed assets are dated on the books start.'),
-      error: err => this.fail(err, 'Could not save the settings.'),
+      next: () => this.done(this.i18n.t('Settings saved. Opening balances and opening fixed assets are dated on the books start.')),
+      error: err => this.fail(err, this.i18n.t('Could not save the settings.')),
     });
   }
 
   async generate(): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !(await this.confirmService.confirmAsync({ message: 'Create opening balances from every ledger entry up to the books start date?', confirmText: 'Create' }))) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: this.i18n.t('Create opening balances from every ledger entry up to the books start date?'), confirmText: this.i18n.t('Create') }))) return;
     this.busy.set(true);
     this.finance.generateOpeningEntries(farmId).subscribe({
-      next: r => this.done([`${r.created} opening balance(s) created from the ledger.`, ...r.warnings].join('\n')),
-      error: err => this.fail(err, 'Could not generate the opening balances.'),
+      next: r => this.done([this.i18n.t('{n} opening balance(s) created from the ledger.', { n: r.created }), ...r.warnings].join('\n')),
+      error: err => this.fail(err, this.i18n.t('Could not generate the opening balances.')),
     });
   }
 
@@ -315,18 +314,18 @@ export class AccountsSetupComponent {
     const id = this.editingId();
     this.busy.set(true);
     (id ? this.finance.updateBalanceSheetEntry(farmId, id, body) : this.finance.createBalanceSheetEntry(farmId, body)).subscribe({
-      next: saved => this.done(`${saved.code} saved.`, () => this.entry.set(null)),
-      error: err => this.fail(err, 'Could not save the entry.'),
+      next: saved => this.done(this.i18n.t('{code} saved.', { code: saved.code }), () => this.entry.set(null)),
+      error: err => this.fail(err, this.i18n.t('Could not save the entry.')),
     });
   }
 
   async deleteEntry(r: BalanceSheetEntry): Promise<void> {
     const farmId = this.farmId;
-    if (!farmId || !(await this.confirmService.confirmAsync({ message: `Delete ${r.code} (${r.description})?`, confirmText: 'Delete', destructive: true }))) return;
+    if (!farmId || !(await this.confirmService.confirmAsync({ message: this.i18n.t('Delete {code} ({description})?', { code: r.code, description: r.description }), confirmText: this.i18n.t('Delete'), destructive: true }))) return;
     this.busy.set(true);
     this.finance.deleteBalanceSheetEntry(farmId, r.id).subscribe({
-      next: () => this.done(`${r.code} deleted.`),
-      error: err => this.fail(err, 'Could not delete the entry.'),
+      next: () => this.done(this.i18n.t('{code} deleted.', { code: r.code })),
+      error: err => this.fail(err, this.i18n.t('Could not delete the entry.')),
     });
   }
 

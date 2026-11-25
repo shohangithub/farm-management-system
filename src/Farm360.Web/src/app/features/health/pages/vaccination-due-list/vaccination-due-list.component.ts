@@ -20,11 +20,13 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-vaccination-due-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, MatButtonModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, MatButtonModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe],
   templateUrl: './vaccination-due-list.component.html',
   styleUrls: ['./vaccination-due-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -35,6 +37,7 @@ export class VaccinationDueListComponent {
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -140,14 +143,14 @@ export class VaccinationDueListComponent {
         filename: `Farm360_Vaccination_Schedule_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Herd Vaccination Schedule & Due Report',
-          subtitle: 'Upcoming Immunization Records (Next 30 Days)',
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('Herd Vaccination Schedule & Due Report'),
+          subtitle: this.i18n.t('Upcoming Immunization Records (Next 30 Days)'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: 'Total Scheduled Events', value: `${list.length}` },
-            { label: 'Status Window', value: 'Next 30 Days' }
+            { label: this.i18n.t('Total Scheduled Events'), value: `${list.length}` },
+            { label: this.i18n.t('Status Window'), value: this.i18n.t('Next 30 Days') }
           ]
         },
         showSignatures: true

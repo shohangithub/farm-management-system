@@ -11,6 +11,8 @@ import { PenService } from '../../../farms/services/pen.service';
 import { ShedList } from '../../../farms/models/shed.model';
 import { PenList } from '../../../farms/models/pen.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface TransferAnimalDialogData {
   animalId: string;
@@ -24,13 +26,14 @@ export interface TransferAnimalDialogData {
   selector: 'app-transfer-animal-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './transfer-animal-dialog.component.html'
 })
 export class TransferAnimalDialogComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(MatDialogRef<TransferAnimalDialogComponent>);
   public readonly data = inject<TransferAnimalDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly animalSvc = inject(AnimalService);
   private readonly shedSvc = inject(ShedService);
   private readonly penSvc = inject(PenService);
@@ -112,7 +115,7 @@ export class TransferAnimalDialogComponent implements OnInit, OnDestroy {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            this.error.set(err.error?.detail || err.error?.title || 'Transfer failed.');
+            this.error.set(err.error?.detail || err.error?.title || this.i18n.t('Transfer failed.'));
         }
       }
     });

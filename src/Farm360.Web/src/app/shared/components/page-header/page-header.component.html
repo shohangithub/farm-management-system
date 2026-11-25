@@ -3,10 +3,10 @@
   <div class="min-w-0 flex-1 basis-full sm:basis-[26rem]">
     <app-breadcrumb [customLastNode]="breadcrumbActiveNode"></app-breadcrumb>
     <h1 class="text-[22px] font-bold text-gray-900 dark:text-white mt-1 tracking-tight leading-tight">
-      {{ title }}
+      {{ title | t }}
     </h1>
     <p *ngIf="description" class="text-[13px] text-gray-500 dark:text-gray-400 mt-1 max-w-3xl">
-      {{ description }}
+      {{ description | t }}
     </p>
   </div>
   
@@ -14,11 +14,11 @@
     <ng-content select="[actions]"></ng-content>
     <button *ngIf="secondaryActionLabel" mat-stroked-button (click)="onSecondaryAction()" class="!rounded-xl shadow-sm !font-semibold !border-gray-300 dark:!border-gray-600">
       <mat-icon *ngIf="secondaryActionIcon" class="mr-2">{{ secondaryActionIcon }}</mat-icon>
-      {{ secondaryActionLabel }}
+      {{ secondaryActionLabel | t }}
     </button>
     <button *ngIf="primaryActionLabel" mat-flat-button color="primary" (click)="onPrimaryAction()" class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-xl shadow-sm !font-semibold">
       <mat-icon *ngIf="primaryActionIcon" class="mr-2">{{ primaryActionIcon }}</mat-icon>
-      {{ primaryActionLabel }}
+      {{ primaryActionLabel | t }}
     </button>
   </div>
 </div>

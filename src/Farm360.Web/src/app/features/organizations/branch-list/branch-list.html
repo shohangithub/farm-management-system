@@ -1,7 +1,7 @@
 <app-page-header 
-  title="Branches" 
-  description="Manage locations and units for this organization."
-  primaryActionLabel="Add Branch"
+  [title]="'Branches' | t" 
+  [description]="'Manage locations and units for this organization.' | t"
+  [primaryActionLabel]="'Add Branch' | t"
   primaryActionIcon="add"
   (primaryAction)="onAdd()">
 </app-page-header>
@@ -21,17 +21,17 @@
         </div>
         <input type="text" (keyup.enter)="onSearch($event)" (blur)="onSearch($event)" 
                class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors" 
-               placeholder="Search branches...">
+               [placeholder]="'Search branches...' | t">
       </div>
       
       <div class="w-full sm:w-auto flex items-center gap-3">
-        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Filter by:</div>
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ 'Filter by:' | t }}</div>
         <div class="relative">
           <select (change)="onFilterStatus($event)" class="block w-44 pl-3 pr-10 py-2 text-base border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg shadow-sm appearance-none cursor-pointer">
-            <option value="">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Closed">Closed</option>
+            <option value="">{{ 'All Statuses' | t }}</option>
+            <option value="Active">{{ 'Active' | t }}</option>
+            <option value="Inactive">{{ 'Inactive' | t }}</option>
+            <option value="Closed">{{ 'Closed' | t }}</option>
           </select>
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">expand_more</mat-icon>
@@ -44,16 +44,16 @@
   <app-empty-state 
     *ngIf="!isLoading() && branches().length === 0 && !searchTerm() && !error()"
     icon="location_city"
-    title="No Branches Found"
-    description="Create your first branch to start tracking operations in this location."
-    actionLabel="Add Branch"
+    [title]="'No Branches Found' | t"
+    [description]="'Create your first branch to start tracking operations in this location.' | t"
+    [actionLabel]="'Add Branch' | t"
     (action)="onAdd()">
   </app-empty-state>
 
   <app-empty-state 
     *ngIf="!isLoading() && branches().length === 0 && searchTerm() && !error()"
     icon="search_off"
-    title="No matches found"
+    [title]="'No matches found' | t"
     description="We couldn't find any branches matching your search or filters.">
   </app-empty-state>
 

@@ -49,7 +49,8 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
             // Age and fixed-quantity plans don't change with weight.
             if (ruleSet.PlanType is FeedingPlanType.AgeBased or FeedingPlanType.FixedQuantity) continue;
 
-            var matchingRule = FeedingRuleMatcher.Match(ruleSet, notification.WeightKg, null).Primary;
+            var match = FeedingRuleMatcher.Match(ruleSet, notification.WeightKg, null);
+            var matchingRule = match.Primary;
 
             if (matchingRule != null)
             {
@@ -65,10 +66,19 @@ public sealed class WeightRecordedEventHandler : INotificationHandler<WeightReco
                 _planRepository.Update(plan);
 
                 // Update any pending daily feeding entries for today so rations reflect the new weight immediately
+                // A band can feed several recipes (concentrate + roughage): each entry moves to the new
+                // band's line for ITS recipe, with that line's quantity. Moving every entry onto the
+                // primary line would put two entries on one (plan, line, day) -- a unique-index violation.
                 var pendingEntries = await _entryRepository.GetPendingEntriesByPlanIdAndDateAsync(notification.TenantId, plan.Id, today, cancellationToken);
+                var usedLines = new HashSet<Guid>();
                 foreach (var entry in pendingEntries)
                 {
-                    entry.UpdateExpectedQuantity(expectedKg, matchingRule.Id);
+                    var line = match.Lines.FirstOrDefault(l => l.FormulaId == entry.FormulaId && !usedLines.Contains(l.Id));
+                    if (line is null)
+                        continue;
+
+                    usedLines.Add(line.Id);
+                    entry.UpdateExpectedQuantity(FeedingRuleMatcher.ExpectedKg(ruleSet, line, notification.WeightKg), line.Id);
                     _entryRepository.Update(entry);
                 }
             }

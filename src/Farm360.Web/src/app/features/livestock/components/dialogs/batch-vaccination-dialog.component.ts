@@ -10,6 +10,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { formatAnimalAge } from '../../utils/animal-age';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 export interface BatchVaccinationDialogData {
   animals: AnimalListItemDto[];
 }
@@ -22,7 +23,8 @@ export interface BatchVaccinationDialogData {
     CommonModule, 
     ReactiveFormsModule, 
     MatDialogModule, 
-    MatIconModule
+    MatIconModule,
+    TranslatePipe
   ],
   template: `
     <div class="flex flex-col h-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800">
@@ -34,11 +36,11 @@ export interface BatchVaccinationDialogData {
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">vaccines</mat-icon>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">Batch Vaccination</h2>
-            <p class="text-xs text-gray-500 font-medium">Administer vaccine to {{ data.animals.length }} animals</p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">{{ 'Batch Vaccination' | t }}</h2>
+            <p class="text-xs text-gray-500 font-medium">{{ 'Administer vaccine to {n} animals' | t: { n: data.animals.length } }}</p>
           </div>
         </div>
-        <button aria-label="Close" type="button" mat-dialog-close class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors">
+        <button [attr.aria-label]="'Close' | t" type="button" mat-dialog-close class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon>
         </button>
       </div>
@@ -47,8 +49,8 @@ export interface BatchVaccinationDialogData {
       <div *ngIf="error()" class="m-6 mb-0 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg flex items-start gap-3 animate-fade-in-up">
         <mat-icon class="text-red-500 mt-0.5 !text-[20px] !w-[20px] !h-[20px]">error_outline</mat-icon>
         <div>
-          <h4 class="text-sm font-bold text-red-800 dark:text-red-300">{{ error()?.title || 'Submission Failed' }}</h4>
-          <p class="text-xs text-red-700 dark:text-red-400 mt-1">{{ error()?.detail || 'An unexpected error occurred. Please try again.' }}</p>
+          <h4 class="text-sm font-bold text-red-800 dark:text-red-300">{{ error()?.title || ('Submission Failed' | t) }}</h4>
+          <p class="text-xs text-red-700 dark:text-red-400 mt-1">{{ error()?.detail || ('An unexpected error occurred. Please try again.' | t) }}</p>
           <ul *ngIf="error()?.errors" class="mt-2 text-xs text-red-700 dark:text-red-400 list-disc list-inside">
             <li *ngFor="let err of error()?.errors | keyvalue">{{ err.value }}</li>
           </ul>
@@ -60,24 +62,24 @@ export interface BatchVaccinationDialogData {
         <form [formGroup]="form" class="space-y-5">
           <!-- Vaccine Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vaccine Name <span class="text-red-500">*</span></label>
-            <input type="text" formControlName="vaccineName" placeholder="e.g. FMD Vaccine"
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Vaccine Name' | t }} <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="vaccineName" [placeholder]="'e.g. FMD Vaccine' | t"
                    class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm transition-colors"
                    [class.border-red-300]="form.get('vaccineName')?.invalid && form.get('vaccineName')?.touched">
             <p *ngIf="form.get('vaccineName')?.invalid && form.get('vaccineName')?.touched" class="mt-1 text-xs text-red-500">
-              Vaccine name is required.
+              {{ 'Vaccine name is required.' | t }}
             </p>
           </div>
 
           <!-- Batch Number & Date -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batch Number</label>
-              <input type="text" formControlName="batchNumber" placeholder="e.g. BN-1002"
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Batch Number' | t }}</label>
+              <input type="text" formControlName="batchNumber" [placeholder]="'e.g. BN-1002' | t"
                      class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm transition-colors">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Administered Date <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Administered Date' | t }} <span class="text-red-500">*</span></label>
               <input type="date" formControlName="administeredDate"
                      class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm transition-colors"
                      [class.border-red-300]="form.get('administeredDate')?.invalid && form.get('administeredDate')?.touched">
@@ -86,8 +88,8 @@ export interface BatchVaccinationDialogData {
 
           <!-- Notes -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-            <textarea formControlName="notes" rows="2" placeholder="Optional notes about this batch vaccination..."
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Notes' | t }}</label>
+            <textarea formControlName="notes" rows="2" [placeholder]="'Optional notes about this batch vaccination...' | t"
                       class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm transition-colors resize-none"></textarea>
           </div>
         </form>
@@ -95,15 +97,15 @@ export interface BatchVaccinationDialogData {
         <!-- Selected Animals List -->
         <div class="mt-8">
           <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            Selected Animals <span class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-0.5 px-2 rounded-full text-[11px]">{{ data.animals.length }}</span>
+            {{ 'Selected Animals' | t }} <span class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-0.5 px-2 rounded-full text-[11px]">{{ data.animals.length }}</span>
           </h3>
           <div class="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-gray-900/50 max-h-48 overflow-y-auto">
             <table class="w-full text-left text-sm whitespace-nowrap">
               <thead class="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs uppercase font-bold sticky top-0 z-10">
                 <tr>
-                  <th class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">Tag ID</th>
-                  <th class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">Breed</th>
-                  <th class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-right">Age</th>
+                  <th class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">{{ 'Tag ID' | t }}</th>
+                  <th class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">{{ 'Breed' | t }}</th>
+                  <th class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-right">{{ 'Age' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -122,12 +124,12 @@ export interface BatchVaccinationDialogData {
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex justify-end gap-3">
         <button type="button" mat-dialog-close [disabled]="isSubmitting()"
                 class="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-colors disabled:opacity-50">
-          Cancel
+          {{ 'Cancel' | t }}
         </button>
         <button type="button" (click)="onSubmit()" [disabled]="form.invalid || isSubmitting()"
                 class="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 shadow-sm transition-all focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
           <mat-icon *ngIf="isSubmitting()" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">autorenew</mat-icon>
-          {{ isSubmitting() ? 'Saving...' : 'Confirm Vaccination' }}
+          {{ (isSubmitting() ? 'Saving...' : 'Confirm Vaccination') | t }}
         </button>
       </div>
 

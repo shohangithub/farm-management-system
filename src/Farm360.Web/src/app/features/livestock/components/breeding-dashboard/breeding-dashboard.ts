@@ -16,6 +16,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { AnalyticsService, BreedingAnalyticsDto } from '../../../../core/services/analytics.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 echarts.use([PieChart, LineChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent, CanvasRenderer]);
 
@@ -29,7 +31,8 @@ echarts.use([PieChart, LineChart, TitleComponent, TooltipComponent, GridComponen
     NgxEchartsDirective,
     PageHeaderComponent, 
     LoadingComponent, 
-    EmptyStateComponent
+    EmptyStateComponent,
+    TranslatePipe
   ],
   templateUrl: './breeding-dashboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,6 +41,8 @@ export class BreedingDashboardComponent {
   private analyticsService = inject(AnalyticsService);
   private workingContext = inject(WorkingContextService);
   private router = inject(Router);
+  private i18n = inject(I18nService);
+  readonly noDataDescription = this.i18n.t("No pregnancies, upcoming calvings or checked matings for this farm. Matings are recorded on a female animal's page, in the Breeding History tab.");
 
   /** The farm picked in the context selector; the page re-loads whenever it changes. */
   private farm = toSignal(this.workingContext.currentFarm$, { initialValue: this.workingContext.currentFarmValue });
@@ -69,7 +74,7 @@ export class BreedingDashboardComponent {
       color: ['#10b981', '#f43f5e'],
       series: [
         {
-          name: 'Conception',
+          name: this.i18n.t('Conception'),
           type: 'pie',
           radius: ['50%', '70%'],
           avoidLabelOverlap: false,
@@ -88,8 +93,8 @@ export class BreedingDashboardComponent {
             show: false
           },
           data: [
-            { value: data.conceptionRatePercentage, name: 'Conception Rate' },
-            { value: 100 - data.conceptionRatePercentage, name: 'Did Not Conceive' }
+            { value: data.conceptionRatePercentage, name: this.i18n.t('Conception Rate') },
+            { value: 100 - data.conceptionRatePercentage, name: this.i18n.t('Did Not Conceive') }
           ]
         }
       ]

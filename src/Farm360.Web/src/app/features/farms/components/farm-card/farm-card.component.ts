@@ -1,16 +1,19 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { FarmList } from '../../models/farm.model';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-farm-card',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule],
+  imports: [TranslatePipe, CommonModule, RouterModule, MatIconModule],
   templateUrl: './farm-card.component.html'
 })
 export class FarmCardComponent {
+  private readonly i18n = inject(I18nService);
   @Input() farm!: FarmList;
   @Input() branchId!: string;
 

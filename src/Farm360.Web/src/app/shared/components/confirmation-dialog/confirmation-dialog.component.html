@@ -1,12 +1,12 @@
 <h2 mat-dialog-title class="!text-xl !font-bold !text-gray-900 dark:!text-white">
-  {{ data.title }}
+  {{ data.title | t }}
 </h2>
 <mat-dialog-content class="!text-gray-600 dark:!text-gray-300">
-  <p class="whitespace-pre-line">{{ data.message }}</p>
+  <p class="whitespace-pre-line">{{ data.message | t }}</p>
 </mat-dialog-content>
 <mat-dialog-actions align="end" class="!pb-4 !pr-4">
   <button mat-button *ngIf="!data.hideCancel" (click)="onCancel()" class="!text-gray-600 dark:!text-gray-400 hover:!bg-gray-100 dark:hover:!bg-gray-800">
-    {{ data.cancelButtonText || 'Cancel' }}
+    {{ (data.cancelButtonText || 'Cancel') | t }}
   </button>
   <button mat-flat-button 
           [color]="data.isDestructive ? 'warn' : 'primary'" 
@@ -14,6 +14,6 @@
           [class.!bg-red-600]="data.isDestructive"
           [class.!bg-primary-600]="!data.isDestructive"
           class="!text-white ml-2 shadow-sm !rounded-md">
-    {{ data.confirmButtonText || 'Confirm' }}
+    {{ (data.confirmButtonText || 'Confirm') | t }}
   </button>
 </mat-dialog-actions>

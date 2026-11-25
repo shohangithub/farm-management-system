@@ -1,16 +1,16 @@
 <app-page-header
-  title="Executive Dashboard"
+  [title]="'Executive Dashboard' | t"
   [description]="greeting()"
-  breadcrumbActiveNode="Dashboard"
+  [breadcrumbActiveNode]="'Dashboard' | t"
 >
   <div actions class="flex flex-wrap gap-2">
     <button mat-stroked-button color="primary" type="button" class="!rounded-xl" (click)="openGuidelines()">
       <mat-icon>menu_book</mat-icon>
-      SOP & Guidelines
+      {{ 'SOP & Guidelines' | t }}
     </button>
     <a mat-flat-button color="primary" class="!rounded-xl" routerLink="/reports">
       <mat-icon>assessment</mat-icon>
-      Generate Report
+      {{ 'Generate Report' | t }}
     </a>
   </div>
 </app-page-header>
@@ -21,7 +21,7 @@
     <!-- Error State -->
     <app-error-state
       *ngIf="hasError()"
-      title="Failed to load dashboard"
+      [title]="'Failed to load dashboard' | t"
       [message]="main.error() ?? ''"
       (retry)="main.retry()"
     ></app-error-state>
@@ -30,7 +30,7 @@
     <app-setup-checklist class="block empty:hidden"></app-setup-checklist>
 
     <!-- Loading skeleton -->
-    <div *ngIf="isLoading()" class="space-y-8" aria-busy="true" aria-label="Loading dashboard">
+    <div *ngIf="isLoading()" class="space-y-8" aria-busy="true" [attr.aria-label]="'Loading dashboard' | t">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <div *ngFor="let s of kpiSkeletons" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-5 animate-pulse">
           <div class="flex items-center gap-3">
@@ -67,16 +67,16 @@
       <!-- 1. At a glance: KPI cards -->
       <section aria-labelledby="kpi-heading" class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="kpi-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">At a glance</h2>
+          <h2 id="kpi-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'At a glance' | t }}</h2>
           <span *ngIf="attentionCount() > 0"
                 class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
-            {{ attentionCount() }} {{ attentionCount() === 1 ? 'area needs' : 'areas need' }} attention
+            {{ (attentionCount() === 1 ? '{n} area needs attention' : '{n} areas need attention') | t: { n: attentionCount() } }}
           </span>
           <span *ngIf="attentionCount() === 0"
                 class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
-            Everything looks on track
+            {{ 'Everything looks on track' | t }}
           </span>
         </div>
 
@@ -87,7 +87,7 @@
               <div class="w-10 h-10 shrink-0 rounded-full flex items-center justify-center" [ngClass]="kpiIconClass(kpi.tone)" aria-hidden="true">
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">{{ kpi.icon }}</mat-icon>
               </div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-300 m-0 truncate">{{ kpi.label }}</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-300 m-0 truncate">{{ kpi.label | t }}</p>
             </div>
 
             <p class="mt-4 mb-0 text-2xl xl:text-3xl leading-tight font-semibold tracking-tight tabular-nums text-gray-900 dark:text-white break-words">
@@ -96,21 +96,21 @@
             </p>
 
             <div *ngIf="kpi.split as split" class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium">
-              <span class="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400" title="Income">
+              <span class="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400" [title]="'Income' | t">
                 <mat-icon class="text-[16px] w-[16px] h-[16px]" aria-hidden="true">arrow_upward</mat-icon>
-                <span class="sr-only">Income</span>
+                <span class="sr-only">{{ 'Income' | t }}</span>
                 {{ split.income | money }}
               </span>
-              <span class="inline-flex items-center gap-1 text-rose-700 dark:text-rose-400" title="Expense">
+              <span class="inline-flex items-center gap-1 text-rose-700 dark:text-rose-400" [title]="'Expense' | t">
                 <mat-icon class="text-[16px] w-[16px] h-[16px]" aria-hidden="true">arrow_downward</mat-icon>
-                <span class="sr-only">Expense</span>
+                <span class="sr-only">{{ 'Expense' | t }}</span>
                 {{ split.expense | money }}
               </span>
             </div>
 
             <p *ngIf="!kpi.split" class="mt-2 mb-0 flex items-center gap-1 text-xs font-medium" [ngClass]="kpiHintClass(kpi.hintTone)">
               <mat-icon *ngIf="kpi.hintIcon" class="text-[16px] w-[16px] h-[16px] shrink-0" aria-hidden="true">{{ kpi.hintIcon }}</mat-icon>
-              <span class="truncate">{{ kpi.hint }}</span>
+              <span class="truncate">{{ kpi.hint | t }}</span>
             </p>
           </div>
         </div>
@@ -127,12 +127,12 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">psychology</mat-icon>
               </div>
               <div class="min-w-0">
-                <h2 id="alerts-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">AI Predictive Alerts</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">Automated health and performance signals</p>
+                <h2 id="alerts-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'AI Predictive Alerts' | t }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Automated health and performance signals' | t }}</p>
               </div>
             </div>
             <span *ngIf="dashboard.actionableInsights.length > 0" class="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-full bg-primary-50 text-primary-800 dark:bg-primary-500/10 dark:text-primary-300">
-              {{ dashboard.actionableInsights.length }} Active
+              {{ '{n} Active' | t: { n: dashboard.actionableInsights.length } }}
             </span>
           </div>
 
@@ -141,8 +141,8 @@
               <div class="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3" aria-hidden="true">
                 <mat-icon>verified</mat-icon>
               </div>
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0">All Systems Healthy</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-0 max-w-md mx-auto">No alerts right now. We keep watching animal health and feed efficiency and will flag anything that needs you.</p>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'All Systems Healthy' | t }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-0 max-w-md mx-auto">{{ 'No alerts right now. We keep watching animal health and feed efficiency and will flag anything that needs you.' | t }}</p>
             </div>
 
             <ul *ngIf="dashboard.actionableInsights.length > 0" class="space-y-3 m-0 p-0 list-none">
@@ -160,8 +160,8 @@
                   <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3 line-clamp-2 leading-relaxed">{{ insight.message }}</p>
 
                   <div class="flex flex-wrap gap-2">
-                    <button mat-stroked-button type="button" class="!rounded-lg" color="primary" (click)="reviewInsight(insight)">Review Details</button>
-                    <button mat-button type="button" class="!rounded-lg !text-gray-600 dark:!text-gray-300" [attr.aria-label]="'Dismiss alert: ' + insight.title" (click)="dismissInsight(insight)">Dismiss</button>
+                    <button mat-stroked-button type="button" class="!rounded-lg" color="primary" (click)="reviewInsight(insight)">{{ 'Review Details' | t }}</button>
+                    <button mat-button type="button" class="!rounded-lg !text-gray-600 dark:!text-gray-300" [attr.aria-label]="'Dismiss alert: {title}' | t: { title: insight.title }" (click)="dismissInsight(insight)">{{ 'Dismiss' | t }}</button>
                   </div>
                 </div>
               </li>
@@ -176,32 +176,32 @@
           <section aria-labelledby="quick-ops-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2">
               <mat-icon class="text-primary-600 dark:text-primary-400 text-[20px] w-[20px] h-[20px]" aria-hidden="true">bolt</mat-icon>
-              <h2 id="quick-ops-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">Quick Operations</h2>
+              <h2 id="quick-ops-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Quick Operations' | t }}</h2>
             </div>
             <div class="p-4 grid grid-cols-2 gap-3">
               <button type="button" routerLink="/livestock/register" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">add_circle</mat-icon>
                 </span>
-                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">Add Animal</span>
+                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Add Animal' | t }}</span>
               </button>
               <button type="button" routerLink="/health/treatments" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">healing</mat-icon>
                 </span>
-                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">Log Treatment</span>
+                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Log Treatment' | t }}</span>
               </button>
               <button type="button" routerLink="/feeding/logs" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">restaurant_menu</mat-icon>
                 </span>
-                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">Log Feed</span>
+                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Log Feed' | t }}</span>
               </button>
               <button type="button" routerLink="/inventory/dashboard" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">inventory_2</mat-icon>
                 </span>
-                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">Stock Update</span>
+                <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Stock Update' | t }}</span>
               </button>
             </div>
           </section>
@@ -210,7 +210,7 @@
           <section aria-labelledby="activity-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2">
               <mat-icon class="text-primary-600 dark:text-primary-400 text-[20px] w-[20px] h-[20px]" aria-hidden="true">history</mat-icon>
-              <h2 id="activity-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">Recent Activity</h2>
+              <h2 id="activity-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Recent Activity' | t }}</h2>
             </div>
             <div class="p-4">
               <app-error-state *ngIf="activity.error() as err" [compact]="true" [message]="err" (retry)="activity.retry()"></app-error-state>
@@ -226,8 +226,8 @@
       <section aria-labelledby="analytics-heading" class="space-y-4">
 
         <div>
-          <h2 id="analytics-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">Operational & Biometric Analytics</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 mt-1">Herd make-up, vaccination coverage, growth and feed cost</p>
+          <h2 id="analytics-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Operational & Biometric Analytics' | t }}</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 mt-1">{{ 'Herd make-up, vaccination coverage, growth and feed cost' | t }}</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
@@ -239,8 +239,8 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">pie_chart</mat-icon>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">Herd Composition</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">Breakdown by species, sex and status</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Herd Composition' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Breakdown by species, sex and status' | t }}</p>
               </div>
             </div>
             <div class="flex-1 min-w-0">
@@ -256,8 +256,8 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">vaccines</mat-icon>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">Vaccination Compliance</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">Coverage, scheduled doses and overdue events</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Vaccination Compliance' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Coverage, scheduled doses and overdue events' | t }}</p>
               </div>
             </div>
             <div class="flex-1 min-w-0">
@@ -273,8 +273,8 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">trending_up</mat-icon>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">ADG Growth Trends</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">6-month average of per-animal daily gain, from weigh-ins</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'ADG Growth Trends' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ '6-month average of per-animal daily gain, from weigh-ins' | t }}</p>
               </div>
             </div>
             <div class="flex-1 min-w-0">
@@ -290,8 +290,8 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">payments</mat-icon>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">Feed Cost Trends</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">Confirmed feed cost per month ÷ average head on farm</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Feed Cost Trends' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Confirmed feed cost per month ÷ average head on farm' | t }}</p>
               </div>
             </div>
             <div class="flex-1 min-w-0">
@@ -306,8 +306,8 @@
       <!-- 4. Multi-Farm Overview (Farm Summary Cards) -->
       <section *ngIf="farmSummaryCards() && farmSummaryCards()!.length > 1" aria-labelledby="network-heading" class="space-y-4">
         <div>
-          <h2 id="network-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">Enterprise Farm Network</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 mt-1">Cross-branch summary and revenue performance</p>
+          <h2 id="network-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Enterprise Farm Network' | t }}</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 mt-1">{{ 'Cross-branch summary and revenue performance' | t }}</p>
         </div>
         <app-farm-summary-cards [data]="farmSummaryCards() ?? null"></app-farm-summary-cards>
       </section>

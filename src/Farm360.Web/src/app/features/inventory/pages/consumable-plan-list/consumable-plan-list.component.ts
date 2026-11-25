@@ -24,6 +24,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-consumable-plan-list',
@@ -38,21 +40,22 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Daily Consumable Plans"
-      description="Define recurring daily supply plans (shampoo, mosquito coils, Dettol, sanitation chemicals) to automate stock tracking and costs."
-      breadcrumbActiveNode="Consumable Plans">
+      [title]="'Daily Consumable Plans' | t"
+      [description]="'Define recurring daily supply plans (shampoo, mosquito coils, Dettol, sanitation chemicals) to automate stock tracking and costs.' | t"
+      [breadcrumbActiveNode]="'Consumable Plans' | t">
       <div actions class="flex items-center gap-2">
         <a routerLink="/inventory/daily-consumables"
           class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-teal-500">today</mat-icon> Today's Consumables
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-teal-500">today</mat-icon> {{ "Today's Consumables" | t }}
         </a>
         <button (click)="openCreatePlanDialog()"
           class="px-4 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-md shadow-teal-500/20 inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> New Consumable Plan
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'New Consumable Plan' | t }}
         </button>
       </div>
     </app-page-header>
@@ -65,17 +68,17 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
-                 type="text" placeholder="Search plans..."
+                 type="text" [placeholder]="'Search plans...' | t"
                  class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm" />
         </div>
 
         <div class="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
           <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
                   class="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm">
-            <option value="">All Statuses</option>
-            <option [value]="ConsumableUsagePlanStatus.Active">Active</option>
-            <option [value]="ConsumableUsagePlanStatus.Paused">Paused</option>
-            <option [value]="ConsumableUsagePlanStatus.Completed">Completed</option>
+            <option value="">{{ 'All Statuses' | t }}</option>
+            <option [value]="ConsumableUsagePlanStatus.Active">{{ 'Active' | t }}</option>
+            <option [value]="ConsumableUsagePlanStatus.Paused">{{ 'Paused' | t }}</option>
+            <option [value]="ConsumableUsagePlanStatus.Completed">{{ 'Completed' | t }}</option>
           </select>
         </div>
       </div>
@@ -87,9 +90,9 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         } @else if (!loading() && plans().length === 0) {
           <app-empty-state
             icon="cleaning_services"
-            title="No Consumable Plans Found"
-            description="Create your first recurring consumable plan to start tracking daily items like shampoo, coils, and cleaning supplies."
-            actionLabel="Create Plan"
+            [title]="'No Consumable Plans Found' | t"
+            [description]="'Create your first recurring consumable plan to start tracking daily items like shampoo, coils, and cleaning supplies.' | t"
+            [actionLabel]="'Create Plan' | t"
             (action)="openCreatePlanDialog()">
           </app-empty-state>
         } @else {
@@ -111,7 +114,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                         {{ plan.name }}
                       </h3>
                       <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 mb-0">
-                        {{ plan.itemsCount }} item{{ plan.itemsCount !== 1 ? 's' : '' }} • Est. {{ plan.totalDailyEstimatedCostBdt | money:2 }} / day
+                        {{ '{n} item(s)' | t: { n: plan.itemsCount } }} • {{ 'Est. {cost} / day' | t: { cost: (plan.totalDailyEstimatedCostBdt | money:2) } }}
                       </p>
                     </div>
                   </div>
@@ -122,7 +125,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                       'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800': plan.status === ConsumableUsagePlanStatus.Paused,
                       'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700': plan.status === ConsumableUsagePlanStatus.Completed
                     }">
-                    {{ plan.statusName }}
+                    {{ plan.statusName | t }}
                   </span>
                 </div>
 
@@ -138,7 +141,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                         <span class="font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">{{ item.itemName }}</span>
                         <div class="flex items-center gap-1.5 shrink-0">
                           <span class="font-bold text-teal-600 dark:text-teal-400">{{ item.plannedQuantityPerDay }} {{ item.unitOfMeasure }}</span>
-                          <span class="text-[11px] text-gray-400">/day</span>
+                          <span class="text-[11px] text-gray-400">{{ '/day' | t }}</span>
                         </div>
                       </div>
                     }
@@ -147,14 +150,14 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
                 <!-- Card Footer Actions -->
                 <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between relative z-10">
-                  <span class="text-[11px] text-gray-400">From {{ plan.startDate }}</span>
+                  <span class="text-[11px] text-gray-400">{{ 'From {date}' | t: { date: plan.startDate } }}</span>
                   <div class="flex items-center gap-1">
-                    <button aria-label="Edit Plan" (click)="openEditPlanDialog(plan)"
-                      class="p-1.5 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Plan">
+                    <button [attr.aria-label]="'Edit Plan' | t" (click)="openEditPlanDialog(plan)"
+                      class="p-1.5 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [title]="'Edit Plan' | t">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                     </button>
-                    <button aria-label="Delete Plan" (click)="deletePlan(plan)"
-                      class="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Plan">
+                    <button [attr.aria-label]="'Delete Plan' | t" (click)="deletePlan(plan)"
+                      class="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [title]="'Delete Plan' | t">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                     </button>
                   </div>
@@ -187,6 +190,7 @@ export class ConsumablePlanListComponent {
   private readonly contextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   readonly loading = signal(true);
   readonly searchTerm = signal('');
@@ -230,7 +234,7 @@ export class ConsumablePlanListComponent {
           state.search || undefined
         ).pipe(
           catchError(err => {
-            this.loadError.set(parseApiError(err, 'Could not load consumable plans.'));
+            this.loadError.set(parseApiError(err, this.i18n.t('Could not load consumable plans.')));
             return of({ items: [] });
           }),
           switchMap(res => {
@@ -254,7 +258,7 @@ export class ConsumablePlanListComponent {
   openCreatePlanDialog(): void {
     const farmId = this.currentFarmId();
     if (!farmId) {
-      this.notify.warning('Please select an active farm first.');
+      this.notify.warning(this.i18n.t('Please select an active farm first.'));
       return;
     }
 
@@ -293,9 +297,9 @@ export class ConsumablePlanListComponent {
   deletePlan(plan: ConsumableUsagePlan): void {
     const ref = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        title: 'Delete Consumable Plan',
-        message: `Are you sure you want to delete the plan "${plan.name}"? Past daily entries will be retained.`,
-        confirmText: 'Delete Plan',
+        title: this.i18n.t('Delete Consumable Plan'),
+        message: this.i18n.t('Are you sure you want to delete the plan “{name}”? Past daily entries will be retained.', { name: plan.name }),
+        confirmText: this.i18n.t('Delete Plan'),
         isDestructive: true
       }
     });
@@ -304,11 +308,11 @@ export class ConsumablePlanListComponent {
       if (confirmed) {
         this.inventoryService.deleteConsumablePlan(plan.id).subscribe({
           next: () => {
-            this.notify.success('Plan deleted successfully.');
+            this.notify.success(this.i18n.t('Plan deleted successfully.'));
             this.refreshTrigger.update(v => v + 1);
           },
           error: () => {
-            this.notify.error('Failed to delete plan.');
+            this.notify.error(this.i18n.t('Failed to delete plan.'));
           }
         });
       }

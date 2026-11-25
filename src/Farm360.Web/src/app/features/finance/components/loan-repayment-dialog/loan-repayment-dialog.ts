@@ -10,10 +10,12 @@ import { LoanRecord } from '../../models/finance.model';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-loan-repayment-dialog',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [TranslatePipe, MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -26,11 +28,11 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-emerald-500">payments</mat-icon>
-            Record Repayment
+            {{ 'Record Repayment' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Record a payment against an active loan</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Record a payment against an active loan' | t }}</p>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -55,16 +57,16 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
               </div>
               <div>
                 <p class="text-sm font-bold text-gray-900 dark:text-white m-0">{{ data.lenderName }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ data.schedule }} schedule</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ '{schedule} schedule' | t: { schedule: (data.schedule | t) } }}</p>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2.5 text-center">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">Principal</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">{{ 'Principal' | t }}</p>
                 <p class="text-sm font-bold text-gray-900 dark:text-white m-0 mt-0.5">{{ data.principalAmountBdt | money }}</p>
               </div>
               <div class="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2.5 text-center">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">Outstanding</p>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 m-0">{{ 'Outstanding' | t }}</p>
                 <p class="text-sm font-bold text-rose-600 dark:text-rose-400 m-0 mt-0.5">{{ data.outstandingBalanceBdt | money }}</p>
               </div>
             </div>
@@ -73,25 +75,25 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           <!-- Repayment Amount -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Repayment Amount (BDT) <span class="text-red-500">*</span>
+              {{ 'Repayment Amount (BDT)' | t }} <span class="text-red-500">*</span>
             </label>
-            <input type="number" formControlName="amountBdt" step="100" min="1" placeholder="e.g. 10000"
+            <input type="number" formControlName="amountBdt" step="100" min="1" [placeholder]="'e.g. 10000' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
             <!-- How the payment is booked: principal reduces the debt, interest is an expense -->
             <div *ngIf="split() as s" class="mt-1.5 grid grid-cols-2 gap-2 text-[11px]">
               <div class="rounded-lg px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
-                <span class="text-gray-500 dark:text-gray-400">Principal (reduces loan)</span>
+                <span class="text-gray-500 dark:text-gray-400">{{ 'Principal (reduces loan)' | t }}</span>
                 <div class="font-bold text-emerald-700 dark:text-emerald-300">{{ s.principal | money:2 }}</div>
               </div>
               <div class="rounded-lg px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50">
-                <span class="text-gray-500 dark:text-gray-400">Interest (expense)</span>
+                <span class="text-gray-500 dark:text-gray-400">{{ 'Interest (expense)' | t }}</span>
                 <div class="font-bold text-amber-700 dark:text-amber-300">{{ s.interest | money:2 }}</div>
               </div>
             </div>
             <div *ngIf="data.outstandingBalanceBdt > 0" class="flex gap-2 mt-1.5">
               <button type="button" (click)="setFullAmount()"
                 class="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors font-medium">
-                Pay Full ({{ data.outstandingBalanceBdt | money }})
+                {{ 'Pay Full ({amount})' | t: { amount: (data.outstandingBalanceBdt | money) } }}
               </button>
             </div>
           </div>
@@ -99,7 +101,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           <!-- Repayment Date -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Repayment Date <span class="text-red-500">*</span>
+              {{ 'Repayment Date' | t }} <span class="text-red-500">*</span>
             </label>
             <input type="date" formControlName="repaymentDate"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
@@ -108,18 +110,18 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           <!-- Reference ID -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Reference / Receipt No. (Optional)
+              {{ 'Reference / Receipt No. (Optional)' | t }}
             </label>
-            <input type="text" formControlName="referenceId" placeholder="e.g. TRX-2026-0912"
+            <input type="text" formControlName="referenceId" [placeholder]="'e.g. TRX-2026-0912' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
           </div>
 
           <!-- Notes -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              Notes (Optional)
+              {{ 'Notes (Optional)' | t }}
             </label>
-            <textarea formControlName="notes" rows="2" placeholder="Any additional repayment details..."
+            <textarea formControlName="notes" rows="2" [placeholder]="'Any additional repayment details...' | t"
                       class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow"></textarea>
           </div>
 
@@ -129,12 +131,12 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isLoading()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isLoading()"
                   class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isLoading()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isLoading() ? 'Processing...' : 'Record Repayment' }}</span>
+            <span>{{ (isLoading() ? 'Processing...' : 'Record Repayment') | t }}</span>
           </button>
         </div>
       </form>
@@ -154,6 +156,7 @@ export class LoanRepaymentDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
 
   form!: FormGroup;
   isLoading = signal(false);
@@ -193,7 +196,7 @@ export class LoanRepaymentDialogComponent implements OnInit {
 
     const farmId = this.workingContextService.currentFarmValue?.id;
     if (!farmId) {
-      this.error.set('No active farm selected.');
+      this.error.set(this.i18n.t('No active farm selected.'));
       return;
     }
 

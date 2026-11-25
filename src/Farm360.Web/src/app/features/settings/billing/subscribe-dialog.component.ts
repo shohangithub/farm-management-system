@@ -7,6 +7,8 @@ import { SubscriptionPlan, SubscribeRequest, TenantSubscriptionRecord } from '..
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { parseApiError } from '../../../core/utils/error-parser';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 export interface SubscribeDialogData {
   plan: SubscriptionPlan;
@@ -16,7 +18,7 @@ export interface SubscribeDialogData {
 @Component({
   selector: 'app-subscribe-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -34,12 +36,12 @@ export interface SubscribeDialogData {
           </div>
           <div>
             <h2 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5 m-0">
-              Subscribe to {{ data.plan.name }}
+              {{ 'Subscribe to {plan}' | t: { plan: (data.plan.name | t) } }}
             </h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">Select your billing cycle and preferred payment method</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Select your billing cycle and preferred payment method' | t }}</p>
           </div>
         </div>
-        <button aria-label="Close" matTooltip="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button [attr.aria-label]="'Close' | t" matTooltip="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -58,7 +60,7 @@ export interface SubscribeDialogData {
           <!-- 1. Billing Frequency Choice -->
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-              Billing Frequency <span class="text-red-500">*</span>
+              {{ 'Billing Frequency' | t }} <span class="text-red-500">*</span>
             </label>
             <div class="grid grid-cols-3 gap-2.5">
               <!-- Monthly -->
@@ -70,10 +72,10 @@ export interface SubscribeDialogData {
                 [class.dark:text-emerald-300]="selectedCycle() === 'Monthly'"
                 class="p-3 border rounded-xl text-left transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 flex flex-col justify-between">
                 <div>
-                  <span class="text-xs font-semibold block">Monthly</span>
+                  <span class="text-xs font-semibold block">{{ 'Monthly' | t }}</span>
                   <span class="text-sm font-bold block mt-1">{{ data.plan.monthlyPrice | money:2 }}</span>
                 </div>
-                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Billed monthly</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">{{ 'Billed monthly' | t }}</span>
               </button>
 
               <!-- Yearly -->
@@ -84,12 +86,12 @@ export interface SubscribeDialogData {
                 [class.text-emerald-700]="selectedCycle() === 'Yearly'"
                 [class.dark:text-emerald-300]="selectedCycle() === 'Yearly'"
                 class="p-3 border rounded-xl text-left transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 flex flex-col justify-between relative overflow-hidden">
-                <span class="absolute top-1 right-1 text-[11px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">Save ~17%</span>
+                <span class="absolute top-1 right-1 text-[11px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">{{ 'Save ~17%' | t }}</span>
                 <div>
-                  <span class="text-xs font-semibold block">Yearly</span>
+                  <span class="text-xs font-semibold block">{{ 'Yearly' | t }}</span>
                   <span class="text-sm font-bold block mt-1">{{ data.plan.yearlyPrice | money:2 }}</span>
                 </div>
-                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Billed annually</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">{{ 'Billed annually' | t }}</span>
               </button>
 
               <!-- One-Time / Lifetime -->
@@ -100,12 +102,12 @@ export interface SubscribeDialogData {
                 [class.text-emerald-700]="selectedCycle() === 'OneTime'"
                 [class.dark:text-emerald-300]="selectedCycle() === 'OneTime'"
                 class="p-3 border rounded-xl text-left transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 flex flex-col justify-between relative overflow-hidden">
-                <span class="absolute top-1 right-1 text-[11px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">Lifetime</span>
+                <span class="absolute top-1 right-1 text-[11px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">{{ 'Lifetime' | t }}</span>
                 <div>
-                  <span class="text-xs font-semibold block">One-Time</span>
+                  <span class="text-xs font-semibold block">{{ 'One-Time' | t }}</span>
                   <span class="text-sm font-bold block mt-1">{{ data.plan.oneTimePrice | money:2 }}</span>
                 </div>
-                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Never expires</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">{{ 'Never expires' | t }}</span>
               </button>
             </div>
           </div>
@@ -113,12 +115,12 @@ export interface SubscribeDialogData {
           <!-- Total Bill Summary Card -->
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
-              <span class="text-xs text-gray-500 dark:text-gray-400 block">Total Amount Due</span>
-              <span class="text-xl font-extrabold text-gray-900 dark:text-white">{{ currentPrice() | money:2 }} <span class="text-xs font-medium text-gray-400">BDT</span></span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 block">{{ 'Total Amount Due' | t }}</span>
+              <span class="text-xl font-extrabold text-gray-900 dark:text-white">{{ currentPrice() | money:2 }} <span class="text-xs font-medium text-gray-400">{{ 'BDT' | t }}</span></span>
             </div>
             <div class="text-right">
-              <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 block">Access: {{ data.plan.name }}</span>
-              <span class="text-[11px] text-gray-500">{{ selectedCycle() }} cycle</span>
+              <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 block">{{ 'Access: {plan}' | t: { plan: (data.plan.name | t) } }}</span>
+              <span class="text-[11px] text-gray-500">{{ '{cycle} cycle' | t: { cycle: (selectedCycle() | t) } }}</span>
             </div>
           </div>
 
@@ -127,18 +129,18 @@ export interface SubscribeDialogData {
             class="w-full p-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:from-emerald-700 hover:to-teal-700 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-60">
             <mat-icon *ngIf="isRedirecting()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
             <mat-icon *ngIf="!isRedirecting()" class="!w-[18px] !h-[18px] !text-[18px]">bolt</mat-icon>
-            <span>{{ isRedirecting() ? 'Redirecting to payment...' : 'Pay Online Now (bKash / Nagad / Card / Bank)' }}</span>
+            <span>{{ (isRedirecting() ? 'Redirecting to payment...' : 'Pay Online Now (bKash / Nagad / Card / Bank)') | t }}</span>
           </button>
           <div class="flex items-center gap-3">
             <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Or report a payment manually</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Or report a payment manually' | t }}</span>
             <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
           </div>
 
           <!-- 2. Payment Method Selector -->
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-              Payment Method <span class="text-red-500">*</span>
+              {{ 'Payment Method' | t }} <span class="text-red-500">*</span>
             </label>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button type="button" *ngFor="let m of paymentMethods"
@@ -150,7 +152,7 @@ export interface SubscribeDialogData {
                 [class.dark:text-primary-300]="selectedMethod() === m.id"
                 class="p-2.5 border rounded-xl text-center text-xs font-semibold transition-all border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 flex flex-col items-center gap-1.5">
                 <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-600 dark:text-gray-400">{{ m.icon }}</mat-icon>
-                <span>{{ m.label }}</span>
+                <span>{{ m.label | t }}</span>
               </button>
             </div>
           </div>
@@ -159,19 +161,19 @@ export interface SubscribeDialogData {
           <div class="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-blue-600 dark:text-blue-400 mt-0.5 shrink-0">info</mat-icon>
             <div>
-              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'bKash'">bKash Merchant Payment</p>
-              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Nagad'">Nagad Payment</p>
-              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Card'">Debit / Credit Card</p>
-              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Bank'">Bank Transfer</p>
+              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'bKash'">{{ 'bKash Merchant Payment' | t }}</p>
+              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Nagad'">{{ 'Nagad Payment' | t }}</p>
+              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Card'">{{ 'Debit / Credit Card' | t }}</p>
+              <p class="font-semibold mb-1" *ngIf="selectedMethod() === 'Bank'">{{ 'Bank Transfer' | t }}</p>
 
               <p class="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400" *ngIf="selectedMethod() === 'bKash' || selectedMethod() === 'Nagad'">
-                Send <strong>{{ currentPrice() | money:2 }}</strong> via Make Payment to <strong>01700-FARM360</strong>. Then enter the 8-10 character Transaction ID (TrxID) below. We activate your plan as soon as we've checked it.
+                <span [innerHTML]="'Send <strong>{amount}</strong> via Make Payment to <strong>01700-FARM360</strong>. Then enter the 8-10 character Transaction ID (TrxID) below. We activate your plan as soon as we have checked it.' | t: { amount: (currentPrice() | money:2) }"></span>
               </p>
               <p class="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400" *ngIf="selectedMethod() === 'Card'">
-                Instant card payment verification via SSLCommerz / VISA / Mastercard. Enter transaction approval code or reference below.
+                {{ 'Instant card payment verification via SSLCommerz / VISA / Mastercard. Enter transaction approval code or reference below.' | t }}
               </p>
               <p class="text-[11px] leading-relaxed text-blue-700 dark:text-blue-400" *ngIf="selectedMethod() === 'Bank'">
-                Deposit to: Eastern Bank Ltd, A/C: 1020304050, Title: Farm360 Agro Ltd. Enter the deposit slip reference below.
+                {{ 'Deposit to: Eastern Bank Ltd, A/C: 1020304050, Title: Farm360 Agro Ltd. Enter the deposit slip reference below.' | t }}
               </p>
             </div>
           </div>
@@ -179,11 +181,11 @@ export interface SubscribeDialogData {
           <!-- 3. Transaction ID / Reference Input -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Transaction ID / Payment Reference <span class="text-red-500">*</span>
+              {{ 'Transaction ID / Payment Reference' | t }} <span class="text-red-500">*</span>
             </label>
-            <input type="text" formControlName="paymentReference" placeholder="e.g. BL90XYZ123 or TRX-10029"
+            <input type="text" formControlName="paymentReference" [placeholder]="'e.g. BL90XYZ123 or TRX-10029' | t"
               class="block w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
-            <p class="text-[11px] text-gray-400">Our team verifies each reference before your plan activates -- usually within one business day.</p>
+            <p class="text-[11px] text-gray-400">{{ 'Our team verifies each reference before your plan activates -- usually within one business day.' | t }}</p>
           </div>
 
         </div>
@@ -192,12 +194,12 @@ export interface SubscribeDialogData {
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/70 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isLoading() || isRedirecting()"
             class="px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isLoading() || isRedirecting()"
             class="px-5 py-2 text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isLoading()" class="animate-spin !w-[16px] !h-[16px] !text-[16px]">autorenew</mat-icon>
-            <span>{{ isLoading() ? 'Submitting...' : 'Submit Payment Reference' }}</span>
+            <span>{{ (isLoading() ? 'Submitting...' : 'Submit Payment Reference') | t }}</span>
           </button>
         </div>
       </form>
@@ -208,6 +210,7 @@ export class SubscribeDialogComponent {
   private fb = inject(FormBuilder);
   private subscriptionService = inject(SubscriptionService);
   private dialogRef = inject(MatDialogRef<SubscribeDialogComponent>);
+  private readonly i18n = inject(I18nService);
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: SubscribeDialogData) {
     this.selectedCycle.set(data.initialCycle || 'Monthly');
@@ -284,7 +287,7 @@ export class SubscribeDialogComponent {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.error.set(parseApiError(err, 'Failed to submit payment reference. Please check it and try again.'));
+        this.error.set(parseApiError(err, this.i18n.t('Failed to submit payment reference. Please check it and try again.')));
       }
     });
   }
@@ -303,11 +306,11 @@ export class SubscribeDialogComponent {
           return;
         }
         this.isRedirecting.set(false);
-        this.error.set(session.failedReason ?? 'Could not start the payment session. Please try again.');
+        this.error.set(session.failedReason ?? this.i18n.t('Could not start the payment session. Please try again.'));
       },
       error: (err) => {
         this.isRedirecting.set(false);
-        this.error.set(parseApiError(err, 'Could not start the payment session. Please try again.'));
+        this.error.set(parseApiError(err, this.i18n.t('Could not start the payment session. Please try again.')));
       }
     });
   }

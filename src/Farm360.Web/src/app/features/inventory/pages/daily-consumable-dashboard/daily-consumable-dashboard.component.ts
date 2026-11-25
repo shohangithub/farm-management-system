@@ -24,6 +24,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface GroupedPlanEntries {
   planId: string;
@@ -47,40 +49,41 @@ interface GroupedPlanEntries {
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Daily Consumables & Operations"
-      description="Track and confirm daily supply usage (shampoo, coils, Dettol, chemicals) with automatic inventory deduction and expense recording."
-      breadcrumbActiveNode="Today's Consumables">
+      [title]="'Daily Consumables & Operations' | t"
+      [description]="'Track and confirm daily supply usage (shampoo, coils, Dettol, chemicals) with automatic inventory deduction and expense recording.' | t"
+      [breadcrumbActiveNode]="crumbLabel | t">
       <div actions class="flex flex-wrap items-center gap-2">
         
         <!-- Date Stepper Controls -->
         <div class="flex items-center bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-1">
-          <button aria-label="Previous" (click)="stepDate(-1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
+          <button [attr.aria-label]="'Previous' | t" (click)="stepDate(-1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_left</mat-icon>
           </button>
           <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)"
                  class="bg-transparent border-0 text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none px-2 py-0.5" />
-          <button aria-label="Next" (click)="stepDate(1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
+          <button [attr.aria-label]="'Next' | t" (click)="stepDate(1)" class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg transition-colors">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">chevron_right</mat-icon>
           </button>
         </div>
 
         <button (click)="setToday()" [disabled]="isToday()"
           class="px-3 py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-colors shadow-sm inline-flex items-center gap-1">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">calendar_today</mat-icon> Today
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">calendar_today</mat-icon> {{ 'Today' | t }}
         </button>
 
         <button (click)="generateEntries()" [disabled]="generating()"
           class="px-3.5 py-2 text-xs font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl border border-teal-200 dark:border-teal-800 transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">sync</mat-icon> Generate Entries
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">sync</mat-icon> {{ 'Generate Entries' | t }}
         </button>
 
         <button (click)="bulkConfirmAll()" [disabled]="pendingCount() === 0 || bulkConfirming()"
           class="px-4 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-md shadow-teal-500/20 inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> Confirm All ({{ pendingCount() }})
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> {{ 'Confirm All ({n})' | t: { n: pendingCount() } }}
         </button>
       </div>
     </app-page-header>
@@ -91,9 +94,9 @@ interface GroupedPlanEntries {
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-2 font-bold text-sm">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-500">warning</mat-icon>
-          {{ bulkFailures().length }} {{ bulkFailures().length === 1 ? 'entry was' : 'entries were' }} not confirmed
+          {{ '{n} entry(s) not confirmed' | t: { n: bulkFailures().length } }}
         </div>
-        <button type="button" (click)="bulkFailures.set([])" aria-label="Dismiss"
+        <button type="button" (click)="bulkFailures.set([])" [attr.aria-label]="'Dismiss' | t"
           class="p-1 -m-1 text-amber-700 hover:text-amber-900 dark:text-amber-300 rounded-lg">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon>
         </button>
@@ -101,7 +104,7 @@ interface GroupedPlanEntries {
       <ul class="mt-2 space-y-1 text-xs list-disc pl-6">
         <li *ngFor="let f of bulkFailures()"><b>{{ f.itemName }}</b>: {{ f.reason }}</li>
       </ul>
-      <p class="mt-2 mb-0 text-xs text-amber-800 dark:text-amber-200">These are still pending. Fix the cause (for example, record the Stock In) and confirm them again.</p>
+      <p class="mt-2 mb-0 text-xs text-amber-800 dark:text-amber-200">{{ 'These are still pending. Fix the cause (for example, record the Stock In) and confirm them again.' | t }}</p>
     </div>
 
     <!-- KPI Summary Cards -->
@@ -111,7 +114,7 @@ interface GroupedPlanEntries {
       <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Planned</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Total Planned' | t }}</span>
             <div class="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
               {{ summary()?.totalPlannedEntries ?? 0 }}
             </div>
@@ -126,7 +129,7 @@ interface GroupedPlanEntries {
       <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Confirmed</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Confirmed' | t }}</span>
             <div class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
               {{ summary()?.confirmedEntries ?? 0 }}
             </div>
@@ -141,7 +144,7 @@ interface GroupedPlanEntries {
       <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Pending</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Pending' | t }}</span>
             <div class="text-xl font-extrabold text-amber-500 mt-1">
               {{ summary()?.pendingEntries ?? 0 }}
             </div>
@@ -156,7 +159,7 @@ interface GroupedPlanEntries {
       <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Recorded Cost</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Recorded Cost' | t }}</span>
             <div class="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
               {{ summary()?.totalCostBdt ?? 0 | money:2 }}
             </div>
@@ -179,9 +182,9 @@ interface GroupedPlanEntries {
         } @else if (!loading() && entries().length === 0) {
           <app-empty-state
             icon="cleaning_services"
-            title="No Consumable Entries For This Date"
-            description="No entries generated yet. Click 'Generate Entries' to pull items from active consumable plans."
-            actionLabel="Generate Entries"
+            [title]="'No Consumable Entries For This Date' | t"
+            [description]="emptyDescription | t"
+            [actionLabel]="'Generate Entries' | t"
             (action)="generateEntries()">
           </app-empty-state>
         } @else {
@@ -197,7 +200,7 @@ interface GroupedPlanEntries {
                     </div>
                     <div>
                       <h3 class="font-bold text-gray-900 dark:text-white text-sm m-0">{{ group.planName }}</h3>
-                      <span class="text-[11px] text-gray-400">{{ group.entries.length }} item{{ group.entries.length !== 1 ? 's' : '' }} • {{ group.confirmedCount }}/{{ group.entries.length }} confirmed</span>
+                      <span class="text-[11px] text-gray-400">{{ '{n} item(s)' | t: { n: group.entries.length } }} • {{ '{done}/{total} confirmed' | t: { done: group.confirmedCount, total: group.entries.length } }}</span>
                     </div>
                   </div>
                 </div>
@@ -223,25 +226,25 @@ interface GroupedPlanEntries {
                               'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400': entry.status === DailyConsumableEntryStatus.Pending,
                               'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400': entry.status === DailyConsumableEntryStatus.Skipped
                             }">
-                            {{ entry.statusName }}
+                            {{ entry.statusName | t }}
                           </span>
                         </div>
 
                         <!-- Quantities & Cost -->
                         <div class="grid grid-cols-2 gap-2 p-2 bg-gray-50/80 dark:bg-gray-900/40 rounded-lg text-xs mb-3">
                           <div>
-                            <span class="text-gray-400 text-[11px] block font-semibold">Planned</span>
+                            <span class="text-gray-400 text-[11px] block font-semibold">{{ 'Planned' | t }}</span>
                             <span class="font-bold text-gray-700 dark:text-gray-300">{{ entry.expectedQuantity }} {{ entry.unitOfMeasure }}</span>
                           </div>
                           <div>
-                            <span class="text-gray-400 text-[11px] block font-semibold">Actual</span>
+                            <span class="text-gray-400 text-[11px] block font-semibold">{{ 'Actual' | t }}</span>
                             <span class="font-bold" [ngClass]="entry.actualQuantity != null ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'">
                               {{ entry.actualQuantity != null ? entry.actualQuantity + ' ' + entry.unitOfMeasure : '—' }}
                             </span>
                           </div>
                           @if (entry.totalCostBdt) {
                             <div class="col-span-2 pt-1 border-t border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between text-[11px]">
-                              <span class="text-gray-400">Total Expense:</span>
+                              <span class="text-gray-400">{{ 'Total Expense:' | t }}</span>
                               <span class="font-bold text-gray-900 dark:text-white">{{ entry.totalCostBdt | money:2 }}</span>
                             </div>
                           }
@@ -253,16 +256,16 @@ interface GroupedPlanEntries {
                         @if (entry.status === DailyConsumableEntryStatus.Pending) {
                           <button (click)="skipEntry(entry)"
                             class="px-2.5 py-1 text-[11px] font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                            Skip
+                            {{ 'Skip' | t }}
                           </button>
                           <button (click)="openConfirmDialog(entry)"
                             class="px-3 py-1 text-[11px] font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-all shadow-xs shadow-teal-500/20 inline-flex items-center gap-1">
-                            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check</mat-icon> Confirm
+                            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check</mat-icon> {{ 'Confirm' | t }}
                           </button>
                         } @else {
                           <button (click)="openConfirmDialog(entry)"
                             class="px-2.5 py-1 text-[11px] font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-flex items-center gap-1">
-                            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Adjust
+                            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Adjust' | t }}
                           </button>
                         }
                       </div>
@@ -286,6 +289,11 @@ export class DailyConsumableDashboardComponent {
   private readonly contextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
+
+  /** Labels with apostrophes / quotes, kept out of the template. */
+  readonly crumbLabel = "Today's Consumables";
+  readonly emptyDescription = "No entries generated yet. Click 'Generate Entries' to pull items from active consumable plans.";
 
   readonly loading = signal(true);
   readonly generating = signal(false);
@@ -332,7 +340,7 @@ export class DailyConsumableDashboardComponent {
         return forkJoin({
           entries: this.inventoryService.getDailyConsumables(state.farmId, state.date).pipe(
             catchError(err => {
-              this.loadError.set(parseApiError(err, 'Could not load daily consumables.'));
+              this.loadError.set(parseApiError(err, this.i18n.t('Could not load daily consumables.')));
               return of([]);
             })
           ),
@@ -411,12 +419,12 @@ export class DailyConsumableDashboardComponent {
     this.inventoryService.generateDailyConsumables(farmId, this.selectedDate()).subscribe({
       next: res => {
         this.generating.set(false);
-        this.notify.success(`Generated ${res.generatedCount} entries for ${this.selectedDate()}`);
+        this.notify.success(this.i18n.t('Generated {n} entries for {date}', { n: res.generatedCount, date: this.selectedDate() }));
         this.refreshTrigger.update(v => v + 1);
       },
       error: () => {
         this.generating.set(false);
-        this.notify.error('Failed to generate entries.');
+        this.notify.error(this.i18n.t('Failed to generate entries.'));
       }
     });
   }
@@ -453,17 +461,17 @@ export class DailyConsumableDashboardComponent {
         // Name each failed entry from the list on screen.
         const names = new Map(this.entries().map(e => [e.id, e.itemName]));
         this.bulkFailuresDate.set(entryDate);
-        this.bulkFailures.set(failed.map(f => ({ itemName: names.get(f.entryId) ?? 'Entry', reason: f.reason })));
+        this.bulkFailures.set(failed.map(f => ({ itemName: names.get(f.entryId) ?? this.i18n.t('Entry'), reason: f.reason })));
         if (failed.length) {
-          this.notify.warning(`Confirmed ${res.confirmedCount}; ${failed.length} could not be confirmed — see the list on the page.`);
+          this.notify.warning(this.i18n.t('Confirmed {n}; {failed} could not be confirmed — see the list on the page.', { n: res.confirmedCount, failed: failed.length }));
         } else {
-          this.notify.success(`Confirmed ${res.confirmedCount} daily consumable entries.`);
+          this.notify.success(this.i18n.t('Confirmed {n} daily consumable entries.', { n: res.confirmedCount }));
         }
         this.refreshTrigger.update(v => v + 1);
       },
       error: () => {
         this.bulkConfirming.set(false);
-        this.notify.error('Failed to bulk-confirm entries.');
+        this.notify.error(this.i18n.t('Failed to bulk-confirm entries.'));
       }
     });
   }
@@ -474,11 +482,11 @@ export class DailyConsumableDashboardComponent {
       reason: 'Skipped by farm manager'
     }).subscribe({
       next: () => {
-        this.notify.success(`Skipped ${entry.itemName}.`);
+        this.notify.success(this.i18n.t('Skipped {item}.', { item: entry.itemName }));
         this.refreshTrigger.update(v => v + 1);
       },
       error: () => {
-        this.notify.error('Failed to skip entry.');
+        this.notify.error(this.i18n.t('Failed to skip entry.'));
       }
     });
   }

@@ -23,6 +23,8 @@ import { SubscribeDialogComponent, SubscribeDialogData } from './subscribe-dialo
 import { parseApiError } from '../../../core/utils/error-parser';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-billing',
@@ -36,28 +38,29 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
     MatSnackBarModule,
     PageHeaderComponent,
     LoadingComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    TranslatePipe
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-header
-      title="Subscription & Billing Hub"
-      description="Manage your subscription tier, billing frequencies, trial activations, and payment history."
-      breadcrumbActiveNode="Subscription & Billing">
+      [title]="'Subscription & Billing Hub' | t"
+      [description]="'Manage your subscription tier, billing frequencies, trial activations, and payment history.' | t"
+      [breadcrumbActiveNode]="'Subscription & Billing' | t">
       <div actions class="flex items-center gap-2">
         <button
           (click)="loadData()"
           [disabled]="isLoading()"
           class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 rounded-xl transition-all shadow-sm inline-flex items-center gap-1.5 cursor-pointer">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isLoading()">refresh</mat-icon>
-          Refresh
+          {{ 'Refresh' | t }}
         </button>
         <button
           *ngIf="plans().length > 0"
           (click)="openSubscribeDialog(plans()[1] || plans()[0])"
           class="px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5 cursor-pointer">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">workspace_premium</mat-icon>
-          Upgrade Plan
+          {{ 'Upgrade Plan' | t }}
         </button>
       </div>
     </app-page-header>
@@ -72,7 +75,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
           <mat-icon class="text-red-500">error</mat-icon>
           <span>{{ errorMessage() }}</span>
         </div>
-        <button aria-label="Close" matTooltip="Close" (click)="errorMessage.set(null)" class="text-red-400 hover:text-red-600 dark:hover:text-red-200">
+        <button [attr.aria-label]="'Close' | t" matTooltip="Close" (click)="errorMessage.set(null)" class="text-red-400 hover:text-red-600 dark:hover:text-red-200">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">close</mat-icon>
         </button>
       </div>
@@ -86,7 +89,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
           <!-- Plan Info -->
           <div class="space-y-2">
             <div class="flex flex-wrap items-center gap-2.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Current Subscription</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ 'Current Subscription' | t }}</span>
               
               <!-- Status Badge -->
               <span
@@ -108,43 +111,43 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
                   [class.bg-blue-500]="sub.isTrial"
                   [class.bg-amber-500]="sub.status === 'GracePeriod'"
                   [class.bg-red-500]="sub.status === 'Suspended' || sub.status === 'Expired'"></span>
-                {{ sub.isTrial ? (sub.trialDays + '-Day Free Trial') : sub.status }}
+                {{ sub.isTrial ? ('{n}-Day Free Trial' | t: { n: sub.trialDays }) : (sub.status | t) }}
               </span>
 
               <!-- Billing Cycle Badge -->
               <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                {{ sub.billingCycle }} Cycle
+                {{ '{cycle} Cycle' | t: { cycle: (sub.billingCycle | t) } }}
               </span>
             </div>
 
             <div class="flex items-baseline gap-3">
               <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                {{ sub.tier }} Plan
+                {{ '{tier} Plan' | t: { tier: (sub.tier | t) } }}
               </h2>
               <span class="text-sm text-gray-500 dark:text-gray-400">
-                for <strong class="text-gray-800 dark:text-gray-200">{{ sub.tenantName }}</strong>
+                {{ 'for' | t }} <strong class="text-gray-800 dark:text-gray-200">{{ sub.tenantName }}</strong>
               </span>
             </div>
 
             <!-- Expiration / Trial Notice -->
             <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xl">
               <ng-container *ngIf="sub.isTrial">
-                You are currently exploring Farm360 on a <strong>{{ sub.trialDays }}-day Free Trial</strong>.
+                <span [innerHTML]="'You are currently exploring Farm360 on a <strong>{n}-day Free Trial</strong>.' | t: { n: sub.trialDays }"></span>
                 <span class="text-blue-600 dark:text-blue-400 font-semibold" *ngIf="sub.trialDaysRemaining > 0">
-                  {{ sub.trialDaysRemaining }} day{{ sub.trialDaysRemaining === 1 ? '' : 's' }} remaining (ends {{ sub.trialEndsAtUtc | date:'mediumDate' }}).
+                  {{ (sub.trialDaysRemaining === 1 ? '{n} day remaining (ends {date}).' : '{n} days remaining (ends {date}).') | t: { n: sub.trialDaysRemaining, date: (sub.trialEndsAtUtc | date:'mediumDate') } }}
                 </span>
                 <span class="text-red-500 font-bold" *ngIf="sub.trialDaysRemaining <= 0">
-                  Your trial has expired. Subscribe to maintain uninterrupted access.
+                  {{ 'Your trial has expired. Subscribe to maintain uninterrupted access.' | t }}
                 </span>
               </ng-container>
 
               <ng-container *ngIf="!sub.isTrial">
                 <span *ngIf="sub.billingCycle === 'OneTime'" class="text-emerald-600 font-semibold">
-                  Lifetime access unlocked. No recurring renewal necessary.
+                  {{ 'Lifetime access unlocked. No recurring renewal necessary.' | t }}
                 </span>
                 <span *ngIf="sub.billingCycle !== 'OneTime' && sub.subscriptionExpiresAtUtc">
-                  Next renewal date: <strong>{{ sub.subscriptionExpiresAtUtc | date:'mediumDate' }}</strong>
-                  <span *ngIf="sub.daysRemaining !== null"> ({{ sub.daysRemaining }} day{{ sub.daysRemaining === 1 ? '' : 's' }} left)</span>.
+                  {{ 'Next renewal date:' | t }} <strong>{{ sub.subscriptionExpiresAtUtc | date:'mediumDate' }}</strong>
+                  <span *ngIf="sub.daysRemaining !== null"> ({{ (sub.daysRemaining === 1 ? '{n} day left' : '{n} days left') | t: { n: sub.daysRemaining } }})</span>.
                 </span>
               </ng-container>
             </p>
@@ -156,7 +159,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
               (click)="scrollToPlans()"
               class="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 cursor-pointer">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">shopping_cart_checkout</mat-icon>
-              {{ sub.isTrial ? 'Choose Subscription' : 'Change Plan' }}
+              {{ (sub.isTrial ? 'Choose Subscription' : 'Change Plan') | t }}
             </button>
           </div>
         </div>
@@ -167,7 +170,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
           <div class="space-y-2">
             <div class="flex justify-between text-xs">
               <span class="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-400">group</mat-icon> User Seats
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-400">group</mat-icon> {{ 'User Seats' | t }}
               </span>
               <span class="text-gray-500 dark:text-gray-400">
                 <strong>{{ sub.currentUsers }}</strong> / {{ sub.maxUsers }}
@@ -187,7 +190,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
           <div class="space-y-2">
             <div class="flex justify-between text-xs">
               <span class="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-400">location_on</mat-icon> Farm Locations
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-400">location_on</mat-icon> {{ 'Farm Locations' | t }}
               </span>
               <span class="text-gray-500 dark:text-gray-400">
                 <strong>{{ sub.currentFarms }}</strong> / {{ sub.maxFarms }}
@@ -207,7 +210,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
           <div class="space-y-2">
             <div class="flex justify-between text-xs">
               <span class="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-400">pets</mat-icon> Livestock Capacity
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-400">pets</mat-icon> {{ 'Livestock Capacity' | t }}
               </span>
               <span class="text-gray-500 dark:text-gray-400">
                 <strong>{{ sub.currentAnimals }}</strong> / {{ sub.maxAnimals }}
@@ -229,13 +232,13 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
       <div *ngIf="status() && !status()?.hasUsedTrial && !status()?.isTrial" class="bg-gradient-to-br from-blue-50/80 via-white to-emerald-50/50 dark:from-blue-950/20 dark:via-gray-800 dark:to-emerald-950/20 rounded-2xl p-6 md:p-8 border border-blue-100 dark:border-blue-900/40 shadow-sm relative overflow-hidden">
         <div class="max-w-2xl mb-6">
           <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-wider mb-2">
-            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">bolt</mat-icon> Risk-Free Evaluation
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">bolt</mat-icon> {{ 'Risk-Free Evaluation' | t }}
           </div>
           <h3 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Start Your Free Trial — No Credit Card Required
+            {{ 'Start Your Free Trial — No Credit Card Required' | t }}
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Choose a trial duration that best fits your evaluation schedule. Full features unlocked immediately.
+            {{ 'Choose a trial duration that best fits your evaluation schedule. Full features unlocked immediately.' | t }}
           </p>
         </div>
 
@@ -243,14 +246,14 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
           <div *ngFor="let trial of trialOptions()"
             class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all flex flex-col justify-between relative overflow-hidden">
             <div *ngIf="trial.days === 7" class="absolute top-2 right-2 text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
-              Recommended
+              {{ 'Recommended' | t }}
             </div>
             <div>
               <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
                 <mat-icon>hourglass_top</mat-icon>
               </div>
-              <h4 class="text-sm font-bold text-gray-900 dark:text-white">{{ trial.title }}</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{{ trial.description }}</p>
+              <h4 class="text-sm font-bold text-gray-900 dark:text-white">{{ trial.title | t }}</h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{{ trial.description | t }}</p>
             </div>
 
             <button
@@ -258,7 +261,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
               [disabled]="isActivatingTrial()"
               class="mt-5 w-full py-2 px-3 text-xs font-bold rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-500 dark:hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50">
               <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">play_arrow</mat-icon>
-              Activate {{ trial.days }}-Day Trial
+              {{ 'Activate {n}-Day Trial' | t: { n: trial.days } }}
             </button>
           </div>
         </div>
@@ -268,10 +271,10 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
       <div id="plans-section" class="space-y-6">
         <div class="text-center max-w-xl mx-auto space-y-2">
           <h3 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Flexible Plans Built for Growth
+            {{ 'Flexible Plans Built for Growth' | t }}
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            From single livestock farms to commercial agro-enterprises, select the tier and billing frequency that fits your scale.
+            {{ 'From single livestock farms to commercial agro-enterprises, select the tier and billing frequency that fits your scale.' | t }}
           </p>
 
           <!-- Frequency Toggle Switch -->
@@ -285,7 +288,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
               [class.dark:text-white]="selectedCycle() === 'Monthly'"
               [class.shadow-sm]="selectedCycle() === 'Monthly'"
               class="px-4 py-2 text-xs font-bold rounded-xl transition-all text-gray-500 dark:text-gray-400 cursor-pointer">
-              Monthly
+              {{ 'Monthly' | t }}
             </button>
             <button
               type="button"
@@ -296,8 +299,8 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
               [class.dark:text-white]="selectedCycle() === 'Yearly'"
               [class.shadow-sm]="selectedCycle() === 'Yearly'"
               class="px-4 py-2 text-xs font-bold rounded-xl transition-all text-gray-500 dark:text-gray-400 cursor-pointer flex items-center gap-1.5">
-              <span>Yearly</span>
-              <span class="text-[11px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">Save ~17%</span>
+              <span>{{ 'Yearly' | t }}</span>
+              <span class="text-[11px] font-bold px-1.5 py-0.5 bg-emerald-500 text-white rounded-full">{{ 'Save ~17%' | t }}</span>
             </button>
             <button
               type="button"
@@ -308,8 +311,8 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
               [class.dark:text-white]="selectedCycle() === 'OneTime'"
               [class.shadow-sm]="selectedCycle() === 'OneTime'"
               class="px-4 py-2 text-xs font-bold rounded-xl transition-all text-gray-500 dark:text-gray-400 cursor-pointer flex items-center gap-1.5">
-              <span>One-Time</span>
-              <span class="text-[11px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">Lifetime</span>
+              <span>{{ 'One-Time' | t }}</span>
+              <span class="text-[11px] font-bold px-1.5 py-0.5 bg-amber-500 text-white rounded-full">{{ 'Lifetime' | t }}</span>
             </button>
           </div>
         </div>
@@ -325,14 +328,14 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
             
             <!-- Popular Badge -->
             <div *ngIf="plan.isPopular" class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[11px] font-extrabold uppercase tracking-wider rounded-full shadow-md">
-              Most Popular
+              {{ 'Most Popular' | t }}
             </div>
 
             <div>
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ plan.name }}</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ plan.name | t }}</span>
                 <span *ngIf="isCurrentPlan(plan.tier)" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                  Current
+                  {{ 'Current' | t }}
                 </span>
               </div>
 
@@ -343,27 +346,27 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
                     {{ getPlanPrice(plan) | money:2 }}
                   </span>
                   <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                    <ng-container *ngIf="selectedCycle() === 'Monthly'">/ mo</ng-container>
-                    <ng-container *ngIf="selectedCycle() === 'Yearly'">/ yr</ng-container>
-                    <ng-container *ngIf="selectedCycle() === 'OneTime'">one-time</ng-container>
+                    <ng-container *ngIf="selectedCycle() === 'Monthly'">{{ '/ mo' | t }}</ng-container>
+                    <ng-container *ngIf="selectedCycle() === 'Yearly'">{{ '/ yr' | t }}</ng-container>
+                    <ng-container *ngIf="selectedCycle() === 'OneTime'">{{ 'one-time' | t }}</ng-container>
                   </span>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 min-h-[36px]">{{ plan.description }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 min-h-[36px]">{{ plan.description | t }}</p>
               </div>
 
               <!-- Limits Overview -->
               <div class="py-3 border-y border-gray-100 dark:border-gray-700/60 space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
                 <div class="flex items-center gap-2">
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-500">check_circle</mat-icon>
-                  <span><strong>{{ plan.maxUsers }}</strong> User Seats</span>
+                  <span><strong>{{ plan.maxUsers }}</strong> {{ 'User Seats' | t }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-500">check_circle</mat-icon>
-                  <span><strong>{{ plan.maxFarms }}</strong> Farm Location{{ plan.maxFarms > 1 ? 's' : '' }}</span>
+                  <span><strong>{{ plan.maxFarms }}</strong> {{ (plan.maxFarms > 1 ? 'Farm Locations' : 'Farm Location') | t }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-500">check_circle</mat-icon>
-                  <span><strong>{{ plan.maxAnimals | number }}</strong> Livestock Head</span>
+                  <span><strong>{{ plan.maxAnimals | number }}</strong> {{ 'Livestock Head' | t }}</span>
                 </div>
               </div>
 
@@ -371,7 +374,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
               <ul class="mt-4 space-y-2 text-xs text-gray-500 dark:text-gray-400">
                 <li *ngFor="let feat of plan.features" class="flex items-start gap-2">
                   <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-emerald-500 shrink-0 mt-0.5">done</mat-icon>
-                  <span>{{ feat }}</span>
+                  <span>{{ feat | t }}</span>
                 </li>
               </ul>
             </div>
@@ -389,7 +392,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
               [class.text-gray-800]="!plan.isPopular"
               [class.dark:text-white]="!plan.isPopular"
               class="mt-6 w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
-              <span>{{ isCurrentPlan(plan.tier) ? 'Renew / Extend' : 'Choose ' + plan.name }}</span>
+              <span>{{ isCurrentPlan(plan.tier) ? ('Renew / Extend' | t) : ('Choose {plan}' | t: { plan: (plan.name | t) }) }}</span>
               <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">arrow_forward</mat-icon>
             </button>
           </div>
@@ -400,8 +403,8 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
       <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/80 flex items-center justify-between">
           <div>
-            <h3 class="text-base font-bold text-gray-900 dark:text-white">Billing & Payment History</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Audit log of all subscription payments and invoices for this organization.</p>
+            <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Billing & Payment History' | t }}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Audit log of all subscription payments and invoices for this organization.' | t }}</p>
           </div>
         </div>
 
@@ -410,13 +413,13 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-gray-50/50 dark:bg-gray-700/30 border-b border-gray-100 dark:border-gray-700 text-gray-400 font-bold uppercase tracking-wider text-[11px]">
-                <th class="py-3.5 px-6">Invoice #</th>
-                <th class="py-3.5 px-6">Plan Tier</th>
-                <th class="py-3.5 px-6">Billing Cycle</th>
-                <th class="py-3.5 px-6">Amount</th>
-                <th class="py-3.5 px-6">Method & TrxID</th>
-                <th class="py-3.5 px-6">Date</th>
-                <th class="py-3.5 px-6 text-right">Status</th>
+                <th class="py-3.5 px-6">{{ 'Invoice #' | t }}</th>
+                <th class="py-3.5 px-6">{{ 'Plan Tier' | t }}</th>
+                <th class="py-3.5 px-6">{{ 'Billing Cycle' | t }}</th>
+                <th class="py-3.5 px-6">{{ 'Amount' | t }}</th>
+                <th class="py-3.5 px-6">{{ 'Method & TrxID' | t }}</th>
+                <th class="py-3.5 px-6">{{ 'Date' | t }}</th>
+                <th class="py-3.5 px-6 text-right">{{ 'Status' | t }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -425,17 +428,17 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
                   {{ item.invoiceNumber }}
                 </td>
                 <td class="py-4 px-6 font-medium text-gray-900 dark:text-white">
-                  {{ item.tier }}
+                  {{ item.tier | t }}
                 </td>
                 <td class="py-4 px-6 text-gray-500 dark:text-gray-400">
-                  {{ item.billingCycle }}
+                  {{ item.billingCycle | t }}
                 </td>
                 <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">
                   {{ item.amount | money:2 }} <span class="text-[11px] text-gray-400 font-normal">{{ item.currency }}</span>
                 </td>
                 <td class="py-4 px-6 text-gray-600 dark:text-gray-300">
-                  <div class="font-medium">{{ item.paymentMethod }}</div>
-                  <div class="text-[11px] font-mono text-gray-400" *ngIf="item.paymentReference">Ref: {{ item.paymentReference }}</div>
+                  <div class="font-medium">{{ item.paymentMethod | t }}</div>
+                  <div class="text-[11px] font-mono text-gray-400" *ngIf="item.paymentReference">{{ 'Ref: {ref}' | t: { ref: item.paymentReference } }}</div>
                 </td>
                 <td class="py-4 px-6 text-gray-500 dark:text-gray-400">
                   {{ item.createdAtUtc | date:'mediumDate' }}
@@ -445,7 +448,7 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
                     [class.bg-emerald-50]="item.status === 'Completed'" [class.text-emerald-700]="item.status === 'Completed'" [class.dark:bg-emerald-950/40]="item.status === 'Completed'" [class.dark:text-emerald-300]="item.status === 'Completed'" [class.border-emerald-200]="item.status === 'Completed'" [class.dark:border-emerald-800]="item.status === 'Completed'"
                     [class.bg-amber-50]="item.status === 'Pending'" [class.text-amber-700]="item.status === 'Pending'" [class.dark:bg-amber-950/40]="item.status === 'Pending'" [class.dark:text-amber-300]="item.status === 'Pending'" [class.border-amber-200]="item.status === 'Pending'" [class.dark:border-amber-800]="item.status === 'Pending'"
                     [class.bg-red-50]="item.status === 'Rejected'" [class.text-red-700]="item.status === 'Rejected'" [class.dark:bg-red-950/40]="item.status === 'Rejected'" [class.dark:text-red-300]="item.status === 'Rejected'" [class.border-red-200]="item.status === 'Rejected'" [class.dark:border-red-800]="item.status === 'Rejected'">
-                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">{{ item.status === 'Completed' ? 'check' : item.status === 'Pending' ? 'hourglass_top' : 'close' }}</mat-icon> {{ item.status }}
+                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">{{ item.status === 'Completed' ? 'check' : item.status === 'Pending' ? 'hourglass_top' : 'close' }}</mat-icon> {{ item.status | t }}
                   </span>
                 </td>
               </tr>
@@ -457,8 +460,8 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
         <app-empty-state
           *ngIf="!isLoading() && history().length === 0"
           icon="receipt_long"
-          title="No Billing Records Found"
-          description="Your payment receipts and subscription invoices will appear here once recorded."
+          [title]="'No Billing Records Found' | t"
+          [description]="'Your payment receipts and subscription invoices will appear here once recorded.' | t"
           actionText="Subscribe Now"
           (actionClicked)="scrollToPlans()">
         </app-empty-state>
@@ -473,6 +476,7 @@ export class BillingComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   public status = signal<TenantSubscriptionStatus | null>(null);
   public catalog = signal<SubscriptionCatalog | null>(null);
@@ -522,7 +526,7 @@ export class BillingComponent implements OnInit {
       cancel: 'Checkout was cancelled. No charge was made.'
     };
 
-    this.notify.info(messages[checkout] ?? 'Checkout finished.');
+    this.notify.info(this.i18n.t(messages[checkout] ?? 'Checkout finished.'));
 
     // A successful online checkout activates via the gateway's IPN, which can land slightly after
     // this redirect -- reload shortly after so the status card reflects it.
@@ -551,7 +555,7 @@ export class BillingComponent implements OnInit {
           this.isLoading.set(false);
         },
         error: (err) => {
-          this.errorMessage.set(parseApiError(err, 'Failed to load subscription details.'));
+          this.errorMessage.set(parseApiError(err, this.i18n.t('Failed to load subscription details.')));
           this.isLoading.set(false);
         }
       });
@@ -585,12 +589,12 @@ export class BillingComponent implements OnInit {
         next: (updatedStatus) => {
           this.status.set(updatedStatus);
           this.isActivatingTrial.set(false);
-          this.notify.success(`🎉 ${days}-Day Free Trial activated successfully!`);
+          this.notify.success(this.i18n.t('🎉 {n}-Day Free Trial activated successfully!', { n: days }));
         },
         error: (err) => {
           this.isActivatingTrial.set(false);
-          const msg = parseApiError(err, 'Failed to activate free trial.');
-          this.notify.error(`Error: ${msg}`);
+          const msg = parseApiError(err, this.i18n.t('Failed to activate free trial.'));
+          this.notify.error(this.i18n.t('Error: {message}', { message: msg }));
         }
       });
   }
@@ -613,7 +617,7 @@ export class BillingComponent implements OnInit {
       if (result) {
         // The subscription is NOT active yet -- it's recorded as Pending until an admin verifies
         // the payment reference, so `status` (the tenant's actual tier/access) is left untouched.
-        this.notify.info(`Payment reference submitted (${result.invoiceNumber}). We'll verify it and activate your ${result.tier} plan shortly.`);
+        this.notify.info(this.i18n.t("Payment reference submitted ({invoice}). We'll verify it and activate your {tier} plan shortly.", { invoice: result.invoiceNumber, tier: this.i18n.t(result.tier) }));
         // Reload history to show the new pending invoice
         this.subscriptionService.getHistory().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (hist) => this.history.set(hist)

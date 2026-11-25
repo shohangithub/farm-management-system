@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { Observable, concat, toArray } from 'rxjs';
 import { BranchOption, RoleOption, TeamMember, TeamService } from './team.service';
 import { parseApiError } from '../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 export interface MemberDialogData {
   member: TeamMember;
@@ -19,12 +21,12 @@ export interface MemberDialogData {
 @Component({
   selector: 'app-member-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="bg-white dark:bg-gray-800 rounded-2xl flex flex-col max-h-[92vh] w-full" novalidate>
       <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-        <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">Edit access</h2>
+        <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ 'Edit access' | t }}</h2>
         <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ data.member.fullName || data.member.phone || data.member.email }}</p>
       </div>
 
@@ -32,35 +34,35 @@ export interface MemberDialogData {
         <div *ngIf="error()" role="alert" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-3 rounded-r-md text-sm text-red-700 dark:text-red-400 whitespace-pre-line">{{ error() }}</div>
 
         <div>
-          <label for="member-role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+          <label for="member-role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Role' | t }}</label>
           <select id="member-role" formControlName="roleId"
                   class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-60">
             <option *ngFor="let role of data.roles" [value]="role.id" [disabled]="!role.canGrant && role.id !== data.member.roleId">
-              {{ role.name }}{{ role.canGrant ? '' : ' (above your permissions)' }}
+              {{ role.name | t }}{{ role.canGrant ? '' : (' (above your permissions)' | t) }}
             </option>
           </select>
-          <p *ngIf="!data.canAssignRole" class="mt-1 text-xs text-gray-500">You don't have permission to change roles.</p>
-          <p *ngIf="form.controls.roleId.touched && form.controls.roleId.invalid" class="mt-1 text-xs text-red-600">Choose a role.</p>
+          <p *ngIf="!data.canAssignRole" class="mt-1 text-xs text-gray-500">{{ "You don't have permission to change roles." | t }}</p>
+          <p *ngIf="form.controls.roleId.touched && form.controls.roleId.invalid" class="mt-1 text-xs text-red-600">{{ 'Choose a role.' | t }}</p>
         </div>
 
         <div>
-          <label for="member-branch" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Branch</label>
+          <label for="member-branch" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Branch' | t }}</label>
           <select id="member-branch" formControlName="branchId"
                   class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-60">
-            <option value="">All branches</option>
+            <option value="">{{ 'All branches' | t }}</option>
             <option *ngFor="let branch of data.branches" [value]="branch.id">{{ branch.name }}</option>
           </select>
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Changes apply to the member's next request.</p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ "Changes apply to the member's next request." | t }}</p>
         </div>
       </div>
 
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
         <button type="button" (click)="dialogRef.close(false)" [disabled]="saving()"
-                class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{{ 'Cancel' | t }}</button>
         <button type="submit" [disabled]="saving() || form.pristine"
                 class="px-4 py-2 rounded-lg text-sm font-bold bg-primary-600 hover:bg-primary-500 text-white flex items-center gap-2 disabled:opacity-50">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="saving()">{{ saving() ? 'autorenew' : 'save' }}</mat-icon>
-          {{ saving() ? 'Saving…' : 'Save' }}
+          {{ (saving() ? 'Saving…' : 'Save') | t }}
         </button>
       </div>
     </form>
@@ -71,6 +73,7 @@ export class MemberDialogComponent {
   readonly dialogRef = inject(MatDialogRef<MemberDialogComponent, boolean>);
   private readonly fb = inject(FormBuilder);
   private readonly team = inject(TeamService);
+  private readonly i18n = inject(I18nService);
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -102,7 +105,7 @@ export class MemberDialogComponent {
       next: () => this.dialogRef.close(true),
       error: err => {
         this.saving.set(false);
-        this.error.set(parseApiError(err, 'Could not update the member.'));
+        this.error.set(parseApiError(err, this.i18n.t('Could not update the member.')));
       }
     });
   }

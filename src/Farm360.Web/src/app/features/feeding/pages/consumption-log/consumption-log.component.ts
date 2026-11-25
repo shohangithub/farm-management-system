@@ -20,6 +20,8 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-consumption-log',
   standalone: true,
@@ -33,27 +35,28 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatPaginatorModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Daily Feeding Records"
-      description="Older shed-level feed records (read only). Daily feeding is now confirmed on the Today page."
-      breadcrumbActiveNode="Feeding Records">
+      [title]="'Daily Feeding Records' | t"
+      [description]="'Older shed-level feed records (read only). Daily feeding is now confirmed on the Today page.' | t"
+      [breadcrumbActiveNode]="'Feeding Records' | t">
       <div actions class="flex items-center gap-2 no-print">
         <a mat-stroked-button routerLink="/reports/feeding.animal-consumption"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">summarize</mat-icon>
-          <span>Animal Consumption Report</span>
+          <span>{{ 'Animal Consumption Report' | t }}</span>
         </a>
         <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || logs().length === 0"
           class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
-          {{ isExporting() ? 'Exporting PDF...' : 'Export PDF' }}
+          {{ (isExporting() ? 'Exporting PDF...' : 'Export PDF') | t }}
         </button>
         <a routerLink="/feeding/today"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">today</mat-icon> Record today's feeding
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">today</mat-icon> {{ "Record today's feeding" | t }}
         </a>
       </div>
     </app-page-header>
@@ -68,9 +71,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
       <app-empty-state
         *ngIf="!isLoading() && logs().length === 0 && !loadError()"
         icon="history"
-        title="No feeding records yet"
-        description="Log daily feed distribution to track consumption and costs over time."
-        actionLabel="Log Daily Feeding"
+        [title]="'No feeding records yet' | t"
+        [description]="'Log daily feed distribution to track consumption and costs over time.' | t"
+        [actionLabel]="'Log Daily Feeding' | t"
         (action)="openLogDialog()">
       </app-empty-state>
 
@@ -79,14 +82,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-800 text-[11px] uppercase tracking-wider font-bold text-gray-400">
-              <th class="py-3.5 px-4">Log Date</th>
-              <th class="py-3.5 px-4">Ration Used</th>
-              <th class="py-3.5 px-4">Head Count</th>
-              <th class="py-3.5 px-4">Offered (kg)</th>
-              <th class="py-3.5 px-4">Wastage (kg)</th>
-              <th class="py-3.5 px-4">Net Consumed (kg)</th>
-              <th class="py-3.5 px-4">Total Cost</th>
-              <th class="py-3.5 px-4">Notes</th>
+              <th class="py-3.5 px-4">{{ 'Log Date' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Ration Used' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Head Count' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Offered (kg)' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Wastage (kg)' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Net Consumed (kg)' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Total Cost' | t }}</th>
+              <th class="py-3.5 px-4">{{ 'Notes' | t }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
@@ -94,10 +97,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
                 <td class="py-3.5 px-4 font-semibold text-gray-900 dark:text-white">{{ log.logDate }}</td>
                 <td class="py-3.5 px-4 font-semibold text-emerald-600 dark:text-emerald-400">{{ log.formulaTitle }}</td>
-                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-400 font-medium">{{ log.headCount }} heads</td>
-                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-400">{{ log.totalFeedOfferedKg }} kg</td>
-                <td class="py-3.5 px-4 font-medium text-amber-600 dark:text-amber-400">{{ log.totalRefusalKg }} kg</td>
-                <td class="py-3.5 px-4 font-bold text-gray-900 dark:text-white">{{ log.netConsumptionKg }} kg</td>
+                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-400 font-medium">{{ '{n} heads' | t: { n: log.headCount } }}</td>
+                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-400">{{ log.totalFeedOfferedKg }} {{ 'kg' | t }}</td>
+                <td class="py-3.5 px-4 font-medium text-amber-600 dark:text-amber-400">{{ log.totalRefusalKg }} {{ 'kg' | t }}</td>
+                <td class="py-3.5 px-4 font-bold text-gray-900 dark:text-white">{{ log.netConsumptionKg }} {{ 'kg' | t }}</td>
                 <td class="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">{{ log.totalCostBdt | money }}</td>
                 <td class="py-3.5 px-4 text-xs text-gray-400 max-w-xs truncate">{{ log.notes || '-' }}</td>
               </tr>
@@ -114,7 +117,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           [pageSizeOptions]="[10, 25, 50]"
           [pageIndex]="pageIndex()"
           (page)="onPageChange($event)"
-          aria-label="Select page"
+          [attr.aria-label]="'Select page' | t"
           class="!bg-transparent">
         </mat-paginator>
       </div>
@@ -128,6 +131,7 @@ export class ConsumptionLogComponent implements OnInit {
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly pdfService = inject(PdfExportService);
+  private readonly i18n = inject(I18nService);
 
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -163,7 +167,7 @@ export class ConsumptionLogComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.loadError.set(parseApiError(err, 'Could not load the consumption log.'));
+        this.loadError.set(parseApiError(err, this.i18n.t('Could not load the consumption log.')));
         this.isLoading.set(false);
       }
     });

@@ -3,11 +3,11 @@
     <div>
       <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-pink-500">favorite</mat-icon>
-        Record Mating
+        {{ 'Record Mating' | t }}
       </h2>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Record mating event for {{ data.animalTag }}</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Record mating event for {tag}' | t: { tag: data.animalTag } }}</p>
     </div>
-    <button aria-label="Close" mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+    <button [attr.aria-label]="'Close' | t" mat-dialog-close class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
       <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
     </button>
   </div>
@@ -22,22 +22,22 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- Date -->
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Mating Date <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Mating Date' | t }} <span class="text-red-500">*</span></label>
           <input type="date" formControlName="date"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           <p class="text-xs text-red-500 mt-1" *ngIf="form.get('date')?.touched && form.get('date')?.invalid">
-            Mating Date is required.
+            {{ 'Mating Date is required.' | t }}
           </p>
         </div>
 
         <!-- AI Toggle -->
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Method</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Method' | t }}</label>
           <div class="flex items-center gap-3 pt-2">
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" formControlName="isAI" class="sr-only peer">
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-              <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Artificial Insemination (AI)</span>
+              <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ 'Artificial Insemination (AI)' | t }}</span>
             </label>
           </div>
         </div>
@@ -45,20 +45,20 @@
 
       <!-- Sire Info -->
       <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-4 border border-gray-100 dark:border-gray-700">
-        <h3 class="text-sm font-bold text-gray-900 dark:text-white">Sire Information (Optional)</h3>
+        <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ 'Sire Information (Optional)' | t }}</h3>
         
         <div class="space-y-1.5" *ngIf="!form.get('isAI')?.value">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Internal Sire (on-farm male)</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Internal Sire (on-farm male)' | t }}</label>
           <select formControlName="sireAnimalId"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <option value="">-- None / external sire --</option>
+            <option value="">-- {{ 'None / external sire' | t }} --</option>
             <option *ngFor="let s of sires()" [value]="s.id">{{ s.tagId }} — {{ s.breedName }}</option>
           </select>
         </div>
 
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">External Sire ID / Semen Batch</label>
-          <input type="text" formControlName="sireExternalId" placeholder="External Tag or Batch ID"
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'External Sire ID / Semen Batch' | t }}</label>
+          <input type="text" formControlName="sireExternalId" [placeholder]="'External Tag or Batch ID' | t"
             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
         </div>
       </div>
@@ -67,12 +67,12 @@
     <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
       <button type="button" mat-dialog-close [disabled]="submitting()"
         class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-        Cancel
+        {{ 'Cancel' | t }}
       </button>
       <button type="submit" [disabled]="submitting()"
         class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-        <span *ngIf="!submitting()">Record Mating</span>
-        <span *ngIf="submitting()">Recording...</span>
+        <span *ngIf="!submitting()">{{ 'Record Mating' | t }}</span>
+        <span *ngIf="submitting()">{{ 'Recording...' | t }}</span>
       </button>
     </div>
   </form>

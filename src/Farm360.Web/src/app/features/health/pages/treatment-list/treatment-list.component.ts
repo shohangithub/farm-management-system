@@ -26,6 +26,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-treatment-list',
@@ -44,7 +46,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
     MatMenuModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   templateUrl: './treatment-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -55,6 +58,7 @@ export class TreatmentListComponent {
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -156,14 +160,14 @@ export class TreatmentListComponent {
         filename: `Farm360_Medical_Treatments_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Medical Treatments Log',
-          subtitle: 'Active & Historical Medication Administration Records',
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('Medical Treatments Log'),
+          subtitle: this.i18n.t('Active & Historical Medication Administration Records'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: 'Total Recorded Treatments', value: `${total}` },
-            { label: 'Current Page Items', value: `${items.length}` }
+            { label: this.i18n.t('Total Recorded Treatments'), value: `${total}` },
+            { label: this.i18n.t('Current Page Items'), value: `${items.length}` }
           ]
         },
         showSignatures: true

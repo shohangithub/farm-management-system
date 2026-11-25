@@ -9,6 +9,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ReportService } from '../../services/report.service';
 import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, ReportRunHistoryItem } from '../../models/report.models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * The Report Center: every report in the product, grouped by module.
@@ -33,20 +35,21 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       <app-page-header
-        title="Reports Center"
-        description="Printable, exportable analytical and operational reports across every module."
-        breadcrumbActiveNode="Reports">
+        [title]="'Reports Center' | t"
+        [description]="'Printable, exportable analytical and operational reports across every module.' | t"
+        [breadcrumbActiveNode]="'Reports' | t">
         <div actions class="flex items-center gap-3">
           <div class="relative w-64 sm:w-80">
             <mat-icon class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
             <input
               type="text"
-              placeholder="Search reports..."
+              [placeholder]="'Search reports...' | t"
               [ngModel]="query()"
               (ngModelChange)="query.set($event)"
               class="w-full pl-10 pr-9 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs"
@@ -55,7 +58,7 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
               *ngIf="query()"
               (click)="query.set('')"
               class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Clear search"
+              [title]="'Clear search' | t"
             >
               <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">close</mat-icon>
             </button>
@@ -65,18 +68,18 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
 
       <!-- Category filter -->
       @if (!loading() && !error() && catalog().length > 0) {
-        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by category">
+        <div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'Filter by category' | t">
           <button type="button" (click)="category.set(null)"
-                  [class]="chipClass(category() === null)">All ({{ catalog().length }})</button>
+                  [class]="chipClass(category() === null)">{{ 'All ({n})' | t: { n: catalog().length } }}</button>
           @for (c of categories(); track c.category) {
             <button type="button" (click)="category.set(c.category)"
                     [class]="chipClass(category() === c.category)">
-              <mat-icon class="!text-[14px] !w-[14px] !h-[14px] align-middle mr-1">{{ icon(c.category) }}</mat-icon>{{ c.category }} ({{ c.count }})
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px] align-middle mr-1">{{ icon(c.category) }}</mat-icon>{{ c.category | t }} ({{ c.count }})
             </button>
           }
           <button type="button" (click)="onlyFavourites.set(!onlyFavourites())"
                   [class]="chipClass(onlyFavourites())">
-            <mat-icon class="!text-[14px] !w-[14px] !h-[14px] align-middle mr-1">star</mat-icon>Favourites ({{ favourites().length }})
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px] align-middle mr-1">star</mat-icon>{{ 'Favourites ({n})' | t: { n: favourites().length } }}
           </button>
         </div>
       }
@@ -84,11 +87,11 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
       <!-- Recently opened -->
       @if (!loading() && !error() && recent().length > 0 && !query() && !category() && !onlyFavourites()) {
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mr-1">Recently opened</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mr-1">{{ 'Recently opened' | t }}</span>
           @for (r of recent(); track r.key) {
             <a [routerLink]="['/reports', r.key]"
                class="text-xs px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 no-underline hover:underline">
-              {{ r.title }}
+              {{ reportTitle(r) }}
             </a>
           }
         </div>
@@ -103,14 +106,14 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
           <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mb-3">
             <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">error_outline</mat-icon>
           </div>
-          <p class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Failed to Load Reports</p>
+          <p class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ 'Failed to Load Reports' | t }}</p>
           <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mb-4">{{ error() }}</p>
           <button
             mat-stroked-button
             (click)="load()"
             class="!rounded-xl !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!border-emerald-500"
           >
-            <mat-icon class="mr-1.5">refresh</mat-icon> Retry
+            <mat-icon class="mr-1.5">refresh</mat-icon> {{ 'Retry' | t }}
           </button>
         </div>
 
@@ -118,9 +121,9 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
         <app-empty-state
           *ngIf="!loading() && !error() && !filtered().length"
           icon="search_off"
-          title="No Reports Found"
+          [title]="'No Reports Found' | t"
           [description]="emptyMessage()"
-          [actionLabel]="query() || category() || onlyFavourites() ? 'Clear filters' : undefined"
+          [actionLabel]="query() || category() || onlyFavourites() ? ('Clear filters' | t) : undefined"
           (action)="clearFilters()"
         >
         </app-empty-state>
@@ -135,7 +138,7 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">{{ icon(group.category) }}</mat-icon>
                 </div>
                 <h2 class="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200 m-0">
-                  {{ group.category }}
+                  {{ group.category | t }}
                 </h2>
                 <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                   {{ group.reports.length }}
@@ -161,7 +164,7 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
                       </div>
                       <button type="button"
                               class="order-last shrink-0 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                              [attr.aria-label]="isFavourite(report.key) ? 'Remove from favourites' : 'Add to favourites'"
+                              [attr.aria-label]="(isFavourite(report.key) ? 'Remove from favourites' : 'Add to favourites') | t"
                               [attr.aria-pressed]="isFavourite(report.key)"
                               (click)="toggleFavourite($event, report.key)">
                         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]"
@@ -172,11 +175,11 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
                       </button>
                       <div class="min-w-0 flex-1">
                         <h3 class="font-bold text-gray-900 dark:text-white text-sm sm:text-base leading-snug m-0 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                          {{ report.title }}
+                          {{ reportTitle(report) }}
                         </h3>
-                        @if (report.titleBn && report.titleBn !== report.title) {
+                        @if (secondaryTitle(report); as second) {
                           <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 m-0 mt-0.5">
-                            {{ report.titleBn }}
+                            {{ second }}
                           </p>
                         }
                       </div>
@@ -184,16 +187,16 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
 
                     <!-- Description -->
                     <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1 relative z-10 m-0">
-                      {{ report.description }}
+                      {{ reportDescription(report) }}
                     </p>
 
                     <!-- Footer Action -->
                     <div class="pt-3 border-t border-gray-50 dark:border-gray-800/80 flex items-center justify-between mt-auto relative z-10">
                       <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                        {{ group.category }}
+                        {{ group.category | t }}
                       </span>
                       <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
-                        Open Report
+                        {{ 'Open Report' | t }}
                         <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">arrow_forward</mat-icon>
                       </span>
                     </div>
@@ -210,50 +213,50 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
         <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 sm:p-6">
           <div class="flex items-center gap-2 mb-3">
             <mat-icon class="text-emerald-600 !text-[18px] !w-[18px] !h-[18px]">history</mat-icon>
-            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200 m-0">Recent runs</h2>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200 m-0">{{ 'Recent runs' | t }}</h2>
             <span class="flex-1"></span>
             <button mat-button type="button" (click)="loadRuns()" class="!text-xs">
-              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">refresh</mat-icon> Refresh
+              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">refresh</mat-icon> {{ 'Refresh' | t }}
             </button>
           </div>
 
           @if (runsError()) {
             <p class="text-xs text-red-600 dark:text-red-400 m-0">{{ runsError() }}</p>
           } @else if (!runs().length) {
-            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">No reports have been run yet. Runs appear here with who ran them, when, and with which parameters.</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ 'No reports have been run yet. Runs appear here with who ran them, when, and with which parameters.' | t }}</p>
           } @else {
             <div class="overflow-x-auto">
               <table class="w-full text-xs text-left">
                 <thead class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   <tr>
-                    <th class="py-2 pr-3">Report</th>
-                    <th class="py-2 pr-3">Run by</th>
-                    <th class="py-2 pr-3">When</th>
-                    <th class="py-2 pr-3">Parameters</th>
-                    <th class="py-2 pr-3">Format</th>
-                    <th class="py-2 pr-3">Result</th>
+                    <th class="py-2 pr-3">{{ 'Report' | t }}</th>
+                    <th class="py-2 pr-3">{{ 'Run by' | t }}</th>
+                    <th class="py-2 pr-3">{{ 'When' | t }}</th>
+                    <th class="py-2 pr-3">{{ 'Parameters' | t }}</th>
+                    <th class="py-2 pr-3">{{ 'Format' | t }}</th>
+                    <th class="py-2 pr-3">{{ 'Result' | t }}</th>
                     <th class="py-2"></th>
                   </tr>
                 </thead>
                 <tbody class="text-gray-800 dark:text-gray-200">
                   @for (run of runs(); track run.id) {
                     <tr class="border-t border-gray-100 dark:border-gray-700/60 align-top">
-                      <td class="py-2 pr-3 font-semibold">{{ run.reportTitle }}</td>
+                      <td class="py-2 pr-3 font-semibold">{{ runTitle(run) }}</td>
                       <td class="py-2 pr-3">{{ run.requestedByName }}</td>
                       <td class="py-2 pr-3 whitespace-nowrap">{{ run.requestedAtUtc | date: 'dd-MMM-yyyy HH:mm' }}</td>
                       <td class="py-2 pr-3 text-gray-600 dark:text-gray-300 max-w-[320px]">{{ describeParameters(run) }}</td>
-                      <td class="py-2 pr-3">{{ run.format === 'Screen' ? 'On screen' : run.format.toUpperCase() }}</td>
+                      <td class="py-2 pr-3">{{ run.format === 'Screen' ? ('On screen' | t) : run.format.toUpperCase() }}</td>
                       <td class="py-2 pr-3">
                         @if (run.outcome === 'Succeeded') {
-                          <span class="text-emerald-700 dark:text-emerald-400">{{ run.rowCount }} rows</span>
+                          <span class="text-emerald-700 dark:text-emerald-400">{{ '{n} rows' | t: { n: run.rowCount } }}</span>
                         } @else {
-                          <span class="text-red-600 dark:text-red-400" [title]="run.failureReason ?? ''">Failed</span>
+                          <span class="text-red-600 dark:text-red-400" [title]="run.failureReason ?? ''">{{ 'Failed' | t }}</span>
                         }
                       </td>
                       <td class="py-2 text-right">
                         <button mat-stroked-button type="button" class="!text-xs !rounded-lg" (click)="runAgain(run)"
                                 [disabled]="!canOpen(run.reportKey)">
-                          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">replay</mat-icon> Run again
+                          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">replay</mat-icon> {{ 'Run again' | t }}
                         </button>
                       </td>
                     </tr>
@@ -270,6 +273,7 @@ import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, Repo
 export class ReportCenterComponent implements OnInit {
   private readonly reports = inject(ReportService);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   protected readonly query = signal('');
   protected readonly category = signal<ReportCategory | null>(null);
@@ -314,15 +318,15 @@ export class ReportCenterComponent implements OnInit {
 
   protected readonly emptyMessage = computed(() => {
     if (this.onlyFavourites() && !this.favourites().length) {
-      return 'You have no favourite reports yet. Tap the star on a report to keep it here.';
+      return this.i18n.t('You have no favourite reports yet. Tap the star on a report to keep it here.');
     }
     if (this.query()) {
-      return `No report matches "${this.query()}". Try a different search term.`;
+      return this.i18n.t('No report matches "{query}". Try a different search term.', { query: this.query() });
     }
     if (this.category() || this.onlyFavourites()) {
-      return 'No reports match these filters.';
+      return this.i18n.t('No reports match these filters.');
     }
-    return 'No reports are available for your role. Ask the farm owner to grant report permissions.';
+    return this.i18n.t('No reports are available for your role. Ask the farm owner to grant report permissions.');
   });
 
   protected readonly grouped = computed(() => {
@@ -351,7 +355,7 @@ export class ReportCenterComponent implements OnInit {
     this.runsError.set(null);
     this.reports.getRuns(15).subscribe({
       next: runs => this.runs.set(runs),
-      error: () => this.runsError.set('Recent runs could not be loaded.'),
+      error: () => this.runsError.set(this.i18n.t('Recent runs could not be loaded.')),
     });
   }
 
@@ -393,10 +397,12 @@ export class ReportCenterComponent implements OnInit {
     return entries
       .map(([name, value]) => {
         const p = report?.parameters.find(x => x.name.toLowerCase() === name.toLowerCase());
-        const label = p?.label.en ?? name;
+        const bn = this.i18n.isBangla;
+        const label = (bn ? p?.label.bn || p?.label.en : p?.label.en) ?? name;
         const isEntity = p && ['Animal', 'Batch', 'Farm', 'Shed', 'Breed', 'InventoryItem'].includes(p.type);
-        const option = p?.options?.find(o => o.value === value)?.label.en;
-        return `${label}: ${isEntity ? 'selected' : option ?? value}`;
+        const optionLabel = p?.options?.find(o => o.value === value)?.label;
+        const option = optionLabel ? (bn ? optionLabel.bn || optionLabel.en : optionLabel.en) : undefined;
+        return `${label}: ${isEntity ? this.i18n.t('selected') : option ?? value}`;
       })
       .join(' · ');
   }
@@ -425,10 +431,29 @@ export class ReportCenterComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Could not load the report catalog.');
+        this.error.set(this.i18n.t('Could not load the report catalog.'));
         this.loading.set(false);
       },
     });
+  }
+
+  /** In Bangla the Bangla title leads; English stays as the small second line. */
+  protected reportTitle(r: ReportCatalogItem): string {
+    return this.i18n.isBangla && r.titleBn ? r.titleBn : r.title;
+  }
+
+  protected secondaryTitle(r: ReportCatalogItem): string | null {
+    const second = this.i18n.isBangla ? r.title : r.titleBn;
+    return second && second !== this.reportTitle(r) ? second : null;
+  }
+
+  protected reportDescription(r: ReportCatalogItem): string {
+    return this.i18n.isBangla && r.descriptionBn ? r.descriptionBn : r.description;
+  }
+
+  protected runTitle(run: ReportRunHistoryItem): string {
+    const report = this.catalog().find(r => r.key === run.reportKey);
+    return report ? this.reportTitle(report) : run.reportTitle;
   }
 
   protected icon(category: ReportCategory): string {

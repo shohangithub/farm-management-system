@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface FinanceNavLink {
   path: string;
@@ -14,7 +15,7 @@ interface FinanceNavLink {
 @Component({
   selector: 'app-finance-subnav',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MatIconModule],
+  imports: [TranslatePipe, CommonModule, RouterLink, RouterLinkActive, MatIconModule],
   template: `
     <nav class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto print:hidden">
       <a *ngFor="let link of links"
@@ -22,7 +23,7 @@ interface FinanceNavLink {
          routerLinkActive="!bg-emerald-50 dark:!bg-emerald-950/40 !text-emerald-700 dark:!text-emerald-300 border-emerald-200 dark:border-emerald-800/60"
          [routerLinkActiveOptions]="{ exact: !!link.exact }"
          class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 border border-transparent hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-        <mat-icon class="text-base">{{ link.icon }}</mat-icon> {{ link.label }}
+        <mat-icon class="text-base">{{ link.icon }}</mat-icon> {{ link.label | t }}
       </a>
     </nav>
   `,

@@ -1,7 +1,7 @@
 <app-page-header 
-  title="My Profile" 
-  description="Manage your personal details and account preferences."
-  primaryActionLabel="Save Changes"
+  [title]="'My Profile' | t"
+  [description]="'Manage your personal details and account preferences.' | t"
+  [primaryActionLabel]="'Save Changes' | t"
   primaryActionIcon="save"
   (primaryAction)="onSubmit()">
 </app-page-header>
@@ -11,7 +11,7 @@
     
     <div *ngIf="successMessage()" class="m-6 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4 rounded-r-md flex items-center shadow-sm">
       <mat-icon class="text-emerald-500 mr-3">check_circle</mat-icon>
-      <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{{ successMessage() }}</p>
+      <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{{ successMessage() | t }}</p>
     </div>
 
     <div *ngIf="error()" class="m-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r-md flex items-center shadow-sm">
@@ -26,30 +26,30 @@
           {{ profileForm.get('name')?.value?.charAt(0) || 'U' }}
         </div>
         <div>
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ profileForm.get('name')?.value || 'User' }}</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ profileForm.get('role')?.value }}</p>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ profileForm.get('name')?.value || ('User' | t) }}</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ profileForm.get('role')?.value | t }}</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Full Name' | t }}</label>
           <input type="text" formControlName="name" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 transition-shadow">
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Email Address' | t }}</label>
           <input type="email" formControlName="email" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 transition-shadow">
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number (Read Only)</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Phone Number (Read Only)' | t }}</label>
           <input type="tel" formControlName="phone" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 cursor-not-allowed">
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Used to sign in, so it can't be changed here.</p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ "Used to sign in, so it can't be changed here." | t }}</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role (Read Only)</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Role (Read Only)' | t }}</label>
           <input type="text" formControlName="role" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 cursor-not-allowed">
         </div>
       </div>
@@ -58,7 +58,7 @@
         <button type="submit" [disabled]="isSaving()" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50">
           <mat-icon *ngIf="isSaving()" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">autorenew</mat-icon>
           <mat-icon *ngIf="!isSaving()" class="!text-[18px] !w-[18px] !h-[18px]">save</mat-icon>
-          {{ isSaving() ? 'Saving...' : 'Save Profile' }}
+          {{ (isSaving() ? 'Saving...' : 'Save Profile') | t }}
         </button>
       </div>
 
@@ -68,33 +68,33 @@
   <!-- Change password -->
   <div class="max-w-3xl mx-auto mt-6 bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
     <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="p-6" novalidate>
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Change password</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">You'll stay signed in here; all other devices are signed out.</p>
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ 'Change password' | t }}</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ "You'll stay signed in here; all other devices are signed out." | t }}</p>
 
       <div *ngIf="passwordError()" role="alert" class="mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-3 rounded-r-md text-sm text-red-700 dark:text-red-400 whitespace-pre-line">{{ passwordError() }}</div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label for="currentPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current password</label>
+          <label for="currentPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Current password' | t }}</label>
           <input id="currentPassword" type="password" formControlName="currentPassword" autocomplete="current-password" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-          <p *ngIf="passwordForm.controls.currentPassword.touched && passwordForm.controls.currentPassword.invalid" class="mt-1 text-xs text-red-600">Enter your current password.</p>
+          <p *ngIf="passwordForm.controls.currentPassword.touched && passwordForm.controls.currentPassword.invalid" class="mt-1 text-xs text-red-600">{{ 'Enter your current password.' | t }}</p>
         </div>
         <div>
-          <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New password</label>
+          <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'New password' | t }}</label>
           <input id="newPassword" type="password" formControlName="newPassword" autocomplete="new-password" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-          <p *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid" class="mt-1 text-xs text-red-600">{{ passwordHint }}</p>
+          <p *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid" class="mt-1 text-xs text-red-600">{{ passwordHint | t }}</p>
         </div>
         <div>
-          <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm new password</label>
+          <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'Confirm new password' | t }}</label>
           <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-          <p *ngIf="passwordForm.controls.confirmPassword.touched && passwordForm.errors?.['mismatch']" class="mt-1 text-xs text-red-600">Passwords don't match.</p>
+          <p *ngIf="passwordForm.controls.confirmPassword.touched && passwordForm.errors?.['mismatch']" class="mt-1 text-xs text-red-600">{{ "Passwords don't match." | t }}</p>
         </div>
       </div>
 
       <div class="mt-6 flex justify-end">
         <button type="submit" [disabled]="isChangingPassword()" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-sm font-bold flex items-center gap-2 disabled:opacity-50">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isChangingPassword()">{{ isChangingPassword() ? 'autorenew' : 'lock_reset' }}</mat-icon>
-          {{ isChangingPassword() ? 'Changing…' : 'Change password' }}
+          {{ (isChangingPassword() ? 'Changing…' : 'Change password') | t }}
         </button>
       </div>
     </form>

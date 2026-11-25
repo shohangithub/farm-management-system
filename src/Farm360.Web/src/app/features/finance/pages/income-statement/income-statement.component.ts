@@ -16,6 +16,8 @@ import { IncomeStatement, IncomeStatementTotals } from '../../models/finance.mod
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { APP_NUMBER_LOCALE } from '../../../../shared/utils/locale';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface Period { fromDate: string | null; toDate: string; comparative: boolean; }
 
@@ -28,24 +30,24 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
 @Component({
   selector: 'app-income-statement',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
   template: `
     <app-page-header
-      title="Profit & Loss Statement"
-      description="Statement of profit or loss for the financial year (or any period), compared with the same period last year."
-      breadcrumbActiveNode="Profit & Loss">
+      [title]="'Profit & Loss Statement' | t"
+      [description]="'Statement of profit or loss for the financial year (or any period), compared with the same period last year.' | t"
+      [breadcrumbActiveNode]="'Profit & Loss' | t">
       <div actions class="flex items-center gap-2 flex-wrap">
         <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium">
-          <span class="text-gray-500">From</span>
+          <span class="text-gray-500">{{ 'From' | t }}</span>
           <input type="date" [ngModel]="period.fromDate" (ngModelChange)="setPeriod({ fromDate: $event || null })"
                  class="bg-transparent text-xs font-semibold outline-none" />
-          <span class="text-gray-500">to</span>
+          <span class="text-gray-500">{{ 'to' | t }}</span>
           <input type="date" [ngModel]="period.toDate" (ngModelChange)="setPeriod({ toDate: $event })"
                  class="bg-transparent text-xs font-semibold outline-none" />
         </div>
         <label class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs cursor-pointer">
           <input type="checkbox" [ngModel]="period.comparative" (ngModelChange)="setPeriod({ comparative: $event })" class="accent-emerald-600" />
-          <span>Compare last year</span>
+          <span>{{ 'Compare last year' | t }}</span>
         </label>
         <button mat-stroked-button (click)="export('pdf')" class="!rounded-xl !text-xs">
           <mat-icon class="!text-[16px] !w-4 !h-4">picture_as_pdf</mat-icon> PDF
@@ -54,7 +56,7 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
           <mat-icon class="!text-[16px] !w-4 !h-4">file_download</mat-icon> Excel
         </button>
         <button mat-stroked-button (click)="print()" class="!rounded-xl !text-xs">
-          <mat-icon class="!text-[16px] !w-4 !h-4">print</mat-icon> Print
+          <mat-icon class="!text-[16px] !w-4 !h-4">print</mat-icon> {{ 'Print' | t }}
         </button>
       </div>
     </app-page-header>
@@ -62,16 +64,16 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
     <div class="px-6 py-4 mx-auto max-w-6xl space-y-6">
       <app-finance-subnav></app-finance-subnav>
 
-      <p class="text-[11px] text-gray-500 dark:text-gray-400 -mt-2">Leave "From" blank for the financial year to date.</p>
+      <p class="text-[11px] text-gray-500 dark:text-gray-400 -mt-2">{{ 'Leave "From" blank for the financial year to date.' | t }}</p>
 
       <div *ngIf="error()" class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300">{{ error() }}</div>
-      <div *ngIf="isLoading()" class="text-sm text-gray-500 py-10 text-center">Loading…</div>
+      <div *ngIf="isLoading()" class="text-sm text-gray-500 py-10 text-center">{{ 'Loading…' | t }}</div>
 
       <ng-container *ngIf="statement() as st">
         <!-- KPI cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div *ngFor="let k of kpis(st.totals)" class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ k.label }}</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ k.label | t }}</p>
             <h3 class="text-xl font-black mt-1" [ngClass]="k.value >= 0 ? k.color : 'text-rose-600 dark:text-rose-400'">{{ k.value | money }}</h3>
             <p *ngIf="k.hint" class="text-[11px] text-gray-400 mt-0.5">{{ k.hint }}</p>
           </div>
@@ -80,16 +82,16 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
         <!-- Statement -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
           <div class="p-5 text-center border-b border-gray-100 dark:border-gray-700/60">
-            <h2 class="text-base font-black uppercase tracking-wider text-gray-900 dark:text-white">Statement of Profit or Loss</h2>
-            <p class="text-xs text-gray-500 mt-1">For the period {{ st.fromDate | date:'d MMM yyyy' }} to {{ st.toDate | date:'d MMM yyyy' }}</p>
+            <h2 class="text-base font-black uppercase tracking-wider text-gray-900 dark:text-white">{{ 'Statement of Profit or Loss' | t }}</h2>
+            <p class="text-xs text-gray-500 mt-1">{{ 'For the period {from} to {to}' | t: { from: (st.fromDate | date:'d MMM yyyy'), to: (st.toDate | date:'d MMM yyyy') } }}</p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
                 <tr>
-                  <th class="text-left px-5 py-2 w-16">Code</th>
-                  <th class="text-left px-3 py-2">Particulars</th>
-                  <th class="text-right px-5 py-2 w-44">Current</th>
+                  <th class="text-left px-5 py-2 w-16">{{ 'Code' | t }}</th>
+                  <th class="text-left px-3 py-2">{{ 'Particulars' | t }}</th>
+                  <th class="text-right px-5 py-2 w-44">{{ 'Current' | t }}</th>
                   <th *ngIf="st.priorTotals" class="text-right px-5 py-2 w-44">
                     {{ st.priorFromDate | date:'d MMM yy' }} – {{ st.priorToDate | date:'d MMM yy' }}
                   </th>
@@ -98,20 +100,20 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
               <tbody>
                 <ng-container *ngFor="let section of st.sections; let i = index">
                   <tr class="bg-gray-50/60 dark:bg-gray-900/20">
-                    <td colspan="4" class="px-5 pt-3 pb-1 text-xs font-black uppercase tracking-widest text-gray-800 dark:text-gray-100">{{ section.name }}</td>
+                    <td colspan="4" class="px-5 pt-3 pb-1 text-xs font-black uppercase tracking-widest text-gray-800 dark:text-gray-100">{{ sectionName(section) }}</td>
                   </tr>
                   <tr *ngIf="!section.lines.length">
-                    <td></td><td colspan="3" class="px-3 py-1.5 text-xs text-gray-400 italic">Nothing in this period</td>
+                    <td></td><td colspan="3" class="px-3 py-1.5 text-xs text-gray-400 italic">{{ 'Nothing in this period' | t }}</td>
                   </tr>
                   <tr *ngFor="let line of section.lines" class="border-t border-gray-50 dark:border-gray-700/40">
                     <td class="px-5 py-1.5 font-mono text-[11px] text-gray-400">{{ line.accountCode }}</td>
-                    <td class="px-3 py-1.5 text-gray-800 dark:text-gray-200">{{ line.accountName }}</td>
+                    <td class="px-3 py-1.5 text-gray-800 dark:text-gray-200">{{ (i18n.isBangla && line.accountNameBn) ? line.accountNameBn : line.accountName }}</td>
                     <td class="px-5 py-1.5 text-right font-mono">{{ fmt(line.amountBdt) }}</td>
                     <td *ngIf="st.priorTotals" class="px-5 py-1.5 text-right font-mono text-gray-500">{{ fmt(line.priorAmountBdt) }}</td>
                   </tr>
                   <tr class="font-semibold">
                     <td></td>
-                    <td class="px-3 py-1 text-xs text-gray-600 dark:text-gray-300">Total {{ section.name.toLowerCase() }}</td>
+                    <td class="px-3 py-1 text-xs text-gray-600 dark:text-gray-300">{{ 'Total {group}' | t: { group: sectionName(section).toLowerCase() } }}</td>
                     <td class="px-5 py-1 text-right font-mono border-t border-gray-300 dark:border-gray-600">{{ fmt(section.totalBdt) }}</td>
                     <td *ngIf="st.priorTotals" class="px-5 py-1 text-right font-mono border-t border-gray-300 dark:border-gray-600 text-gray-500">{{ fmt(section.priorTotalBdt) }}</td>
                   </tr>
@@ -119,20 +121,20 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
                   <!-- Running results after the sections they close -->
                   <tr *ngIf="section.key === 'cost-of-sales'" class="font-black bg-emerald-50/50 dark:bg-emerald-950/20">
                     <td></td>
-                    <td class="px-3 py-2 text-xs uppercase tracking-wider">Gross Profit <span class="font-normal normal-case text-gray-500">({{ st.totals.grossMarginPercent }}% of revenue)</span></td>
+                    <td class="px-3 py-2 text-xs uppercase tracking-wider">{{ 'Gross Profit' | t }} <span class="font-normal normal-case text-gray-500">{{ '({value}% of revenue)' | t: { value: st.totals.grossMarginPercent } }}</span></td>
                     <td class="px-5 py-2 text-right font-mono">{{ fmt(st.totals.grossProfitBdt) }}</td>
                     <td *ngIf="st.priorTotals" class="px-5 py-2 text-right font-mono text-gray-500">{{ fmt(st.priorTotals.grossProfitBdt) }}</td>
                   </tr>
                   <tr *ngIf="section.key === 'operating-expenses'" class="font-black bg-emerald-50/50 dark:bg-emerald-950/20">
                     <td></td>
-                    <td class="px-3 py-2 text-xs uppercase tracking-wider">Operating Profit</td>
+                    <td class="px-3 py-2 text-xs uppercase tracking-wider">{{ 'Operating Profit' | t }}</td>
                     <td class="px-5 py-2 text-right font-mono">{{ fmt(st.totals.operatingProfitBdt) }}</td>
                     <td *ngIf="st.priorTotals" class="px-5 py-2 text-right font-mono text-gray-500">{{ fmt(st.priorTotals.operatingProfitBdt) }}</td>
                   </tr>
                 </ng-container>
                 <tr class="font-black bg-gray-50 dark:bg-gray-900/50">
                   <td></td>
-                  <td class="px-3 py-3 text-xs uppercase tracking-wider">{{ st.totals.netProfitBdt >= 0 ? 'Net Profit for the period' : 'Net Loss for the period' }}</td>
+                  <td class="px-3 py-3 text-xs uppercase tracking-wider">{{ (st.totals.netProfitBdt >= 0 ? 'Net Profit for the period' : 'Net Loss for the period') | t }}</td>
                   <td class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200"
                       [ngClass]="st.totals.netProfitBdt >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">{{ fmt(st.totals.netProfitBdt) }}</td>
                   <td *ngIf="st.priorTotals" class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200 text-gray-600">{{ fmt(st.priorTotals.netProfitBdt) }}</td>
@@ -143,9 +145,8 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
           <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700/60 text-[11px] text-gray-500 flex items-start gap-2">
             <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">info</mat-icon>
             <span>
-              Cost of sales is the purchase cost of the animals sold or lost plus the feed, health, labour and consumables used.
-              Stock and animal purchases are not costs until used or sold. A negative "Loss / (Gain) on disposal" is a gain.
-              See the <a routerLink="/finance/reports/balance-sheet" class="underline">balance sheet</a> for the financial position.
+              {{ costOfSalesNote | t }}
+              {{ 'See the' | t }} <a routerLink="/finance/reports/balance-sheet" class="underline">{{ 'balance sheet' | t }}</a> {{ 'for the financial position.' | t }}
             </span>
           </div>
         </div>
@@ -159,6 +160,8 @@ export class IncomeStatementComponent {
   private readonly context = inject(WorkingContextService);
   private readonly reports = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly i18n = inject(I18nService);
+  readonly costOfSalesNote = 'Cost of sales is the purchase cost of the animals sold or lost plus the feed, health, labour and consumables used. Stock and animal purchases are not costs until used or sold. A negative "Loss / (Gain) on disposal" is a gain.';
 
   readonly statement = signal<IncomeStatement | null>(null);
   readonly isLoading = signal(true);
@@ -171,7 +174,7 @@ export class IncomeStatementComponent {
     combineLatest([this.period$, this.context.currentFarm$]).pipe(
       tap(() => { this.isLoading.set(true); this.error.set(null); }),
       switchMap(([p, farm]) => !farm ? of(null) : this.finance.getIncomeStatement(farm.id, p.fromDate, p.toDate, p.comparative).pipe(
-        catchError(err => { this.error.set(parseApiError(err, 'Failed to load the profit and loss statement.')); return of(null); })
+        catchError(err => { this.error.set(parseApiError(err, this.i18n.t('Failed to load the profit and loss statement.'))); return of(null); })
       )),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(st => { this.statement.set(st); this.isLoading.set(false); });
@@ -185,10 +188,14 @@ export class IncomeStatementComponent {
   kpis(t: IncomeStatementTotals) {
     return [
       { label: 'Revenue', value: t.revenueBdt, color: 'text-gray-900 dark:text-white', hint: '' },
-      { label: 'Gross Profit', value: t.grossProfitBdt, color: 'text-emerald-600 dark:text-emerald-400', hint: `${t.grossMarginPercent}% margin` },
-      { label: 'Operating Expenses', value: t.operatingExpensesBdt, color: 'text-amber-600 dark:text-amber-400', hint: 'incl. depreciation' },
-      { label: 'Net Profit', value: t.netProfitBdt, color: 'text-emerald-600 dark:text-emerald-400', hint: `${t.netMarginPercent}% of revenue` },
+      { label: 'Gross Profit', value: t.grossProfitBdt, color: 'text-emerald-600 dark:text-emerald-400', hint: this.i18n.t('{value}% margin', { value: t.grossMarginPercent }) },
+      { label: 'Operating Expenses', value: t.operatingExpensesBdt, color: 'text-amber-600 dark:text-amber-400', hint: this.i18n.t('incl. depreciation') },
+      { label: 'Net Profit', value: t.netProfitBdt, color: 'text-emerald-600 dark:text-emerald-400', hint: this.i18n.t('{value}% of revenue', { value: t.netMarginPercent }) },
     ];
+  }
+
+  sectionName(section: { name: string; nameBn?: string | null }): string {
+    return this.i18n.isBangla && section.nameBn ? section.nameBn : section.name;
   }
 
   /** Accounting format: negatives in brackets, zero as a dash. */
@@ -209,7 +216,7 @@ export class IncomeStatementComponent {
           this.reports.saveBlob(res.body, this.reports.fileNameFrom(res.headers, `Farm360_Profit_and_Loss_${this.period.toDate}.${format}`));
         }
       },
-      error: err => this.error.set(parseApiError(err, 'Export failed.'))
+      error: err => this.error.set(parseApiError(err, this.i18n.t('Export failed.')))
     });
   }
 

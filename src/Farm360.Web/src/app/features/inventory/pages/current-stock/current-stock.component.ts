@@ -21,6 +21,8 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-current-stock',
@@ -37,7 +39,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     EmptyStateComponent,
     LoadingComponent,
     ErrorStateComponent,
-    MatTooltipModule
+    MatTooltipModule,
+    TranslatePipe
   ],
   templateUrl: './current-stock.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -47,6 +50,7 @@ export class CurrentStockComponent implements OnInit {
   private readonly contextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
   private readonly pdfService = inject(PdfExportService);
+  private readonly i18n = inject(I18nService);
 
   readonly isLoading = signal(false);
   readonly loadError = signal<string | null>(null);
@@ -104,7 +108,7 @@ export class CurrentStockComponent implements OnInit {
       error: (err) => {
         this.items.set([]);
         this.isLoading.set(false);
-        this.loadError.set(parseApiError(err, 'Could not load current stock.'));
+        this.loadError.set(parseApiError(err, this.i18n.t('Could not load current stock.')));
       }
     });
   }
@@ -135,15 +139,15 @@ export class CurrentStockComponent implements OnInit {
 
     this.isExporting.set(true);
     try {
-      const farmName = this.contextService.currentFarmValue?.name || 'All Units';
+      const farmName = this.contextService.currentFarmValue?.name || this.i18n.t('All Units');
       await this.pdfService.exportElement(element, {
         filename: `Current_Stock_Report_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Current Stock Balance & Valuation Report',
-          subtitle: 'Real-time snapshot of current inventory balance and valuation',
+          title: this.i18n.t('Current Stock Balance & Valuation Report'),
+          subtitle: this.i18n.t('Real-time snapshot of current inventory balance and valuation'),
           farmName,
-          dateRange: `As of ${new Date().toLocaleDateString('en-GB')}`,
+          dateRange: this.i18n.t('As of {date}', { date: new Date().toLocaleDateString('en-GB') }),
           currency: 'BDT (৳)'
         },
         showSignatures: true

@@ -23,6 +23,8 @@ import { FarmSummaryCardsComponent } from '../../widgets/farm-summary-cards/farm
 import { RecentActivityFeedComponent } from '../../widgets/recent-activity-feed/recent-activity-feed';
 import { SetupChecklistComponent } from '../../widgets/setup-checklist/setup-checklist';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /** Visual tone of a KPI: neutral (brand), or a state colour only when the meaning is clear. */
 type KpiTone = 'neutral' | 'good' | 'warn' | 'bad';
@@ -72,7 +74,8 @@ const KPI_HINT_CLASS: Record<KpiTone, string> = {
     VaccinationComplianceChartComponent,
     FarmSummaryCardsComponent,
     RecentActivityFeedComponent,
-    SetupChecklistComponent
+    SetupChecklistComponent,
+    TranslatePipe
   ],
   templateUrl: './executive-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +88,7 @@ export class ExecutiveDashboardComponent {
   private readonly dashboardService = inject(DashboardService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   private readonly farmId$ = this.contextService.currentFarm$.pipe(
     map(farm => farm?.id)
@@ -115,7 +119,7 @@ export class ExecutiveDashboardComponent {
         switchMap(([farmId]) => farmId
           ? load(farmId).pipe(
               map((data): State => ({ data, error: null })),
-              catchError(err => of<State>({ data: null, error: parseApiError(err, fallbackMessage) })),
+              catchError(err => of<State>({ data: null, error: parseApiError(err, this.i18n.t(fallbackMessage)) })),
               startWith<State>({ data: undefined, error: null })
             )
           : of<State>({ data: noFarmValue, error: null }))
@@ -169,10 +173,12 @@ export class ExecutiveDashboardComponent {
   /** "Good morning, Rafiul. Here's Green Acres today." Built from data already in memory. */
   public readonly greeting = computed(() => {
     const hour = new Date().getHours();
-    const salutation = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    const firstName = (this.authService.currentUserSignal()?.fullName ?? '').trim().split(/\s+/)[0];
-    const farm = this.farmName();
-    return `${salutation}${firstName ? ', ' + firstName : ''}. Here's ${farm ? farm : 'your farm'} today.`;
+    const greeting = this.i18n.t(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening');
+    const name = (this.authService.currentUserSignal()?.fullName ?? '').trim().split(/\s+/)[0];
+    const farm = this.farmName() || this.i18n.t('your farm');
+    return name
+      ? this.i18n.t("{greeting}, {name}. Here's {farm} today.", { greeting, name, farm })
+      : this.i18n.t("{greeting}. Here's {farm} today.", { greeting, farm });
   });
 
   /** Count of KPI signals that need someone to act (sick, deaths, low stock, due vaccinations). */

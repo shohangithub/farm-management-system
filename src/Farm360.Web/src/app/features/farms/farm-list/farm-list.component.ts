@@ -14,15 +14,18 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-farm-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatIconModule, FarmCardComponent, PageHeaderComponent, LoadingComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [TranslatePipe, CommonModule, RouterModule, FormsModule, MatIconModule, FarmCardComponent, PageHeaderComponent, LoadingComponent, EmptyStateComponent, ErrorStateComponent],
   templateUrl: './farm-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FarmListComponent {
+  private readonly i18n = inject(I18nService);
   private readonly farmService = inject(FarmService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

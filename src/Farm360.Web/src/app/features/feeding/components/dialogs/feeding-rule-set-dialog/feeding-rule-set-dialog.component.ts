@@ -23,6 +23,8 @@ import {
 import { NotificationService } from '../../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 interface PlanTypeOption {
   value: FeedingPlanType;
@@ -46,7 +48,7 @@ interface RuleRow {
 @Component({
   selector: 'app-feeding-rule-set-dialog',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [MoneyPipe, TranslatePipe,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -77,42 +79,42 @@ interface RuleRow {
             <mat-icon class="!w-5 !h-5 !text-[20px]">rule</mat-icon>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">{{ isEditing ? 'Edit' : 'New' }} Feed Chart <span class="text-sm font-normal text-gray-400">· খাদ্য তালিকা</span></h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">How much each animal should eat per day</p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">{{ (isEditing ? 'Edit Feed Chart' : 'New Feed Chart') | t }} @if (!i18n.isBangla) {<span class="text-sm font-normal text-gray-400">· খাদ্য তালিকা</span>}</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ 'How much each animal should eat per day' | t }}</p>
           </div>
         </div>
-        <button mat-icon-button (click)="close()" class="text-gray-400" aria-label="Close"><mat-icon>close</mat-icon></button>
+        <button mat-icon-button (click)="close()" class="text-gray-400" [attr.aria-label]="'Close' | t"><mat-icon>close</mat-icon></button>
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-7" [formGroup]="form">
 
         <!-- Step 1: basics -->
         <section class="space-y-3">
-          <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white m-0"><span class="step">1</span> Name &amp; animals</h3>
+          <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white m-0"><span class="step">1</span> {{ 'Name & animals' | t }}</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="md:col-span-3">
-              <input formControlName="name" type="text" class="field" placeholder="Chart name, e.g. Fattening bull — concentrate" />
-              <p *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="text-[11px] text-red-500 mt-1 mb-0">Give the rule set a name.</p>
+              <input formControlName="name" type="text" class="field" [placeholder]="'Chart name, e.g. Fattening bull — concentrate' | t" />
+              <p *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="text-[11px] text-red-500 mt-1 mb-0">{{ 'Give the rule set a name.' | t }}</p>
             </div>
-            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Animal
+            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">{{ 'Animal' | t }}
               <select formControlName="targetAnimalType" class="field mt-1">
-                <option *ngFor="let a of animalOptions" [value]="a">{{ a }}</option>
+                <option *ngFor="let a of animalOptions" [value]="a">{{ a | t }}</option>
               </select>
             </label>
-            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Purpose
+            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">{{ 'Purpose' | t }}
               <select formControlName="feedingPurpose" class="field mt-1">
-                <option *ngFor="let p of purposeOptions" [value]="p">{{ p }}</option>
+                <option *ngFor="let p of purposeOptions" [value]="p">{{ p | t }}</option>
               </select>
             </label>
             <div class="flex items-end pb-2">
-              <mat-checkbox formControlName="isActive" color="primary">Active (can be used in plans)</mat-checkbox>
+              <mat-checkbox formControlName="isActive" color="primary">{{ 'Active (can be used in plans)' | t }}</mat-checkbox>
             </div>
           </div>
         </section>
 
         <!-- Step 2: how feed is decided -->
         <section class="space-y-3">
-          <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white m-0"><span class="step">2</span> How is the daily feed decided?</h3>
+          <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white m-0"><span class="step">2</span> {{ 'How is the daily feed decided?' | t }}</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button type="button" *ngFor="let p of planTypes" (click)="setPlanType(p.value)"
               class="text-left p-3.5 rounded-xl border-2 transition-all flex gap-3"
@@ -121,9 +123,9 @@ interface RuleRow {
                 : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-emerald-300'">
               <mat-icon class="shrink-0" [ngClass]="planType === p.value ? 'text-emerald-600' : 'text-gray-400'">{{ p.icon }}</mat-icon>
               <span>
-                <span class="block text-sm font-bold text-gray-900 dark:text-white">{{ p.title }}</span>
-                <span class="block text-xs text-gray-600 dark:text-gray-300 mt-0.5">{{ p.summary }}</span>
-                <span class="block text-[11px] text-emerald-700 dark:text-emerald-400 mt-1">{{ p.example }}</span>
+                <span class="block text-sm font-bold text-gray-900 dark:text-white">{{ p.title | t }}</span>
+                <span class="block text-xs text-gray-600 dark:text-gray-300 mt-0.5">{{ p.summary | t }}</span>
+                <span class="block text-[11px] text-emerald-700 dark:text-emerald-400 mt-1">{{ p.example | t }}</span>
               </span>
             </button>
           </div>
@@ -133,58 +135,58 @@ interface RuleRow {
         <section class="space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-2">
             <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white m-0">
-              <span class="step">3</span> {{ hasRange ? 'Feed for each ' + (isAge ? 'age' : 'weight') + ' range' : 'Daily feed per animal' }}
+              <span class="step">3</span> {{ (hasRange ? (isAge ? 'Feed for each age range' : 'Feed for each weight range') : 'Daily feed per animal') | t }}
             </h3>
             <div class="flex items-center gap-2">
               <button *ngIf="hasRange" type="button" (click)="showGenerator.set(!showGenerator())"
                 class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 inline-flex items-center gap-1">
-                <mat-icon class="!text-[16px] !w-4 !h-4">auto_awesome</mat-icon> Quick fill
+                <mat-icon class="!text-[16px] !w-4 !h-4">auto_awesome</mat-icon> {{ 'Quick fill' | t }}
               </button>
               <button *ngIf="hasRange && rules.length > 1" type="button" (click)="sortRules()"
                 class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 inline-flex items-center gap-1">
-                <mat-icon class="!text-[16px] !w-4 !h-4">sort</mat-icon> Sort
+                <mat-icon class="!text-[16px] !w-4 !h-4">sort</mat-icon> {{ 'Sort' | t }}
               </button>
             </div>
           </div>
 
           <!-- Same ration for every row -->
           <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-3 text-xs">
-            <span class="font-semibold text-gray-700 dark:text-gray-200">Ration for all rows:</span>
+            <span class="font-semibold text-gray-700 dark:text-gray-200">{{ 'Ration for all rows:' | t }}</span>
             <select class="cell !w-auto min-w-[200px]" [ngModel]="defaultFormulaId" [ngModelOptions]="{ standalone: true }" (ngModelChange)="applyFormulaToAll($event)">
-              <option [ngValue]="null">— choose a formula —</option>
-              <optgroup label="Formulas / rations">
-                <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}{{ f.totalCostPerKgBdt ? ' (৳' + (f.totalCostPerKgBdt | number:'1.0-2') + '/kg)' : '' }}</option>
+              <option [ngValue]="null">{{ '— choose a formula —' | t }}</option>
+              <optgroup [label]="'Formulas / rations' | t">
+                <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}{{ f.totalCostPerKgBdt ? ' (৳' + (f.totalCostPerKgBdt | number:'1.0-2') + '/' + ('kg' | t) + ')' : '' }}</option>
               </optgroup>
-              <optgroup *ngIf="stockItems().length" label="Stock items (fed as they are)">
+              <optgroup *ngIf="stockItems().length" [label]="'Stock items (fed as they are)' | t">
                 <option *ngFor="let it of stockItems()" [ngValue]="'i:' + it.id">{{ it.name }} ({{ it.weightedAverageCostBdt | money:2 }}/{{ it.unitOfMeasure }})</option>
               </optgroup>
             </select>
-            <span class="text-gray-400">or</span>
+            <span class="text-gray-400">{{ 'or' | t }}</span>
             <select class="cell !w-auto" [ngModel]="defaultFeedType" [ngModelOptions]="{ standalone: true }" (ngModelChange)="applyFeedTypeToAll($event)">
-              <option *ngFor="let c of categoryOptions" [ngValue]="c.value">{{ c.label }} (no formula)</option>
+              <option *ngFor="let c of categoryOptions" [ngValue]="c.value">{{ '{label} (no formula)' | t: { label: (c.label | t) } }}</option>
             </select>
-            <span class="text-gray-400">— you can still change a single row below.</span>
+            <span class="text-gray-400">{{ '— you can still change a single row below.' | t }}</span>
           </div>
 
           <!-- Quick fill -->
           <div *ngIf="showGenerator()" class="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs flex flex-wrap items-end gap-3">
-            <label class="font-semibold">From ({{ unitLabel }})
+            <label class="font-semibold">{{ 'From ({unit})' | t: { unit: unitLabel } }}
               <input type="number" min="0" class="cell mt-1 !w-24" [(ngModel)]="gen.from" [ngModelOptions]="{ standalone: true }" />
             </label>
-            <label class="font-semibold">To ({{ unitLabel }})
+            <label class="font-semibold">{{ 'To ({unit})' | t: { unit: unitLabel } }}
               <input type="number" min="0" class="cell mt-1 !w-24" [(ngModel)]="gen.to" [ngModelOptions]="{ standalone: true }" />
             </label>
-            <label class="font-semibold">Every ({{ unitLabel }})
+            <label class="font-semibold">{{ 'Every ({unit})' | t: { unit: unitLabel } }}
               <input type="number" min="0" class="cell mt-1 !w-20" [(ngModel)]="gen.step" [ngModelOptions]="{ standalone: true }" />
             </label>
-            <label class="font-semibold">First {{ quantityLabel }}
+            <label class="font-semibold">{{ 'First {label}' | t: { label: quantityLabel } }}
               <input type="number" min="0" step="0.01" class="cell mt-1 !w-24" [(ngModel)]="gen.startQty" [ngModelOptions]="{ standalone: true }" />
             </label>
-            <label class="font-semibold">Increase per row
+            <label class="font-semibold">{{ 'Increase per row' | t }}
               <input type="number" min="0" step="0.01" class="cell mt-1 !w-24" [(ngModel)]="gen.increment" [ngModelOptions]="{ standalone: true }" />
             </label>
-            <button type="button" (click)="generate()" class="px-3 py-2 rounded-lg bg-emerald-600 text-white font-semibold">Create {{ generatorCount() }} rows</button>
-            <p class="w-full m-0 text-gray-500">Replaces the rows below. Example: 81 → 450 kg every 50 kg, starting at 1.5 kg and adding 0.5 kg per row.</p>
+            <button type="button" (click)="generate()" class="px-3 py-2 rounded-lg bg-emerald-600 text-white font-semibold">{{ 'Create {n} rows' | t: { n: generatorCount() } }}</button>
+            <p class="w-full m-0 text-gray-500">{{ 'Replaces the rows below. Example: 81 → 450 kg every 50 kg, starting at 1.5 kg and adding 0.5 kg per row.' | t }}</p>
           </div>
 
           <!-- Table -->
@@ -194,12 +196,12 @@ interface RuleRow {
                 <tr>
                   <th class="px-3 py-2 text-left w-8">#</th>
                   <ng-container *ngIf="hasRange">
-                    <th class="px-2 py-2 text-left">From ({{ unitLabel }})</th>
-                    <th class="px-2 py-2 text-left">To ({{ unitLabel }})</th>
+                    <th class="px-2 py-2 text-left">{{ 'From ({unit})' | t: { unit: unitLabel } }}</th>
+                    <th class="px-2 py-2 text-left">{{ 'To ({unit})' | t: { unit: unitLabel } }}</th>
                   </ng-container>
-                  <th class="px-2 py-2 text-left">Formula / ration</th>
+                  <th class="px-2 py-2 text-left">{{ 'Formula / ration' | t }}</th>
                   <th class="px-2 py-2 text-left w-36">{{ quantityLabel }} <span class="text-red-500">*</span></th>
-                  <th class="px-2 py-2 text-left">Works out to</th>
+                  <th class="px-2 py-2 text-left">{{ 'Works out to' | t }}</th>
                   <th class="w-10"></th>
                 </tr>
               </thead>
@@ -213,36 +215,36 @@ interface RuleRow {
                     </td>
                     <td class="px-2 py-2">
                       <input type="number" min="0" class="cell" [ngClass]="{ invalid: rowError(i) }"
-                        [formControlName]="isAge ? 'maxAgeDays' : 'maxWeightKg'" placeholder="no limit" />
+                        [formControlName]="isAge ? 'maxAgeDays' : 'maxWeightKg'" [placeholder]="'no limit' | t" />
                     </td>
                   </ng-container>
                   <td class="px-2 py-2 min-w-[180px]">
                     <select formControlName="formulaId" class="cell">
-                      <option [ngValue]="null">No formula — by category</option>
-                      <optgroup label="Formulas / rations">
+                      <option [ngValue]="null">{{ 'No formula — by category' | t }}</option>
+                      <optgroup [label]="'Formulas / rations' | t">
                         <option *ngFor="let f of formulas()" [ngValue]="f.id">{{ f.title }}</option>
                       </optgroup>
-                      <optgroup *ngIf="stockItems().length" label="Stock items (fed as they are)">
+                      <optgroup *ngIf="stockItems().length" [label]="'Stock items (fed as they are)' | t">
                         <option *ngFor="let it of stockItems()" [ngValue]="'i:' + it.id">{{ it.name }}</option>
                       </optgroup>
                     </select>
                     <select *ngIf="!rule.get('formulaId')?.value" formControlName="feedType" class="cell mt-1">
-                      <option *ngFor="let c of categoryOptions" [ngValue]="c.value">{{ c.label }}</option>
+                      <option *ngFor="let c of categoryOptions" [ngValue]="c.value">{{ c.label | t }}</option>
                     </select>
                   </td>
                   <td class="px-2 py-2">
                     <div class="relative">
                       <input type="number" min="0" step="0.01" formControlName="quantityValue" class="cell pr-9"
                         [ngClass]="{ invalid: rule.get('quantityValue')?.touched && rule.get('quantityValue')?.invalid }" placeholder="0" />
-                      <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-400">{{ isPercent ? '%' : 'kg' }}</span>
+                      <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-400">{{ isPercent ? '%' : ('kg' | t) }}</span>
                     </div>
                   </td>
                   <td class="px-2 py-2 text-[11px] text-gray-500 dark:text-gray-400 pt-3">{{ worksOut(i) }}</td>
                   <td class="px-2 py-2 text-right">
-                    <button type="button" (click)="duplicateRule(i)" title="Copy this row below" class="p-1 text-gray-400 hover:text-emerald-600" aria-label="Duplicate">
+                    <button type="button" (click)="duplicateRule(i)" [title]="'Copy this row below' | t" class="p-1 text-gray-400 hover:text-emerald-600" [attr.aria-label]="'Duplicate' | t">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">content_copy</mat-icon>
                     </button>
-                    <button type="button" (click)="removeRule(i)" title="Remove row" class="p-1 text-gray-400 hover:text-red-600" [disabled]="rules.length === 1" aria-label="Delete">
+                    <button type="button" (click)="removeRule(i)" [title]="'Remove row' | t" class="p-1 text-gray-400 hover:text-red-600" [disabled]="rules.length === 1" [attr.aria-label]="'Delete' | t">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                     </button>
                   </td>
@@ -252,40 +254,40 @@ interface RuleRow {
             <div *ngIf="hasRange || rules.length === 0" class="border-t border-gray-100 dark:border-gray-700/60 p-2">
               <button type="button" (click)="addRule()" class="w-full py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 inline-flex items-center justify-center gap-1">
                 <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon>
-                {{ hasRange ? 'Add next range' + (nextStartHint() !== null ? ' (starts at ' + nextStartHint() + ' ' + unitLabel + ')' : '') : 'Add row' }}
+                {{ hasRange ? (nextStartHint() !== null ? ('Add next range (starts at {start} {unit})' | t: { start: nextStartHint(), unit: unitLabel }) : ('Add next range' | t)) : ('Add row' | t) }}
               </button>
             </div>
           </div>
 
           <!-- Checks -->
           <div *ngIf="issues().length" class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 space-y-1">
-            <div class="font-bold flex items-center gap-1"><mat-icon class="!text-[16px] !w-4 !h-4">warning</mat-icon> Please check</div>
+            <div class="font-bold flex items-center gap-1"><mat-icon class="!text-[16px] !w-4 !h-4">warning</mat-icon> {{ 'Please check' | t }}</div>
             <div *ngFor="let issue of issues()">• {{ issue }}</div>
           </div>
           <div *ngIf="!issues().length && hasRange && rules.length > 1" class="text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
             <mat-icon class="!text-[16px] !w-4 !h-4">check_circle</mat-icon>
-            Ranges cover {{ coverage() }} with no gaps or overlaps.
+            {{ 'Ranges cover {range} with no gaps or overlaps.' | t: { range: coverage() } }}
           </div>
         </section>
 
         <!-- Notes -->
         <section>
-          <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Notes (optional)
-            <textarea formControlName="baseNotes" rows="2" class="field mt-1" placeholder="e.g. Split into two meals, morning and evening"></textarea>
+          <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">{{ 'Notes (optional)' | t }}
+            <textarea formControlName="baseNotes" rows="2" class="field mt-1" [placeholder]="'e.g. Split into two meals, morning and evening' | t"></textarea>
           </label>
         </section>
       </div>
 
       <!-- Footer -->
       <div class="px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3 shrink-0">
-        <span class="text-xs text-gray-500">{{ rules.length }} row(s)<span *ngIf="blockingIssue()" class="text-red-500"> · {{ blockingIssue() }}</span></span>
+        <span class="text-xs text-gray-500">{{ '{n} row(s)' | t: { n: rules.length } }}<span *ngIf="blockingIssue()" class="text-red-500"> · {{ blockingIssue() }}</span></span>
         <div class="flex gap-3">
           <button type="button" (click)="close()" [disabled]="isSubmitting()"
-            class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl">Cancel</button>
+            class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl">{{ 'Cancel' | t }}</button>
           <button type="button" (click)="submit()" [disabled]="isSubmitting()"
             class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl inline-flex items-center min-w-[130px] justify-center">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-5 !h-5 !text-[20px] mr-2">refresh</mat-icon>
-            {{ isEditing ? 'Save changes' : 'Create feed chart' }}
+            {{ (isEditing ? 'Save changes' : 'Create feed chart') | t }}
           </button>
         </div>
       </div>
@@ -302,6 +304,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly inventoryService = inject(InventoryService);
   private readonly context = inject(WorkingContextService);
+  protected readonly i18n = inject(I18nService);
 
   readonly isEditing = !!this.data;
   readonly isSubmitting = signal(false);
@@ -352,8 +355,8 @@ export class FeedingRuleSetDialogComponent implements OnInit {
   get isAge(): boolean { return this.planType === FeedingPlanType.AgeBased; }
   get isPercent(): boolean { return this.planType === FeedingPlanType.WeightPercentage; }
   get hasRange(): boolean { return this.planType !== FeedingPlanType.FixedQuantity; }
-  get unitLabel(): string { return this.isAge ? 'days' : 'kg'; }
-  get quantityLabel(): string { return this.isPercent ? '% of body weight' : 'kg / head / day'; }
+  get unitLabel(): string { return this.i18n.t(this.isAge ? 'days' : 'kg'); }
+  get quantityLabel(): string { return this.i18n.t(this.isPercent ? '% of body weight' : 'kg / head / day'); }
 
   ngOnInit(): void {
     this.feedingService.getFormulas(1, 500).subscribe({
@@ -493,7 +496,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     const { from, to, step, startQty, increment } = this.gen;
     const count = this.generatorCount();
     if (!count || count > 100) {
-      this.notify.warning('Check the From / To / Every values.');
+      this.notify.warning(this.i18n.t('Check the From / To / Every values.'));
       return;
     }
     this.rules.clear();
@@ -525,11 +528,12 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     const unit = this.unitLabel;
     const rows = this.rules.controls.map((_, i) => ({ i, ...this.row(i) }));
 
-    rows.filter(r => r.quantity === null || r.quantity <= 0).forEach(r => out.push(`Row ${r.i + 1}: enter the ${this.isPercent ? 'percentage' : 'quantity'}.`));
-    if (this.isPercent) rows.filter(r => (r.quantity ?? 0) > 10).forEach(r => out.push(`Row ${r.i + 1}: ${r.quantity}% of body weight is very high (usually 1.5–4%).`));
+    const t = (text: string, params?: Record<string, string | number | null>) => this.i18n.t(text, params);
+    rows.filter(r => r.quantity === null || r.quantity <= 0).forEach(r => out.push(t(this.isPercent ? 'Row {row}: enter the percentage.' : 'Row {row}: enter the quantity.', { row: r.i + 1 })));
+    if (this.isPercent) rows.filter(r => (r.quantity ?? 0) > 10).forEach(r => out.push(t('Row {row}: {pct}% of body weight is very high (usually 1.5–4%).', { row: r.i + 1, pct: r.quantity })));
     if (!this.hasRange) return out;
 
-    rows.filter(r => r.min !== null && r.max !== null && r.min > r.max).forEach(r => out.push(`Row ${r.i + 1}: "from" (${r.min}) is above "to" (${r.max}).`));
+    rows.filter(r => r.min !== null && r.max !== null && r.min > r.max).forEach(r => out.push(t('Row {row}: "from" ({min}) is above "to" ({max}).', { row: r.i + 1, min: r.min, max: r.max })));
 
     const sorted = rows.filter(r => r.min !== null || r.max !== null)
       .sort((a, b) => (a.min ?? -Infinity) - (b.min ?? -Infinity));
@@ -537,24 +541,24 @@ export class FeedingRuleSetDialogComponent implements OnInit {
       const prev = sorted[k - 1];
       const cur = sorted[k];
       if (prev.max === null) {
-        out.push(`Row ${prev.i + 1} has no upper limit, so it overlaps row ${cur.i + 1}.`);
+        out.push(t('Row {a} has no upper limit, so it overlaps row {b}.', { a: prev.i + 1, b: cur.i + 1 }));
       } else if (cur.min !== null && cur.min <= prev.max) {
-        out.push(`Rows ${prev.i + 1} and ${cur.i + 1} overlap (${prev.min ?? 0}–${prev.max} and ${cur.min}–${cur.max ?? '…'} ${unit}).`);
+        out.push(t('Rows {a} and {b} overlap ({aMin}–{aMax} and {bMin}–{bMax} {unit}).', { a: prev.i + 1, b: cur.i + 1, aMin: prev.min ?? 0, aMax: prev.max, bMin: cur.min, bMax: cur.max ?? '…', unit }));
       } else if (cur.min !== null && cur.min > prev.max + 1) {
-        out.push(`Gap between ${prev.max} and ${cur.min} ${unit}: animals in between get no feed from this rule set.`);
+        out.push(t('Gap between {from} and {to} {unit}: animals in between get no feed from this rule set.', { from: prev.max, to: cur.min, unit }));
       }
     }
     const unsorted = rows.some((r, k) => k > 0 && r.min !== null && rows[k - 1].min !== null && r.min < rows[k - 1].min!);
-    if (unsorted && !out.length) out.push('Rows are out of order — press "Sort" to list them lightest / youngest first.');
+    if (unsorted && !out.length) out.push(t('Rows are out of order — press "Sort" to list them lightest / youngest first.'));
     return out;
   }
 
   /** Hard problems that stop saving (shown in the footer). */
   blockingIssue(): string | null {
     this.revision();
-    if (this.form.get('name')?.invalid) return 'name is required';
-    if (this.rules.controls.some(c => c.get('quantityValue')?.invalid)) return 'every row needs a quantity';
-    if (this.rules.controls.some((_, i) => this.rowError(i))) return 'a range has "from" above "to"';
+    if (this.form.get('name')?.invalid) return this.i18n.t('name is required');
+    if (this.rules.controls.some(c => c.get('quantityValue')?.invalid)) return this.i18n.t('every row needs a quantity');
+    if (this.rules.controls.some((_, i) => this.rowError(i))) return this.i18n.t('a range has "from" above "to"');
     return null;
   }
 
@@ -564,7 +568,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     const mins = rows.map(r => r.min).filter((v): v is number => v !== null);
     const maxes = rows.map(r => r.max);
     const low = mins.length ? Math.min(...mins) : 0;
-    const high = maxes.some(m => m === null) ? 'and above' : `– ${Math.max(...(maxes as number[]))}`;
+    const high = maxes.some(m => m === null) ? this.i18n.t('and above') : `– ${Math.max(...(maxes as number[]))}`;
     return `${low} ${high} ${this.unitLabel}`;
   }
 
@@ -577,14 +581,14 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     const costPerKg = formulaId?.startsWith('i:')
       ? this.stockItems().find(it => it.id === formulaId.substring(2))?.weightedAverageCostBdt ?? 0
       : this.formulas().find(f => f.id === formulaId)?.totalCostPerKgBdt ?? 0;
-    const money = (kg: number) => costPerKg ? ` ≈ ${formatMoney((kg * costPerKg))}/day` : '';
+    const money = (kg: number) => costPerKg ? ` ≈ ${this.i18n.t('{amount}/day', { amount: formatMoney((kg * costPerKg)) })}` : '';
 
     if (this.isPercent) {
       const weight = r.min !== null && r.max !== null ? Math.round((r.min + r.max) / 2) : (r.min ?? r.max ?? 300);
       const kg = Math.round(weight * r.quantity) / 100;
-      return `${weight} kg animal → ${kg} kg/day${money(kg)}`;
+      return `${this.i18n.t('{weight} kg animal → {kg} kg/day', { weight, kg })}${money(kg)}`;
     }
-    return `${r.quantity} kg/head/day${money(r.quantity)}`;
+    return `${this.i18n.t('{qty} kg/head/day', { qty: r.quantity })}${money(r.quantity)}`;
   }
 
   // ── Save ───────────────────────────────────────────────────────────────
@@ -598,7 +602,7 @@ export class FeedingRuleSetDialogComponent implements OnInit {
     this.revision.update(v => v + 1);
     const blocking = this.blockingIssue();
     if (blocking || this.rules.length === 0) {
-      this.notify.error(`Cannot save yet: ${blocking ?? 'add at least one row'}.`);
+      this.notify.error(this.i18n.t('Cannot save yet: {reason}.', { reason: blocking ?? this.i18n.t('add at least one row') }));
       return;
     }
 
@@ -633,11 +637,11 @@ export class FeedingRuleSetDialogComponent implements OnInit {
       : this.feedingService.createRuleSet(request);
     call.subscribe({
       next: () => {
-        this.notify.success(this.isEditing ? 'Feed chart updated' : 'Feed chart created');
+        this.notify.success(this.i18n.t(this.isEditing ? 'Feed chart updated' : 'Feed chart created'));
         this.dialogRef.close(true);
       },
       error: (err: { error?: { detail?: string } }) => {
-        this.notify.error(err.error?.detail || 'Failed to save the rule set');
+        this.notify.error(err.error?.detail || this.i18n.t('Failed to save the rule set'));
         this.isSubmitting.set(false);
       }
     });

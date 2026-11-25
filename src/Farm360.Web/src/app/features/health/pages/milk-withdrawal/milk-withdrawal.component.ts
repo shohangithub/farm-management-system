@@ -15,25 +15,27 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-milk-withdrawal',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe],
   template: `
 <app-page-header 
-  title="Milk Withdrawal Tracking" 
-  description="Monitor milk withdrawal periods after medical treatments."
+  [title]="'Milk Withdrawal Tracking' | t"
+  [description]="'Monitor milk withdrawal periods after medical treatments.' | t"
   icon="water_drop" 
   iconColor="text-amber-600">
   <div actions class="flex items-center gap-2">
     <button (click)="exportPdf()" [disabled]="isExporting() || !withdrawals().length"
       class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+      <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
     </button>
     <button class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="loadWithdrawals()">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> Refresh
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> {{ 'Refresh' | t }}
     </button>
   </div>
 </app-page-header>
@@ -42,8 +44,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
 <div class="mb-6 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 p-4 rounded-xl border border-amber-200 dark:border-amber-800 flex items-start shadow-sm">
   <mat-icon class="mr-3 mt-0.5">warning</mat-icon>
   <div>
-    <div class="font-medium mb-1">Attention</div>
-    <div class="text-sm">The animals listed below are currently under a milk withdrawal period due to medical treatment. Their milk must NOT be added to the bulk tank.</div>
+    <div class="font-medium mb-1">{{ 'Attention' | t }}</div>
+    <div class="text-sm">{{ 'The animals listed below are currently under a milk withdrawal period due to medical treatment. Their milk must NOT be added to the bulk tank.' | t }}</div>
   </div>
 </div>
 
@@ -55,11 +57,11 @@ import { NotificationService } from '../../../../shared/services/notification.se
     <table class="w-full text-sm text-left" *ngIf="withdrawals().length > 0">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
         <tr>
-          <th scope="col" class="px-6 py-4">Animal Tag</th>
-          <th scope="col" class="px-6 py-4">Medication</th>
-          <th scope="col" class="px-6 py-4">Treatment Started</th>
-          <th scope="col" class="px-6 py-4 text-center">Withdrawal Days</th>
-          <th scope="col" class="px-6 py-4">Safe To Milk Date</th>
+          <th scope="col" class="px-6 py-4">{{ 'Animal Tag' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Medication' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Treatment Started' | t }}</th>
+          <th scope="col" class="px-6 py-4 text-center">{{ 'Withdrawal Days' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Safe To Milk Date' | t }}</th>
         </tr>
       </thead>
       <tbody>
@@ -75,7 +77,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
           </td>
           <td class="px-6 py-4 text-center">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-              {{ w.milkWithdrawalDays }} Days
+              {{ '{days} Days' | t: { days: w.milkWithdrawalDays } }}
             </span>
           </td>
           <td class="px-6 py-4 text-rose-600 dark:text-rose-400 font-medium">
@@ -88,9 +90,9 @@ import { NotificationService } from '../../../../shared/services/notification.se
     <app-empty-state 
       *ngIf="!isLoading() && withdrawals().length === 0 && !loadError()"
       icon="check_circle"
-      title="No Active Withdrawals"
-      description="There are currently no animals under a milk withdrawal period."
-      actionLabel="Refresh"
+      [title]="'No Active Withdrawals' | t"
+      [description]="'There are currently no animals under a milk withdrawal period.' | t"
+      [actionLabel]="'Refresh' | t"
       (action)="loadWithdrawals()">
     </app-empty-state>
   </div>
@@ -103,6 +105,7 @@ export class MilkWithdrawalComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
+  private readonly i18n = inject(I18nService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -154,14 +157,14 @@ export class MilkWithdrawalComponent {
         filename: `Farm360_Milk_Withdrawals_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Milk Withdrawal Compliance Report',
-          subtitle: 'Active Clinical Treatment Milk Withholding Registry',
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('Milk Withdrawal Compliance Report'),
+          subtitle: this.i18n.t('Active Clinical Treatment Milk Withholding Registry'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: 'Active Restricted Animals', value: `${items.length}` },
-            { label: 'Compliance Status', value: 'Strict Isolation from Bulk Tank' }
+            { label: this.i18n.t('Active Restricted Animals'), value: `${items.length}` },
+            { label: this.i18n.t('Compliance Status'), value: this.i18n.t('Strict Isolation from Bulk Tank') }
           ]
         },
         showSignatures: true

@@ -19,6 +19,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-supplier-list',
@@ -33,17 +35,18 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Suppliers & Vendor Management"
-      description="Manage feed mills, pharmaceutical companies, veterinary product suppliers, and procurement contacts."
-      breadcrumbActiveNode="Suppliers">
+      [title]="'Suppliers & Vendor Management' | t"
+      [description]="'Manage feed mills, pharmaceutical companies, veterinary product suppliers, and procurement contacts.' | t"
+      [breadcrumbActiveNode]="'Suppliers' | t">
       <div actions>
         <button (click)="openCreateSupplierDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add Supplier
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Supplier' | t }}
         </button>
       </div>
     </app-page-header>
@@ -57,14 +60,14 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
-            placeholder="Search suppliers by name or phone..."
+            [placeholder]="'Search suppliers by name or phone...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
         </div>
 
         <select [ngModel]="currentSortKey()" (ngModelChange)="onSortChange($event)"
           class="w-full sm:w-52 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option value="name_asc">Sort: Name (A-Z)</option>
-          <option value="name_desc">Sort: Name (Z-A)</option>
+          <option value="name_asc">{{ 'Sort: Name (A-Z)' | t }}</option>
+          <option value="name_desc">{{ 'Sort: Name (Z-A)' | t }}</option>
         </select>
       </div>
 
@@ -72,9 +75,9 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       <app-empty-state
         *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="local_shipping"
-        title="No suppliers registered"
-        description="Add suppliers to associate them with incoming stock purchases and receipts."
-        actionLabel="Add Supplier"
+        [title]="'No suppliers registered' | t"
+        [description]="'Add suppliers to associate them with incoming stock purchases and receipts.' | t"
+        [actionLabel]="'Add Supplier' | t"
         (action)="openCreateSupplierDialog()">
       </app-empty-state>
 
@@ -91,9 +94,9 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
                 </div>
                 <div class="flex items-center gap-1">
                   <button (click)="openEditDialog(sup); $event.stopPropagation()" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-flex items-center gap-1">
-                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Edit
+                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Edit' | t }}
                   </button>
-                  <button aria-label="Delete" (click)="onDelete(sup, $event)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                  <button [attr.aria-label]="'Delete' | t" (click)="onDelete(sup, $event)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
                     <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                   </button>
                 </div>
@@ -127,12 +130,12 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
       <!-- Pagination Footer -->
       <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-          Showing <span class="font-bold text-gray-900 dark:text-white">{{ pageStart() }}</span> to <span class="font-bold text-gray-900 dark:text-white">{{ pageEnd() }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ result()?.totalCount }}</span> suppliers
+          {{ 'Showing {from} to {to} of {total} suppliers' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>
         <div class="flex items-center gap-4">
           <!-- Page Size Filter -->
           <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-500 dark:text-gray-400">Rows per page:</label>
+            <label class="text-sm text-gray-500 dark:text-gray-400">{{ 'Rows per page:' | t }}</label>
             <select [ngModel]="params().pageSize" (ngModelChange)="onPageSizeChange($event)"
               class="px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
               <option [ngValue]="10">10</option>
@@ -143,11 +146,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
           </div>
           
           <div class="flex items-center gap-2">
-            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button [attr.aria-label]="'Previous' | t" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button [attr.aria-label]="'Next' | t" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -164,6 +167,7 @@ export class SupplierListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -242,7 +246,7 @@ export class SupplierListComponent {
       tap(() => { this.loading.set(true); this.error.set(null); }),
       switchMap(({ params }) => this.inventoryService.getSuppliers(params).pipe(
         catchError(e => {
-          this.error.set(parseApiError(e, 'Could not load suppliers.'));
+          this.error.set(parseApiError(e, this.i18n.t('Could not load suppliers.')));
           return of(null);
         })
       )),
@@ -333,10 +337,10 @@ export class SupplierListComponent {
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
-        title: 'Delete Supplier',
-        message: `Are you sure you want to delete supplier "${supplier.name}"? This action cannot be undone.`,
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
+        title: this.i18n.t('Delete Supplier'),
+        message: this.i18n.t('Are you sure you want to delete supplier “{name}”? This action cannot be undone.', { name: supplier.name }),
+        confirmButtonText: this.i18n.t('Delete'),
+        cancelButtonText: this.i18n.t('Cancel'),
         isDestructive: true
       }
     });
@@ -347,7 +351,7 @@ export class SupplierListComponent {
           next: () => this.reload(),
           error: (err) => {
             console.error('Failed to delete supplier', err);
-            this.error.set(err?.error?.detail || 'Failed to delete supplier');
+            this.error.set(err?.error?.detail || this.i18n.t('Failed to delete supplier'));
           }
         });
       }

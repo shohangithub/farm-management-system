@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, of, switchMap, BehaviorSubject } from 'rxjs';
+import { catchError, of, switchMap, BehaviorSubject, combineLatest } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -15,16 +15,18 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { IncomeFormDialogComponent } from '../../components/income-form-dialog/income-form-dialog';
 import { ExpenseFormDialogComponent } from '../../components/expense-form-dialog/expense-form-dialog';
 import { AllocateOverheadDialogComponent } from '../../components/allocate-overhead-dialog/allocate-overhead-dialog';
-import { MonthlyCashFlowPoint } from '../../models/finance.model';
+import { MonthlyCashFlowPoint, categoryLabel } from '../../models/finance.model';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-finance-dashboard',
   standalone: true,
-  imports: [MoneyPipe, HasPermissionDirective, ErrorStateComponent,
+  imports: [TranslatePipe, MoneyPipe, HasPermissionDirective, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterLink,
@@ -44,22 +46,26 @@ export class FinanceDashboardComponent implements OnInit {
   private readonly workingContextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load the finance dashboard");
   
   readonly Math = Math;
   private readonly refreshTrigger$ = new BehaviorSubject<void>(undefined);
 
   readonly loadError = signal<string | null>(null);
 
-  private readonly dashboardData$ = this.refreshTrigger$.pipe(
-    switchMap(() => {
+  // Reload when the farm is chosen or changed, not only on open: after a page refresh the farm
+  // arrives a moment later, and reading it once showed "No Financial Activity".
+  private readonly dashboardData$ = combineLatest([this.workingContextService.currentFarm$, this.refreshTrigger$]).pipe(
+    switchMap(([farm]) => {
       this.loadError.set(null);
-      const currentFarmId = this.workingContextService.currentFarmValue?.id;
+      const currentFarmId = farm?.id;
       if (!currentFarmId) {
         return of(null);
       }
       return this.financeService.getDashboard(currentFarmId).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the finance dashboard.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the finance dashboard.')));
           return of(null);
         })
       );
@@ -70,6 +76,11 @@ export class FinanceDashboardComponent implements OnInit {
   readonly isLoading = computed(() => this.dashboardData() === undefined);
 
   ngOnInit(): void {}
+
+  /** The head's friendly name in the interface language (never the raw code). */
+  categoryText(category: string): string {
+    return categoryLabel(category);
+  }
 
   refresh(): void {
     this.refreshTrigger$.next();

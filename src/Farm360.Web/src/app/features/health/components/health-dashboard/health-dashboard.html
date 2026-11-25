@@ -1,11 +1,11 @@
 <app-page-header 
-  title="Health & Mortality Analytics" 
-  description="Trends on mortality and vaccination compliance."
-  breadcrumbActiveNode="Health Analytics">
+  [title]="'Health & Mortality Analytics' | t"
+  [description]="'Trends on mortality and vaccination compliance.' | t"
+  [breadcrumbActiveNode]="'Health Analytics' | t">
   <div actions>
     <button mat-flat-button color="primary" class="print:hidden" [disabled]="!hasData()" (click)="printReport()">
       <mat-icon>print</mat-icon>
-      Print Report
+      {{ 'Print Report' | t }}
     </button>
   </div>
 </app-page-header>
@@ -16,16 +16,16 @@
   <app-empty-state
     *ngIf="!hasFarm()"
     icon="agriculture"
-    title="Choose a farm at the top"
-    description="Health analytics are shown per farm. Pick a farm in the selector at the top of the page.">
+    [title]="'Choose a farm at the top' | t"
+    [description]="'Health analytics are shown per farm. Pick a farm in the selector at the top of the page.' | t">
   </app-empty-state>
 
   <app-empty-state
     *ngIf="hasFarm() && !isLoading() && !hasData()"
     icon="health_and_safety"
-    title="Could not load health analytics"
-    description="Something went wrong while loading the numbers for this farm. You can still record treatments, vaccinations and mortality from the Health dashboard."
-    actionLabel="Open Health Dashboard"
+    [title]="'Could not load health analytics' | t"
+    [description]="'Something went wrong while loading the numbers for this farm. You can still record treatments, vaccinations and mortality from the Health dashboard.' | t"
+    [actionLabel]="'Open Health Dashboard' | t"
     (action)="goToHealthDashboard()">
   </app-empty-state>
 
@@ -35,7 +35,7 @@
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
       <div class="flex justify-between items-start mb-4">
         <div>
-          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Mortality (Last 12 Mos)</p>
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Mortality (Last 12 Mos)' | t }}</p>
           <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalDeathsLast12Months }}</h3>
         </div>
         <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-red-500/20">
@@ -44,14 +44,14 @@
       </div>
       <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
         <mat-icon class="text-[14px] w-[14px] h-[14px] mr-1 text-red-500">trending_down</mat-icon>
-        Total animal deaths recorded.
+        {{ 'Total animal deaths recorded.' | t }}
       </p>
       <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-red-500/5 rotate-[-10deg] pointer-events-none">warning</mat-icon>
     </div>
 
     <!-- Chart: Vaccination Compliance -->
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden col-span-1 lg:col-span-2">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Vaccination Compliance</h3>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ 'Vaccination Compliance' | t }}</h3>
       <div echarts [options]="chartOptions()" class="w-full h-[300px]"></div>
     </div>
   </div>

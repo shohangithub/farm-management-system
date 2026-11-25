@@ -28,12 +28,14 @@ import { BuySellSharesDialogComponent, ShareActionType } from '../../components/
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-share-market',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -49,26 +51,26 @@ import { parseApiError } from '../../../../core/utils/error-parser';
   ],
   template: `
     <app-page-header 
-      title="Farm Share Market" 
-      description="Equity share management, shareholder capital tracking, live valuations, and ownership distribution."
-      breadcrumbActiveNode="Share Market">
+      [title]="'Farm Share Market' | t" 
+      [description]="'Equity share management, shareholder capital tracking, live valuations, and ownership distribution.' | t"
+      [breadcrumbActiveNode]="'Share Market' | t">
       <div actions class="flex items-center gap-2">
         <button *ngIf="overview()?.isConfigured" mat-stroked-button (click)="openTradeDialog('valuation')"
                 class="!rounded-xl !px-4 !py-2 !border-indigo-300 dark:!border-indigo-700 !text-indigo-700 dark:!text-indigo-300 hover:!bg-indigo-50 dark:hover:!bg-indigo-950/40 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">trending_up</mat-icon>
-          <span>Update Valuation</span>
+          <span>{{ 'Update Valuation' | t }}</span>
         </button>
 
         <button *ngIf="overview()?.isConfigured" mat-stroked-button (click)="openConfigureDialog()"
                 class="!rounded-xl !px-4 !py-2 !border-teal-300 dark:!border-teal-700 !text-teal-700 dark:!text-teal-300 hover:!bg-teal-50 dark:hover:!bg-teal-950/40 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">tune</mat-icon>
-          <span>Configure Shares</span>
+          <span>{{ 'Configure Shares' | t }}</span>
         </button>
 
         <button *ngIf="overview()?.isConfigured" mat-flat-button color="primary" (click)="openTradeDialog('purchase')"
                 class="!rounded-xl !px-5 !py-2 !bg-gradient-to-r !from-teal-600 !to-emerald-600 hover:!from-teal-700 hover:!to-emerald-700 !text-white flex items-center gap-2 shadow-sm shadow-teal-500/30 transition-all">
           <mat-icon class="!text-[20px]">add_shopping_cart</mat-icon>
-          <span>Issue / Buy Shares</span>
+          <span>{{ 'Issue / Buy Shares' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -80,7 +82,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
       <!-- Loading State -->
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load the share market" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="!isLoading() && loadError() as err" [title]="couldNotLoadTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- UNCONFIGURED STATE -->
       <div *ngIf="!isLoading() && overview() && !overview()?.isConfigured"
@@ -94,14 +96,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-teal-500/30">
             <mat-icon class="!text-[32px] !w-[32px] !h-[32px]">storefront</mat-icon>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white">Farm Share Market Not Configured</h3>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ 'Farm Share Market Not Configured' | t }}</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            Turn your farm into an equity share investment vehicle. Divide your total farm valuation into shares, retain your majority ownership, and issue shares to outside investors or partners.
+            {{ 'Turn your farm into an equity share investment vehicle. Divide your total farm valuation into shares, retain your majority ownership, and issue shares to outside investors or partners.' | t }}
           </p>
           <button mat-flat-button color="primary" (click)="openConfigureDialog()"
                   class="!rounded-xl !px-6 !py-2.5 !bg-gradient-to-r !from-teal-600 !to-emerald-600 hover:!from-teal-700 hover:!to-emerald-700 !text-white shadow-md shadow-teal-500/20">
             <mat-icon class="mr-1.5">tune</mat-icon>
-            Set Up Farm Shares Now
+            {{ 'Set Up Farm Shares Now' | t }}
           </button>
         </div>
       </div>
@@ -115,7 +117,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <!-- Farm Valuation Card -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-teal-300 dark:hover:border-teal-700 transition-all">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Farm Valuation</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Farm Valuation' | t }}</span>
               <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
                 <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">monetization_on</mat-icon>
               </div>
@@ -125,7 +127,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 {{ config.totalValuationBdt | money }}
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                {{ config.totalShares | number }} total shares
+                {{ '{count} total shares' | t: { count: (config.totalShares | number) } }}
               </p>
             </div>
             <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-teal-500/5 rotate-[-10deg] pointer-events-none">monetization_on</mat-icon>
@@ -134,10 +136,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <!-- Share Price Card -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Current Share Price</span>
-              <button (click)="openTradeDialog('valuation')" title="Update Share Valuation"
+              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Current Share Price' | t }}</span>
+              <button (click)="openTradeDialog('valuation')" [title]="'Update Share Valuation' | t"
                       class="px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition-colors">
-                Revalue
+                {{ 'Revalue' | t }}
               </button>
             </div>
             <div class="mt-3">
@@ -145,7 +147,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 {{ config.sharePriceBdt | money }}
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                Valued: {{ config.lastValuationDate | date:'mediumDate' }}
+                {{ 'Valued: {date}' | t: { date: (config.lastValuationDate | date:'mediumDate') } }}
               </p>
             </div>
             <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
@@ -154,7 +156,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <!-- Owner Retained Equity -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Owner Retained Equity</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Owner Retained Equity' | t }}</span>
               <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                 <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">admin_panel_settings</mat-icon>
               </div>
@@ -164,7 +166,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 {{ config.ownerOwnershipPercentage | number:'1.1-1' }}%
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                {{ config.ownerShareCount | number }} shares ({{ config.ownerEquityValueBdt | money }})
+                {{ '{count} shares ({value})' | t: { count: (config.ownerShareCount | number), value: (config.ownerEquityValueBdt | money) } }}
               </p>
             </div>
             <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">shield</mat-icon>
@@ -173,11 +175,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <!-- Available Pool Card -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-amber-300 dark:hover:border-amber-700 transition-all">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Available Pool</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Available Pool' | t }}</span>
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
                     [class]="config.isShareSaleOpen ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'">
                 <span class="w-1.5 h-1.5 rounded-full" [class]="config.isShareSaleOpen ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"></span>
-                {{ config.isShareSaleOpen ? 'SALE OPEN' : 'CLOSED' }}
+                {{ (config.isShareSaleOpen ? 'SALE OPEN' : 'CLOSED') | t }}
               </span>
             </div>
             <div class="mt-3">
@@ -185,7 +187,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 {{ config.availableShareCount | number }}
               </span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                Pool Value: {{ config.availableValuationBdt | money }}
+                {{ 'Pool Value: {value}' | t: { value: (config.availableValuationBdt | money) } }}
               </p>
             </div>
             <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-amber-500/5 rotate-[-10deg] pointer-events-none">inventory_2</mat-icon>
@@ -202,9 +204,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
                   <mat-icon class="text-teal-600">pie_chart</mat-icon>
-                  Ownership Breakdown
+                  {{ 'Ownership Breakdown' | t }}
                 </h3>
-                <span class="text-xs text-gray-400 font-semibold">{{ overview()?.distribution?.length || 0 }} Slices</span>
+                <span class="text-xs text-gray-400 font-semibold">{{ '{count} Slices' | t: { count: overview()?.distribution?.length || 0 } }}</span>
               </div>
 
               <!-- Chart Container -->
@@ -216,7 +218,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                         [type]="'doughnut'">
                 </canvas>
                 <div *ngIf="chartData().datasets[0].data.length === 0" class="text-xs text-gray-400">
-                  No share distribution data
+                  {{ 'No share distribution data' | t }}
                 </div>
               </div>
             </div>
@@ -226,11 +228,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <div *ngFor="let item of overview()?.distribution" class="flex items-center justify-between text-xs py-1">
                 <div class="flex items-center gap-2 truncate">
                   <span class="w-3 h-3 rounded-full shrink-0" [style.backgroundColor]="item.colorHex"></span>
-                  <span class="font-medium text-gray-800 dark:text-gray-200 truncate">{{ item.label }}</span>
+                  <span class="font-medium text-gray-800 dark:text-gray-200 truncate">{{ item.label | t }}</span>
                 </div>
                 <div class="text-right shrink-0">
                   <span class="font-bold text-gray-900 dark:text-white">{{ item.percentage | number:'1.1-1' }}%</span>
-                  <span class="text-gray-400 ml-1.5">({{ item.shareCount | number }} shares)</span>
+                  <span class="text-gray-400 ml-1.5">({{ '{count} shares' | t: { count: (item.shareCount | number) } }})</span>
                 </div>
               </div>
             </div>
@@ -243,10 +245,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div>
                   <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
                     <mat-icon class="text-emerald-600">analytics</mat-icon>
-                    Farm Capital & Shareholder Structure
+                    {{ 'Farm Capital & Shareholder Structure' | t }}
                   </h3>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                    Distribution of active partner capital, dividend entitlement, and equity reserves
+                    {{ 'Distribution of active partner capital, dividend entitlement, and equity reserves' | t }}
                   </p>
                 </div>
               </div>
@@ -254,27 +256,27 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <!-- Metrics Row -->
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                 <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/60">
-                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">Outside Capital Raised</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">{{ 'Outside Capital Raised' | t }}</span>
                   <span class="text-lg font-extrabold text-teal-700 dark:text-teal-300 mt-1 block">
                     {{ overview()?.totalCapitalRaisedBdt | money }}
                   </span>
-                  <span class="text-[11px] text-gray-400 block mt-0.5">{{ overview()?.totalAllocatedShares | number }} shares issued</span>
+                  <span class="text-[11px] text-gray-400 block mt-0.5">{{ '{count} shares issued' | t: { count: (overview()?.totalAllocatedShares | number) } }}</span>
                 </div>
 
                 <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/60">
-                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">Active Shareholders</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">{{ 'Active Shareholders' | t }}</span>
                   <span class="text-lg font-extrabold text-emerald-700 dark:text-emerald-300 mt-1 block">
-                    {{ overview()?.totalShareholdersCount | number }} partners
+                    {{ '{count} partners' | t: { count: (overview()?.totalShareholdersCount | number) } }}
                   </span>
-                  <span class="text-[11px] text-gray-400 block mt-0.5">Excluding owner</span>
+                  <span class="text-[11px] text-gray-400 block mt-0.5">{{ 'Excluding owner' | t }}</span>
                 </div>
 
                 <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/60 col-span-2 sm:col-span-1">
-                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">Issued Shares Value</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">{{ 'Issued Shares Value' | t }}</span>
                   <span class="text-lg font-extrabold text-indigo-700 dark:text-indigo-300 mt-1 block">
                     {{ (overview()?.totalAllocatedShares || 0) * config.sharePriceBdt | money }}
                   </span>
-                  <span class="text-[11px] text-gray-400 block mt-0.5">At current valuation</span>
+                  <span class="text-[11px] text-gray-400 block mt-0.5">{{ 'At current valuation' | t }}</span>
                 </div>
               </div>
 
@@ -285,18 +287,18 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                     <mat-icon>shopping_bag</mat-icon>
                   </div>
                   <div>
-                    <span class="text-xs font-bold text-gray-900 dark:text-white block">Ready to accept a new investment?</span>
-                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Issue shares to an existing or new equity investor directly into the farm ledger.</span>
+                    <span class="text-xs font-bold text-gray-900 dark:text-white block">{{ 'Ready to accept a new investment?' | t }}</span>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Issue shares to an existing or new equity investor directly into the farm ledger.' | t }}</span>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
                   <button mat-flat-button color="primary" (click)="openTradeDialog('purchase')"
                           class="!rounded-xl !px-4 !py-1.5 !bg-teal-600 hover:!bg-teal-700 !text-white text-xs font-semibold">
-                    Issue Shares
+                    {{ 'Issue Shares' | t }}
                   </button>
                   <button mat-stroked-button (click)="openTradeDialog('transfer')"
                           class="!rounded-xl !px-4 !py-1.5 !border-gray-300 dark:!border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    Transfer
+                    {{ 'Transfer' | t }}
                   </button>
                 </div>
               </div>
@@ -304,9 +306,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             </div>
 
             <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>Valuation Notes: {{ config.valuationNotes || 'Standard asset-backed farm valuation model.' }}</span>
+              <span>{{ 'Valuation Notes: {notes}' | t: { notes: config.valuationNotes || ('Standard asset-backed farm valuation model.' | t) } }}</span>
               <a routerLink="/finance/investors/pnl" class="text-teal-600 hover:underline flex items-center gap-1 font-medium">
-                <span>View P&L Profit Sharing</span>
+                <span>{{ 'View P&L Profit Sharing' | t }}</span>
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">arrow_forward</mat-icon>
               </a>
             </div>
@@ -320,15 +322,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <div>
               <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
                 <mat-icon class="text-teal-600">group</mat-icon>
-                Farm Shareholders & Equity Positions
+                {{ 'Farm Shareholders & Equity Positions' | t }}
               </h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-                Individual partner holdings, cost basis, unrealized capital gain, and ownership %
+                {{ 'Individual partner holdings, cost basis, unrealized capital gain, and ownership %' | t }}
               </p>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs font-bold text-gray-500 dark:text-gray-400">
-                {{ overview()?.shareholders?.length || 0 }} Active Partners
+                {{ '{count} Active Partners' | t: { count: overview()?.shareholders?.length || 0 } }}
               </span>
             </div>
           </div>
@@ -337,15 +339,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/30 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
-                  <th class="py-3 px-6">Shareholder</th>
-                  <th class="py-3 px-4">Certificate #</th>
-                  <th class="py-3 px-4 text-right">Shares Held</th>
-                  <th class="py-3 px-4 text-right">Equity %</th>
-                  <th class="py-3 px-4 text-right">Avg Buy Price</th>
-                  <th class="py-3 px-4 text-right">Invested Capital</th>
-                  <th class="py-3 px-4 text-right">Current Market Value</th>
-                  <th class="py-3 px-4 text-right">Gain / Loss</th>
-                  <th class="py-3 px-4 text-center">Actions</th>
+                  <th class="py-3 px-6">{{ 'Shareholder' | t }}</th>
+                  <th class="py-3 px-4">{{ 'Certificate #' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Shares Held' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Equity %' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Avg Buy Price' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Invested Capital' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Current Market Value' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Gain / Loss' | t }}</th>
+                  <th class="py-3 px-4 text-center">{{ 'Actions' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -357,8 +359,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                         👑
                       </span>
                       <div>
-                        <span class="font-bold text-gray-900 dark:text-white block">Farm Owner (Retained)</span>
-                        <span class="text-[11px] text-gray-500 dark:text-gray-400">Founding Equity</span>
+                        <span class="font-bold text-gray-900 dark:text-white block">{{ 'Farm Owner (Retained)' | t }}</span>
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Founding Equity' | t }}</span>
                       </div>
                     </div>
                   </td>
@@ -380,7 +382,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                   <td class="py-3.5 px-4 text-center">
                     <button (click)="openConfigureDialog()"
                             class="px-2 py-1 text-xs text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg transition-colors">
-                      Edit
+                      {{ 'Edit' | t }}
                     </button>
                   </td>
                 </tr>
@@ -394,7 +396,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                       </div>
                       <div>
                         <span class="font-bold text-gray-900 dark:text-white block">{{ s.investorName }}</span>
-                        <span class="text-[11px] text-gray-400">{{ s.investorPhone || s.investorEmail || 'No contact' }}</span>
+                        <span class="text-[11px] text-gray-400">{{ s.investorPhone || s.investorEmail || ('No contact' | t) }}</span>
                       </div>
                     </div>
                   </td>
@@ -426,15 +428,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                   </td>
                   <td class="py-3.5 px-4 text-center">
                     <div class="inline-flex items-center gap-1">
-                      <button (click)="openTradeDialogForInvestor('purchase', s.investorId)" title="Issue more shares"
+                      <button (click)="openTradeDialogForInvestor('purchase', s.investorId)" [title]="'Issue more shares' | t"
                               class="p-1.5 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 rounded-lg transition-colors">
                         <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add_circle</mat-icon>
                       </button>
-                      <button (click)="openTradeDialogForInvestor('sell', s.investorId)" title="Redeem / Buy back shares"
+                      <button (click)="openTradeDialogForInvestor('sell', s.investorId)" [title]="'Redeem / Buy back shares' | t"
                               class="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition-colors">
                         <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">remove_circle</mat-icon>
                       </button>
-                      <button (click)="openTradeDialogForInvestor('transfer', s.investorId)" title="Transfer shares"
+                      <button (click)="openTradeDialogForInvestor('transfer', s.investorId)" [title]="'Transfer shares' | t"
                               class="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition-colors">
                         <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">swap_horiz</mat-icon>
                       </button>
@@ -450,8 +452,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                         📦
                       </span>
                       <div>
-                        <span class="font-bold text-gray-700 dark:text-gray-300 block">Available Shares Pool</span>
-                        <span class="text-[11px] text-gray-500">Unissued Equity</span>
+                        <span class="font-bold text-gray-700 dark:text-gray-300 block">{{ 'Available Shares Pool' | t }}</span>
+                        <span class="text-[11px] text-gray-500">{{ 'Unissued Equity' | t }}</span>
                       </div>
                     </div>
                   </td>
@@ -473,7 +475,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                   <td class="py-3.5 px-4 text-center">
                     <button (click)="openTradeDialog('purchase')"
                             class="px-2 py-1 text-xs text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg font-semibold transition-colors">
-                      Sell Shares
+                      {{ 'Sell Shares' | t }}
                     </button>
                   </td>
                 </tr>
@@ -489,30 +491,30 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <div>
               <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
                 <mat-icon class="text-indigo-600">receipt_long</mat-icon>
-                Recent Share Transactions & Audit Log
+                {{ 'Recent Share Transactions & Audit Log' | t }}
               </h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-                Full chronological ledger of share issuances, buybacks, transfers, and price revaluations
+                {{ 'Full chronological ledger of share issuances, buybacks, transfers, and price revaluations' | t }}
               </p>
             </div>
-            <span class="text-xs text-gray-400 font-semibold">{{ overview()?.recentTransactions?.length || 0 }} Records</span>
+            <span class="text-xs text-gray-400 font-semibold">{{ '{count} Records' | t: { count: overview()?.recentTransactions?.length || 0 } }}</span>
           </div>
 
           <div *ngIf="overview()?.recentTransactions?.length === 0" class="p-8 text-center text-xs text-gray-400">
-            No share transactions recorded yet. Click "Issue / Buy Shares" above to allocate shares to partners.
+            {{ 'No share transactions recorded yet. Click "Issue / Buy Shares" above to allocate shares to partners.' | t }}
           </div>
 
           <div *ngIf="(overview()?.recentTransactions?.length || 0) > 0" class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-800/30 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
-                  <th class="py-3 px-6">Date</th>
-                  <th class="py-3 px-4">Type</th>
-                  <th class="py-3 px-4">Investor</th>
-                  <th class="py-3 px-4 text-right">Shares</th>
-                  <th class="py-3 px-4 text-right">Price / Share</th>
-                  <th class="py-3 px-4 text-right">Total Amount</th>
-                  <th class="py-3 px-4">Reference / Notes</th>
+                  <th class="py-3 px-6">{{ 'Date' | t }}</th>
+                  <th class="py-3 px-4">{{ 'Type' | t }}</th>
+                  <th class="py-3 px-4">{{ 'Investor' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Shares' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Price / Share' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Total Amount' | t }}</th>
+                  <th class="py-3 px-4">{{ 'Reference / Notes' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -528,13 +530,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                             'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300': tx.type === 'Transfer',
                             'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300': tx.type === 'ValuationAdjustment'
                           }">
-                      {{ tx.type }}
+                      {{ tx.type | t }}
                     </span>
                   </td>
                   <td class="py-3 px-4 font-medium text-gray-900 dark:text-white">
                     {{ tx.investorName }}
                     <span *ngIf="tx.counterpartyInvestorName" class="text-gray-400 text-[11px] block">
-                      Transfer to/from: {{ tx.counterpartyInvestorName }}
+                      {{ 'Transfer to/from: {name}' | t: { name: tx.counterpartyInvestorName } }}
                     </span>
                   </td>
                   <td class="py-3 px-4 text-right font-bold text-gray-900 dark:text-white">
@@ -566,6 +568,8 @@ export class ShareMarketDashboardComponent implements OnInit {
   private workingContext = inject(WorkingContextService);
   private dialog = inject(MatDialog);
   private destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load the share market");
 
   public isLoading = signal(true);
   public overview = signal<ShareMarketOverview | null>(null);
@@ -595,7 +599,7 @@ export class ShareMarketDashboardComponent implements OnInit {
           label: (context) => {
             const label = context.label || '';
             const value = context.parsed || 0;
-            return ` ${label}: ${value.toLocaleString()} shares`;
+            return ' ' + this.i18n.t('{label}: {count} shares', { label, count: value.toLocaleString() });
           }
         }
       }
@@ -626,7 +630,7 @@ export class ShareMarketDashboardComponent implements OnInit {
     forkJoin({
       overview: this.financeService.getShareOverview(farmId).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the share market.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the share market.')));
           return of(null);
         })
       ),
@@ -655,7 +659,7 @@ export class ShareMarketDashboardComponent implements OnInit {
       return;
     }
 
-    const labels = overview.distribution.map(d => d.label);
+    const labels = overview.distribution.map(d => this.i18n.t(d.label));
     const data = overview.distribution.map(d => d.shareCount);
     const bgColors = overview.distribution.map(d => d.colorHex);
 

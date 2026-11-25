@@ -5,6 +5,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { InventoryService } from '../../services/inventory.service';
 import { ItemUnits, UnitConversion } from '../../models/inventory.models';
 import { APP_NUMBER_LOCALE } from '../../../../shared/utils/locale';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface UnitSelection {
   unitId: string | null;
@@ -22,11 +23,11 @@ export interface UnitSelection {
 @Component({
   selector: 'app-unit-picker',
   standalone: true,
-  imports: [CommonModule, MatFormFieldModule, MatSelectModule],
+  imports: [CommonModule, MatFormFieldModule, MatSelectModule, TranslatePipe],
   template: `
     <!-- Inside Material (outline) forms, match the fields around it -->
     <mat-form-field *ngIf="appearance() === 'material'; else plain" appearance="outline" class="w-full">
-      <mat-label>{{ label() || 'Unit' }}</mat-label>
+      <mat-label>{{ (label() || 'Unit') | t }}</mat-label>
       <mat-select [value]="selectedId()" (selectionChange)="choose($event.value)" [disabled]="!units()?.units?.length">
         <mat-option *ngIf="!units()?.units?.length" [value]="null">{{ units()?.baseUnit || '—' }}</mat-option>
         <mat-option *ngFor="let u of units()?.units" [value]="u.id">
@@ -38,7 +39,7 @@ export interface UnitSelection {
 
     <ng-template #plain>
     <div class="flex flex-col gap-1">
-      <label *ngIf="label()" class="text-xs font-semibold text-gray-600 dark:text-gray-300">{{ label() }}</label>
+      <label *ngIf="label()" class="text-xs font-semibold text-gray-600 dark:text-gray-300">{{ label() | t }}</label>
       <select [disabled]="!units()?.units?.length"
               (change)="choose($any($event.target).value)"
               class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white outline-none focus:border-emerald-500">

@@ -25,6 +25,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ExportService } from '../../../../shared/services/export.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-inventory-item-list',
@@ -39,17 +41,18 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Stock Catalog & Inventory Items"
-      description="Manage feed, veterinary medicines, chemicals, equipment, stock thresholds, and unit costs."
-      breadcrumbActiveNode="Stock Catalog">
+      [title]="'Stock Catalog & Inventory Items' | t"
+      [description]="'Manage feed, veterinary medicines, chemicals, equipment, stock thresholds, and unit costs.' | t"
+      [breadcrumbActiveNode]="'Stock Catalog' | t">
       <div actions>
         <button (click)="openCreateItemDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add Inventory Item
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Inventory Item' | t }}
         </button>
       </div>
     </app-page-header>
@@ -63,39 +66,39 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
-            placeholder="Search items by name or SKU..."
+            [placeholder]="'Search items by name or SKU...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
         </div>
 
         <select [ngModel]="params().category ?? null" (ngModelChange)="onCategoryChange($event)"
           class="w-full sm:w-56 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option [ngValue]="null">All Categories</option>
+          <option [ngValue]="null">{{ 'All Categories' | t }}</option>
           @for (cat of categoryOptions; track cat.value) {
-            <option [ngValue]="cat.value">{{ cat.label }}</option>
+            <option [ngValue]="cat.value">{{ cat.label | t }}</option>
           }
         </select>
 
         <select [ngModel]="params().status ?? null" (ngModelChange)="onStatusChange($event)"
           class="w-full sm:w-48 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option [ngValue]="null">All Statuses</option>
-          <option [ngValue]="InventoryStatus.Sufficient">Sufficient</option>
-          <option [ngValue]="InventoryStatus.LowStock">Low Stock</option>
-          <option [ngValue]="InventoryStatus.OutOfStock">Out of Stock</option>
+          <option [ngValue]="null">{{ 'All Statuses' | t }}</option>
+          <option [ngValue]="InventoryStatus.Sufficient">{{ 'Sufficient' | t }}</option>
+          <option [ngValue]="InventoryStatus.LowStock">{{ 'Low Stock' | t }}</option>
+          <option [ngValue]="InventoryStatus.OutOfStock">{{ 'Out of Stock' | t }}</option>
         </select>
 
         <select [ngModel]="currentSortKey()" (ngModelChange)="onSortChange($event)"
           class="w-full sm:w-52 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option value="name_asc">Sort: Name (A-Z)</option>
-          <option value="name_desc">Sort: Name (Z-A)</option>
-          <option value="stock_desc">Sort: Highest Stock</option>
-          <option value="stock_asc">Sort: Lowest Stock</option>
-          <option value="value_desc">Sort: Highest Total Value</option>
+          <option value="name_asc">{{ 'Sort: Name (A-Z)' | t }}</option>
+          <option value="name_desc">{{ 'Sort: Name (Z-A)' | t }}</option>
+          <option value="stock_desc">{{ 'Sort: Highest Stock' | t }}</option>
+          <option value="stock_asc">{{ 'Sort: Lowest Stock' | t }}</option>
+          <option value="value_desc">{{ 'Sort: Highest Total Value' | t }}</option>
         </select>
         
         <!-- Export Button -->
         <button (click)="exportToCsv()" class="ml-auto sm:ml-2 px-3 py-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">download</mat-icon>
-          Export
+          {{ 'Export' | t }}
         </button>
       </div>
 
@@ -103,9 +106,9 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <app-empty-state
         *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="inventory_2"
-        title="No inventory items found"
-        description="Add your first stock item to start monitoring farm inventory."
-        actionLabel="Add Inventory Item"
+        [title]="'No inventory items found' | t"
+        [description]="'Add your first stock item to start monitoring farm inventory.' | t"
+        [actionLabel]="'Add Inventory Item' | t"
         (action)="openCreateItemDialog()">
       </app-empty-state>
 
@@ -124,7 +127,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                 <div>
                   <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-emerald-600 transition-colors">{{ item.name }}</h3>
                   <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-400">
-                    SKU: {{ item.sku }} • {{ item.categoryName }}
+                    {{ 'SKU: {sku}' | t: { sku: item.sku } }} • {{ item.categoryName | t }}
                   </span>
                 </div>
               </div>
@@ -136,7 +139,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                   'bg-red-50 text-red-700 border border-red-200': item.status === InventoryStatus.OutOfStock,
                   'bg-blue-50 text-blue-700 border border-blue-200': item.status === InventoryStatus.Excess
                 }">
-                {{ item.statusName }}
+                {{ item.statusName | t }}
               </span>
             </div>
 
@@ -144,21 +147,21 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <div class="p-5 flex-1 relative z-10">
               <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 mb-4">
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Current Stock</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Current Stock' | t }}</div>
                   <div class="font-extrabold text-gray-900 dark:text-white text-base mt-0.5">{{ item.currentStock }} {{ item.unitOfMeasure }}</div>
                 </div>
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Reorder Level</div>
+                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Reorder Level' | t }}</div>
                   <div class="font-bold text-gray-600 dark:text-gray-400 text-sm mt-0.5">{{ item.reorderThreshold }} {{ item.unitOfMeasure }}</div>
                 </div>
               </div>
 
               <div class="flex items-center justify-between text-xs mb-1 text-gray-400">
-                <span>Weighted Avg Cost</span>
+                <span>{{ 'Weighted Avg Cost' | t }}</span>
                 <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ item.weightedAverageCostBdt | money:2 }} / {{ item.unitOfMeasure }}</span>
               </div>
               <div class="flex items-center justify-between text-xs text-gray-400">
-                <span>Total Value</span>
+                <span>{{ 'Total Value' | t }}</span>
                 <span class="font-extrabold text-gray-900 dark:text-white">{{ item.totalValueBdt | money }}</span>
               </div>
             </div>
@@ -166,16 +169,16 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <!-- Footer Action -->
             <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between relative z-10">
               <button (click)="openStockInDialog(item)" class="px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_business</mat-icon> Stock In
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_business</mat-icon> {{ 'Stock In' | t }}
               </button>
               <div class="flex items-center gap-1">
                 <button (click)="openStockOutDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 transition-colors inline-flex items-center gap-1">
-                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">remove</mat-icon> Out
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">remove</mat-icon> {{ 'Out' | t }}
                 </button>
                 <button (click)="openEditDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors inline-flex items-center gap-1">
-                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Edit
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Edit' | t }}
                 </button>
-                <button aria-label="Delete" (click)="onDelete(item, $event)" class="px-2 py-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg border border-transparent transition-colors">
+                <button [attr.aria-label]="'Delete' | t" (click)="onDelete(item, $event)" class="px-2 py-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg border border-transparent transition-colors">
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">delete</mat-icon>
                 </button>
               </div>
@@ -187,12 +190,12 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <!-- Pagination Footer -->
       <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-          Showing <span class="font-bold text-gray-900 dark:text-white">{{ pageStart() }}</span> to <span class="font-bold text-gray-900 dark:text-white">{{ pageEnd() }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ result()?.totalCount }}</span> items
+          {{ 'Showing {from} to {to} of {total} items' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>
         <div class="flex items-center gap-4">
           <!-- Page Size Filter -->
           <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-500 dark:text-gray-400">Rows per page:</label>
+            <label class="text-sm text-gray-500 dark:text-gray-400">{{ 'Rows per page:' | t }}</label>
             <select [ngModel]="params().pageSize" (ngModelChange)="onPageSizeChange($event)"
               class="px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
               <option [ngValue]="10">10</option>
@@ -203,11 +206,11 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           </div>
           
           <div class="flex items-center gap-2">
-            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button [attr.aria-label]="'Previous' | t" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button [attr.aria-label]="'Next' | t" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -225,6 +228,7 @@ export class InventoryItemListComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly exportSvc = inject(ExportService);
+  private readonly i18n = inject(I18nService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -324,7 +328,7 @@ export class InventoryItemListComponent {
         }
         return this.inventoryService.getItems(params).pipe(
           catchError(e => {
-            this.error.set(parseApiError(e, 'Could not load inventory items.'));
+            this.error.set(parseApiError(e, this.i18n.t('Could not load inventory items.')));
             return of(null);
           })
         );
@@ -458,10 +462,10 @@ export class InventoryItemListComponent {
       width: '450px',
       panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'],
       data: {
-        title: 'Delete Inventory Item',
-        message: `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
+        title: this.i18n.t('Delete Inventory Item'),
+        message: this.i18n.t('Are you sure you want to delete “{name}”? This action cannot be undone.', { name: item.name }),
+        confirmButtonText: this.i18n.t('Delete'),
+        cancelButtonText: this.i18n.t('Cancel'),
         isDestructive: true
       }
     });
@@ -472,7 +476,7 @@ export class InventoryItemListComponent {
           next: () => this.reload(),
           error: (err) => {
             console.error('Failed to delete item', err);
-            this.error.set(err?.error?.detail || 'Failed to delete item');
+            this.error.set(err?.error?.detail || this.i18n.t('Failed to delete item'));
           }
         });
       }

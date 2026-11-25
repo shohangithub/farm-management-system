@@ -7,24 +7,26 @@ import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { FeedCostTrend } from '../../models/dashboard.model';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { translate } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-feed-cost-trend-chart',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, MatIconModule, BaseChartDirective, RouterModule],
+  imports: [MoneyPipe, CommonModule, MatIconModule, BaseChartDirective, RouterModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-full">
       <!-- Top Metrics & Legend Bar -->
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-gray-100 dark:border-gray-700/60">
         <div class="flex flex-wrap items-baseline gap-x-2 min-w-0">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Unit</span>
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Feed cost per average head on farm (BDT/Month)</span>
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Unit' | t }}</span>
+          <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ 'Feed cost per average head on farm (BDT/Month)' | t }}</span>
         </div>
 
         <div *ngIf="hasData()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-800 dark:bg-primary-500/10 dark:text-primary-300 whitespace-nowrap">
           <mat-icon class="text-[14px] w-[14px] h-[14px]" aria-hidden="true">account_balance_wallet</mat-icon>
-          Latest: {{ latestCost() | money:2 }}
+          {{ 'Latest: {value}' | t: { value: (latestCost() | money:2) } }}
         </div>
       </div>
 
@@ -45,10 +47,10 @@ import { formatMoney } from '../../../../shared/pipes/money.pipe';
           <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 flex items-center justify-center mb-3" aria-hidden="true">
             <mat-icon>restaurant</mat-icon>
           </div>
-          <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">No confirmed feeding records</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">Confirm daily feed logs to see monthly feed cost per head.</p>
+          <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">{{ 'No confirmed feeding records' | t }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">{{ 'Confirm daily feed logs to see monthly feed cost per head.' | t }}</p>
           <a routerLink="/feeding/logs" class="mt-4 inline-flex items-center gap-1 min-h-[44px] px-3 rounded-lg text-sm font-semibold text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-            Open feed logs
+            {{ 'Open feed logs' | t }}
             <mat-icon class="text-[18px] w-[18px] h-[18px]" aria-hidden="true">arrow_forward</mat-icon>
           </a>
         </div>
@@ -111,9 +113,9 @@ export class FeedCostTrendChartComponent implements OnChanges {
           label: (context) => {
             const label = context.dataset.label || '';
             if (context.parsed.y === null || context.parsed.y === undefined) {
-              return ` ${label}: no data`;
+              return ` ${label}: ${translate('no data')}`;
             }
-            return ` ${label}: ${formatMoney(context.parsed.y)} / head`;
+            return ` ${label}: ${translate('{value} / head', { value: formatMoney(context.parsed.y) })}`;
           }
         }
       }
@@ -148,7 +150,7 @@ export class FeedCostTrendChartComponent implements OnChanges {
           labels: this.data[0].dataPoints.map(p => p.label),
           datasets: this.data.map((group, index) => ({
             data: group.dataPoints.map(p => p.costPerAnimal),
-            label: group.groupName,
+            label: translate(group.groupName),
             backgroundColor: 'rgba(99, 102, 241, 0.85)',
             hoverBackgroundColor: '#6366f1',
             borderRadius: 6,

@@ -11,10 +11,10 @@
       </div>
       <div>
         <h2 class="text-xl font-bold text-gray-900 dark:text-white m-0 leading-tight">
-          {{ isEditing() ? 'Edit Vet Visit' : 'Vet Visit Details' }}
+          {{ (isEditing() ? 'Edit Vet Visit' : 'Vet Visit Details') | t }}
         </h2>
         <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">
-          {{ isEditing() ? 'Update the details for this veterinary visit' : 'View the complete record for this visit' }}
+          {{ (isEditing() ? 'Update the details for this veterinary visit' : 'View the complete record for this visit') | t }}
         </p>
       </div>
     </div>
@@ -23,10 +23,10 @@
       <button *ngIf="!isLoading()" 
               (click)="toggleEdit()"
               class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-              [title]="isEditing() ? 'Cancel Edit' : 'Edit'" aria-label="Toggle edit">
+              [title]="(isEditing() ? 'Cancel Edit' : 'Edit') | t" [attr.aria-label]="'Toggle edit' | t">
         <mat-icon class="!w-5 !h-5 !text-[20px]">{{ isEditing() ? 'close' : 'edit' }}</mat-icon>
       </button>
-      <button mat-dialog-close class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" aria-label="Close">
+      <button mat-dialog-close class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" [attr.aria-label]="'Close' | t">
         <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
       </button>
     </div>
@@ -35,7 +35,7 @@
   <!-- Loading State -->
   <div *ngIf="isLoading()" class="flex-1 p-12 flex flex-col items-center justify-center space-y-4">
     <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
-    <p class="text-gray-500 font-medium">Loading visit details...</p>
+    <p class="text-gray-500 font-medium">{{ 'Loading visit details...' | t }}</p>
   </div>
 
   <!-- Content -->
@@ -47,15 +47,15 @@
       <!-- Quick Stats -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Date</p>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{{ 'Date' | t }}</p>
           <p class="font-medium text-gray-900 dark:text-white">{{ visit.visitDate | date:'mediumDate' }}</p>
         </div>
         <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Veterinarian</p>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{{ 'Veterinarian' | t }}</p>
           <p class="font-medium text-gray-900 dark:text-white">{{ visit.vetName }}</p>
         </div>
         <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Type</p>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{{ 'Type' | t }}</p>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
                 [ngClass]="{
                   'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400': visit.visitType === 'RoutineCheckup',
@@ -63,15 +63,15 @@
                   'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400': visit.visitType === 'VaccinationDrive',
                   'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400': visit.visitType === 'Surgery'
                 }">
-            {{ visit.visitType === 'RoutineCheckup' ? 'Routine Checkup' : 
+            {{ (visit.visitType === 'RoutineCheckup' ? 'Routine Checkup' : 
                visit.visitType === 'VaccinationDrive' ? 'Vaccination Drive' : 
-               visit.visitType }}
+               visit.visitType) | t }}
           </span>
         </div>
         <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Cost</p>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{{ 'Cost' | t }}</p>
           <p class="font-medium" [ngClass]="visit.costBdt ? 'text-gray-900 dark:text-white' : 'text-gray-400'">
-            {{ visit.costBdt ? (visit.costBdt | money) : 'N/A' }}
+            {{ visit.costBdt ? (visit.costBdt | money) : ('N/A' | t) }}
           </p>
         </div>
       </div>
@@ -81,7 +81,7 @@
         <div *ngIf="visit.purpose" class="space-y-2">
           <h3 class="text-sm font-bold text-gray-900 dark:text-white flex items-center space-x-2">
             <mat-icon class="text-gray-400 text-sm w-4 h-4 leading-none">flag</mat-icon>
-            <span>Purpose of Visit</span>
+            <span>{{ 'Purpose of Visit' | t }}</span>
           </h3>
           <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
             {{ visit.purpose }}
@@ -91,7 +91,7 @@
         <div *ngIf="visit.findings" class="space-y-2">
           <h3 class="text-sm font-bold text-gray-900 dark:text-white flex items-center space-x-2">
             <mat-icon class="text-gray-400 text-sm w-4 h-4 leading-none">search</mat-icon>
-            <span>Findings</span>
+            <span>{{ 'Findings' | t }}</span>
           </h3>
           <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
             {{ visit.findings }}
@@ -101,7 +101,7 @@
         <div *ngIf="visit.recommendations" class="space-y-2">
           <h3 class="text-sm font-bold text-gray-900 dark:text-white flex items-center space-x-2">
             <mat-icon class="text-gray-400 text-sm w-4 h-4 leading-none">assignment</mat-icon>
-            <span>Recommendations</span>
+            <span>{{ 'Recommendations' | t }}</span>
           </h3>
           <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
             {{ visit.recommendations }}
@@ -111,7 +111,7 @@
         <div *ngIf="visit.nextVisitDate" class="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
           <mat-icon class="text-blue-500">event</mat-icon>
           <div>
-            <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Scheduled Follow-up</p>
+            <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">{{ 'Scheduled Follow-up' | t }}</p>
             <p class="text-sm font-medium text-gray-900 dark:text-white">{{ visit.nextVisitDate | date:'fullDate' }}</p>
           </div>
         </div>
@@ -124,10 +124,10 @@
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Veterinarian Name <span class="text-red-500">*</span></label>
-          <input type="text" formControlName="vetName" placeholder="Dr. John Doe" [matAutocomplete]="autoVetEdit"
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Veterinarian Name' | t }} <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="vetName" [placeholder]="'Dr. John Doe' | t" [matAutocomplete]="autoVetEdit"
                  class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-          <p *ngIf="form.get('vetName')?.touched && form.get('vetName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+          <p *ngIf="form.get('vetName')?.touched && form.get('vetName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
           <mat-autocomplete #autoVetEdit="matAutocomplete">
             <mat-option *ngFor="let option of filteredVetNames$ | async" [value]="option">
               {{ option }}
@@ -135,53 +135,53 @@
           </mat-autocomplete>
         </div>
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Visit Date <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Visit Date' | t }} <span class="text-red-500">*</span></label>
           <input type="date" formControlName="visitDate"
                  class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-          <p *ngIf="form.get('visitDate')?.touched && form.get('visitDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+          <p *ngIf="form.get('visitDate')?.touched && form.get('visitDate')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Visit Type <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Visit Type' | t }} <span class="text-red-500">*</span></label>
           <select formControlName="visitType"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-            <option [ngValue]="1">Routine Checkup</option>
-            <option [ngValue]="2">Emergency</option>
-            <option [ngValue]="3">Vaccination Drive</option>
-            <option [ngValue]="4">Surgery</option>
+            <option [ngValue]="1">{{ 'Routine Checkup' | t }}</option>
+            <option [ngValue]="2">{{ 'Emergency' | t }}</option>
+            <option [ngValue]="3">{{ 'Vaccination Drive' | t }}</option>
+            <option [ngValue]="4">{{ 'Surgery' | t }}</option>
           </select>
-          <p *ngIf="form.get('visitType')?.touched && form.get('visitType')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">This field is required.</p>
+          <p *ngIf="form.get('visitType')?.touched && form.get('visitType')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
         </div>
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Cost (BDT)</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Cost (BDT)' | t }}</label>
           <input type="number" formControlName="costBdt" min="0" placeholder="0.00"
                  class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-          <p *ngIf="form.get('costBdt')?.touched && form.get('costBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">Must be at least 0.</p>
+          <p *ngIf="form.get('costBdt')?.touched && form.get('costBdt')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
         </div>
       </div>
 
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Purpose</label>
-        <textarea formControlName="purpose" rows="2" placeholder="Primary reason for the visit..."
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Purpose' | t }}</label>
+        <textarea formControlName="purpose" rows="2" [placeholder]="'Primary reason for the visit...' | t"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"></textarea>
       </div>
 
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Findings</label>
-        <textarea formControlName="findings" rows="3" placeholder="Clinical observations and diagnoses..."
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Findings' | t }}</label>
+        <textarea formControlName="findings" rows="3" [placeholder]="'Clinical observations and diagnoses...' | t"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"></textarea>
       </div>
       
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Recommendations</label>
-        <textarea formControlName="recommendations" rows="3" placeholder="Prescriptions, changes in diet, next steps..."
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Recommendations' | t }}</label>
+        <textarea formControlName="recommendations" rows="3" [placeholder]="'Prescriptions, changes in diet, next steps...' | t"
                   class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"></textarea>
       </div>
 
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Next Visit Date</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Next Visit Date' | t }}</label>
         <input type="date" formControlName="nextVisitDate"
                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
       </div>
@@ -194,13 +194,13 @@
     <button type="button" 
             (click)="toggleEdit()"
             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-      Cancel
+      {{ 'Cancel' | t }}
     </button>
     <button type="button"
             (click)="onSave()"
             [disabled]="isSaving() || form.invalid"
             class="relative inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-700 transition-all shadow-sm shadow-primary-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
-      <span [class.opacity-0]="isSaving()">Save Changes</span>
+      <span [class.opacity-0]="isSaving()">{{ 'Save Changes' | t }}</span>
       <div *ngIf="isSaving()" class="absolute inset-0 flex items-center justify-center">
         <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
       </div>

@@ -33,13 +33,15 @@ import { formatAnimalAge } from '../../utils/animal-age';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-animal-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, RouterModule, FormsModule,
-    PageHeaderComponent, LoadingComponent, EmptyStateComponent, MatIconModule, MatMenuModule, MatButtonModule
+    PageHeaderComponent, LoadingComponent, EmptyStateComponent, MatIconModule, MatMenuModule, MatButtonModule, TranslatePipe
   ],
   templateUrl: './animal-list.component.html'
 })
@@ -53,6 +55,7 @@ export class AnimalListComponent {
   private readonly exportSvc = inject(ExportService);
   private readonly pdfService = inject(PdfExportService);
   private readonly reportService = inject(ReportService);
+  private readonly i18n = inject(I18nService);
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly isExporting = signal(false);
@@ -125,7 +128,7 @@ export class AnimalListComponent {
         const query: AnimalListParams = params.status ? { ...params, presence: undefined } : params;
         return this.svc.getList(query).pipe(
           catchError(e => {
-            this.error.set(parseApiError(e, 'Could not load animals.'));
+            this.error.set(parseApiError(e, this.i18n.t('Could not load animals.')));
             return of(null);
           })
         );
@@ -167,6 +170,7 @@ export class AnimalListComponent {
       error: (err) => {
         this.isExporting.set(false);
         console.error('Failed to export report', err);
+        this.notify.error(this.i18n.t('Failed to export report. Please try again.'));
       }
     });
   }
@@ -226,9 +230,9 @@ export class AnimalListComponent {
   });
 
   // ── Display helpers ───────────────────────────────────────────────────────
-  speciesLabel(s: AnimalSpecies): string { return SPECIES_LABELS[s] ?? '—'; }
-  statusLabel(s: AnimalStatus): string { return STATUS_LABELS[s] ?? '—'; }
-  sexLabel(s: AnimalSex): string { return SEX_LABELS[s] ?? '—'; }
+  speciesLabel(s: AnimalSpecies): string { return this.i18n.t(SPECIES_LABELS[s] ?? '—'); }
+  statusLabel(s: AnimalStatus): string { return this.i18n.t(STATUS_LABELS[s] ?? '—'); }
+  sexLabel(s: AnimalSex): string { return this.i18n.t(SEX_LABELS[s] ?? '—'); }
 
   statusClass(status: AnimalStatus): string {
     switch (status) {
@@ -310,9 +314,9 @@ export class AnimalListComponent {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       disableClose: true,
       data: {
-        title: 'Delete Animal',
-        message: `Are you sure you want to delete animal ${animal.tagId}? This action cannot be undone.`,
-        confirmButtonText: 'Delete',
+        title: this.i18n.t('Delete Animal'),
+        message: this.i18n.t('Are you sure you want to delete animal {tag}? This action cannot be undone.', { tag: animal.tagId }),
+        confirmButtonText: this.i18n.t('Delete'),
         isDestructive: true
       }
     });
@@ -321,7 +325,7 @@ export class AnimalListComponent {
       if (res) {
         this.svc.delete(animal.id).subscribe({
           next: () => this.refresh(),
-          error: e => this.notify.error(parseApiError(e, 'Delete failed.')),
+          error: e => this.notify.error(parseApiError(e, this.i18n.t('Delete failed.'))),
         });
       }
     });

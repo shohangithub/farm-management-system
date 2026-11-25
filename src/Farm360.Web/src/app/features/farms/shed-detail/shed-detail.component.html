@@ -2,9 +2,9 @@
   [title]="shed() ? shed()!.shedName : 'Shed Details'"
   [description]="shed() ? 'Shed Number: ' + shed()!.shedNumber : ''"
   [breadcrumbActiveNode]="shed()?.shedName || 'Shed Details'"
-  primaryActionLabel="Edit Shed"
+  [primaryActionLabel]="'Edit Shed' | t"
   primaryActionIcon="edit"
-  secondaryActionLabel="Back"
+  [secondaryActionLabel]="'Back' | t"
   secondaryActionIcon="arrow_back"
   (primaryAction)="onEdit()"
   (secondaryAction)="onBack()">
@@ -19,7 +19,7 @@
     <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
     <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
   </div>
-  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Shed...</p>
+  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">{{ 'Loading Shed...' | t }}</p>
 </div>
 
 <div *ngIf="!isLoading() && shed()" class="space-y-6">
@@ -36,7 +36,7 @@
           <div class="flex items-center gap-2 flex-wrap">
             <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{{ shed()?.shedName }}</h2>
             <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
-              {{ shed()?.animalType || 'Mixed' }}
+              {{ (shed()?.animalType || 'Mixed') | t }}
             </span>
           </div>
           <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 font-mono">{{ shed()?.shedNumber }}</p>
@@ -46,7 +46,7 @@
             [ngClass]="statusClass()">
         <span class="w-2 h-2 rounded-full mr-2"
               [ngClass]="{'bg-emerald-500': shed()?.status === 'Active', 'bg-gray-400': shed()?.status === 'Inactive', 'bg-amber-500': shed()?.status === 'UnderMaintenance'}"></span>
-        {{ statusLabel() }}
+        {{ statusLabel() | t }}
       </span>
     </div>
 
@@ -57,7 +57,7 @@
           <mat-icon class="!text-blue-600 dark:!text-blue-400 !text-[20px] !w-[20px] !h-[20px]">pets</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Current Animals</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Current Animals' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ shed()?.currentOccupancy | number }}</div>
         </div>
       </div>
@@ -66,7 +66,7 @@
           <mat-icon class="!text-indigo-600 dark:!text-indigo-400 !text-[20px] !w-[20px] !h-[20px]">warehouse</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Capacity</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Capacity' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ shed()?.capacity ? (shed()?.capacity | number) : 'Unlimited' }}</div>
         </div>
       </div>
@@ -75,7 +75,7 @@
           <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[20px] !w-[20px] !h-[20px]">pie_chart</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Utilization</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Utilization' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
             {{ shed()?.capacity ? ((shed()!.currentOccupancy / shed()!.capacity!) * 100 | number:'1.0-0') + '%' : 'N/A' }}
           </div>
@@ -86,9 +86,9 @@
           <mat-icon class="!text-amber-600 dark:!text-amber-400 !text-[20px] !w-[20px] !h-[20px]">roofing</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Floor Type</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Floor Type' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-            {{ shed()?.floorType || 'Standard' }}
+            {{ (shed()?.floorType || 'Standard') | t }}
           </div>
         </div>
       </div>
@@ -100,7 +100,7 @@
     <mat-tab-group animationDuration="200ms" class="farm-tab-group">
 
       <!-- ─── Overview Tab ─────────────────────────────────────────── -->
-      <mat-tab label="Overview">
+      <mat-tab [label]="'Overview' | t">
         <div class="p-6 sm:p-8">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
@@ -108,23 +108,23 @@
             <div class="md:col-span-2">
                <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">plumbing</mat-icon>
-                Facilities & Utilities
+                {{ 'Facilities & Utilities' | t }}
               </dt>
               <dd class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                  <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ventilation</span>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'Ventilation' | t }}</span>
                     <mat-icon [ngClass]="shed()?.hasVentilation ? '!text-green-500' : '!text-gray-400'">
                       {{ shed()?.hasVentilation ? 'check_circle' : 'cancel' }}
                     </mat-icon>
                  </div>
                  <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Water Line</span>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'Water Line' | t }}</span>
                     <mat-icon [ngClass]="shed()?.hasWaterLine ? '!text-green-500' : '!text-gray-400'">
                       {{ shed()?.hasWaterLine ? 'check_circle' : 'cancel' }}
                     </mat-icon>
                  </div>
                  <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800/50 p-4 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Feed Line</span>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'Feed Line' | t }}</span>
                     <mat-icon [ngClass]="shed()?.hasFeedLine ? '!text-green-500' : '!text-gray-400'">
                       {{ shed()?.hasFeedLine ? 'check_circle' : 'cancel' }}
                     </mat-icon>
@@ -136,10 +136,10 @@
             <div>
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">roofing</mat-icon>
-                Roof Type
+                {{ 'Roof Type' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                {{ shed()?.roofType || 'Not specified' }}
+                {{ (shed()?.roofType || 'Not specified') | t }}
               </dd>
             </div>
             
@@ -147,11 +147,11 @@
             <div class="md:col-span-2 pt-4 mt-4 border-t border-red-100 dark:border-red-900/30">
                <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-red-500 mb-3">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">warning</mat-icon>
-                Danger Zone
+                {{ 'Danger Zone' | t }}
               </dt>
               <dd>
                  <button mat-flat-button color="warn" (click)="deleteShed()" class="!rounded-lg shadow-sm">
-                   Delete Shed
+                   {{ 'Delete Shed' | t }}
                  </button>
               </dd>
             </div>
@@ -160,17 +160,17 @@
       </mat-tab>
 
       <!-- ─── Pens Tab ─────────────────────────────────────────────── -->
-      <mat-tab label="Pens">
+      <mat-tab [label]="'Pens' | t">
         <div class="p-6 sm:p-8">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white">Pens in this Shed</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Enclosures for housing individual or grouped animals.</p>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Pens in this Shed' | t }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Enclosures for housing individual or grouped animals.' | t }}</p>
             </div>
             <button mat-flat-button (click)="onManagePens()"
                     class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-xl !text-sm !font-semibold shadow-sm">
               <mat-icon class="!mr-1 !text-[18px] !w-[18px] !h-[18px]">add</mat-icon>
-              New Pen
+              {{ 'New Pen' | t }}
             </button>
           </div>
 
@@ -182,20 +182,20 @@
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
               <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">fence</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No Pens Yet</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">Click "New Pen" to add a pen to this shed.</p>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ 'No Pens Yet' | t }}</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">{{ 'Click "New Pen" to add a pen to this shed.' | t }}</p>
           </div>
 
           <div *ngIf="!isLoading() && pens().length > 0" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-800/50 border-y border-gray-100 dark:border-gray-800">
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Pen No.</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Pen Name</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">Group</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">Occupancy</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">Status</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">Action</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Pen No.' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Pen Name' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">{{ 'Group' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">{{ 'Occupancy' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">{{ 'Status' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">{{ 'Action' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -204,7 +204,7 @@
                   <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-white">{{ p.penName }}</td>
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="px-2 py-0.5 text-[11px] uppercase font-bold rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-                      {{ p.animalGroup || 'General' }}
+                      {{ (p.animalGroup || 'General') | t }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-sm font-semibold text-right text-gray-700 dark:text-gray-300">
@@ -213,13 +213,13 @@
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border"
                           [ngClass]="p.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
-                      {{ p.status }}
+                      {{ p.status | t }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right">
                     <a [routerLink]="['/organizations/branches', branchId(), 'farms', farmId(), 'sheds', shedId(), 'pens', p.id]"
                        class="text-primary-600 hover:text-primary-700 font-semibold text-sm">
-                      View
+                      {{ 'View' | t }}
                     </a>
                   </td>
                 </tr>
@@ -230,14 +230,14 @@
       </mat-tab>
 
       <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
-      <mat-tab label="Audit Info">
+      <mat-tab [label]="'Audit Info' | t">
         <div class="p-6 sm:p-8">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_circle_outline</mat-icon>
-                Created At
+                {{ 'Created At' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (shed()?.createdAtUtc | date:'MMM d, y, h:mm a') || '—' }}
@@ -247,7 +247,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon>
-                Created By
+                {{ 'Created By' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ shed()?.createdBy || '—' }}
@@ -257,7 +257,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_calendar</mat-icon>
-                Last Modified
+                {{ 'Last Modified' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (shed()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || 'Never modified' }}
@@ -267,7 +267,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">manage_accounts</mat-icon>
-                Last Modified By
+                {{ 'Last Modified By' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ shed()?.modifiedBy || '—' }}

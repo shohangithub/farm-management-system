@@ -13,6 +13,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -20,12 +22,13 @@ import { parseApiError } from '../../../core/utils/error-parser';
 @Component({
   selector: 'app-organization-detail',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatTabsModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, DatePipe],
+  imports: [TranslatePipe, ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatTabsModule, PageHeaderComponent, DataTableComponent, EmptyStateComponent, DatePipe],
   templateUrl: './organization-detail.html',
   styleUrls: ['./organization-detail.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrganizationDetailComponent {
+  private readonly i18n = inject(I18nService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private organizationService = inject(OrganizationService);
@@ -43,7 +46,7 @@ export class OrganizationDetailComponent {
   branchColumns: TableColumn[] = [
     { def: 'branch', header: 'Branch', cell: (row: BranchList) => row.name },
     { def: 'contact', header: 'Contact', cell: (row: BranchList) => row.contactEmail },
-    { def: 'status', header: 'Status', cell: (row: BranchList) => row.status === 'Active' ? 'Active' : 'Inactive' },
+    { def: 'status', header: 'Status', cell: (row: BranchList) => this.i18n.t(row.status === 'Active' ? 'Active' : 'Inactive') },
     { def: 'actions', header: 'Actions', cell: () => '' }
   ];
   branchDisplayedColumns = ['branch', 'contact', 'status', 'actions'];
@@ -66,7 +69,7 @@ export class OrganizationDetailComponent {
         )
       }).pipe(
         tap(res => {
-          if (!res.organization && !this.error()) this.error.set('Failed to load organization details.');
+          if (!res.organization && !this.error()) this.error.set(this.i18n.t('Failed to load organization details.'));
         }),
         catchError(err => {
           this.error.set(parseApiError(err, 'Failed to load organization details.'));

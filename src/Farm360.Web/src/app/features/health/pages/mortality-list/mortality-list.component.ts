@@ -23,6 +23,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-mortality-list',
@@ -37,7 +39,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   templateUrl: './mortality-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -48,6 +51,7 @@ export class MortalityListComponent {
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -147,14 +151,14 @@ export class MortalityListComponent {
         filename: `Farm360_Mortality_Report_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Mortality & Loss Audit Report',
-          subtitle: 'Animal Casualty & Economic Impact Registry',
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('Mortality & Loss Audit Report'),
+          subtitle: this.i18n.t('Animal Casualty & Economic Impact Registry'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: 'Total Recorded Losses', value: `${total}` },
-            { label: 'Audit Window', value: 'Complete Farm Registry' }
+            { label: this.i18n.t('Total Recorded Losses'), value: `${total}` },
+            { label: this.i18n.t('Audit Window'), value: this.i18n.t('Complete Farm Registry') }
           ]
         },
         showSignatures: true

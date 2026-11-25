@@ -15,6 +15,8 @@ import { parseApiError } from '../../../../../core/utils/error-parser';
 
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 export interface ManualFeedingDialogData {
   farmId: string;
   date: string;
@@ -26,7 +28,7 @@ export interface ManualFeedingDialogData {
   selector: 'app-manual-feeding-entry-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent, TranslatePipe],
   styles: [`
     .field { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 1px solid rgb(209 213 219); background: white; font-size: 0.8125rem; color: rgb(17 24 39); outline: none; }
     .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(16, 185, 129, .15); }
@@ -40,69 +42,68 @@ export interface ManualFeedingDialogData {
             <mat-icon class="!w-5 !h-5 !text-[20px]">edit_note</mat-icon>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">Manual Feed Entry <span class="text-sm font-normal text-gray-400">· হাতে খাবার এন্ট্রি</span></h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Feed given outside the plan — saved as confirmed</p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight m-0">{{ 'Manual Feed Entry' | t }} @if (!i18n.isBangla) {<span class="text-sm font-normal text-gray-400">· হাতে খাবার এন্ট্রি</span>}</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ 'Feed given outside the plan — saved as confirmed' | t }}</p>
           </div>
         </div>
-        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400" aria-label="Close"><mat-icon>close</mat-icon></button>
+        <button mat-icon-button (click)="dialogRef.close()" class="text-gray-400" [attr.aria-label]="'Close' | t"><mat-icon>close</mat-icon></button>
       </div>
 
       <form [formGroup]="form" class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label class="block">
-            <span class="font-semibold text-gray-700 dark:text-gray-300">Date fed</span>
+            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ 'Date fed' | t }}</span>
             <input type="date" class="field mt-1" formControlName="date" [max]="today" />
           </label>
           <label class="block">
-            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ isItem() ? 'Quantity per animal' : 'Kg per animal' }}</span>
+            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ (isItem() ? 'Quantity per animal' : 'Kg per animal') | t }}</span>
             <div class="flex gap-2 mt-1">
               <input type="number" step="0.01" min="0" class="field flex-1" formControlName="quantityPerHead" placeholder="0" />
               <div class="w-40 shrink-0">
                 <app-unit-picker *ngIf="isItem(); else kgUnit" [itemId]="itemId()" [quantity]="value().quantityPerHead" [useDefault]="false"
                   (selectionChange)="unit.set($event)"></app-unit-picker>
-                <ng-template #kgUnit><div class="field text-gray-500">kg</div></ng-template>
+                <ng-template #kgUnit><div class="field text-gray-500">{{ 'kg' | t }}</div></ng-template>
               </div>
             </div>
           </label>
         </div>
 
         <label class="block">
-          <span class="font-semibold text-gray-700 dark:text-gray-300">What was fed</span>
+          <span class="font-semibold text-gray-700 dark:text-gray-300">{{ 'What was fed' | t }}</span>
           <select class="field mt-1" formControlName="source">
-            <option value="">— choose a recipe or stock item —</option>
-            <optgroup label="Recipes">
+            <option value="">{{ '— choose a recipe or stock item —' | t }}</option>
+            <optgroup [label]="'Recipes' | t">
               <option *ngFor="let f of formulas()" [value]="'f:' + f.id">{{ f.title }}</option>
             </optgroup>
-            <optgroup label="Stock items (fed as they are)">
-              <option *ngFor="let it of feedItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+            <optgroup [label]="'Stock items (fed as they are)' | t">
+              <option *ngFor="let it of feedItems()" [value]="'i:' + it.id">{{ it.name }} — {{ '{qty} {unit} in stock' | t: { qty: (it.currentStock | number:'1.0-2'), unit: it.unitOfMeasure } }}</option>
             </optgroup>
-            <optgroup label="Supplements & medicines (liver tonic, zinc…)">
-              <option *ngFor="let it of supplementItems()" [value]="'i:' + it.id">{{ it.name }} — {{ it.currentStock | number:'1.0-2' }} {{ it.unitOfMeasure }} in stock</option>
+            <optgroup [label]="'Supplements & medicines (liver tonic, zinc…)' | t">
+              <option *ngFor="let it of supplementItems()" [value]="'i:' + it.id">{{ it.name }} — {{ '{qty} {unit} in stock' | t: { qty: (it.currentStock | number:'1.0-2'), unit: it.unitOfMeasure } }}</option>
             </optgroup>
           </select>
         </label>
 
         <div>
-          <span class="font-semibold text-gray-700 dark:text-gray-300">Animals</span>
+          <span class="font-semibold text-gray-700 dark:text-gray-300">{{ 'Animals' | t }}</span>
           <div class="mt-1"><app-animal-picker formControlName="animalIds" [multiSelect]="true"></app-animal-picker></div>
-          <p class="text-[11px] text-gray-500 mt-1">{{ count() }} selected</p>
+          <p class="text-[11px] text-gray-500 mt-1">{{ '{count} selected' | t: { count: count() } }}</p>
         </div>
 
         <label class="block">
-          <span class="font-semibold text-gray-700 dark:text-gray-300">Note <span class="font-normal text-gray-400">(optional)</span></span>
-          <input type="text" class="field mt-1" formControlName="notes" maxlength="300" placeholder="e.g. Morning feed missed in the plan" />
+          <span class="font-semibold text-gray-700 dark:text-gray-300">{{ 'Note' | t }} <span class="font-normal text-gray-400">{{ '(optional)' | t }}</span></span>
+          <input type="text" class="field mt-1" formControlName="notes" maxlength="300" [placeholder]="'e.g. Morning feed missed in the plan' | t" />
         </label>
 
         <div *ngIf="total() > 0" class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 text-emerald-800 dark:text-emerald-300">
-          <b>{{ total() | number:'1.0-3' }} {{ unitLabel() }}</b> in all ({{ count() }} × {{ form.value.quantityPerHead }}) will be taken from stock
-          and charged to these animals on {{ form.value.date | date:'dd MMM yyyy' }}.
+          <b>{{ total() | number:'1.0-3' }} {{ unitLabel() | t }}</b> {{ 'in all ({count} × {qty}) will be taken from stock and charged to these animals on {date}.' | t: { count: count(), qty: form.value.quantityPerHead, date: (form.value.date | date:'dd MMM yyyy') } }}
         </div>
       </form>
 
       <div class="px-6 py-3 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shrink-0 flex justify-end gap-2">
-        <button mat-button type="button" (click)="dialogRef.close()">Cancel</button>
+        <button mat-button type="button" (click)="dialogRef.close()">{{ 'Cancel' | t }}</button>
         <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="form.invalid || saving()">
-          {{ saving() ? 'Saving…' : 'Save & confirm' }}
+          {{ (saving() ? 'Saving…' : 'Save & confirm') | t }}
         </button>
       </div>
     </div>
@@ -115,6 +116,7 @@ export class ManualFeedingEntryDialogComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  protected readonly i18n = inject(I18nService);
 
   readonly today = toLocalIsoDate();
   readonly formulas = signal<FeedFormula[]>([]);
@@ -165,7 +167,7 @@ export class ManualFeedingEntryDialogComponent implements OnInit {
       next: res => this.dialogRef.close(res),
       error: err => {
         this.saving.set(false);
-        this.notify.error(parseApiError(err, 'Could not record the feed.'));
+        this.notify.error(parseApiError(err, this.i18n.t('Could not record the feed.')));
       }
     });
   }

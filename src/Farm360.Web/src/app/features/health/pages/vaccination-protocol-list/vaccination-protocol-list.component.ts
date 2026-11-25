@@ -20,6 +20,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-vaccination-protocol-list',
@@ -34,7 +35,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   templateUrl: './vaccination-protocol-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush

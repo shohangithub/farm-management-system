@@ -1,3 +1,5 @@
+import { translate } from '../../../core/i18n/i18n.service';
+
 /**
  * Animal age in whole calendar months from date of birth — the one definition used across the
  * livestock screens (mirrors the backend `AnimalAge` helper used by the reports).
@@ -29,11 +31,11 @@ export function ageInDays(dob: string | Date, asOf: Date = new Date()): number {
 /** Compact label: "12d" under a month, "7mo" under a year, otherwise "2y" or "2y 3m". */
 export function formatAnimalAge(dob: string | Date, asOf: Date = new Date()): string {
   const months = completedMonths(dob, asOf);
-  if (months === 0) return `${ageInDays(dob, asOf)}d`;
-  if (months < 12) return `${months}mo`;
+  if (months === 0) return translate('{n}d', { n: ageInDays(dob, asOf) });
+  if (months < 12) return translate('{n}mo', { n: months });
   const years = Math.floor(months / 12);
   const rem = months % 12;
-  return rem > 0 ? `${years}y ${rem}m` : `${years}y`;
+  return rem > 0 ? translate('{y}y {m}m', { y: years, m: rem }) : translate('{y}y', { y: years });
 }
 
 /** Parses an ISO date ("2024-01-31" or a full timestamp) as a local calendar date. */

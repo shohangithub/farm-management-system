@@ -1,5 +1,5 @@
-<app-page-header title="Animal Batches" description="Manage groups of animals for bulk operations and streamlined management"
-  primaryActionLabel="Create Batch" primaryActionIcon="add" (primaryAction)="onCreateBatch()">
+<app-page-header [title]="'Animal Batches' | t" [description]="'Manage groups of animals for bulk operations and streamlined management' | t"
+  [primaryActionLabel]="'Create Batch' | t" primaryActionIcon="add" (primaryAction)="onCreateBatch()">
 </app-page-header>
 
 
@@ -9,22 +9,22 @@
     <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
     <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
   </div>
-  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Batches...</p>
+  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">{{ 'Loading Batches...' | t }}</p>
 </div>
 
 <!-- Error State -->
-<app-error-state *ngIf="error() as err" class="block mb-6 no-print" title="Couldn't load batches" [message]="err" (retry)="refresh()"></app-error-state>
+<app-error-state *ngIf="error() as err" class="block mb-6 no-print" [title]="couldNotLoadTitle" [message]="err" (retry)="refresh()"></app-error-state>
 
 <!-- Empty State -->
 <div *ngIf="!loading() && !error() && batches().length === 0" class="py-24 text-center">
   <div class="w-20 h-20 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center mb-6 mx-auto shadow-sm">
     <mat-icon class="!text-primary-500 !text-[40px] !w-[40px] !h-[40px]">group_work</mat-icon>
   </div>
-  <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">No Batches Found</h3>
-  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">Create your first batch to start grouping animals for easier management, feeding, and medical treatments.</p>
+  <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">{{ 'No Batches Found' | t }}</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">{{ 'Create your first batch to start grouping animals for easier management, feeding, and medical treatments.' | t }}</p>
   <button (click)="onCreateBatch()" class="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
     <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">add</mat-icon>
-    Create Batch
+    {{ 'Create Batch' | t }}
   </button>
 </div>
 
@@ -42,11 +42,11 @@
       </div>
       <span class="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider uppercase border shadow-sm"
         [ngClass]="batch.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'">
-        {{ batch.status }}
+        {{ batch.status | t }}
       </span>
     </div>
     
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 line-clamp-2 h-10">{{ batch.notes || 'No description provided for this batch.' }}</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 line-clamp-2 h-10">{{ batch.notes || ('No description provided for this batch.' | t) }}</p>
     
     <div class="pt-4 border-t border-gray-100 dark:border-gray-800/50 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -54,9 +54,9 @@
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">pets</mat-icon>
         </div>
         <div>
-          <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">On farm</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">{{ 'On farm' | t }}</p>
           <p class="text-sm font-bold text-gray-900 dark:text-white">{{ batch.animalCount }}
-            <span *ngIf="batch.totalEverInBatch > batch.animalCount" class="text-xs font-medium text-gray-400">/ {{ batch.totalEverInBatch }} ever</span>
+            <span *ngIf="batch.totalEverInBatch > batch.animalCount" class="text-xs font-medium text-gray-400">/ {{ '{n} ever' | t: { n: batch.totalEverInBatch } }}</span>
           </p>
         </div>
       </div>
@@ -74,36 +74,36 @@
       <div>
         <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px] !text-primary-500">group_work</mat-icon>
-          Create New Batch
+          {{ 'Create New Batch' | t }}
         </h2>
-        <p class="text-xs text-gray-500 mt-0.5">Group animals together for simplified management</p>
+        <p class="text-xs text-gray-500 mt-0.5">{{ 'Group animals together for simplified management' | t }}</p>
       </div>
-      <button mat-dialog-close aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <button mat-dialog-close [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
       </button>
     </div>
 
     <div class="p-6 space-y-5 overflow-y-auto">
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Batch Name <span class="text-red-500">*</span></label>
-        <input type="text" [(ngModel)]="createForm.name" required placeholder="e.g. Summer 2024 Calves"
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Batch Name' | t }} <span class="text-red-500">*</span></label>
+        <input type="text" [(ngModel)]="createForm.name" required [placeholder]="'e.g. Summer 2024 Calves' | t"
           class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
       </div>
       
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Description / Notes (Optional)</label>
-        <textarea [(ngModel)]="createForm.notes" rows="3" placeholder="Add context about this batch..."
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Description / Notes (Optional)' | t }}</label>
+        <textarea [(ngModel)]="createForm.notes" rows="3" [placeholder]="'Add context about this batch...' | t"
           class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow"></textarea>
       </div>
     </div>
 
     <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
       <button mat-dialog-close class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-        Cancel
+        {{ 'Cancel' | t }}
       </button>
       <button (click)="submitCreateBatch()" [disabled]="!createForm.name.trim() || creating()"
         class="px-5 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm">
-        {{ creating() ? 'Creating...' : 'Create Batch' }}
+        {{ (creating() ? 'Creating...' : 'Create Batch') | t }}
       </button>
     </div>
   </div>

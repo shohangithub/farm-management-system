@@ -18,6 +18,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-ingredient-list',
@@ -35,17 +37,18 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     MatDialogModule,
     PageHeaderComponent,
     EmptyStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Feed Ingredients Catalog"
-      description="Manage raw feed ingredients, dry matter, crude protein content, and unit costs."
-      breadcrumbActiveNode="Ingredients Catalog">
+      [title]="'Feed Ingredients Catalog' | t"
+      [description]="'Manage raw feed ingredients, dry matter, crude protein content, and unit costs.' | t"
+      [breadcrumbActiveNode]="'Ingredients Catalog' | t">
       <div actions>
         <button (click)="openCreateIngredientDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add New Ingredient
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add New Ingredient' | t }}
         </button>
       </div>
     </app-page-header>
@@ -59,15 +62,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()"
-            placeholder="Search ingredients..."
+            [placeholder]="'Search ingredients...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
         </div>
 
         <select [(ngModel)]="selectedCategory" (ngModelChange)="applyFilter()"
           class="w-full sm:w-56 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option [ngValue]="null">All Categories</option>
+          <option [ngValue]="null">{{ 'All Categories' | t }}</option>
           @for (cat of categoryOptions; track cat.value) {
-            <option [ngValue]="cat.value">{{ cat.label }}</option>
+            <option [ngValue]="cat.value">{{ cat.label | t }}</option>
           }
         </select>
       </div>
@@ -76,9 +79,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
       <app-empty-state
         *ngIf="!isLoading() && filteredIngredients().length === 0 && !loadError()"
         icon="restaurant_menu"
-        title="No ingredients found"
-        description="Add a raw ingredient to build custom feed formulas."
-        actionLabel="Add Ingredient"
+        [title]="'No ingredients found' | t"
+        [description]="'Add a raw ingredient to build custom feed formulas.' | t"
+        [actionLabel]="'Add Ingredient' | t"
         (action)="openCreateIngredientDialog()">
       </app-empty-state>
 
@@ -97,14 +100,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div>
                   <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-emerald-600 transition-colors">{{ ing.name }}</h3>
                   <span class="inline-flex items-center mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {{ ing.categoryName }}
+                    {{ ing.categoryName | t }}
                   </span>
                 </div>
               </div>
 
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
                 [ngClass]="ing.isPreloaded ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
-                {{ ing.isPreloaded ? 'Preloaded' : 'Custom' }}
+                {{ (ing.isPreloaded ? 'Preloaded' : 'Custom') | t }}
               </span>
             </div>
 
@@ -126,15 +129,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               </div>
 
               <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs text-gray-400">Unit Cost</span>
-                <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">{{ ing.unitCostBdt | money:2 }} / {{ ing.unit }}</span>
+                <span class="text-xs text-gray-400">{{ 'Unit Cost' | t }}</span>
+                <span class="text-base font-extrabold text-emerald-600 dark:text-emerald-400">{{ ing.unitCostBdt | money:2 }} / {{ ing.unit | t }}</span>
               </div>
             </div>
 
             <!-- Footer Action -->
             <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex justify-end relative z-10">
               <button (click)="openEditDialog(ing)" class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors shadow-sm inline-flex items-center gap-1">
-                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> Edit
+                <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Edit' | t }}
               </button>
             </div>
           </div>
@@ -147,6 +150,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 export class IngredientListComponent implements OnInit {
   private readonly feedingService = inject(FeedingService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
 
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -179,7 +183,7 @@ export class IngredientListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.loadError.set(parseApiError(err, 'Could not load feed ingredients.'));
+        this.loadError.set(parseApiError(err, this.i18n.t('Could not load feed ingredients.')));
         this.isLoading.set(false);
       }
     });

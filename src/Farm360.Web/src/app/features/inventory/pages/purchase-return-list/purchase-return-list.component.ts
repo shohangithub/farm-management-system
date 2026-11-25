@@ -27,6 +27,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-purchase-return-list',
@@ -40,17 +42,18 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Purchase Returns"
-      description="Track goods returned to suppliers, credit notes, and stock deductions."
-      breadcrumbActiveNode="Purchase Returns">
+      [title]="'Purchase Returns' | t"
+      [description]="'Track goods returned to suppliers, credit notes, and stock deductions.' | t"
+      [breadcrumbActiveNode]="'Purchase Returns' | t">
       <div actions class="flex items-center gap-3">
         <button [routerLink]="['/inventory/purchase-orders']"
           class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">receipt_long</mat-icon> Purchase Orders
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">receipt_long</mat-icon> {{ 'Purchase Orders' | t }}
         </button>
       </div>
     </app-page-header>
@@ -64,17 +67,17 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="relative w-full sm:w-80">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
-            placeholder="Search return # or credit note..."
+            [placeholder]="'Search return # or credit note...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all" />
         </div>
 
         <div class="flex items-center gap-3 w-full sm:w-auto">
           <select [ngModel]="statusFilter()" (ngModelChange)="onStatusChange($event)"
             class="w-full sm:w-48 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all">
-            <option [ngValue]="null">All Statuses</option>
-            <option [ngValue]="PurchaseReturnStatus.Draft">Draft</option>
-            <option [ngValue]="PurchaseReturnStatus.Completed">Completed</option>
-            <option [ngValue]="PurchaseReturnStatus.Cancelled">Cancelled</option>
+            <option [ngValue]="null">{{ 'All Statuses' | t }}</option>
+            <option [ngValue]="PurchaseReturnStatus.Draft">{{ 'Draft' | t }}</option>
+            <option [ngValue]="PurchaseReturnStatus.Completed">{{ 'Completed' | t }}</option>
+            <option [ngValue]="PurchaseReturnStatus.Cancelled">{{ 'Cancelled' | t }}</option>
           </select>
         </div>
       </div>
@@ -83,9 +86,9 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <app-empty-state
         *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="assignment_return"
-        title="No Purchase Returns found"
-        description="To return items to a supplier, open a fulfilled purchase order and click 'Return Items'."
-        actionLabel="Go to Purchase Orders"
+        [title]="'No Purchase Returns found' | t"
+        [description]="emptyDescription | t"
+        [actionLabel]="'Go to Purchase Orders' | t"
         (action)="router.navigate(['/inventory/purchase-orders'])">
       </app-empty-state>
 
@@ -94,14 +97,14 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-800/60 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             <tr>
-              <th scope="col" class="px-5 py-3.5 text-left">Return #</th>
-              <th scope="col" class="px-5 py-3.5 text-left">Date</th>
-              <th scope="col" class="px-5 py-3.5 text-left">PO Reference</th>
-              <th scope="col" class="px-5 py-3.5 text-left">Supplier</th>
-              <th scope="col" class="px-5 py-3.5 text-left">Reason</th>
-              <th scope="col" class="px-5 py-3.5 text-center">Status</th>
-              <th scope="col" class="px-5 py-3.5 text-right">Total Refund</th>
-              <th scope="col" class="px-5 py-3.5 text-right">Actions</th>
+              <th scope="col" class="px-5 py-3.5 text-left">{{ 'Return #' | t }}</th>
+              <th scope="col" class="px-5 py-3.5 text-left">{{ 'Date' | t }}</th>
+              <th scope="col" class="px-5 py-3.5 text-left">{{ 'PO Reference' | t }}</th>
+              <th scope="col" class="px-5 py-3.5 text-left">{{ 'Supplier' | t }}</th>
+              <th scope="col" class="px-5 py-3.5 text-left">{{ 'Reason' | t }}</th>
+              <th scope="col" class="px-5 py-3.5 text-center">{{ 'Status' | t }}</th>
+              <th scope="col" class="px-5 py-3.5 text-right">{{ 'Total Refund' | t }}</th>
+              <th scope="col" class="px-5 py-3.5 text-right">{{ 'Actions' | t }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-800">
@@ -113,7 +116,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                     <span>{{ ret.returnNumber }}</span>
                   </div>
                   <span *ngIf="ret.creditNoteNumber" class="text-xs text-gray-400 block font-normal mt-0.5">
-                    Ref: {{ ret.creditNoteNumber }}
+                    {{ 'Ref: {ref}' | t: { ref: ret.creditNoteNumber } }}
                   </span>
                 </td>
                 <td class="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
@@ -122,7 +125,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                 <td class="px-5 py-4 text-sm font-medium">
                   <a [routerLink]="['/inventory/purchase-orders', ret.purchaseOrderId]"
                      class="text-emerald-600 hover:text-emerald-700 hover:underline">
-                    {{ ret.poNumber || 'View PO' }}
+                    {{ ret.poNumber || ('View PO' | t) }}
                   </a>
                 </td>
                 <td class="px-5 py-4 text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -130,7 +133,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                 </td>
                 <td class="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                   <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                    {{ getReasonName(ret.reason) }}
+                    {{ getReasonName(ret.reason) | t }}
                   </span>
                 </td>
                 <td class="px-5 py-4 text-center">
@@ -140,7 +143,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                       'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300': ret.status === PurchaseReturnStatus.Completed,
                       'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-300': ret.status === PurchaseReturnStatus.Cancelled
                     }">
-                    {{ getStatusName(ret.status) }}
+                    {{ getStatusName(ret.status) | t }}
                   </span>
                 </td>
                 <td class="px-5 py-4 text-sm font-black text-amber-600 dark:text-amber-400 text-right">
@@ -149,16 +152,16 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                 <td class="px-5 py-4 text-sm text-right space-x-1.5 whitespace-nowrap">
                   <!-- Complete Draft Action -->
                   <button *ngIf="ret.status === PurchaseReturnStatus.Draft" (click)="onCompleteReturn(ret)"
-                    title="Complete return and deduct stock"
+                    [title]="'Complete return and deduct stock' | t"
                     class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1">
-                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check</mat-icon> Complete
+                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check</mat-icon> {{ 'Complete' | t }}
                   </button>
 
                   <!-- Cancel Draft Action -->
                   <button *ngIf="ret.status === PurchaseReturnStatus.Draft" (click)="onCancelReturn(ret)"
-                    title="Cancel draft return"
+                    [title]="'Cancel draft return' | t"
                     class="px-2.5 py-1 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors inline-flex items-center gap-1">
-                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">close</mat-icon> Cancel
+                    <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">close</mat-icon> {{ 'Cancel' | t }}
                   </button>
                 </td>
               </tr>
@@ -170,16 +173,16 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <!-- Pagination Footer -->
       <div *ngIf="result() && result()!.totalPages > 1" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/30">
         <span class="text-xs text-gray-500">
-          Showing page {{ result()!.pageNumber }} of {{ result()!.totalPages }} ({{ result()!.totalCount }} returns)
+          {{ 'Showing page {page} of {pages} ({n} returns)' | t: { page: result()!.pageNumber, pages: result()!.totalPages, n: result()!.totalCount } }}
         </span>
         <div class="flex items-center gap-2">
           <button (click)="onPageChange(result()!.pageNumber - 1)" [disabled]="!result()!.hasPreviousPage"
             class="px-3 py-1 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 disabled:opacity-50 hover:bg-gray-50">
-            Previous
+            {{ 'Previous' | t }}
           </button>
           <button (click)="onPageChange(result()!.pageNumber + 1)" [disabled]="!result()!.hasNextPage"
             class="px-3 py-1 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 disabled:opacity-50 hover:bg-gray-50">
-            Next
+            {{ 'Next' | t }}
           </button>
         </div>
       </div>
@@ -194,6 +197,8 @@ export class PurchaseReturnListComponent {
   readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly emptyDescription = "To return items to a supplier, open a fulfilled purchase order and click 'Return Items'.";
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -237,7 +242,7 @@ export class PurchaseReturnListComponent {
         this.error.set(null);
         return this.inventoryService.getPurchaseReturns(params).pipe(
           catchError(err => {
-            this.error.set(parseApiError(err, 'Could not load purchase returns.'));
+            this.error.set(parseApiError(err, this.i18n.t('Could not load purchase returns.')));
             return of(null);
           })
         );
@@ -278,10 +283,10 @@ export class PurchaseReturnListComponent {
   onCompleteReturn(ret: PurchaseReturn): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        title: 'Complete Purchase Return',
-        message: `Are you sure you want to complete return ${ret.returnNumber}? This will immediately deduct ${ret.items.length} item(s) from inventory stock and post a financial reversal of ৳ ${ret.totalAmountBdt.toFixed(2)}.`,
-        confirmText: 'Complete Return',
-        cancelText: 'Cancel',
+        title: this.i18n.t('Complete Purchase Return'),
+        message: this.i18n.t('Are you sure you want to complete return {ret}? This will immediately deduct {n} item(s) from inventory stock and post a financial reversal of ৳ {amount}.', { ret: ret.returnNumber, n: ret.items.length, amount: ret.totalAmountBdt.toFixed(2) }),
+        confirmText: this.i18n.t('Complete Return'),
+        cancelText: this.i18n.t('Cancel'),
         isDanger: false
       }
     });
@@ -297,14 +302,14 @@ export class PurchaseReturnListComponent {
             next: () => this.refresh(),
             error: (err) => {
               this.loading.set(false);
-              this.notify.error(err?.error?.detail || err?.message || 'Failed to complete return.');
+              this.notify.error(err?.error?.detail || err?.message || this.i18n.t('Failed to complete return.'));
             }
           });
       });
   }
 
   onCancelReturn(ret: PurchaseReturn): void {
-    const reason = prompt('Enter a reason for cancelling this return:', 'Refused by supplier');
+    const reason = prompt(this.i18n.t('Enter a reason for cancelling this return:'), this.i18n.t('Refused by supplier'));
     if (!reason) return;
 
     this.loading.set(true);
@@ -314,7 +319,7 @@ export class PurchaseReturnListComponent {
         next: () => this.refresh(),
         error: (err) => {
           this.loading.set(false);
-          this.notify.error(err?.error?.detail || err?.message || 'Failed to cancel return.');
+          this.notify.error(err?.error?.detail || err?.message || this.i18n.t('Failed to cancel return.'));
         }
       });
   }

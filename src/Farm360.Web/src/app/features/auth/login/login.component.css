@@ -189,3 +189,19 @@
   color: var(--color-danger);
   margin-top: var(--space-1);
 }
+
+/* "Explore the demo farm": secondary to Sign In */
+.btn-explore-demo:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-explore-demo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-explore-demo .login-spinner {
+  border-color: rgba(148, 163, 184, 0.35);
+  border-top-color: var(--color-primary);
+}

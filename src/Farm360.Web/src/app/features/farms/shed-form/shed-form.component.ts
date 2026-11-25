@@ -8,16 +8,19 @@ import { CreateShedCommand, UpdateShedCommand } from '../models/shed.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 
 @Component({
   selector: 'app-shed-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
+  imports: [TranslatePipe, CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
   templateUrl: './shed-form.component.html'
 })
 export class ShedFormComponent implements OnInit, HasUnsavedChanges {
+  private readonly i18n = inject(I18nService);
   /** Set once the form is saved so the unsaved-changes guard lets navigation through. */
   private saved = false;
 
@@ -100,7 +103,7 @@ export class ShedFormComponent implements OnInit, HasUnsavedChanges {
         this.shedForm.get('shedNumber')?.disable();
       },
       error: (err) => {
-        this.error.set('Failed to load shed details.');
+        this.error.set(this.i18n.t('Failed to load shed details.'));
         console.error(err);
       }
     });
@@ -123,7 +126,7 @@ export class ShedFormComponent implements OnInit, HasUnsavedChanges {
   onSubmit(): void {
     if (this.shedForm.invalid) {
       this.shedForm.markAllAsTouched();
-      this.notify.error('Please fix the validation errors before submitting.');
+      this.notify.error(this.i18n.t('Please fix the validation errors before submitting.'));
       return;
     }
 
@@ -148,12 +151,12 @@ export class ShedFormComponent implements OnInit, HasUnsavedChanges {
       this.shedService.updateShed(this.shedId()!, command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Shed updated successfully!');
+          this.notify.success(this.i18n.t('Shed updated successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to update shed. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to update shed. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);
@@ -167,12 +170,12 @@ export class ShedFormComponent implements OnInit, HasUnsavedChanges {
       this.shedService.createShed(this.farmId(), command).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.notify.success('Shed created successfully!');
+          this.notify.success(this.i18n.t('Shed created successfully!'));
           this.saved = true;
           this.router.navigate(['/organizations/branches', this.branchId(), 'farms', this.farmId(), 'sheds']);
         },
         error: (err) => {
-          const message = err?.error?.detail || err?.error?.title || 'Failed to create shed. Please check the inputs.';
+          const message = err?.error?.detail || err?.error?.title || this.i18n.t('Failed to create shed. Please check the inputs.');
           this.error.set(message);
           this.isSubmitting.set(false);
           console.error(err);

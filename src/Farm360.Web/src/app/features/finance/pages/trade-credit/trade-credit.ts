@@ -11,12 +11,14 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinanceService } from '../../services/finance.service';
-import { TradeBill, TradeBillKind, TradeBillPayment, TradeCreditOverview, TradeCreditSide } from '../../models/finance.model';
+import { TradeBill, TradeBillKind, TradeBillPayment, TradeCreditOverview, TradeCreditSide, categoryLabel } from '../../models/finance.model';
 import { TradeBillDialogComponent, TradeBillDialogMode } from '../../components/trade-bill-dialog/trade-bill-dialog.component';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { DocumentService } from '../../../../core/services/document.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * Payables & Receivables — the credit book. Who owes the farm (customers), whom the farm owes
@@ -26,7 +28,7 @@ import { DocumentService } from '../../../../core/services/document.service';
 @Component({
   selector: 'app-trade-credit',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [TranslatePipe, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './trade-credit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -37,6 +39,7 @@ export class TradeCreditComponent {
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly documents = inject(DocumentService);
+  private readonly i18n = inject(I18nService);
 
   readonly overview = signal<TradeCreditOverview | null>(null);
   readonly isLoading = signal(true);
@@ -89,7 +92,7 @@ export class TradeCreditComponent {
           if (!farm) return of(null);
           return this.finance.getTradeCredit(farm.id, this.includeSettled()).pipe(
             catchError(err => {
-              this.error.set(parseApiError(err, 'Failed to load payables and receivables.'));
+              this.error.set(parseApiError(err, this.i18n.t('Failed to load payables and receivables.')));
               return of(null);
             }),
           );
@@ -133,9 +136,9 @@ export class TradeCreditComponent {
         if (!result) return;
         this.lastPaymentId.set(mode === 'payment' ? this.newPaymentId(bill, result) : null);
         this.notice.set(
-          mode === 'payment' ? (bill.kind === 'Payable' ? 'Payment recorded and posted to the cash book.' : 'Collection recorded and posted to the cash book.')
+          this.i18n.t(mode === 'payment' ? (bill.kind === 'Payable' ? 'Payment recorded and posted to the cash book.' : 'Collection recorded and posted to the cash book.')
           : mode === 'write-off' ? 'Balance written off and posted to the ledger.'
-          : 'Credit terms updated.');
+          : 'Credit terms updated.'));
         this.reload();
       });
   }
@@ -175,32 +178,32 @@ export class TradeCreditComponent {
   async voidPayment(bill: TradeBill, payment: TradeBillPayment): Promise<void> {
     const farmId = this.context.currentFarmValue?.id;
     if (!farmId) return;
-    if (!(await this.confirmService.confirmAsync({ message: `Void the ${formatMoney(payment.amountBdt)} ${bill.kind === 'Payable' ? 'payment to' : 'collection from'} ${bill.partyName} on ${payment.paymentDate}?\n\nIts cash-book entry is removed and the bill balance goes back up.`, confirmText: 'Void', destructive: true }))) {
+    if (!(await this.confirmService.confirmAsync({ message: this.i18n.t(bill.kind === 'Payable' ? 'Void the {amount} payment to {party} on {date}?\n\nIts cash-book entry is removed and the bill balance goes back up.' : 'Void the {amount} collection from {party} on {date}?\n\nIts cash-book entry is removed and the bill balance goes back up.', { amount: formatMoney(payment.amountBdt), party: bill.partyName, date: payment.paymentDate }), confirmText: this.i18n.t('Void'), destructive: true }))) {
       return;
     }
     this.finance.voidBillPayment(farmId, bill.id, payment.id).subscribe({
       next: () => {
         this.lastPaymentId.set(null);
-        this.notice.set('Payment voided.');
+        this.notice.set(this.i18n.t('Payment voided.'));
         this.reload();
       },
-      error: err => this.error.set(parseApiError(err, 'Could not void the payment.')),
+      error: err => this.error.set(parseApiError(err, this.i18n.t('Could not void the payment.'))),
     });
   }
 
   async cancel(bill: TradeBill): Promise<void> {
     const farmId = this.context.currentFarmValue?.id;
     if (!farmId) return;
-    if (!(await this.confirmService.confirmAsync({ message: `Cancel the credit bill for ${bill.partyName}?\n\nThe ${bill.kind === 'Payable' ? 'purchase' : 'sale'} stays in the books, but as ${bill.kind === 'Payable' ? 'paid' : 'received'} in cash on ${bill.billDate}.`, confirmText: 'Cancel bill', cancelText: 'Keep', destructive: true }))) {
+    if (!(await this.confirmService.confirmAsync({ message: this.i18n.t(bill.kind === 'Payable' ? 'Cancel the credit bill for {party}?\n\nThe purchase stays in the books, but as paid in cash on {date}.' : 'Cancel the credit bill for {party}?\n\nThe sale stays in the books, but as received in cash on {date}.', { party: bill.partyName, date: bill.billDate }), confirmText: this.i18n.t('Cancel bill'), cancelText: this.i18n.t('Keep'), destructive: true }))) {
       return;
     }
     this.finance.cancelTradeBill(farmId, bill.id).subscribe({
       next: () => {
         this.lastPaymentId.set(null);
-        this.notice.set('Bill cancelled — the deal is now treated as settled in cash.');
+        this.notice.set(this.i18n.t('Bill cancelled — the deal is now treated as settled in cash.'));
         this.reload();
       },
-      error: err => this.error.set(parseApiError(err, 'Could not cancel the bill.')),
+      error: err => this.error.set(parseApiError(err, this.i18n.t('Could not cancel the bill.'))),
     });
   }
 
@@ -215,12 +218,17 @@ export class TradeCreditComponent {
   }
 
   statusLabel(bill: TradeBill): string {
-    if (bill.daysOverdue > 0) return `${bill.daysOverdue} day(s) overdue`;
+    if (bill.daysOverdue > 0) return this.i18n.t('{days} day(s) overdue', { days: bill.daysOverdue });
     switch (bill.status) {
-      case 'PartiallyPaid': return 'Part paid';
-      case 'Overpaid': return bill.kind === 'Payable' ? 'Advance to recover' : 'Customer credit';
-      default: return bill.status;
+      case 'PartiallyPaid': return this.i18n.t('Part paid');
+      case 'Overpaid': return this.i18n.t(bill.kind === 'Payable' ? 'Advance to recover' : 'Customer credit');
+      default: return this.i18n.t(bill.status);
     }
+  }
+
+  /** Bangla shows the head's Bangla name; English keeps the name the server sent. */
+  categoryName(bill: TradeBill): string {
+    return this.i18n.isBangla ? categoryLabel(bill.category) : bill.categoryName;
   }
 
   agingClass(key: string): string {

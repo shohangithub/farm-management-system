@@ -78,7 +78,11 @@ public static class RateLimitingSetup
                 }
 
                 var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var key = userId is not null ? $"user:{userId}" : $"ip:{ClientIp(http)}";
+                // Every prospect shares the demo account: limit them per IP, not as one user.
+                var isDemo = Guid.TryParse(userId, out var parsedUserId) && Farm360.Application.Demo.DemoConstants.IsDemoViewer(parsedUserId);
+                var key = userId is null ? $"ip:{ClientIp(http)}"
+                    : isDemo ? $"demo:{ClientIp(http)}"
+                    : $"user:{userId}";
 
                 return RateLimitPartition.GetSlidingWindowLimiter(key, _ => new SlidingWindowRateLimiterOptions
                 {

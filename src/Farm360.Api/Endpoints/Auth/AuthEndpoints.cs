@@ -82,6 +82,33 @@ public static class AuthEndpoints
         .WithTags("Auth")
         .Produces(StatusCodes.Status200OK);
 
+        // ── Public "Try the demo" farm ─────────────────────────────────────────
+        // Whether the sign-in page should offer "Explore the demo farm".
+        group.MapGet("/demo-status", async ([FromServices] Farm360.Application.Demo.DemoTenantManager demo, CancellationToken ct) =>
+            Results.Ok(await demo.GetStatusAsync(ct)))
+        .AllowAnonymous()
+        .WithTags("Auth")
+        .Produces<Farm360.Application.Demo.DemoStatusDto>();
+
+        // Signs in as the shared, read-only demo Viewer. Takes no input, so it can never be used to
+        // obtain any other account; 404 while the demo is off or still being built.
+        group.MapPost("/demo-login", async ([FromServices] Farm360.Application.Demo.DemoTenantManager demo, CancellationToken ct) =>
+        {
+            var result = await demo.LoginAsync(ct);
+            return result is null
+                ? Results.Problem(
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Demo not available",
+                    detail: Farm360.Application.Demo.DemoConstants.NotReadyMessage,
+                    type: "https://farm360.ai/errors/demo-not-ready")
+                : Results.Ok(result);
+        })
+        .AllowAnonymous()
+        .RequireRateLimiting(Farm360.Api.Configuration.RateLimitingSetup.AuthPolicy)
+        .WithTags("Auth")
+        .Produces<LoginResponse>()
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapGet("/me", async (IMediator mediator) =>
         {
             var result = await mediator.Send(new GetCurrentUserQuery());

@@ -7,6 +7,7 @@ import { BehaviorSubject, switchMap, of, catchError } from 'rxjs';
 import { InventoryService } from '../../services/inventory.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-expiring-items-panel',
@@ -17,7 +18,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
     MatButtonModule,
     DatePipe,
     LoadingComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    TranslatePipe
   ],
   templateUrl: './expiring-items-panel.html',
   changeDetection: ChangeDetectionStrategy.OnPush

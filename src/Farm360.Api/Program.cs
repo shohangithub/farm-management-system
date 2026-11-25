@@ -13,6 +13,7 @@ using Farm360.Api.Endpoints;
 using Farm360.Api.Endpoints.Auth;
 using Farm360.Api.Endpoints.Subscriptions;
 using Farm360.Api.Endpoints.Dashboard;
+using Farm360.Api.Endpoints.Admin;
 using Farm360.Api.Middleware;
 using Farm360.Api.Authorization;
 using Farm360.Api.Configuration;
@@ -121,6 +122,10 @@ try
         });
     });
 
+    // Public "Try the demo" farm: Demo:Enabled (default false)
+    builder.Services.Configure<Farm360.Application.Demo.DemoOptions>(
+        builder.Configuration.GetSection(Farm360.Application.Demo.DemoOptions.SectionName));
+
     // Rate limiting: auth endpoints (per IP) + general per-user limit
     builder.Services.AddFarm360RateLimiting(builder.Configuration);
 
@@ -228,6 +233,9 @@ try
     // [9] Authorization
     app.UseAuthorization();
 
+    // [9a] The shared "Try the demo" account is read-only on every route (incl. account and billing routes)
+    app.UseMiddleware<DemoUserGuardMiddleware>();
+
     // [9b] Per-farm access: any {farmId} in the route/query must be in the caller's tenant and allowed farms
     app.UseMiddleware<FarmAccessMiddleware>();
 
@@ -278,6 +286,7 @@ try
     app.MapIntelligenceEndpoints();
     app.MapFinanceEndpoints();
     app.MapAnalyticsEndpoints();
+    app.MapDemoAdminEndpoints();
 
     Log.Information("Farm360 API started. Environment: {Environment}", app.Environment.EnvironmentName);
 
@@ -331,6 +340,19 @@ try
             "refresh-tenant-subscription-statuses",
             sender => sender.Send(new Farm360.Application.Tenants.Jobs.RefreshTenantSubscriptionStatusesCommand(), CancellationToken.None),
             Hangfire.Cron.Daily(1, 0), jobTimeZone); // 1:00 AM daily -- proactively suspends tenants whose trial/subscription lapsed
+
+        // Public "Try the demo" farm (Demo:Enabled, default false). The weekly rebuild keeps its dates
+        // fresh (it does nothing while the demo is off); the first build runs in the background right
+        // after start-up when no demo tenant is ready yet, so start-up is never blocked by it.
+        jobService.AddOrUpdateRecurring<Farm360.Application.Demo.DemoTenantManager>(
+            Farm360.Application.Demo.DemoConstants.WeeklyRebuildJobId,
+            demo => demo.RebuildIfEnabledAsync(CancellationToken.None),
+            Hangfire.Cron.Weekly(DayOfWeek.Friday, 3, 0), jobTimeZone); // Friday 3:00 AM
+
+        if (app.Configuration.GetValue("Demo:Enabled", defaultValue: false))
+        {
+            jobService.Enqueue<Farm360.Application.Demo.DemoTenantManager>(demo => demo.EnsureSeededAsync(CancellationToken.None));
+        }
     }
 
     await app.RunAsync();

@@ -32,8 +32,12 @@ public sealed class RefreshTokenService(
         string? userAgent,
         CancellationToken cancellationToken = default)
     {
-        // Enforce max sessions — revoke oldest if over limit
-        await EnforceSessionLimitAsync(userId, cancellationToken);
+        // Enforce max sessions — revoke oldest if over limit. Not for the shared demo Viewer: every
+        // prospect signs in as it, and a sixth visitor must not sign the first one out.
+        if (!Farm360.Application.Demo.DemoConstants.IsDemoViewer(userId))
+        {
+            await EnforceSessionLimitAsync(userId, cancellationToken);
+        }
 
         var rawToken = GenerateRawToken();
         var tokenHash = HashToken(rawToken);

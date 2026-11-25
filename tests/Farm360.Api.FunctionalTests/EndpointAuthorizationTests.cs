@@ -53,6 +53,10 @@ public class EndpointAuthorizationTests
         "POST /api/v1/auth/login",
         "POST /api/v1/auth/refresh",
         "POST /api/v1/auth/register",
+        // Public "Try the demo": takes no input and can only sign in the fixed, read-only demo Viewer
+        // (404 while Demo:Enabled is false); auth rate limit. Status is a public on/off flag.
+        "POST /api/v1/auth/demo-login",
+        "GET /api/v1/auth/demo-status",
         // Password reset via SMS OTP: generic responses (no user enumeration), auth rate limit.
         "POST /api/v1/auth/password/forgot",
         "POST /api/v1/auth/password/verify",

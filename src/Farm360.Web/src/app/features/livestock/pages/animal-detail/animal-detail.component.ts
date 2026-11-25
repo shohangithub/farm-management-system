@@ -73,6 +73,8 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { APP_DATE_LOCALE } from '../../../../shared/utils/locale';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-animal-detail',
   standalone: true,
@@ -82,7 +84,7 @@ import { APP_DATE_LOCALE } from '../../../../shared/utils/locale';
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule, MatTooltipModule, HasPermissionDirective,
     NgxEchartsModule,
-    CattleProfitProjectionComponent
+    CattleProfitProjectionComponent, TranslatePipe
   ],
   templateUrl: './animal-detail.component.html',
   styleUrl: './animal-detail.component.scss'
@@ -107,6 +109,8 @@ export class AnimalDetailComponent {
   private readonly reportService = inject(ReportService);
   private readonly breedSvc = inject(BreedService);
   private readonly intelligenceSvc = inject(IntelligenceService);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load animal");
 
   readonly isExporting = signal(false);
   readonly AnimalStatus = AnimalStatus;
@@ -209,7 +213,7 @@ export class AnimalDetailComponent {
             );
           }),
           catchError(err => {
-            this.error.set(parseApiError(err, 'Could not load this animal.'));
+            this.error.set(parseApiError(err, this.i18n.t('Could not load this animal.')));
             return of(null);
           })
         )
@@ -353,12 +357,12 @@ export class AnimalDetailComponent {
   readonly disposalReasonLabel = computed(() => {
     const r = this.animal()?.disposalReason;
     switch (r) {
-      case DisposalReason.NaturalDeath: return 'Natural death';
-      case DisposalReason.Disease: return 'Disease';
-      case DisposalReason.Accident: return 'Accident';
-      case DisposalReason.Slaughter: return 'Slaughter';
-      case DisposalReason.Sale: return 'Sale';
-      case DisposalReason.Unknown: return 'Unknown cause';
+      case DisposalReason.NaturalDeath: return this.i18n.t('Natural death');
+      case DisposalReason.Disease: return this.i18n.t('Disease');
+      case DisposalReason.Accident: return this.i18n.t('Accident');
+      case DisposalReason.Slaughter: return this.i18n.t('Slaughter');
+      case DisposalReason.Sale: return this.i18n.t('Sale');
+      case DisposalReason.Unknown: return this.i18n.t('Unknown cause');
       default: return r ? String(r) : null;
     }
   });
@@ -407,7 +411,7 @@ export class AnimalDetailComponent {
     return {
       tooltip: {
         trigger: 'axis',
-        formatter: '{b} <br/> <b>{c} kg</b>',
+        formatter: `{b} <br/> <b>{c} ${this.i18n.t('kg')}</b>`,
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderColor: '#e5e7eb',
         textStyle: { color: '#111827' }
@@ -428,7 +432,7 @@ export class AnimalDetailComponent {
       },
       yAxis: {
         type: 'value',
-        name: 'Weight (kg)',
+        name: this.i18n.t('Weight (kg)'),
         nameTextStyle: { color: '#6b7280', padding: [0, 0, 0, 10] },
         axisLine: { show: false },
         axisTick: { show: false },
@@ -437,7 +441,7 @@ export class AnimalDetailComponent {
       },
       series: [
         {
-          name: 'Weight',
+          name: this.i18n.t('Weight'),
           type: 'line',
           data: weights,
           smooth: true,
@@ -470,14 +474,14 @@ export class AnimalDetailComponent {
     if (!a || !a.movements) return [];
     return a.movements.map(m => ({
       ...m,
-      shedName: m.shedId ? this.sheds().find(s => s.id === m.shedId)?.shedName ?? 'Unknown Shed' : '—',
-      penName: m.penId ? this.pens().find(p => p.id === m.penId)?.penNumber ?? 'Unknown Pen' : '—'
+      shedName: m.shedId ? this.sheds().find(s => s.id === m.shedId)?.shedName ?? this.i18n.t('Unknown Shed') : '—',
+      penName: m.penId ? this.pens().find(p => p.id === m.penId)?.penNumber ?? this.i18n.t('Unknown Pen') : '—'
     }));
   });
 
   statusLabel = computed(() => {
     const s = this.animal()?.status;
-    return s !== undefined ? (STATUS_LABELS as any)[s] || '—' : '—';
+    return s !== undefined ? this.i18n.t((STATUS_LABELS as any)[s] || '—') : '—';
   });
 
   statusClass = computed(() => {
@@ -516,11 +520,11 @@ export class AnimalDetailComponent {
 
   speciesLabel(s: AnimalSpecies): string {
     switch (s) {
-      case AnimalSpecies.CattleBeef: return 'Cattle (Beef)';
-      case AnimalSpecies.CattleDairy: return 'Cattle (Dairy)';
-      case AnimalSpecies.Goat: return 'Goat';
-      case AnimalSpecies.Sheep: return 'Sheep';
-      default: return 'Unknown';
+      case AnimalSpecies.CattleBeef: return this.i18n.t('Cattle (Beef)');
+      case AnimalSpecies.CattleDairy: return this.i18n.t('Cattle (Dairy)');
+      case AnimalSpecies.Goat: return this.i18n.t('Goat');
+      case AnimalSpecies.Sheep: return this.i18n.t('Sheep');
+      default: return this.i18n.t('Unknown');
     }
   }
 
@@ -535,20 +539,20 @@ export class AnimalDetailComponent {
   }
 
   sexLabel(s: AnimalSex): string {
-    return s === AnimalSex.Male ? 'Male' : 'Female';
+    return this.i18n.t(s === AnimalSex.Male ? 'Male' : 'Female');
   }
 
   tagTypeLabel(t: TagType): string {
     switch (t) {
-      case TagType.Manual: return 'Manual/Collar';
-      case TagType.EarTag: return 'Ear Tag';
-      case TagType.Rfid: return 'RFID';
-      default: return 'Unknown';
+      case TagType.Manual: return this.i18n.t('Manual/Collar');
+      case TagType.EarTag: return this.i18n.t('Ear Tag');
+      case TagType.Rfid: return this.i18n.t('RFID');
+      default: return this.i18n.t('Unknown');
     }
   }
 
   ageLabel(dob: string): string {
-    return formatAnimalAge(dob) + ' old';
+    return this.i18n.t('{age} old', { age: formatAnimalAge(dob) });
   }
 
   onQuarantine(): void {
@@ -569,9 +573,9 @@ export class AnimalDetailComponent {
     if (!a) return;
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, { disableClose: true,
       data: {
-        title: 'Release from Quarantine',
-        message: `Are you sure you want to release ${a.tagId} from quarantine?`,
-        confirmButtonText: 'Release',
+        title: this.i18n.t('Release from Quarantine'),
+        message: this.i18n.t('Are you sure you want to release {tag} from quarantine?', { tag: a.tagId }),
+        confirmButtonText: this.i18n.t('Release'),
         isDestructive: false
       }
     });
@@ -623,9 +627,9 @@ export class AnimalDetailComponent {
     dialogRef.afterClosed().subscribe((res: ReverseAnimalExitResult | undefined) => {
       if (!res) return;
       const refund = res.receivedFromBuyerBdt > 0
-        ? ` ৳${res.receivedFromBuyerBdt.toLocaleString()} received from the buyer was removed from the accounts — hand it back.`
+        ? ' ' + this.i18n.t('৳{amount} received from the buyer was removed from the accounts — hand it back.', { amount: res.receivedFromBuyerBdt.toLocaleString() })
         : '';
-      this.notify.success(`${a.tagId} is back on the farm. Check Confirm Planned Feed for its pending feed entries.${refund}`, { duration: 10000 });
+      this.notify.success(this.i18n.t('{tag} is back on the farm. Check Confirm Planned Feed for its pending feed entries.', { tag: a.tagId }) + refund, { duration: 10000 });
       this.load();
     });
   }
@@ -660,7 +664,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('Location assigned successfully!');
+        this.notify.success(this.i18n.t('Location assigned successfully!'));
         this.load();
       }
     });
@@ -678,7 +682,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('Mating recorded successfully!');
+        this.notify.success(this.i18n.t('Mating recorded successfully!'));
         this.load();
       }
     });
@@ -696,7 +700,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('Pregnancy confirmed successfully!');
+        this.notify.success(this.i18n.t('Pregnancy confirmed successfully!'));
         this.load();
       }
     });
@@ -714,7 +718,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('Calving recorded successfully!');
+        this.notify.success(this.i18n.t('Calving recorded successfully!'));
         this.load();
       }
     });
@@ -732,7 +736,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('BCS recorded successfully!');
+        this.notify.success(this.i18n.t('BCS recorded successfully!'));
         this.load();
       }
     });
@@ -755,7 +759,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('Animal assigned to batch successfully!');
+        this.notify.success(this.i18n.t('Animal assigned to batch successfully!'));
         this.load();
       }
     });
@@ -773,7 +777,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('Weight recorded successfully!');
+        this.notify.success(this.i18n.t('Weight recorded successfully!'));
         this.load();
       }
     });
@@ -790,7 +794,7 @@ export class AnimalDetailComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.notify.success('Photo uploaded successfully!');
+        this.notify.success(this.i18n.t('Photo uploaded successfully!'));
         this.load();
       }
     });
@@ -830,22 +834,22 @@ export class AnimalDetailComponent {
         scale: 2,
         quality: 0.95,
         header: {
-          title: `Livestock Dossier: ${tag}`,
-          subtitle: `Species: ${this.speciesLabel(a.species)} | Breed: ${this.breedName() || 'Standard'} | Sex: ${this.sexLabel(a.sex)}`,
+          title: this.i18n.t('Livestock Dossier: {tag}', { tag }),
+          subtitle: this.i18n.t('Species: {species} | Breed: {breed} | Sex: {sex}', { species: this.speciesLabel(a.species), breed: this.breedName() || this.i18n.t('Standard'), sex: this.sexLabel(a.sex) }),
           farmName,
-          dateRange: `Generated: ${new Date().toLocaleDateString('en-GB')}`,
-          currency: 'BDT (৳)',
+          dateRange: this.i18n.t('Generated: {date}', { date: new Date().toLocaleDateString('en-GB') }),
+          currency: this.i18n.t('BDT (৳)'),
           metaFields: [
-            { label: 'Status', value: this.statusLabel() },
-            { label: 'Category', value: this.speciesLabel(a.species) }
+            { label: this.i18n.t('Status'), value: this.statusLabel() },
+            { label: this.i18n.t('Category'), value: this.speciesLabel(a.species) }
           ]
         },
         showSignatures: true
       });
-      this.notify.success('Animal Dossier exported successfully!');
+      this.notify.success(this.i18n.t('Animal Dossier exported successfully!'));
     } catch (err) {
       console.error('Failed to export dossier', err);
-      this.notify.error('Failed to generate Dossier PDF.');
+      this.notify.error(this.i18n.t('Failed to generate Dossier PDF.'));
     } finally {
       element.style.display = 'none';
       this.isExporting.set(false);
@@ -872,13 +876,13 @@ export class AnimalDetailComponent {
           const defaultName = `Farm360_${tag}_${keyShort}_${dateStr}.${format}`;
           const fn = this.reportService.fileNameFrom(res.headers, defaultName);
           this.reportService.saveBlob(res.body, fn);
-          this.notify.success('Report exported successfully!');
+          this.notify.success(this.i18n.t('Report exported successfully!'));
         }
       },
       error: (err) => {
         this.isExporting.set(false);
         console.error('Failed to export report', err);
-        this.notify.error('Failed to export report. Please try again.');
+        this.notify.error(this.i18n.t('Failed to export report. Please try again.'));
       }
     });
   }
@@ -893,7 +897,7 @@ export class AnimalDetailComponent {
   }
 
   private handleError(err: any): void {
-    let msg = 'An unexpected error occurred.';
+    let msg = this.i18n.t('An unexpected error occurred.');
     if (err?.error?.errors) {
       msg = Object.values(err.error.errors).flat().join('\n');
     } else if (err?.error?.detail) {

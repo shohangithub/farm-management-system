@@ -70,15 +70,28 @@ public sealed class TenantMembershipService(ApplicationDbContext dbContext) : IT
         return new TenantMembership(membership.TenantId, roleName, allowedFarmIds);
     }
 
-    public async Task<Guid> CreateTenantForUserAsync(
+    public Task<Guid> CreateTenantForUserAsync(
         Guid userId,
         string farmName,
         string userEmail,
         string? userPhone,
         int trialDays = 7,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        CreateTenantForUserAsync(userId, farmName, GenerateSlug(farmName), userEmail, userPhone, trialDays, cancellationToken);
+
+    /// <summary>
+    /// The sign-up path with an explicit, unique slug (the demo farm is rebuilt under the same name,
+    /// so its slug cannot be derived from the name).
+    /// </summary>
+    public async Task<Guid> CreateTenantForUserAsync(
+        Guid userId,
+        string farmName,
+        string slug,
+        string userEmail,
+        string? userPhone,
+        int trialDays,
+        CancellationToken cancellationToken)
     {
-        var slug = GenerateSlug(farmName);
         var tenant = Tenant.Create(farmName, slug, SubscriptionTier.Starter);
         var initialTrialDays = trialDays is 3 or 7 or 10 ? trialDays : 7;
         tenant.StartTrial(initialTrialDays);

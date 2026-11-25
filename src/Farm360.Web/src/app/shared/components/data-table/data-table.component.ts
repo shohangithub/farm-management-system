@@ -6,6 +6,7 @@ import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface TableColumn {
   def: string;
@@ -24,7 +25,8 @@ export interface TableColumn {
     MatSortModule, 
     MatButtonModule, 
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    TranslatePipe
   ],
   templateUrl: './data-table.component.html'
 })

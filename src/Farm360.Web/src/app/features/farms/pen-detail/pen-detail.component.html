@@ -2,9 +2,9 @@
   [title]="pen() ? pen()!.penName : 'Pen Details'"
   [description]="pen() ? 'Pen Number: ' + pen()!.penNumber : ''"
   [breadcrumbActiveNode]="pen()?.penName || 'Pen Details'"
-  primaryActionLabel="Edit Pen"
+  [primaryActionLabel]="'Edit Pen' | t"
   primaryActionIcon="edit"
-  secondaryActionLabel="Back"
+  [secondaryActionLabel]="'Back' | t"
   secondaryActionIcon="arrow_back"
   (primaryAction)="onEdit()"
   (secondaryAction)="onBack()">
@@ -19,7 +19,7 @@
     <div class="absolute inset-0 border-4 border-gray-100 dark:border-gray-800 rounded-full"></div>
     <div class="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
   </div>
-  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Loading Pen...</p>
+  <p class="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">{{ 'Loading Pen...' | t }}</p>
 </div>
 
 <div *ngIf="!isLoading() && pen()" class="space-y-6">
@@ -36,7 +36,7 @@
           <div class="flex items-center gap-2 flex-wrap">
             <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{{ pen()?.penName }}</h2>
             <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
-              {{ pen()?.animalGroup || 'Mixed Group' }}
+              {{ (pen()?.animalGroup || 'Mixed Group') | t }}
             </span>
           </div>
           <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400 font-mono">{{ pen()?.penNumber }}</p>
@@ -46,7 +46,7 @@
             [ngClass]="statusClass()">
         <span class="w-2 h-2 rounded-full mr-2"
               [ngClass]="{'bg-emerald-500': pen()?.status === 'Active', 'bg-gray-400': pen()?.status === 'Inactive', 'bg-amber-500': pen()?.status === 'UnderMaintenance'}"></span>
-        {{ statusLabel() }}
+        {{ statusLabel() | t }}
       </span>
     </div>
 
@@ -57,7 +57,7 @@
           <mat-icon class="!text-blue-600 dark:!text-blue-400 !text-[20px] !w-[20px] !h-[20px]">pets</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Current Animals</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Current Animals' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ pen()?.currentOccupancy | number }}</div>
         </div>
       </div>
@@ -66,7 +66,7 @@
           <mat-icon class="!text-indigo-600 dark:!text-indigo-400 !text-[20px] !w-[20px] !h-[20px]">warehouse</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Capacity</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Capacity' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ pen()?.capacity | number }}</div>
         </div>
       </div>
@@ -75,7 +75,7 @@
           <mat-icon class="!text-emerald-600 dark:!text-emerald-400 !text-[20px] !w-[20px] !h-[20px]">pie_chart</mat-icon>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Utilization</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Utilization' | t }}</div>
           <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
             {{ pen()?.capacity ? ((pen()!.currentOccupancy / pen()!.capacity!) * 100 | number:'1.0-0') + '%' : 'N/A' }}
           </div>
@@ -89,7 +89,7 @@
     <mat-tab-group animationDuration="200ms" class="farm-tab-group">
 
       <!-- ─── Overview Tab ─────────────────────────────────────────── -->
-      <mat-tab label="Overview">
+      <mat-tab [label]="'Overview' | t">
         <div class="p-6 sm:p-8">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
@@ -97,10 +97,10 @@
             <div class="md:col-span-2">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">sticky_note_2</mat-icon>
-                Notes
+                {{ 'Notes' | t }}
               </dt>
               <dd class="text-sm text-gray-800 dark:text-gray-200 font-medium whitespace-pre-line leading-relaxed">
-                {{ pen()?.notes || 'No notes provided.' }}
+                {{ pen()?.notes || ('No notes provided.' | t) }}
               </dd>
             </div>
             
@@ -108,11 +108,11 @@
             <div class="md:col-span-2 pt-4 border-t border-red-100 dark:border-red-900/30">
                <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-red-500 mb-3">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">warning</mat-icon>
-                Danger Zone
+                {{ 'Danger Zone' | t }}
               </dt>
               <dd>
                  <button mat-flat-button color="warn" (click)="deletePen()" class="!rounded-lg shadow-sm">
-                   Delete Pen
+                   {{ 'Delete Pen' | t }}
                  </button>
               </dd>
             </div>
@@ -121,17 +121,17 @@
       </mat-tab>
 
       <!-- ─── Animals Tab ─────────────────────────────────────────────── -->
-      <mat-tab label="Animals">
+      <mat-tab [label]="'Animals' | t">
         <div class="p-6 sm:p-8">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white">Animals in this Pen</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Livestock currently housed here.</p>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Animals in this Pen' | t }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Livestock currently housed here.' | t }}</p>
             </div>
             <a mat-flat-button routerLink="/livestock/register" [queryParams]="{ branchId: branchId(), farmId: farmId() }"
                class="!bg-primary-600 !text-white hover:!bg-primary-700 !rounded-xl !text-sm !font-semibold shadow-sm">
               <mat-icon class="!mr-1 !text-[18px] !w-[18px] !h-[18px]">add</mat-icon>
-              Register Animal
+              {{ 'Register Animal' | t }}
             </a>
           </div>
 
@@ -143,20 +143,20 @@
             <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 shadow-sm">
               <mat-icon class="!text-gray-400 !text-[28px] !w-[28px] !h-[28px]">pets</mat-icon>
             </div>
-            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No Animals Yet</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">Register new animals to assign them to this pen.</p>
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ 'No Animals Yet' | t }}</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs">{{ 'Register new animals to assign them to this pen.' | t }}</p>
           </div>
 
           <div *ngIf="!isLoading() && animals().length > 0" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-800/50 border-y border-gray-100 dark:border-gray-800">
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Tag ID</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Breed</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">Sex</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">Date of Birth</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">Status</th>
-                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">Action</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Tag ID' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Breed' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">{{ 'Sex' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">{{ 'Date of Birth' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">{{ 'Status' | t }}</th>
+                  <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">{{ 'Action' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -165,7 +165,7 @@
                   <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">{{ a.breedName }}</td>
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="px-2 py-0.5 text-[11px] uppercase font-bold rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-                      {{ a.sex === 'Male' ? 'Male' : a.sex === 'Female' ? 'Female' : 'Unknown' }}
+                      {{ (a.sex === 'Male' ? 'Male' : a.sex === 'Female' ? 'Female' : 'Unknown') | t }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-sm font-semibold text-right text-gray-700 dark:text-gray-300">
@@ -174,13 +174,13 @@
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border"
                           [ngClass]="a.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
-                      {{ a.status === 'Active' ? 'Active' : (a.status === 'Sold' ? 'Sold' : (a.status === 'Dead' ? 'Deceased' : 'Quarantined')) }}
+                      {{ (a.status === 'Active' ? 'Active' : (a.status === 'Sold' ? 'Sold' : (a.status === 'Dead' ? 'Deceased' : 'Quarantined'))) | t }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right">
                     <a [routerLink]="['/livestock', a.id]"
                        class="text-primary-600 hover:text-primary-700 font-semibold text-sm">
-                      View
+                      {{ 'View' | t }}
                     </a>
                   </td>
                 </tr>
@@ -191,14 +191,14 @@
       </mat-tab>
 
       <!-- ─── Audit Tab ──────────────────────────────────────────────── -->
-      <mat-tab label="Audit Info">
+      <mat-tab [label]="'Audit Info' | t">
         <div class="p-6 sm:p-8">
           <dl class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_circle_outline</mat-icon>
-                Created At
+                {{ 'Created At' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (pen()?.createdAtUtc | date:'MMM d, y, h:mm a') || '—' }}
@@ -208,7 +208,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon>
-                Created By
+                {{ 'Created By' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ pen()?.createdBy || '—' }}
@@ -218,7 +218,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit_calendar</mat-icon>
-                Last Modified
+                {{ 'Last Modified' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {{ (pen()?.modifiedAtUtc | date:'MMM d, y, h:mm a') || 'Never modified' }}
@@ -228,7 +228,7 @@
             <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800/50">
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">manage_accounts</mat-icon>
-                Last Modified By
+                {{ 'Last Modified By' | t }}
               </dt>
               <dd class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">
                 {{ pen()?.modifiedBy || '—' }}

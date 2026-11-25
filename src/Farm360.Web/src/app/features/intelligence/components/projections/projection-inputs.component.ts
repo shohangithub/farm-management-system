@@ -6,6 +6,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { FatteningProjectionInputs, ProjectionDefaults, ProjectionDefaultValue } from '../../models/projection.model';
 
 /** Form field name → defaults key. Yield fields are edited as % in the form but sent as 0–1 ratios. */
@@ -14,7 +16,7 @@ const PERCENT_FIELDS = ['initialMeatYieldRatio', 'meatYieldOnDailyGainRatio'] as
 @Component({
   selector: 'app-projection-inputs',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTooltipModule, TranslatePipe],
   template: `
     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden h-full">
       <div class="flex items-start justify-between gap-3 mb-6">
@@ -23,101 +25,101 @@ const PERCENT_FIELDS = ['initialMeatYieldRatio', 'meatYieldOnDailyGainRatio'] as
             <mat-icon>tune</mat-icon>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white m-0">Projection Levers</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 m-0">Projection starts today, from the animal's latest weight. Adjust any value to simulate outcomes.</p>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white m-0">{{ 'Projection Levers' | t }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 m-0">{{ "Projection starts today, from the animal's latest weight. Adjust any value to simulate outcomes." | t }}</p>
           </div>
         </div>
         <button type="button" (click)="resetToDefaults()" [disabled]="!defaults()"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 shrink-0">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">restart_alt</mat-icon> Reset
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">restart_alt</mat-icon> {{ 'Reset' | t }}
         </button>
       </div>
 
       <form [formGroup]="form">
-        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">Animal &amp; market</p>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{{ 'Animal & market' | t }}</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Starting Live Weight (kg)</mat-label>
+            <mat-label>{{ 'Starting Live Weight (kg)' | t }}</mat-label>
             <input matInput type="number" formControlName="startingLiveWeightKg" min="0.1" step="0.1">
             <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="hint(defaults()?.startingLiveWeightKg)">info</mat-icon>
-            <mat-error>Must be greater than 0</mat-error>
+            <mat-error>{{ 'Must be greater than 0' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Investment to Date (BDT)</mat-label>
+            <mat-label>{{ 'Investment to Date (BDT)' | t }}</mat-label>
             <input matInput type="number" formControlName="purchasePriceBdt" min="0">
             <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="hint(defaults()?.purchasePriceBdt)">info</mat-icon>
-            <mat-error>Cannot be negative</mat-error>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Meat Price (BDT/kg)</mat-label>
+            <mat-label>{{ 'Meat Price (BDT/kg)' | t }}</mat-label>
             <input matInput type="number" formControlName="currentMeatPriceBdtPerKg" min="0">
             <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="hint(defaults()?.currentMeatPriceBdtPerKg)">info</mat-icon>
-            <mat-error>Cannot be negative</mat-error>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Fattening Period (days)</mat-label>
+            <mat-label>{{ 'Fattening Period (days)' | t }}</mat-label>
             <input matInput type="number" formControlName="fatteningPeriodDays" min="1" max="1095" step="1">
-            <mat-error>Whole number of days, 1–1095</mat-error>
+            <mat-error>{{ 'Whole number of days, 1–1095' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Daily Live-Weight Gain (kg)</mat-label>
+            <mat-label>{{ 'Daily Live-Weight Gain (kg)' | t }}</mat-label>
             <input matInput type="number" formControlName="dailyLiveWeightGainKg" min="0" step="0.05">
             <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="hint(defaults()?.dailyLiveWeightGainKg)">info</mat-icon>
-            <mat-error>Cannot be negative</mat-error>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Meat Yield / Dressing (%)</mat-label>
+            <mat-label>{{ 'Meat Yield / Dressing (%)' | t }}</mat-label>
             <input matInput type="number" formControlName="initialMeatYieldRatio" min="0" max="100" step="1">
             <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="hint(defaults()?.initialMeatYieldRatio)">info</mat-icon>
-            <mat-error>Between 0 and 100</mat-error>
+            <mat-error>{{ 'Between 0 and 100' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Meat Yield on Daily Gain (%)</mat-label>
+            <mat-label>{{ 'Meat Yield on Daily Gain (%)' | t }}</mat-label>
             <input matInput type="number" formControlName="meatYieldOnDailyGainRatio" min="0" max="100" step="1">
-            <mat-icon matSuffix class="text-gray-400 cursor-help" matTooltip="Share of each day's live-weight gain that becomes meat. Shown in the daily 'Meat Gain' column.">info</mat-icon>
-            <mat-error>Between 0 and 100</mat-error>
+            <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="meatGainHint | t">info</mat-icon>
+            <mat-error>{{ 'Between 0 and 100' | t }}</mat-error>
           </mat-form-field>
         </div>
 
-        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 mt-1">Running costs</p>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 mt-1">{{ 'Running costs' | t }}</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4">
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Daily Feed at Start (kg)</mat-label>
+            <mat-label>{{ 'Daily Feed at Start (kg)' | t }}</mat-label>
             <input matInput type="number" formControlName="dailyFeedQuantityKgAtStart" min="0" step="0.1">
             <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="hint(defaults()?.dailyFeedQuantityKgAtStart, 'Scales with body weight as the animal grows.')">info</mat-icon>
-            <mat-error>Cannot be negative</mat-error>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Feed Price (BDT/kg)</mat-label>
+            <mat-label>{{ 'Feed Price (BDT/kg)' | t }}</mat-label>
             <input matInput type="number" formControlName="feedPriceBdtPerKg" min="0" step="0.1">
             <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="hint(defaults()?.feedPriceBdtPerKg)">info</mat-icon>
-            <mat-error>Cannot be negative</mat-error>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Grass Cost (BDT/day)</mat-label>
+            <mat-label>{{ 'Grass Cost (BDT/day)' | t }}</mat-label>
             <input matInput type="number" formControlName="dailyGrassCostBdt" min="0">
-            <mat-error>Cannot be negative</mat-error>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Other Cost (BDT/day)</mat-label>
+            <mat-label>{{ 'Other Cost (BDT/day)' | t }}</mat-label>
             <input matInput type="number" formControlName="dailyOtherCostBdt" min="0">
-            <mat-error>Cannot be negative</mat-error>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Labour Cost (BDT/month)</mat-label>
+            <mat-label>{{ 'Labour Cost (BDT/month)' | t }}</mat-label>
             <input matInput type="number" formControlName="monthlyLaborCostBdt" min="0">
-            <mat-icon matSuffix class="text-gray-400 cursor-help" matTooltip="Charged per day as monthly ÷ 30.">info</mat-icon>
-            <mat-error>Cannot be negative</mat-error>
+            <mat-icon matSuffix class="text-gray-400 cursor-help" [matTooltip]="'Charged per day as monthly ÷ 30.' | t">info</mat-icon>
+            <mat-error>{{ 'Cannot be negative' | t }}</mat-error>
           </mat-form-field>
         </div>
       </form>
@@ -128,7 +130,9 @@ const PERCENT_FIELDS = ['initialMeatYieldRatio', 'meatYieldOnDailyGainRatio'] as
 export class ProjectionInputsComponent {
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
 
+  readonly meatGainHint = "Share of each day's live-weight gain that becomes meat. Shown in the daily 'Meat Gain' column.";
   defaults = input<ProjectionDefaults | null>(null);
   inputsChanged = output<FatteningProjectionInputs>();
 
@@ -183,8 +187,8 @@ export class ProjectionInputsComponent {
   }
 
   hint(d: ProjectionDefaultValue<number> | null | undefined, extra = ''): string {
-    const source = d?.sourceLabel ? `Default: ${d.sourceLabel}` : '';
-    return [source, extra].filter(Boolean).join(' — ');
+    const source = d?.sourceLabel ? this.i18n.t('Default: {source}', { source: this.i18n.t(d.sourceLabel) }) : '';
+    return [source, extra ? this.i18n.t(extra) : ''].filter(Boolean).join(' — ');
   }
 
   private emitIfValid(): void {

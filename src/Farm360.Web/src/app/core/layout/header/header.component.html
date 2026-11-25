@@ -2,7 +2,7 @@
   
   <!-- Left Side: Menu Toggle & Breadcrumb -->
   <div class="flex items-center gap-2">
-    <button mat-icon-button (click)="onToggleSidebar()" aria-label="Toggle sidebar" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+    <button mat-icon-button (click)="onToggleSidebar()" [attr.aria-label]="'Toggle sidebar' | t" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
       <mat-icon>menu_open</mat-icon>
     </button>
     
@@ -17,31 +17,39 @@
   <!-- Right Side: Actions & Profile -->
   <div class="flex items-center gap-1.5">
     
+    <!-- Language Switcher: shows the language you can switch to -->
+    <button type="button" (click)="i18n.toggle()"
+      [matTooltip]="(i18n.isBangla ? 'Switch to English' : 'Switch to Bangla') | t"
+      [attr.aria-label]="(i18n.isBangla ? 'Switch to English' : 'Switch to Bangla') | t"
+      class="h-9 px-3 rounded-full text-xs font-semibold border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+      {{ i18n.isBangla ? 'English' : 'বাংলা' }}
+    </button>
+
     <!-- Theme Switcher -->
-    <button mat-icon-button (click)="toggleTheme()" [matTooltip]="isDarkMode() ? 'Light Mode' : 'Dark Mode'" [attr.aria-label]="isDarkMode() ? 'Light Mode' : 'Dark Mode'" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+    <button mat-icon-button (click)="toggleTheme()" [matTooltip]="(isDarkMode() ? 'Light Mode' : 'Dark Mode') | t" [attr.aria-label]="(isDarkMode() ? 'Light Mode' : 'Dark Mode') | t" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
       <mat-icon class="!w-5 !h-5 !text-[20px]">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
     </button>
 
     <!-- Context Selector Component (inline from md; mobile uses the dialog below) -->
     <app-context-selector class="hidden md:block"></app-context-selector>
-    <button mat-icon-button class="md:hidden text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200" (click)="openContextDialog()" matTooltip="Switch organisation / branch / farm" aria-label="Switch organisation, branch or farm">
+    <button mat-icon-button class="md:hidden text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200" (click)="openContextDialog()" [matTooltip]="'Switch organisation / branch / farm' | t" [attr.aria-label]="'Switch organisation, branch or farm' | t">
       <mat-icon class="!w-5 !h-5 !text-[20px]">swap_horiz</mat-icon>
     </button>
 
     <!-- Notifications -->
-    <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" (menuOpened)="onNotificationsOpen()" matTooltip="Notifications" [attr.aria-label]="signalRService.unreadCount() > 0 ? 'Notifications, ' + signalRService.unreadCount() + ' unread' : 'Notifications'" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors relative">
+    <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" (menuOpened)="onNotificationsOpen()" [matTooltip]="'Notifications' | t" [attr.aria-label]="signalRService.unreadCount() > 0 ? ('Notifications, {count} unread' | t: { count: signalRService.unreadCount() }) : ('Notifications' | t)" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors relative">
       <mat-icon class="!w-5 !h-5 !text-[20px]">notifications_none</mat-icon>
       <span *ngIf="signalRService.unreadCount() > 0" class="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[11px] font-bold leading-4 rounded-full border border-white dark:border-surface-dark text-center" aria-hidden="true">{{ signalRService.unreadCount() > 9 ? '9+' : signalRService.unreadCount() }}</span>
     </button>
     <mat-menu #notificationsMenu="matMenu" xPosition="before" class="bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 min-w-[320px] max-w-[360px]">
       <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800/50 flex justify-between items-center">
-        <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">Notifications</h3>
+        <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">{{ 'Notifications' | t }}</h3>
       </div>
       
       <div class="max-h-80 overflow-y-auto">
         <div *ngIf="signalRService.notifications().length === 0" class="p-6 text-center text-sm text-gray-500">
           <mat-icon class="text-gray-300 dark:text-gray-600 mb-2 !text-[32px] !w-[32px] !h-[32px]">notifications_paused</mat-icon>
-          <p>No new notifications</p>
+          <p>{{ 'No new notifications' | t }}</p>
         </div>
         
         <div *ngFor="let notification of signalRService.notifications()" class="px-4 py-3 border-b border-gray-50 dark:border-gray-800/30 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors" (click)="$event.stopPropagation()">
@@ -69,7 +77,7 @@
     </mat-menu>
 
     <!-- User Profile Menu -->
-    <button mat-icon-button [matMenuTriggerFor]="userMenu" [matTooltip]="displayName()" [attr.aria-label]="'Account menu for ' + displayName()" class="ml-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full h-8 w-8 flex items-center justify-center shadow-sm hover:shadow transition-all">
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" [matTooltip]="displayName()" [attr.aria-label]="'Account menu for {name}' | t: { name: displayName() }" class="ml-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full h-8 w-8 flex items-center justify-center shadow-sm hover:shadow transition-all">
       <span class="text-white font-bold text-xs tracking-wider">{{ initials() }}</span>
     </button>
     <mat-menu #userMenu="matMenu" xPosition="before" class="bg-white dark:bg-surface-dark rounded-lg shadow-lg border border-gray-100 dark:border-gray-800 min-w-[220px]">
@@ -77,29 +85,29 @@
         <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ displayName() }}</p>
         <p *ngIf="user()?.email" class="text-[12px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{{ user()?.email }}</p>
         <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
-          {{ user()?.role }}<ng-container *ngIf="(currentOrg$ | async)?.name as orgName"> · {{ orgName }}</ng-container>
+          {{ user()?.role | t }}<ng-container *ngIf="(currentOrg$ | async)?.name as orgName"> · {{ orgName }}</ng-container>
         </p>
       </div>
       <button mat-menu-item [routerLink]="['/settings/profile']" class="text-sm text-gray-700 dark:text-gray-300">
         <mat-icon class="text-gray-400">person_outline</mat-icon>
-        <span>My Profile</span>
+        <span>{{ 'My Profile' | t }}</span>
       </button>
       <button mat-menu-item [routerLink]="['/settings']" class="text-sm text-gray-700 dark:text-gray-300">
         <mat-icon class="text-gray-400">settings_applications</mat-icon>
-        <span>Settings</span>
+        <span>{{ 'Settings' | t }}</span>
       </button>
 
       <!-- Mobile Only Context Options -->
       <mat-divider class="dark:border-gray-800/50 md:hidden"></mat-divider>
       <button mat-menu-item (click)="openContextDialog()" class="text-sm text-gray-700 dark:text-gray-300 md:hidden">
         <mat-icon class="text-gray-400">swap_horiz</mat-icon>
-        <span>Change Organization / Branch / Farm</span>
+        <span>{{ 'Change Organization / Branch / Farm' | t }}</span>
       </button>
 
       <mat-divider class="dark:border-gray-800/50"></mat-divider>
       <button mat-menu-item (click)="logout()" class="text-sm text-red-600 dark:text-red-400">
         <mat-icon class="text-red-500 dark:text-red-400">logout</mat-icon>
-        <span>Sign Out</span>
+        <span>{{ 'Sign Out' | t }}</span>
       </button>
     </mat-menu>
     

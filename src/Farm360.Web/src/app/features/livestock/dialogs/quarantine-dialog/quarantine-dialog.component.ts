@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface QuarantineDialogData {
   animalId: string;
@@ -16,13 +18,14 @@ export interface QuarantineDialogData {
   selector: 'app-quarantine-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './quarantine-dialog.component.html'
 })
 export class QuarantineDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<QuarantineDialogComponent>);
   public readonly data = inject<QuarantineDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly animalSvc = inject(AnimalService);
   private readonly destroy$ = new Subject<void>();
 
@@ -56,7 +59,7 @@ export class QuarantineDialogComponent {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            this.error.set(err.error?.detail || err.error?.title || 'Quarantine failed.');
+            this.error.set(err.error?.detail || err.error?.title || this.i18n.t('Quarantine failed.'));
         }
       }
     });

@@ -117,12 +117,17 @@ public sealed class RegisterAnimalCommandHandler(
 
         if (request.ShedId.HasValue)
         {
+            // The animal has been in this pen since it arrived, not since the day it was entered in
+            // the app: dating the first placement "today" would reject back-dated sales, deaths and
+            // other on-farm records between acquisition and today. The validator already keeps the
+            // acquisition date out of the future; the Min is a guard for callers that skip it.
             var userId = currentUser.UserId ?? Guid.Empty;
+            var placedOn = request.AcquisitionDate <= _clock.Today ? request.AcquisitionDate : _clock.Today;
             animal.TransferToShed(
-                request.ShedId.Value, 
-                request.PenId, 
-                _clock.Today, 
-                userId, 
+                request.ShedId.Value,
+                request.PenId,
+                placedOn,
+                userId,
                 "Initial Placement");
         }
 

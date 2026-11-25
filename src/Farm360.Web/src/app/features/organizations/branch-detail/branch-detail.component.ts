@@ -12,6 +12,8 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -19,7 +21,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
 @Component({
   selector: 'app-branch-detail',
   standalone: true,
-  imports: [ErrorStateComponent, 
+  imports: [TranslatePipe, ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatIconModule,
@@ -33,6 +35,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BranchDetailComponent {
+  private readonly i18n = inject(I18nService);
   private readonly branchService = inject(BranchService);
   private readonly farmService = inject(FarmService);
   private readonly route = inject(ActivatedRoute);
@@ -69,7 +72,7 @@ export class BranchDetailComponent {
         farms: this.farmService.getFarmsByBranch(branchId).pipe(catchError(() => of([])))
       }).pipe(
         tap(res => {
-          if (!res.branch && !this.error()) this.error.set('Failed to load branch details.');
+          if (!res.branch && !this.error()) this.error.set(this.i18n.t('Failed to load branch details.'));
         }),
         catchError(err => {
           this.error.set(parseApiError(err, 'Failed to load branch details.'));

@@ -18,6 +18,8 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-purchase-order-list',
@@ -31,17 +33,18 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    LoadingComponent
+    LoadingComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Purchase Orders"
-      description="Manage purchase orders, approve requests, and fulfill stock arrivals from suppliers."
-      breadcrumbActiveNode="Purchase Orders">
+      [title]="'Purchase Orders' | t"
+      [description]="'Manage purchase orders, approve requests, and fulfill stock arrivals from suppliers.' | t"
+      [breadcrumbActiveNode]="'Purchase Orders' | t">
       <div actions>
         <button [routerLink]="['/inventory/purchase-orders/new']"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Create PO
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Create PO' | t }}
         </button>
       </div>
     </app-page-header>
@@ -55,18 +58,18 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="relative w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
-            placeholder="Search PO number..."
+            [placeholder]="'Search PO number...' | t"
             class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
         </div>
 
         <select [ngModel]="params().status ?? null" (ngModelChange)="onStatusChange($event)"
           class="w-full sm:w-48 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
-          <option [ngValue]="null">All Statuses</option>
-          <option [ngValue]="PurchaseOrderStatus.Draft">Draft</option>
-          <option [ngValue]="PurchaseOrderStatus.PendingApproval">Pending Approval</option>
-          <option [ngValue]="PurchaseOrderStatus.Approved">Approved</option>
-          <option [ngValue]="PurchaseOrderStatus.Fulfilled">Fulfilled</option>
-          <option [ngValue]="PurchaseOrderStatus.Cancelled">Cancelled</option>
+          <option [ngValue]="null">{{ 'All Statuses' | t }}</option>
+          <option [ngValue]="PurchaseOrderStatus.Draft">{{ 'Draft' | t }}</option>
+          <option [ngValue]="PurchaseOrderStatus.PendingApproval">{{ 'Pending Approval' | t }}</option>
+          <option [ngValue]="PurchaseOrderStatus.Approved">{{ 'Approved' | t }}</option>
+          <option [ngValue]="PurchaseOrderStatus.Fulfilled">{{ 'Fulfilled' | t }}</option>
+          <option [ngValue]="PurchaseOrderStatus.Cancelled">{{ 'Cancelled' | t }}</option>
         </select>
       </div>
 
@@ -74,9 +77,9 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <app-empty-state
         *ngIf="!loading() && !error() && (!result()?.items || result()?.items?.length === 0)"
         icon="request_quote"
-        title="No Purchase Orders found"
-        description="Create your first purchase order to restock your inventory."
-        actionLabel="Create PO"
+        [title]="'No Purchase Orders found' | t"
+        [description]="'Create your first purchase order to restock your inventory.' | t"
+        [actionLabel]="'Create PO' | t"
         (action)="router.navigate(['/inventory/purchase-orders/new'])">
       </app-empty-state>
 
@@ -84,7 +87,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <div *ngIf="!loading() && result()?.items?.length" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @for (po of result()?.items; track po.id) {
           <div class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer"
-               role="link" tabindex="0" [attr.aria-label]="'Open purchase order ' + (po.poNumber ?? '')"
+               role="link" tabindex="0" [attr.aria-label]="'Open purchase order {po}' | t: { po: po.poNumber ?? '' }"
                (click)="router.navigate(['/inventory/purchase-orders', po.id])"
                (keydown.enter)="router.navigate(['/inventory/purchase-orders', po.id])">
             <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">request_quote</mat-icon>
@@ -96,7 +99,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                   <mat-icon class="!w-5 !h-5 !text-[20px]">request_quote</mat-icon>
                 </div>
                 <div>
-                  <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-emerald-600 transition-colors">PO #{{ po.poNumber }}</h3>
+                  <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-emerald-600 transition-colors">{{ 'PO #{po}' | t: { po: po.poNumber } }}</h3>
                   <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-400">
                     {{ po.orderDate | date:'mediumDate' }}
                   </span>
@@ -111,18 +114,18 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
                   'bg-indigo-50 text-indigo-700 border border-indigo-200': po.status === PurchaseOrderStatus.Fulfilled,
                   'bg-red-50 text-red-700 border border-red-200': po.status === PurchaseOrderStatus.Cancelled
                 }">
-                {{ getStatusName(po.status) }}
+                {{ getStatusName(po.status) | t }}
               </span>
             </div>
 
             <!-- Card Body -->
             <div class="p-5 flex-1 relative z-10">
               <div class="flex items-center justify-between text-xs mb-2 text-gray-400">
-                <span>Items Count</span>
-                <span class="font-bold text-gray-700 dark:text-gray-300">{{ po.items.length || 0 }} Items</span>
+                <span>{{ 'Items Count' | t }}</span>
+                <span class="font-bold text-gray-700 dark:text-gray-300">{{ '{n} Items' | t: { n: po.items.length || 0 } }}</span>
               </div>
               <div class="flex items-center justify-between text-xs text-gray-400">
-                <span>Total Amount</span>
+                <span>{{ 'Total Amount' | t }}</span>
                 <span class="font-extrabold text-emerald-600 dark:text-emerald-400 text-base">{{ po.totalAmountBdt | money:2 }}</span>
               </div>
             </div>
@@ -130,7 +133,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <!-- Footer Action -->
             <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-end relative z-10">
                <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
-                 View Details <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">arrow_forward</mat-icon>
+                 {{ 'View Details' | t }} <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">arrow_forward</mat-icon>
                </span>
             </div>
           </div>
@@ -140,15 +143,15 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
       <!-- Pagination Footer -->
       <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-          Showing <span class="font-bold text-gray-900 dark:text-white">{{ pageStart() }}</span> to <span class="font-bold text-gray-900 dark:text-white">{{ pageEnd() }}</span> of <span class="font-bold text-gray-900 dark:text-white">{{ result()?.totalCount }}</span> items
+          {{ 'Showing {from} to {to} of {total} items' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
-            <button aria-label="Previous" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
+            <button [attr.aria-label]="'Previous' | t" (click)="prevPage()" [disabled]="!result()?.hasPreviousPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_left</mat-icon>
             </button>
-            <button aria-label="Next" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
+            <button [attr.aria-label]="'Next' | t" (click)="nextPage()" [disabled]="!result()?.hasNextPage"
                     class="inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">chevron_right</mat-icon>
             </button>
@@ -164,6 +167,7 @@ export class PurchaseOrderList {
   private readonly contextService = inject(WorkingContextService);
   private readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -230,7 +234,7 @@ export class PurchaseOrderList {
         }
         return this.inventoryService.getPurchaseOrders(params).pipe(
           catchError(e => {
-            this.error.set(parseApiError(e, 'Could not load purchase orders.'));
+            this.error.set(parseApiError(e, this.i18n.t('Could not load purchase orders.')));
             return of(null);
           })
         );

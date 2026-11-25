@@ -6,7 +6,7 @@
 <div *ngIf="error()" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3 animate-fade-in-up">
   <mat-icon class="!text-red-500 mt-0.5">error_outline</mat-icon>
   <div>
-    <h3 class="text-sm font-semibold">Error</h3>
+    <h3 class="text-sm font-semibold">{{ 'Error' | t }}</h3>
     <p class="text-xs mt-1">{{ error() }}</p>
   </div>
 </div>
@@ -14,7 +14,7 @@
 <div *ngIf="successMessage()" class="bg-accent-50 dark:bg-accent-900/20 border-l-4 border-accent-500 text-accent-700 dark:text-accent-400 p-4 rounded-r-md mb-6 shadow-sm flex items-start gap-3 animate-fade-in-up">
   <mat-icon class="!text-accent-500 mt-0.5">check_circle_outline</mat-icon>
   <div>
-    <h3 class="text-sm font-semibold">Success</h3>
+    <h3 class="text-sm font-semibold">{{ 'Success' | t }}</h3>
     <p class="text-xs mt-1">{{ successMessage() }}</p>
   </div>
 </div>
@@ -30,9 +30,9 @@
           <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">domain</mat-icon>
           </div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Basic Info</h3>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Basic Info' | t }}</h3>
         </div>
-        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">Provide the fundamental details about this business entity. This name will appear on all official documents.</p>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">{{ 'Provide the fundamental details about this business entity. This name will appear on all official documents.' | t }}</p>
       </div>
       
       <div class="p-8 md:col-span-2 space-y-6">
@@ -40,46 +40,46 @@
           
           <!-- Logo Upload -->
           <div class="sm:col-span-2 form-group relative">
-            <label class="form-label font-medium mb-1.5 block">Organization Logo</label>
+            <label class="form-label font-medium mb-1.5 block">{{ 'Organization Logo' | t }}</label>
             <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl hover:border-primary-500 dark:hover:border-primary-500 transition-colors bg-white/50 dark:bg-gray-800/30">
               <div class="space-y-1 text-center flex flex-col items-center">
                 <div *ngIf="logoPreviewUrl()" class="mb-4 relative group">
                   <img [src]="logoPreviewUrl()" alt="Logo Preview" class="h-24 w-24 object-cover rounded-xl shadow-sm ring-1 ring-black/5" />
-                  <button aria-label="Close" matTooltip="Close" type="button" (click)="onRemoveLogo()" class="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200 shadow-sm">
+                  <button [attr.aria-label]="'Close' | t" type="button" (click)="onRemoveLogo()" class="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200 shadow-sm">
                     <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">close</mat-icon>
                   </button>
                 </div>
                 <mat-icon *ngIf="!logoPreviewUrl()" class="mx-auto !h-12 !w-12 !text-[48px] text-gray-400">image</mat-icon>
                 <div class="flex text-sm text-gray-600 dark:text-gray-400 mt-2">
                   <label for="file-upload" class="relative cursor-pointer bg-transparent rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
-                    <span>Upload a file</span>
+                    <span>{{ 'Upload a file' | t }}</span>
                     <input id="file-upload" name="file-upload" type="file" accept="image/*" class="sr-only" (change)="onLogoSelected($event)">
                   </label>
-                  <p class="pl-1">or drag and drop</p>
+                  <p class="pl-1">{{ 'or drag and drop' | t }}</p>
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-500">
-                  PNG, JPG, GIF up to 2MB
+                  {{ 'PNG, JPG, GIF up to 2MB' | t }}
                 </p>
               </div>
             </div>
           </div>
 
           <div class="sm:col-span-2 form-group relative">
-            <label for="name" class="form-label font-medium mb-1.5 block">Organization Name <span class="text-red-500">*</span></label>
-            <input type="text" formControlName="name" id="name" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="e.g. Acme Corporation">
+            <label for="name" class="form-label font-medium mb-1.5 block">{{ 'Organization Name' | t }} <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="name" id="name" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" [placeholder]="'e.g. Acme Corporation' | t">
             <span *ngIf="orgForm.get('name')?.touched && orgForm.get('name')?.invalid" class="text-[11px] text-red-500 mt-1.5 flex items-center gap-1">
-              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">info</mat-icon> Organization name is required (max 200 chars).
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">info</mat-icon> {{ 'Organization name is required (max 200 chars).' | t }}
             </span>
           </div>
 
           <div class="sm:col-span-2 form-group relative">
-            <label for="businessType" class="form-label font-medium mb-1.5 block">Business Type <span class="text-red-500">*</span></label>
+            <label for="businessType" class="form-label font-medium mb-1.5 block">{{ 'Business Type' | t }} <span class="text-red-500">*</span></label>
             <select id="businessType" formControlName="businessType" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
-              <option value="Farm">Farm / Producer</option>
-              <option value="Supplier">Supplier / Vendor</option>
-              <option value="Buyer">Buyer / Distributor</option>
-              <option value="VeterinaryClinic">Veterinary Clinic</option>
-              <option value="Cooperative">Cooperative</option>
+              <option value="Farm">{{ 'Farm / Producer' | t }}</option>
+              <option value="Supplier">{{ 'Supplier / Vendor' | t }}</option>
+              <option value="Buyer">{{ 'Buyer / Distributor' | t }}</option>
+              <option value="VeterinaryClinic">{{ 'Veterinary Clinic' | t }}</option>
+              <option value="Cooperative">{{ 'Cooperative' | t }}</option>
             </select>
           </div>
         </div>
@@ -96,57 +96,57 @@
           <div class="w-8 h-8 rounded-lg bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 flex items-center justify-center">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">public</mat-icon>
           </div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Regional Settings</h3>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Regional Settings' | t }}</h3>
         </div>
-        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">Set the primary communication channels and localization settings for the organization.</p>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">{{ 'Set the primary communication channels and localization settings for the organization.' | t }}</p>
       </div>
       
       <div class="p-8 md:col-span-2 space-y-6">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div class="form-group relative">
-            <label for="contactEmail" class="form-label font-medium mb-1.5 block">Contact Email <span class="text-red-500">*</span></label>
-            <input type="email" formControlName="contactEmail" id="contactEmail" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="admin@example.com">
+            <label for="contactEmail" class="form-label font-medium mb-1.5 block">{{ 'Contact Email' | t }} <span class="text-red-500">*</span></label>
+            <input type="email" formControlName="contactEmail" id="contactEmail" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" [placeholder]="'admin@example.com' | t">
             <span *ngIf="orgForm.get('contactEmail')?.touched && orgForm.get('contactEmail')?.invalid" class="text-[11px] text-red-500 mt-1.5 flex items-center gap-1">
-              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">info</mat-icon> Valid email is required.
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">info</mat-icon> {{ 'Valid email is required.' | t }}
             </span>
           </div>
 
           <div class="form-group relative">
-            <label for="contactPhone" class="form-label font-medium mb-1.5 block">Contact Phone</label>
-            <input type="text" formControlName="contactPhone" id="contactPhone" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="+880XXXXXXXXXX">
+            <label for="contactPhone" class="form-label font-medium mb-1.5 block">{{ 'Contact Phone' | t }}</label>
+            <input type="text" formControlName="contactPhone" id="contactPhone" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" [placeholder]="'+880XXXXXXXXXX' | t">
           </div>
 
           <div class="form-group relative">
-            <label for="currencyCode" class="form-label font-medium mb-1.5 block">Currency <span class="text-red-500">*</span></label>
+            <label for="currencyCode" class="form-label font-medium mb-1.5 block">{{ 'Currency' | t }} <span class="text-red-500">*</span></label>
             <select id="currencyCode" formControlName="currencyCode" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
-              <option value="BDT">BDT (৳) — Bangladeshi Taka</option>
-              <option value="USD">USD ($) — US Dollar</option>
-              <option value="EUR">EUR (€) — Euro</option>
-              <option value="GBP">GBP (£) — British Pound</option>
-              <option value="INR">INR (₹) — Indian Rupee</option>
-              <option value="AED">AED (د.إ) — UAE Dirham</option>
+              <option value="BDT">{{ 'BDT (৳) — Bangladeshi Taka' | t }}</option>
+              <option value="USD">{{ 'USD ($) — US Dollar' | t }}</option>
+              <option value="EUR">{{ 'EUR (€) — Euro' | t }}</option>
+              <option value="GBP">{{ 'GBP (£) — British Pound' | t }}</option>
+              <option value="INR">{{ 'INR (₹) — Indian Rupee' | t }}</option>
+              <option value="AED">{{ 'AED (د.إ) — UAE Dirham' | t }}</option>
             </select>
           </div>
 
           <div class="form-group relative">
-            <label for="timeZoneId" class="form-label font-medium mb-1.5 block">Time Zone <span class="text-red-500">*</span></label>
+            <label for="timeZoneId" class="form-label font-medium mb-1.5 block">{{ 'Time Zone' | t }} <span class="text-red-500">*</span></label>
             <select id="timeZoneId" formControlName="timeZoneId" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
-              <option value="Asia/Dhaka">Asia/Dhaka (GMT+6)</option>
-              <option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</option>
-              <option value="Asia/Dubai">Asia/Dubai (GMT+4)</option>
-              <option value="UTC">UTC (GMT+0)</option>
-              <option value="America/New_York">America/New_York (EST)</option>
-              <option value="Europe/London">Europe/London (GMT)</option>
+              <option value="Asia/Dhaka">{{ 'Asia/Dhaka (GMT+6)' | t }}</option>
+              <option value="Asia/Kolkata">{{ 'Asia/Kolkata (GMT+5:30)' | t }}</option>
+              <option value="Asia/Dubai">{{ 'Asia/Dubai (GMT+4)' | t }}</option>
+              <option value="UTC">{{ 'UTC (GMT+0)' | t }}</option>
+              <option value="America/New_York">{{ 'America/New_York (EST)' | t }}</option>
+              <option value="Europe/London">{{ 'Europe/London (GMT)' | t }}</option>
             </select>
           </div>
           
           <div class="sm:col-span-2 form-group relative">
-            <label for="languageCode" class="form-label font-medium mb-1.5 block">Language <span class="text-red-500">*</span></label>
+            <label for="languageCode" class="form-label font-medium mb-1.5 block">{{ 'Language' | t }} <span class="text-red-500">*</span></label>
             <select id="languageCode" formControlName="languageCode" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
-              <option value="en">English</option>
-              <option value="bn">Bengali (বাংলা)</option>
-              <option value="hi">Hindi (हिंदी)</option>
-              <option value="ar">Arabic (العربية)</option>
+              <option value="en">{{ 'English' | t }}</option>
+              <option value="bn">{{ 'Bengali (বাংলা)' | t }}</option>
+              <option value="hi">{{ 'Hindi (हिंदी)' | t }}</option>
+              <option value="ar">{{ 'Arabic (العربية)' | t }}</option>
             </select>
           </div>
         </div>
@@ -163,25 +163,25 @@
           <div class="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">gavel</mat-icon>
           </div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Legal & Compliance</h3>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Legal & Compliance' | t }}</h3>
         </div>
-        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">Official registration and tax identification details required for billing.</p>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">{{ 'Official registration and tax identification details required for billing.' | t }}</p>
       </div>
       
       <div class="p-8 md:col-span-2 space-y-6">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div class="sm:col-span-2 form-group relative">
-            <label for="businessRegistrationNumber" class="form-label font-medium mb-1.5 block">Business Reg Number</label>
+            <label for="businessRegistrationNumber" class="form-label font-medium mb-1.5 block">{{ 'Business Reg Number' | t }}</label>
             <input type="text" formControlName="businessRegistrationNumber" id="businessRegistrationNumber" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
           </div>
 
           <div class="form-group relative">
-            <label for="tradeLicenseNumber" class="form-label font-medium mb-1.5 block">Trade License Number</label>
+            <label for="tradeLicenseNumber" class="form-label font-medium mb-1.5 block">{{ 'Trade License Number' | t }}</label>
             <input type="text" formControlName="tradeLicenseNumber" id="tradeLicenseNumber" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
           </div>
 
           <div class="form-group relative">
-            <label for="taxIdentificationNumber" class="form-label font-medium mb-1.5 block">Tax ID (BIN / TIN)</label>
+            <label for="taxIdentificationNumber" class="form-label font-medium mb-1.5 block">{{ 'Tax ID (BIN / TIN)' | t }}</label>
             <input type="text" formControlName="taxIdentificationNumber" id="taxIdentificationNumber" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300">
           </div>
         </div>
@@ -198,35 +198,35 @@
           <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center">
             <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">location_on</mat-icon>
           </div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Location Address</h3>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Location Address' | t }}</h3>
         </div>
-        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">The physical or headquarters address of the organization.</p>
+        <p class="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">{{ 'The physical or headquarters address of the organization.' | t }}</p>
       </div>
       
       <div class="p-8 md:col-span-2 space-y-6">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div class="sm:col-span-2 form-group relative">
-            <label for="street" class="form-label font-medium mb-1.5 block">Street Address</label>
-            <input type="text" formControlName="street" id="street" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="123 Main Road, Block A">
+            <label for="street" class="form-label font-medium mb-1.5 block">{{ 'Street Address' | t }}</label>
+            <input type="text" formControlName="street" id="street" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" [placeholder]="'123 Main Road, Block A' | t">
           </div>
 
           <div class="form-group relative">
-            <label for="city" class="form-label font-medium mb-1.5 block">City / Upazila</label>
-            <input type="text" formControlName="city" id="city" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="Dhaka">
+            <label for="city" class="form-label font-medium mb-1.5 block">{{ 'City / Upazila' | t }}</label>
+            <input type="text" formControlName="city" id="city" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" [placeholder]="'Dhaka' | t">
           </div>
 
           <div class="form-group relative">
-            <label for="state" class="form-label font-medium mb-1.5 block">State / Division</label>
-            <input type="text" formControlName="state" id="state" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="Dhaka Division">
+            <label for="state" class="form-label font-medium mb-1.5 block">{{ 'State / Division' | t }}</label>
+            <input type="text" formControlName="state" id="state" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" [placeholder]="'Dhaka Division' | t">
           </div>
 
           <div class="form-group relative">
-            <label for="country" class="form-label font-medium mb-1.5 block">Country</label>
-            <input type="text" formControlName="country" id="country" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="Bangladesh">
+            <label for="country" class="form-label font-medium mb-1.5 block">{{ 'Country' | t }}</label>
+            <input type="text" formControlName="country" id="country" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" [placeholder]="'Bangladesh' | t">
           </div>
 
           <div class="form-group relative">
-            <label for="zipCode" class="form-label font-medium mb-1.5 block">ZIP / Postal Code</label>
+            <label for="zipCode" class="form-label font-medium mb-1.5 block">{{ 'ZIP / Postal Code' | t }}</label>
             <input type="text" formControlName="zipCode" id="zipCode" class="form-control hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300" placeholder="1212">
           </div>
         </div>
@@ -237,11 +237,11 @@
   <!-- ── Action Buttons ─────────────────────────────────────── -->
   <div class="sticky bottom-6 z-10 flex items-center justify-end gap-3 p-4 bg-white/70 dark:bg-surface-dark/70 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-lg ring-1 ring-black/5">
     <button type="button" routerLink="/organizations" class="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
-      Cancel
+      {{ 'Cancel' | t }}
     </button>
     <button type="submit" [disabled]="orgForm.invalid || isSubmitting()" class="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-[0_4px_14px_0_rgba(99,102,241,0.39)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.23)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none">
       <mat-icon *ngIf="isSubmitting()" class="animate-spin !w-5 !h-5 !text-[20px]">autorenew</mat-icon>
-      {{ isSubmitting() ? 'Saving...' : 'Save Organization' }}
+      {{ (isSubmitting() ? 'Saving...' : 'Save Organization') | t }}
     </button>
   </div>
 

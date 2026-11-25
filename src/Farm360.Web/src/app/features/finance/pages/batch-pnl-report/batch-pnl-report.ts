@@ -17,6 +17,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /** Batch P&L with the unrealised-value fields the API now returns (ratios are 0–1 fractions). */
 interface BatchPnLReportView extends BatchPnLReport {
@@ -37,29 +39,30 @@ interface BatchPnLReportView extends BatchPnLReport {
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    PercentPipe
+    PercentPipe,
+    TranslatePipe
   ],
   template: `
     <app-page-header 
-      title="Batch Profit & Loss" 
-      [description]="'Financial performance for batch ' + (batchId() || '')"
-      breadcrumbActiveNode="Batch P&L">
+      [title]="'Batch Profit & Loss' | t" 
+      [description]="'Financial performance for batch {batch}' | t: { batch: (batchId() || '') }"
+      [breadcrumbActiveNode]="'Batch P&L' | t">
       <div actions class="flex items-center gap-3">
         <a mat-stroked-button routerLink="/finance"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>Overview</span>
+          <span>{{ 'Overview' | t }}</span>
         </a>
         <a mat-stroked-button [routerLink]="['/reports/finance.batch-pnl']" [queryParams]="{ batchId: batchId() }"
           matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>SAP Report</span>
+          <span>{{ 'SAP Report' | t }}</span>
         </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
         </button>
         <button mat-stroked-button (click)="exportExcel()" [disabled]="!reportData()"
           class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
@@ -73,13 +76,13 @@ interface BatchPnLReportView extends BatchPnLReport {
 
     <div *ngIf="!isLoading()" class="p-6 max-w-5xl mx-auto space-y-6">
       
-      <app-error-state *ngIf="loadError() as err" title="Couldn't load the report" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="loadError() as err" [title]="loadErrorTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <app-empty-state
         *ngIf="!reportData() && !loadError()"
         icon="trending_flat"
-        title="No P&L Data"
-        description="No financial transactions found for this batch.">
+        [title]="'No P&L Data' | t"
+        [description]="'No financial transactions found for this batch.' | t">
       </app-empty-state>
 
       <!-- Main Report View -->
@@ -91,7 +94,7 @@ interface BatchPnLReportView extends BatchPnLReport {
         <div class="flex flex-col md:flex-row gap-6 mb-8 border-b border-gray-100 dark:border-gray-700/50 pb-8">
           <!-- Total Income -->
           <div class="flex-1">
-            <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Realised Income</p>
+            <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Realised Income' | t }}</p>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
               {{ report.totalIncomeBdt | money }}
             </h2>
@@ -99,7 +102,7 @@ interface BatchPnLReportView extends BatchPnLReport {
 
           <!-- Total Cost -->
           <div class="flex-1 border-l-0 md:border-l border-gray-100 dark:border-gray-700/50 md:pl-6">
-            <p class="text-sm font-bold uppercase tracking-wider text-gray-500">Total Cost</p>
+            <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Total Cost' | t }}</p>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
               {{ report.totalCostBdt | money }}
             </h2>
@@ -111,10 +114,10 @@ interface BatchPnLReportView extends BatchPnLReport {
           <!-- Gross Profit -->
           <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Realised Profit / Loss</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">{{ 'Realised Profit / Loss' | t }}</p>
               <h3 class="text-2xl font-bold" [ngClass]="report.grossProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
                 {{ Math.abs(report.grossProfitBdt) | money }}
-                <span *ngIf="report.grossProfitBdt < 0" class="text-sm">Loss</span>
+                <span *ngIf="report.grossProfitBdt < 0" class="text-sm">{{ 'Loss' | t }}</span>
               </h3>
             </div>
             <div class="w-12 h-12 rounded-full flex items-center justify-center" [ngClass]="report.grossProfitBdt >= 0 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'">
@@ -125,7 +128,7 @@ interface BatchPnLReportView extends BatchPnLReport {
           <!-- ROI -->
           <div class="bg-blue-50/50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800/50 flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400 mb-1">Realised ROI</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400 mb-1">{{ 'Realised ROI' | t }}</p>
               <h3 class="text-2xl font-bold text-blue-900 dark:text-blue-100">
                 {{ report.returnOnInvestmentPercent | percent:'1.2-2' }}
               </h3>
@@ -140,20 +143,20 @@ interface BatchPnLReportView extends BatchPnLReport {
         <!-- Unrealised value & estimated P&L (animals still on the farm) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
           <div class="bg-amber-50/50 dark:bg-amber-900/20 rounded-xl p-6 border border-amber-100 dark:border-amber-800/50">
-            <p class="text-xs font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400 mb-1">Unrealised value ({{ report.onHandAnimals ?? 0 }} on hand)</p>
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400 mb-1">{{ 'Unrealised value ({n} on hand)' | t: { n: (report.onHandAnimals ?? 0) } }}</p>
             <h3 class="text-2xl font-bold text-amber-900 dark:text-amber-100">
               {{ (report.unrealisedValueBdt ?? 0) | money }}
             </h3>
           </div>
           <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
-            <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Estimated Total P&amp;L</p>
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">{{ 'Estimated Total P&L' | t }}</p>
             <h3 class="text-2xl font-bold" [ngClass]="(report.estimatedTotalProfitBdt ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
               {{ Math.abs(report.estimatedTotalProfitBdt ?? 0) | money }}
-              <span *ngIf="(report.estimatedTotalProfitBdt ?? 0) < 0" class="text-sm">Loss</span>
+              <span *ngIf="(report.estimatedTotalProfitBdt ?? 0) < 0" class="text-sm">{{ 'Loss' | t }}</span>
             </h3>
           </div>
           <div class="bg-blue-50/50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800/50">
-            <p class="text-xs font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400 mb-1">Estimated ROI</p>
+            <p class="text-xs font-bold uppercase tracking-wider text-blue-600/70 dark:text-blue-400 mb-1">{{ 'Estimated ROI' | t }}</p>
             <h3 class="text-2xl font-bold text-blue-900 dark:text-blue-100">
               {{ (report.estimatedRoiPercent ?? 0) | percent:'1.2-2' }}
             </h3>
@@ -162,8 +165,7 @@ interface BatchPnLReportView extends BatchPnLReport {
 
         <div class="mt-6 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 p-3 rounded-lg border border-gray-100 dark:border-gray-700/50">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">info</mat-icon>
-          <span>This batch contains <strong>{{ report.totalAnimals }}</strong> animals. Realised P&amp;L = realised income − total cost of every animal;
-            the estimate adds the value of animals still on the farm at the farm's valuation rate. ROI = profit ÷ total cost.</span>
+          <span>{{ batchNote | t: { n: report.totalAnimals } }}</span>
         </div>
 
       </div>
@@ -177,6 +179,9 @@ export class BatchPnlReportComponent implements OnInit {
   private readonly pdfExportService = inject(PdfExportService);
   private readonly reportService = inject(ReportService);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(I18nService);
+  readonly loadErrorTitle = this.i18n.t("Couldn't load the report");
+  readonly batchNote = "This batch contains {n} animals. Realised P&L = realised income − total cost of every animal; the estimate adds the value of animals still on the farm at the farm's valuation rate. ROI = profit ÷ total cost.";
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -205,7 +210,7 @@ export class BatchPnlReportComponent implements OnInit {
       return this.financeService.getBatchPnL(farm.id, batchId).pipe(
         map(r => r as BatchPnLReportView | null),
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the batch P&L report.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the batch P&L report.')));
           return of(null as BatchPnLReportView | null);
         }));
     })
@@ -251,17 +256,17 @@ export class BatchPnlReportComponent implements OnInit {
               filename: `Farm360_Batch_PnL_${batch}`,
               orientation: 'landscape',
               header: {
-                title: 'Batch Profit & Loss Statement',
-                subtitle: `Batch Code: ${batch} Performance Report`,
+                title: this.i18n.t('Batch Profit & Loss Statement'),
+                subtitle: this.i18n.t('Batch Code: {batch} Performance Report', { batch }),
                 farmName: farm?.name || 'Primary Farm',
                 orgName: org?.name || 'Farm360 Enterprise',
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Animals', value: `${report?.totalAnimals || 0}` },
-                  { label: 'Realised P&L', value: `${formatMoney((report?.grossProfitBdt || 0))}` },
-                  { label: 'Realised ROI', value: `${((report?.returnOnInvestmentPercent || 0) * 100).toFixed(2)}%` },
-                  { label: 'Estimated P&L', value: `${formatMoney((report?.estimatedTotalProfitBdt || 0))}` },
-                  { label: 'Estimated ROI', value: `${((report?.estimatedRoiPercent || 0) * 100).toFixed(2)}%` }
+                  { label: this.i18n.t('Total Animals'), value: `${report?.totalAnimals || 0}` },
+                  { label: this.i18n.t('Realised P&L'), value: `${formatMoney((report?.grossProfitBdt || 0))}` },
+                  { label: this.i18n.t('Realised ROI'), value: `${((report?.returnOnInvestmentPercent || 0) * 100).toFixed(2)}%` },
+                  { label: this.i18n.t('Estimated P&L'), value: `${formatMoney((report?.estimatedTotalProfitBdt || 0))}` },
+                  { label: this.i18n.t('Estimated ROI'), value: `${((report?.estimatedRoiPercent || 0) * 100).toFixed(2)}%` }
                 ]
               },
               showSignatures: true

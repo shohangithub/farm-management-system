@@ -14,20 +14,21 @@ import { switchMap, catchError, tap, map } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-incident-detail',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule, PageHeaderComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule, PageHeaderComponent, LoadingComponent, TranslatePipe],
   template: `
 <app-page-header 
-  title="Incident Details" 
-  description="View comprehensive information about the disease incident."
+  [title]="'Incident Details' | t"
+  [description]="'View comprehensive information about the disease incident.' | t"
   icon="coronavirus" 
   iconColor="text-rose-600">
   <div actions class="flex gap-2">
     <button routerLink="/health/incidents" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> Back to List
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> {{ 'Back to List' | t }}
     </button>
   </div>
 </app-page-header>
@@ -42,62 +43,62 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     <div class="md:col-span-2 space-y-6">
       <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-          <mat-icon class="mr-2 text-gray-400">info</mat-icon> Overview
+          <mat-icon class="mr-2 text-gray-400">info</mat-icon> {{ 'Overview' | t }}
         </h2>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Disease Name</div>
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ 'Disease Name' | t }}</div>
             <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident()?.diseaseName }}</div>
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Date Reported</div>
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ 'Date Reported' | t }}</div>
             <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident()?.incidentDate | date:'longDate' }}</div>
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Severity</div>
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ 'Severity' | t }}</div>
             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" *ngIf="incident()?.severity !== undefined" [ngClass]="getSeverityClass(incident()!.severity)">
-              {{ getSeverityName(incident()!.severity) }}
+              {{ getSeverityName(incident()!.severity) | t }}
             </span>
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Status</div>
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ 'Status' | t }}</div>
             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" *ngIf="incident()?.status !== undefined" [ngClass]="getStatusClass(incident()!.status)">
-              {{ getStatusName(incident()!.status) }}
+              {{ getStatusName(incident()!.status) | t }}
             </span>
             <div class="mt-3 flex flex-wrap items-center gap-2">
-              <label for="incident-status" class="sr-only">Change status</label>
+              <label for="incident-status" class="sr-only">{{ 'Change status' | t }}</label>
               <select id="incident-status"
                 class="text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2.5 py-1.5"
                 [disabled]="savingStatus()"
                 (change)="selectedStatus.set($any($event.target).value)">
-                <option *ngFor="let s of statusOptions" [value]="s" [selected]="s === (selectedStatus() ?? incident()!.status)">{{ getStatusName(s) }}</option>
+                <option *ngFor="let s of statusOptions" [value]="s" [selected]="s === (selectedStatus() ?? incident()!.status)">{{ getStatusName(s) | t }}</option>
               </select>
               <button type="button"
                 class="px-3 py-1.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 [disabled]="savingStatus() || !selectedStatus() || selectedStatus() === incident()!.status"
                 (click)="updateStatus()">
-                {{ savingStatus() ? 'Saving...' : 'Update Status' }}
+                {{ (savingStatus() ? 'Saving...' : 'Update Status') | t }}
               </button>
             </div>
             <p *ngIf="statusError()" class="mt-2 text-xs text-rose-600 dark:text-rose-400">{{ statusError() }}</p>
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Animals Affected</div>
+            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{{ 'Animals Affected' | t }}</div>
             <div class="font-bold text-gray-900 dark:text-white text-lg">{{ incident()?.affectedAnimalCount ?? 0 }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Count entered when the incident was reported</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'Count entered when the incident was reported' | t }}</div>
           </div>
         </div>
 
         <div class="mt-6">
-          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Symptoms</h3>
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ 'Symptoms' | t }}</h3>
           <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 text-gray-700 dark:text-gray-300">
             {{ incident()?.symptoms }}
           </div>
         </div>
         
         <div class="mt-6" *ngIf="incident()?.notes">
-          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes</h3>
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ 'Notes' | t }}</h3>
           <div class="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-xl border border-yellow-100 dark:border-yellow-700/30 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
             {{ incident()?.notes }}
           </div>
@@ -110,12 +111,12 @@ import { parseApiError } from '../../../../core/utils/error-parser';
       <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl shadow-sm rounded-2xl border border-gray-100 dark:border-gray-800/50 p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
-            <mat-icon class="mr-2 text-gray-400">pets</mat-icon> Affected Animals
+            <mat-icon class="mr-2 text-gray-400">pets</mat-icon> {{ 'Affected Animals' | t }}
           </h2>
-          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full" matTooltip="Animals affected (reported count)">{{ incident()?.affectedAnimalCount ?? 0 }}</span>
+          <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full" [matTooltip]="'Animals affected (reported count)' | t">{{ incident()?.affectedAnimalCount ?? 0 }}</span>
         </div>
         <p *ngIf="affectedAnimals().length" class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          {{ affectedAnimals().length }} tracked individually
+          {{ '{count} tracked individually' | t: { count: affectedAnimals().length } }}
         </p>
 
         <ul class="space-y-3" *ngIf="affectedAnimals().length">
@@ -129,7 +130,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <div *ngIf="animal.species || animal.breedName" class="text-xs text-gray-500 dark:text-gray-400">{{ animal.species }}<span *ngIf="animal.species && animal.breedName"> - </span>{{ animal.breedName }}</div>
               </div>
             </div>
-            <button mat-icon-button color="primary" [routerLink]="['/livestock', animal.animalId]" matTooltip="View Animal" aria-label="View Animal">
+            <button mat-icon-button color="primary" [routerLink]="['/livestock', animal.animalId]" [matTooltip]="'View Animal' | t" [attr.aria-label]="'View Animal' | t">
               <mat-icon>chevron_right</mat-icon>
             </button>
           </li>
@@ -137,7 +138,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
         <div *ngIf="!affectedAnimals().length" class="text-center py-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
           <mat-icon class="text-gray-400 mb-2">info_outline</mat-icon>
-          <p class="text-sm text-gray-500">{{ incident()?.affectedAnimalCount ?? 0 }} animal(s) reported affected. No individual animals are tracked for this incident.</p>
+          <p class="text-sm text-gray-500">{{ '{count} animal(s) reported affected. No individual animals are tracked for this incident.' | t: { count: incident()?.affectedAnimalCount ?? 0 } }}</p>
         </div>
       </div>
     </div>

@@ -14,6 +14,8 @@ import { InventoryService } from '../../../services/inventory.service';
 import { InventoryCategory, InventoryCategoryNames, InventoryItem, MeasureUnit, UnitConversion } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-create-item-dialog',
@@ -27,7 +29,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatInputModule,
     MatSelectModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] w-full max-w-xl mx-auto">
@@ -39,14 +42,14 @@ import { NotificationService } from '../../../../../shared/services/notification
           </div>
           <div>
             <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white m-0 leading-tight">
-              {{ isEdit ? 'Edit Inventory Item' : 'Add New Inventory Item' }}
+              {{ (isEdit ? 'Edit Inventory Item' : 'Add New Inventory Item') | t }}
             </h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-              {{ isEdit ? 'Update inventory item catalog details' : 'Register a new consumable, medicine, or asset' }}
+              {{ (isEdit ? 'Update inventory item catalog details' : 'Register a new consumable, medicine, or asset') | t }}
             </p>
           </div>
         </div>
-        <button aria-label="Close" mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button [attr.aria-label]="'Close' | t" mat-dialog-close type="button" class="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
         </button>
       </div>
@@ -66,62 +69,62 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div class="p-4 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Item Name</mat-label>
-              <input matInput formControlName="name" placeholder="e.g. Oxytetracycline Injection" required />
-              <mat-error>Name is required</mat-error>
+              <mat-label>{{ 'Item Name' | t }}</mat-label>
+              <input matInput formControlName="name" [placeholder]="'e.g. Oxytetracycline Injection' | t" required />
+              <mat-error>{{ 'Name is required' | t }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Category</mat-label>
+              <mat-label>{{ 'Category' | t }}</mat-label>
               <mat-select formControlName="category" required>
                 @for (cat of categories; track cat.value) {
-                  <mat-option [value]="cat.value">{{ cat.label }}</mat-option>
+                  <mat-option [value]="cat.value">{{ cat.label | t }}</mat-option>
                 }
               </mat-select>
-              <mat-error>Category is required</mat-error>
+              <mat-error>{{ 'Category is required' | t }}</mat-error>
             </mat-form-field>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <!-- Base unit: stock, average cost and every use are counted in it -->
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Base unit (stock counted in)</mat-label>
+              <mat-label>{{ 'Base unit (stock counted in)' | t }}</mat-label>
               <mat-select formControlName="baseUnitId" required>
                 @for (u of baseUnits(); track u.id) {
                   <mat-option [value]="u.id">{{ u.name }}{{ u.description ? ' — ' + u.description : '' }}</mat-option>
                 }
               </mat-select>
-              <mat-hint>{{ baseLocked ? 'Has stock — base unit is locked' : 'Manage in Inventory → Base Units' }}</mat-hint>
-              <mat-error>Unit is required</mat-error>
+              <mat-hint>{{ (baseLocked ? 'Has stock — base unit is locked' : 'Manage in Inventory → Base Units') | t }}</mat-hint>
+              <mat-error>{{ 'Unit is required' | t }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Usually bought / issued in</mat-label>
+              <mat-label>{{ 'Usually bought / issued in' | t }}</mat-label>
               <mat-select formControlName="defaultUnitId">
-                <mat-option [value]="null">{{ selectedBase()?.name || 'Base unit' }}</mat-option>
+                <mat-option [value]="null">{{ selectedBase()?.name || ('Base unit' | t) }}</mat-option>
                 @for (c of packs(); track c.id) {
                   <mat-option [value]="c.id">{{ c.name }} = {{ c.factor }} {{ selectedBase()?.name }}</mat-option>
                 }
               </mat-select>
-              <mat-hint>Pre-selected on Stock In and purchase orders</mat-hint>
+              <mat-hint>{{ 'Pre-selected on Stock In and purchase orders' | t }}</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Reorder Threshold</mat-label>
+              <mat-label>{{ 'Reorder Threshold' | t }}</mat-label>
               <input matInput type="number" formControlName="reorderThreshold" step="1" min="0" required />
-              <mat-error>Threshold is required</mat-error>
+              <mat-error>{{ 'Threshold is required' | t }}</mat-error>
             </mat-form-field>
           </div>
 
           @if (!isEdit) {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Initial Stock Qty</mat-label>
+                <mat-label>{{ 'Initial Stock Qty' | t }}</mat-label>
                 <input matInput type="number" formControlName="initialStock" step="1" min="0" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Initial Unit Cost (BDT)</mat-label>
+                <mat-label>{{ 'Initial Unit Cost (BDT)' | t }}</mat-label>
                 <input matInput type="number" formControlName="initialCostBdt" step="0.5" min="0" />
               </mat-form-field>
             </div>
@@ -129,13 +132,13 @@ import { NotificationService } from '../../../../../shared/services/notification
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>SKU (Auto-generated if empty)</mat-label>
-              <input matInput formControlName="sku" placeholder="e.g. MED-8910" />
+              <mat-label>{{ 'SKU (Auto-generated if empty)' | t }}</mat-label>
+              <input matInput formControlName="sku" [placeholder]="'e.g. MED-8910' | t" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Storage Location</mat-label>
-              <input matInput formControlName="storageLocation" placeholder="e.g. Cold Storage Shelf B" />
+              <mat-label>{{ 'Storage Location' | t }}</mat-label>
+              <input matInput formControlName="storageLocation" [placeholder]="'e.g. Cold Storage Shelf B' | t" />
             </mat-form-field>
           </div>
         </div>
@@ -144,12 +147,12 @@ import { NotificationService } from '../../../../../shared/services/notification
         <div class="px-4 py-3 sm:px-6 sm:py-4 bg-gray-50/80 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-800 flex justify-end items-center gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isSubmitting()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
             class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-500/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             <mat-spinner *ngIf="isSubmitting()" diameter="16" class="!stroke-white"></mat-spinner>
-            <span>{{ isEdit ? 'Update Item' : 'Save Item' }}</span>
+            <span>{{ (isEdit ? 'Update Item' : 'Save Item') | t }}</span>
           </button>
         </div>
       </form>
@@ -182,6 +185,7 @@ export class CreateItemDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly isSubmitting = signal(false);
@@ -270,7 +274,7 @@ export class CreateItemDialogComponent {
     request$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.notify.success(`Inventory item ${this.isEdit ? 'updated' : 'created'} successfully.`);
+        this.notify.success(this.i18n.t(this.isEdit ? 'Inventory item updated successfully.' : 'Inventory item created successfully.'));
         this.dialogRef.close(true);
       },
       error: (err: any) => {

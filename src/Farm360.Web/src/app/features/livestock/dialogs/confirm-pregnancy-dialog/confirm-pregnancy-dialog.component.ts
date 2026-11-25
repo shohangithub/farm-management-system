@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface ConfirmPregnancyDialogData {
   animalId: string;
@@ -18,13 +20,14 @@ export interface ConfirmPregnancyDialogData {
   selector: 'app-confirm-pregnancy-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './confirm-pregnancy-dialog.component.html'
 })
 export class ConfirmPregnancyDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<ConfirmPregnancyDialogComponent>);
   public readonly data = inject<ConfirmPregnancyDialogData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(I18nService);
   private readonly animalSvc = inject(AnimalService);
   private readonly destroy$ = new Subject<void>();
 
@@ -68,7 +71,7 @@ export class ConfirmPregnancyDialogComponent {
         if (err.error?.errors) {
             this.error.set(Object.values(err.error.errors).flat().join('\n'));
         } else {
-            this.error.set(err.error?.detail || err.error?.title || 'Pregnancy confirmation failed.');
+            this.error.set(err.error?.detail || err.error?.title || this.i18n.t('Pregnancy confirmation failed.'));
         }
       }
     });

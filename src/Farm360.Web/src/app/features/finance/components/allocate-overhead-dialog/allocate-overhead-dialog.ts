@@ -9,6 +9,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { OverheadAllocationResult } from '../../models/finance.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
  * Runs the labour/overhead allocation for a period: splits every unattributed indirect expense
@@ -19,7 +21,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 @Component({
   selector: 'app-allocate-overhead-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [TranslatePipe, MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] w-full">
       <!-- Header -->
@@ -27,13 +29,13 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-amber-500">engineering</mat-icon>
-            Allocate Labor &amp; Overhead
+            {{ 'Allocate Labor & Overhead' | t }}
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-            Spread this period's labour and overhead expenses across the animals present during it
+            {{ "Spread this period's labour and overhead expenses across the animals present during it" | t }}
           </p>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -52,14 +54,14 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                  From <span class="text-red-500">*</span>
+                  {{ 'From' | t }} <span class="text-red-500">*</span>
                 </label>
                 <input type="date" formControlName="from"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
               <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                  To <span class="text-red-500">*</span>
+                  {{ 'To' | t }} <span class="text-red-500">*</span>
                 </label>
                 <input type="date" formControlName="to"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
@@ -69,19 +71,15 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
             <label class="flex items-start gap-2.5 cursor-pointer select-none">
               <input type="checkbox" formControlName="isBackfill" class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
               <span class="text-sm text-gray-700 dark:text-gray-300">
-                This is a historical backfill
-                <span class="block text-xs text-gray-500 dark:text-gray-400">Just flags the rows produced -- it doesn't change the amounts</span>
+                {{ 'This is a historical backfill' | t }}
+                <span class="block text-xs text-gray-500 dark:text-gray-400">{{ "Just flags the rows produced -- it doesn't change the amounts" | t }}</span>
               </span>
             </label>
 
             <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs text-blue-800 dark:text-blue-300 flex gap-2">
               <mat-icon class="!text-[16px] !w-[16px] !h-[16px] shrink-0 mt-0.5">info</mat-icon>
               <span>
-                Labour, utilities, transport, miscellaneous and daily consumables that aren't already
-                linked to one animal are shared out. Feed, vet and medicine costs reach each animal
-                separately. This runs automatically on the 3rd of every month for the previous month --
-                run it yourself only to see the current month early or after entering older expenses.
-                Re-running a period is safe: already-shared expenses are skipped.
+                {{ "Labour, utilities, transport, miscellaneous and daily consumables that aren't already linked to one animal are shared out. Feed, vet and medicine costs reach each animal separately. This runs automatically on the 3rd of every month for the previous month -- run it yourself only to see the current month early or after entering older expenses. Re-running a period is safe: already-shared expenses are skipped." | t }}
               </span>
             </div>
 
@@ -90,12 +88,12 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
           <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
             <button type="button" mat-dialog-close [disabled]="isLoading()"
               class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-              Cancel
+              {{ 'Cancel' | t }}
             </button>
             <button type="submit" [disabled]="form.invalid || isLoading()"
                     class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
               <mat-icon *ngIf="isLoading()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-              <span>{{ isLoading() ? 'Allocating...' : 'Run Allocation' }}</span>
+              <span>{{ (isLoading() ? 'Allocating...' : 'Run Allocation') | t }}</span>
             </button>
           </div>
         </form>
@@ -104,26 +102,26 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="p-6 space-y-4">
           <div class="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
             <mat-icon class="!text-[22px] !w-[22px] !h-[22px] text-emerald-600 dark:text-emerald-400">check_circle</mat-icon>
-            <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Allocation complete</span>
+            <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">{{ 'Allocation complete' | t }}</span>
           </div>
 
           <dl class="grid grid-cols-2 gap-3 text-sm">
             <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <dt class="text-xs text-gray-500 dark:text-gray-400">Amount allocated</dt>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Amount allocated' | t }}</dt>
               <dd class="font-bold text-gray-900 dark:text-white m-0">{{ result()!.amountAllocatedBdt | money:2 }}</dd>
             </div>
             <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <dt class="text-xs text-gray-500 dark:text-gray-400">Animal ledgers updated</dt>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Animal ledgers updated' | t }}</dt>
               <dd class="font-bold text-gray-900 dark:text-white m-0">{{ result()!.ledgersUpdated }}</dd>
             </div>
             <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <dt class="text-xs text-gray-500 dark:text-gray-400">Transactions allocated</dt>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Transactions allocated' | t }}</dt>
               <dd class="font-bold text-gray-900 dark:text-white m-0">{{ result()!.transactionsAllocated }} / {{ result()!.transactionsConsidered }}</dd>
             </div>
             <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <dt class="text-xs text-gray-500 dark:text-gray-400">Skipped</dt>
+              <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Skipped' | t }}</dt>
               <dd class="font-bold text-gray-900 dark:text-white m-0">
-                {{ result()!.transactionsSkippedAlreadyAllocated }} already done, {{ result()!.transactionsSkippedNoAnimals }} no animals
+                {{ '{done} already done, {none} no animals' | t: { done: result()!.transactionsSkippedAlreadyAllocated, none: result()!.transactionsSkippedNoAnimals } }}
               </dd>
             </div>
           </dl>
@@ -132,7 +130,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end shrink-0">
           <button type="button" (click)="dialogRef.close(result())"
                   class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30">
-            Done
+            {{ 'Done' | t }}
           </button>
         </div>
       }
@@ -151,6 +149,7 @@ export class AllocateOverheadDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private financeService = inject(FinanceService);
   private workingContextService = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
 
   form!: FormGroup;
   isLoading = signal(false);
@@ -173,7 +172,7 @@ export class AllocateOverheadDialogComponent implements OnInit {
 
     const farmId = this.workingContextService.currentFarmValue?.id;
     if (!farmId) {
-      this.error.set('No active farm selected.');
+      this.error.set(this.i18n.t('No active farm selected.'));
       return;
     }
 

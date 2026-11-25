@@ -16,6 +16,7 @@ import { WorkingContextService } from '../../../core/services/working-context.se
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, filter, startWith, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-animal-multi-picker',
@@ -29,7 +30,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     MatAutocompleteModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule
+    MatChipsModule,
+    TranslatePipe
   ],
   providers: [
     {
@@ -41,10 +43,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   template: `
     <div class="flex flex-col gap-4">
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Shed (Optional)</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Shed (Optional)' | t }}</label>
         <select [formControl]="shedControl"
                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-          <option [ngValue]="null">-- All Sheds --</option>
+          <option [ngValue]="null">{{ '-- All Sheds --' | t }}</option>
           <option *ngFor="let shed of sheds$ | async" [value]="shed.id">
             {{ shed.shedName }}
           </option>
@@ -53,22 +55,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
       <!-- Selected Animals Chips -->
       <div class="space-y-1.5 relative w-full">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Search and Select Animals</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Search and Select Animals' | t }}</label>
         
         <div class="flex items-center min-h-[42px] px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-shadow flex-wrap gap-2">
           
-          <mat-chip-grid #chipGrid aria-label="Selected animals" class="!flex !flex-row !flex-wrap !items-center !gap-1.5">
+          <mat-chip-grid #chipGrid [attr.aria-label]="'Selected animals' | t" class="!flex !flex-row !flex-wrap !items-center !gap-1.5">
             <mat-chip-row *ngFor="let animal of selectedAnimals" (removed)="removeAnimal(animal)"
                           class="!bg-primary-50 dark:!bg-primary-900/30 !text-primary-700 dark:!text-primary-300 !min-h-[28px] border border-primary-200 dark:border-primary-800/50">
               <span class="text-xs font-medium">{{ animal.tagId }}</span>
-              <button matChipRemove [attr.aria-label]="'remove ' + animal.tagId" class="opacity-70 hover:opacity-100">
+              <button matChipRemove [attr.aria-label]="'Remove {tag}' | t: { tag: animal.tagId }" class="opacity-70 hover:opacity-100">
                 <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">cancel</mat-icon>
               </button>
             </mat-chip-row>
             
             <input 
               class="outline-none bg-transparent text-sm flex-1 min-w-[150px] text-gray-900 dark:text-white placeholder-gray-400 py-1"
-              placeholder="Type tag or breed..." 
+              [placeholder]="'Type tag or breed...' | t" 
               [matChipInputFor]="chipGrid" 
               [formControl]="searchControl" 
               [matAutocomplete]="auto">
@@ -82,9 +84,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <div class="flex flex-col">
               <span class="font-medium text-gray-900 dark:text-white text-sm">{{ animal.tagId }} — {{ animal.breedName }}</span>
               <span class="text-xs text-gray-500 flex gap-2 mt-0.5">
-                <span>{{ getSexLabel(animal.sex) }}</span>
-                <span *ngIf="animal.shedId"> • Shed ID: {{ animal.shedId | slice:0:8 }}</span>
-                <span *ngIf="animal.status !== 'Active'" class="font-semibold text-amber-600"> • {{ animal.status }}</span>
+                <span>{{ getSexLabel(animal.sex) | t }}</span>
+                <span *ngIf="animal.shedId"> • {{ 'Shed ID: {id}' | t: { id: (animal.shedId | slice:0:8) } }}</span>
+                <span *ngIf="animal.status !== 'Active'" class="font-semibold text-amber-600"> • {{ animal.status | t }}</span>
               </span>
             </div>
           </mat-option>

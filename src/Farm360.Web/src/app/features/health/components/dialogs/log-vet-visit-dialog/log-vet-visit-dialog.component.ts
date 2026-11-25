@@ -12,11 +12,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-log-vet-visit-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule, TranslatePipe],
   templateUrl: './log-vet-visit-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -26,6 +27,9 @@ export class LogVetVisitDialog {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private destroyRef = inject(DestroyRef);
+
+  /** Kept here because the apostrophe cannot sit inside a template string literal. */
+  readonly recommendationsPlaceholder = "Vet's advice or treatment plan...";
 
   isSubmitting = signal(false);
   error = signal('');

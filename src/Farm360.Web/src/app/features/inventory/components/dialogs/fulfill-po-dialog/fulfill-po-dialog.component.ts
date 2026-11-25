@@ -11,6 +11,8 @@ import {
   toCreditTerms,
 } from '../../../../finance/components/credit-terms-fields/credit-terms-fields.component';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 export interface FulfillPoDialogData {
   id: string;
@@ -26,7 +28,7 @@ export interface FulfillPoDialogData {
 @Component({
   selector: 'app-fulfill-po-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, CreditTermsFieldsComponent],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, CreditTermsFieldsComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -34,11 +36,11 @@ export interface FulfillPoDialogData {
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-emerald-500">inventory</mat-icon>
-            Receive PO #{{ data.poNumber }}
+            {{ 'Receive PO #{po}' | t: { po: data.poNumber } }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">All items go into stock and the inventory balance is updated.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'All items go into stock and the inventory balance is updated.' | t }}</p>
         </div>
-        <button aria-label="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+        <button [attr.aria-label]="'Close' | t" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -49,28 +51,28 @@ export interface FulfillPoDialogData {
         }
         <div class="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
           <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Supplier</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Supplier' | t }}</div>
             <div class="text-sm font-bold text-gray-900 dark:text-white">{{ supplierName() || '—' }}</div>
           </div>
           <div class="text-right">
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">Order total</div>
+            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Order total' | t }}</div>
             <div class="text-lg font-black text-gray-900 dark:text-white">{{ data.totalAmountBdt | money:2 }}</div>
           </div>
         </div>
 
         <app-credit-terms-fields [group]="credit" kind="Payable" [total]="data.totalAmountBdt"
-          [requireParty]="false" [partyPlaceholder]="supplierName() || 'Supplier'"></app-credit-terms-fields>
+          [requireParty]="false" [partyPlaceholder]="supplierName() || ('Supplier' | t)"></app-credit-terms-fields>
       </div>
 
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
         <button type="button" mat-dialog-close [disabled]="busy()"
           class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50">
-          Cancel
+          {{ 'Cancel' | t }}
         </button>
         <button type="button" (click)="fulfill()" [disabled]="busy() || credit.invalid"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2">
           @if (busy()) { <mat-icon class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon> }
-          {{ busy() ? 'Receiving…' : 'Fulfill & Receive Stock' }}
+          {{ (busy() ? 'Receiving…' : 'Fulfill & Receive Stock') | t }}
         </button>
       </div>
     </div>
@@ -80,6 +82,7 @@ export class FulfillPoDialogComponent {
   readonly data = inject<FulfillPoDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<FulfillPoDialogComponent>);
   private readonly inventory = inject(InventoryService);
+  private readonly i18n = inject(I18nService);
 
   readonly credit = buildCreditTermsGroup(inject(FormBuilder), false);
   readonly busy = signal(false);
@@ -98,7 +101,7 @@ export class FulfillPoDialogComponent {
   fulfill(): void {
     const credit = toCreditTerms(this.credit.getRawValue());
     if (credit && (credit.paidNowBdt ?? 0) >= this.data.totalAmountBdt) {
-      this.error.set('The amount paid now covers the whole order — choose “Paid in full now” instead.');
+      this.error.set(this.i18n.t('The amount paid now covers the whole order — choose “Paid in full now” instead.'));
       return;
     }
 
@@ -108,7 +111,7 @@ export class FulfillPoDialogComponent {
       next: () => this.dialogRef.close(true),
       error: err => {
         this.busy.set(false);
-        this.error.set(parseApiError(err, 'Failed to fulfill the purchase order.'));
+        this.error.set(parseApiError(err, this.i18n.t('Failed to fulfill the purchase order.')));
       },
     });
   }

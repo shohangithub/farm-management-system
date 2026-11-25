@@ -8,6 +8,8 @@ import { BehaviorSubject, catchError, combineLatest, map, of, startWith, switchM
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { FarmSetupStatus, FarmSetupStep, FarmSetupStepKey } from '../../models/dashboard.model';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { translate } from '../../../../core/i18n/i18n.service';
 
 interface StepInfo {
   title: string;
@@ -66,7 +68,7 @@ const HIDE_KEY_PREFIX = 'farm360.setupChecklist.hidden.';
 @Component({
   selector: 'app-setup-checklist',
   standalone: true,
-  imports: [RouterModule, MatIconModule, MatButtonModule],
+  imports: [RouterModule, MatIconModule, MatButtonModule, TranslatePipe],
   templateUrl: './setup-checklist.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -162,8 +164,8 @@ export class SetupChecklistComponent {
   }
 
   public countLabel(row: StepRow): string {
-    if (row.key === 'accounts') return 'Saved';
-    return `${row.count} ${row.count === 1 ? row.unit[0] : row.unit[1]}`;
+    if (row.key === 'accounts') return translate('Saved');
+    return translate(`{n} ${row.count === 1 ? row.unit[0] : row.unit[1]}`, { n: row.count });
   }
 
   private toRow(step: FarmSetupStep, number: number, farmId: string): StepRow {

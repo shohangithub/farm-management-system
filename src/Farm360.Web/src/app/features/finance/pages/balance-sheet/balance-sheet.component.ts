@@ -21,6 +21,8 @@ import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { APP_NUMBER_LOCALE } from '../../../../shared/utils/locale';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface StatementGroup { title: string | null; lines: BalanceSheetLine[]; total: number; priorTotal: number; }
 interface StatementBlock { title: string; totalLabel: string; total: number; priorTotal: number; color: string; groups: StatementGroup[]; }
@@ -38,22 +40,23 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
     LoadingComponent,
     EmptyStateComponent,
     FinanceSubnavComponent,
-    DatePipe
+    DatePipe,
+    TranslatePipe
   ],
   template: `
     <app-page-header 
-      title="Balance Sheet" 
-      description="Statement of financial position: assets, liabilities and equity, compared with the previous financial year end."
-      breadcrumbActiveNode="Balance Sheet">
+      [title]="'Balance Sheet' | t" 
+      [description]="'Statement of financial position: assets, liabilities and equity, compared with the previous financial year end.' | t"
+      [breadcrumbActiveNode]="'Balance Sheet' | t">
       <div actions class="flex items-center gap-3">
         <a mat-stroked-button routerLink="/finance"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>Overview</span>
+          <span>{{ 'Overview' | t }}</span>
         </a>
         <form [formGroup]="filterForm" class="flex items-center gap-2">
           <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium">
-            <span class="text-gray-500 dark:text-gray-400">As of:</span>
+            <span class="text-gray-500 dark:text-gray-400">{{ 'As of:' | t }}</span>
             <input 
               type="date" 
               formControlName="asOfDate" 
@@ -61,19 +64,19 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
           </div>
           <label class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium cursor-pointer">
             <input type="checkbox" formControlName="comparative" class="accent-emerald-600" />
-            <span class="text-gray-600 dark:text-gray-300">Compare previous year end</span>
+            <span class="text-gray-600 dark:text-gray-300">{{ 'Compare previous year end' | t }}</span>
           </label>
         </form>
         <a mat-stroked-button routerLink="/reports/finance.balance-sheet"
           matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>SAP Report</span>
+          <span>{{ 'SAP Report' | t }}</span>
         </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !bsData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
         </button>
         <button mat-stroked-button (click)="exportExcel()" [disabled]="!bsData()"
           class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
@@ -83,7 +86,7 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
         <button mat-stroked-button (click)="printReport()"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">print</mat-icon>
-          <span>Print</span>
+          <span>{{ 'Print' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -94,13 +97,13 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
 
       <app-finance-subnav></app-finance-subnav>
 
-      <app-error-state *ngIf="loadError() as err" title="Couldn't load the balance sheet" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="loadError() as err" [title]="loadErrorTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <app-empty-state
         *ngIf="!bsData() && !loadError()"
         icon="account_balance"
-        title="No Financial Records Found"
-        description="There is no balance sheet data available for this farm as of the selected date.">
+        [title]="'No Financial Records Found' | t"
+        [description]="'There is no balance sheet data available for this farm as of the selected date.' | t">
       </app-empty-state>
 
       <div *ngIf="bsData() as sheet" #reportSheet id="balanceSheetReport" class="space-y-6">
@@ -111,47 +114,47 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
              [ngClass]="sheet.isBalanced ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-200' : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200'">
           <mat-icon class="shrink-0">{{ sheet.isBalanced ? 'info' : 'error_outline' }}</mat-icon>
           <div class="text-xs leading-relaxed flex-1">{{ sheet.message }}</div>
-          <a routerLink="/finance/accounts-setup" class="text-xs font-bold underline whitespace-nowrap">Accounts setup</a>
+          <a routerLink="/finance/accounts-setup" class="text-xs font-bold underline whitespace-nowrap">{{ 'Accounts setup' | t }}</a>
         </div>
 
         <!-- KPI cards -->
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Assets</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Total Assets' | t }}</p>
             <h3 class="text-xl font-black text-gray-900 dark:text-white mt-1">{{ sheet.totalAssetsBdt | money }}</h3>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Liabilities</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Total Liabilities' | t }}</p>
             <h3 class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">{{ sheet.liabilities.totalBdt | money }}</h3>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Equity</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Total Equity' | t }}</p>
             <h3 class="text-xl font-black text-purple-600 dark:text-purple-400 mt-1">{{ sheet.equity.totalBdt | money }}</h3>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Profit for the year</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Profit for the year' | t }}</p>
             <h3 class="text-xl font-black mt-1" [ngClass]="(sheet.currentYearProfitBdt || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
               {{ (sheet.currentYearProfitBdt || 0) | money }}
             </h3>
-            <p class="text-[11px] text-gray-400 mt-0.5">since {{ sheet.fiscalYearStart | date:'d MMM yyyy' }}</p>
+            <p class="text-[11px] text-gray-400 mt-0.5">{{ 'since {date}' | t: { date: (sheet.fiscalYearStart | date:'d MMM yyyy') } }}</p>
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Net Working Capital</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Net Working Capital' | t }}</p>
             <h3 class="text-xl font-black mt-1" [ngClass]="sheet.netWorkingCapitalBdt >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
               {{ sheet.netWorkingCapitalBdt | money }}
             </h3>
-            <p class="text-[11px] text-gray-400 mt-0.5">Current assets − current liabilities</p>
+            <p class="text-[11px] text-gray-400 mt-0.5">{{ 'Current assets − current liabilities' | t }}</p>
           </div>
         </div>
 
         <!-- Statement of financial position (auditor layout) -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
           <div class="p-5 text-center border-b border-gray-100 dark:border-gray-700/60">
-            <h2 class="text-base font-black uppercase tracking-wider text-gray-900 dark:text-white">Statement of Financial Position</h2>
+            <h2 class="text-base font-black uppercase tracking-wider text-gray-900 dark:text-white">{{ 'Statement of Financial Position' | t }}</h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              As at {{ sheet.asOfDate | date:'d MMMM yyyy' }}
-              <span *ngIf="sheet.booksStartDate"> · Books start {{ sheet.booksStartDate | date:'d MMM yyyy' }}</span>
-              · Financial year from {{ monthName(sheet.fiscalYearStartMonth) }}
+              {{ 'As at {date}' | t: { date: (sheet.asOfDate | date:'d MMMM yyyy') } }}
+              <span *ngIf="sheet.booksStartDate"> · {{ 'Books start {date}' | t: { date: (sheet.booksStartDate | date:'d MMM yyyy') } }}</span>
+              · {{ 'Financial year from {month}' | t: { month: monthName(sheet.fiscalYearStartMonth) } }}
             </p>
           </div>
 
@@ -159,8 +162,8 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
             <table class="w-full text-sm">
               <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
                 <tr>
-                  <th class="text-left px-5 py-2 w-16">Code</th>
-                  <th class="text-left px-3 py-2">Particulars</th>
+                  <th class="text-left px-5 py-2 w-16">{{ 'Code' | t }}</th>
+                  <th class="text-left px-3 py-2">{{ 'Particulars' | t }}</th>
                   <th class="text-right px-5 py-2 w-44">{{ sheet.asOfDate | date:'d MMM yyyy' }}</th>
                   <th *ngIf="sheet.priorDate" class="text-right px-5 py-2 w-44">{{ sheet.priorDate | date:'d MMM yyyy' }}</th>
                 </tr>
@@ -173,12 +176,12 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
                   <ng-container *ngFor="let g of block.groups">
                     <tr *ngIf="g.title">
                       <td></td>
-                      <td colspan="3" class="px-3 pt-2 pb-1 text-xs font-bold text-gray-600 dark:text-gray-300 italic">{{ g.title }}</td>
+                      <td colspan="3" class="px-3 pt-2 pb-1 text-xs font-bold text-gray-600 dark:text-gray-300 italic">{{ g.title | t }}</td>
                     </tr>
                     <tr *ngFor="let line of g.lines" class="border-t border-gray-50 dark:border-gray-700/40 hover:bg-gray-50/60 dark:hover:bg-gray-700/20">
                       <td class="px-5 py-1.5 font-mono text-[11px] text-gray-400">{{ line.lineCode }}</td>
                       <td class="px-3 py-1.5">
-                        <span class="text-gray-800 dark:text-gray-200" [class.pl-4]="line.isDeduction">{{ line.lineName }}</span>
+                        <span class="text-gray-800 dark:text-gray-200" [class.pl-4]="line.isDeduction">{{ (i18n.isBangla && line.nameBn) ? line.nameBn : line.lineName }}</span>
                         <span *ngIf="line.notes" class="block text-[11px] text-gray-400 print:hidden">{{ line.notes }}</span>
                       </td>
                       <td class="px-5 py-1.5 text-right font-mono" [ngClass]="line.amountBdt < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'">{{ fmt(line.amountBdt) }}</td>
@@ -186,7 +189,7 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
                     </tr>
                     <tr *ngIf="g.title && g.lines.length > 1" class="font-semibold">
                       <td></td>
-                      <td class="px-3 py-1 text-xs text-gray-600 dark:text-gray-300">Total {{ g.title.toLowerCase() }}</td>
+                      <td class="px-3 py-1 text-xs text-gray-600 dark:text-gray-300">{{ 'Total {group}' | t: { group: (g.title | t).toLowerCase() } }}</td>
                       <td class="px-5 py-1 text-right font-mono border-t border-gray-300 dark:border-gray-600">{{ fmt(g.total) }}</td>
                       <td *ngIf="sheet.priorDate" class="px-5 py-1 text-right font-mono border-t border-gray-300 dark:border-gray-600 text-gray-500">{{ fmt(g.priorTotal) }}</td>
                     </tr>
@@ -201,13 +204,13 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
 
                 <tr class="font-black bg-gray-50 dark:bg-gray-900/50">
                   <td></td>
-                  <td class="px-3 py-3 text-xs uppercase tracking-wider text-gray-900 dark:text-white">Total Liabilities &amp; Equity</td>
+                  <td class="px-3 py-3 text-xs uppercase tracking-wider text-gray-900 dark:text-white">{{ 'Total Liabilities & Equity' | t }}</td>
                   <td class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200 text-indigo-700 dark:text-indigo-400">{{ fmt(sheet.totalLiabilitiesAndEquityBdt) }}</td>
                   <td *ngIf="sheet.priorDate" class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200 text-gray-600">{{ fmt(sheet.priorTotalLiabilitiesAndEquityBdt) }}</td>
                 </tr>
                 <tr *ngIf="sheet.differenceBdt !== 0 || (sheet.priorDifferenceBdt || 0) !== 0" class="font-black bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300">
                   <td></td>
-                  <td class="px-3 py-2 text-xs uppercase tracking-wider">Difference (assets − liabilities &amp; equity)</td>
+                  <td class="px-3 py-2 text-xs uppercase tracking-wider">{{ 'Difference (assets − liabilities & equity)' | t }}</td>
                   <td class="px-5 py-2 text-right font-mono">{{ fmt(sheet.differenceBdt) }}</td>
                   <td *ngIf="sheet.priorDate" class="px-5 py-2 text-right font-mono">{{ fmt(sheet.priorDifferenceBdt) }}</td>
                 </tr>
@@ -218,13 +221,8 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
           <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700/60 text-[11px] text-gray-500 dark:text-gray-400 flex items-start gap-2">
             <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">info</mat-icon>
             <span>
-              <strong class="text-gray-700 dark:text-gray-200">Livestock is valued at cost</strong> (purchase price of the animals
-              on the farm), not at market value — herd values shown elsewhere in the app (e.g. at meat-yield market price) are
-              estimates and do not affect these statements; the gain is recognised only when an animal is sold.
-              Livestock and inventory are carried at cost until sold, used or written off. Fixed assets are shown at cost less
-              depreciation from the fixed-asset register. Retained earnings brought forward are the profits of earlier financial
-              years; the profit for the year runs from {{ sheet.fiscalYearStart | date:'d MMM yyyy' }}.
-              <span *ngIf="sheet.isBalanced" class="font-semibold text-emerald-600 dark:text-emerald-400">Assets = Liabilities + Equity ✓</span>
+              <strong class="text-gray-700 dark:text-gray-200">{{ 'Livestock is valued at cost' | t }}</strong> {{ '(purchase price of the animals on the farm), not at market value — herd values shown elsewhere in the app (e.g. at meat-yield market price) are estimates and do not affect these statements; the gain is recognised only when an animal is sold. Livestock and inventory are carried at cost until sold, used or written off. Fixed assets are shown at cost less depreciation from the fixed-asset register. Retained earnings brought forward are the profits of earlier financial years; the profit for the year runs from {date}.' | t: { date: (sheet.fiscalYearStart | date:'d MMM yyyy') } }}
+              <span *ngIf="sheet.isBalanced" class="font-semibold text-emerald-600 dark:text-emerald-400">{{ 'Assets = Liabilities + Equity ✓' | t }}</span>
             </span>
           </div>
         </div>
@@ -233,16 +231,16 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
         <div *ngIf="sheet.reconciliations?.length" class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
           <div class="p-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <h3 class="text-sm font-black text-gray-900 dark:text-white">Proof: books vs. registers</h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Each balance must match what really exists — stock on hand, the herd, the loan register and the investor register.</p>
+              <h3 class="text-sm font-black text-gray-900 dark:text-white">{{ 'Proof: books vs. registers' | t }}</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'Each balance must match what really exists — stock on hand, the herd, the loan register and the investor register.' | t }}</p>
             </div>
             <a routerLink="/finance/accounting-health" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-              <mat-icon class="!w-4 !h-4 !text-[16px]">fact_check</mat-icon> Accounting Health
+              <mat-icon class="!w-4 !h-4 !text-[16px]">fact_check</mat-icon> {{ 'Accounting Health' | t }}
             </a>
           </div>
           <table class="w-full text-sm">
             <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
-              <tr><th class="text-left px-4 py-2">Account</th><th class="text-right px-4 py-2">Books</th><th class="text-right px-4 py-2">Register</th><th class="text-right px-4 py-2">Difference</th></tr>
+              <tr><th class="text-left px-4 py-2">{{ 'Account' | t }}</th><th class="text-right px-4 py-2">{{ 'Books' | t }}</th><th class="text-right px-4 py-2">{{ 'Register' | t }}</th><th class="text-right px-4 py-2">{{ 'Difference' | t }}</th></tr>
             </thead>
             <tbody>
               <tr *ngFor="let r of sheet.reconciliations" class="border-t border-gray-100 dark:border-gray-700/60">
@@ -273,6 +271,8 @@ export class BalanceSheetComponent {
   private readonly pdfExportService = inject(PdfExportService);
   private readonly reportService = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly i18n = inject(I18nService);
+  readonly loadErrorTitle = this.i18n.t("Couldn't load the balance sheet");
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -308,7 +308,7 @@ export class BalanceSheetComponent {
       if (!farm) return of(null);
       return this.financeService.getBalanceSheet(farm.id, filter.asOfDate, null, filter.comparative).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the balance sheet.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the balance sheet.')));
           return of(null);
         })
       );
@@ -355,15 +355,15 @@ export class BalanceSheetComponent {
               filename: `Farm360_Balance_Sheet_${asOf}`,
               orientation: 'landscape',
               header: {
-                title: 'Balance Sheet',
-                subtitle: `Statement of Financial Position (Assets = Liabilities + Equity)`,
+                title: this.i18n.t('Balance Sheet'),
+                subtitle: this.i18n.t('Statement of Financial Position (Assets = Liabilities + Equity)'),
                 farmName: farm?.name || 'Primary Farm',
                 orgName: org?.name || 'Farm360 Enterprise',
-                dateRange: `As of ${asOf}`,
+                dateRange: this.i18n.t('As of {date}', { date: asOf }),
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Assets', value: `${formatMoney((sheet?.totalAssetsBdt || 0))}` },
-                  { label: 'Status', value: sheet?.isBalanced ? 'Balanced' : 'Unbalanced' }
+                  { label: this.i18n.t('Total Assets'), value: `${formatMoney((sheet?.totalAssetsBdt || 0))}` },
+                  { label: this.i18n.t('Status'), value: this.i18n.t(sheet?.isBalanced ? 'Balanced' : 'Unbalanced') }
                 ]
               },
               showSignatures: true
@@ -401,7 +401,7 @@ export class BalanceSheetComponent {
   private readonly months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   monthName(month?: number): string {
-    return this.months[((month || 7) - 1) % 12];
+    return this.i18n.t(this.months[((month || 7) - 1) % 12]);
   }
 
   /** Accounting format: thousands separators, negatives in brackets, zero as a dash. */
@@ -433,9 +433,9 @@ export class BalanceSheetComponent {
       });
     };
     return [
-      { title: 'Assets', totalLabel: 'Total Assets', total: sheet.totalAssetsBdt, priorTotal: sheet.priorTotalAssetsBdt || 0, color: 'text-emerald-700 dark:text-emerald-400', groups: group(sheet.assets.lines) },
-      { title: 'Liabilities', totalLabel: 'Total Liabilities', total: sheet.liabilities.totalBdt, priorTotal: sheet.liabilities.priorTotalBdt || 0, color: 'text-amber-700 dark:text-amber-400', groups: group(sheet.liabilities.lines) },
-      { title: 'Equity', totalLabel: 'Total Equity', total: sheet.equity.totalBdt, priorTotal: sheet.equity.priorTotalBdt || 0, color: 'text-purple-700 dark:text-purple-300', groups: group(sheet.equity.lines) }
+      { title: this.i18n.t('Assets'), totalLabel: this.i18n.t('Total Assets'), total: sheet.totalAssetsBdt, priorTotal: sheet.priorTotalAssetsBdt || 0, color: 'text-emerald-700 dark:text-emerald-400', groups: group(sheet.assets.lines) },
+      { title: this.i18n.t('Liabilities'), totalLabel: this.i18n.t('Total Liabilities'), total: sheet.liabilities.totalBdt, priorTotal: sheet.liabilities.priorTotalBdt || 0, color: 'text-amber-700 dark:text-amber-400', groups: group(sheet.liabilities.lines) },
+      { title: this.i18n.t('Equity'), totalLabel: this.i18n.t('Total Equity'), total: sheet.equity.totalBdt, priorTotal: sheet.equity.priorTotalBdt || 0, color: 'text-purple-700 dark:text-purple-300', groups: group(sheet.equity.lines) }
     ];
   }
 

@@ -7,6 +7,7 @@ import { FinanceService } from '../../services/finance.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { FarmShareConfig, ConfigureFarmSharesRequest } from '../../models/finance.model';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface ConfigureSharesDialogData {
   farmId: string;
@@ -17,7 +18,7 @@ export interface ConfigureSharesDialogData {
   selector: 'app-configure-shares-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MoneyPipe, 
+  imports: [TranslatePipe, MoneyPipe, 
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
@@ -34,14 +35,14 @@ export interface ConfigureSharesDialogData {
           </div>
           <div>
             <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">
-              {{ isEditing ? 'Update Farm Share Structure' : 'Set Up Farm Share Market' }}
+              {{ (isEditing ? 'Update Farm Share Structure' : 'Set Up Farm Share Market') | t }}
             </h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-              Define total shares, share price valuation, and retained owner allocation
+              {{ 'Define total shares, share price valuation, and retained owner allocation' | t }}
             </p>
           </div>
         </div>
-        <button mat-dialog-close type="button" aria-label="Close" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -61,25 +62,25 @@ export interface ConfigureSharesDialogData {
           <!-- Live Valuation Card Preview -->
           <div class="p-4 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50/50 dark:from-teal-950/40 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 grid grid-cols-2 gap-3 text-xs">
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">Estimated Total Valuation</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Estimated Total Valuation' | t }}</span>
               <span class="text-base font-extrabold text-teal-700 dark:text-teal-300">
                 {{ computedTotalValuation() | money }}
               </span>
             </div>
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">Available Pool Valuation</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Available Pool Valuation' | t }}</span>
               <span class="text-base font-extrabold text-emerald-700 dark:text-emerald-300">
                 {{ computedAvailableValuation() | money }}
               </span>
             </div>
             <div class="border-t border-teal-200/40 dark:border-teal-800/40 pt-2">
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">Available Shares</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Available Shares' | t }}</span>
               <span class="text-sm font-bold text-gray-800 dark:text-gray-200">
-                {{ computedAvailableShares() | number }} shares
+                {{ '{count} shares' | t: { count: (computedAvailableShares() | number) } }}
               </span>
             </div>
             <div class="border-t border-teal-200/40 dark:border-teal-800/40 pt-2">
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">Owner Ownership</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Owner Ownership' | t }}</span>
               <span class="text-sm font-bold text-gray-800 dark:text-gray-200">
                 {{ computedOwnerPercentage() | number:'1.1-2' }}%
               </span>
@@ -90,17 +91,17 @@ export interface ConfigureSharesDialogData {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                Total Shares <span class="text-red-500">*</span>
+                {{ 'Total Shares' | t }} <span class="text-red-500">*</span>
               </label>
-              <input type="number" formControlName="totalShares" placeholder="e.g. 1000" min="1" step="1"
+              <input type="number" formControlName="totalShares" [placeholder]="'e.g. 1000' | t" min="1" step="1"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                Price Per Share (BDT) <span class="text-red-500">*</span>
+                {{ 'Price Per Share (BDT)' | t }} <span class="text-red-500">*</span>
               </label>
-              <input type="number" formControlName="sharePriceBdt" placeholder="e.g. 5000" min="1" step="0.01"
+              <input type="number" formControlName="sharePriceBdt" [placeholder]="'e.g. 5000' | t" min="1" step="0.01"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             </div>
           </div>
@@ -109,28 +110,28 @@ export interface ConfigureSharesDialogData {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                Owner Retained Shares <span class="text-red-500">*</span>
+                {{ 'Owner Retained Shares' | t }} <span class="text-red-500">*</span>
               </label>
-              <input type="number" formControlName="ownerShareCount" placeholder="e.g. 600" min="0" step="1"
+              <input type="number" formControlName="ownerShareCount" [placeholder]="'e.g. 600' | t" min="0" step="1"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
-              <span class="text-[11px] text-gray-500 dark:text-gray-400">Shares held exclusively by you</span>
+              <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Shares held exclusively by you' | t }}</span>
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                Minimum Purchase (Shares) <span class="text-red-500">*</span>
+                {{ 'Minimum Purchase (Shares)' | t }} <span class="text-red-500">*</span>
               </label>
-              <input type="number" formControlName="minimumPurchaseShares" placeholder="e.g. 1" min="1" step="1"
+              <input type="number" formControlName="minimumPurchaseShares" [placeholder]="'e.g. 1' | t" min="1" step="1"
                      class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
-              <span class="text-[11px] text-gray-500 dark:text-gray-400">Min shares per transaction</span>
+              <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Min shares per transaction' | t }}</span>
             </div>
           </div>
 
           <!-- Share Sale Open Switch -->
           <div class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
             <div>
-              <span class="text-xs font-bold text-gray-800 dark:text-gray-200 block">Open for Share Purchases</span>
-              <span class="text-[11px] text-gray-500 dark:text-gray-400">Allow investors to purchase available shares</span>
+              <span class="text-xs font-bold text-gray-800 dark:text-gray-200 block">{{ 'Open for Share Purchases' | t }}</span>
+              <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Allow investors to purchase available shares' | t }}</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" formControlName="isShareSaleOpen" class="sr-only peer">
@@ -141,9 +142,9 @@ export interface ConfigureSharesDialogData {
           <!-- Valuation Notes -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-              Valuation Notes / Basis
+              {{ 'Valuation Notes / Basis' | t }}
             </label>
-            <textarea formControlName="valuationNotes" rows="2" placeholder="e.g. Valuation based on Q3 livestock inventory, land assets, and milk production yield."
+            <textarea formControlName="valuationNotes" rows="2" [placeholder]="'e.g. Valuation based on Q3 livestock inventory, land assets, and milk production yield.' | t"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow resize-none"></textarea>
           </div>
 
@@ -153,12 +154,12 @@ export interface ConfigureSharesDialogData {
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-end gap-3 shrink-0">
           <button mat-dialog-close type="button"
                   class="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
                   class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-teal-500/20 flex items-center gap-2 transition-all">
             <mat-icon *ngIf="isSubmitting()" class="animate-spin !text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon>
-            <span>{{ isSubmitting() ? 'Saving...' : 'Save Configuration' }}</span>
+            <span>{{ (isSubmitting() ? 'Saving...' : 'Save Configuration') | t }}</span>
           </button>
         </div>
       </form>

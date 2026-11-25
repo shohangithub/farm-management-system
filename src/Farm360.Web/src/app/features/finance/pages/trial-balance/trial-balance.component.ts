@@ -21,6 +21,8 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-trial-balance',
   standalone: true,
@@ -35,22 +37,23 @@ import { parseApiError } from '../../../../core/utils/error-parser';
     LoadingComponent,
     EmptyStateComponent,
     CurrencyPipe,
-    DatePipe
+    DatePipe,
+    TranslatePipe
   ],
   template: `
     <app-page-header 
-      title="Trial Balance" 
-      description="Comprehensive summary of debit and credit ledger balances ensuring double-entry mathematical integrity."
-      breadcrumbActiveNode="Trial Balance">
+      [title]="'Trial Balance' | t" 
+      [description]="'Comprehensive summary of debit and credit ledger balances ensuring double-entry mathematical integrity.' | t"
+      [breadcrumbActiveNode]="'Trial Balance' | t">
       <div actions class="flex items-center gap-3">
         <a mat-stroked-button routerLink="/finance"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>Overview</span>
+          <span>{{ 'Overview' | t }}</span>
         </a>
         <form [formGroup]="filterForm" class="flex items-center gap-2">
           <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium">
-            <span class="text-gray-500 dark:text-gray-400">As of:</span>
+            <span class="text-gray-500 dark:text-gray-400">{{ 'As of:' | t }}</span>
             <input 
               type="date" 
               formControlName="asOfDate" 
@@ -61,12 +64,12 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
           class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
           <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>SAP Report</span>
+          <span>{{ 'SAP Report' | t }}</span>
         </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !tbData()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
         </button>
         <button mat-stroked-button (click)="exportExcel()" [disabled]="!tbData()"
           class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
@@ -76,7 +79,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
         <button mat-stroked-button (click)="printReport()"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
           <mat-icon class="text-sm">print</mat-icon>
-          <span>Print</span>
+          <span>{{ 'Print' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -87,13 +90,13 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
       <app-finance-subnav></app-finance-subnav>
 
-      <app-error-state *ngIf="loadError() as err" title="Couldn't load the trial balance" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="loadError() as err" [title]="loadErrorTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <app-empty-state
         *ngIf="!loadError() && (!tbData() || !tbData()?.lines?.length)"
         icon="account_balance_wallet"
-        title="No Ledger Records Found"
-        description="There are no transaction lines recorded as of the selected date. Start by recording revenue or expenses.">
+        [title]="'No Ledger Records Found' | t"
+        [description]="'There are no transaction lines recorded as of the selected date. Start by recording revenue or expenses.' | t">
       </app-empty-state>
 
       <div *ngIf="tbData() as data" #reportSheet id="trialBalanceReport" class="space-y-6">
@@ -104,11 +107,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Debits</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Debits' | t }}</p>
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
                   {{ data.totalDebitBdt | money }}
                 </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">Assets, Expenses, Drawings</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">{{ 'Assets, Expenses, Drawings' | t }}</p>
               </div>
               <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
                 <mat-icon class="text-lg">arrow_downward</mat-icon>
@@ -121,11 +124,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Credits</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Credits' | t }}</p>
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
                   {{ data.totalCreditBdt | money }}
                 </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">Revenue, Liabilities, Capital</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">{{ 'Revenue, Liabilities, Capital' | t }}</p>
               </div>
               <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
                 <mat-icon class="text-lg">arrow_upward</mat-icon>
@@ -139,17 +142,17 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20' : 'bg-gradient-to-br from-amber-50/60 to-rose-50/60 dark:from-amber-950/20 dark:to-rose-950/20'">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Ledger Integrity</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Ledger Integrity' | t }}</p>
                 <div class="flex items-center gap-2 mt-1">
                   <span *ngIf="data.isBalanced" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-                    <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">check_circle</mat-icon> Balanced
+                    <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">check_circle</mat-icon> {{ 'Balanced' | t }}
                   </span>
                   <span *ngIf="!data.isBalanced" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 flex items-center gap-1">
-                    <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">warning</mat-icon> Discrepancy
+                    <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">warning</mat-icon> {{ 'Discrepancy' | t }}
                   </span>
                 </div>
                 <p class="text-[11px] mt-1 font-semibold" [ngClass]="data.isBalanced ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                  {{ data.isBalanced ? 'Debits equal Credits (100% in sync)' : 'Difference: ' + (data.differenceBdt | money:2) }}
+                  {{ data.isBalanced ? ('Debits equal Credits (100% in sync)' | t) : ('Difference: {amount}' | t: { amount: (data.differenceBdt | money:2) }) }}
                 </p>
               </div>
               <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white"
@@ -164,11 +167,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Active Accounts</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Active Accounts' | t }}</p>
                 <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
                   {{ data.lines.length }}
                 </h3>
-                <p class="text-[11px] text-gray-400 mt-0.5">As of {{ data.asOfDate | date:'mediumDate' }}</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">{{ 'As of {date}' | t: { date: (data.asOfDate | date:'mediumDate') } }}</p>
               </div>
               <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
                 <mat-icon class="text-lg">format_list_bulleted</mat-icon>
@@ -186,47 +189,47 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               (click)="selectedGroup.set('ALL')"
               class="px-3 py-1.5 rounded-lg transition-all"
               [ngClass]="selectedGroup() === 'ALL' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'">
-              All ({{ data.lines.length }})
+              {{ 'All ({n})' | t: { n: data.lines.length } }}
             </button>
             <button 
               type="button"
               (click)="selectedGroup.set('Asset')"
               class="px-3 py-1.5 rounded-lg transition-all"
               [ngClass]="selectedGroup() === 'Asset' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'">
-              Assets
+              {{ 'Assets' | t }}
             </button>
             <button 
               type="button"
               (click)="selectedGroup.set('Liability')"
               class="px-3 py-1.5 rounded-lg transition-all"
               [ngClass]="selectedGroup() === 'Liability' ? 'bg-white dark:bg-gray-700 text-amber-600 dark:text-amber-400 shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'">
-              Liabilities
+              {{ 'Liabilities' | t }}
             </button>
             <button 
               type="button"
               (click)="selectedGroup.set('Equity')"
               class="px-3 py-1.5 rounded-lg transition-all"
               [ngClass]="selectedGroup() === 'Equity' ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'">
-              Equity
+              {{ 'Equity' | t }}
             </button>
             <button 
               type="button"
               (click)="selectedGroup.set('Revenue')"
               class="px-3 py-1.5 rounded-lg transition-all"
               [ngClass]="selectedGroup() === 'Revenue' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'">
-              Revenue
+              {{ 'Revenue' | t }}
             </button>
             <button 
               type="button"
               (click)="selectedGroup.set('Expense')"
               class="px-3 py-1.5 rounded-lg transition-all"
               [ngClass]="selectedGroup() === 'Expense' ? 'bg-white dark:bg-gray-700 text-rose-600 dark:text-rose-400 shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'">
-              Expenses
+              {{ 'Expenses' | t }}
             </button>
           </div>
 
           <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">
-            Showing {{ filteredLines().length }} of {{ data.lines.length }} accounts
+            {{ 'Showing {shown} of {total} accounts' | t: { shown: filteredLines().length, total: data.lines.length } }}
           </div>
         </div>
 
@@ -236,11 +239,11 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-900/40 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  <th class="py-3.5 px-5">Code</th>
-                  <th class="py-3.5 px-5">Account Name</th>
-                  <th class="py-3.5 px-5">Classification</th>
-                  <th class="py-3.5 px-5 text-right">Debit (BDT)</th>
-                  <th class="py-3.5 px-5 text-right">Credit (BDT)</th>
+                  <th class="py-3.5 px-5">{{ 'Code' | t }}</th>
+                  <th class="py-3.5 px-5">{{ 'Account Name' | t }}</th>
+                  <th class="py-3.5 px-5">{{ 'Classification' | t }}</th>
+                  <th class="py-3.5 px-5 text-right">{{ 'Debit (BDT)' | t }}</th>
+                  <th class="py-3.5 px-5 text-right">{{ 'Credit (BDT)' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800/50 text-sm">
@@ -255,7 +258,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                   <td class="py-3.5 px-5">
                     <span [ngClass]="getBadgeClass(line.categoryGroup)"
                           class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold">
-                      {{ line.categoryGroup }}
+                      {{ line.categoryGroup | t }}
                     </span>
                   </td>
                   <td class="py-3.5 px-5 text-right font-mono font-medium text-gray-800 dark:text-gray-200">
@@ -272,8 +275,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <tfoot>
                 <tr class="border-t-2 border-b-4 border-gray-900 dark:border-gray-200 bg-gray-50 dark:bg-gray-900/60 font-black text-sm">
                   <td colspan="3" class="py-4 px-5 text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                    <span>Total Balances</span>
-                    <span *ngIf="data.isBalanced" class="text-xs font-bold text-emerald-600 dark:text-emerald-400">✓ In Equilibrium</span>
+                    <span>{{ 'Total Balances' | t }}</span>
+                    <span *ngIf="data.isBalanced" class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ '✓ In Equilibrium' | t }}</span>
                   </td>
                   <td class="py-4 px-5 text-right font-mono text-base font-black text-blue-700 dark:text-blue-400">
                     {{ data.totalDebitBdt | money:2 }}
@@ -300,6 +303,8 @@ export class TrialBalanceComponent {
   private readonly pdfExportService = inject(PdfExportService);
   private readonly reportService = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
+  readonly loadErrorTitle = this.i18n.t("Couldn't load the trial balance");
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -335,7 +340,7 @@ export class TrialBalanceComponent {
       if (!farm) return of(null);
       return this.financeService.getTrialBalance(farm.id, filter.asOfDate).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the trial balance.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the trial balance.')));
           return of(null);
         })
       );
@@ -407,16 +412,16 @@ export class TrialBalanceComponent {
               filename: `Farm360_Trial_Balance_${asOf}`,
               orientation: 'landscape',
               header: {
-                title: 'Trial Balance Report',
-                subtitle: `Debit & Credit Ledger Accounts Verification`,
+                title: this.i18n.t('Trial Balance Report'),
+                subtitle: this.i18n.t('Debit & Credit Ledger Accounts Verification'),
                 farmName: farm?.name || 'Primary Farm',
                 orgName: org?.name || 'Farm360 Enterprise',
-                dateRange: `As of ${asOf}`,
+                dateRange: this.i18n.t('As of {date}', { date: asOf }),
                 currency: 'BDT (৳)',
                 metaFields: [
-                  { label: 'Total Debits', value: `${formatMoney((data?.totalDebitBdt || 0))}` },
-                  { label: 'Total Credits', value: `${formatMoney((data?.totalCreditBdt || 0))}` },
-                  { label: 'Integrity', value: data?.isBalanced ? 'Balanced (100% in sync)' : `Variance: ${formatMoney((data?.differenceBdt || 0))}` }
+                  { label: this.i18n.t('Total Debits'), value: `${formatMoney((data?.totalDebitBdt || 0))}` },
+                  { label: this.i18n.t('Total Credits'), value: `${formatMoney((data?.totalCreditBdt || 0))}` },
+                  { label: this.i18n.t('Integrity'), value: data?.isBalanced ? this.i18n.t('Balanced (100% in sync)') : this.i18n.t('Variance: {amount}', { amount: formatMoney((data?.differenceBdt || 0)) }) }
                 ]
               },
               showSignatures: true

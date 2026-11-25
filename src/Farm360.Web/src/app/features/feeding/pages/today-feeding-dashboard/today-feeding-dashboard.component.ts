@@ -25,6 +25,8 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 interface PenGroup {
   penName: string;
   entries: DailyFeedingEntry[];
@@ -68,43 +70,44 @@ type ViewMode = 'cows' | 'grouped' | 'list';
     MatDialogModule,
     MatTooltipModule,
     PageHeaderComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    TranslatePipe
   ],
   template: `
     <app-page-header
-      title="Confirm Planned Feed · পরিকল্পিত খাবার নিশ্চিত"
-      description="Entries made automatically from your feeding plans. Confirm, adjust or skip them. To record feed without a plan, use Record Daily Feed."
-      breadcrumbActiveNode="Confirm Planned Feed">
+      [title]="i18n.isBangla ? ('Confirm Planned Feed' | t) : 'Confirm Planned Feed · পরিকল্পিত খাবার নিশ্চিত'"
+      [description]="'Entries made automatically from your feeding plans. Confirm, adjust or skip them. To record feed without a plan, use Record Daily Feed.' | t"
+      [breadcrumbActiveNode]="'Confirm Planned Feed' | t">
       <div actions class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <!-- Generate Entries On-Demand -->
         <button type="button" (click)="generateEntries()" [disabled]="isGenerating()"
           class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0" [class.animate-spin]="isGenerating()">auto_awesome</mat-icon>
-          <span>{{ isGenerating() ? 'Generating...' : (isPast() ? 'Generate Missed Day' : 'Generate Entries') }}</span>
+          <span>{{ (isGenerating() ? 'Generating...' : (isPast() ? 'Generate Missed Day' : 'Generate Entries')) | t }}</span>
         </button>
 
         <!-- Feed given outside the plan -->
         <button type="button" (click)="openManualEntry()" [disabled]="!currentFarmId"
-          matTooltip="Record feed actually given outside the plan — a missed or extra feed, or a cow with no ration"
+          [matTooltip]="'Record feed actually given outside the plan — a missed or extra feed, or a cow with no ration' | t"
           class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0">edit_note</mat-icon>
-          <span>Manual Feed Entry</span>
+          <span>{{ 'Manual Feed Entry' | t }}</span>
         </button>
 
         <!-- SAP Daily Workflow Report -->
         <a routerLink="/reports/feeding.daily-workflow"
           [queryParams]="{ period: selectedDate() + '..' + selectedDate(), autoRun: 'true' }"
-          matTooltip="Open enterprise SAP Daily Feeding & Nutrition Workflow Report for Selected Date"
+          [matTooltip]="'Open enterprise SAP Daily Feeding & Nutrition Workflow Report for Selected Date' | t"
           class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0 text-emerald-600 dark:text-emerald-400">fact_check</mat-icon>
-          <span>Daily Workflow (SAP)</span>
+          <span>{{ 'Daily Workflow (SAP)' | t }}</span>
         </a>
 
         <!-- Refresh Data -->
         <button type="button" (click)="loadEntries()"
           class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0" [class.animate-spin]="isLoading()">refresh</mat-icon>
-          <span>Refresh</span>
+          <span>{{ 'Refresh' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -114,25 +117,25 @@ type ViewMode = 'cows' | 'grouped' | 'list';
     <div>
 
     <!-- ═══════════════════ Day overview: date, progress and KPI tiles ═══════════════════ -->
-    <section aria-label="Day overview"
+    <section [attr.aria-label]="'Day overview' | t"
       class="mb-4 rounded-2xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-800 shadow-sm p-4 space-y-4">
 
       <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
         <!-- Date navigation: prev / date / next / Today -->
-        <div role="group" aria-label="Choose feeding date"
+        <div role="group" [attr.aria-label]="'Choose feeding date' | t"
           class="flex items-center gap-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-1 w-full md:w-auto">
-          <button type="button" (click)="previousDay()" matTooltip="Previous Day" aria-label="Previous Day"
+          <button type="button" (click)="previousDay()" [matTooltip]="'Previous Day' | t" [attr.aria-label]="'Previous Day' | t"
             class="h-11 w-11 sm:h-10 sm:w-10 shrink-0 inline-flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
             <mat-icon>chevron_left</mat-icon>
           </button>
 
           <label class="flex-1 md:flex-none min-w-0 flex flex-col items-center justify-center px-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-11 sm:h-10 focus-within:ring-2 focus-within:ring-emerald-500">
             <span class="text-[10px] font-bold uppercase tracking-wider leading-none text-gray-500 dark:text-gray-400">{{ selectedDate() | date:'EEEE' }}</span>
-            <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateSelect($event)" aria-label="Select date"
+            <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateSelect($event)" [attr.aria-label]="'Select date' | t"
               class="w-full min-w-0 text-center text-sm font-bold leading-tight bg-transparent border-none p-0 text-gray-900 dark:text-white focus:outline-none cursor-pointer" />
           </label>
 
-          <button type="button" (click)="nextDay()" matTooltip="Next Day" aria-label="Next Day"
+          <button type="button" (click)="nextDay()" [matTooltip]="'Next Day' | t" [attr.aria-label]="'Next Day' | t"
             class="h-11 w-11 sm:h-10 sm:w-10 shrink-0 inline-flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
             <mat-icon>chevron_right</mat-icon>
           </button>
@@ -142,29 +145,29 @@ type ViewMode = 'cows' | 'grouped' | 'list';
               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
               : 'text-emerald-700 dark:text-emerald-300 hover:bg-white dark:hover:bg-gray-700'"
             class="h-11 sm:h-10 px-4 shrink-0 rounded-lg text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1">
-            Today
+            {{ 'Today' | t }}
           </button>
         </div>
 
         <!-- Workflow progress -->
         <div class="flex-1 min-w-0">
           <div class="flex items-baseline justify-between gap-2">
-            <span class="text-[11px] uppercase font-bold tracking-wider text-gray-500 dark:text-gray-400">Workflow Progress</span>
+            <span class="text-[11px] uppercase font-bold tracking-wider text-gray-500 dark:text-gray-400">{{ 'Workflow Progress' | t }}</span>
             <span class="text-sm font-extrabold text-emerald-700 dark:text-emerald-400 tabular-nums">{{ progressRounded() }}%</span>
           </div>
           <div class="mt-1 text-base font-bold text-gray-900 dark:text-white">
-            {{ completedCount() }} of {{ filteredEntries().length }} done
+            {{ '{done} of {total} done' | t: { done: completedCount(), total: filteredEntries().length } }}
           </div>
           <div class="mt-2 h-3 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden"
-            role="progressbar" aria-label="Feeding entries done" aria-valuemin="0" aria-valuemax="100"
+            role="progressbar" [attr.aria-label]="'Feeding entries done' | t" aria-valuemin="0" aria-valuemax="100"
             [attr.aria-valuenow]="progressRounded()"
-            [attr.aria-valuetext]="completedCount() + ' of ' + filteredEntries().length + ' done'">
+            [attr.aria-valuetext]="'{done} of {total} done' | t: { done: completedCount(), total: filteredEntries().length }">
             <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-500"
               [style.width.%]="progressPct()"></div>
           </div>
           <div class="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between gap-2">
             <span class="inline-flex items-center gap-1">
-              <span class="h-2 w-2 rounded-full bg-amber-500"></span>{{ countPending() }} pending
+              <span class="h-2 w-2 rounded-full bg-amber-500"></span>{{ '{n} pending' | t: { n: countPending() } }}
             </span>
             <span class="tabular-nums">{{ selectedDate() | date:'d MMM y' }}</span>
           </div>
@@ -174,32 +177,32 @@ type ViewMode = 'cows' | 'grouped' | 'list';
       <!-- KPI tiles -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
-          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Total Planned Feed</div>
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">{{ 'Total Planned Feed' | t }}</div>
           <div class="text-lg sm:text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 mt-1 tabular-nums break-words">
-            {{ totalExpectedKg() | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500 dark:text-gray-400">kg</span>
+            {{ totalExpectedKg() | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'kg' | t }}</span>
           </div>
         </div>
         <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
-          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Feed Consumed</div>
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">{{ 'Feed Consumed' | t }}</div>
           <div class="text-lg sm:text-2xl font-extrabold text-blue-700 dark:text-blue-400 mt-1 tabular-nums break-words">
-            {{ totalActualKg() | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500 dark:text-gray-400">kg</span>
+            {{ totalActualKg() | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'kg' | t }}</span>
           </div>
         </div>
         <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
-          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Total Feed Cost</div>
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">{{ 'Total Feed Cost' | t }}</div>
           <div class="text-lg sm:text-2xl font-extrabold text-teal-700 dark:text-teal-400 mt-1 tabular-nums break-words">
             {{ totalFeedCost() | money:2 }}
           </div>
           <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 tabular-nums">
-            Avg {{ averageBlendedCost() | money:2 }}/kg
+            {{ 'Avg {cost}/kg' | t: { cost: (averageBlendedCost() | money:2) } }}
           </div>
         </div>
         <div class="rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 p-4 min-w-0">
-          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">Total Feeding Entries</div>
+          <div class="text-[11px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider leading-tight">{{ 'Total Feeding Entries' | t }}</div>
           <div class="text-lg sm:text-2xl font-extrabold text-gray-900 dark:text-white mt-1 tabular-nums">
             {{ filteredEntries().length }}
             @if (filteredEntries().length !== allEntries().length) {
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">(of {{ allEntries().length }})</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ '(of {n})' | t: { n: allEntries().length } }}</span>
             }
           </div>
         </div>
@@ -207,7 +210,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
     </section>
 
     <!-- ═══════════════════ Toolbar: search, view switch, status filter ═══════════════════ -->
-    <section aria-label="Search and filters" class="mb-4 space-y-2">
+    <section [attr.aria-label]="'Search and filters' | t" class="mb-4 space-y-2">
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
         <!-- Search Box -->
         <div class="relative w-full lg:max-w-md">
@@ -215,21 +218,21 @@ type ViewMode = 'cows' | 'grouped' | 'list';
           <input type="search"
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event)"
-            aria-label="Search entries"
-            placeholder="Search by animal tag, formula, shed, or pen..."
+            [attr.aria-label]="'Search entries' | t"
+            [placeholder]="'Search by animal tag, formula, shed, or pen...' | t"
             class="w-full h-11 pl-10 pr-4 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-shadow shadow-sm" />
         </div>
 
         <!-- View Mode Switcher -->
-        <div role="group" aria-label="Choose view"
+        <div role="group" [attr.aria-label]="'Choose view' | t"
           class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200/70 dark:border-gray-700/70 w-full lg:w-auto">
           @for (v of viewOptions; track v.value) {
             <button type="button" (click)="viewMode.set(v.value)"
-              [matTooltip]="v.tooltip"
+              [matTooltip]="v.tooltip | t"
               [attr.aria-pressed]="viewMode() === v.value"
               [ngClass]="segmentClass(viewMode() === v.value)"
               class="h-10 sm:h-9 px-3 text-xs font-bold rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
-              <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">{{ v.icon }}</mat-icon> {{ v.label }}
+              <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">{{ v.icon }}</mat-icon> {{ v.label | t }}
             </button>
           }
         </div>
@@ -237,7 +240,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
 
       <!-- Status Filter Chips (scroll sideways on a phone) -->
       <div class="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div role="group" aria-label="Filter by status"
+        <div role="group" [attr.aria-label]="'Filter by status' | t"
           class="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200/70 dark:border-gray-700/70">
           @for (s of statusOptions; track s) {
             <button type="button" (click)="statusFilter.set(s)"
@@ -260,7 +263,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
       <!-- Loading skeleton -->
       @if (isLoading()) {
         <div class="space-y-4" aria-busy="true" aria-live="polite">
-          <span class="sr-only">Loading feeding entries…</span>
+          <span class="sr-only">{{ 'Loading feeding entries…' | t }}</span>
           @for (s of skeletonRows; track s) {
             <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-800 p-4 animate-pulse">
               <div class="flex items-center gap-4">
@@ -289,11 +292,11 @@ type ViewMode = 'cows' | 'grouped' | 'list';
       @if (!isLoading() && !loadError() && filteredEntries().length === 0) {
         <app-empty-state
           icon="restaurant_menu"
-          [title]="allEntries().length === 0 ? 'No Feeding Entries for Selected Date' : 'No Matching Feeding Entries'"
+          [title]="(allEntries().length === 0 ? 'No Feeding Entries for Selected Date' : 'No Matching Feeding Entries') | t"
           [description]="allEntries().length === 0
-            ? 'Nothing to confirm for ' + (selectedDate() | date:'EEEE, d MMM y') + ' yet. Tap \\'' + (isPast() ? 'Generate Missed Day' : 'Generate Entries') + '\\' to build the feeding list from your active feeding plans.'
-            : 'No entries match your search or status filter. Clear them to see every entry for this day.'"
-          [actionLabel]="allEntries().length === 0 ? 'Generate Entries Now' : 'Reset Filters'"
+            ? ('Nothing to confirm for {date} yet. Tap “{action}” to build the feeding list from your active feeding plans.' | t: { date: (selectedDate() | date:'EEEE, d MMM y'), action: ((isPast() ? 'Generate Missed Day' : 'Generate Entries') | t) })
+            : ('No entries match your search or status filter. Clear them to see every entry for this day.' | t)"
+          [actionLabel]="(allEntries().length === 0 ? 'Generate Entries Now' : 'Reset Filters') | t"
           (action)="allEntries().length === 0 ? generateEntries() : resetFilters()">
         </app-empty-state>
       }
@@ -320,11 +323,11 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                     <div class="flex items-center gap-2 min-w-0">
                       <h3 class="m-0 text-lg font-extrabold text-gray-900 dark:text-white leading-tight truncate" [title]="cow.animalTag">{{ cow.animalTag }}</h3>
                       <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 whitespace-nowrap shrink-0">
-                        {{ cow.entries.length }} {{ cow.entries.length === 1 ? 'ration' : 'rations' }}
+                        {{ (cow.entries.length === 1 ? '{n} ration' : '{n} rations') | t: { n: cow.entries.length } }}
                       </span>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                      {{ cow.shedName || 'Unassigned Shed' }} / {{ cow.penName || 'Unassigned Pen' }}
+                      {{ cow.shedName || ('Unassigned Shed' | t) }} / {{ cow.penName || ('Unassigned Pen' | t) }}
                     </div>
                   </div>
                 </div>
@@ -333,14 +336,14 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                 <div class="flex flex-wrap items-center justify-between sm:justify-end gap-x-4 gap-y-2 w-full sm:w-auto">
                   <div class="flex items-center gap-4">
                     <div class="whitespace-nowrap">
-                      <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Fed / Planned</div>
+                      <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Fed / Planned' | t }}</div>
                       <div class="text-sm font-extrabold tabular-nums">
                         <span class="text-emerald-700 dark:text-emerald-400">{{ cow.totalActualKg | number:'1.2-2' }}</span>
-                        <span class="text-gray-500 dark:text-gray-400 font-semibold"> / {{ cow.totalExpectedKg | number:'1.2-2' }} kg</span>
+                        <span class="text-gray-500 dark:text-gray-400 font-semibold"> / {{ cow.totalExpectedKg | number:'1.2-2' }} {{ 'kg' | t }}</span>
                       </div>
                     </div>
                     <div class="whitespace-nowrap border-l border-gray-200 dark:border-gray-700 pl-4">
-                      <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Est. Cost</div>
+                      <div class="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Est. Cost' | t }}</div>
                       <div class="text-sm font-extrabold text-teal-700 dark:text-teal-400 tabular-nums">
                         {{ cow.totalCostBdt | money:2 }}
                       </div>
@@ -348,24 +351,24 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                   </div>
 
                   <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button type="button" (click)="openManualEntry([cow.animalId])" matTooltip="Record extra feed given to this cow"
+                    <button type="button" (click)="openManualEntry([cow.animalId])" [matTooltip]="'Record extra feed given to this cow' | t"
                       class="h-11 sm:h-10 px-4 flex-1 sm:flex-none text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
-                      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Add Feed
+                      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Feed' | t }}
                     </button>
 
                     @if (cow.hasPending) {
                       <button type="button" (click)="confirmCow(cow)"
-                        [matTooltip]="'Confirm all ' + getPendingCountForCow(cow) + ' pending rations for this cow'"
-                        [attr.aria-label]="'Confirm (' + getPendingCountForCow(cow) + ') pending rations for ' + cow.animalTag"
+                        [matTooltip]="'Confirm all {n} pending rations for this cow' | t: { n: getPendingCountForCow(cow) }"
+                        [attr.aria-label]="'Confirm ({n}) pending rations for {tag}' | t: { n: getPendingCountForCow(cow), tag: cow.animalTag }"
                         class="h-11 sm:h-10 px-4 flex-1 sm:flex-none text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
                         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon>
-                        Confirm ({{ getPendingCountForCow(cow) }})
+                        {{ 'Confirm ({n})' | t: { n: getPendingCountForCow(cow) } }}
                       </button>
                     }
 
                     @if (cow.allConfirmed) {
                       <span class="h-11 sm:h-10 px-4 flex-1 sm:flex-none rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 inline-flex items-center justify-center gap-1 whitespace-nowrap">
-                        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon> All Confirmed
+                        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check_circle</mat-icon> {{ 'All Confirmed' | t }}
                       </span>
                     }
                   </div>
@@ -398,12 +401,12 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                     <mat-icon class="!w-[22px] !h-[22px] !text-[22px]">home_work</mat-icon>
                   </div>
                   <div class="min-w-0">
-                    <h2 class="m-0 text-lg font-extrabold text-gray-900 dark:text-white leading-tight truncate">{{ shed.shedName }}</h2>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ shed.pens.length }} pens • {{ getShedEntriesCount(shed) }} total entries</div>
+                    <h2 class="m-0 text-lg font-extrabold text-gray-900 dark:text-white leading-tight truncate">{{ shed.shedName | t }}</h2>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ '{pens} pens • {n} total entries' | t: { pens: shed.pens.length, n: getShedEntriesCount(shed) } }}</div>
                   </div>
                 </div>
                 <div class="text-sm font-semibold text-gray-600 dark:text-gray-300 tabular-nums">
-                  <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">{{ shed.totalActualKg | number:'1.2-2' }}kg</span> / {{ shed.totalExpectedKg | number:'1.2-2' }}kg Confirmed
+                  <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">{{ shed.totalActualKg | number:'1.2-2' }}{{ 'kg' | t }}</span> / {{ shed.totalExpectedKg | number:'1.2-2' }}{{ 'kg' | t }} {{ 'Confirmed' | t }}
                 </div>
               </header>
 
@@ -414,17 +417,17 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                     <div class="flex flex-wrap justify-between items-center gap-2 mb-2 sm:mb-4 px-2 pt-2 sm:p-0">
                       <div class="flex items-center gap-2 min-w-0">
                         <mat-icon class="text-gray-400 !w-5 !h-5 !text-[20px] shrink-0">fence</mat-icon>
-                        <h3 class="m-0 text-base font-bold text-gray-900 dark:text-gray-100 truncate">{{ pen.penName }}</h3>
+                        <h3 class="m-0 text-base font-bold text-gray-900 dark:text-gray-100 truncate">{{ pen.penName | t }}</h3>
                         <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 whitespace-nowrap">
-                          {{ pen.entries.length }} entries
+                          {{ '{n} entries' | t: { n: pen.entries.length } }}
                         </span>
                       </div>
 
                       @if (hasPending(pen)) {
                         <button type="button" (click)="confirmPen(pen)"
-                          [attr.aria-label]="'Confirm All (' + getPendingPenCount(pen) + ') pending entries in ' + pen.penName"
+                          [attr.aria-label]="'Confirm All ({n}) pending entries in {pen}' | t: { n: getPendingPenCount(pen), pen: (pen.penName | t) }"
                           class="h-11 sm:h-10 px-4 w-full sm:w-auto text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
-                          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> Confirm All ({{ getPendingPenCount(pen) }})
+                          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> {{ 'Confirm All ({n})' | t: { n: getPendingPenCount(pen) } }}
                         </button>
                       }
                     </div>
@@ -452,16 +455,16 @@ type ViewMode = 'cows' | 'grouped' | 'list';
             <table class="w-full min-w-[960px] text-left border-collapse">
               <thead>
                 <tr class="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 text-[11px] uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400">
-                  <th scope="col" class="py-3 px-4">Animal Tag</th>
-                  <th scope="col" class="py-3 px-4">Location (Shed / Pen)</th>
-                  <th scope="col" class="py-3 px-4">Ration Formula</th>
-                  <th scope="col" class="py-3 px-4">Planned (kg)</th>
-                  <th scope="col" class="py-3 px-4">Consumed (kg)</th>
-                  <th scope="col" class="py-3 px-4">Unit Cost</th>
-                  <th scope="col" class="py-3 px-4">Total Cost</th>
-                  <th scope="col" class="py-3 px-4">Status</th>
-                  <th scope="col" class="py-3 px-4">Notes / Reason</th>
-                  <th scope="col" class="py-3 px-4 text-right">Actions</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Animal Tag' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Location (Shed / Pen)' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Ration Formula' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Planned (kg)' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Consumed (kg)' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Unit Cost' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Total Cost' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Status' | t }}</th>
+                  <th scope="col" class="py-3 px-4">{{ 'Notes / Reason' | t }}</th>
+                  <th scope="col" class="py-3 px-4 text-right">{{ 'Actions' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60 text-sm">
@@ -480,29 +483,29 @@ type ViewMode = 'cows' | 'grouped' | 'list';
 
                     <!-- Location -->
                     <td class="py-2 px-4 text-gray-600 dark:text-gray-300 font-medium">
-                      {{ entry.shedName || 'Unassigned Shed' }} / {{ entry.penName || 'Unassigned Pen' }}
+                      {{ entry.shedName || ('Unassigned Shed' | t) }} / {{ entry.penName || ('Unassigned Pen' | t) }}
                     </td>
 
                     <!-- Ration Formula -->
                     <td class="py-2 px-4 font-semibold text-emerald-700 dark:text-emerald-400">
-                      {{ entry.formulaName || 'Base Ration' }}
+                      {{ entry.formulaName || ('Base Ration' | t) }}
                     </td>
 
                     <!-- Planned (kg) -->
                     <td class="py-2 px-4 font-semibold text-gray-800 dark:text-gray-200 tabular-nums whitespace-nowrap">
-                      {{ entry.expectedKg | number:'1.2-2' }} kg
+                      {{ entry.expectedKg | number:'1.2-2' }} {{ 'kg' | t }}
                     </td>
 
                     <!-- Actual (kg) -->
                     <td class="py-2 px-4 font-bold tabular-nums whitespace-nowrap"
                       [ngClass]="entry.actualKg !== null && entry.actualKg !== undefined ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-400'">
-                      {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : '-') }} {{ entry.actualKg !== null && entry.actualKg !== undefined ? 'kg' : '' }}
+                      {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : '-') }} {{ entry.actualKg !== null && entry.actualKg !== undefined ? ('kg' | t) : '' }}
                     </td>
 
                     <!-- Unit Cost -->
                     <td class="py-2 px-4 text-xs tabular-nums whitespace-nowrap">
                       @if (entry.unitCostBdt != null) {
-                        <span class="font-semibold text-emerald-700 dark:text-emerald-400">{{ entry.unitCostBdt | money:2 }}/kg</span>
+                        <span class="font-semibold text-emerald-700 dark:text-emerald-400">{{ entry.unitCostBdt | money:2 }}/{{ 'kg' | t }}</span>
                       } @else {
                         <span class="text-gray-400">-</span>
                       }
@@ -524,7 +527,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                       <span class="h-6 px-2 rounded-full border text-[11px] font-bold inline-flex items-center gap-1 whitespace-nowrap"
                         [ngClass]="statusPillClass(entry.status)">
                         <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">{{ statusIcon(entry.status) }}</mat-icon>
-                        {{ entry.status }}
+                        {{ entry.status | t }}
                       </span>
                     </td>
 
@@ -536,24 +539,24 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                     <!-- Actions -->
                     <td class="py-2 px-4 text-right">
                       <div class="flex items-center justify-end gap-1">
-                        <button type="button" (click)="openCostBreakdown(entry)" matTooltip="Cost Breakdown" aria-label="Cost Breakdown"
+                        <button type="button" (click)="openCostBreakdown(entry)" [matTooltip]="'Cost Breakdown' | t" [attr.aria-label]="'Cost Breakdown' | t"
                           class="h-10 w-10 inline-flex items-center justify-center text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
                           <mat-icon class="!w-5 !h-5 !text-[20px]">payments</mat-icon>
                         </button>
 
                         @if (entry.status === 'Pending') {
-                          <button type="button" (click)="confirmEntry(entry)" matTooltip="Confirm Planned Amount"
-                            [attr.aria-label]="'Confirm planned amount for ' + entry.animalTag"
+                          <button type="button" (click)="confirmEntry(entry)" [matTooltip]="'Confirm Planned Amount' | t"
+                            [attr.aria-label]="'Confirm planned amount for {tag}' | t: { tag: entry.animalTag }"
                             class="h-10 w-10 inline-flex items-center justify-center text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1">
                             <mat-icon class="!w-5 !h-5 !text-[20px]">check</mat-icon>
                           </button>
-                          <button type="button" (click)="openAdjustDialog(entry, 'adjust')" matTooltip="Adjust Amount"
-                            [attr.aria-label]="'Adjust Amount for ' + entry.animalTag"
+                          <button type="button" (click)="openAdjustDialog(entry, 'adjust')" [matTooltip]="'Adjust Amount' | t"
+                            [attr.aria-label]="'Adjust Amount for {tag}' | t: { tag: entry.animalTag }"
                             class="h-10 w-10 inline-flex items-center justify-center text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                             <mat-icon class="!w-5 !h-5 !text-[20px]">tune</mat-icon>
                           </button>
-                          <button type="button" (click)="openAdjustDialog(entry, 'skip')" matTooltip="Skip Entry"
-                            [attr.aria-label]="'Skip Feeding for ' + entry.animalTag"
+                          <button type="button" (click)="openAdjustDialog(entry, 'skip')" [matTooltip]="'Skip Entry' | t"
+                            [attr.aria-label]="'Skip Feeding for {tag}' | t: { tag: entry.animalTag }"
                             class="h-10 w-10 inline-flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400">
                             <mat-icon class="!w-5 !h-5 !text-[20px]">block</mat-icon>
                           </button>
@@ -575,7 +578,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
         <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-lg shadow-gray-900/10 p-2 flex items-center gap-2">
           <div class="flex-1 min-w-0 px-2">
             <div class="text-sm font-bold text-gray-900 dark:text-white truncate">
-              {{ completedCount() }} of {{ filteredEntries().length }} done
+              {{ '{done} of {total} done' | t: { done: completedCount(), total: filteredEntries().length } }}
             </div>
             <div class="mt-1 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden" aria-hidden="true">
               <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-500"
@@ -619,14 +622,14 @@ type ViewMode = 'cows' | 'grouped' | 'list';
               </div>
             }
             <div class="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate" [class.mt-1]="showAnimal"
-              [matTooltip]="entry.formulaName || 'Base Ration'">
-              {{ entry.formulaName || 'Base Ration' }}
+              [matTooltip]="entry.formulaName || ('Base Ration' | t)">
+              {{ entry.formulaName || ('Base Ration' | t) }}
             </div>
           </div>
           <span class="h-6 px-2 shrink-0 rounded-full border text-[11px] font-bold inline-flex items-center gap-1 whitespace-nowrap"
             [ngClass]="statusPillClass(entry.status)">
             <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">{{ statusIcon(entry.status) }}</mat-icon>
-            {{ entry.status }}
+            {{ entry.status | t }}
           </span>
         </div>
 
@@ -635,28 +638,28 @@ type ViewMode = 'cows' | 'grouped' | 'list';
           <div class="text-2xl font-extrabold tabular-nums leading-none"
             [ngClass]="entry.status === 'Pending' ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'">
             {{ (entry.actualKg !== null && entry.actualKg !== undefined ? entry.actualKg : entry.expectedKg) | number:'1.2-2' }}
-            <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">kg</span>
+            <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ 'kg' | t }}</span>
             @if (entry.status === 'Adjusted' && entry.actualKg !== entry.expectedKg) {
-              <span class="text-xs font-medium text-gray-400 line-through ml-1">{{ entry.expectedKg | number:'1.2-2' }}kg</span>
+              <span class="text-xs font-medium text-gray-400 line-through ml-1">{{ entry.expectedKg | number:'1.2-2' }}{{ 'kg' | t }}</span>
             }
           </div>
 
           <button type="button" (click)="openCostBreakdown(entry)"
-            [matTooltip]="entry.unitCostBdt != null ? 'Snapshotted cost: ৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg. Click for breakdown.' : 'Click to inspect planned cost breakdown.'"
-            [attr.aria-label]="'Cost breakdown for ' + entry.animalTag"
+            [matTooltip]="entry.unitCostBdt != null ? ('Snapshotted cost: ৳{cost}/kg. Click for breakdown.' | t: { cost: (entry.unitCostBdt | number:'1.2-2') }) : ('Click to inspect planned cost breakdown.' | t)"
+            [attr.aria-label]="'Cost breakdown for {tag}' | t: { tag: entry.animalTag }"
             class="h-8 px-2 shrink-0 inline-flex items-center gap-1 rounded-lg text-xs font-semibold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             [ngClass]="entry.unitCostBdt != null
               ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border-emerald-200/80 dark:border-emerald-800/80'
               : 'bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600'">
             <mat-icon class="!w-4 !h-4 !text-[16px]">payments</mat-icon>
-            <span>{{ entry.unitCostBdt != null ? '৳' + (entry.unitCostBdt | number:'1.2-2') + '/kg' : 'Cost' }}</span>
+            <span>{{ entry.unitCostBdt != null ? '৳' + (entry.unitCostBdt | number:'1.2-2') + '/' + ('kg' | t) : ('Cost' | t) }}</span>
           </button>
         </div>
 
         <!-- Entry cost -->
         @if (entry.totalCostBdt != null || entry.unitCostBdt != null) {
           <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center gap-2">
-            <span>Ration Cost</span>
+            <span>{{ 'Ration Cost' | t }}</span>
             <span class="font-bold text-teal-700 dark:text-teal-300 tabular-nums">
               {{ (entry.totalCostBdt ?? ((entry.actualKg ?? entry.expectedKg) * (entry.unitCostBdt ?? 0))) | money:2 }}
             </span>
@@ -667,20 +670,20 @@ type ViewMode = 'cows' | 'grouped' | 'list';
         @if (entry.status === 'Pending') {
           <div class="mt-auto pt-4 space-y-2">
             <button type="button" (click)="confirmEntry(entry)"
-              [attr.aria-label]="'Confirm ' + (entry.expectedKg | number:'1.2-2') + ' kg for ' + entry.animalTag"
+              [attr.aria-label]="'Confirm {kg} kg for {tag}' | t: { kg: (entry.expectedKg | number:'1.2-2'), tag: entry.animalTag }"
               class="w-full h-12 rounded-xl text-base font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
-              <mat-icon class="!w-5 !h-5 !text-[20px]">check</mat-icon> Confirm
+              <mat-icon class="!w-5 !h-5 !text-[20px]">check</mat-icon> {{ 'Confirm' | t }}
             </button>
             <div class="grid grid-cols-2 gap-2">
               <button type="button" (click)="openAdjustDialog(entry, 'adjust')"
-                [attr.aria-label]="'Adjust Amount for ' + entry.animalTag"
+                [attr.aria-label]="'Adjust Amount for {tag}' | t: { tag: entry.animalTag }"
                 class="h-11 px-2 rounded-xl text-xs font-bold text-blue-800 dark:text-blue-200 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800/70 inline-flex items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">tune</mat-icon> Adjust Amount
+                <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">tune</mat-icon> {{ 'Adjust Amount' | t }}
               </button>
               <button type="button" (click)="openAdjustDialog(entry, 'skip')"
-                [attr.aria-label]="'Skip Feeding for ' + entry.animalTag"
+                [attr.aria-label]="'Skip Feeding for {tag}' | t: { tag: entry.animalTag }"
                 class="h-11 px-2 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 inline-flex items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400">
-                <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">block</mat-icon> Skip Feeding
+                <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">block</mat-icon> {{ 'Skip Feeding' | t }}
               </button>
             </div>
           </div>
@@ -698,6 +701,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly i18n = inject(I18nService);
 
   // Signals
   readonly isLoading = signal(true);
@@ -928,12 +932,12 @@ export class TodayFeedingDashboardComponent implements OnInit {
     this.isGenerating.set(true);
     this.feedingService.generateEntries(this.selectedDate(), this.currentFarmId || undefined).subscribe({
       next: (res) => {
-        this.notify.success(res.message || 'Daily entries generated successfully.');
+        this.notify.success(res.message || this.i18n.t('Daily entries generated successfully.'));
         this.isGenerating.set(false);
         this.loadEntries();
       },
       error: (err) => {
-        this.notify.error(err.error?.detail || 'Failed to generate entries.');
+        this.notify.error(err.error?.detail || this.i18n.t('Failed to generate entries.'));
         this.isGenerating.set(false);
       }
     });
@@ -947,7 +951,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
       ManualFeedingEntryDialogComponent, { data, width: '640px', maxWidth: '96vw', maxHeight: '92vh', panelClass: ['!rounded-2xl', '!bg-white', 'dark:!bg-gray-900'] })
       .afterClosed().subscribe(res => {
         if (!res) return;
-        const msg = `Recorded feed for ${res.recorded} animal${res.recorded === 1 ? '' : 's'}.` + (res.notes.length ? ' ' + res.notes.join(' ') : '');
+        const msg = this.i18n.t(res.recorded === 1 ? 'Recorded feed for {n} animal.' : 'Recorded feed for {n} animals.', { n: res.recorded }) + (res.notes.length ? ' ' + res.notes.join(' ') : '');
         this.notify.success(msg);
         this.loadEntries();
       });
@@ -956,11 +960,11 @@ export class TodayFeedingDashboardComponent implements OnInit {
   confirmEntry(entry: DailyFeedingEntry): void {
     this.feedingService.confirmEntry(entry.id, entry.expectedKg).subscribe({
       next: () => {
-        this.notify.success(`Confirmed feed for ${entry.animalTag}`);
+        this.notify.success(this.i18n.t('Confirmed feed for {tag}', { tag: entry.animalTag }));
         this.loadEntries();
       },
       error: (err) => {
-        this.notify.error(parseApiError(err, 'Failed to confirm entry'));
+        this.notify.error(parseApiError(err, this.i18n.t('Failed to confirm entry')));
       }
     });
   }
@@ -990,7 +994,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
     const pendingEntries = pen.entries.filter(e => e.status === 'Pending');
 
     if (pendingEntries.length === 0) {
-      this.notify.warning(`All entries in ${pen.penName} are already processed.`);
+      this.notify.warning(this.i18n.t('All entries in {pen} are already processed.', { pen: this.i18n.t(pen.penName) }));
       return;
     }
 
@@ -999,11 +1003,11 @@ export class TodayFeedingDashboardComponent implements OnInit {
     this.isLoading.set(true);
     forkJoin(observables).subscribe({
       next: () => {
-        this.notify.success(`Confirmed ${pendingEntries.length} entries for ${pen.penName}`);
+        this.notify.success(this.i18n.t('Confirmed {n} entries for {pen}', { n: pendingEntries.length, pen: this.i18n.t(pen.penName) }));
         this.loadEntries();
       },
       error: (err) => {
-        this.notify.error(parseApiError(err, 'Some confirmations failed'));
+        this.notify.error(parseApiError(err, this.i18n.t('Some confirmations failed')));
         this.loadEntries();
       }
     });
@@ -1046,9 +1050,9 @@ export class TodayFeedingDashboardComponent implements OnInit {
 
   // Presentation helpers
   filterLabel(status: string): string {
-    if (status === 'all') return `All (${this.allEntries().length})`;
-    if (status === 'Pending') return `Pending (${this.countPending()})`;
-    return status;
+    if (status === 'all') return this.i18n.t('All ({n})', { n: this.allEntries().length });
+    if (status === 'Pending') return this.i18n.t('Pending ({n})', { n: this.countPending() });
+    return this.i18n.t(status);
   }
 
   segmentClass(active: boolean): string {
@@ -1109,7 +1113,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
     const pendingEntries = cow.entries.filter(e => e.status === 'Pending');
 
     if (pendingEntries.length === 0) {
-      this.notify.warning(`All rations for ${cow.animalTag} are already processed.`);
+      this.notify.warning(this.i18n.t('All rations for {tag} are already processed.', { tag: cow.animalTag }));
       return;
     }
 
@@ -1118,11 +1122,11 @@ export class TodayFeedingDashboardComponent implements OnInit {
     this.isLoading.set(true);
     forkJoin(observables).subscribe({
       next: () => {
-        this.notify.success(`Confirmed all rations for ${cow.animalTag}`);
+        this.notify.success(this.i18n.t('Confirmed all rations for {tag}', { tag: cow.animalTag }));
         this.loadEntries();
       },
       error: (err) => {
-        this.notify.error(parseApiError(err, 'Some confirmations failed'));
+        this.notify.error(parseApiError(err, this.i18n.t('Some confirmations failed')));
         this.loadEntries();
       }
     });

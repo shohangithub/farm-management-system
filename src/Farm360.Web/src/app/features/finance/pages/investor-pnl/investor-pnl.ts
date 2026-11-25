@@ -23,10 +23,12 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-investor-pnl',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -39,18 +41,18 @@ import { parseApiError } from '../../../../core/utils/error-parser';
   ],
   template: `
     <app-page-header 
-      title="Profit & Loss Sharing" 
-      description="Calculates farm operating profitability and computes investor equity shares, allocated profits, and undistributed balances."
-      breadcrumbActiveNode="Profit & Loss Sharing">
+      [title]="'Profit & Loss Sharing' | t" 
+      [description]="'Calculates farm operating profitability and computes investor equity shares, allocated profits, and undistributed balances.' | t"
+      [breadcrumbActiveNode]="'Profit & Loss Sharing' | t">
       <div actions class="flex items-center gap-2">
         <a routerLink="/finance/investors" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-gray-300 dark:!border-gray-700 !text-gray-700 dark:!text-gray-300 hover:!bg-gray-100 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">arrow_back</mat-icon>
-          <span>Investors List</span>
+          <span>{{ 'Investors List' | t }}</span>
         </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !summary()"
           class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -66,29 +68,29 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <button type="button" (click)="setPreset('all')"
                   [ngClass]="activePreset() === 'all' ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-            All Time
+            {{ 'All Time' | t }}
           </button>
           <button type="button" (click)="setPreset('fiscal')"
                   [ngClass]="activePreset() === 'fiscal' ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
-                  title="The farm's financial year to date — the same period as the income statement and the balance sheet's profit for the year"
+                  [title]="fiscalYearTitle"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-            This Fiscal Year
+            {{ 'This Fiscal Year' | t }}
           </button>
           <button type="button" (click)="setPreset('month')"
                   [ngClass]="activePreset() === 'month' ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
-            This Month
+            {{ 'This Month' | t }}
           </button>
         </div>
 
         <div class="flex items-center gap-2 w-full md:w-auto">
           <div class="flex items-center gap-1.5 text-xs text-gray-500">
-            <span>From:</span>
+            <span>{{ 'From:' | t }}</span>
             <input type="date" [ngModel]="fromDate()" (ngModelChange)="onFromDateChange($event)"
                    class="px-2.5 py-1.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-white">
           </div>
           <div class="flex items-center gap-1.5 text-xs text-gray-500">
-            <span>To:</span>
+            <span>{{ 'To:' | t }}</span>
             <input type="date" [ngModel]="toDate()" (ngModelChange)="onToDateChange($event)"
                    class="px-2.5 py-1.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-white">
           </div>
@@ -98,7 +100,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 
       <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-      <app-error-state *ngIf="!isLoading() && loadError() as err" title="Couldn't load profit sharing" [message]="err" (retry)="retryLoad()"></app-error-state>
+      <app-error-state *ngIf="!isLoading() && loadError() as err" [title]="couldNotLoadTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Main Content -->
       <div *ngIf="!isLoading() && summary()" #reportSheet id="investorPnlReport" class="space-y-6">
@@ -110,7 +112,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Farm Revenue</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Farm Revenue' | t }}</p>
                 <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                   {{ summary()!.totalFarmRevenueBdt | money }}
                 </h3>
@@ -119,14 +121,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>trending_up</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">Excludes capital injections</p>
+            <p class="text-xs text-gray-400 mt-3">{{ 'Excludes capital injections' | t }}</p>
           </div>
 
           <!-- Farm Operating Expenses -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Farm Expenses</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Farm Expenses' | t }}</p>
                 <h3 class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
                   {{ summary()!.totalFarmExpensesBdt | money }}
                 </h3>
@@ -135,14 +137,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>trending_down</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">Excludes investor payouts</p>
+            <p class="text-xs text-gray-400 mt-3">{{ 'Excludes investor payouts' | t }}</p>
           </div>
 
           <!-- Net Farm Profit / Loss -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Net Farm Profit / Loss</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Net Farm Profit / Loss' | t }}</p>
                 <h3 class="text-2xl font-bold mt-1"
                     [ngClass]="summary()!.netFarmProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
                   {{ summary()!.netFarmProfitBdt | money }}
@@ -153,14 +155,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>{{ summary()!.netFarmProfitBdt >= 0 ? 'savings' : 'warning' }}</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">Gross operating result before charity</p>
+            <p class="text-xs text-gray-400 mt-3">{{ 'Gross operating result before charity' | t }}</p>
           </div>
 
           <!-- Charity Deduction (5%) -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Charity Deduction ({{ summary()!.charityPercentage }}%)</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Charity Deduction ({percent}%)' | t: { percent: summary()!.charityPercentage } }}</p>
                 <h3 class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
                   {{ summary()!.charityAmountBdt | money }}
                 </h3>
@@ -169,14 +171,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>volunteer_activism</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">5% allocated to charity from positive profit</p>
+            <p class="text-xs text-gray-400 mt-3">{{ '5% allocated to charity from positive profit' | t }}</p>
           </div>
 
           <!-- Distributable Profit -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Distributable Profit (95%)</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Distributable Profit (95%)' | t }}</p>
                 <h3 class="text-2xl font-bold mt-1"
                     [ngClass]="summary()!.distributableProfitBdt >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'">
                   {{ summary()!.distributableProfitBdt | money }}
@@ -186,14 +188,14 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>account_balance_wallet</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">Pool shared among equity investors</p>
+            <p class="text-xs text-gray-400 mt-3">{{ 'Pool shared among equity investors' | t }}</p>
           </div>
 
           <!-- Total Active Capital Pool -->
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Capital Pool</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Total Capital Pool' | t }}</p>
                 <h3 class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-1">
                   {{ summary()!.totalActiveCapitalBdt | money }}
                 </h3>
@@ -202,7 +204,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                 <mat-icon>pie_chart</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">From all active equity partners</p>
+            <p class="text-xs text-gray-400 mt-3">{{ 'From all active equity partners' | t }}</p>
           </div>
 
         </div>
@@ -212,9 +214,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
           
           <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white m-0">Investor Equity & Profit Distribution Breakdown</h3>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ 'Investor Equity & Profit Distribution Breakdown' | t }}</h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 m-0">
-                Detailed share allocation of Distributable Profit (after 5% charity) based on agreed contract or active capital ratio
+                {{ 'Detailed share allocation of Distributable Profit (after 5% charity) based on agreed contract or active capital ratio' | t }}
               </p>
             </div>
           </div>
@@ -223,15 +225,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
             <table class="w-full text-left text-xs text-gray-700 dark:text-gray-300">
               <thead class="bg-gray-50 dark:bg-gray-800/50 uppercase font-semibold text-[11px] tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
                 <tr>
-                  <th class="px-6 py-3.5">Investor Name</th>
-                  <th class="px-4 py-3.5 text-right">Invested Capital</th>
-                  <th class="px-4 py-3.5 text-right">Capital %</th>
-                  <th class="px-4 py-3.5 text-right">Profit Share %</th>
-                  <th class="px-4 py-3.5 text-right">Allocated Share</th>
-                  <th class="px-4 py-3.5 text-right">Profit Paid</th>
-                  <th class="px-4 py-3.5 text-right">Undistributed Balance</th>
-                  <th class="px-4 py-3.5 text-right">Net Equity Value</th>
-                  <th class="px-6 py-3.5 text-center no-print">Action</th>
+                  <th class="px-6 py-3.5">{{ 'Investor Name' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Invested Capital' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Capital %' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Profit Share %' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Allocated Share' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Profit Paid' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Undistributed Balance' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Net Equity Value' | t }}</th>
+                  <th class="px-6 py-3.5 text-center no-print">{{ 'Action' | t }}</th>
                 </tr>
               </thead>
 
@@ -247,7 +249,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                     <div>
                       <span class="block">{{ share.investorName }}</span>
                       <span class="text-[11px] font-normal" [ngClass]="share.isActive ? 'text-emerald-500' : 'text-gray-400'">
-                        {{ share.isActive ? 'Active Partner' : 'Inactive' }}
+                        {{ (share.isActive ? 'Active Partner' : 'Inactive') | t }}
                       </span>
                     </div>
                   </td>
@@ -294,10 +296,10 @@ import { parseApiError } from '../../../../core/utils/error-parser';
                   <!-- Action -->
                   <td class="px-6 py-4 text-center no-print">
                     <button (click)="openPayoutDialog(share)"
-                            title="Distribute Profit"
+                            [title]="'Distribute Profit' | t"
                             class="px-3 py-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors inline-flex items-center gap-1">
                       <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">payments</mat-icon>
-                      <span>Pay Out</span>
+                      <span>{{ 'Pay Out' | t }}</span>
                     </button>
                   </td>
 
@@ -307,7 +309,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
               <!-- Table Summary Footer -->
               <tfoot class="bg-gray-50/80 dark:bg-gray-800/80 font-bold border-t border-gray-200 dark:border-gray-700">
                 <tr>
-                  <td class="px-6 py-3.5">Totals</td>
+                  <td class="px-6 py-3.5">{{ 'Totals' | t }}</td>
                   <td class="px-4 py-3.5 text-right">{{ summary()!.totalActiveCapitalBdt | money }}</td>
                   <td class="px-4 py-3.5 text-right">100%</td>
                   <td class="px-4 py-3.5 text-right">-</td>
@@ -337,6 +339,9 @@ export class InvestorPnLComponent {
   private workingContextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load profit sharing");
+  readonly fiscalYearTitle = this.i18n.t("The farm's financial year to date — the same period as the income statement and the balance sheet's profit for the year");
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -370,7 +375,7 @@ export class InvestorPnLComponent {
       if (!farm) return of(null);
       return this.financeService.getInvestorPnL(farm.id, filter.from, filter.to).pipe(
         catchError(err => {
-          this.loadError.set(parseApiError(err, 'Could not load the investor P&L.'));
+          this.loadError.set(parseApiError(err, this.i18n.t('Could not load the investor P&L.')));
           return of(null);
         })
       );
@@ -448,8 +453,8 @@ export class InvestorPnLComponent {
     const farm = this.workingContextService.currentFarmValue;
     const org = this.workingContextService.currentOrgValue;
     const dateRangeStr = this.fromDate() || this.toDate()
-      ? `${this.fromDate() || 'Beginning'} to ${this.toDate() || 'Present'}`
-      : 'All Time';
+      ? this.i18n.t('{from} to {to}', { from: this.fromDate() || this.i18n.t('Beginning'), to: this.toDate() || this.i18n.t('Present') })
+      : this.i18n.t('All Time');
 
     this.isExporting.set(true);
     try {
@@ -457,16 +462,16 @@ export class InvestorPnLComponent {
         filename: `Farm360_Investor_PnL_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Profit & Loss Sharing Report',
-          subtitle: 'Investor Equity, Capital Proportions & Distributable Earnings',
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('Profit & Loss Sharing Report'),
+          subtitle: this.i18n.t('Investor Equity, Capital Proportions & Distributable Earnings'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
-          dateRange: `Period: ${dateRangeStr}`,
-          currency: 'BDT (৳)',
+          dateRange: this.i18n.t('Period: {range}', { range: dateRangeStr }),
+          currency: this.i18n.t('BDT (৳)'),
           metaFields: [
-            { label: 'Farm Net Profit', value: `${formatMoney((summary?.netFarmProfitBdt || 0))}` },
-            { label: 'Distributable Profit', value: `${formatMoney((summary?.distributableProfitBdt || 0))}` },
-            { label: 'Total Investors', value: `${summary?.investorShares?.length || 0}` }
+            { label: this.i18n.t('Farm Net Profit'), value: `${formatMoney((summary?.netFarmProfitBdt || 0))}` },
+            { label: this.i18n.t('Distributable Profit'), value: `${formatMoney((summary?.distributableProfitBdt || 0))}` },
+            { label: this.i18n.t('Total Investors'), value: `${summary?.investorShares?.length || 0}` }
           ]
         },
         showSignatures: true

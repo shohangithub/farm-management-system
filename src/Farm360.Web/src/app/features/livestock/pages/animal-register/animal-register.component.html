@@ -1,6 +1,6 @@
 <app-page-header 
-  title="Register Animal" 
-  description="Add a new animal to your organization's herd.">
+  [title]="'Register Animal' | t" 
+  [description]="addAnimalDescription">
 </app-page-header>
 
 <!-- Server Error Alert -->
@@ -9,7 +9,7 @@
     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
   </svg>
   <div>
-    <h3 class="text-sm font-semibold">Registration Failed</h3>
+    <h3 class="text-sm font-semibold">{{ 'Registration Failed' | t }}</h3>
     <p class="text-xs mt-0.5">{{ error() }}</p>
   </div>
 </div>
@@ -19,21 +19,21 @@
     
     <!-- Step 1: Identification & Classification -->
     <mat-step [stepControl]="idForm">
-      <ng-template matStepLabel>Identification</ng-template>
+      <ng-template matStepLabel>{{ 'Identification' | t }}</ng-template>
       <form [formGroup]="idForm" class="p-6 sm:p-8 space-y-6">
         <div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Identification & Classification</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Core tracking information for this animal.</p>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Identification & Classification' | t }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ 'Core tracking information for this animal.' | t }}</p>
         </div>
         
         <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
           <!-- Tag ID -->
           <div class="sm:col-span-3 space-y-1.5">
             <label for="tagId" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Tag ID <span class="text-red-500">*</span>
+              {{ 'Tag ID' | t }} <span class="text-red-500">*</span>
             </label>
             <input type="text" formControlName="tagId" id="tagId" 
-                   placeholder="e.g. B-001 or 001234"
+                   [placeholder]="'e.g. B-001 or 001234' | t"
                    class="block w-full px-3 py-2.5 border rounded-lg text-sm font-mono uppercase shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 placeholder-gray-400
                           [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
@@ -45,22 +45,22 @@
           <!-- Tag Type -->
           <div class="sm:col-span-3 space-y-1.5">
             <label for="tagType" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Tag Type <span class="text-red-500">*</span>
+              {{ 'Tag Type' | t }} <span class="text-red-500">*</span>
             </label>
             <select formControlName="tagType" id="tagType"
                     class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-              <option [ngValue]="TagType.Manual">Manual Label</option>
-              <option [ngValue]="TagType.EarTag">Ear Tag</option>
-              <option [ngValue]="TagType.Rfid">RFID</option>
+              <option [ngValue]="TagType.Manual">{{ 'Manual Label' | t }}</option>
+              <option [ngValue]="TagType.EarTag">{{ 'Ear Tag' | t }}</option>
+              <option [ngValue]="TagType.Rfid">{{ 'RFID' | t }}</option>
             </select>
           </div>
 
           <!-- Species -->
           <div class="sm:col-span-3 space-y-1.5">
-            <label for="species" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Species <span class="text-red-500">*</span></label>
+            <label for="species" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Species' | t }} <span class="text-red-500">*</span></label>
             <select formControlName="species" id="species"
                     class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-              <option *ngFor="let s of speciesOptions" [ngValue]="s.value">{{ s.label }}</option>
+              <option *ngFor="let s of speciesOptions" [ngValue]="s.value">{{ s.label | t }}</option>
             </select>
           </div>
 
@@ -68,49 +68,49 @@
           <div class="sm:col-span-3 space-y-1.5">
             <div class="flex items-center justify-between">
               <label for="breedId" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Breed Name <span class="text-red-500">*</span>
+                {{ 'Breed Name' | t }} <span class="text-red-500">*</span>
               </label>
-              <a *ngIf="breeds().length === 0" routerLink="/livestock/breeds" class="text-xs text-primary-600 hover:text-primary-700 font-medium bg-primary-50 px-2 py-0.5 rounded transition-colors">+ Add Breed</a>
+              <a *ngIf="breeds().length === 0" routerLink="/livestock/breeds" class="text-xs text-primary-600 hover:text-primary-700 font-medium bg-primary-50 px-2 py-0.5 rounded transition-colors">+ {{ 'Add Breed' | t }}</a>
             </div>
             <select formControlName="breedId" id="breedId"
                     class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
-              <option value="" disabled selected>Select a breed...</option>
-              <option *ngFor="let b of breeds()" [value]="b.id">{{ b.name }} ({{ b.category }})</option>
+              <option value="" disabled selected>{{ 'Select a breed...' | t }}</option>
+              <option *ngFor="let b of breeds()" [value]="b.id">{{ b.name }} ({{ b.category | t }})</option>
             </select>
             <p *ngIf="getError(idForm, 'breedId')" class="text-xs text-red-500 mt-1">{{ getError(idForm, 'breedId') }}</p>
           </div>
 
           <!-- Sex -->
           <div class="sm:col-span-3 space-y-1.5">
-            <label for="sex" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Sex <span class="text-red-500">*</span></label>
+            <label for="sex" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Sex' | t }} <span class="text-red-500">*</span></label>
             <select formControlName="sex" id="sex"
                     class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-              <option [ngValue]="AnimalSex.Male">Male</option>
-              <option [ngValue]="AnimalSex.Female">Female</option>
+              <option [ngValue]="AnimalSex.Male">{{ 'Male' | t }}</option>
+              <option [ngValue]="AnimalSex.Female">{{ 'Female' | t }}</option>
             </select>
           </div>
         </div>
         
         <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800/50 mt-6">
-          <button mat-button type="button" routerLink="/livestock" class="mr-auto text-gray-500">Cancel</button>
-          <button mat-flat-button color="primary" matStepperNext [disabled]="idForm.invalid">Next Step</button>
+          <button mat-button type="button" routerLink="/livestock" class="mr-auto text-gray-500">{{ 'Cancel' | t }}</button>
+          <button mat-flat-button color="primary" matStepperNext [disabled]="idForm.invalid">{{ 'Next Step' | t }}</button>
         </div>
       </form>
     </mat-step>
 
     <!-- Step 2: Acquisition -->
     <mat-step [stepControl]="acquisitionForm">
-      <ng-template matStepLabel>Acquisition</ng-template>
+      <ng-template matStepLabel>{{ 'Acquisition' | t }}</ng-template>
       <form [formGroup]="acquisitionForm" class="p-6 sm:p-8 space-y-6">
         <div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Acquisition Details</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">How and when this animal entered the farm.</p>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Acquisition Details' | t }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ 'How and when this animal entered the farm.' | t }}</p>
         </div>
         
         <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
           <!-- Date of Birth -->
           <div class="sm:col-span-3 space-y-1.5">
-            <label for="dateOfBirth" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Date of Birth <span class="text-red-500">*</span></label>
+            <label for="dateOfBirth" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Date of Birth' | t }} <span class="text-red-500">*</span></label>
             <input type="date" formControlName="dateOfBirth" id="dateOfBirth" [max]="today"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                           [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
@@ -119,17 +119,17 @@
           
           <!-- Type -->
           <div class="sm:col-span-3 space-y-1.5">
-            <label for="acquisitionType" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Type <span class="text-red-500">*</span></label>
+            <label for="acquisitionType" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Type' | t }} <span class="text-red-500">*</span></label>
             <select formControlName="acquisitionType" id="acquisitionType"
                     class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-              <option [ngValue]="AcquisitionType.Purchased">Purchased</option>
-              <option [ngValue]="AcquisitionType.BornOnFarm">Born on Farm</option>
+              <option [ngValue]="AcquisitionType.Purchased">{{ 'Purchased' | t }}</option>
+              <option [ngValue]="AcquisitionType.BornOnFarm">{{ 'Born on Farm' | t }}</option>
             </select>
           </div>
 
           <!-- Date -->
           <div class="sm:col-span-3 space-y-1.5">
-            <label for="acquisitionDate" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Acquisition Date <span class="text-red-500">*</span></label>
+            <label for="acquisitionDate" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Acquisition Date' | t }} <span class="text-red-500">*</span></label>
             <input type="date" formControlName="acquisitionDate" id="acquisitionDate" [max]="today"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                           [&.ng-invalid.ng-touched]:border-red-400 [&.ng-invalid.ng-touched]:ring-1 [&.ng-invalid.ng-touched]:ring-red-300">
@@ -138,7 +138,7 @@
 
           <!-- Price -->
           <div class="sm:col-span-3 space-y-1.5" *ngIf="acquisitionForm.get('acquisitionType')?.value === AcquisitionType.Purchased">
-            <label for="acquisitionPriceBdt" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Purchase Price (BDT)</label>
+            <label for="acquisitionPriceBdt" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Purchase Price (BDT)' | t }}</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span class="text-gray-500 sm:text-sm">৳</span>
@@ -151,30 +151,30 @@
         </div>
         
         <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800/50 mt-6 gap-2">
-          <button mat-button matStepperPrevious type="button">Back</button>
-          <button mat-flat-button color="primary" matStepperNext [disabled]="acquisitionForm.invalid">Next Step</button>
+          <button mat-button matStepperPrevious type="button">{{ 'Back' | t }}</button>
+          <button mat-flat-button color="primary" matStepperNext [disabled]="acquisitionForm.invalid">{{ 'Next Step' | t }}</button>
         </div>
       </form>
     </mat-step>
 
     <!-- Step 3: Placement (Optional) -->
     <mat-step [stepControl]="placementForm">
-      <ng-template matStepLabel>Placement</ng-template>
+      <ng-template matStepLabel>{{ 'Placement' | t }}</ng-template>
       <form [formGroup]="placementForm" class="p-6 sm:p-8 space-y-6">
         <div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Initial Placement (Optional)</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Assign the animal to a shed and pen.</p>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Initial Placement (Optional)' | t }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ 'Assign the animal to a shed and pen.' | t }}</p>
         </div>
         
         <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2">
           <!-- Shed -->
           <div class="space-y-1.5">
             <label for="shedId" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Shed
+              {{ 'Shed' | t }}
             </label>
             <select formControlName="shedId" id="shedId"
                     class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer">
-              <option [ngValue]="null">-- Unassigned --</option>
+              <option [ngValue]="null">-- {{ 'Unassigned' | t }} --</option>
               <option *ngFor="let s of sheds()" [ngValue]="s.id">{{ s.shedName }} ({{ s.shedNumber }})</option>
             </select>
           </div>
@@ -182,50 +182,50 @@
           <!-- Pen -->
           <div class="space-y-1.5">
             <label for="penId" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Pen
+              {{ 'Pen' | t }}
             </label>
             <select formControlName="penId" id="penId"
                     class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm cursor-pointer"
                     [attr.disabled]="!placementForm.get('shedId')?.value ? '' : null">
-              <option [ngValue]="null">-- Unassigned --</option>
+              <option [ngValue]="null">-- {{ 'Unassigned' | t }} --</option>
               <option *ngFor="let p of pens()" [ngValue]="p.id">{{ p.penNumber }}</option>
             </select>
           </div>
         </div>
         
         <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800/50 mt-6 gap-2">
-          <button mat-button matStepperPrevious type="button">Back</button>
-          <button mat-flat-button color="primary" matStepperNext>Next Step</button>
+          <button mat-button matStepperPrevious type="button">{{ 'Back' | t }}</button>
+          <button mat-flat-button color="primary" matStepperNext>{{ 'Next Step' | t }}</button>
         </div>
       </form>
     </mat-step>
 
     <!-- Step 4: Notes & Submit -->
     <mat-step [stepControl]="notesForm">
-      <ng-template matStepLabel>Finish</ng-template>
+      <ng-template matStepLabel>{{ 'Finish' | t }}</ng-template>
       <form [formGroup]="notesForm" (ngSubmit)="onSubmit()" class="p-6 sm:p-8 space-y-6">
         <div>
-          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">Additional Information</h3>
+          <h3 class="text-base font-bold text-gray-900 dark:text-white tracking-tight">{{ 'Additional Information' | t }}</h3>
         </div>
         
         <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-1">
           <div class="space-y-1.5">
-            <label for="notes" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</label>
+            <label for="notes" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Notes' | t }}</label>
             <textarea formControlName="notes" id="notes" rows="3"
-                   placeholder="Write any relevant notes about this animal here..."
+                   [placeholder]="'Write any relevant notes about this animal here...' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
           </div>
         </div>
         
         <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800/50 mt-6 gap-2">
-          <button mat-button matStepperPrevious type="button">Back</button>
+          <button mat-button matStepperPrevious type="button">{{ 'Back' | t }}</button>
           <button type="submit" [disabled]="idForm.invalid || acquisitionForm.invalid || placementForm.invalid || notesForm.invalid || submitting()"
                   class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
             <svg *ngIf="submitting()" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
             </svg>
-            {{ submitting() ? 'Registering...' : 'Register Animal' }}
+            {{ (submitting() ? 'Registering...' : 'Register Animal') | t }}
           </button>
         </div>
       </form>

@@ -143,8 +143,10 @@ public static class PersistenceServiceExtensions
         services.AddScoped<Farm360.Domain.Identity.Repositories.IRoleRepository, Farm360.Persistence.Repositories.Identity.RoleRepository>();
 
         // ── Cross-cutting services ────────────────────────────────────────────
-        services.AddScoped<ITenantMembershipService, TenantMembershipService>();
+        services.AddScoped<TenantMembershipService>();
+        services.AddScoped<ITenantMembershipService>(sp => sp.GetRequiredService<TenantMembershipService>());
         services.AddScoped<IFarmAccessService, FarmAccessService>();
+        services.AddScoped<Farm360.Application.Demo.IDemoTenantStore, DemoTenantStore>();
 
         // ── Data Seeder (transient — runs once at startup) ────────────────────
         services.AddTransient<DataSeeder>();

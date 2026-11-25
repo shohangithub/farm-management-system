@@ -12,6 +12,8 @@ import { InventoryService } from '../../../services/inventory.service';
 import { DailyConsumableEntry } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-confirm-consumable-entry-dialog',
@@ -24,7 +26,8 @@ import { NotificationService } from '../../../../../shared/services/notification
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] w-full max-w-md mx-auto">
@@ -36,14 +39,14 @@ import { NotificationService } from '../../../../../shared/services/notification
           </div>
           <div>
             <h2 class="text-base font-bold text-gray-900 dark:text-white m-0 leading-tight">
-              Confirm Consumable Usage
+              {{ 'Confirm Consumable Usage' | t }}
             </h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-              Record actual quantity used for {{ data.entry.itemName }}
+              {{ 'Record actual quantity used for {item}' | t: { item: data.entry.itemName } }}
             </p>
           </div>
         </div>
-        <button aria-label="Close" mat-dialog-close type="button" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button [attr.aria-label]="'Close' | t" mat-dialog-close type="button" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <mat-icon class="!w-5 !h-5 !text-[20px]">close</mat-icon>
         </button>
       </div>
@@ -61,13 +64,13 @@ import { NotificationService } from '../../../../../shared/services/notification
           <!-- Item Summary Badge -->
           <div class="p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs">
             <div>
-              <span class="text-gray-400 block text-[11px] uppercase font-bold">Planned Qty</span>
+              <span class="text-gray-400 block text-[11px] uppercase font-bold">{{ 'Planned Qty' | t }}</span>
               <span class="font-bold text-gray-900 dark:text-white text-sm">
                 {{ data.entry.expectedQuantity }} {{ data.entry.unitOfMeasure }}
               </span>
             </div>
             <div class="text-right">
-              <span class="text-gray-400 block text-[11px] uppercase font-bold">Available Stock</span>
+              <span class="text-gray-400 block text-[11px] uppercase font-bold">{{ 'Available Stock' | t }}</span>
               <span class="font-bold" [ngClass]="data.entry.currentStock < data.entry.expectedQuantity ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'">
                 {{ data.entry.currentStock }} {{ data.entry.unitOfMeasure }}
               </span>
@@ -75,25 +78,25 @@ import { NotificationService } from '../../../../../shared/services/notification
           </div>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Actual Quantity Used ({{ data.entry.unitOfMeasure }})</mat-label>
+            <mat-label>{{ 'Actual Quantity Used ({unit})' | t: { unit: data.entry.unitOfMeasure } }}</mat-label>
             <input matInput type="number" formControlName="actualQuantity" step="0.5" min="0" required />
-            <mat-error>Valid quantity is required</mat-error>
+            <mat-error>{{ 'Valid quantity is required' | t }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Adjustment Reason (if different from planned)</mat-label>
-            <input matInput formControlName="adjustmentReason" placeholder="e.g. Extra deep cleaning shift" />
+            <mat-label>{{ 'Adjustment Reason (if different from planned)' | t }}</mat-label>
+            <input matInput formControlName="adjustmentReason" [placeholder]="'e.g. Extra deep cleaning shift' | t" />
           </mat-form-field>
         </div>
 
         <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 flex items-center justify-end gap-2.5 shrink-0">
           <button mat-dialog-close type="button" class="px-3.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
             class="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-500/20 inline-flex items-center gap-2 disabled:opacity-50">
             <mat-spinner *ngIf="isSubmitting()" diameter="14" class="!stroke-white"></mat-spinner>
-            <span>Confirm Usage</span>
+            <span>{{ 'Confirm Usage' | t }}</span>
           </button>
         </div>
       </form>
@@ -107,6 +110,7 @@ export class ConfirmConsumableEntryDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly inventoryService = inject(InventoryService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly error = signal('');
@@ -129,7 +133,7 @@ export class ConfirmConsumableEntryDialogComponent {
       adjustmentReason: val.adjustmentReason?.trim() || undefined
     }).subscribe({
       next: () => {
-        this.notify.success('Consumable usage confirmed & stock deducted.');
+        this.notify.success(this.i18n.t('Consumable usage confirmed & stock deducted.'));
         this.dialogRef.close(true);
       },
       error: (err: unknown) => {

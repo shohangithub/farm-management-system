@@ -9,11 +9,13 @@ import { BreedDto, CreateBreedRequest } from '../../../models/breed.models';
 import { finalize } from 'rxjs';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-reference-dialog.component';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-breed-setup-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     <div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
       <!-- Header -->
@@ -21,16 +23,16 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-gray-500">pets</mat-icon>
-            {{ isEdit() ? 'Edit Breed' : 'Add New Breed' }}
+            {{ (isEdit() ? 'Edit Breed' : 'Add New Breed') | t }}
           </h2>
           <div class="flex items-center gap-3 mt-1">
-            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Define intelligence targets</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ 'Define intelligence targets' | t }}</p>
             <button type="button" (click)="openReference()" class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold flex items-center gap-1 transition-colors bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 px-2 py-0.5 rounded-md">
-              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">menu_book</mat-icon> View Reference Guide
+              <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">menu_book</mat-icon> {{ 'View Reference Guide' | t }}
             </button>
           </div>
         </div>
-        <button aria-label="Close" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button [attr.aria-label]="'Close' | t" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
         </button>
       </div>
@@ -48,51 +50,51 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Breed Name <span class="text-red-500">*</span></label>
-              <input type="text" formControlName="name" placeholder="e.g. Shahiwal"
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Breed Name' | t }} <span class="text-red-500">*</span></label>
+              <input type="text" formControlName="name" [placeholder]="'e.g. Shahiwal' | t"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
 <p *ngIf="form.get('name')?.invalid && form.get('name')?.touched" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ fieldError(form, 'name') }}</p>
             </div>
             
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Category <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Category' | t }} <span class="text-red-500">*</span></label>
               <select formControlName="category"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-                <option value="Indigenous">Indigenous</option>
-                <option value="Exotic">Exotic</option>
-                <option value="Crossbred">Crossbred</option>
+                <option value="Indigenous">{{ 'Indigenous' | t }}</option>
+                <option value="Exotic">{{ 'Exotic' | t }}</option>
+                <option value="Crossbred">{{ 'Crossbred' | t }}</option>
               </select>
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Main Purpose <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Main Purpose' | t }} <span class="text-red-500">*</span></label>
               <select formControlName="mainPurpose"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-                <option value="Beef">Beef</option>
-                <option value="Dairy">Dairy</option>
-                <option value="Dual-purpose">Dual-purpose</option>
+                <option value="Beef">{{ 'Beef' | t }}</option>
+                <option value="Dairy">{{ 'Dairy' | t }}</option>
+                <option value="Dual-purpose">{{ 'Dual-purpose' | t }}</option>
               </select>
             </div>
             
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Origin</label>
-              <input type="text" formControlName="origin" placeholder="e.g. Punjab, Pakistan"
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Origin' | t }}</label>
+              <input type="text" formControlName="origin" [placeholder]="'e.g. Punjab, Pakistan' | t"
                      class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             </div>
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Description</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Description' | t }}</label>
             <textarea formControlName="description" rows="2"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
           </div>
 
           <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
-            <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Growth & Intelligence Targets</h3>
+            <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">{{ 'Growth & Intelligence Targets' | t }}</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div class="space-y-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Standard ADG (Min - Max kg)</label>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Standard ADG (Min - Max kg)' | t }}</label>
                 <div class="flex items-center gap-2">
                   <input type="number" min="0" step="0.01" formControlName="standardAdgMin"
                          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
@@ -103,7 +105,7 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
               </div>
               
               <div class="space-y-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">Feed Conv. Ratio (FCR) (Min - Max)</label>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Feed Conv. Ratio (FCR) (Min - Max)' | t }}</label>
                 <div class="flex items-center gap-2">
                   <input type="number" min="0" step="0.01" formControlName="fcrMin"
                          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
@@ -116,22 +118,22 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
             
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                <div class="space-y-1.5">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Poor)</label>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'ADG (Poor)' | t }}</label>
                 <input type="number" min="0" step="0.01" formControlName="adgPoorManagement"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
               <div class="space-y-1.5">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Average)</label>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'ADG (Average)' | t }}</label>
                 <input type="number" min="0" step="0.01" formControlName="adgAverageFarm"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
               <div class="space-y-1.5">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Good)</label>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'ADG (Good)' | t }}</label>
                 <input type="number" min="0" step="0.01" formControlName="adgGoodCommercialFarm"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
               <div class="space-y-1.5">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">ADG (Intensive)</label>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'ADG (Intensive)' | t }}</label>
                 <input type="number" min="0" step="0.01" formControlName="adgIntensiveFattening"
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
@@ -143,12 +145,12 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 shrink-0">
           <button type="button" mat-dialog-close [disabled]="isLoading()"
             class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isLoading()"
                   class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <mat-icon *ngIf="isLoading()" class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon>
-            <span>{{ isLoading() ? (isEdit() ? 'Saving...' : 'Creating...') : (isEdit() ? 'Save Changes' : 'Create Breed') }}</span>
+            <span>{{ (isLoading() ? (isEdit() ? 'Saving...' : 'Creating...') : (isEdit() ? 'Save Changes' : 'Create Breed')) | t }}</span>
           </button>
         </div>
       </form>
@@ -174,6 +176,7 @@ import { BreedReferenceDialogComponent } from '../breed-reference-dialog/breed-r
 export class BreedSetupDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly breedService = inject(BreedService);
+  private readonly i18n = inject(I18nService);
   private readonly dialogRef = inject(MatDialogRef<BreedSetupDialogComponent>);
   public readonly data = inject<{ breed?: BreedDto }>(MAT_DIALOG_DATA);
 
@@ -231,7 +234,7 @@ export class BreedSetupDialogComponent implements OnInit {
         next: () => this.dialogRef.close(true),
         error: (err) => {
           console.error('Failed to save breed', err);
-          const parsedMsg = parseApiError(err, 'Failed to save breed.');
+          const parsedMsg = parseApiError(err, this.i18n.t('Failed to save breed.'));
           this.error.set(parsedMsg);
         }
       });
@@ -251,13 +254,13 @@ export class BreedSetupDialogComponent implements OnInit {
   fieldError(group: { get(name: string): import('@angular/forms').AbstractControl | null }, name: string): string {
     const e = group.get(name)?.errors;
     if (!e) return '';
-    if (e['required']) return 'This field is required.';
-    if (e['min']) return `Must be at least ${e['min'].min}.`;
-    if (e['max']) return `Must be at most ${e['max'].max}.`;
-    if (e['maxlength']) return `Must be ${e['maxlength'].requiredLength} characters or fewer.`;
-    if (e['minlength']) return `Must be at least ${e['minlength'].requiredLength} characters.`;
-    if (e['email']) return 'Enter a valid email address.';
-    if (e['pattern']) return 'Invalid format.';
-    return 'Invalid value.';
+    if (e['required']) return this.i18n.t('This field is required.');
+    if (e['min']) return this.i18n.t('Must be at least {min}.', { min: e['min'].min });
+    if (e['max']) return this.i18n.t('Must be at most {max}.', { max: e['max'].max });
+    if (e['maxlength']) return this.i18n.t('Must be {n} characters or fewer.', { n: e['maxlength'].requiredLength });
+    if (e['minlength']) return this.i18n.t('Must be at least {n} characters.', { n: e['minlength'].requiredLength });
+    if (e['email']) return this.i18n.t('Enter a valid email address.');
+    if (e['pattern']) return this.i18n.t('Invalid format.');
+    return this.i18n.t('Invalid value.');
   }
 }

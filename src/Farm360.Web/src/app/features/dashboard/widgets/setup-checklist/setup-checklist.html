@@ -1,7 +1,7 @@
 @if (kind() === 'noFarm') {
   <div class="flex items-center gap-3 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800/80 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
     <mat-icon class="text-primary-600 dark:text-primary-400 shrink-0" aria-hidden="true">rocket_launch</mat-icon>
-    <span>Choose a farm at the top to see your setup steps.</span>
+    <span>{{ 'Choose a farm at the top to see your setup steps.' | t }}</span>
   </div>
 } @else if (visible()) {
   <section
@@ -15,8 +15,8 @@
           <mat-icon class="text-[20px] w-[20px] h-[20px]">rocket_launch</mat-icon>
         </div>
         <div class="min-w-0">
-          <h2 id="setup-checklist-title" class="text-base font-semibold text-gray-900 dark:text-white leading-tight m-0">Get your farm ready</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-0">Work through these steps in order. Each one takes a few minutes.</p>
+          <h2 id="setup-checklist-title" class="text-base font-semibold text-gray-900 dark:text-white leading-tight m-0">{{ 'Get your farm ready' | t }}</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-0">{{ 'Work through these steps in order. Each one takes a few minutes.' | t }}</p>
         </div>
       </div>
       <button
@@ -24,7 +24,7 @@
         class="self-start sm:self-auto min-h-[44px] -my-2 px-2 -mx-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 underline-offset-4 hover:underline whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         (click)="hideForNow()"
       >
-        Hide for now
+        {{ 'Hide for now' | t }}
       </button>
     </div>
 
@@ -37,20 +37,20 @@
     } @else if (kind() === 'error') {
       <div class="mt-5 flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
         <mat-icon class="text-amber-600 dark:text-amber-400" aria-hidden="true">error_outline</mat-icon>
-        <span>We couldn't load your setup steps.</span>
-        <button type="button" class="font-semibold text-primary-700 dark:text-primary-400 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500" (click)="retry()">Try again</button>
+        <span>{{ "We couldn't load your setup steps." | t }}</span>
+        <button type="button" class="font-semibold text-primary-700 dark:text-primary-400 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500" (click)="retry()">{{ 'Try again' | t }}</button>
       </div>
     } @else {
       <!-- Progress -->
       <div class="mt-5">
         <div class="flex items-center justify-between text-sm mb-2">
-          <span class="font-semibold text-gray-800 dark:text-gray-100">{{ doneCount() }} of {{ totalCount() }} done</span>
+          <span class="font-semibold text-gray-800 dark:text-gray-100">{{ '{done} of {total} done' | t: { done: doneCount(), total: totalCount() } }}</span>
           <span class="text-gray-500 dark:text-gray-400 tabular-nums">{{ percent() }}%</span>
         </div>
         <div
           class="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"
           role="progressbar"
-          aria-label="Setup progress"
+          [attr.aria-label]="'Setup progress' | t"
           [attr.aria-valuenow]="doneCount()"
           aria-valuemin="0"
           [attr.aria-valuemax]="totalCount()"
@@ -70,13 +70,13 @@
               <mat-icon class="text-[20px] w-[20px] h-[20px]">{{ next.icon }}</mat-icon>
             </div>
             <div class="min-w-0">
-              <p class="text-xs font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-400 m-0">Next · Step {{ next.number }}</p>
-              <p class="font-semibold text-gray-900 dark:text-white m-0 mt-0.5">{{ next.title }}</p>
-              <p class="text-sm text-gray-600 dark:text-gray-300 m-0">{{ next.description }}</p>
+              <p class="text-xs font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-400 m-0">{{ 'Next · Step {n}' | t: { n: next.number } }}</p>
+              <p class="font-semibold text-gray-900 dark:text-white m-0 mt-0.5">{{ next.title | t }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-300 m-0">{{ next.description | t }}</p>
             </div>
           </div>
           <a mat-flat-button color="primary" class="!rounded-xl w-full sm:w-auto shrink-0" [routerLink]="next.link">
-            Set up
+            {{ 'Set up' | t }}
             <mat-icon iconPositionEnd>arrow_forward</mat-icon>
           </a>
         </div>
@@ -90,11 +90,11 @@
               <div class="flex items-start gap-3 flex-1 min-w-0">
                 <span class="mt-0.5 w-6 h-6 shrink-0 rounded-full border-2 border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center justify-center" aria-hidden="true">{{ row.number }}</span>
                 <div class="min-w-0">
-                  <p class="font-medium text-gray-800 dark:text-gray-100 m-0">{{ row.title }}</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 m-0">{{ row.description }}</p>
+                  <p class="font-medium text-gray-800 dark:text-gray-100 m-0">{{ row.title | t }}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 m-0">{{ row.description | t }}</p>
                 </div>
               </div>
-              <a mat-stroked-button class="!rounded-xl w-full sm:w-auto shrink-0" [routerLink]="row.link">Set up</a>
+              <a mat-stroked-button class="!rounded-xl w-full sm:w-auto shrink-0" [routerLink]="row.link">{{ 'Set up' | t }}</a>
             </li>
           }
         </ul>
@@ -110,7 +110,7 @@
             (click)="toggleCompleted()"
           >
             <mat-icon class="text-[18px] w-[18px] h-[18px]">check_circle</mat-icon>
-            {{ doneRows().length }} {{ doneRows().length === 1 ? 'step' : 'steps' }} done
+            {{ (doneRows().length === 1 ? '{n} step done' : '{n} steps done') | t: { n: doneRows().length } }}
             <mat-icon class="text-[18px] w-[18px] h-[18px] transition-transform duration-200" [class.rotate-180]="showCompleted()">expand_more</mat-icon>
           </button>
 
@@ -119,7 +119,7 @@
               @for (row of doneRows(); track row.key) {
                 <li class="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                   <mat-icon class="text-emerald-500 shrink-0 text-[20px] w-[20px] h-[20px]">check_circle</mat-icon>
-                  <a class="flex-1 min-w-0 truncate text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" [routerLink]="row.link">{{ row.title }}</a>
+                  <a class="flex-1 min-w-0 truncate text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" [routerLink]="row.link">{{ row.title | t }}</a>
                   <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ countLabel(row) }}</span>
                 </li>
               }

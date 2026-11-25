@@ -14,6 +14,8 @@ import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../core/utils/error-parser';
@@ -22,11 +24,12 @@ import { NotificationService } from '../../../shared/services/notification.servi
 @Component({
   selector: 'app-branch-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, LoadingComponent, EmptyStateComponent],
+  imports: [TranslatePipe, ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, PageHeaderComponent, DataTableComponent, LoadingComponent, EmptyStateComponent],
   templateUrl: './branch-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BranchListComponent {
+  private readonly i18n = inject(I18nService);
   private readonly notify = inject(NotificationService);
   private readonly branchService = inject(BranchService);
   private readonly route = inject(ActivatedRoute);
@@ -99,7 +102,7 @@ export class BranchListComponent {
         if (city || country) {
           return `<div class="text-sm text-gray-600 dark:text-gray-400">${[city, country].filter(Boolean).join(', ')}</div>`;
         }
-        return `<span class="text-[11px] text-gray-400 italic">Not specified</span>`;
+        return `<span class="text-[11px] text-gray-400 italic">${this.i18n.t('Not specified')}</span>`;
       },
       isAction: false
     },
@@ -111,7 +114,7 @@ export class BranchListComponent {
         let txt = 'Closed';
         if (row.status === 'Active') { cls = 'bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400'; txt = 'Active'; }
         else if (row.status === 'Inactive') { cls = 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'; txt = 'Inactive'; }
-        return `<span class="px-2 py-0.5 inline-flex text-[11px] leading-5 font-bold rounded-md uppercase tracking-wider ${cls}">${txt}</span>`;
+        return `<span class="px-2 py-0.5 inline-flex text-[11px] leading-5 font-bold rounded-md uppercase tracking-wider ${cls}">${this.i18n.t(txt)}</span>`;
       },
       isAction: false
     },

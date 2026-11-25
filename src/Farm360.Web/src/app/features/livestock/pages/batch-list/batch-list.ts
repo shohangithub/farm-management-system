@@ -17,11 +17,13 @@ import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-batch-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, PageHeaderComponent, FormsModule, MatButtonModule, MatIconModule, MatDialogModule, MatSnackBarModule],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, PageHeaderComponent, FormsModule, MatButtonModule, MatIconModule, MatDialogModule, MatSnackBarModule, TranslatePipe],
   templateUrl: './batch-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -30,6 +32,8 @@ export class BatchList {
   private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
   private readonly contextService = inject(WorkingContextService);
+  private readonly i18n = inject(I18nService);
+  readonly couldNotLoadTitle = this.i18n.t("Couldn't load batches");
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -57,7 +61,7 @@ export class BatchList {
       switchMap(({ farmId }) => this.svc.getBatches(farmId!).pipe(
         map(res => res.items),
         catchError(err => {
-          this.error.set(parseApiError(err, 'Could not load batches.'));
+          this.error.set(parseApiError(err, this.i18n.t('Could not load batches.')));
           return of([]);
         })
       )),
@@ -77,7 +81,7 @@ export class BatchList {
     if (this.createForm.farmId) {
       this.dialog.open(this.createBatchDialog, { maxWidth: '95vw', disableClose: true, width: '560px' });
     } else {
-      this.notify.warning('Please select a farm context first');
+      this.notify.warning(this.i18n.t('Please select a farm context first'));
     }
   }
 
@@ -95,12 +99,12 @@ export class BatchList {
       next: () => {
         this.creating.set(false);
         this.dialog.closeAll();
-        this.notify.success('Batch created successfully');
+        this.notify.success(this.i18n.t('Batch created successfully'));
         this.refreshTrigger.update(v => v + 1);
       },
       error: (err) => {
         this.creating.set(false);
-        this.notify.error(parseApiError(err, 'Could not create the batch.'));
+        this.notify.error(parseApiError(err, this.i18n.t('Could not create the batch.')));
       }
     });
   }

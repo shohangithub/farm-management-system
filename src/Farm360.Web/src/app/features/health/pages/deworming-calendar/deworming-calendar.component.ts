@@ -17,28 +17,30 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-deworming-calendar',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent],
+  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe],
   template: `
 <app-page-header 
-  title="Deworming Calendar" 
-  description="Doses scheduled by deworming protocols. Vaccinations are listed under Due Vaccinations."
+  [title]="'Deworming Calendar' | t"
+  [description]="'Doses scheduled by deworming protocols. Vaccinations are listed under Due Vaccinations.' | t"
   icon="event_note" 
   iconColor="text-emerald-600">
   <div actions class="flex items-center gap-2">
     <button (click)="exportPdf()" [disabled]="isExporting() || !events()?.length"
       class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ isExporting() ? 'Exporting...' : 'Export PDF' }}</span>
+      <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
     </button>
     <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="openScheduleDialog()">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> Schedule Deworming
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Schedule Deworming' | t }}
     </button>
     <button class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="loadEvents()">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> Refresh
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> {{ 'Refresh' | t }}
     </button>
   </div>
 </app-page-header>
@@ -51,10 +53,10 @@ import { NotificationService } from '../../../../shared/services/notification.se
     <table class="w-full text-sm text-left" *ngIf="events().length > 0">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
         <tr>
-          <th scope="col" class="px-6 py-4">Date</th>
-          <th scope="col" class="px-6 py-4">Animal</th>
-          <th scope="col" class="px-6 py-4">Vaccine / Medicine</th>
-          <th scope="col" class="px-6 py-4">Status</th>
+          <th scope="col" class="px-6 py-4">{{ 'Date' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Animal' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Vaccine / Medicine' | t }}</th>
+          <th scope="col" class="px-6 py-4">{{ 'Status' | t }}</th>
         </tr>
       </thead>
       <tbody>
@@ -75,7 +77,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
                     'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400': ev.status === 'Scheduled',
                     'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': ev.status === 'Overdue' || ev.status === 'Missed'
                   }">
-              {{ ev.status }}
+              {{ ev.status | t }}
             </span>
           </td>
         </tr>
@@ -85,9 +87,9 @@ import { NotificationService } from '../../../../shared/services/notification.se
     <app-empty-state 
       *ngIf="!isLoading() && events().length === 0 && !loadError()"
       icon="event_note"
-      title="No Deworming Events"
-      description="There are no deworming events scheduled for this farm."
-      actionLabel="Refresh"
+      [title]="'No Deworming Events' | t"
+      [description]="'There are no deworming events scheduled for this farm.' | t"
+      [actionLabel]="'Refresh' | t"
       (action)="loadEvents()">
     </app-empty-state>
   </div>
@@ -101,6 +103,7 @@ export class DewormingCalendarComponent {
   private contextService = inject(WorkingContextService);
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
   
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -180,14 +183,14 @@ export class DewormingCalendarComponent {
         filename: `Farm360_Deworming_Calendar_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Deworming & Parasite Control Schedule',
-          subtitle: 'Doses scheduled by deworming protocols',
-          farmName: farm?.name || 'Primary Farm',
+          title: this.i18n.t('Deworming & Parasite Control Schedule'),
+          subtitle: this.i18n.t('Doses scheduled by deworming protocols'),
+          farmName: farm?.name || this.i18n.t('Primary Farm'),
           orgName: org?.name || 'Farm360 Enterprise',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: 'Total Scheduled Events', value: `${list.length}` },
-            { label: 'Calendar Scope', value: 'Active Herd Schedule' }
+            { label: this.i18n.t('Total Scheduled Events'), value: `${list.length}` },
+            { label: this.i18n.t('Calendar Scope'), value: this.i18n.t('Active Herd Schedule') }
           ]
         },
         showSignatures: true

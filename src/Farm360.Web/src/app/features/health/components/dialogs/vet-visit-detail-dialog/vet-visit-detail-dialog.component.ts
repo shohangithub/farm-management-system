@@ -13,11 +13,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 import { NotificationService } from '../../../../../shared/services/notification.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
+import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-vet-visit-detail-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatAutocompleteModule, MatInputModule, TranslatePipe],
   templateUrl: './vet-visit-detail-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

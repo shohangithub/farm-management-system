@@ -17,6 +17,8 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
@@ -34,7 +36,8 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
     PageHeaderComponent,
     LoadingComponent,
     EmptyStateComponent,
-    ErrorStateComponent
+    ErrorStateComponent,
+    TranslatePipe
   ],
   templateUrl: './inventory-movement-report.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -44,6 +47,7 @@ export class InventoryMovementReport implements OnInit {
   private workingContextService = inject(WorkingContextService);
   private fb = inject(FormBuilder);
   private pdfService = inject(PdfExportService);
+  private readonly i18n = inject(I18nService);
 
   readonly isExporting = signal(false);
   readonly loadError = signal<string | null>(null);
@@ -59,7 +63,7 @@ export class InventoryMovementReport implements OnInit {
       return this.inventoryService.getMovementReport(farmId, filters.startDate, filters.endDate)
         .pipe(
           catchError(err => {
-            this.loadError.set(parseApiError(err, 'Could not load the movement report.'));
+            this.loadError.set(parseApiError(err, this.i18n.t('Could not load the movement report.')));
             return of(null);
           }),
           startWith(undefined)
@@ -108,17 +112,17 @@ export class InventoryMovementReport implements OnInit {
 
     this.isExporting.set(true);
     try {
-      const farmName = this.workingContextService.currentFarmValue?.name || 'All Units';
+      const farmName = this.workingContextService.currentFarmValue?.name || this.i18n.t('All Units');
       const start = this.filterForm.value.start ? new Date(this.filterForm.value.start).toLocaleDateString('en-GB') : '';
       const end = this.filterForm.value.end ? new Date(this.filterForm.value.end).toLocaleDateString('en-GB') : '';
       await this.pdfService.exportElement(element, {
         filename: `Inventory_Movement_Report_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: 'Inventory Movement & Consumption Report',
-          subtitle: 'Track stock flow, consumption, and closing balances',
+          title: this.i18n.t('Inventory Movement & Consumption Report'),
+          subtitle: this.i18n.t('Track stock flow, consumption, and closing balances'),
           farmName,
-          dateRange: `Period: ${start} - ${end}`,
+          dateRange: this.i18n.t('Period: {start} - {end}', { start, end }),
           currency: 'BDT (৳)'
         },
         showSignatures: true

@@ -2,12 +2,12 @@
   <div class="h-16 w-16 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center mb-4">
     <mat-icon class="text-3xl text-gray-400 dark:text-gray-500">{{ icon }}</mat-icon>
   </div>
-  <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ title }}</h3>
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-sm">{{ description }}</p>
+  <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ title | t }}</h3>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-sm">{{ description | t }}</p>
   <div class="mt-6" *ngIf="actionLabel">
     <button mat-stroked-button color="primary" (click)="onAction()">
       <mat-icon *ngIf="actionIcon" class="mr-2">{{ actionIcon }}</mat-icon>
-      {{ actionLabel }}
+      {{ actionLabel | t }}
     </button>
   </div>
 </div>

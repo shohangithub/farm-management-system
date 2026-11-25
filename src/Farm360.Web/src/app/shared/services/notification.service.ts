@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { translate } from '../../core/i18n/i18n.service';
 import { MatSnackBar, MatSnackBarConfig, MatSnackBarRef, TextOnlySnackBar } from '@angular/material/snack-bar';
 
 export type NotificationKind = 'success' | 'error' | 'warning' | 'info';
@@ -54,7 +55,8 @@ export class NotificationService {
   }
 
   show(kind: NotificationKind, message: string, config?: MatSnackBarConfig): MatSnackBarRef<TextOnlySnackBar> {
-    return this.snackBar.open(message, ACTION_LABEL, {
+    // Messages already translated by the caller pass through unchanged (no matching key).
+    return this.snackBar.open(translate(message), translate(ACTION_LABEL), {
       duration: DURATIONS[kind],
       horizontalPosition: 'end',
       verticalPosition: 'bottom',

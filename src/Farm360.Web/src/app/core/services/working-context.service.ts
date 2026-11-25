@@ -36,6 +36,13 @@ export class WorkingContextService {
   private currentFarmSubject = new BehaviorSubject<LookupDto | null>(null);
   public currentFarm$ = this.currentFarmSubject.asObservable().pipe(distinctUntilChanged((a, b) => a?.id === b?.id));
 
+  /**
+   * True once the first organisation → branch → farm lookup has finished (or failed). Pages read
+   * the farm when they open, so the layout waits for this before showing them; otherwise a page
+   * opened by refreshing the browser saw "no farm" and showed an empty screen.
+   */
+  readonly ready = signal(false);
+
   public get currentOrgValue(): LookupDto | null { return this.currentOrgSubject.value; }
   public get currentBranchValue(): LookupDto | null { return this.currentBranchSubject.value; }
   public get currentFarmValue(): LookupDto | null { return this.currentFarmSubject.value; }
@@ -60,6 +67,10 @@ export class WorkingContextService {
         
         let targetOrgId = localStorage.getItem(STORAGE_ORG_KEY);
         
+        if (orgs.length === 0) {
+          this.ready.set(true);
+        }
+
         // Auto-select if only 1 organization
         if (orgs.length === 1) {
           targetOrgId = orgs[0].id;
@@ -77,6 +88,7 @@ export class WorkingContextService {
       },
       error: (err) => {
         console.error('Failed to load organizations for context', err);
+        this.ready.set(true);
       }
     });
   }
@@ -115,7 +127,8 @@ export class WorkingContextService {
         } else {
           this.setBranch(null);
         }
-      }
+      },
+      error: () => this.ready.set(true)
     });
   }
 
@@ -152,12 +165,14 @@ export class WorkingContextService {
         } else {
           this.setFarm(null);
         }
-      }
+      },
+      error: () => this.ready.set(true)
     });
   }
 
   public setFarm(farm: LookupDto | null) {
     this.currentFarmSubject.next(farm);
+    this.ready.set(true);
     if (farm) {
       localStorage.setItem(STORAGE_FARM_KEY, farm.id);
     } else {
@@ -166,6 +181,7 @@ export class WorkingContextService {
   }
 
   private clearContext() {
+    this.ready.set(false);
     this.organizationsSubject.next([]);
     this.branchesSubject.next([]);
     this.farmsSubject.next([]);
