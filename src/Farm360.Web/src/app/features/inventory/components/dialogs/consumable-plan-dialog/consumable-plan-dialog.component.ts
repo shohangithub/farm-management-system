@@ -171,7 +171,7 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
             {{ 'Cancel' | t }}
           </button>
           <button type="submit" [disabled]="form.invalid || isSubmitting()"
-            class="px-5 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-md shadow-teal-500/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            class="px-5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             <mat-spinner *ngIf="isSubmitting()" diameter="16" class="!stroke-white"></mat-spinner>
             <span>{{ (isEdit ? 'Update Plan' : 'Create Plan') | t }}</span>
           </button>

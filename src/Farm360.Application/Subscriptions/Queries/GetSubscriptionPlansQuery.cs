@@ -47,7 +47,7 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
             ),
             new(
                 Tier: "Standard",
-                Name: "Standard Commercial",
+                Name: "Standard Farm",
                 Description: "Comprehensive farm optimization for growing livestock businesses and multi-shed setups.",
                 MonthlyPrice: standard.MonthlyPrice,
                 YearlyPrice: standard.YearlyPrice,
@@ -59,17 +59,16 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
                 [
                     "Up to 5 Farms & 500 Animals",
                     "10 User Accounts with Role Permissions",
-                    "Smart Ration & FCR Engine",
+                    "Feed rations & feed efficiency (FCR)",
                     "Inventory Management & Daily Consumables",
                     "Financial Transactions & Loan Tracking",
-                    "Automated Health Alerts & Reports",
-                    "Priority WhatsApp & Phone Support"
+                    "Automated Health Alerts & Reports"
                 ],
                 IsPopular: true
             ),
             new(
                 Tier: "Professional",
-                Name: "Professional Enterprise",
+                Name: "Professional Farm",
                 Description: "Advanced analytics, multiple branches, investor P&L, and full multi-farm governance.",
                 MonthlyPrice: professional.MonthlyPrice,
                 YearlyPrice: professional.YearlyPrice,
@@ -83,9 +82,8 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
                     "50 User Accounts with Custom Roles",
                     "Full Multi-Branch & Multi-Org Support",
                     "Investor P&L & Share Market Features",
-                    "Real-time Executive Dashboard & Intelligence",
-                    "Automated Cost Allocation Engines",
-                    "24/7 Dedicated Account Manager"
+                    "Live dashboard & profit reports",
+                    "Automatic labour & overhead cost sharing"
                 ],
                 IsPopular: false
             ),
@@ -107,7 +105,7 @@ internal sealed class GetSubscriptionPlansQueryHandler : IRequestHandler<GetSubs
                     "Custom SLA & Guaranteed Uptime",
                     "Dedicated Infrastructure / On-Premise option",
                     "Custom Integration & API Gateways",
-                    "Custom AI Analytics & Feed Formulation",
+                    "Custom analytics & feed formulas",
                     "Direct Engineer & On-Site Support"
                 ],
                 IsPopular: false

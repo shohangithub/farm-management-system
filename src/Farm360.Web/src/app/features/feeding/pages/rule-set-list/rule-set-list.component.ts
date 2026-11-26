@@ -35,7 +35,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header
-      [title]="'Feed Charts · খাদ্য তালিকা' | t"
+      [title]="'Feed Charts' | t"
       [description]="'How much to feed by weight or age. Give a chart to animals from Feeding Plans.' | t"
       [breadcrumbActiveNode]="'Feed Charts' | t">
       <div actions>

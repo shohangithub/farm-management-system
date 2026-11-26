@@ -29,15 +29,15 @@ interface ShedBlock { shed: string; animals: RoutineAnimal[]; totalKg: number; }
   standalone: true,
   imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent, TranslatePipe],
   template: `
-    <app-page-header [title]="i18n.isBangla ? ('Daily Feeding Routine' | t) : 'Daily Feeding Routine · দৈনিক খাবার রুটিন'"
-      [description]="'From your feed charts and recipes: what to mix, what to carry at each feeding time, and what each animal gets.' | t"
+    <app-page-header [title]="'Daily Feeding Routine' | t"
+      [description]="'What to mix and carry at each feeding time, and what each animal gets.' | t"
       [breadcrumbActiveNode]="'Daily Routine' | t">
       <div actions class="flex gap-2">
         <button mat-stroked-button (click)="print()" [disabled]="!result()" class="!rounded-xl !text-xs"><mat-icon class="!text-[16px]">print</mat-icon> {{ 'Print' | t }}</button>
       </div>
     </app-page-header>
 
-    <div class="px-6 py-4 mx-auto max-w-7xl">
+    <div>
       <div class="print:hidden"><app-feeding-subnav></app-feeding-subnav></div>
 
       <!-- Inputs -->

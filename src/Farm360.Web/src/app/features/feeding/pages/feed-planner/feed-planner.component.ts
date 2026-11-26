@@ -31,7 +31,7 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
   standalone: true,
   imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, AnimalPickerComponent, FeedingSubnavComponent, TranslatePipe],
   template: `
-    <app-page-header [title]="i18n.isBangla ? ('Feed Purchase Plan' | t) : 'Feed Purchase Plan · খাদ্য ক্রয় পরিকল্পনা'"
+    <app-page-header [title]="'Feed Purchase Plan' | t"
       [description]="'What to buy for the next days — for one animal, several, a shed, a batch or the whole farm.' | t"
       [breadcrumbActiveNode]="'Purchase Plan' | t">
       <div actions class="flex gap-2">
@@ -41,7 +41,7 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
       </div>
     </app-page-header>
 
-    <div class="px-6 py-4 mx-auto max-w-7xl">
+    <div>
       <app-feeding-subnav></app-feeding-subnav>
 
       <!-- Inputs -->

@@ -19,12 +19,12 @@ const SEGMENT_LABELS = ['Completed', 'Due Soon (7 Days)', 'Overdue'];
     <div class="flex flex-col h-full">
       <!-- Top Compliance Badge Header -->
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-gray-100 dark:border-gray-700/60">
-        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Health status' | t }}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">{{ 'Scheduled doses' | t }}</span>
         <div 
           class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
           [ngClass]="getComplianceBadgeClass()">
           <span class="w-1.5 h-1.5 rounded-full" aria-hidden="true" [ngClass]="getComplianceDotClass()"></span>
-          {{ '{rate}% Compliance Rate' | t: { rate: compliancePercentage() } }}
+          {{ '{rate}% given' | t: { rate: compliancePercentage() } }}
         </div>
       </div>
 

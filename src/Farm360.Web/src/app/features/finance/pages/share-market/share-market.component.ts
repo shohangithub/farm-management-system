@@ -51,26 +51,26 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header 
-      [title]="'Farm Share Market' | t" 
-      [description]="'Equity share management, shareholder capital tracking, live valuations, and ownership distribution.' | t"
-      [breadcrumbActiveNode]="'Share Market' | t">
-      <div actions class="flex items-center gap-2">
+      [title]="'Farm Shares' | t" 
+      [description]="'Split the farm into shares and see who owns how much.' | t"
+      [breadcrumbActiveNode]="'Farm Shares' | t">
+      <div actions class="flex flex-wrap items-center gap-2">
         <button *ngIf="overview()?.isConfigured" mat-stroked-button (click)="openTradeDialog('valuation')"
-                class="!rounded-xl !px-4 !py-2 !border-indigo-300 dark:!border-indigo-700 !text-indigo-700 dark:!text-indigo-300 hover:!bg-indigo-50 dark:hover:!bg-indigo-950/40 flex items-center gap-1.5 transition-all">
+                class="!rounded-xl !px-4 !py-2 !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">trending_up</mat-icon>
-          <span>{{ 'Update Valuation' | t }}</span>
+          <span>{{ 'Update farm value' | t }}</span>
         </button>
 
         <button *ngIf="overview()?.isConfigured" mat-stroked-button (click)="openConfigureDialog()"
-                class="!rounded-xl !px-4 !py-2 !border-teal-300 dark:!border-teal-700 !text-teal-700 dark:!text-teal-300 hover:!bg-teal-50 dark:hover:!bg-teal-950/40 flex items-center gap-1.5 transition-all">
+                class="!rounded-xl !px-4 !py-2 !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">tune</mat-icon>
-          <span>{{ 'Configure Shares' | t }}</span>
+          <span>{{ 'Share settings' | t }}</span>
         </button>
 
         <button *ngIf="overview()?.isConfigured" mat-flat-button color="primary" (click)="openTradeDialog('purchase')"
-                class="!rounded-xl !px-5 !py-2 !bg-gradient-to-r !from-teal-600 !to-emerald-600 hover:!from-teal-700 hover:!to-emerald-700 !text-white flex items-center gap-2 shadow-sm shadow-teal-500/30 transition-all">
+                class="!rounded-xl !px-5 !py-2 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 transition-all">
           <mat-icon class="!text-[20px]">add_shopping_cart</mat-icon>
-          <span>{{ 'Issue / Buy Shares' | t }}</span>
+          <span>{{ 'Sell shares' | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -86,24 +86,21 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
       <!-- UNCONFIGURED STATE -->
       <div *ngIf="!isLoading() && overview() && !overview()?.isConfigured"
-           class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-12 text-center relative overflow-hidden">
+           class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-12 text-center relative overflow-hidden">
         
-        <mat-icon class="absolute -right-8 -bottom-8 text-[180px] text-teal-500/5 rotate-[-10deg] pointer-events-none">
-          pie_chart
-        </mat-icon>
 
         <div class="max-w-md mx-auto space-y-4">
-          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-teal-500/30">
+          <div class="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
             <mat-icon class="!text-[32px] !w-[32px] !h-[32px]">storefront</mat-icon>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ 'Farm Share Market Not Configured' | t }}</h3>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ 'Farm shares are not set up yet' | t }}</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            {{ 'Turn your farm into an equity share investment vehicle. Divide your total farm valuation into shares, retain your majority ownership, and issue shares to outside investors or partners.' | t }}
+            {{ 'Split the farm value into shares, keep most of them yourself, and sell some to partners.' | t }}
           </p>
           <button mat-flat-button color="primary" (click)="openConfigureDialog()"
-                  class="!rounded-xl !px-6 !py-2.5 !bg-gradient-to-r !from-teal-600 !to-emerald-600 hover:!from-teal-700 hover:!to-emerald-700 !text-white shadow-md shadow-teal-500/20">
+                  class="!rounded-xl !px-6 !py-2.5 !bg-primary-600 hover:!bg-primary-700 !text-white">
             <mat-icon class="mr-1.5">tune</mat-icon>
-            {{ 'Set Up Farm Shares Now' | t }}
+            {{ 'Set up farm shares' | t }}
           </button>
         </div>
       </div>
@@ -115,9 +112,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <!-- Farm Valuation Card -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-teal-300 dark:hover:border-teal-700 transition-all">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-teal-300 dark:hover:border-teal-700 transition-all">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Farm Valuation' | t }}</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total farm value' | t }}</span>
               <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
                 <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">monetization_on</mat-icon>
               </div>
@@ -130,14 +127,13 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 {{ '{count} total shares' | t: { count: (config.totalShares | number) } }}
               </p>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-teal-500/5 rotate-[-10deg] pointer-events-none">monetization_on</mat-icon>
           </div>
 
           <!-- Share Price Card -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Current Share Price' | t }}</span>
-              <button (click)="openTradeDialog('valuation')" [title]="'Update Share Valuation' | t"
+              <button (click)="openTradeDialog('valuation')" [title]="'Update share price' | t"
                       class="px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition-colors">
                 {{ 'Revalue' | t }}
               </button>
@@ -150,13 +146,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 {{ 'Valued: {date}' | t: { date: (config.lastValuationDate | date:'mediumDate') } }}
               </p>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
           </div>
 
           <!-- Owner Retained Equity -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Owner Retained Equity' | t }}</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Owner shares' | t }}</span>
               <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                 <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">admin_panel_settings</mat-icon>
               </div>
@@ -169,11 +164,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 {{ '{count} shares ({value})' | t: { count: (config.ownerShareCount | number), value: (config.ownerEquityValueBdt | money) } }}
               </p>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">shield</mat-icon>
           </div>
 
           <!-- Available Pool Card -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-amber-300 dark:hover:border-amber-700 transition-all">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-amber-300 dark:hover:border-amber-700 transition-all">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Available Pool' | t }}</span>
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
@@ -190,7 +184,6 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 {{ 'Pool Value: {value}' | t: { value: (config.availableValuationBdt | money) } }}
               </p>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[80px] text-amber-500/5 rotate-[-10deg] pointer-events-none">inventory_2</mat-icon>
           </div>
 
         </div>
@@ -199,7 +192,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           <!-- Left: Doughnut Chart -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/50 flex flex-col justify-between">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/50 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
@@ -239,16 +232,16 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <!-- Right: Market Summary & Highlights -->
-          <div class="lg:col-span-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/50 flex flex-col justify-between">
+          <div class="lg:col-span-2 bg-white dark:bg-gray-800/80 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/50 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-4">
                 <div>
                   <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
                     <mat-icon class="text-emerald-600">analytics</mat-icon>
-                    {{ 'Farm Capital & Shareholder Structure' | t }}
+                    {{ 'Who owns the farm' | t }}
                   </h3>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">
-                    {{ 'Distribution of active partner capital, dividend entitlement, and equity reserves' | t }}
+                    {{ 'Shares held by the owner, by partners, and not yet sold' | t }}
                   </p>
                 </div>
               </div>
@@ -264,7 +257,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 </div>
 
                 <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/60">
-                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">{{ 'Active Shareholders' | t }}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 block font-medium">{{ 'Shareholders' | t }}</span>
                   <span class="text-lg font-extrabold text-emerald-700 dark:text-emerald-300 mt-1 block">
                     {{ '{count} partners' | t: { count: (overview()?.totalShareholdersCount | number) } }}
                   </span>
@@ -276,19 +269,19 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <span class="text-lg font-extrabold text-indigo-700 dark:text-indigo-300 mt-1 block">
                     {{ (overview()?.totalAllocatedShares || 0) * config.sharePriceBdt | money }}
                   </span>
-                  <span class="text-[11px] text-gray-400 block mt-0.5">{{ 'At current valuation' | t }}</span>
+                  <span class="text-[11px] text-gray-400 block mt-0.5">{{ 'At the current farm value' | t }}</span>
                 </div>
               </div>
 
               <!-- Quick Market Actions Bar -->
               <div class="p-4 rounded-xl bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent border border-teal-200/60 dark:border-teal-800/40 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-teal-500/20">
+                  <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
                     <mat-icon>shopping_bag</mat-icon>
                   </div>
                   <div>
                     <span class="text-xs font-bold text-gray-900 dark:text-white block">{{ 'Ready to accept a new investment?' | t }}</span>
-                    <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Issue shares to an existing or new equity investor directly into the farm ledger.' | t }}</span>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Sell shares to a new or existing investor.' | t }}</span>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -306,7 +299,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             </div>
 
             <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>{{ 'Valuation Notes: {notes}' | t: { notes: config.valuationNotes || ('Standard asset-backed farm valuation model.' | t) } }}</span>
+              <span>{{ 'How the value was set: {notes}' | t: { notes: config.valuationNotes || ('Based on what the farm owns.' | t) } }}</span>
               <a routerLink="/finance/investors/pnl" class="text-teal-600 hover:underline flex items-center gap-1 font-medium">
                 <span>{{ 'View P&L Profit Sharing' | t }}</span>
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">arrow_forward</mat-icon>
@@ -317,12 +310,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </div>
 
         <!-- 3. Shareholders Portfolio Table -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+        <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
                 <mat-icon class="text-teal-600">group</mat-icon>
-                {{ 'Farm Shareholders & Equity Positions' | t }}
+                {{ 'Who holds shares' | t }}
               </h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
                 {{ 'Individual partner holdings, cost basis, unrealized capital gain, and ownership %' | t }}
@@ -342,7 +335,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <th class="py-3 px-6">{{ 'Shareholder' | t }}</th>
                   <th class="py-3 px-4">{{ 'Certificate #' | t }}</th>
                   <th class="py-3 px-4 text-right">{{ 'Shares Held' | t }}</th>
-                  <th class="py-3 px-4 text-right">{{ 'Equity %' | t }}</th>
+                  <th class="py-3 px-4 text-right">{{ 'Ownership %' | t }}</th>
                   <th class="py-3 px-4 text-right">{{ 'Avg Buy Price' | t }}</th>
                   <th class="py-3 px-4 text-right">{{ 'Invested Capital' | t }}</th>
                   <th class="py-3 px-4 text-right">{{ 'Current Market Value' | t }}</th>
@@ -360,7 +353,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                       </span>
                       <div>
                         <span class="font-bold text-gray-900 dark:text-white block">{{ 'Farm Owner (Retained)' | t }}</span>
-                        <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Founding Equity' | t }}</span>
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Owner founding shares' | t }}</span>
                       </div>
                     </div>
                   </td>
@@ -391,7 +384,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 <tr *ngFor="let s of overview()?.shareholders" class="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors">
                   <td class="py-3.5 px-6">
                     <div class="flex items-center gap-2">
-                      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-xs">
+                      <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
                         {{ s.investorName.charAt(0).toUpperCase() }}
                       </div>
                       <div>
@@ -453,7 +446,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                       </span>
                       <div>
                         <span class="font-bold text-gray-700 dark:text-gray-300 block">{{ 'Available Shares Pool' | t }}</span>
-                        <span class="text-[11px] text-gray-500">{{ 'Unissued Equity' | t }}</span>
+                        <span class="text-[11px] text-gray-500">{{ 'Shares not yet sold' | t }}</span>
                       </div>
                     </div>
                   </td>
@@ -486,7 +479,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </div>
 
         <!-- 4. Recent Transactions Audit Trail -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+        <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
               <h3 class="text-base font-bold text-gray-900 dark:text-white m-0 flex items-center gap-2">
@@ -494,7 +487,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 {{ 'Recent Share Transactions & Audit Log' | t }}
               </h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-                {{ 'Full chronological ledger of share issuances, buybacks, transfers, and price revaluations' | t }}
+                {{ 'Every share sale, buy-back, transfer and price change' | t }}
               </p>
             </div>
             <span class="text-xs text-gray-400 font-semibold">{{ '{count} Records' | t: { count: overview()?.recentTransactions?.length || 0 } }}</span>

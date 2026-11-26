@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -39,7 +40,7 @@ interface GroupedPlanEntries {
 @Component({
   selector: 'app-daily-consumable-dashboard',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -54,8 +55,8 @@ interface GroupedPlanEntries {
   ],
   template: `
     <app-page-header
-      [title]="'Daily Consumables & Operations' | t"
-      [description]="'Track and confirm daily supply usage (shampoo, coils, Dettol, chemicals) with automatic inventory deduction and expense recording.' | t"
+      [title]="'Daily Supplies' | t"
+      [description]="'Confirm the supplies used each day. Stock and costs update by themselves.' | t"
       [breadcrumbActiveNode]="crumbLabel | t">
       <div actions class="flex flex-wrap items-center gap-2">
         
@@ -82,11 +83,12 @@ interface GroupedPlanEntries {
         </button>
 
         <button (click)="bulkConfirmAll()" [disabled]="pendingCount() === 0 || bulkConfirming()"
-          class="px-4 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-md shadow-teal-500/20 inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+          class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> {{ 'Confirm All ({n})' | t: { n: pendingCount() } }}
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
     <!-- Entries "Confirm All" could not confirm, and why -->
     <div *ngIf="bulkFailures().length && bulkFailuresDate() === selectedDate()" role="alert"
@@ -111,7 +113,7 @@ interface GroupedPlanEntries {
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
       
       <!-- Total Planned -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
             <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Total Planned' | t }}</span>
@@ -126,7 +128,7 @@ interface GroupedPlanEntries {
       </div>
 
       <!-- Confirmed -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
             <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Confirmed' | t }}</span>
@@ -141,7 +143,7 @@ interface GroupedPlanEntries {
       </div>
 
       <!-- Pending -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
             <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Pending' | t }}</span>
@@ -156,7 +158,7 @@ interface GroupedPlanEntries {
       </div>
 
       <!-- Today's Cost -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/60 shadow-sm relative overflow-hidden">
         <div class="flex items-center justify-between">
           <div>
             <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ 'Recorded Cost' | t }}</span>
@@ -173,7 +175,7 @@ interface GroupedPlanEntries {
     </div>
 
     <!-- Main Content: Grouped by Plan -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
       <div class="p-4 sm:p-6">
@@ -259,7 +261,7 @@ interface GroupedPlanEntries {
                             {{ 'Skip' | t }}
                           </button>
                           <button (click)="openConfirmDialog(entry)"
-                            class="px-3 py-1 text-[11px] font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-all shadow-xs shadow-teal-500/20 inline-flex items-center gap-1">
+                            class="px-3 py-1 text-[11px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all shadow-xs shadow-teal-500/20 inline-flex items-center gap-1">
                             <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">check</mat-icon> {{ 'Confirm' | t }}
                           </button>
                         } @else {
@@ -292,7 +294,7 @@ export class DailyConsumableDashboardComponent {
   private readonly i18n = inject(I18nService);
 
   /** Labels with apostrophes / quotes, kept out of the template. */
-  readonly crumbLabel = "Today's Consumables";
+  readonly crumbLabel = 'Daily Supplies';
   readonly emptyDescription = "No entries generated yet. Click 'Generate Entries' to pull items from active consumable plans.";
 
   readonly loading = signal(true);

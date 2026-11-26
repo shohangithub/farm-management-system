@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +12,7 @@ import { of } from 'rxjs';
 
 import { InventoryService } from '../../services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
-import { StockTransaction, StockTransactionParams, StockTransactionType } from '../../models/inventory.models';
+import { StockTransaction, StockTransactionParams, StockTransactionType, movementLabel, cleanReference } from '../../models/inventory.models';
 import { StockInDialogComponent } from '../../components/dialogs/stock-in-dialog/stock-in-dialog.component';
 import { StockOutDialogComponent } from '../../components/dialogs/stock-out-dialog/stock-out-dialog.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -28,7 +29,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-stock-ledger',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -43,12 +44,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header
-      [title]="'Stock Transaction Audit Ledger' | t"
-      [description]="'Immutable history of all receipts, issues, auto-feed deductions, adjustments, and write-offs.' | t"
-      [breadcrumbActiveNode]="'Stock Ledger' | t">
+      [title]="'Stock History' | t"
+      [description]="'Every stock movement in and out, newest first.' | t"
+      [breadcrumbActiveNode]="'Stock History' | t">
       <div actions class="flex items-center gap-2 no-print">
         <button (click)="exportPdf()" [disabled]="isExporting() || loading() || !result()?.items?.length"
-          class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
           {{ (isExporting() ? 'Exporting PDF...' : 'Export PDF') | t }}
         </button>
@@ -57,19 +58,20 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_business</mat-icon> {{ 'Record Stock In' | t }}
         </button>
         <button (click)="openStockOutDialog()"
-          class="px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
+          class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">remove_shopping_cart</mat-icon> {{ 'Deduct Stock' | t }}
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
-    <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div id="reportSheet" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
       <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters & Search Toolbar -->
-      <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30 no-print">
-        <div class="relative w-full sm:w-72">
+      <div class="p-4 border-b border-gray-100 dark:border-gray-800 grid grid-cols-2 sm:flex sm:flex-row sm:items-center gap-3 sm:gap-4 bg-gray-50/50 dark:bg-gray-900/30 no-print">
+        <div class="relative col-span-2 w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
             [placeholder]="'Search by item, invoice or supplier...' | t"
@@ -123,19 +125,19 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
             @for (tx of result()?.items; track tx.id) {
               <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
-                <td class="py-3.5 px-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                <td class="py-3 px-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
                   {{ tx.transactionDate }}
                 </td>
-                <td class="py-3.5 px-4 font-bold text-gray-900 dark:text-white">
+                <td class="py-3 px-4 font-semibold text-gray-900 dark:text-white min-w-[140px]">
                   {{ tx.itemName }}
                 </td>
                 <td class="py-3.5 px-4">
-                  <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                  <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap"
                     [ngClass]="{
-                      'bg-emerald-50 text-emerald-700 border border-emerald-200': isStockIn(tx.transactionType),
-                      'bg-amber-50 text-amber-700 border border-amber-200': !isStockIn(tx.transactionType)
+                      'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800': isStockIn(tx.transactionType),
+                      'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800': !isStockIn(tx.transactionType)
                     }">
-                    {{ tx.transactionTypeName | t }}
+                    {{ movementLabel(tx.transactionTypeName) | t }}
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-right font-extrabold"
@@ -143,11 +145,11 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   {{ isStockIn(tx.transactionType) ? '+' : '-' }}{{ getAbsQuantity(tx.quantity) }}
                   <span *ngIf="tx.enteredUnitName" class="block text-[11px] font-normal text-gray-500">{{ tx.enteredQuantity | number:'1.0-4' }} × {{ tx.enteredUnitName }}</span>
                 </td>
-                <td class="py-3.5 px-4 text-right">{{ tx.unitCostBdt | money:2 }}</td>
+                <td class="py-3.5 px-4 text-right whitespace-nowrap">{{ tx.unitCostBdt | money:2 }}</td>
                 <td class="py-3.5 px-4 text-right font-bold text-gray-900 dark:text-white">{{ tx.totalCostBdt | money }}</td>
-                <td class="py-3.5 px-4 text-right font-bold text-gray-500">{{ tx.balanceAfter }}</td>
-                <td class="py-3.5 px-4 text-xs text-gray-400">
-                  {{ tx.supplierName || tx.invoiceNumber || tx.reason || '—' }}
+                <td class="py-3.5 px-4 text-right font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ tx.balanceAfter | number:'1.0-2' }}</td>
+                <td class="py-3.5 px-4 text-xs text-gray-500 dark:text-gray-400 min-w-[180px]">
+                  {{ tx.supplierName || tx.invoiceNumber || cleanReference(tx.reason) || '—' }}
                 </td>
               </tr>
             }
@@ -156,7 +158,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10 no-print">
+      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10 no-print">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
           {{ 'Showing {from} to {to} of {total} transactions' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>
@@ -211,6 +213,8 @@ export class StockLedgerComponent {
   private readonly refreshTrigger = signal(0);
 
   readonly StockTransactionType = StockTransactionType;
+  readonly movementLabel = movementLabel;
+  readonly cleanReference = cleanReference;
 
   constructor() {
     // 1. Initialize from URL Query Parameters
@@ -405,11 +409,13 @@ export class StockLedgerComponent {
 
   isStockIn(type: any): boolean {
     if (type == null) return false;
-    return type === 1 || type === '1' || type === 'StockIn' || type === StockTransactionType.StockIn;
+    // Stock coming in: purchases, and feed put back when a confirmed feeding is reversed.
+    return type === 1 || type === '1' || type === 'StockIn' || type === StockTransactionType.StockIn
+      || type === 11 || type === '11' || type === 'FeedConsumptionReversal';
   }
 
   getAbsQuantity(qty: number | null | undefined): string {
     if (qty == null) return '0';
-    return Math.abs(qty).toString();
+    return (Math.round(Math.abs(qty) * 1000) / 1000).toString();
   }
 }

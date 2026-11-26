@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -24,7 +25,7 @@ import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 @Component({
   selector: 'app-inventory-movement-report',
   standalone: true,
-  imports: [
+  imports: [InventorySubnavComponent, 
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -119,8 +120,8 @@ export class InventoryMovementReport implements OnInit {
         filename: `Inventory_Movement_Report_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: this.i18n.t('Inventory Movement & Consumption Report'),
-          subtitle: this.i18n.t('Track stock flow, consumption, and closing balances'),
+          title: this.i18n.t('Stock Movement Report'),
+          subtitle: this.i18n.t('Opening, received, used and closing stock for a date range.'),
           farmName,
           dateRange: this.i18n.t('Period: {start} - {end}', { start, end }),
           currency: 'BDT (৳)'

@@ -20,8 +20,7 @@ import { translate } from '../../../../core/i18n/i18n.service';
       <!-- Top Metrics & Legend Bar -->
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-gray-100 dark:border-gray-700/60">
         <div class="flex flex-wrap items-baseline gap-x-2 min-w-0">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Unit' | t }}</span>
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ 'Feed cost per average head on farm (BDT/Month)' | t }}</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ 'Taka per animal, per month' | t }}</span>
         </div>
 
         <div *ngIf="hasData()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-800 dark:bg-primary-500/10 dark:text-primary-300 whitespace-nowrap">
@@ -49,7 +48,7 @@ import { translate } from '../../../../core/i18n/i18n.service';
           </div>
           <p class="text-sm font-medium text-gray-800 dark:text-gray-200 m-0">{{ 'No confirmed feeding records' | t }}</p>
           <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[260px] m-0 mt-1">{{ 'Confirm daily feed logs to see monthly feed cost per head.' | t }}</p>
-          <a routerLink="/feeding/logs" class="mt-4 inline-flex items-center gap-1 min-h-[44px] px-3 rounded-lg text-sm font-semibold text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+          <a routerLink="/feeding/today" class="mt-4 inline-flex items-center gap-1 min-h-[44px] px-3 rounded-lg text-sm font-semibold text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
             {{ 'Open feed logs' | t }}
             <mat-icon class="text-[18px] w-[18px] h-[18px]" aria-hidden="true">arrow_forward</mat-icon>
           </a>

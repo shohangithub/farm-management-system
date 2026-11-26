@@ -39,7 +39,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   template: `
     <app-page-header 
       [title]="'Loans & Liabilities' | t" 
-      [description]="'Manage farm financing, loans, and track repayments.' | t"
+      [description]="'Track farm loans and their repayments.' | t"
       [breadcrumbActiveNode]="'Loans' | t">
       <div actions>
         <button mat-flat-button color="primary" (click)="openLoanDialog()" class="!rounded-xl !px-6 !py-2.5 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 shadow-sm shadow-primary-500/30 transition-all">
@@ -71,14 +71,13 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       <!-- Loans Grid -->
       <div *ngIf="loans() && loans()!.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <div *ngFor="let loan of loans()" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6">
+        <div *ngFor="let loan of loans()" class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6">
           
           <!-- Background Watermark -->
-          <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">real_estate_agent</mat-icon>
           
           <div class="flex justify-between items-start mb-6">
             <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center">
                 <mat-icon>real_estate_agent</mat-icon>
               </div>
               <div>
@@ -139,7 +138,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <!-- Action Button -->
           <div *ngIf="loan.isActive" class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50">
             <button (click)="openRepaymentDialog(loan)" 
-              class="w-full py-2.5 px-4 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-sm shadow-emerald-500/20 flex items-center justify-center gap-2">
+              class="w-full py-2.5 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">payments</mat-icon>
               {{ 'Make Repayment' | t }}
             </button>

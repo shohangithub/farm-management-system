@@ -44,25 +44,9 @@ import { I18nService } from '../../../core/i18n/i18n.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-header
-      [title]="'Subscription & Billing Hub' | t"
-      [description]="'Manage your subscription tier, billing frequencies, trial activations, and payment history.' | t"
+      [title]="'Subscription' | t"
+      [description]="'Your plan, what you have used, and your payments.' | t"
       [breadcrumbActiveNode]="'Subscription & Billing' | t">
-      <div actions class="flex items-center gap-2">
-        <button
-          (click)="loadData()"
-          [disabled]="isLoading()"
-          class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 rounded-xl transition-all shadow-sm inline-flex items-center gap-1.5 cursor-pointer">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isLoading()">refresh</mat-icon>
-          {{ 'Refresh' | t }}
-        </button>
-        <button
-          *ngIf="plans().length > 0"
-          (click)="openSubscribeDialog(plans()[1] || plans()[0])"
-          class="px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5 cursor-pointer">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">workspace_premium</mat-icon>
-          {{ 'Upgrade Plan' | t }}
-        </button>
-      </div>
     </app-page-header>
 
     <div class="space-y-8 relative">
@@ -271,10 +255,10 @@ import { I18nService } from '../../../core/i18n/i18n.service';
       <div id="plans-section" class="space-y-6">
         <div class="text-center max-w-xl mx-auto space-y-2">
           <h3 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-            {{ 'Flexible Plans Built for Growth' | t }}
+            {{ 'Choose a plan' | t }}
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ 'From single livestock farms to commercial agro-enterprises, select the tier and billing frequency that fits your scale.' | t }}
+            {{ 'Pick the plan and payment cycle that fits your farm.' | t }}
           </p>
 
           <!-- Frequency Toggle Switch -->
@@ -404,7 +388,7 @@ import { I18nService } from '../../../core/i18n/i18n.service';
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/80 flex items-center justify-between">
           <div>
             <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Billing & Payment History' | t }}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Audit log of all subscription payments and invoices for this organization.' | t }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'All your payments and invoices.' | t }}</p>
           </div>
         </div>
 

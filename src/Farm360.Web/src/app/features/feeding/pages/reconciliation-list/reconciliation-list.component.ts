@@ -35,12 +35,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header
-      [title]="'Feeding Reconciliations' | t"
-      [description]="'Review and approve daily feed consumption variances to maintain accurate inventory.' | t"
-      [breadcrumbActiveNode]="'Reconciliations' | t">
-      <div actions class="flex items-center gap-2 no-print">
+      [title]="'Stock Check' | t"
+      [description]="'Compare planned feed with the stock actually used, and approve the difference.' | t"
+      [breadcrumbActiveNode]="'Stock Check' | t">
+      <div actions class="flex flex-wrap items-center gap-2 no-print">
         <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || reconciliations().length === 0"
-          class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
           {{ (isExporting() ? 'Exporting PDF...' : 'Export PDF') | t }}
         </button>

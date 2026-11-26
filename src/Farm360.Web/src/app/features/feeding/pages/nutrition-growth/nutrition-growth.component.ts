@@ -24,8 +24,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, AnimalPickerComponent, FeedingSubnavComponent, TranslatePipe],
   template: `
-    <app-page-header [title]="'Nutrition & Growth · পুষ্টি ও বৃদ্ধি' | t"
-      [description]="'What a cow ate — protein, energy, dry matter, minerals — against what its weight needs, and how well it grew.' | t"
+    <app-page-header [title]="'Nutrition & Growth' | t"
+      [description]="'What an animal ate against what it needs, and how well it grew.' | t"
       [breadcrumbActiveNode]="'Nutrition & Growth' | t">
       <div actions class="flex gap-2">
         <button mat-stroked-button (click)="export('pdf')" [disabled]="!data()" class="!rounded-xl !text-xs"><mat-icon class="!text-[16px]">picture_as_pdf</mat-icon> PDF</button>
@@ -34,7 +34,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       </div>
     </app-page-header>
 
-    <div class="px-6 py-4 mx-auto max-w-7xl">
+    <div>
       <app-feeding-subnav></app-feeding-subnav>
 
       <!-- Inputs -->

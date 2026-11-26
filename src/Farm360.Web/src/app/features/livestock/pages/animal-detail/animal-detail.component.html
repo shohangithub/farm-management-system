@@ -15,66 +15,60 @@
     </button>
 
     <mat-menu #exportMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
-      <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-        {{ 'Animal Profile & Dossier' | t }}
-      </div>
       <a mat-menu-item routerLink="/reports/finance.animal-life-history" [queryParams]="{ animalId: animal()?.id, autoRun: 'true' }" class="!rounded-xl">
-        <mat-icon class="!text-emerald-600">history</mat-icon>
+        <mat-icon class="!text-gray-500">history</mat-icon>
         <div class="flex flex-col text-left">
           <span class="font-medium text-xs">{{ 'Full History & Profit/Loss' | t }}</span>
           <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'Every cost, the sale and the profit, from arrival to today' | t }}</span>
         </div>
       </a>
       <button mat-menu-item [matMenuTriggerFor]="summarySubmenu" class="!rounded-xl">
-        <mat-icon class="!text-emerald-600">assessment</mat-icon>
+        <mat-icon class="!text-gray-500">assessment</mat-icon>
         <div class="flex flex-col text-left">
-          <span class="font-medium text-xs">{{ 'Animal Comprehensive Summary' | t }}</span>
-          <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'SAP dossier: Demographics, Weight KPIs & P&L' | t }}</span>
+          <span class="font-medium text-xs">{{ 'Animal summary' | t }}</span>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'Details, weights and profit/loss' | t }}</span>
         </div>
       </button>
       <button mat-menu-item (click)="exportDossierPdf()" [disabled]="isExporting()" class="!rounded-xl">
-        <mat-icon class="!text-red-500">picture_as_pdf</mat-icon>
+        <mat-icon class="!text-gray-500">print</mat-icon>
         <div class="flex flex-col text-left">
-          <span class="font-medium text-xs">{{ 'Visual Dashboard Sheet (PDF)' | t }}</span>
-          <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'Full visual sheet: KPIs, charts & photo' | t }}</span>
+          <span class="font-medium text-xs">{{ 'Printable animal sheet (PDF)' | t }}</span>
+          <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ 'One page with photo, weights and charts' | t }}</span>
         </div>
       </button>
-
       <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
-      <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-        {{ 'Specialized SAP Reports' | t }}
-      </div>
+      <button mat-menu-item [matMenuTriggerFor]="moreReportsSubmenu" class="!rounded-xl">
+        <mat-icon class="!text-gray-500">description</mat-icon>
+        <span class="text-xs">{{ 'More reports' | t }}</span>
+      </button>
+    </mat-menu>
 
+    <!-- Less-used single-topic reports, one level down to keep the main menu short -->
+    <mat-menu #moreReportsSubmenu="matMenu" class="!rounded-2xl !p-1.5 shadow-xl border border-gray-100 dark:border-gray-800">
       <button mat-menu-item [matMenuTriggerFor]="growthSubmenu" class="!rounded-xl">
-        <mat-icon class="!text-emerald-600">show_chart</mat-icon>
-        <span class="text-xs">{{ 'Weight & Growth Trajectory' | t }}</span>
+        <mat-icon class="!text-gray-500">show_chart</mat-icon>
+        <span class="text-xs">{{ 'Weight & growth' | t }}</span>
       </button>
-
       <button mat-menu-item [matMenuTriggerFor]="feedingSubmenu" class="!rounded-xl">
-        <mat-icon class="!text-amber-600">restaurant</mat-icon>
-        <span class="text-xs">{{ 'Feeding & Nutrition Ledger' | t }}</span>
+        <mat-icon class="!text-gray-500">restaurant</mat-icon>
+        <span class="text-xs">{{ 'Feeding record' | t }}</span>
       </button>
-
       <button mat-menu-item [matMenuTriggerFor]="healthSubmenu" class="!rounded-xl">
-        <mat-icon class="!text-teal-600">healing</mat-icon>
+        <mat-icon class="!text-gray-500">healing</mat-icon>
         <span class="text-xs">{{ 'Medical & Health History' | t }}</span>
       </button>
-
       <button mat-menu-item [matMenuTriggerFor]="costSubmenu" class="!rounded-xl">
-        <mat-icon class="!text-blue-600">account_balance_wallet</mat-icon>
-        <span class="text-xs">{{ 'Cost & Investment Ledger' | t }}</span>
+        <mat-icon class="!text-gray-500">account_balance_wallet</mat-icon>
+        <span class="text-xs">{{ 'Cost record' | t }}</span>
       </button>
-
       <a mat-menu-item routerLink="/reports/finance.animal-daily-cost" [queryParams]="{ animalId: animal()?.id }" class="!rounded-xl">
-        <mat-icon class="!text-emerald-600">calendar_month</mat-icon>
+        <mat-icon class="!text-gray-500">calendar_month</mat-icon>
         <span class="text-xs">{{ 'Daily Cost Report' | t }}</span>
       </a>
-
       <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
-
       <button mat-menu-item (click)="openInReportCenter('livestock.animal-summary')" class="!rounded-xl">
-        <mat-icon class="!text-purple-500">visibility</mat-icon>
-        <span class="text-xs">{{ 'Open in Report Center' | t }}</span>
+        <mat-icon class="!text-gray-500">open_in_new</mat-icon>
+        <span class="text-xs">{{ 'Open as report' | t }}</span>
       </button>
     </mat-menu>
 
@@ -92,11 +86,6 @@
       <button mat-menu-item (click)="exportAnimalReport('livestock.animal-summary', 'csv')" [disabled]="isExporting()" class="!rounded-xl">
         <mat-icon class="!text-blue-500">article</mat-icon>
         <span class="text-xs">{{ 'CSV Data File' | t }}</span>
-      </button>
-      <div class="my-1 border-t border-gray-100 dark:border-gray-800"></div>
-      <button mat-menu-item (click)="openInReportCenter('livestock.animal-summary')" class="!rounded-xl">
-        <mat-icon class="!text-purple-500">open_in_new</mat-icon>
-        <span class="text-xs">{{ 'Customize in Report Center' | t }}</span>
       </button>
     </mat-menu>
 
@@ -175,62 +164,38 @@
       {{ 'Edit' | t }}
     </button>
 
-    <!-- Secondary actions: visible as buttons from the sm breakpoint up; on phones they live in the "More actions" menu below. -->
-    <div class="hidden sm:contents">
-      <button type="button" *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()"
-        class="h-9 px-3 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        {{ 'Quarantine' | t }}
-      </button>
-      <button type="button" *ngIf="animal()!.status === AnimalStatus.Quarantined" (click)="onRelease()"
-        class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        {{ 'Release from Quarantine' | t }}
-      </button>
-      <button type="button" *ngIf="isOnFarm()" (click)="onTransfer()"
-        class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        {{ 'Assign Location' | t }}
-      </button>
-      <button type="button" *ngIf="isOnFarm()" (click)="onAssignBatch()"
-        class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        {{ 'Assign to Batch' | t }}
-      </button>
-      <button type="button" *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()"
-        class="h-9 px-3 text-xs font-semibold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        {{ 'Record Sale' | t }}
-      </button>
-      <button type="button" *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled
-        [matTooltip]="'Release it from quarantine before selling' | t"
-        class="h-9 px-3 text-xs font-semibold text-blue-400 dark:text-blue-500 bg-blue-50/60 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/40 rounded-lg cursor-not-allowed inline-flex items-center">
-        {{ 'Record Sale' | t }}
-      </button>
-      <button type="button" *ngIf="isOnFarm()" (click)="onRecordDeath()"
-        class="h-9 px-3 text-xs font-semibold text-red-700 dark:text-red-300 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        {{ 'Record Death' | t }}
-      </button>
-      <!-- Smart Consultant projects sale scenarios: only meaningful while the animal is on the farm. -->
-      <button type="button" *ngIf="isOnFarm()" (click)="onOpenIntelligence()"
-        class="h-9 px-3 text-xs font-semibold text-emerald-800 dark:text-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/50 dark:hover:to-teal-900/50 border border-emerald-200 dark:border-emerald-800/60 rounded-lg shadow-sm transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-        <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400" aria-hidden="true">psychology</mat-icon>
-        {{ 'Smart Consultant' | t }}
-      </button>
-    </div>
-
-    <!-- Phones: the same secondary actions (same conditions and handlers) in an overflow menu. -->
+    <!-- Less frequent actions live in one "More" menu (same conditions and handlers on every screen size). -->
     <button type="button" *ngIf="isOnFarm()" [matMenuTriggerFor]="moreActionsMenu"
-      [attr.aria-label]="'More actions' | t" [matTooltip]="'More actions' | t"
-      class="sm:hidden h-9 w-9 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-      <mat-icon class="!text-[20px] !w-[20px] !h-[20px]" aria-hidden="true">more_vert</mat-icon>
+      [attr.aria-label]="'More actions' | t"
+      class="h-9 min-w-[36px] px-2 sm:px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+      <mat-icon class="sm:!hidden !text-[20px] !w-[20px] !h-[20px]" aria-hidden="true">more_vert</mat-icon>
+      <span class="hidden sm:inline">{{ 'More' | t }}</span>
+      <mat-icon class="!hidden sm:!inline-block !text-[18px] !w-[18px] !h-[18px] text-gray-400 -mr-1" aria-hidden="true">arrow_drop_down</mat-icon>
     </button>
     <mat-menu #moreActionsMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5">
-      <button mat-menu-item *ngIf="isOnFarm()" (click)="onOpenIntelligence()" class="!rounded-xl">
-        <mat-icon class="!text-emerald-600">psychology</mat-icon>
-        <span class="text-sm">{{ 'Smart Consultant' | t }}</span>
+      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()" class="!rounded-xl">
+        <mat-icon class="!text-gray-500">sell</mat-icon>
+        <span class="text-sm">{{ 'Record Sale' | t }}</span>
       </button>
+      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled class="!rounded-xl">
+        <mat-icon>sell</mat-icon>
+        <div class="flex flex-col text-left">
+          <span class="text-sm">{{ 'Record Sale' | t }}</span>
+          <span class="text-[11px]">{{ 'Release it from quarantine before selling' | t }}</span>
+        </div>
+      </button>
+      <!-- Sale planner: projects weight and profit for a future sale date -->
+      <button mat-menu-item *ngIf="isOnFarm()" (click)="onOpenIntelligence()" class="!rounded-xl">
+        <mat-icon class="!text-gray-500">event_available</mat-icon>
+        <span class="text-sm">{{ 'When to sell?' | t }}</span>
+      </button>
+      <mat-divider class="!my-1"></mat-divider>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onTransfer()" class="!rounded-xl">
-        <mat-icon>place</mat-icon>
+        <mat-icon class="!text-gray-500">place</mat-icon>
         <span class="text-sm">{{ 'Assign Location' | t }}</span>
       </button>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onAssignBatch()" class="!rounded-xl">
-        <mat-icon>group_work</mat-icon>
+        <mat-icon class="!text-gray-500">group_work</mat-icon>
         <span class="text-sm">{{ 'Assign to Batch' | t }}</span>
       </button>
       <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()" class="!rounded-xl">
@@ -242,17 +207,6 @@
         <span class="text-sm">{{ 'Release from Quarantine' | t }}</span>
       </button>
       <mat-divider class="!my-1"></mat-divider>
-      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()" class="!rounded-xl">
-        <mat-icon class="!text-blue-600">sell</mat-icon>
-        <span class="text-sm">{{ 'Record Sale' | t }}</span>
-      </button>
-      <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Quarantined" disabled class="!rounded-xl">
-        <mat-icon>sell</mat-icon>
-        <div class="flex flex-col text-left">
-          <span class="text-sm">{{ 'Record Sale' | t }}</span>
-          <span class="text-[11px]">{{ 'Release it from quarantine before selling' | t }}</span>
-        </div>
-      </button>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onRecordDeath()" class="!rounded-xl">
         <mat-icon class="!text-red-600">heart_broken</mat-icon>
         <span class="text-sm text-red-700 dark:text-red-300">{{ 'Record Death' | t }}</span>
@@ -326,10 +280,12 @@
     <div class="w-full lg:w-1/3 flex flex-col">
       <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-800 overflow-hidden flex flex-col h-full">
         <!-- Image Section -->
-        <div class="relative w-full h-44 sm:h-56 lg:h-60 shrink-0 bg-gradient-to-br from-emerald-50/70 via-teal-50/50 to-slate-100/80 dark:from-gray-900/60 dark:to-gray-800/40 flex flex-col items-center justify-center overflow-hidden border-b border-gray-100 dark:border-gray-800">
+        <!-- Photo: full height when there is one; a slim strip when there is none -->
+        <div class="relative w-full shrink-0 flex flex-col items-center justify-center overflow-hidden border-b border-gray-100 dark:border-gray-800"
+             [ngClass]="animal()!.primaryPhotoUrl ? 'h-44 sm:h-56 lg:h-60 bg-gray-50 dark:bg-gray-900/50' : 'h-20 bg-gray-50 dark:bg-gray-900/40'">
           <img *ngIf="animal()!.primaryPhotoUrl" [src]="animal()!.primaryPhotoUrl" [alt]="'Photo of {tag}' | t: { tag: animal()!.tagId }" class="absolute inset-0 w-full h-full object-cover" />
-          <div *ngIf="!animal()!.primaryPhotoUrl" class="flex flex-col items-center justify-center gap-2 p-6 text-center">
-            <div class="w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-emerald-100 dark:border-gray-700 flex items-center justify-center text-3xl" aria-hidden="true">
+          <div *ngIf="!animal()!.primaryPhotoUrl" class="flex items-center justify-center gap-3 px-4 text-center">
+            <div class="w-11 h-11 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-2xl" aria-hidden="true">
               {{ speciesEmoji(animal()!.species) }}
             </div>
             <span class="text-xs text-gray-500 dark:text-gray-400">{{ 'No profile photo yet' | t }}</span>
@@ -452,9 +408,9 @@
         <div class="flex flex-wrap justify-between items-start gap-3">
           <div class="min-w-0 flex-1 basis-48">
             <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              {{ (isExited() ? 'Final Profit / Loss' : 'Projected Profit / Loss') | t }}
+              {{ (isExited() ? 'Final Profit / Loss' : 'Profit if sold today') | t }}
             </p>
-            <p *ngIf="!isExited()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'If sold today: latest weight × live rate − total investment' | t }}</p>
+            <p *ngIf="!isExited()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Latest weight × live rate − total investment' | t }}</p>
             <p *ngIf="isExited() && !isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Sale revenue − total investment' | t }}</p>
             <p *ngIf="isDead()" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'Died — no revenue; the total investment is lost' | t }}</p>
           </div>
@@ -528,7 +484,7 @@
           <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div class="min-w-0">
               <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Weight Progression' | t }}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Chronological record of animal weights.' | t }}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Every weighing, newest first.' | t }}</p>
             </div>
             <button type="button" *ngIf="isOnFarm()" (click)="onRecordWeight()"
               class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm no-print focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
@@ -561,7 +517,7 @@
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-100 dark:divide-gray-800">
-                <tr *ngFor="let w of animal()!.weightRecords"
+                <tr *ngFor="let w of sortedWeightsDesc()"
                   class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                   <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-white">{{ w.recordedDate | date:'mediumDate' }}</td>
                   <td class="px-4 py-3 whitespace-nowrap text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{{ w.weightKg | number:'1.1-2' }} {{ 'kg' | t }}</td>
@@ -1327,7 +1283,7 @@
         </div>
       </mat-tab>
       <!-- ─── Profit Projections Tab ─────────────────────────── -->
-      <mat-tab [label]="'Profit Projections' | t">
+      <mat-tab [label]="'Fattening plan' | t">
         <div class="h-full min-h-[400px] sm:min-h-[500px]">
           <!-- A sold/dead animal is not projected: show the realised result instead. -->
           <app-cattle-profit-projection *ngIf="!isExited()" [animalId]="animal()!.id"></app-cattle-profit-projection>

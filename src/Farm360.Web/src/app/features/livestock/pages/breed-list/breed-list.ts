@@ -37,24 +37,24 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
   ],
   template: `
     <app-page-header
-      [title]="'Breed Management' | t"
-      [description]="'Manage livestock breeds, growth targets, and intelligence baselines.' | t"
+      [title]="'Breeds' | t"
+      [description]="'The breeds you keep, with their expected daily gain and feed use.' | t"
       [breadcrumbActiveNode]="'Breeds' | t">
       <div actions>
         <button (click)="openSetupDialog()"
-          class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
+          class="h-10 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Breed' | t }}
         </button>
       </div>
     </app-page-header>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px] mt-6 mx-6 mb-6">
+    <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
       <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters & Sorting Toolbar -->
-      <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
-        <div class="relative w-full sm:w-72">
+      <div class="p-4 border-b border-gray-100 dark:border-gray-800 grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-3">
+        <div class="relative col-span-2 w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
             [placeholder]="'Search breeds...' | t"
@@ -77,8 +77,8 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
           <option value="Dual-purpose">{{ 'Dual-purpose' | t }}</option>
         </select>
 
-        <select [ngModel]="currentSortKey()" (ngModelChange)="onSortChange($event)"
-          class="w-full sm:w-52 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+        <select [ngModel]="currentSortKey()" (ngModelChange)="onSortChange($event)" [attr.aria-label]="'Sort' | t"
+          class="col-span-2 w-full sm:w-52 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
           <option value="name_asc">{{ 'Sort: Name (A-Z)' | t }}</option>
           <option value="name_desc">{{ 'Sort: Name (Z-A)' | t }}</option>
           <option value="adg_desc">{{ 'Sort: Highest ADG' | t }}</option>
@@ -97,56 +97,55 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
       </app-empty-state>
 
       <!-- Breeds Grid -->
-      <div *ngIf="!loading() && result()?.items?.length" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngIf="!loading() && result()?.items?.length" class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @for (breed of result()?.items; track breed.id) {
-          <div (click)="goToDetails(breed.id)" (keydown.enter)="goToDetails(breed.id)" role="link" tabindex="0" [attr.aria-label]="'Open breed {name}' | t: { name: breed.name }" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer">
-            <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">pets</mat-icon>
+          <div (click)="goToDetails(breed.id)" (keydown.enter)="goToDetails(breed.id)" role="link" tabindex="0" [attr.aria-label]="'Open breed {name}' | t: { name: breed.name }" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
 
             <!-- Card Header -->
-            <div class="p-5 flex items-start justify-between border-b border-gray-50 dark:border-gray-700/50 relative z-10">
+            <div class="px-5 pt-5 pb-3 flex items-start justify-between gap-2">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-10 h-10 shrink-0 rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 flex items-center justify-center">
                   <mat-icon class="!w-5 !h-5 !text-[20px]">pets</mat-icon>
                 </div>
                 <div>
-                  <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-emerald-600 transition-colors">{{ breed.name }}</h3>
-                  <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-400">
+                  <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ breed.name }}</h3>
+                  <span class="inline-flex items-center mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ breed.category | t }} • {{ breed.mainPurpose | t }}
                   </span>
                 </div>
               </div>
 
-              <div class="flex items-center gap-1">
-                <button [attr.aria-label]="'Edit Breed' | t" (click)="openSetupDialog(breed); $event.stopPropagation()" class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" [title]="'Edit Breed' | t">
+              <div class="flex items-center shrink-0 -mr-2 -mt-1">
+                <button [attr.aria-label]="'Edit Breed' | t" (click)="openSetupDialog(breed); $event.stopPropagation()" class="w-9 h-9 inline-flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors" [title]="'Edit Breed' | t">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                 </button>
-                <button [attr.aria-label]="'Delete Breed' | t" (click)="onDelete(breed, $event)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" [title]="'Delete Breed' | t">
+                <button [attr.aria-label]="'Delete Breed' | t" (click)="onDelete(breed, $event)" class="w-9 h-9 inline-flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors" [title]="'Delete Breed' | t">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                 </button>
               </div>
             </div>
 
             <!-- Card Body -->
-            <div class="p-5 flex-1 relative z-10">
-              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ breed.description || ('No description provided.' | t) }}</p>
+            <div class="px-5 pb-5 flex-1 flex flex-col">
+              <p *ngIf="descriptionOf(breed) as desc" class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{{ desc }}</p>
 
-              <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 mb-2">
+              <dl class="mt-auto grid grid-cols-2 gap-3 px-3 py-2.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Standard ADG' | t }}</div>
-                  <div class="font-extrabold text-gray-900 dark:text-white text-base mt-0.5">{{ breed.standardAdgMin }} - {{ breed.standardAdgMax }} {{ 'kg' | t }}</div>
+                  <dt class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Daily gain (ADG)' | t }}</dt>
+                  <dd class="font-semibold text-gray-900 dark:text-white text-sm mt-0.5 tabular-nums">{{ breed.standardAdgMin }}–{{ breed.standardAdgMax }} {{ 'kg/day' | t }}</dd>
                 </div>
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Target FCR' | t }}</div>
-                  <div class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">{{ breed.fcrMin }} - {{ breed.fcrMax }}</div>
+                  <dt class="text-[11px] text-gray-500 dark:text-gray-400" [title]="'Kg of feed needed for 1 kg of weight gain (FCR)' | t">{{ 'Feed per kg gain (FCR)' | t }}</dt>
+                  <dd class="font-semibold text-gray-900 dark:text-white text-sm mt-0.5 tabular-nums">{{ breed.fcrMin }}–{{ breed.fcrMax }} {{ 'kg' | t }}</dd>
                 </div>
-              </div>
+              </dl>
             </div>
           </div>
         }
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+      <div *ngIf="!loading() && result()?.items?.length" class="px-4 sm:px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
           {{ 'Showing {from} to {to} of {total} breeds' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount } }}
         </div>
@@ -182,6 +181,17 @@ export class BreedList {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
+
+  /** The breed's description without a repeated "Name - " prefix (seed data often starts with the name). */
+  descriptionOf(breed: BreedDto): string {
+    const d = (breed.description ?? '').trim();
+    if (breed.name && d.toLowerCase().startsWith(breed.name.toLowerCase())) {
+      const rest = d.slice(breed.name.length);
+      const stripped = rest.replace(/^\s*[-–—:]\s*/, '');
+      if (stripped !== rest) return stripped.trim();
+    }
+    return d;
+  }
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);

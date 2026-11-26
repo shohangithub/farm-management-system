@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -18,6 +17,7 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { DocumentService } from '../../../../core/services/document.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
@@ -28,7 +28,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-trade-credit',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [FinanceSubnavComponent, TranslatePipe, MoneyPipe, CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './trade-credit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

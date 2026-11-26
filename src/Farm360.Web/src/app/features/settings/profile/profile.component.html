@@ -1,12 +1,9 @@
 <app-page-header 
   [title]="'My Profile' | t"
-  [description]="'Manage your personal details and account preferences.' | t"
-  [primaryActionLabel]="'Save Changes' | t"
-  primaryActionIcon="save"
-  (primaryAction)="onSubmit()">
+  [description]="'Your name, email and password.' | t">
 </app-page-header>
 
-<div class="p-6">
+<div>
   <div class="max-w-3xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden relative">
     
     <div *ngIf="successMessage()" class="m-6 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4 rounded-r-md flex items-center shadow-sm">

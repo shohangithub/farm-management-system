@@ -34,7 +34,7 @@ import { I18nService } from '../../../core/i18n/i18n.service';
       (primaryAction)="openInvite()">
     </app-page-header>
 
-    <div class="p-4 sm:p-6 space-y-6">
+    <div class="space-y-6">
       <div *ngIf="loading()" class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
         <mat-icon class="animate-spin">autorenew</mat-icon> {{ 'Loading team…' | t }}
       </div>

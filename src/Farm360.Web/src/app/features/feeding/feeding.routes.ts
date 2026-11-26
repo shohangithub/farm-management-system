@@ -59,11 +59,6 @@ export const FEEDING_ROUTES: Routes = [
     title: 'Feeding Overview — Farm360 AI'
   },
   {
-    path: 'logs',
-    loadComponent: () => import('./pages/consumption-log/consumption-log.component').then(m => m.ConsumptionLogComponent),
-    title: 'Feed Records — Farm360 AI'
-  },
-  {
     path: 'reconciliations',
     loadComponent: () => import('./pages/reconciliation-list/reconciliation-list.component').then(m => m.ReconciliationListComponent),
     title: 'Feeding Reconciliations — Farm360 AI'

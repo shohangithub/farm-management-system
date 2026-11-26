@@ -1,7 +1,8 @@
+import { RouterLink } from '@angular/router';
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -22,17 +23,28 @@ interface BaseUnitForm { id: string | null; name: string; description: string; i
 @Component({
   selector: 'app-base-units',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, TranslatePipe],
+  imports: [InventorySubnavComponent, CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, TranslatePipe, RouterLink],
   template: `
-    <app-page-header [title]="'Base Units · মূল একক' | t" [description]="'The units stock is counted in. Bags, bottles and other packs are set up under Unit Conversions.' | t"
-      [breadcrumbActiveNode]="'Base Units' | t">
-      <div actions class="flex gap-2">
-        <a mat-stroked-button routerLink="/inventory/unit-conversions" class="!rounded-xl !text-xs"><mat-icon class="!text-[16px]">swap_horiz</mat-icon> {{ 'Unit Conversions' | t }}</a>
-      </div>
+    <app-page-header [title]="'Units' | t" [description]="'The units stock is counted in, like kg, ml or piece. Bags and bottles go under Pack Sizes.' | t"
+      [breadcrumbActiveNode]="'Units' | t">
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
+    <!-- Units and Pack Sizes are one page with two tabs -->
+    <div class="mb-6 inline-flex rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-1" role="tablist">
+      <a routerLink="/inventory/base-units" role="tab" [attr.aria-selected]="true"
+         [ngClass]="true ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+         class="min-h-[40px] px-4 inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold transition-colors">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">straighten</mat-icon> {{ 'Units' | t }}
+      </a>
+      <a routerLink="/inventory/unit-conversions" role="tab" [attr.aria-selected]="!true"
+         [ngClass]="!true ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+         class="min-h-[40px] px-4 inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold transition-colors">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">swap_horiz</mat-icon> {{ 'Pack Sizes' | t }}
+      </a>
+    </div>
 
-    <div class="px-6 py-4 mx-auto max-w-6xl">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
         <!-- Toolbar: search, add, delete selected -->
         <div class="p-4 flex flex-wrap items-center gap-2 border-b border-gray-100 dark:border-gray-700">
           <div class="relative">

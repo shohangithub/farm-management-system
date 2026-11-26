@@ -22,13 +22,15 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { HealthFilterBarComponent, HealthFilterOption } from '../../components/health-filter-bar/health-filter-bar.component';
+import { AnimalTagLookupService } from '../../services/animal-tag-lookup.service';
 
 @Component({
   selector: 'app-vaccination-due-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, MatButtonModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, MatButtonModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent, HealthFilterBarComponent],
   templateUrl: './vaccination-due-list.component.html',
-  styleUrls: ['./vaccination-due-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VaccinationDueListComponent {
@@ -38,6 +40,7 @@ export class VaccinationDueListComponent {
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
   private readonly i18n = inject(I18nService);
+  private readonly tagLookup = inject(AnimalTagLookupService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -65,7 +68,7 @@ export class VaccinationDueListComponent {
 
   // Combined params for the fetch request
   private fetchParams = computed(() => ({
-    farmId: this.currentFarmId()?.id || '11111111-1111-1111-1111-111111111111', // Fallback for MVP
+    farmId: this.currentFarmId()?.id || '',
     dateStr: this.dateStr(),
     refresh: this.refreshTrigger()
   }));
@@ -74,8 +77,9 @@ export class VaccinationDueListComponent {
   upcomingVaccinations = toSignal(
     toObservable(this.fetchParams).pipe(
       tap(() => { this.isLoading.set(true); this.error.set(''); }),
-      switchMap(({ farmId, dateStr }) =>
-        this.healthService.getUpcomingVaccinations(farmId, dateStr).pipe(
+      switchMap(({ farmId, dateStr }) => !farmId
+        ? of([] as VaccinationEventDto[]).pipe(tap(() => this.isLoading.set(false)))
+        : this.healthService.getUpcomingVaccinations(farmId, dateStr).pipe(
           catchError((err) => {
             this.error.set(parseApiError(err, 'Failed to load upcoming vaccinations.'));
             return of([]);
@@ -86,6 +90,48 @@ export class VaccinationDueListComponent {
     ),
     { initialValue: [] as VaccinationEventDto[] }
   );
+
+  // Filters (applied in the browser: the whole 30-day list is already loaded)
+  readonly search = signal('');
+  readonly whenFilter = signal('');
+  readonly whenOptions: HealthFilterOption[] = [
+    { value: '', label: 'All' },
+    { value: 'overdue', label: 'Overdue' },
+    { value: 'week', label: 'Due this week' },
+  ];
+
+  /** Ear tags for the animals in the list (the API row only carries the animal id). */
+  readonly tags = toSignal(
+    toObservable(this.upcomingVaccinations).pipe(
+      switchMap(items => this.tagLookup.tagsFor((items || []).map(v => v.animalId)))
+    ),
+    { initialValue: {} as Record<string, string> }
+  );
+
+  /** The list after filters, overdue first. */
+  readonly visible = computed(() => {
+    const term = this.search().toLowerCase();
+    const when = this.whenFilter();
+    const tags = this.tags();
+    return [...(this.upcomingVaccinations() || [])]
+      .filter(v => {
+        const urgency = this.getUrgencyClass(v.scheduledDate);
+        if (when === 'overdue' && urgency !== 'danger-row') return false;
+        if (when === 'week' && urgency === '') return false;
+        if (!term) return true;
+        return v.vaccineName.toLowerCase().includes(term) || (tags[v.animalId] || '').toLowerCase().includes(term);
+      })
+      .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
+  });
+
+  urgencyLabel(dateStr: string): string {
+    switch (this.getUrgencyClass(dateStr)) {
+      case 'danger-row': return 'Overdue';
+      case 'warning-row': return 'Due today';
+      case 'info-row': return 'This week';
+      default: return 'Upcoming';
+    }
+  }
 
   getUrgencyClass(dateStr: string): string {
     const today = new Date();
@@ -133,7 +179,7 @@ export class VaccinationDueListComponent {
     const el = this.reportSheet?.nativeElement;
     if (!el) return;
 
-    const list = this.upcomingVaccinations() || [];
+    const list = this.visible();
     const farm = this.contextService.currentFarmValue;
     const org = this.contextService.currentOrgValue;
 
@@ -143,14 +189,14 @@ export class VaccinationDueListComponent {
         filename: `Farm360_Vaccination_Schedule_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: this.i18n.t('Herd Vaccination Schedule & Due Report'),
-          subtitle: this.i18n.t('Upcoming Immunization Records (Next 30 Days)'),
+          title: this.i18n.t('Vaccinations Due'),
+          subtitle: this.i18n.t('Vaccines due in the next 30 days'),
           farmName: farm?.name || this.i18n.t('Primary Farm'),
-          orgName: org?.name || 'Farm360 Enterprise',
+          orgName: org?.name || 'Farm360',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: this.i18n.t('Total Scheduled Events'), value: `${list.length}` },
-            { label: this.i18n.t('Status Window'), value: this.i18n.t('Next 30 Days') }
+            { label: this.i18n.t('Vaccines due'), value: `${list.length}` },
+            { label: this.i18n.t('Period'), value: this.i18n.t('Next 30 Days') }
           ]
         },
         showSignatures: true

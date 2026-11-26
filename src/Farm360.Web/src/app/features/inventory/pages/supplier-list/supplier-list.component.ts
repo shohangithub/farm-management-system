@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -25,7 +26,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-supplier-list',
   standalone: true,
-  imports: [
+  imports: [InventorySubnavComponent, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -40,8 +41,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header
-      [title]="'Suppliers & Vendor Management' | t"
-      [description]="'Manage feed mills, pharmaceutical companies, veterinary product suppliers, and procurement contacts.' | t"
+      [title]="'Suppliers' | t"
+      [description]="'Feed mills, medicine sellers and others you buy from.' | t"
       [breadcrumbActiveNode]="'Suppliers' | t">
       <div actions>
         <button (click)="openCreateSupplierDialog()"
@@ -50,8 +51,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
       <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
@@ -85,11 +87,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       <div *ngIf="!loading() && result()?.items?.length" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @for (sup of result()?.items; track sup.id) {
           <div class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 p-5 flex flex-col justify-between">
-            <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">local_shipping</mat-icon>
 
             <div>
               <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
                   <mat-icon class="!w-5 !h-5 !text-[20px]">local_shipping</mat-icon>
                 </div>
                 <div class="flex items-center gap-1">
@@ -128,7 +129,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
           {{ 'Showing {from} to {to} of {total} suppliers' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>

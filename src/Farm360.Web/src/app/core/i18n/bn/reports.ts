@@ -84,4 +84,6 @@ export const BN_REPORTS: Record<string, string> = {
   'Slaughtered': 'জবাই করা',
   'Transferred': 'স্থানান্তরিত',
   'Left farm': 'খামার ছেড়েছে',
+  // UI audit: plain wording
+  'Open, print or download any report.': 'যেকোনো রিপোর্ট খুলুন, প্রিন্ট বা ডাউনলোড করুন।',
 };

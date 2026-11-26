@@ -1,12 +1,8 @@
 <app-page-header
   [title]="'Accounting Health' | t"
-  [description]="'হিসাব যাচাই — checks the books against stock, herd, loans and investors, and repairs older records.' | t"
+  [description]="'Checks the books against stock, herd, loans and investors.' | t"
   [breadcrumbActiveNode]="'Accounting Health' | t">
   <div actions class="flex items-center gap-2 flex-wrap">
-    <a mat-stroked-button routerLink="/finance"
-      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-      <mat-icon class="text-sm">arrow_back</mat-icon><span>{{ 'Overview' | t }}</span>
-    </a>
     <button mat-stroked-button (click)="recheck()" [disabled]="isLoading()"
       class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
       <mat-icon class="text-sm">refresh</mat-icon><span>{{ 'Re-check' | t }}</span>
@@ -15,6 +11,8 @@
 </app-page-header>
 
 <div class="px-4 sm:px-6 py-4 mx-auto max-w-6xl space-y-5">
+
+  <app-finance-subnav></app-finance-subnav>
 
   @if (error()) {
     <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
@@ -152,7 +150,7 @@
       }
       <div class="flex items-center gap-3">
         <button mat-flat-button (click)="runRepair()" [disabled]="isRepairing()"
-          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold px-4">
+          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold px-4">
           <mat-icon class="text-sm">{{ isRepairing() ? 'hourglass_empty' : 'build' }}</mat-icon>
           {{ (isRepairing() ? 'Repairing…' : 'Repair ledger') | t }}
         </button>

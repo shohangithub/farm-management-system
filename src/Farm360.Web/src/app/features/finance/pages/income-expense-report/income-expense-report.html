@@ -1,58 +1,29 @@
 <app-page-header
   [title]="'Income & Expense Statement' | t"
-  [description]="'আয়-ব্যয় বিবরণী — daily cash book or any date range, with opening and closing balance.' | t"
+  [description]="'Daily cash book or any date range, with opening and closing balance.' | t"
   [breadcrumbActiveNode]="'Income & Expense' | t">
   <div actions class="flex items-center gap-2 flex-wrap">
-    <a mat-stroked-button routerLink="/finance"
-      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-      <mat-icon class="text-sm">arrow_back</mat-icon><span>{{ 'Overview' | t }}</span>
-    </a>
-    <button mat-stroked-button (click)="export('xlsx')" [disabled]="!data() || !!exporting()"
-      class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-      <mat-icon class="!w-4 !h-4 !text-[16px]">{{ exporting() === 'xlsx' ? 'hourglass_empty' : 'grid_on' }}</mat-icon>
-      <span>Excel</span>
+    <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu"
+      class="!rounded-xl !min-h-[40px] !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 !text-xs !font-semibold">
+      <mat-icon class="!w-4 !h-4 !text-[16px]">download</mat-icon>
+      <span>{{ 'Download' | t }}</span>
+      <mat-icon iconPositionEnd class="!w-4 !h-4 !text-[16px]">expand_more</mat-icon>
     </button>
-    <button mat-stroked-button (click)="export('pdf')" [disabled]="!data() || !!exporting()"
-      class="rounded-xl border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-      <mat-icon class="!w-4 !h-4 !text-[16px]">{{ exporting() === 'pdf' ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>PDF</span>
-    </button>
-    <button mat-flat-button (click)="print()" [disabled]="!data()"
-      class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm">
-      <mat-icon class="text-sm">print</mat-icon><span>{{ 'Print' | t }}</span>
+    <mat-menu #exportMenu="matMenu" xPosition="before">
+      <button mat-menu-item (click)="export('xlsx')" [disabled]="!data() || !!exporting()"><mat-icon>grid_on</mat-icon><span>{{ 'Download Excel' | t }}</span></button>
+      <button mat-menu-item (click)="export('pdf')" [disabled]="!data() || !!exporting()"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+    </mat-menu>
+    <button mat-flat-button type="button" (click)="print()" [disabled]="!data()"
+      class="!rounded-xl !min-h-[40px] !bg-primary-600 hover:!bg-primary-700 !text-white !text-xs !font-semibold">
+      <mat-icon class="!w-4 !h-4 !text-[16px]">print</mat-icon>
+      <span>{{ 'Print' | t }}</span>
     </button>
   </div>
 </app-page-header>
 
 <div class="px-4 sm:px-6 py-4 mx-auto max-w-7xl space-y-5">
 
-  <!-- Sub-navigation -->
-  <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700/60 pb-3 overflow-x-auto">
-    <a routerLink="/finance" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
-      <mat-icon class="text-base">dashboard</mat-icon> {{ 'Overview' | t }}
-    </a>
-    <a routerLink="/finance/transactions" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
-      <mat-icon class="text-base">receipt_long</mat-icon> {{ 'General Ledger' | t }}
-    </a>
-    <a routerLink="/finance/reports/income-expense" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 whitespace-nowrap">
-      <mat-icon class="text-base">swap_vert</mat-icon> {{ 'Income & Expense' | t }}
-    </a>
-    <a routerLink="/finance/reports/full-accounts" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
-      <mat-icon class="text-base">menu_book</mat-icon> {{ 'Full Accounts' | t }}
-    </a>
-    <a routerLink="/finance/credit" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-      <mat-icon class="text-base">request_quote</mat-icon> {{ 'Payables & Receivables' | t }}
-    </a>
-    <a routerLink="/finance/accounting-health" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap transition-colors">
-      <mat-icon class="text-base">fact_check</mat-icon> {{ 'Accounting Health' | t }}
-    </a>
-    <a routerLink="/finance/reports/monthly-pnl" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
-      <mat-icon class="text-base">calendar_view_month</mat-icon> {{ 'Monthly P&L' | t }}
-    </a>
-    <a routerLink="/finance/reports/balance-sheet" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 whitespace-nowrap">
-      <mat-icon class="text-base">account_balance_wallet</mat-icon> {{ 'Balance Sheet' | t }}
-    </a>
-  </div>
+  <app-finance-subnav></app-finance-subnav>
 
   <!-- Filter card -->
   <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm p-4 space-y-3">

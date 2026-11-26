@@ -1,24 +1,24 @@
-<div class="h-full flex flex-col gap-6">
+<div class="h-full flex flex-col">
 
   <!-- Header -->
   <app-page-header
-    [title]="'Inventory Movement' | t"
-    [description]="'Track stock flow, consumption, and closing balances' | t"
+    [title]="'Stock Movement Report' | t"
+    [description]="'Opening, received, used and closing stock for a date range.' | t"
     [breadcrumbActiveNode]="'Movement Report' | t">
     <div actions class="flex items-center gap-3 no-print">
-      <button mat-flat-button color="primary" (click)="exportPdf()" [disabled]="isExporting() || isLoading() || items().length === 0"
-        class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md text-white disabled:opacity-50">
-        <mat-icon [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
+      <button (click)="exportPdf()" [disabled]="isExporting() || isLoading() || items().length === 0"
+        class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" [class.animate-spin]="isExporting()">{{ isExporting() ? 'refresh' : 'picture_as_pdf' }}</mat-icon>
         {{ (isExporting() ? 'Exporting PDF...' : 'Export PDF') | t }}
       </button>
     </div>
   </app-page-header>
+  <app-inventory-subnav></app-inventory-subnav>
 
   <!-- Filter Card -->
-  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden no-print">
-    <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">date_range</mat-icon>
-    
-    <form [formGroup]="filterForm" (ngSubmit)="onGenerate()" class="flex flex-col sm:flex-row gap-4 items-end relative z-10">
+  <div class="mb-6 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 px-4 sm:px-6 pt-5 pb-1 relative no-print">
+
+    <form [formGroup]="filterForm" (ngSubmit)="onGenerate()" class="flex flex-col sm:flex-row gap-x-4 sm:items-start">
       
       <mat-form-field appearance="outline" class="w-full sm:w-auto flex-1">
         <mat-label>{{ 'Date Range' | t }}</mat-label>
@@ -30,7 +30,7 @@
         <mat-date-range-picker #picker></mat-date-range-picker>
       </mat-form-field>
 
-      <button mat-flat-button color="primary" class="rounded-xl h-[56px] px-8 bg-emerald-600 hover:bg-emerald-700 shadow-md mb-5" type="submit" [disabled]="filterForm.invalid || isLoading()">
+      <button mat-flat-button color="primary" class="!rounded-xl !h-[56px] px-6 mb-5" type="submit" [disabled]="filterForm.invalid || isLoading()">
         <mat-icon class="animate-spin" *ngIf="isLoading()">autorenew</mat-icon>
         <mat-icon *ngIf="!isLoading()">analytics</mat-icon>
         {{ 'Generate Report' | t }}
@@ -39,7 +39,7 @@
   </div>
 
   <!-- Data Card -->
-  <div id="reportSheet" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 flex-1 relative overflow-hidden flex flex-col min-h-[400px]">
+  <div id="reportSheet" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex-1 relative overflow-hidden flex flex-col min-h-[400px]">
     
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
     
@@ -53,7 +53,7 @@
     </app-empty-state>
 
     <div class="overflow-auto flex-1 custom-scrollbar" *ngIf="items().length > 0">
-      <table mat-table [dataSource]="items()" class="w-full bg-transparent">
+      <table mat-table [dataSource]="items()" class="w-full min-w-[820px] !bg-transparent">
 
         <!-- Item Name Column -->
         <ng-container matColumnDef="itemName">
@@ -77,31 +77,31 @@
         <ng-container matColumnDef="openingStock">
           <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Opening' | t }}</th>
           <td mat-cell *matCellDef="let element" class="text-right text-gray-600 dark:text-gray-400">
-            {{ element.openingStock }} <span class="text-xs ml-1">{{ element.unitOfMeasure }}</span>
+            {{ element.openingStock | number:'1.0-2' }} <span class="text-xs ml-1">{{ element.unitOfMeasure }}</span>
           </td>
         </ng-container>
 
         <!-- Received Column -->
         <ng-container matColumnDef="received">
-          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Received (In)' | t }}</th>
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Received' | t }}</th>
           <td mat-cell *matCellDef="let element" class="text-right text-emerald-600 dark:text-emerald-400 font-medium">
-            +{{ element.received }}
+            {{ element.quantityReceived ? '+' + (element.quantityReceived | number:'1.0-2') : '—' }}
           </td>
         </ng-container>
 
         <!-- Consumed Column -->
         <ng-container matColumnDef="consumed">
-          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Consumed (Out)' | t }}</th>
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Used' | t }}</th>
           <td mat-cell *matCellDef="let element" class="text-right text-rose-600 dark:text-rose-400">
-            -{{ element.consumed }}
+            {{ element.quantityConsumed ? '-' + (element.quantityConsumed | number:'1.0-2') : '—' }}
           </td>
         </ng-container>
 
         <!-- Written Off Column -->
         <ng-container matColumnDef="writtenOff">
           <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Written Off' | t }}</th>
-          <td mat-cell *matCellDef="let element" class="text-right text-orange-600 dark:text-orange-400">
-            -{{ element.writtenOff }}
+          <td mat-cell *matCellDef="let element" class="text-right text-amber-600 dark:text-amber-400">
+            {{ element.quantityWrittenOff ? '-' + (element.quantityWrittenOff | number:'1.0-2') : '—' }}
           </td>
         </ng-container>
 
@@ -109,15 +109,15 @@
         <ng-container matColumnDef="closingStock">
           <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Closing' | t }}</th>
           <td mat-cell *matCellDef="let element" class="text-right font-bold text-gray-900 dark:text-white">
-            {{ element.closingStock }} <span class="text-xs font-normal ml-1">{{ element.unitOfMeasure }}</span>
+            {{ element.closingStock | number:'1.0-2' }} <span class="text-xs font-normal ml-1">{{ element.unitOfMeasure }}</span>
           </td>
         </ng-container>
 
         <!-- Closing Value Column -->
         <ng-container matColumnDef="closingValue">
-          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Value (BDT)' | t }}</th>
-          <td mat-cell *matCellDef="let element" class="text-right font-medium text-emerald-700 dark:text-emerald-400">
-            {{ element.closingValue | number:'1.2-2' }}
+          <th mat-header-cell *matHeaderCellDef class="font-semibold text-gray-600 dark:text-gray-300 text-right">{{ 'Value (৳)' | t }}</th>
+          <td mat-cell *matCellDef="let element" class="text-right font-medium text-gray-900 dark:text-white">
+            {{ element.currentValuationBdt | number:'1.0-0' }}
           </td>
         </ng-container>
 

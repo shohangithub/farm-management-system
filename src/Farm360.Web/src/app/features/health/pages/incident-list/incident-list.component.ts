@@ -17,83 +17,92 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
+import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { HealthFilterBarComponent, HealthFilterOption } from '../../components/health-filter-bar/health-filter-bar.component';
+
 @Component({
   selector: 'app-incident-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe],
+  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent, HealthFilterBarComponent],
   template: `
-<app-page-header 
+<app-page-header
   [title]="'Disease Incidents' | t"
-  [description]="'Track and manage disease outbreaks and incidents.' | t"
-  icon="coronavirus" 
-  iconColor="text-rose-600">
-  <div actions class="flex gap-2">
-    <button (click)="reportIncident()" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+  [description]="'Outbreaks on the farm and how far they have spread.' | t">
+  <div actions class="flex flex-wrap items-center gap-2">
+    <button type="button" (click)="reportIncident()"
+      class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Report Incident' | t }}
     </button>
   </div>
 </app-page-header>
 
-<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
-  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
+<app-health-nav></app-health-nav>
 
-  <div class="relative overflow-x-auto">
-    <table class="w-full text-sm text-left" *ngIf="incidents().length > 0">
-      <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
-        <tr>
-          <th scope="col" class="px-6 py-4">{{ 'Date' | t }}</th>
-          <th scope="col" class="px-6 py-4">{{ 'Disease' | t }}</th>
-          <th scope="col" class="px-6 py-4">{{ 'Severity' | t }}</th>
-          <th scope="col" class="px-6 py-4">{{ 'Affected Animals' | t }}</th>
-          <th scope="col" class="px-6 py-4">{{ 'Status' | t }}</th>
-          <th scope="col" class="px-6 py-4 text-right">{{ 'Actions' | t }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let incident of incidents()" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-          <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
-            {{ incident.incidentDate | date:'mediumDate' }}
-          </td>
-          <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-            {{ incident.diseaseName }}
-          </td>
-          <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [ngClass]="getSeverityClass(incident.severity)">
-              {{ getSeverityName(incident.severity) | t }}
-            </span>
-          </td>
-          <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-            {{ incident.affectedAnimalCount }}
-          </td>
-          <td class="px-6 py-4">
-            <label [for]="'status-' + incident.id" class="sr-only">{{ 'Status' | t }}</label>
+<app-health-filter-bar
+  [placeholder]="'Search disease'"
+  [options]="openOptions"
+  [selected]="openFilter()"
+  (selectedChange)="openFilter.set($event)"
+  (searchChange)="search.set($event)">
+</app-health-filter-bar>
+
+<div class="relative min-h-[200px]">
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
+
+  <div *ngIf="!isLoading() && !loadError() && visible().length === 0">
+    <app-empty-state
+      icon="health_and_safety"
+      [title]="(!incidents().length ? 'No disease incidents' : (openFilter() === 'open' && !search() ? 'No active outbreaks' : 'Nothing matches this filter')) | t"
+      [description]="(!incidents().length ? 'Report one when several animals fall sick with the same disease.' : (openFilter() === 'open' && !search() ? 'Every reported incident is resolved.' : 'Try another word or filter.')) | t"
+      [actionLabel]="incidents().length ? undefined : ('Report Incident' | t)"
+      (action)="reportIncident()">
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="!isLoading() && visible().length > 0" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div *ngFor="let incident of visible()"
+         class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm flex flex-col min-w-0">
+      <div class="p-4 flex items-start gap-3">
+        <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+          <mat-icon class="!w-5 !h-5 !text-[20px]">coronavirus</mat-icon>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 class="font-semibold text-[15px] leading-snug text-gray-900 dark:text-white break-words">{{ incident.diseaseName }}</h3>
+          <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ incident.incidentDate | date:'mediumDate' }}</p>
+        </div>
+        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold" [ngClass]="getSeverityClass(incident.severity)">
+          {{ getSeverityName(incident.severity) | t }}
+        </span>
+      </div>
+
+      <dl class="px-4 pb-4 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+        <div>
+          <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ 'Affected Animals' | t }}</dt>
+          <dd class="font-semibold text-gray-900 dark:text-white">{{ incident.affectedAnimalCount }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400"><label [for]="'status-' + incident.id">{{ 'Status' | t }}</label></dt>
+          <dd>
             <select [id]="'status-' + incident.id"
-              class="text-xs font-medium rounded-full border-0 px-2.5 py-1 cursor-pointer disabled:opacity-50"
+              class="text-xs font-semibold rounded-full border-0 pl-2.5 pr-7 py-1 cursor-pointer disabled:opacity-50"
               [ngClass]="getStatusClass(incident.status)"
               [disabled]="savingId() === incident.id"
               (change)="changeStatus(incident, $any($event.target).value, $event)">
               <option *ngFor="let s of statusOptions" [value]="s" [selected]="s === incident.status">{{ getStatusName(s) | t }}</option>
             </select>
             <p *ngIf="statusErrorId() === incident.id && statusError()" class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ statusError() }}</p>
-          </td>
-          <td class="px-6 py-4 text-right space-x-2">
-            <a [routerLink]="['/health/incidents', incident.id]" class="px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors shadow-sm inline-block">
-              {{ 'Details' | t }}
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    
-    <app-empty-state 
-      *ngIf="!isLoading() && incidents().length === 0 && !loadError()"
-      icon="health_and_safety"
-      [title]="'No Incidents' | t"
-      [description]="'No disease incidents have been reported.' | t"
-      [actionLabel]="'Report Incident' | t"
-      (action)="reportIncident()">
-    </app-empty-state>
+          </dd>
+        </div>
+      </dl>
+
+      <div class="mt-auto px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2">
+        <a [routerLink]="['/health/incidents', incident.id]"
+          class="flex-1 inline-flex items-center justify-center gap-1 h-10 px-3 text-[13px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">visibility</mat-icon> {{ 'View Details' | t }}
+        </a>
+      </div>
+    </div>
   </div>
 </div>
   `,
@@ -135,6 +144,25 @@ export class IncidentListComponent {
 
   incidents = computed(() => this.incidentsResult().items);
   totalCount = computed(() => this.incidentsResult().totalCount);
+
+  // Filters (applied in the browser to the loaded list)
+  readonly search = signal('');
+  readonly openFilter = signal('open');
+  readonly openOptions: HealthFilterOption[] = [
+    { value: 'open', label: 'Still active' },
+    { value: 'resolved', label: 'Resolved' },
+    { value: '', label: 'All' },
+  ];
+  readonly visible = computed(() => {
+    const term = this.search().toLowerCase();
+    const which = this.openFilter();
+    return this.incidents().filter(i => {
+      const resolved = i.status === IncidentStatus.Resolved;
+      if (which === 'open' && resolved) return false;
+      if (which === 'resolved' && !resolved) return false;
+      return !term || i.diseaseName.toLowerCase().includes(term);
+    });
+  });
 
   reportIncident() {
     const dialogRef = this.dialog.open(ReportIncidentDialog, { maxWidth: '95vw', disableClose: true, width: '720px' });
@@ -192,11 +220,11 @@ export class IncidentListComponent {
 
   getSeverityClass(severity: IncidentSeverity): string {
     switch (severity) {
-      case IncidentSeverity.Mild: return 'bg-emerald-100 dark:bg-emerald-400/30 text-emerald-600 dark:text-emerald-400';
-      case IncidentSeverity.Moderate: return 'bg-amber-100 dark:bg-amber-400/30 text-amber-600 dark:text-amber-400';
-      case IncidentSeverity.Severe: return 'bg-rose-100 dark:bg-rose-500/30 text-rose-500 dark:text-rose-400';
+      case IncidentSeverity.Mild: return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+      case IncidentSeverity.Moderate: return 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300';
+      case IncidentSeverity.Severe: return 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300';
       case IncidentSeverity.Critical: return 'bg-rose-500 text-white';
-      default: return 'bg-slate-100 text-slate-500';
+      default: return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
     }
   }
 
@@ -212,11 +240,11 @@ export class IncidentListComponent {
 
   getStatusClass(status: IncidentStatus): string {
     switch (status) {
-      case IncidentStatus.Reported: return 'bg-amber-100 dark:bg-amber-400/30 text-amber-600 dark:text-amber-400';
-      case IncidentStatus.UnderTreatment: return 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-400';
-      case IncidentStatus.Contained: return 'bg-blue-100 dark:bg-blue-500/30 text-blue-600 dark:text-blue-400';
-      case IncidentStatus.Resolved: return 'bg-emerald-100 dark:bg-emerald-400/30 text-emerald-600 dark:text-emerald-400';
-      default: return 'bg-slate-100 text-slate-500';
+      case IncidentStatus.Reported: return 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300';
+      case IncidentStatus.UnderTreatment: return 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300';
+      case IncidentStatus.Contained: return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
+      case IncidentStatus.Resolved: return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+      default: return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
     }
   }
 }

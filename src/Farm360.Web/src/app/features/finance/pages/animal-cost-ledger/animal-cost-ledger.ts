@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, V
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of, combineLatest, map, BehaviorSubject } from 'rxjs';
@@ -22,7 +23,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-animal-cost-ledger',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [MatMenuModule, MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     MatIconModule,
@@ -34,10 +35,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header 
-      [title]="'Unit Economics & Cost Ledger' | t"
+      [title]="'Animal cost and profit' | t"
       [description]="'Individual unit cost accumulation, break-even price, and profit margin targets for {animal}' | t: { animal: (breakEvenData()?.tagId || animalId() || ('Animal' | t)) }"
       [breadcrumbActiveNode]="'Cost Ledger' | t">
-      <div actions class="flex items-center gap-3">
+      <div actions class="flex flex-wrap items-center gap-2">
         <a mat-stroked-button routerLink="/livestock"
           class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2 text-xs">
           <mat-icon class="text-sm">pets</mat-icon>
@@ -48,34 +49,19 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <mat-icon class="text-sm">receipt_long</mat-icon>
           <span>{{ 'View Ledger' | t }}</span>
         </a>
-        <a mat-stroked-button [routerLink]="['/reports/finance.animal-cost-ledger']" [queryParams]="{ animalId: animalId() }"
-          matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
-          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>{{ 'SAP Report' | t }}</span>
-        </a>
-        <a mat-stroked-button [routerLink]="['/reports/finance.animal-daily-cost']" [queryParams]="{ animalId: animalId() }"
-          matTooltip="What this animal cost each day: feed, vet, labour and overhead"
-          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">calendar_month</mat-icon>
-          <span>{{ 'Daily Cost' | t }}</span>
-        </a>
-        <a mat-stroked-button routerLink="/reports/finance.herd-daily-cost"
-          matTooltip="What all animals cost each day, with head count and cost per head"
-          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">groups</mat-icon>
-          <span>{{ 'Herd Daily Cost' | t }}</span>
-        </a>
-        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !ledgerData()"
-          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
-          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu"
+          class="!rounded-xl !min-h-[40px] !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">download</mat-icon>
+          <span>{{ 'Download' | t }}</span>
+          <mat-icon iconPositionEnd class="!w-4 !h-4 !text-[16px]">expand_more</mat-icon>
         </button>
-        <button mat-stroked-button (click)="exportExcel()" [disabled]="!ledgerData()"
-          class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">file_download</mat-icon>
-          <span>Excel</span>
-        </button>
+        <mat-menu #exportMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="exportPdf()" [disabled]="isExporting() || !ledgerData()"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+          <button mat-menu-item (click)="exportExcel()" [disabled]="!ledgerData()"><mat-icon>grid_on</mat-icon><span>{{ 'Download Excel' | t }}</span></button>
+          <a mat-menu-item [routerLink]="['/reports/finance.animal-cost-ledger']" [queryParams]="{ animalId: animalId() }"><mat-icon>table_view</mat-icon><span>{{ 'Open as report' | t }}</span></a>
+          <a mat-menu-item [routerLink]="['/reports/finance.animal-daily-cost']" [queryParams]="{ animalId: animalId() }"><mat-icon>table_view</mat-icon><span>{{ 'Daily Cost' | t }}</span></a>
+          <a mat-menu-item routerLink="/reports/finance.herd-daily-cost"><mat-icon>table_view</mat-icon><span>{{ 'Herd Daily Cost' | t }}</span></a>
+        </mat-menu>
       </div>
     </app-page-header>
 
@@ -96,7 +82,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       <div *ngIf="ledgerData() as ledger" #reportSheet id="animalCostLedgerReport" class="space-y-6">
         
         <!-- Total Cost & Break-Even Hero Card -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 md:p-8">
+        <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 md:p-8">
           <div class="absolute -right-4 -bottom-4 text-[150px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">
             <mat-icon inline="true">pets</mat-icon>
           </div>
@@ -191,7 +177,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </div>
 
         <!-- Target Selling Price & Margin Tiers -->
-        <div *ngIf="breakEvenData() as be" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 md:p-8">
+        <div *ngIf="breakEvenData() as be" class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 md:p-8">
           <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Target Selling Price Tiers' | t }}</h3>
@@ -344,7 +330,7 @@ export class AnimalCostLedgerComponent implements OnInit {
               filename: `Farm360_Cost_Ledger_${tag}`,
               orientation: 'landscape',
               header: {
-                title: this.i18n.t('Unit Economics & Cost Ledger'),
+                title: this.i18n.t('Animal cost and profit'),
                 subtitle: this.i18n.t('Animal Tag: {tag} | Weight: {weight} kg', { tag, weight: be?.currentWeightKg ?? this.i18n.t('N/A') }),
                 farmName: farm?.name || 'Primary Farm',
                 orgName: org?.name || 'Farm360 Enterprise',

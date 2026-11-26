@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { WorkingContextService } from '../../services/working-context.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -11,9 +12,9 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
 @Component({
   selector: 'app-context-selector',
   standalone: true,
-  imports: [CommonModule, MatSelectModule, MatFormFieldModule, MatIconModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, MatSelectModule, MatFormFieldModule, MatIconModule, MatTooltipModule, ReactiveFormsModule, TranslatePipe],
   template: `
-    <div [class]="stacked ? 'flex flex-col gap-3 w-full' : 'flex items-center gap-2 mr-4'">
+    <div [class]="stacked ? 'flex flex-col gap-3 w-full' : 'flex items-center gap-2 mr-2'">
       <!-- Organization Selector (multi-org dropdown) -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" [class]="stacked ? 'w-full text-sm' : 'w-28 lg:w-36 text-sm'" *ngIf="(organizations$ | async)?.length! > 1">
         <mat-select [formControl]="orgControl" [placeholder]="'Organization' | t">
@@ -24,7 +25,8 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
       </mat-form-field>
 
       <!-- Organization Display (single-org) -->
-      <div *ngIf="(organizations$ | async)?.length === 1" [class]="stacked ? 'flex flex-col' : 'hidden lg:flex flex-col mr-2'">
+      <!-- Inline (header) mode hides it: with nothing to choose it only adds noise; the farm chip's tooltip names it. -->
+      <div *ngIf="stacked && (organizations$ | async)?.length === 1" class="flex flex-col">
         <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">{{ 'Org' | t }}</span>
         <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight max-w-[120px]">
           {{ (currentOrg$ | async)?.name }}
@@ -41,7 +43,7 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
       </mat-form-field>
 
       <!-- Branch Display (single-branch) -->
-      <div *ngIf="(branches$ | async)?.length === 1" [class]="stacked ? 'flex flex-col' : 'hidden lg:flex flex-col mr-2'">
+      <div *ngIf="stacked && (branches$ | async)?.length === 1" class="flex flex-col">
         <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">{{ 'Branch' | t }}</span>
         <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight w-full">
           {{ (currentBranch$ | async)?.name }}
@@ -58,20 +60,17 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
         </mat-select>
       </mat-form-field>
 
-      <!-- Farm Display (single-farm — prominent "Active Farm" badge) -->
-      <div *ngIf="(farms$ | async)?.length === 1"
-           [class.hidden]="!stacked" class="lg:flex flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-900/20 transition-all duration-300"
-           [class.context-flash]="farmChanged">
-        <!-- Farm Icon Badge -->
-        <div class="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm shadow-emerald-500/20">
-          <mat-icon class="!text-[13px] !w-[13px] !h-[13px] text-white">agriculture</mat-icon>
-        </div>
-        <div class="flex flex-col min-w-0">
-          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold leading-tight">{{ 'Active Farm' | t }}</span>
-          <span class="text-[13px] font-bold text-emerald-800 dark:text-emerald-200 truncate leading-tight max-w-[110px]">
-            {{ (currentFarm$ | async)?.name }}
-          </span>
-        </div>
+      <!-- Farm Display (single farm): stacked shows a labelled row; the header shows one quiet chip with the farm name. -->
+      <div *ngIf="stacked && (farms$ | async)?.length === 1" class="flex flex-col">
+        <span class="text-[11px] text-gray-500 uppercase tracking-widest font-bold leading-tight">{{ 'Farm' | t }}</span>
+        <span class="text-[13px] font-semibold text-gray-900 dark:text-gray-200 truncate leading-tight">{{ (currentFarm$ | async)?.name }}</span>
+      </div>
+      <div *ngIf="!stacked && (farms$ | async)?.length === 1"
+           class="hidden lg:flex items-center gap-1.5 h-9 px-3 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200 transition-all duration-300"
+           [class.context-flash]="farmChanged"
+           [matTooltip]="contextTooltip((currentOrg$ | async)?.name, (currentBranch$ | async)?.name)">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true">agriculture</mat-icon>
+        <span class="text-[13px] font-semibold truncate max-w-[180px]">{{ (currentFarm$ | async)?.name }}</span>
       </div>
     </div>
   `,
@@ -115,6 +114,11 @@ export class ContextSelectorComponent implements OnInit, OnDestroy {
   currentFarm$ = this.contextService.currentFarm$;
 
   private isInitializing = true;
+
+  /** Header chip tooltip: where this farm sits (organisation · branch). */
+  contextTooltip(org?: string | null, branch?: string | null): string {
+    return [org, branch].filter(Boolean).join(' · ');
+  }
 
   ngOnInit() {
     // Sync current values to form controls

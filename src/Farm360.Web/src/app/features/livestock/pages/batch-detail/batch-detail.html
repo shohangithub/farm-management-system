@@ -1,4 +1,4 @@
-<app-page-header *ngIf="batch()" [title]="batch()!.name" [description]="'Managed Batch Profile' | t"
+<app-page-header *ngIf="batch()" [title]="batch()!.name" [description]="'Animal batch' | t"
   [secondaryActionLabel]="'Back to Batches' | t" secondaryActionIcon="arrow_back" (secondaryAction)="goBack()">
 </app-page-header>
 
@@ -16,96 +16,45 @@
 
 <div *ngIf="!loading() && batch()" class="space-y-6">
 
-  <!-- Hero Card -->
-  <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden flex flex-col md:flex-row">
-    <!-- Icon/Graphic Area -->
-    <div class="w-full md:w-1/4 bg-gradient-to-br from-primary-500 to-purple-600 relative overflow-hidden flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800/50 h-48 md:h-auto p-6">
-      <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iMiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')]"></div>
-      
-      <div class="relative z-10 w-20 h-20 bg-white/20 backdrop-blur-md rounded-full border border-white/30 flex items-center justify-center shadow-lg mb-3">
-        <mat-icon class="!text-white !text-[40px] !w-[40px] !h-[40px]">group_work</mat-icon>
-      </div>
-      <div class="relative z-10 px-3 py-1 bg-white/20 backdrop-blur-md rounded-lg border border-white/30 text-white text-[11px] font-bold tracking-wider uppercase shadow-sm">
+  <!-- Batch facts -->
+  <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-5 sm:p-6">
+    <div class="flex flex-wrap items-center gap-2 mb-5">
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border"
+        [ngClass]="batch()!.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'">
         {{ batch()!.status | t }}
-      </div>
+      </span>
+      <span class="text-sm text-gray-500 dark:text-gray-400 inline-flex items-center gap-1.5">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">event</mat-icon>
+        {{ 'Created on {date}' | t: { date: (batch()!.createdAtUtc | date:'mediumDate') } }}
+      </span>
     </div>
 
-    <!-- Details Area -->
-    <div class="w-full md:w-3/4 p-6 sm:p-8 bg-gradient-to-br from-white to-gray-50/50 dark:from-surface-dark dark:to-gray-900/20">
-      <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{{ batch()!.name }}</h2>
-          <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
-            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">event</mat-icon>
-            {{ 'Created on {date}' | t: { date: (batch()!.createdAtUtc | date:'mediumDate') } }}
-          </p>
-        </div>
+    <dl class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div>
+        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'On farm' | t }}</dt>
+        <dd class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
+          {{ batch()!.animalCount }} <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ 'Head' | t }}</span>
+        </dd>
+        <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ '{n} ever assigned (incl. sold / dead)' | t: { n: batch()!.totalEverInBatch } }}</dd>
       </div>
-
-      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
-        <div>
-          <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">{{ 'On farm' | t }}</dt>
-          <dd class="text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            {{ batch()!.animalCount }}
-            <span class="text-sm font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">{{ 'Head' | t }}</span>
-          </dd>
-          <dd class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ '{n} ever assigned (incl. sold / dead)' | t: { n: batch()!.totalEverInBatch } }}</dd>
-        </div>
-        <div>
-          <dt class="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-1">{{ 'Description' | t }}</dt>
-          <dd class="text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
-            {{ batch()!.notes || ('No description provided for this batch.' | t) }}
-          </dd>
-        </div>
-      </dl>
-    </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Description' | t }}</dt>
+        <dd class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+          {{ batch()!.notes || ('No description provided for this batch.' | t) }}
+        </dd>
+      </div>
+    </dl>
   </div>
 
-  <!-- Action Panels -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    
-    <!-- Management Panel -->
-    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-800/50">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
-          <mat-icon>add_circle_outline</mat-icon>
-        </div>
-        <div>
-          <h3 class="font-bold text-gray-900 dark:text-white">{{ 'Batch Management' | t }}</h3>
-          <p class="text-xs text-gray-500 mt-0.5">{{ 'Add or remove animals' | t }}</p>
-        </div>
-      </div>
-      
-      <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">{{ 'Assign animals to this batch from the Animal Detail page, or use bulk actions in the Animal Directory to manage large groups.' | t }}</p>
-      
-      <button [routerLink]="['/livestock']" class="w-full inline-flex justify-center items-center gap-2 px-5 py-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-600 transition-all shadow-sm hover:shadow">
-        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">pets</mat-icon>
-        {{ 'Go to Animal Directory' | t }}
-      </button>
+  <!-- How to work with the batch's animals -->
+  <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+    <div class="flex-1 min-w-0">
+      <h3 class="font-semibold text-gray-900 dark:text-white">{{ 'Animals in this batch' | t }}</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ 'To add an animal, open it and choose More → Assign to Batch. To weigh or vaccinate many at once, tick them in the animal list.' | t }}</p>
     </div>
-
-    <!-- Quick Actions Panel (Placeholder for future) -->
-    <div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-800/50 opacity-75 grayscale-[30%] pointer-events-none">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
-          <mat-icon>auto_fix_high</mat-icon>
-        </div>
-        <div>
-          <h3 class="font-bold text-gray-900 dark:text-white">{{ 'Bulk Actions' | t }} <span class="ml-2 text-[11px] font-bold uppercase bg-gray-200 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded">{{ 'Soon' | t }}</span></h3>
-          <p class="text-xs text-gray-500 mt-0.5">{{ 'Streamline record keeping' | t }}</p>
-        </div>
-      </div>
-      
-      <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">{{ "In the future, you'll be able to apply bulk medical treatments, record mass weights, and transfer the entire batch's location from here." | t }}</p>
-      
-      <div class="flex flex-wrap gap-2">
-        <div class="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs font-semibold text-gray-400 flex items-center gap-1.5 border border-dashed border-gray-300 dark:border-gray-600">
-          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">scale</mat-icon> {{ 'Bulk Weight' | t }}
-        </div>
-        <div class="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs font-semibold text-gray-400 flex items-center gap-1.5 border border-dashed border-gray-300 dark:border-gray-600">
-          <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">vaccines</mat-icon> {{ 'Bulk Treatment' | t }}
-        </div>
-      </div>
-    </div>
+    <a [routerLink]="['/livestock']" class="shrink-0 h-10 inline-flex justify-center items-center gap-2 px-4 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">pets</mat-icon>
+      {{ 'Go to Animals' | t }}
+    </a>
   </div>
 </div>

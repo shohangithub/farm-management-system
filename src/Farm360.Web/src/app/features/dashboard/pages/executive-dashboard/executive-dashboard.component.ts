@@ -195,7 +195,7 @@ export class ExecutiveDashboardComponent {
     return [
       {
         label: 'Animals on Farm', icon: 'pets', value: d.totalAnimals, tone: 'neutral',
-        hint: 'Active + quarantined head', hintTone: 'neutral'
+        hint: 'Including quarantined', hintTone: 'neutral'
       },
       d.sickAnimals > 0
         ? { label: 'Sick Animals', icon: 'medical_services', value: d.sickAnimals, tone: 'bad', hint: 'Needs attention', hintIcon: 'warning', hintTone: 'bad' }
@@ -204,17 +204,17 @@ export class ExecutiveDashboardComponent {
         ? { label: 'Low Stock Items', icon: 'inventory_2', value: d.feedLowStockCount, tone: 'warn', hint: 'Reorder required', hintIcon: 'shopping_cart', hintTone: 'warn' }
         : { label: 'Low Stock Items', icon: 'inventory_2', value: d.feedLowStockCount, tone: 'neutral', hint: 'Stock healthy', hintIcon: 'check_circle', hintTone: 'good' },
       {
-        label: 'Net Profit (MTD)', icon: 'account_balance_wallet', value: net, money: true,
+        label: 'Net profit this month', icon: 'account_balance_wallet', value: net, money: true,
         tone: net < 0 ? 'bad' : 'neutral', hint: '', hintTone: 'neutral',
         split: { income: d.currentMonthIncome, expense: d.currentMonthExpense }
       },
       {
-        label: 'Births (MTD)', icon: 'child_care', value: d.birthsThisMonth, tone: 'neutral',
-        hint: 'New arrivals this month', hintTone: 'neutral'
+        label: 'Births this month', icon: 'child_care', value: d.birthsThisMonth, tone: 'neutral',
+        hint: 'Newborns recorded', hintTone: 'neutral'
       },
       d.deathsThisMonth > 0
-        ? { label: 'Deaths (MTD)', icon: 'heart_broken', value: d.deathsThisMonth, tone: 'bad', hint: 'Attention needed', hintIcon: 'warning', hintTone: 'bad' }
-        : { label: 'Deaths (MTD)', icon: 'heart_broken', value: d.deathsThisMonth, tone: 'neutral', hint: 'No mortalities', hintIcon: 'check_circle', hintTone: 'good' },
+        ? { label: 'Deaths this month', icon: 'heart_broken', value: d.deathsThisMonth, tone: 'bad', hint: 'Attention needed', hintIcon: 'warning', hintTone: 'bad' }
+        : { label: 'Deaths this month', icon: 'heart_broken', value: d.deathsThisMonth, tone: 'neutral', hint: 'No mortalities', hintIcon: 'check_circle', hintTone: 'good' },
       d.dueVaccinations > 0
         ? { label: 'Due Vaccinations', icon: 'vaccines', value: d.dueVaccinations, tone: 'warn', hint: 'Action required', hintIcon: 'schedule', hintTone: 'warn' }
         : { label: 'Due Vaccinations', icon: 'vaccines', value: d.dueVaccinations, tone: 'neutral', hint: 'Up to date', hintIcon: 'check_circle', hintTone: 'good' },

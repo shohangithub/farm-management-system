@@ -172,7 +172,7 @@ export class FeedingReportPdfService {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(71, 85, 105);
-    doc.text(`Farm: ${metadata.farmName || 'Primary Farm'}  |  Org: ${metadata.orgName || 'Farm360 Enterprise'}`, pageWidth - margin, 24.5, { align: 'right' });
+    doc.text(`Farm: ${metadata.farmName || 'Primary Farm'}  |  Org: ${metadata.orgName || 'Farm360'}`, pageWidth - margin, 24.5, { align: 'right' });
     doc.text(`Generated: ${formattedDate} at ${formattedTime}  |  Status: ACTIVE PLANS ONLY`, pageWidth - margin, 28.5, { align: 'right' });
 
     // Subtle horizontal divider

@@ -6,7 +6,7 @@
   (primaryAction)="onAdd()">
 </app-page-header>
 
-<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+<div class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[240px]">
   
   <app-error-state *ngIf="!isLoading() && error() as err" title="Couldn't load branches" [message]="err" (retry)="loadBranches()"></app-error-state>
 

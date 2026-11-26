@@ -59,12 +59,12 @@ interface AnimalGroup {
     :host-context(.dark) .card { background: rgb(31 41 55); border-color: rgb(55 65 81); }
   `],
   template: `
-    <app-page-header [title]="'Record Daily Feed · দৈনিক খাবার লিখুন' | t"
-      [description]="'Record what your animals actually ate today: any mix of feeds, no feeding plan needed. Stock, cost and reports update when you save.' | t"
+    <app-page-header [title]="'Record Daily Feed' | t"
+      [description]="'Write down what your animals ate today. No feeding plan needed.' | t"
       [breadcrumbActiveNode]="'Record Daily Feed' | t">
     </app-page-header>
 
-    <div class="px-4 sm:px-6 py-4 mx-auto max-w-7xl space-y-4">
+    <div class="space-y-4">
       <app-feeding-subnav></app-feeding-subnav>
 
       <div *ngIf="!farmId()" class="card p-6 text-sm text-gray-500">{{ 'Choose a farm at the top of the page to start.' | t }}</div>

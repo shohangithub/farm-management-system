@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, V
 import { CommonModule, PercentPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, of, combineLatest, map, BehaviorSubject } from 'rxjs';
@@ -31,7 +32,7 @@ interface BatchPnLReportView extends BatchPnLReport {
 @Component({
   selector: 'app-batch-pnl-report',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [MatMenuModule, MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     MatIconModule,
@@ -47,28 +48,18 @@ interface BatchPnLReportView extends BatchPnLReport {
       [title]="'Batch Profit & Loss' | t" 
       [description]="'Financial performance for batch {batch}' | t: { batch: (batchId() || '') }"
       [breadcrumbActiveNode]="'Batch P&L' | t">
-      <div actions class="flex items-center gap-3">
-        <a mat-stroked-button routerLink="/finance"
-          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-          <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>{{ 'Overview' | t }}</span>
-        </a>
-        <a mat-stroked-button [routerLink]="['/reports/finance.batch-pnl']" [queryParams]="{ batchId: batchId() }"
-          matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
-          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>{{ 'SAP Report' | t }}</span>
-        </a>
-        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
-          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
-          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
+      <div actions class="flex flex-wrap items-center gap-2">
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu"
+          class="!rounded-xl !min-h-[40px] !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">download</mat-icon>
+          <span>{{ 'Download' | t }}</span>
+          <mat-icon iconPositionEnd class="!w-4 !h-4 !text-[16px]">expand_more</mat-icon>
         </button>
-        <button mat-stroked-button (click)="exportExcel()" [disabled]="!reportData()"
-          class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">file_download</mat-icon>
-          <span>Excel</span>
-        </button>
+        <mat-menu #exportMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="exportPdf()" [disabled]="isExporting() || !reportData()"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+          <button mat-menu-item (click)="exportExcel()" [disabled]="!reportData()"><mat-icon>grid_on</mat-icon><span>{{ 'Download Excel' | t }}</span></button>
+          <a mat-menu-item [routerLink]="['/reports/finance.batch-pnl']" [queryParams]="{ batchId: batchId() }"><mat-icon>table_view</mat-icon><span>{{ 'Open as report' | t }}</span></a>
+        </mat-menu>
       </div>
     </app-page-header>
 
@@ -86,7 +77,7 @@ interface BatchPnLReportView extends BatchPnLReport {
       </app-empty-state>
 
       <!-- Main Report View -->
-      <div *ngIf="reportData() as report" #reportSheet id="batchPnlReport" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 md:p-8">
+      <div *ngIf="reportData() as report" #reportSheet id="batchPnlReport" class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 md:p-8">
         <div class="absolute -right-4 -bottom-4 text-[150px] text-gray-500/5 rotate-[-10deg] pointer-events-none">
           <mat-icon inline="true">leaderboard</mat-icon>
         </div>

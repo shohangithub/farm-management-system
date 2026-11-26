@@ -41,6 +41,46 @@ export const StockTransactionTypeNames: Record<StockTransactionType, string> = {
   [StockTransactionType.PurchaseReturn]: 'Purchase Return'
 };
 
+/**
+ * Plain label for a movement type name as the API sends it (e.g. "PlannedFeedConsumption" → "Feed used").
+ * Unknown names fall back to the raw name, split into words.
+ */
+const MOVEMENT_LABELS: Record<string, string> = {
+  StockIn: 'Stock in',
+  ManualStockOut: 'Stock out',
+  AutoFeedConsumption: 'Feed used',
+  AutoMedicineConsumption: 'Medicine used',
+  Adjustment: 'Adjustment',
+  WriteOff: 'Written off',
+  PlannedFeedConsumption: 'Feed used',
+  ReconciliationAdjustment: 'Stock check adjustment',
+  AutoConsumableUsage: 'Supplies used',
+  PurchaseReturn: 'Returned to supplier',
+  FeedConsumptionReversal: 'Feed put back',
+};
+
+export function movementLabel(name: string | null | undefined): string {
+  if (!name) return '—';
+  return MOVEMENT_LABELS[name] ?? name.replace(/([a-z])([A-Z])/g, '$1 $2');
+}
+
+/** Hides internal record ids (GUIDs) inside auto-generated notes, e.g. "… plan entry fb64b2ca-…". */
+export function cleanReference(text: string | null | undefined): string {
+  if (!text) return '';
+  return text.replace(/\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '').trim();
+}
+
+/** Plain label for a stock status as the API sends it ("LowStock" → "Running low"). */
+export function stockStatusLabel(status: string | null | undefined): string {
+  switch (status) {
+    case 'Sufficient': return 'In stock';
+    case 'LowStock': return 'Running low';
+    case 'OutOfStock': return 'Out of stock';
+    case 'Excess': return 'Well stocked';
+    default: return status ?? '—';
+  }
+}
+
 export enum InventoryStatus {
   Sufficient = 'Sufficient',
   LowStock = 'LowStock',

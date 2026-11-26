@@ -38,7 +38,7 @@ export interface ConfigureSharesDialogData {
               {{ (isEditing ? 'Update Farm Share Structure' : 'Set Up Farm Share Market') | t }}
             </h2>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-              {{ 'Define total shares, share price valuation, and retained owner allocation' | t }}
+              {{ 'Set the number of shares, the price, and how many the owner keeps' | t }}
             </p>
           </div>
         </div>
@@ -62,13 +62,13 @@ export interface ConfigureSharesDialogData {
           <!-- Live Valuation Card Preview -->
           <div class="p-4 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50/50 dark:from-teal-950/40 dark:to-emerald-950/20 border border-teal-200/60 dark:border-teal-800/40 grid grid-cols-2 gap-3 text-xs">
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Estimated Total Valuation' | t }}</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Estimated farm value' | t }}</span>
               <span class="text-base font-extrabold text-teal-700 dark:text-teal-300">
                 {{ computedTotalValuation() | money }}
               </span>
             </div>
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Available Pool Valuation' | t }}</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Value of shares for sale' | t }}</span>
               <span class="text-base font-extrabold text-emerald-700 dark:text-emerald-300">
                 {{ computedAvailableValuation() | money }}
               </span>
@@ -142,9 +142,9 @@ export interface ConfigureSharesDialogData {
           <!-- Valuation Notes -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-              {{ 'Valuation Notes / Basis' | t }}
+              {{ 'How the value was set' | t }}
             </label>
-            <textarea formControlName="valuationNotes" rows="2" [placeholder]="'e.g. Valuation based on Q3 livestock inventory, land assets, and milk production yield.' | t"
+            <textarea formControlName="valuationNotes" rows="2" [placeholder]="'e.g. Based on the animals, land and milk sales' | t"
                       class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow resize-none"></textarea>
           </div>
 

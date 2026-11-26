@@ -28,6 +28,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { HealthFilterBarComponent, HealthFilterOption } from '../../components/health-filter-bar/health-filter-bar.component';
 
 @Component({
   selector: 'app-treatment-list',
@@ -47,7 +49,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     PageHeaderComponent,
     EmptyStateComponent,
     LoadingComponent,
-    TranslatePipe
+    TranslatePipe,
+    HealthNavComponent,
+    HealthFilterBarComponent
   ],
   templateUrl: './treatment-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -70,7 +74,16 @@ export class TreatmentListComponent {
 
   // State
   pageIndex = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(12);
+  readonly statusFilter = signal('');
+  readonly search = signal('');
+  readonly isFiltered = computed(() => !!this.statusFilter() || !!this.search());
+  readonly statusOptions: HealthFilterOption[] = [
+    { value: '', label: 'All' },
+    { value: TreatmentStatus.Ongoing, label: 'Ongoing' },
+    { value: TreatmentStatus.Completed, label: 'Completed' },
+    { value: TreatmentStatus.Failed, label: 'Failed' },
+  ];
   refreshTrigger = signal(0);
   isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -86,14 +99,16 @@ export class TreatmentListComponent {
     pageIndex: this.pageIndex(),
     pageSize: this.pageSize(),
     farmId: this.currentFarm()?.id,
+    status: (this.statusFilter() || undefined) as TreatmentStatus | undefined,
+    search: this.search() || undefined,
     refresh: this.refreshTrigger()
   }));
 
   private treatmentsResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
-      switchMap(({ pageIndex, pageSize, farmId }) => 
-        this.healthService.getTreatments({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
+      switchMap(({ pageIndex, pageSize, farmId, status, search }) =>
+        this.healthService.getTreatments({ pageNumber: pageIndex + 1, pageSize, farmId, status, search }).pipe(
           catchError(err => {
             this.loadError.set(parseApiError(err, 'Could not load treatments.'));
             return of({ items: [], totalCount: 0 });
@@ -111,6 +126,26 @@ export class TreatmentListComponent {
   onPageChange(event: any): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
+  }
+
+  setStatus(value: string): void {
+    this.statusFilter.set(value);
+    this.pageIndex.set(0);
+  }
+
+  setSearch(value: string): void {
+    this.search.set(value);
+    this.pageIndex.set(0);
+  }
+
+  /** Last day the animal must not go for slaughter, while the meat withdrawal is still running. */
+  meatSafeDate(t: MedicalTreatmentDto): Date | null {
+    if (!t.meatWithdrawalDays || !t.startDate) return null;
+    const safe = new Date(t.startDate);
+    safe.setDate(safe.getDate() + t.meatWithdrawalDays);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return safe >= today ? safe : null;
   }
 
   loadTreatments(): void {
@@ -160,14 +195,14 @@ export class TreatmentListComponent {
         filename: `Farm360_Medical_Treatments_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: this.i18n.t('Medical Treatments Log'),
-          subtitle: this.i18n.t('Active & Historical Medication Administration Records'),
+          title: this.i18n.t('Treatments'),
+          subtitle: this.i18n.t('Medicines given to sick animals'),
           farmName: farm?.name || this.i18n.t('Primary Farm'),
-          orgName: org?.name || 'Farm360 Enterprise',
+          orgName: org?.name || 'Farm360',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: this.i18n.t('Total Recorded Treatments'), value: `${total}` },
-            { label: this.i18n.t('Current Page Items'), value: `${items.length}` }
+            { label: this.i18n.t('Total treatments'), value: `${total}` },
+            { label: this.i18n.t('In this PDF'), value: `${items.length}` }
           ]
         },
         showSignatures: true

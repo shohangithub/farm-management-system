@@ -281,7 +281,7 @@ export class FixedAssetsComponent {
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly i18n = inject(I18nService);
-  readonly pageDescription = this.i18n.t("Sheds, machinery, vehicles and land — at cost less depreciation, with the auditor's fixed-asset schedule.");
+  readonly pageDescription = this.i18n.t('Sheds, machinery, vehicles and land, at cost less wear and tear.');
 
   readonly categories = [
     { value: 'BuildingAndShed', label: 'Building & shed' },

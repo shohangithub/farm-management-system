@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, combineLatest, of, switchMap, tap } from 'rxjs';
@@ -30,11 +31,11 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
 @Component({
   selector: 'app-income-statement',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
+  imports: [MatMenuModule, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
   template: `
     <app-page-header
       [title]="'Profit & Loss Statement' | t"
-      [description]="'Statement of profit or loss for the financial year (or any period), compared with the same period last year.' | t"
+      [description]="'Income, costs and profit for the chosen period.' | t"
       [breadcrumbActiveNode]="'Profit & Loss' | t">
       <div actions class="flex items-center gap-2 flex-wrap">
         <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium">
@@ -49,14 +50,20 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
           <input type="checkbox" [ngModel]="period.comparative" (ngModelChange)="setPeriod({ comparative: $event })" class="accent-emerald-600" />
           <span>{{ 'Compare last year' | t }}</span>
         </label>
-        <button mat-stroked-button (click)="export('pdf')" class="!rounded-xl !text-xs">
-          <mat-icon class="!text-[16px] !w-4 !h-4">picture_as_pdf</mat-icon> PDF
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu"
+          class="!rounded-xl !min-h-[40px] !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">download</mat-icon>
+          <span>{{ 'Download' | t }}</span>
+          <mat-icon iconPositionEnd class="!w-4 !h-4 !text-[16px]">expand_more</mat-icon>
         </button>
-        <button mat-stroked-button (click)="export('xlsx')" class="!rounded-xl !text-xs">
-          <mat-icon class="!text-[16px] !w-4 !h-4">file_download</mat-icon> Excel
-        </button>
-        <button mat-stroked-button (click)="print()" class="!rounded-xl !text-xs">
-          <mat-icon class="!text-[16px] !w-4 !h-4">print</mat-icon> {{ 'Print' | t }}
+        <mat-menu #exportMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="export('pdf')"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+          <button mat-menu-item (click)="export('xlsx')"><mat-icon>grid_on</mat-icon><span>{{ 'Download Excel' | t }}</span></button>
+        </mat-menu>
+        <button mat-flat-button type="button" (click)="print()"
+          class="!rounded-xl !min-h-[40px] !bg-primary-600 hover:!bg-primary-700 !text-white !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">print</mat-icon>
+          <span>{{ 'Print' | t }}</span>
         </button>
       </div>
     </app-page-header>

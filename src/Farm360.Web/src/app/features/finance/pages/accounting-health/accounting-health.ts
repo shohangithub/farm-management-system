@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,6 +13,7 @@ import { AccountingHealth, LedgerRepairResult } from '../../models/finance.model
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /**
@@ -24,7 +24,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-accounting-health',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [FinanceSubnavComponent, TranslatePipe, MoneyPipe, CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './accounting-health.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

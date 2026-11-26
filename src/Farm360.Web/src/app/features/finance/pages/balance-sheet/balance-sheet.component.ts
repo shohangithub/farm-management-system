@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRe
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,7 +31,7 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
 @Component({
   selector: 'app-balance-sheet',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [MatMenuModule, MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
@@ -46,15 +47,10 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
   template: `
     <app-page-header 
       [title]="'Balance Sheet' | t" 
-      [description]="'Statement of financial position: assets, liabilities and equity, compared with the previous financial year end.' | t"
+      [description]="'What the farm owns, what it owes, and what belongs to the owners.' | t"
       [breadcrumbActiveNode]="'Balance Sheet' | t">
-      <div actions class="flex items-center gap-3">
-        <a mat-stroked-button routerLink="/finance"
-          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-          <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>{{ 'Overview' | t }}</span>
-        </a>
-        <form [formGroup]="filterForm" class="flex items-center gap-2">
+      <div actions class="flex flex-wrap items-center gap-2">
+        <form [formGroup]="filterForm" class="flex flex-wrap items-center gap-2">
           <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium">
             <span class="text-gray-500 dark:text-gray-400">{{ 'As of:' | t }}</span>
             <input 
@@ -67,25 +63,20 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
             <span class="text-gray-600 dark:text-gray-300">{{ 'Compare previous year end' | t }}</span>
           </label>
         </form>
-        <a mat-stroked-button routerLink="/reports/finance.balance-sheet"
-          matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
-          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>{{ 'SAP Report' | t }}</span>
-        </a>
-        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !bsData()"
-          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
-          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu"
+          class="!rounded-xl !min-h-[40px] !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">download</mat-icon>
+          <span>{{ 'Download' | t }}</span>
+          <mat-icon iconPositionEnd class="!w-4 !h-4 !text-[16px]">expand_more</mat-icon>
         </button>
-        <button mat-stroked-button (click)="exportExcel()" [disabled]="!bsData()"
-          class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">file_download</mat-icon>
-          <span>Excel</span>
-        </button>
-        <button mat-stroked-button (click)="printReport()"
-          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-          <mat-icon class="text-sm">print</mat-icon>
+        <mat-menu #exportMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="exportPdf()" [disabled]="isExporting() || !bsData()"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+          <button mat-menu-item (click)="exportExcel()" [disabled]="!bsData()"><mat-icon>grid_on</mat-icon><span>{{ 'Download Excel' | t }}</span></button>
+          <a mat-menu-item routerLink="/reports/finance.balance-sheet"><mat-icon>table_view</mat-icon><span>{{ 'Open as report' | t }}</span></a>
+        </mat-menu>
+        <button mat-flat-button type="button" (click)="printReport()"
+          class="!rounded-xl !min-h-[40px] !bg-primary-600 hover:!bg-primary-700 !text-white !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">print</mat-icon>
           <span>{{ 'Print' | t }}</span>
         </button>
       </div>

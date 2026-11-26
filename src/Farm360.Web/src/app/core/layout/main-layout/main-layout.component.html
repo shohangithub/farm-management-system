@@ -15,7 +15,8 @@
       class="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100 px-4 py-1.5 text-xs flex items-center justify-between gap-3 shrink-0">
       <div class="flex items-center gap-2 min-w-0">
         <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-amber-600 dark:text-amber-300 shrink-0">visibility</mat-icon>
-        <span class="truncate">{{ "You're exploring a demo farm with sample data. Nothing can be changed." | t }}</span>
+        <span class="truncate hidden sm:inline">{{ "You're exploring a demo farm with sample data. Nothing can be changed." | t }}</span>
+        <span class="truncate sm:hidden">{{ 'Demo farm, view only' | t }}</span>
       </div>
       <button type="button" (click)="startFreeTrial()"
         class="shrink-0 px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
@@ -30,9 +31,9 @@
     <ng-container *ngIf="subscriptionService.currentSubscription() as sub">
       <!-- Trial Banner: Show if tenant is in trial and has not dismissed the banner -->
       <div *ngIf="sub.isTrial && !isBannerDismissed()"
-        class="bg-gradient-to-r from-blue-600 via-indigo-600 to-teal-600 text-white px-4 py-2.5 text-xs flex items-center justify-between shadow-sm shrink-0">
+        class="bg-primary-50 dark:bg-primary-900/30 border-b border-primary-100 dark:border-primary-800/60 text-primary-900 dark:text-primary-100 px-4 py-2 text-xs flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2.5 overflow-hidden">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-blue-200 shrink-0">hourglass_top</mat-icon>
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-primary-600 dark:text-primary-300 shrink-0">hourglass_top</mat-icon>
           <span class="truncate">
             <strong>{{ '{days}-Day Free Trial:' | t: { days: sub.trialDays } }}</strong>
             <ng-container *ngIf="sub.trialDaysRemaining > 0">
@@ -45,10 +46,10 @@
         </div>
         <div class="flex items-center gap-3 shrink-0 ml-4">
           <a routerLink="/settings/billing"
-            class="px-3 py-1 bg-white text-blue-800 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-xs">
+            class="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors">
             {{ 'Upgrade Now' | t }}
           </a>
-          <button (click)="isBannerDismissed.set(true)" class="text-blue-200 hover:text-white transition-colors" [title]="'Dismiss' | t">
+          <button (click)="isBannerDismissed.set(true)" class="text-primary-500 hover:text-primary-800 dark:text-primary-300 dark:hover:text-white transition-colors" [title]="'Dismiss' | t" [attr.aria-label]="'Dismiss' | t">
             <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">close</mat-icon>
           </button>
         </div>

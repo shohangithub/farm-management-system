@@ -1,16 +1,16 @@
 <app-page-header
-  [title]="'Executive Dashboard' | t"
+  [title]="'Dashboard' | t"
   [description]="greeting()"
   [breadcrumbActiveNode]="'Dashboard' | t"
 >
   <div actions class="flex flex-wrap gap-2">
     <button mat-stroked-button color="primary" type="button" class="!rounded-xl" (click)="openGuidelines()">
       <mat-icon>menu_book</mat-icon>
-      {{ 'SOP & Guidelines' | t }}
+      {{ 'Farm guidelines' | t }}
     </button>
     <a mat-flat-button color="primary" class="!rounded-xl" routerLink="/reports">
       <mat-icon>assessment</mat-icon>
-      {{ 'Generate Report' | t }}
+      {{ 'View reports' | t }}
     </a>
   </div>
 </app-page-header>
@@ -116,19 +116,20 @@
         </div>
       </section>
 
-      <!-- 2. Action & Operations Hub (AI Alerts + Quick Actions & Recent Activity) -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+      <!-- 2. Alerts (only when there are any) + Quick actions & Recent activity -->
+      <div class="grid grid-cols-1 gap-4 lg:gap-6"
+           [ngClass]="dashboard.actionableInsights.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'">
 
-        <!-- AI Intelligence Center (Col-span 2) -->
-        <section aria-labelledby="alerts-heading" class="lg:col-span-2 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden min-w-0">
+        <!-- Alerts (Col-span 2). Hidden when empty: the "At a glance" chip already says all is well. -->
+        <section *ngIf="dashboard.actionableInsights.length > 0" aria-labelledby="alerts-heading" class="lg:col-span-2 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden min-w-0">
           <div class="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-10 h-10 shrink-0 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">psychology</mat-icon>
               </div>
               <div class="min-w-0">
-                <h2 id="alerts-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'AI Predictive Alerts' | t }}</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Automated health and performance signals' | t }}</p>
+                <h2 id="alerts-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Alerts' | t }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Health and growth warnings for your farm' | t }}</p>
               </div>
             </div>
             <span *ngIf="dashboard.actionableInsights.length > 0" class="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-full bg-primary-50 text-primary-800 dark:bg-primary-500/10 dark:text-primary-300">
@@ -137,14 +138,6 @@
           </div>
 
           <div class="p-5 sm:p-6">
-            <div *ngIf="dashboard.actionableInsights.length === 0" class="text-center py-8">
-              <div class="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3" aria-hidden="true">
-                <mat-icon>verified</mat-icon>
-              </div>
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'All Systems Healthy' | t }}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-0 max-w-md mx-auto">{{ 'No alerts right now. We keep watching animal health and feed efficiency and will flag anything that needs you.' | t }}</p>
-            </div>
-
             <ul *ngIf="dashboard.actionableInsights.length > 0" class="space-y-3 m-0 p-0 list-none">
               <li *ngFor="let insight of dashboard.actionableInsights"
                   class="flex gap-3 sm:gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/60 dark:bg-gray-900/20">
@@ -169,14 +162,15 @@
           </div>
         </section>
 
-        <!-- Quick Actions & Operations (Col-span 1) -->
-        <div class="space-y-4 lg:space-y-6 min-w-0">
+        <!-- Quick actions & Recent activity: stacked beside alerts, side by side without them -->
+        <div class="min-w-0 grid grid-cols-1 gap-4 lg:gap-6 content-start"
+             [ngClass]="dashboard.actionableInsights.length > 0 ? '' : 'lg:col-span-2 lg:grid-cols-2'">
 
           <!-- Quick Actions -->
           <section aria-labelledby="quick-ops-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2">
               <mat-icon class="text-primary-600 dark:text-primary-400 text-[20px] w-[20px] h-[20px]" aria-hidden="true">bolt</mat-icon>
-              <h2 id="quick-ops-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Quick Operations' | t }}</h2>
+              <h2 id="quick-ops-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Quick actions' | t }}</h2>
             </div>
             <div class="p-4 grid grid-cols-2 gap-3">
               <button type="button" routerLink="/livestock/register" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
@@ -191,7 +185,7 @@
                 </span>
                 <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Log Treatment' | t }}</span>
               </button>
-              <button type="button" routerLink="/feeding/logs" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <button type="button" routerLink="/feeding/sheet" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">restaurant_menu</mat-icon>
                 </span>
@@ -226,7 +220,7 @@
       <section aria-labelledby="analytics-heading" class="space-y-4">
 
         <div>
-          <h2 id="analytics-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Operational & Biometric Analytics' | t }}</h2>
+          <h2 id="analytics-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Farm trends' | t }}</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400 m-0 mt-1">{{ 'Herd make-up, vaccination coverage, growth and feed cost' | t }}</p>
         </div>
 
@@ -256,8 +250,8 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">vaccines</mat-icon>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Vaccination Compliance' | t }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Coverage, scheduled doses and overdue events' | t }}</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Vaccination coverage' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Doses given, due soon and overdue' | t }}</p>
               </div>
             </div>
             <div class="flex-1 min-w-0">
@@ -273,8 +267,8 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">trending_up</mat-icon>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'ADG Growth Trends' | t }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ '6-month average of per-animal daily gain, from weigh-ins' | t }}</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Daily weight gain' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Average gain per animal per day, last 6 months' | t }}</p>
               </div>
             </div>
             <div class="flex-1 min-w-0">
@@ -290,8 +284,8 @@
                 <mat-icon class="text-[20px] w-[20px] h-[20px]">payments</mat-icon>
               </div>
               <div class="min-w-0">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Feed Cost Trends' | t }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Confirmed feed cost per month ÷ average head on farm' | t }}</p>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Feed cost per animal' | t }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 m-0 mt-0.5">{{ 'Monthly feed cost divided by animals on farm' | t }}</p>
               </div>
             </div>
             <div class="flex-1 min-w-0">
@@ -306,8 +300,8 @@
       <!-- 4. Multi-Farm Overview (Farm Summary Cards) -->
       <section *ngIf="farmSummaryCards() && farmSummaryCards()!.length > 1" aria-labelledby="network-heading" class="space-y-4">
         <div>
-          <h2 id="network-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'Enterprise Farm Network' | t }}</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 mt-1">{{ 'Cross-branch summary and revenue performance' | t }}</p>
+          <h2 id="network-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 leading-tight">{{ 'All farms' | t }}</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 mt-1">{{ 'Animals, health and income for each farm' | t }}</p>
         </div>
         <app-farm-summary-cards [data]="farmSummaryCards() ?? null"></app-farm-summary-cards>
       </section>

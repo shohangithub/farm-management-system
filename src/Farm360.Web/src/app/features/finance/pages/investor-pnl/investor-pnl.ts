@@ -41,18 +41,18 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header 
-      [title]="'Profit & Loss Sharing' | t" 
-      [description]="'Calculates farm operating profitability and computes investor equity shares, allocated profits, and undistributed balances.' | t"
-      [breadcrumbActiveNode]="'Profit & Loss Sharing' | t">
-      <div actions class="flex items-center gap-2">
+      [title]="'Profit sharing' | t" 
+      [description]="'How the farm profit is split between investors.' | t"
+      [breadcrumbActiveNode]="'Profit sharing' | t">
+      <div actions class="flex flex-wrap items-center gap-2">
         <a routerLink="/finance/investors" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-gray-300 dark:!border-gray-700 !text-gray-700 dark:!text-gray-300 hover:!bg-gray-100 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">arrow_back</mat-icon>
           <span>{{ 'Investors List' | t }}</span>
         </a>
         <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !summary()"
-          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
+          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold disabled:opacity-50">
           <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
+          <span>{{ (isExporting() ? 'Exporting...' : 'Download PDF') | t }}</span>
         </button>
       </div>
     </app-page-header>
@@ -62,7 +62,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       <app-finance-subnav></app-finance-subnav>
 
       <!-- Filter Controls: Date Range & Quick Presets -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         
         <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
           <button type="button" (click)="setPreset('all')"
@@ -109,7 +109,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           
           <!-- Farm Operating Revenue -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Farm Revenue' | t }}</p>
@@ -117,7 +117,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   {{ summary()!.totalFarmRevenueBdt | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <mat-icon>trending_up</mat-icon>
               </div>
             </div>
@@ -125,7 +125,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <!-- Farm Operating Expenses -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Farm Expenses' | t }}</p>
@@ -133,7 +133,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   {{ summary()!.totalFarmExpensesBdt | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+              <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                 <mat-icon>trending_down</mat-icon>
               </div>
             </div>
@@ -141,7 +141,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <!-- Net Farm Profit / Loss -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Net Farm Profit / Loss' | t }}</p>
@@ -159,7 +159,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <!-- Charity Deduction (5%) -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Charity Deduction ({percent}%)' | t: { percent: summary()!.charityPercentage } }}</p>
@@ -167,7 +167,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   {{ summary()!.charityAmountBdt | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
+              <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center">
                 <mat-icon>volunteer_activism</mat-icon>
               </div>
             </div>
@@ -175,7 +175,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <!-- Distributable Profit -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Distributable Profit (95%)' | t }}</p>
@@ -184,37 +184,37 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   {{ summary()!.distributableProfitBdt | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center">
                 <mat-icon>account_balance_wallet</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">{{ 'Pool shared among equity investors' | t }}</p>
+            <p class="text-xs text-gray-400 mt-3">{{ 'Shared among investors' | t }}</p>
           </div>
 
           <!-- Total Active Capital Pool -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Total Capital Pool' | t }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Total money invested' | t }}</p>
                 <h3 class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-1">
                   {{ summary()!.totalActiveCapitalBdt | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <mat-icon>pie_chart</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-3">{{ 'From all active equity partners' | t }}</p>
+            <p class="text-xs text-gray-400 mt-3">{{ 'From all active partners' | t }}</p>
           </div>
 
         </div>
 
         <!-- Profit Sharing Allocation Table -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
+        <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
           
           <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
-              <h3 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ 'Investor Equity & Profit Distribution Breakdown' | t }}</h3>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ 'Profit share per investor' | t }}</h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 m-0">
                 {{ 'Detailed share allocation of Distributable Profit (after 5% charity) based on agreed contract or active capital ratio' | t }}
               </p>
@@ -231,8 +231,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <th class="px-4 py-3.5 text-right">{{ 'Profit Share %' | t }}</th>
                   <th class="px-4 py-3.5 text-right">{{ 'Allocated Share' | t }}</th>
                   <th class="px-4 py-3.5 text-right">{{ 'Profit Paid' | t }}</th>
-                  <th class="px-4 py-3.5 text-right">{{ 'Undistributed Balance' | t }}</th>
-                  <th class="px-4 py-3.5 text-right">{{ 'Net Equity Value' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Profit not yet paid' | t }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ 'Investor total stake' | t }}</th>
                   <th class="px-6 py-3.5 text-center no-print">{{ 'Action' | t }}</th>
                 </tr>
               </thead>

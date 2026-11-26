@@ -159,7 +159,7 @@ export interface InvestorTransactionDialogData {
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
               {{ 'Notes / Description (Optional)' | t }}
             </label>
-            <textarea formControlName="notes" rows="2" [placeholder]="'e.g. Q3 Profit dividend disbursement via bank transfer' | t"
+            <textarea formControlName="notes" rows="2" [placeholder]="'e.g. Profit share for this quarter, paid by bank' | t"
                       class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow"></textarea>
           </div>
 

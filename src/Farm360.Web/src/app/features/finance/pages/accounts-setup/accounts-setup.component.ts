@@ -30,7 +30,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   template: `
     <app-page-header
       [title]="'Accounts Setup' | t"
-      [description]="'Financial year, books start date, opening balances and year-end adjustments for the balance sheet.' | t"
+      [description]="'Financial year, opening balances and year-end adjustments.' | t"
       [breadcrumbActiveNode]="'Accounts Setup' | t">
     </app-page-header>
 

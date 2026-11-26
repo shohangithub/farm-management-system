@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../inventory-subnav/inventory-subnav.component';
 import { UnitPickerComponent, UnitSelection } from '../unit-picker/unit-picker.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -25,7 +26,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-purchase-order-form',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     UnitPickerComponent,
     CommonModule,
     RouterModule,
@@ -38,9 +39,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header
-      [title]="'Create Purchase Order' | t"
-      [description]="'Create a new purchase order to request items from a supplier.' | t"
-      [breadcrumbActiveNode]="'Create PO' | t">
+      [title]="'New Purchase Order' | t"
+      [description]="'Order items from a supplier.' | t"
+      [breadcrumbActiveNode]="'New Order' | t">
       <div actions class="flex items-center gap-3">
         <button [routerLink]="['/inventory/purchase-orders']"
           class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
@@ -52,8 +53,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative">
       <app-loading *ngIf="loading() || initLoading()" [overlay]="true"></app-loading>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6">

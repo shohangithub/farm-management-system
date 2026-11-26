@@ -29,10 +29,10 @@ export interface AnimalIntelligenceDialogData {
       <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between shrink-0">
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
-            <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-emerald-500">psychology</mat-icon>
-            {{ 'Smart Consultant' | t }}
+            <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-600 dark:text-primary-400">event_available</mat-icon>
+            {{ 'When to sell?' | t }}
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Intelligence Insights for {tag}' | t: { tag: data.tagId } }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Expected weight and profit for {tag}' | t: { tag: data.tagId } }}</p>
         </div>
         <button [attr.aria-label]="'Close' | t" mat-dialog-close type="button" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">close</mat-icon>
@@ -40,7 +40,7 @@ export interface AnimalIntelligenceDialogData {
       </div>
 
       <!-- Scrollable Body -->
-      <div class="p-6 space-y-8 overflow-y-auto custom-scrollbar flex-1 bg-gray-50 dark:bg-gray-900/50">
+      <div class="p-4 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 bg-gray-50 dark:bg-gray-900/50">
         <!-- Intelligence Panel -->
         <app-intelligence-panel [animalId]="data.animalId"></app-intelligence-panel>
         
@@ -52,7 +52,7 @@ export interface AnimalIntelligenceDialogData {
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 flex justify-end shrink-0">
         <button type="button" mat-dialog-close
           class="px-6 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-transparent dark:border-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shadow-sm">
-          {{ 'Close Consultant' | t }}
+          {{ 'Close' | t }}
         </button>
       </div>
     </div>

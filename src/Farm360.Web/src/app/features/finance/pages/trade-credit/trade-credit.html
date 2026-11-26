@@ -1,16 +1,8 @@
 <app-page-header
   [title]="'Payables & Receivables' | t"
-  [description]="'দেনা-পাওনা — what customers owe the farm, what the farm owes suppliers, and how overdue it is.' | t"
+  [description]="'What customers owe the farm and what the farm owes suppliers.' | t"
   [breadcrumbActiveNode]="'Payables & Receivables' | t">
   <div actions class="flex items-center gap-2 flex-wrap">
-    <a mat-stroked-button routerLink="/finance"
-      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-      <mat-icon class="text-sm">arrow_back</mat-icon><span>{{ 'Overview' | t }}</span>
-    </a>
-    <a mat-stroked-button routerLink="/finance/transactions"
-      class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-      <mat-icon class="text-sm">receipt_long</mat-icon><span>{{ 'Ledger' | t }}</span>
-    </a>
     <button mat-stroked-button (click)="reload()" [disabled]="isLoading()"
       class="rounded-xl border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
       <mat-icon class="text-sm">refresh</mat-icon><span>{{ 'Refresh' | t }}</span>
@@ -19,6 +11,8 @@
 </app-page-header>
 
 <div class="px-4 sm:px-6 py-4 mx-auto max-w-7xl space-y-5">
+
+  <app-finance-subnav></app-finance-subnav>
 
   @if (error()) {
     <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">

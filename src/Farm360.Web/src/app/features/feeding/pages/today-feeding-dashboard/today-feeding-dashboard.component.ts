@@ -75,8 +75,8 @@ type ViewMode = 'cows' | 'grouped' | 'list';
   ],
   template: `
     <app-page-header
-      [title]="i18n.isBangla ? ('Confirm Planned Feed' | t) : 'Confirm Planned Feed · পরিকল্পিত খাবার নিশ্চিত'"
-      [description]="'Entries made automatically from your feeding plans. Confirm, adjust or skip them. To record feed without a plan, use Record Daily Feed.' | t"
+      [title]="'Confirm Planned Feed' | t"
+      [description]="'Feed from your feeding plans: confirm, adjust or skip each one.' | t"
       [breadcrumbActiveNode]="'Confirm Planned Feed' | t">
       <div actions class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <!-- Generate Entries On-Demand -->
@@ -89,18 +89,18 @@ type ViewMode = 'cows' | 'grouped' | 'list';
         <!-- Feed given outside the plan -->
         <button type="button" (click)="openManualEntry()" [disabled]="!currentFarmId"
           [matTooltip]="'Record feed actually given outside the plan — a missed or extra feed, or a cow with no ration' | t"
-          class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+          class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0">edit_note</mat-icon>
           <span>{{ 'Manual Feed Entry' | t }}</span>
         </button>
 
-        <!-- SAP Daily Workflow Report -->
+        <!-- Printable daily feeding report for the chosen date -->
         <a routerLink="/reports/feeding.daily-workflow"
           [queryParams]="{ period: selectedDate() + '..' + selectedDate(), autoRun: 'true' }"
-          [matTooltip]="'Open enterprise SAP Daily Feeding & Nutrition Workflow Report for Selected Date' | t"
+          [matTooltip]="'Open the daily feeding report for this date' | t"
           class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0 text-emerald-600 dark:text-emerald-400">fact_check</mat-icon>
-          <span>{{ 'Daily Workflow (SAP)' | t }}</span>
+          <span>{{ 'Daily feeding report' | t }}</span>
         </a>
 
         <!-- Refresh Data -->

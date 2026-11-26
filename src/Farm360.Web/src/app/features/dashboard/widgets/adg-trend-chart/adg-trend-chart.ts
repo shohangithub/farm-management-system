@@ -18,8 +18,7 @@ import { translate } from '../../../../core/i18n/i18n.service';
       <!-- Top Metrics & Legend Bar -->
       <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-gray-100 dark:border-gray-700/60">
         <div class="flex flex-wrap items-baseline gap-x-2 min-w-0">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Metric' | t }}</span>
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ 'Average Daily Gain (kg/day) · gaps = no weigh-ins' | t }}</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ 'kg per day · a gap means no weigh-in that month' | t }}</span>
         </div>
 
         <div *ngIf="hasData()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-800 dark:bg-primary-500/10 dark:text-primary-300 whitespace-nowrap">

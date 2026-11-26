@@ -149,4 +149,5 @@ export const BN_LAYOUT: Record<string, string> = {
   'Vaccination Protocols': 'টিকার প্রোটোকল',
   'Vaccinations': 'টিকা',
   'Vet Visits': 'পশু চিকিৎসকের ভিজিট',
+  'Demo farm, view only': 'ডেমো খামার, শুধু দেখার জন্য',
 };

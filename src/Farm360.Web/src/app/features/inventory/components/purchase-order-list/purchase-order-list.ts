@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -24,7 +25,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-purchase-order-list',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -39,7 +40,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   template: `
     <app-page-header
       [title]="'Purchase Orders' | t"
-      [description]="'Manage purchase orders, approve requests, and fulfill stock arrivals from suppliers.' | t"
+      [description]="'Orders to suppliers. Approve them, then receive the stock.' | t"
       [breadcrumbActiveNode]="'Purchase Orders' | t">
       <div actions>
         <button [routerLink]="['/inventory/purchase-orders/new']"
@@ -48,8 +49,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
       <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
@@ -90,12 +92,11 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                role="link" tabindex="0" [attr.aria-label]="'Open purchase order {po}' | t: { po: po.poNumber ?? '' }"
                (click)="router.navigate(['/inventory/purchase-orders', po.id])"
                (keydown.enter)="router.navigate(['/inventory/purchase-orders', po.id])">
-            <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">request_quote</mat-icon>
 
             <!-- Card Header -->
             <div class="p-5 flex items-start justify-between border-b border-gray-50 dark:border-gray-700/50 relative z-10">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
                   <mat-icon class="!w-5 !h-5 !text-[20px]">request_quote</mat-icon>
                 </div>
                 <div>
@@ -141,7 +142,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
           {{ 'Showing {from} to {to} of {total} items' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>

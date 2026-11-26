@@ -2,7 +2,7 @@ import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { HealthService } from '../../services/health.service';
-import { MilkWithdrawalDto } from '../../models/health.models';
+import { MedicalTreatmentDto, MilkWithdrawalDto } from '../../models/health.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
@@ -18,83 +18,114 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
+import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+interface MeatWithdrawalRow { tag: string; medicine: string; startDate: string; safeDate: Date; }
+
 @Component({
   selector: 'app-milk-withdrawal',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe],
+  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent],
   template: `
-<app-page-header 
-  [title]="'Milk Withdrawal Tracking' | t"
-  [description]="'Monitor milk withdrawal periods after medical treatments.' | t"
-  icon="water_drop" 
-  iconColor="text-amber-600">
-  <div actions class="flex items-center gap-2">
-    <button (click)="exportPdf()" [disabled]="isExporting() || !withdrawals().length"
-      class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
-    </button>
-    <button class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5" (click)="loadWithdrawals()">
-      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> {{ 'Refresh' | t }}
-    </button>
+<app-page-header
+  [title]="'Withdrawal Periods' | t"
+  [breadcrumbActiveNode]="'Withdrawal Periods' | t"
+  [description]="'Recently treated animals whose meat or milk is not safe yet.' | t">
+  <div actions class="flex flex-wrap items-center gap-2">
+    @if (meatRows().length || withdrawals().length) {
+      <button type="button" (click)="exportPdf()" [disabled]="isExporting()"
+        class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'download' }}</mat-icon>
+        {{ (isExporting() ? 'Preparing PDF...' : 'Download PDF') | t }}
+      </button>
+    }
   </div>
 </app-page-header>
 
-<!-- Info Alert -->
-<div class="mb-6 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 p-4 rounded-xl border border-amber-200 dark:border-amber-800 flex items-start shadow-sm">
-  <mat-icon class="mr-3 mt-0.5">warning</mat-icon>
-  <div>
-    <div class="font-medium mb-1">{{ 'Attention' | t }}</div>
-    <div class="text-sm">{{ 'The animals listed below are currently under a milk withdrawal period due to medical treatment. Their milk must NOT be added to the bulk tank.' | t }}</div>
-  </div>
-</div>
+<app-health-nav></app-health-nav>
 
-<div #reportSheet id="milkWithdrawalContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+<div class="relative min-h-[200px]">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
-  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
 
-  <div class="relative overflow-x-auto">
-    <table class="w-full text-sm text-left" *ngIf="withdrawals().length > 0">
-      <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 font-bold tracking-wider">
-        <tr>
-          <th scope="col" class="px-6 py-4">{{ 'Animal Tag' | t }}</th>
-          <th scope="col" class="px-6 py-4">{{ 'Medication' | t }}</th>
-          <th scope="col" class="px-6 py-4">{{ 'Treatment Started' | t }}</th>
-          <th scope="col" class="px-6 py-4 text-center">{{ 'Withdrawal Days' | t }}</th>
-          <th scope="col" class="px-6 py-4">{{ 'Safe To Milk Date' | t }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let w of withdrawals()" class="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-          <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-            {{ w.animalTag }}
-          </td>
-          <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-            {{ w.medicationName }}
-          </td>
-          <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
-            {{ w.treatmentStartDate | date:'mediumDate' }}
-          </td>
-          <td class="px-6 py-4 text-center">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-              {{ '{days} Days' | t: { days: w.milkWithdrawalDays } }}
-            </span>
-          </td>
-          <td class="px-6 py-4 text-rose-600 dark:text-rose-400 font-medium">
-            {{ w.safeToMilkDate | date:'mediumDate' }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    
-    <app-empty-state 
-      *ngIf="!isLoading() && withdrawals().length === 0 && !loadError()"
+  <div *ngIf="!isLoading() && !loadError() && !meatRows().length && !withdrawals().length">
+    <app-empty-state
       icon="check_circle"
-      [title]="'No Active Withdrawals' | t"
-      [description]="'There are currently no animals under a milk withdrawal period.' | t"
-      [actionLabel]="'Refresh' | t"
-      (action)="loadWithdrawals()">
+      [title]="'All clear' | t"
+      [description]="'No animal is waiting out a medicine withdrawal period.' | t">
     </app-empty-state>
+  </div>
+
+  <div #reportSheet id="milkWithdrawalContainer" *ngIf="!isLoading() && !loadError() && (meatRows().length || withdrawals().length)" class="space-y-4">
+    <!-- Meat: matters on every farm that sells animals -->
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
+      <header class="px-4 sm:px-5 py-4 flex items-start gap-3 border-b border-gray-100 dark:border-gray-700/60">
+        <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+          <mat-icon class="!w-5 !h-5 !text-[20px]">block</mat-icon>
+        </div>
+        <div>
+          <h2 class="font-semibold text-[15px] text-gray-900 dark:text-white">{{ 'Meat: do not sell for slaughter yet' | t }}</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Medicine may still be in the meat until the safe date.' | t }}</p>
+        </div>
+      </header>
+      <p *ngIf="!meatRows().length" class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ 'No animal is under meat withdrawal.' | t }}</p>
+      <div *ngIf="meatRows().length" class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40">
+            <tr>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Animal Tag' | t }}</th>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Medicine' | t }}</th>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Treated on' | t }}</th>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Safe to sell from' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of meatRows()" class="border-t border-gray-100 dark:border-gray-700/60">
+              <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ r.tag }}</td>
+              <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ r.medicine }}</td>
+              <td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ r.startDate | date:'mediumDate' }}</td>
+              <td class="px-4 py-3 font-semibold text-amber-700 dark:text-amber-300 whitespace-nowrap">{{ r.safeDate | date:'mediumDate' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Milk: only matters for milking animals -->
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
+      <header class="px-4 sm:px-5 py-4 flex items-start gap-3 border-b border-gray-100 dark:border-gray-700/60">
+        <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+          <mat-icon class="!w-5 !h-5 !text-[20px]">water_drop</mat-icon>
+        </div>
+        <div>
+          <h2 class="font-semibold text-[15px] text-gray-900 dark:text-white">{{ 'Milk: keep out of the bulk tank' | t }}</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Only for milking animals.' | t }}</p>
+        </div>
+      </header>
+      <p *ngIf="!withdrawals().length" class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ 'No animal is under milk withdrawal.' | t }}</p>
+      <div *ngIf="withdrawals().length" class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40">
+            <tr>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Animal Tag' | t }}</th>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Medicine' | t }}</th>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Treated on' | t }}</th>
+              <th scope="col" class="px-4 py-3 font-semibold">{{ 'Safe To Milk Date' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let w of withdrawals()" class="border-t border-gray-100 dark:border-gray-700/60">
+              <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ w.animalTag }}</td>
+              <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ w.medicationName }}</td>
+              <td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ w.treatmentStartDate | date:'mediumDate' }}</td>
+              <td class="px-4 py-3 font-semibold text-blue-700 dark:text-blue-300 whitespace-nowrap">{{ w.safeToMilkDate | date:'mediumDate' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </div>
   `,
@@ -121,23 +152,47 @@ export class MilkWithdrawalComponent {
   private currentFarmId = toSignal(this.contextService.currentFarm$, { initialValue: null });
 
   private fetchParams = computed(() => ({
-    farmId: this.currentFarmId()?.id || '11111111-1111-1111-1111-111111111111',
+    farmId: this.currentFarmId()?.id || '',
     refresh: this.refreshTrigger()
   }));
 
-  withdrawals = toSignal(
+  /** Milk rows come from the withdrawal report; meat rows are worked out from recent treatments. */
+  private readonly result = toSignal(
     toObservable(this.fetchParams).pipe(
       tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
-      switchMap(({ farmId }) => this.healthService.getMilkWithdrawals(farmId).pipe(
-        catchError(err => {
-            this.loadError.set(parseApiError(err, 'Could not load milk withdrawals.'));
-            return of([] as MilkWithdrawalDto[]);
-          })
-      )),
+      switchMap(({ farmId }) => !farmId
+        ? of({ milk: [] as MilkWithdrawalDto[], meat: [] as MeatWithdrawalRow[] })
+        : forkJoin({
+            milk: this.healthService.getMilkWithdrawals(farmId),
+            treatments: this.healthService.getTreatments({ farmId, pageNumber: 1, pageSize: 100, sortBy: 'startdate', sortDesc: true })
+          }).pipe(
+            map(({ milk, treatments }) => ({ milk: milk as MilkWithdrawalDto[], meat: this.toMeatRows(treatments.items) })),
+            catchError(err => {
+              this.loadError.set(parseApiError(err, 'Could not load withdrawal periods.'));
+              return of({ milk: [] as MilkWithdrawalDto[], meat: [] as MeatWithdrawalRow[] });
+            })
+          )),
       tap(() => this.isLoading.set(false))
     ),
-    { initialValue: [] as MilkWithdrawalDto[] }
+    { initialValue: { milk: [] as MilkWithdrawalDto[], meat: [] as MeatWithdrawalRow[] } }
   );
+
+  readonly withdrawals = computed(() => this.result().milk);
+  readonly meatRows = computed(() => this.result().meat);
+
+  private toMeatRows(items: MedicalTreatmentDto[]): MeatWithdrawalRow[] {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return (items || [])
+      .filter(t => t.meatWithdrawalDays > 0 && !!t.startDate)
+      .map(t => {
+        const safe = new Date(t.startDate);
+        safe.setDate(safe.getDate() + t.meatWithdrawalDays);
+        return { tag: t.animalTagId || t.animalId.slice(0, 8), medicine: t.medicationName, startDate: t.startDate, safeDate: safe };
+      })
+      .filter(r => r.safeDate >= today)
+      .sort((a, b) => a.safeDate.getTime() - b.safeDate.getTime());
+  }
 
   loadWithdrawals() {
     this.refreshTrigger.update(v => v + 1);
@@ -147,24 +202,25 @@ export class MilkWithdrawalComponent {
     const el = this.reportSheet?.nativeElement;
     if (!el) return;
 
-    const items = this.withdrawals() || [];
+    const milkCount = this.withdrawals().length;
+    const meatCount = this.meatRows().length;
     const farm = this.contextService.currentFarmValue;
     const org = this.contextService.currentOrgValue;
 
     this.isExporting.set(true);
     try {
       await this.pdfExportService.exportElement(el, {
-        filename: `Farm360_Milk_Withdrawals_${toLocalIsoDate()}`,
+        filename: `Farm360_Withdrawal_Periods_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: this.i18n.t('Milk Withdrawal Compliance Report'),
-          subtitle: this.i18n.t('Active Clinical Treatment Milk Withholding Registry'),
+          title: this.i18n.t('Withdrawal Periods'),
+          subtitle: this.i18n.t('Animals whose meat or milk is not safe yet after medicine'),
           farmName: farm?.name || this.i18n.t('Primary Farm'),
-          orgName: org?.name || 'Farm360 Enterprise',
+          orgName: org?.name || 'Farm360',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: this.i18n.t('Active Restricted Animals'), value: `${items.length}` },
-            { label: this.i18n.t('Compliance Status'), value: this.i18n.t('Strict Isolation from Bulk Tank') }
+            { label: this.i18n.t('Meat withdrawal'), value: `${meatCount}` },
+            { label: this.i18n.t('Milk withdrawal'), value: `${milkCount}` }
           ]
         },
         showSignatures: true

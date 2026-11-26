@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -9,7 +10,7 @@ import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { InventoryService } from '../../services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
-import { CurrentStockSummary, InventoryItem, InventoryStatus } from '../../models/inventory.models';
+import { CurrentStockSummary, InventoryItem, InventoryStatus, stockStatusLabel } from '../../models/inventory.models';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -27,7 +28,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-current-stock',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -65,6 +66,7 @@ export class CurrentStockComponent implements OnInit {
   readonly pageIndex = signal(0);
   readonly pageSize = signal(20);
   readonly today = new Date();
+  readonly statusLabel = stockStatusLabel;
 
   constructor() {
     this.contextService.currentFarm$.pipe(
@@ -121,10 +123,10 @@ export class CurrentStockComponent implements OnInit {
 
   getStatusClass(status: InventoryStatus): string {
     switch (status) {
-      case InventoryStatus.Sufficient: return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border border-teal-200 dark:border-teal-800';
+      case InventoryStatus.Sufficient: return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
       case InventoryStatus.LowStock: return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
       case InventoryStatus.OutOfStock: return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800';
-      case InventoryStatus.Excess: return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800';
+      case InventoryStatus.Excess: return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   }

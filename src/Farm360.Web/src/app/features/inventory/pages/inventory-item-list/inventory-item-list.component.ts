@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -12,7 +13,7 @@ import { of } from 'rxjs';
 import { InventoryService } from '../../services/inventory.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import {
-  InventoryCategory, InventoryCategoryNames, InventoryItem, InventoryStatus, InventoryItemParams
+  InventoryCategory, InventoryCategoryNames, InventoryItem, InventoryStatus, InventoryItemParams, stockStatusLabel
 } from '../../models/inventory.models';
 import { CreateItemDialogComponent } from '../../components/dialogs/create-item-dialog/create-item-dialog.component';
 import { StockInDialogComponent } from '../../components/dialogs/stock-in-dialog/stock-in-dialog.component';
@@ -31,7 +32,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-inventory-item-list',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -46,24 +47,25 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header
-      [title]="'Stock Catalog & Inventory Items' | t"
-      [description]="'Manage feed, veterinary medicines, chemicals, equipment, stock thresholds, and unit costs.' | t"
-      [breadcrumbActiveNode]="'Stock Catalog' | t">
+      [title]="'Stock Items' | t"
+      [description]="'Feed, medicine and other items you keep in stock.' | t"
+      [breadcrumbActiveNode]="'Stock Items' | t">
       <div actions>
         <button (click)="openCreateItemDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Inventory Item' | t }}
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Stock Item' | t }}
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
       <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 
       <!-- Filters & Sorting Toolbar -->
-      <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 dark:bg-gray-900/30">
-        <div class="relative w-full sm:w-72">
+      <div class="p-4 border-b border-gray-100 dark:border-gray-800 grid grid-cols-2 sm:flex sm:flex-row sm:items-center gap-3 sm:gap-4 bg-gray-50/50 dark:bg-gray-900/30">
+        <div class="relative col-span-2 w-full sm:w-72">
           <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
           <input [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
             [placeholder]="'Search items by name or SKU...' | t"
@@ -81,8 +83,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <select [ngModel]="params().status ?? null" (ngModelChange)="onStatusChange($event)"
           class="w-full sm:w-48 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
           <option [ngValue]="null">{{ 'All Statuses' | t }}</option>
-          <option [ngValue]="InventoryStatus.Sufficient">{{ 'Sufficient' | t }}</option>
-          <option [ngValue]="InventoryStatus.LowStock">{{ 'Low Stock' | t }}</option>
+          <option [ngValue]="InventoryStatus.Sufficient">{{ 'In stock' | t }}</option>
+          <option [ngValue]="InventoryStatus.LowStock">{{ 'Running low' | t }}</option>
           <option [ngValue]="InventoryStatus.OutOfStock">{{ 'Out of Stock' | t }}</option>
         </select>
 
@@ -96,7 +98,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </select>
         
         <!-- Export Button -->
-        <button (click)="exportToCsv()" class="ml-auto sm:ml-2 px-3 py-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1">
+        <button (click)="exportToCsv()" class="justify-center sm:ml-2 px-3 py-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">download</mat-icon>
           {{ 'Export' | t }}
         </button>
@@ -108,72 +110,70 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         icon="inventory_2"
         [title]="'No inventory items found' | t"
         [description]="'Add your first stock item to start monitoring farm inventory.' | t"
-        [actionLabel]="'Add Inventory Item' | t"
+        [actionLabel]="'Add Stock Item' | t"
         (action)="openCreateItemDialog()">
       </app-empty-state>
 
       <!-- Items Grid -->
-      <div *ngIf="!loading() && result()?.items?.length" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngIf="!loading() && result()?.items?.length" class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         @for (item of result()?.items; track item.id) {
-          <div class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col justify-between">
-            <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">inventory_2</mat-icon>
+          <div class="group relative bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors overflow-hidden flex flex-col justify-between">
 
             <!-- Card Header -->
-            <div class="p-5 flex items-start justify-between border-b border-gray-50 dark:border-gray-700/50 relative z-10">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+            <div class="p-4 sm:p-5 flex items-start justify-between gap-3 border-b border-gray-100 dark:border-gray-700/50">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <mat-icon class="!w-5 !h-5 !text-[20px]">inventory_2</mat-icon>
                 </div>
-                <div>
-                  <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight group-hover:text-emerald-600 transition-colors">{{ item.name }}</h3>
+                <div class="min-w-0">
+                  <h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight ">{{ item.name }}</h3>
                   <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-400">
                     {{ 'SKU: {sku}' | t: { sku: item.sku } }} • {{ item.categoryName | t }}
                   </span>
                 </div>
               </div>
 
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
+              <span class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap"
                 [ngClass]="{
-                  'bg-emerald-50 text-emerald-700 border border-emerald-200': item.status === InventoryStatus.Sufficient,
-                  'bg-amber-50 text-amber-700 border border-amber-200': item.status === InventoryStatus.LowStock,
-                  'bg-red-50 text-red-700 border border-red-200': item.status === InventoryStatus.OutOfStock,
-                  'bg-blue-50 text-blue-700 border border-blue-200': item.status === InventoryStatus.Excess
+                  'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800': item.status === InventoryStatus.Sufficient || item.status === InventoryStatus.Excess,
+                  'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800': item.status === InventoryStatus.LowStock,
+                  'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800': item.status === InventoryStatus.OutOfStock
                 }">
-                {{ item.statusName | t }}
+                {{ statusLabel(item.statusName) | t }}
               </span>
             </div>
 
             <!-- Card Body -->
-            <div class="p-5 flex-1 relative z-10">
+            <div class="p-4 sm:p-5 flex-1">
               <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50/80 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 mb-4">
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Current Stock' | t }}</div>
-                  <div class="font-extrabold text-gray-900 dark:text-white text-base mt-0.5">{{ item.currentStock }} {{ item.unitOfMeasure }}</div>
+                  <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'In Stock' | t }}</div>
+                  <div class="font-bold text-gray-900 dark:text-white text-base mt-0.5">{{ item.currentStock | number:'1.0-2' }} {{ item.unitOfMeasure }}</div>
                 </div>
                 <div>
-                  <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Reorder Level' | t }}</div>
+                  <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Reorder Level' | t }}</div>
                   <div class="font-bold text-gray-600 dark:text-gray-400 text-sm mt-0.5">{{ item.reorderThreshold }} {{ item.unitOfMeasure }}</div>
                 </div>
               </div>
 
-              <div class="flex items-center justify-between text-xs mb-1 text-gray-400">
-                <span>{{ 'Weighted Avg Cost' | t }}</span>
-                <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ item.weightedAverageCostBdt | money:2 }} / {{ item.unitOfMeasure }}</span>
+              <div class="flex items-center justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+                <span>{{ 'Average Cost' | t }}</span>
+                <span class="font-semibold text-gray-700 dark:text-gray-300">{{ item.weightedAverageCostBdt | money:2 }} / {{ item.unitOfMeasure }}</span>
               </div>
-              <div class="flex items-center justify-between text-xs text-gray-400">
+              <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>{{ 'Total Value' | t }}</span>
-                <span class="font-extrabold text-gray-900 dark:text-white">{{ item.totalValueBdt | money }}</span>
+                <span class="font-bold text-gray-900 dark:text-white">{{ item.totalValueBdt | money }}</span>
               </div>
             </div>
 
             <!-- Footer Action -->
-            <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between relative z-10">
-              <button (click)="openStockInDialog(item)" class="px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1">
+            <div class="p-3 bg-gray-50/80 dark:bg-gray-900/40 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between gap-2">
+              <button (click)="openStockInDialog(item)" class="min-h-[36px] px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_business</mat-icon> {{ 'Stock In' | t }}
               </button>
               <div class="flex items-center gap-1">
                 <button (click)="openStockOutDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 transition-colors inline-flex items-center gap-1">
-                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">remove</mat-icon> {{ 'Out' | t }}
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">remove</mat-icon> {{ 'Stock Out' | t }}
                 </button>
                 <button (click)="openEditDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors inline-flex items-center gap-1">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Edit' | t }}
@@ -188,7 +188,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       </div>
 
       <!-- Pagination Footer -->
-      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+      <div *ngIf="!loading() && result()?.items?.length" class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">
           {{ 'Showing {from} to {to} of {total} items' | t: { from: pageStart(), to: pageEnd(), total: result()?.totalCount ?? 0 } }}
         </div>
@@ -242,6 +242,7 @@ export class InventoryItemListComponent {
   private readonly refreshTrigger = signal(0);
   private readonly InventoryCategoryNames = InventoryCategoryNames;
   readonly InventoryStatus = InventoryStatus;
+  readonly statusLabel = stockStatusLabel;
   readonly categoryOptions = [
     { value: InventoryCategory.Feed, label: InventoryCategoryNames[InventoryCategory.Feed] },
     { value: InventoryCategory.Medicine, label: InventoryCategoryNames[InventoryCategory.Medicine] },

@@ -31,7 +31,7 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
   standalone: true,
   imports: [TranslatePipe, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
   template: `
-    <app-page-header [title]="'Feeding Plans · খাওয়ানোর পরিকল্পনা' | t" [description]="'Who eats what: every animal and what it is fed each day. Set, change, pause or stop plans here.' | t"
+    <app-page-header [title]="'Feeding Plans' | t" [description]="'Who eats what each day. Set, change, pause or stop plans here.' | t"
       [breadcrumbActiveNode]="'Feeding Plans' | t">
       <div actions>
         <button mat-flat-button (click)="openSetRation()" class="!rounded-xl !bg-emerald-600 !text-white">
@@ -40,7 +40,7 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
       </div>
     </app-page-header>
 
-    <div class="px-6 py-4 mx-auto max-w-7xl">
+    <div>
       <app-feeding-subnav></app-feeding-subnav>
 
       <div *ngIf="error()" class="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-sm text-rose-700 dark:text-rose-300">{{ error() }}</div>

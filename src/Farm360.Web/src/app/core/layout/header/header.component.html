@@ -25,16 +25,15 @@
       {{ i18n.isBangla ? 'English' : 'বাংলা' }}
     </button>
 
-    <!-- Theme Switcher -->
-    <button mat-icon-button (click)="toggleTheme()" [matTooltip]="(isDarkMode() ? 'Light Mode' : 'Dark Mode') | t" [attr.aria-label]="(isDarkMode() ? 'Light Mode' : 'Dark Mode') | t" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
-      <mat-icon class="!w-5 !h-5 !text-[20px]">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-    </button>
-
     <!-- Context Selector Component (inline from md; mobile uses the dialog below) -->
     <app-context-selector class="hidden md:block"></app-context-selector>
-    <button mat-icon-button class="md:hidden text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200" (click)="openContextDialog()" [matTooltip]="'Switch organisation / branch / farm' | t" [attr.aria-label]="'Switch organisation, branch or farm' | t">
-      <mat-icon class="!w-5 !h-5 !text-[20px]">swap_horiz</mat-icon>
-    </button>
+    <!-- Phone switcher: only when there is more than one organisation, branch or farm to pick from.
+         Wrapped in a span because the Material button's own display rule beats md:hidden. -->
+    <span *ngIf="hasChoices$ | async" class="md:hidden">
+      <button mat-icon-button class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200" (click)="openContextDialog()" [matTooltip]="'Switch organisation / branch / farm' | t" [attr.aria-label]="'Switch organisation, branch or farm' | t">
+        <mat-icon class="!w-5 !h-5 !text-[20px]">swap_horiz</mat-icon>
+      </button>
+    </span>
 
     <!-- Notifications -->
     <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" (menuOpened)="onNotificationsOpen()" [matTooltip]="'Notifications' | t" [attr.aria-label]="signalRService.unreadCount() > 0 ? ('Notifications, {count} unread' | t: { count: signalRService.unreadCount() }) : ('Notifications' | t)" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors relative">
@@ -97,9 +96,15 @@
         <span>{{ 'Settings' | t }}</span>
       </button>
 
+      <!-- Theme (moved here from the header bar to keep it uncluttered) -->
+      <button mat-menu-item (click)="toggleTheme()" class="text-sm text-gray-700 dark:text-gray-300">
+        <mat-icon class="text-gray-400">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        <span>{{ (isDarkMode() ? 'Light Mode' : 'Dark Mode') | t }}</span>
+      </button>
+
       <!-- Mobile Only Context Options -->
       <mat-divider class="dark:border-gray-800/50 md:hidden"></mat-divider>
-      <button mat-menu-item (click)="openContextDialog()" class="text-sm text-gray-700 dark:text-gray-300 md:hidden">
+      <button mat-menu-item (click)="openContextDialog()" class="text-sm text-gray-700 dark:text-gray-300 md:!hidden">
         <mat-icon class="text-gray-400">swap_horiz</mat-icon>
         <span>{{ 'Change Organization / Branch / Farm' | t }}</span>
       </button>

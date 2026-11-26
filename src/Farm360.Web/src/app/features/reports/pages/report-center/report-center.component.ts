@@ -17,11 +17,11 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
  *
  * Aligned with Farm360 UI Architecture:
  * - Uses <app-page-header> with breadcrumb and search action
- * - Uses standard glassmorphic card container
+ * - Cards sit directly on the page (no card-in-card)
  * - Uses <app-loading> overlay and <app-empty-state>
  * - High-contrast text colors: text-gray-900 dark:text-white for headers,
  *   text-gray-600 dark:text-gray-300 for descriptions, vibrant emerald accents
- * - Grid cards with gradient badges and watermark icon
+ * - Plain grid cards; the section header names the category
  */
 @Component({
   selector: 'app-report-center',
@@ -41,18 +41,18 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   template: `
     <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       <app-page-header
-        [title]="'Reports Center' | t"
-        [description]="'Printable, exportable analytical and operational reports across every module.' | t"
+        [title]="'Reports' | t"
+        [description]="'Open, print or download any report.' | t"
         [breadcrumbActiveNode]="'Reports' | t">
-        <div actions class="flex items-center gap-3">
-          <div class="relative w-64 sm:w-80">
+        <div actions class="flex items-center gap-3 w-full sm:w-auto">
+          <div class="relative w-full sm:w-80">
             <mat-icon class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 !text-[18px] !w-[18px] !h-[18px]">search</mat-icon>
             <input
               type="text"
               [placeholder]="'Search reports...' | t"
               [ngModel]="query()"
               (ngModelChange)="query.set($event)"
-              class="w-full pl-10 pr-9 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs"
+              class="w-full pl-10 pr-9 min-h-[44px] py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs"
             />
             <button
               *ngIf="query()"
@@ -68,7 +68,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
       <!-- Category filter -->
       @if (!loading() && !error() && catalog().length > 0) {
-        <div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'Filter by category' | t">
+        <div class="flex items-center gap-2 overflow-x-auto sm:flex-wrap -mx-4 px-4 sm:mx-0 sm:px-0 pb-1" role="group" [attr.aria-label]="'Filter by category' | t">
           <button type="button" (click)="category.set(null)"
                   [class]="chipClass(category() === null)">{{ 'All ({n})' | t: { n: catalog().length } }}</button>
           @for (c of categories(); track c.category) {
@@ -97,12 +97,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </div>
       }
 
-      <!-- Glassmorphic Main Container -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-5 sm:p-6 min-h-[400px]">
+      <!-- Catalog -->
+      <div class="relative min-h-[400px]">
         <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
         <!-- Error State -->
-        <div *ngIf="error()" class="flex flex-col items-center justify-center p-12 text-center">
+        <div *ngIf="error()" class="flex flex-col items-center justify-center p-12 text-center bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm">
           <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mb-3">
             <mat-icon class="!text-[24px] !w-[24px] !h-[24px]">error_outline</mat-icon>
           </div>
@@ -133,7 +133,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           @for (group of grouped(); track group.category) {
             <section class="space-y-4">
               <!-- Category Header -->
-              <div class="flex items-center gap-2.5 pb-2.5 border-b border-gray-100 dark:border-gray-700/60">
+              <div class="flex items-center gap-2.5">
                 <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">{{ icon(group.category) }}</mat-icon>
                 </div>
@@ -146,24 +146,19 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               </div>
 
               <!-- Cards Grid -->
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @for (report of group.reports; track report.key) {
                   <a
                     [routerLink]="['/reports', report.key]"
-                    class="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col p-5 no-underline"
+                    class="group relative bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm hover:shadow-md hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all duration-200 overflow-hidden flex flex-col p-5 no-underline"
                   >
-                    <!-- Background Watermark -->
-                    <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 dark:text-emerald-400/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">
-                      {{ icon(group.category) }}
-                    </mat-icon>
-
                     <!-- Header & Badge -->
                     <div class="flex items-start gap-3.5 mb-3 relative z-10">
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0 group-hover:scale-105 transition-transform duration-300">
+                      <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                         <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">{{ icon(group.category) }}</mat-icon>
                       </div>
                       <button type="button"
-                              class="order-last shrink-0 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                              class="order-last shrink-0 w-10 h-10 -mt-2 -mr-2 flex items-center justify-center rounded-full hover:bg-amber-50 dark:hover:bg-amber-950/40"
                               [attr.aria-label]="(isFavourite(report.key) ? 'Remove from favourites' : 'Add to favourites') | t"
                               [attr.aria-pressed]="isFavourite(report.key)"
                               (click)="toggleFavourite($event, report.key)">
@@ -178,7 +173,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                           {{ reportTitle(report) }}
                         </h3>
                         @if (secondaryTitle(report); as second) {
-                          <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 m-0 mt-0.5">
+                          <p class="text-xs font-medium text-gray-500 dark:text-gray-400 m-0 mt-0.5">
                             {{ second }}
                           </p>
                         }
@@ -186,16 +181,13 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     </div>
 
                     <!-- Description -->
-                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1 relative z-10 m-0">
+                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1 relative z-10 m-0 line-clamp-3" [title]="reportDescription(report)">
                       {{ reportDescription(report) }}
                     </p>
 
                     <!-- Footer Action -->
-                    <div class="pt-3 border-t border-gray-50 dark:border-gray-800/80 flex items-center justify-between mt-auto relative z-10">
-                      <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                        {{ group.category | t }}
-                      </span>
-                      <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
+                    <div class="flex items-center justify-end mt-auto relative z-10">
+                      <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                         {{ 'Open Report' | t }}
                         <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">arrow_forward</mat-icon>
                       </span>
@@ -210,7 +202,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
       <!-- Recent runs (audit history) with "run again" -->
       @if (!loading() && !error()) {
-        <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 sm:p-6">
+        <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-200/70 dark:border-gray-700/60 p-5 sm:p-6">
           <div class="flex items-center gap-2 mb-3">
             <mat-icon class="text-emerald-600 !text-[18px] !w-[18px] !h-[18px]">history</mat-icon>
             <h2 class="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200 m-0">{{ 'Recent runs' | t }}</h2>
@@ -366,10 +358,10 @@ export class ReportCenterComponent implements OnInit {
   }
 
   protected chipClass(active: boolean): string {
-    const base = 'text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ';
+    const base = 'shrink-0 whitespace-nowrap min-h-[36px] text-xs font-semibold px-3.5 py-1.5 rounded-full border transition-colors ';
     return base + (active
       ? 'bg-emerald-600 border-emerald-600 text-white'
-      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-emerald-500');
+      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-emerald-500 dark:hover:border-emerald-500');
   }
 
   protected isFavourite(key: string): boolean {

@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRe
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -26,7 +27,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-trial-balance',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [MatMenuModule, MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterLink,
@@ -43,15 +44,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   template: `
     <app-page-header 
       [title]="'Trial Balance' | t" 
-      [description]="'Comprehensive summary of debit and credit ledger balances ensuring double-entry mathematical integrity.' | t"
+      [description]="'Debit and credit totals for every account. Both sides should match.' | t"
       [breadcrumbActiveNode]="'Trial Balance' | t">
-      <div actions class="flex items-center gap-3">
-        <a mat-stroked-button routerLink="/finance"
-          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-          <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>{{ 'Overview' | t }}</span>
-        </a>
-        <form [formGroup]="filterForm" class="flex items-center gap-2">
+      <div actions class="flex flex-wrap items-center gap-2">
+        <form [formGroup]="filterForm" class="flex flex-wrap items-center gap-2">
           <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-medium">
             <span class="text-gray-500 dark:text-gray-400">{{ 'As of:' | t }}</span>
             <input 
@@ -60,25 +56,20 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               class="bg-transparent text-gray-800 dark:text-gray-200 text-xs font-semibold outline-none cursor-pointer" />
           </div>
         </form>
-        <a mat-stroked-button routerLink="/reports/finance.trial-balance"
-          matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
-          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>{{ 'SAP Report' | t }}</span>
-        </a>
-        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !tbData()"
-          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
-          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu"
+          class="!rounded-xl !min-h-[40px] !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">download</mat-icon>
+          <span>{{ 'Download' | t }}</span>
+          <mat-icon iconPositionEnd class="!w-4 !h-4 !text-[16px]">expand_more</mat-icon>
         </button>
-        <button mat-stroked-button (click)="exportExcel()" [disabled]="!tbData()"
-          class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">file_download</mat-icon>
-          <span>Excel</span>
-        </button>
-        <button mat-stroked-button (click)="printReport()"
-          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-          <mat-icon class="text-sm">print</mat-icon>
+        <mat-menu #exportMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="exportPdf()" [disabled]="isExporting() || !tbData()"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+          <button mat-menu-item (click)="exportExcel()" [disabled]="!tbData()"><mat-icon>grid_on</mat-icon><span>{{ 'Download Excel' | t }}</span></button>
+          <a mat-menu-item routerLink="/reports/finance.trial-balance"><mat-icon>table_view</mat-icon><span>{{ 'Open as report' | t }}</span></a>
+        </mat-menu>
+        <button mat-flat-button type="button" (click)="printReport()"
+          class="!rounded-xl !min-h-[40px] !bg-primary-600 hover:!bg-primary-700 !text-white !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">print</mat-icon>
           <span>{{ 'Print' | t }}</span>
         </button>
       </div>
@@ -104,7 +95,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <!-- Top Status & KPI Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <!-- Total Debits -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Debits' | t }}</p>
@@ -113,15 +104,14 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 </h3>
                 <p class="text-[11px] text-gray-400 mt-0.5">{{ 'Assets, Expenses, Drawings' | t }}</p>
               </div>
-              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+              <div class="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center">
                 <mat-icon class="text-lg">arrow_downward</mat-icon>
               </div>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-blue-500/5 rotate-[-10deg] pointer-events-none">account_balance</mat-icon>
           </div>
 
           <!-- Total Credits -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Credits' | t }}</p>
@@ -130,15 +120,14 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 </h3>
                 <p class="text-[11px] text-gray-400 mt-0.5">{{ 'Revenue, Liabilities, Capital' | t }}</p>
               </div>
-              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <mat-icon class="text-lg">arrow_upward</mat-icon>
               </div>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">savings</mat-icon>
           </div>
 
           <!-- Balance Integrity -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden"
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden"
                [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20' : 'bg-gradient-to-br from-amber-50/60 to-rose-50/60 dark:from-amber-950/20 dark:to-rose-950/20'">
             <div class="flex items-center justify-between">
               <div>
@@ -156,15 +145,14 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 </p>
               </div>
               <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white"
-                   [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20' : 'bg-gradient-to-br from-rose-500 to-amber-600 shadow-md shadow-rose-500/20'">
+                   [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-rose-500 to-amber-600 shadow-md shadow-rose-500/20'">
                 <mat-icon class="text-lg">{{ data.isBalanced ? 'verified' : 'priority_high' }}</mat-icon>
               </div>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">balance</mat-icon>
           </div>
 
           <!-- Total Accounts -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Active Accounts' | t }}</p>
@@ -173,11 +161,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 </h3>
                 <p class="text-[11px] text-gray-400 mt-0.5">{{ 'As of {date}' | t: { date: (data.asOfDate | date:'mediumDate') } }}</p>
               </div>
-              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
+              <div class="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center">
                 <mat-icon class="text-lg">format_list_bulleted</mat-icon>
               </div>
             </div>
-            <mat-icon class="absolute -right-4 -bottom-4 text-[90px] text-purple-500/5 rotate-[-10deg] pointer-events-none">receipt</mat-icon>
           </div>
         </div>
 
@@ -234,7 +221,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </div>
 
         <!-- Main Trial Balance Table -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative print:border-none print:shadow-none">
+        <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative print:border-none print:shadow-none">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>

@@ -25,6 +25,9 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { HealthFilterBarComponent } from '../../components/health-filter-bar/health-filter-bar.component';
+import { AnimalTagLookupService } from '../../services/animal-tag-lookup.service';
 
 @Component({
   selector: 'app-mortality-list',
@@ -40,7 +43,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     PageHeaderComponent,
     EmptyStateComponent,
     LoadingComponent,
-    TranslatePipe
+    TranslatePipe,
+    HealthNavComponent,
+    HealthFilterBarComponent
   ],
   templateUrl: './mortality-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -52,6 +57,7 @@ export class MortalityListComponent {
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
   private readonly i18n = inject(I18nService);
+  private readonly tagLookup = inject(AnimalTagLookupService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -62,7 +68,8 @@ export class MortalityListComponent {
 
   // State
   pageIndex = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(12);
+  readonly search = signal('');
   refreshTrigger = signal(0);
   isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -78,14 +85,15 @@ export class MortalityListComponent {
     pageIndex: this.pageIndex(),
     pageSize: this.pageSize(),
     farmId: this.currentFarm()?.id,
+    search: this.search() || undefined,
     refresh: this.refreshTrigger()
   }));
 
   private mortalitiesResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
-      switchMap(({ pageIndex, pageSize, farmId }) => 
-        this.healthService.getMortalityRecords({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
+      switchMap(({ pageIndex, pageSize, farmId, search }) =>
+        this.healthService.getMortalityRecords({ pageNumber: pageIndex + 1, pageSize, farmId, search }).pipe(
           catchError(err => {
             this.loadError.set(parseApiError(err, 'Could not load mortality records.'));
             return of({ items: [], totalCount: 0 });
@@ -99,6 +107,19 @@ export class MortalityListComponent {
 
   dataSource = computed(() => this.mortalitiesResult().items);
   totalItems = computed(() => this.mortalitiesResult().totalCount);
+
+  /** Ear tags for the animals on this page (the API row only carries the animal id). */
+  readonly tags = toSignal(
+    toObservable(this.dataSource).pipe(
+      switchMap(items => this.tagLookup.tagsFor(items.map((m: any) => m.animalId)))
+    ),
+    { initialValue: {} as Record<string, string> }
+  );
+
+  setSearch(value: string): void {
+    this.search.set(value);
+    this.pageIndex.set(0);
+  }
 
   onPageChange(event: any): void {
     this.pageIndex.set(event.pageIndex);
@@ -151,14 +172,14 @@ export class MortalityListComponent {
         filename: `Farm360_Mortality_Report_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: this.i18n.t('Mortality & Loss Audit Report'),
-          subtitle: this.i18n.t('Animal Casualty & Economic Impact Registry'),
+          title: this.i18n.t('Animal Deaths'),
+          subtitle: this.i18n.t('Animals that died, with cause and estimated loss'),
           farmName: farm?.name || this.i18n.t('Primary Farm'),
-          orgName: org?.name || 'Farm360 Enterprise',
+          orgName: org?.name || 'Farm360',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: this.i18n.t('Total Recorded Losses'), value: `${total}` },
-            { label: this.i18n.t('Audit Window'), value: this.i18n.t('Complete Farm Registry') }
+            { label: this.i18n.t('Total deaths'), value: `${total}` },
+            { label: this.i18n.t('In this PDF'), value: `${items.length}` }
           ]
         },
         showSignatures: true

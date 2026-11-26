@@ -1,27 +1,22 @@
-<app-page-header 
-  [title]="'Financial Intelligence & Analytics' | t" 
-  [description]="'Executive dashboard for farm revenue, operating expenses, cash flow projections, and profit margins.' | t"
+<app-page-header
+  [title]="'Finance overview' | t"
+  [description]="'Money in, money out and profit for this farm.' | t"
   [breadcrumbActiveNode]="'Finance Overview' | t">
-  <div actions class="flex flex-wrap items-center gap-3">
-    <a mat-stroked-button routerLink="/finance/transactions"
-      class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2">
-      <mat-icon class="text-teal-600">receipt_long</mat-icon>
-      <span>{{ 'General Ledger' | t }}</span>
-    </a>
-    <button mat-flat-button color="accent" 
-      class="rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-4 py-2" 
+  <div actions class="flex flex-wrap items-center gap-2">
+    <button mat-flat-button
+      class="!rounded-xl !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 !min-h-[44px]"
       (click)="openIncomeDialog()">
       <mat-icon>arrow_downward</mat-icon>
       <span>{{ 'Record Income' | t }}</span>
     </button>
-    <button mat-flat-button color="warn"
-      class="rounded-xl shadow-md bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 px-4 py-2"
+    <button mat-stroked-button
+      class="!rounded-xl !border-rose-200 dark:!border-rose-800 !text-rose-700 dark:!text-rose-300 hover:!bg-rose-50 dark:hover:!bg-rose-950/30 flex items-center gap-2 !min-h-[44px]"
       (click)="openExpenseDialog()">
       <mat-icon>arrow_upward</mat-icon>
       <span>{{ 'Record Expense' | t }}</span>
     </button>
     <button mat-stroked-button *hasPermission="'finance.admin'"
-      class="rounded-xl border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-400 flex items-center gap-2 px-4 py-2"
+      class="!rounded-xl !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-2 !min-h-[44px]"
       (click)="openAllocateOverheadDialog()">
       <mat-icon>engineering</mat-icon>
       <span>{{ 'Allocate Labor & Overhead' | t }}</span>
@@ -54,102 +49,98 @@
   <div *ngIf="dashboardData() as data" class="space-y-6">
 
     <!-- KPI Metric Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
       
       <!-- Revenue (MTD) -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-4 sm:p-5 border border-gray-200/70 dark:border-gray-700/60 shadow-sm min-w-0">
         <div class="flex justify-between items-start">
           <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Revenue (MTD)' | t }}</p>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Income this month' | t }}</p>
+            <h3 class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
               {{ data.revenueMtdBdt | money }}
             </h3>
           </div>
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+          <div class="hidden sm:flex w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 items-center justify-center shrink-0">
             <mat-icon class="text-xl">trending_up</mat-icon>
           </div>
         </div>
-        <div class="mt-4 flex items-center text-xs">
+        <div class="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
           <span class="font-semibold flex items-center"
             [ngClass]="data.revenueMomPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
             <mat-icon class="text-sm mr-0.5">{{ data.revenueMomPercent >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             {{ Math.abs(data.revenueMomPercent) }}%
           </span>
-          <span class="text-gray-400 ml-1.5">{{ 'vs last month' | t }}</span>
-          <span class="ml-auto text-gray-400">{{ 'Fiscal YTD: {amount}' | t: { amount: (data.revenueYtdBdt | money) } }}</span>
+          <span class="text-gray-400">{{ 'vs last month' | t }}</span>
+          <span class="w-full text-gray-400">{{ 'This year: {amount}' | t: { amount: (data.revenueYtdBdt | money) } }}</span>
         </div>
-        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-emerald-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
       </div>
 
       <!-- Expenses (MTD) -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-4 sm:p-5 border border-gray-200/70 dark:border-gray-700/60 shadow-sm min-w-0">
         <div class="flex justify-between items-start">
           <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Expenses (MTD)' | t }}</p>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Expenses this month' | t }}</p>
+            <h3 class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
               {{ data.expensesMtdBdt | money }}
             </h3>
           </div>
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+          <div class="hidden sm:flex w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 items-center justify-center shrink-0">
             <mat-icon class="text-xl">receipt_long</mat-icon>
           </div>
         </div>
-        <div class="mt-4 flex items-center text-xs">
+        <div class="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
           <span class="font-semibold flex items-center"
             [ngClass]="data.expensesMomPercent <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
             <mat-icon class="text-sm mr-0.5">{{ data.expensesMomPercent <= 0 ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
             {{ Math.abs(data.expensesMomPercent) }}%
           </span>
-          <span class="text-gray-400 ml-1.5">{{ 'vs last month' | t }}</span>
-          <span class="ml-auto text-gray-400">{{ 'Fiscal YTD: {amount}' | t: { amount: (data.expensesYtdBdt | money) } }}</span>
+          <span class="text-gray-400">{{ 'vs last month' | t }}</span>
+          <span class="w-full text-gray-400">{{ 'This year: {amount}' | t: { amount: (data.expensesYtdBdt | money) } }}</span>
         </div>
-        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-rose-500/5 rotate-[-10deg] pointer-events-none">receipt_long</mat-icon>
       </div>
 
       <!-- Net Profit (MTD) -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-4 sm:p-5 border border-gray-200/70 dark:border-gray-700/60 shadow-sm min-w-0">
         <div class="flex justify-between items-start">
           <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Net Profit (MTD)' | t }}</p>
-            <h3 class="text-2xl font-bold mt-1"
+            <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Profit this month' | t }}</p>
+            <h3 class="text-lg sm:text-2xl font-bold mt-1"
               [ngClass]="data.netProfitMtdBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
               {{ data.netProfitMtdBdt | money }}
             </h3>
           </div>
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+          <div class="hidden sm:flex w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 items-center justify-center shrink-0">
             <mat-icon class="text-xl">savings</mat-icon>
           </div>
         </div>
-        <div class="mt-4 flex items-center text-xs">
+        <div class="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
           <span class="font-semibold flex items-center"
             [ngClass]="data.netProfitMomPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
             <mat-icon class="text-sm mr-0.5">{{ data.netProfitMomPercent >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             {{ Math.abs(data.netProfitMomPercent) }}%
           </span>
-          <span class="text-gray-400 ml-1.5">{{ 'vs last month' | t }}</span>
-          <span class="ml-auto text-gray-400">{{ 'Fiscal YTD: {amount}' | t: { amount: (data.netProfitYtdBdt | money) } }}</span>
+          <span class="text-gray-400">{{ 'vs last month' | t }}</span>
+          <span class="w-full text-gray-400">{{ 'This year: {amount}' | t: { amount: (data.netProfitYtdBdt | money) } }}</span>
         </div>
-        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-blue-500/5 rotate-[-10deg] pointer-events-none">savings</mat-icon>
       </div>
 
       <!-- Profit Margin % -->
-      <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-4 sm:p-5 border border-gray-200/70 dark:border-gray-700/60 shadow-sm min-w-0">
         <div class="flex justify-between items-start">
           <div>
             <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Profit Margin' | t }}</p>
-            <h3 class="text-2xl font-bold mt-1"
-              [ngClass]="(data.profitMarginPercent ?? 0) >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'">
+            <h3 class="text-lg sm:text-2xl font-bold mt-1"
+              [ngClass]="(data.profitMarginPercent ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
               {{ data.profitMarginPercent | number:'1.1-1' }}%
             </h3>
           </div>
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+          <div class="hidden sm:flex w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 items-center justify-center shrink-0">
             <mat-icon class="text-xl">pie_chart</mat-icon>
           </div>
         </div>
         <div class="mt-4 flex items-center text-xs text-gray-400">
-          <span>{{ 'Fiscal YTD Total: {amount}' | t: { amount: ((data.netProfitYtdBdt ?? 0) >= 0 ? '+' : '') + (data.netProfitYtdBdt | money) } }}</span>
+          <span>{{ 'Profit this year: {amount}' | t: { amount: ((data.netProfitYtdBdt ?? 0) >= 0 ? '+' : '') + (data.netProfitYtdBdt | money) } }}</span>
         </div>
-        <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-amber-500/5 rotate-[-10deg] pointer-events-none">pie_chart</mat-icon>
       </div>
 
     </div>
@@ -158,11 +149,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
       <!-- 6-Month Cash Flow Trend Bar Visualization -->
-      <div class="lg:col-span-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm">
+      <div class="lg:col-span-7 bg-white dark:bg-gray-800/80 rounded-2xl p-5 sm:p-6 border border-gray-200/70 dark:border-gray-700/60 shadow-sm">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h4 class="text-base font-bold text-gray-900 dark:text-white">{{ '6-Month Cash Flow Dynamics' | t }}</h4>
-            <p class="text-xs text-gray-400">{{ 'Monthly comparison of revenue vs. operational costs' | t }}</p>
+            <h4 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Last 6 months' | t }}</h4>
+            <p class="text-xs text-gray-400">{{ 'Income and expenses each month' | t }}</p>
           </div>
           <div class="flex items-center gap-4 text-xs font-medium">
             <span class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
@@ -213,14 +204,13 @@
       </div>
 
       <!-- Top Expense Categories Breakdown -->
-      <div class="lg:col-span-5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col justify-between">
+      <div class="lg:col-span-5 bg-white dark:bg-gray-800/80 rounded-2xl p-5 sm:p-6 border border-gray-200/70 dark:border-gray-700/60 shadow-sm flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h4 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Operating Expense Structure' | t }}</h4>
-              <p class="text-xs text-gray-400">{{ 'Distribution across operational cost centers' | t }}</p>
+              <h4 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Where the money goes' | t }}</h4>
+              <p class="text-xs text-gray-400">{{ 'Expenses this month by category' | t }}</p>
             </div>
-            <mat-icon class="text-rose-500">donut_large</mat-icon>
           </div>
 
           <div *ngIf="data.expenseBreakdown && data.expenseBreakdown.length > 0" class="space-y-4 mt-5">
@@ -230,7 +220,7 @@
                 <span class="text-gray-900 dark:text-white">{{ cat.amountBdt | money }} ({{ cat.percentage | number:'1.0-1' }}%)</span>
               </div>
               <div class="w-full bg-gray-100 dark:bg-gray-700/60 rounded-full h-2.5 overflow-hidden">
-                <div class="h-2.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-500" [style.width.%]="cat.percentage"></div>
+                <div class="h-2.5 rounded-full bg-rose-500 transition-all duration-500" [style.width.%]="cat.percentage"></div>
               </div>
             </div>
           </div>
@@ -241,7 +231,7 @@
         </div>
 
         <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs">
-          <span class="text-gray-500">{{ 'Monthly Expense Total:' | t }}</span>
+          <span class="text-gray-500">{{ 'Total this month' | t }}</span>
           <span class="font-bold text-rose-600 dark:text-rose-400">{{ data.expensesMtdBdt | money }}</span>
         </div>
       </div>
@@ -249,14 +239,14 @@
     </div>
 
     <!-- Recent Transactions Mini-Table -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-100 dark:border-gray-800/50 shadow-sm">
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 sm:p-6 border border-gray-200/70 dark:border-gray-700/60 shadow-sm">
       <div class="flex items-center justify-between mb-4">
         <div>
-          <h4 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Recent Journal Entries' | t }}</h4>
-          <p class="text-xs text-gray-400">{{ 'Latest synchronized revenue and expense postings' | t }}</p>
+          <h4 class="text-base font-bold text-gray-900 dark:text-white">{{ 'Recent entries' | t }}</h4>
+          <p class="text-xs text-gray-400">{{ 'The latest income and expenses' | t }}</p>
         </div>
         <a routerLink="/finance/transactions" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
-          <span>{{ 'View All in General Ledger' | t }}</span>
+          <span>{{ 'Open ledger' | t }}</span>
           <mat-icon class="text-base">arrow_forward</mat-icon>
         </a>
       </div>

@@ -1,6 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -36,7 +38,26 @@ export class SidebarComponent {
   ];
 
   bottomMenuItems: MenuItem[] = [
-    { icon: 'workspace_premium', label: 'Subscription & Plans', route: '/settings/billing' },
+    { icon: 'workspace_premium', label: 'Subscription', route: '/settings/billing' },
     { icon: 'settings', label: 'Settings', route: '/settings' }
   ];
+
+  private readonly router = inject(Router);
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects),
+      startWith(this.router.url)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  /** The longest bottom-menu route that prefixes the current URL wins, so only one item is lit. */
+  isBottomItemActive(item: MenuItem): boolean {
+    const path = (this.url() || '').split(/[?#]/)[0];
+    const matches = this.bottomMenuItems
+      .filter(i => i.route && (path === i.route || path.startsWith(i.route + '/')))
+      .sort((a, b) => b.route!.length - a.route!.length);
+    return matches[0] === item;
+  }
 }

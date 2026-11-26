@@ -3,8 +3,8 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, combineLatest, of, switchMap, tap } from 'rxjs';
@@ -18,6 +18,7 @@ import { FullAccountsReport } from '../../models/finance.model';
 import { ACCOUNTS_PAPER_CSS, RANGE_PRESETS, printPaper, toIsoDate } from '../../utils/accounts-report-print';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 /** Sections the user can include or leave out of the statement (and therefore the print-out). */
@@ -33,7 +34,7 @@ type SectionKey =
 @Component({
   selector: 'app-full-accounts-report',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe, TranslatePipe],
+  imports: [FinanceSubnavComponent, MatMenuModule, MoneyPipe, CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe, TranslatePipe],
   templateUrl: './full-accounts-report.html',
   styles: [ACCOUNTS_PAPER_CSS],
   encapsulation: ViewEncapsulation.None,

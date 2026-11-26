@@ -100,7 +100,7 @@ export interface BuySellSharesDialogData {
               <span class="text-sm font-bold text-teal-800 dark:text-teal-200">{{ '{count} shares' | t: { count: (data.config.availableShareCount | number) } }}</span>
             </div>
             <div>
-              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Current Valuation Price' | t }}</span>
+              <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Current share price' | t }}</span>
               <span class="text-sm font-bold text-emerald-700 dark:text-emerald-300">{{ '{price} / share' | t: { price: (data.config.sharePriceBdt | money) } }}</span>
             </div>
             <div>
@@ -117,7 +117,7 @@ export interface BuySellSharesDialogData {
                 <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ data.config.sharePriceBdt | money }}</span>
               </div>
               <div>
-                <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Current Farm Valuation' | t }}</span>
+                <span class="text-gray-500 dark:text-gray-400 block font-medium">{{ 'Current farm value' | t }}</span>
                 <span class="text-sm font-bold text-indigo-700 dark:text-indigo-300">{{ data.config.totalValuationBdt | money }}</span>
               </div>
             </div>
@@ -132,7 +132,7 @@ export interface BuySellSharesDialogData {
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                {{ 'Reason for Revaluation' | t }}
+                {{ 'Reason for the price change' | t }}
               </label>
               <textarea formControlName="valuationNotes" rows="3" [placeholder]="'e.g. Annual farm performance review: herd expanded by 30%, revenue up 22%.' | t"
                         class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"></textarea>
@@ -380,7 +380,7 @@ export class BuySellSharesDialogComponent implements OnInit {
       case 'purchase': return 'Confirm Share Purchase';
       case 'sell': return 'Process Share Redemption';
       case 'transfer': return 'Complete Share Transfer';
-      case 'valuation': return 'Update Valuation';
+      case 'valuation': return 'Update farm value';
     }
   }
 

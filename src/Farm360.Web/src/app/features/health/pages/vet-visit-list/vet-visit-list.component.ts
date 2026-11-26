@@ -24,6 +24,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { HealthFilterBarComponent } from '../../components/health-filter-bar/health-filter-bar.component';
 
 @Component({
   selector: 'app-vet-visit-list',
@@ -39,7 +41,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     PageHeaderComponent,
     EmptyStateComponent,
     LoadingComponent,
-    TranslatePipe
+    TranslatePipe,
+    HealthNavComponent,
+    HealthFilterBarComponent
   ],
   templateUrl: './vet-visit-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -64,7 +68,8 @@ export class VetVisitListComponent {
 
   // State
   pageIndex = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(12);
+  readonly search = signal('');
   refreshTrigger = signal(0);
   isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -80,14 +85,15 @@ export class VetVisitListComponent {
     pageIndex: this.pageIndex(),
     pageSize: this.pageSize(),
     farmId: this.currentFarm()?.id,
+    search: this.search() || undefined,
     refresh: this.refreshTrigger()
   }));
 
   private vetVisitsResult = toSignal(
     toObservable(this.paginationParams).pipe(
       tap(() => { this.isLoading.set(true); this.loadError.set(null); }),
-      switchMap(({ pageIndex, pageSize, farmId }) =>
-        this.healthService.getVetVisits({ pageNumber: pageIndex + 1, pageSize, farmId }).pipe(
+      switchMap(({ pageIndex, pageSize, farmId, search }) =>
+        this.healthService.getVetVisits({ pageNumber: pageIndex + 1, pageSize, farmId, search }).pipe(
           catchError(err => {
             this.loadError.set(parseApiError(err, 'Could not load vet visits.'));
             return of({ items: [], totalCount: 0 });
@@ -105,6 +111,11 @@ export class VetVisitListComponent {
   onPageChange(event: any): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
+  }
+
+  setSearch(value: string): void {
+    this.search.set(value);
+    this.pageIndex.set(0);
   }
 
   loadVetVisits(): void {
@@ -154,14 +165,14 @@ export class VetVisitListComponent {
         filename: `Farm360_Vet_Visits_${toLocalIsoDate()}`,
         orientation: 'landscape',
         header: {
-          title: this.i18n.t('Veterinary Visits & Health Log'),
-          subtitle: this.i18n.t('Professional Clinical Evaluations & Medical Services'),
+          title: this.i18n.t('Vet Visits'),
+          subtitle: this.i18n.t('Vet visits, findings and costs'),
           farmName: farm?.name || this.i18n.t('Primary Farm'),
-          orgName: org?.name || 'Farm360 Enterprise',
+          orgName: org?.name || 'Farm360',
           currency: 'BDT (৳)',
           metaFields: [
-            { label: this.i18n.t('Total Recorded Visits'), value: `${total}` },
-            { label: this.i18n.t('Current Page Items'), value: `${items.length}` }
+            { label: this.i18n.t('Total visits'), value: `${total}` },
+            { label: this.i18n.t('In this PDF'), value: `${items.length}` }
           ]
         },
         showSignatures: true

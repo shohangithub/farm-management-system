@@ -22,6 +22,9 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
+import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { SPECIES_LABELS } from '../../../livestock/models/animal.models';
+
 @Component({
   selector: 'app-vaccination-protocol-list',
   standalone: true,
@@ -36,7 +39,8 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
     PageHeaderComponent,
     EmptyStateComponent,
     LoadingComponent,
-    TranslatePipe
+    TranslatePipe,
+    HealthNavComponent
   ],
   templateUrl: './vaccination-protocol-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -52,7 +56,7 @@ export class VaccinationProtocolListComponent {
 
   // --- Reactive State (Signals) ---
   pageIndex = signal(0);
-  pageSize = signal(10);
+  pageSize = signal(12);
   refreshTrigger = signal(0);
   isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -92,6 +96,11 @@ export class VaccinationProtocolListComponent {
   // Exposed Signals for the Template
   dataSource = computed(() => this.protocolsResult().items);
   totalItems = computed(() => this.protocolsResult().totalCount);
+
+  /** "CattleBeef" -> "Cattle (Beef)". */
+  speciesLabel(species: string): string {
+    return (SPECIES_LABELS as Record<string, string>)[species] ?? species;
+  }
 
   // --- Actions ---
   onPageChange(event: any): void {

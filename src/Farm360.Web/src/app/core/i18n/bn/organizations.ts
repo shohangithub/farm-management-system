@@ -71,6 +71,7 @@ export const BN_ORGANIZATIONS: Record<string, string> = {
   'Organizations': 'প্রতিষ্ঠানসমূহ',
   'Organization': 'প্রতিষ্ঠান',
   'Manage your business entities and branches.': 'আপনার ব্যবসা প্রতিষ্ঠান ও শাখাগুলো পরিচালনা করুন।',
+  'Your business and its branches.': 'আপনার ব্যবসা ও এর শাখাগুলো।',
   'Add Organization': 'প্রতিষ্ঠান যোগ করুন',
   'Search organizations...': 'প্রতিষ্ঠান খুঁজুন...',
   'No Organizations Found': 'কোনো প্রতিষ্ঠান পাওয়া যায়নি',

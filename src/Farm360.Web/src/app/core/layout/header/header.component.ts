@@ -12,6 +12,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
+import { combineLatest, map } from 'rxjs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { WorkingContextService } from '../../services/working-context.service';
 import { ContextSelectorDialogComponent } from '../context-selector/context-selector-dialog.component';
@@ -82,7 +83,12 @@ export class HeaderComponent implements OnInit {
   readonly i18n = inject(I18nService);
   private dialog = inject(MatDialog);
   readonly signalRService = inject(IntelligenceSignalRService);
-  readonly currentOrg$ = inject(WorkingContextService).currentOrg$;
+  private readonly context = inject(WorkingContextService);
+  readonly currentOrg$ = this.context.currentOrg$;
+  /** True when the user has more than one organisation, branch or farm to switch between. */
+  readonly hasChoices$ = combineLatest([this.context.organizations$, this.context.branches$, this.context.farms$]).pipe(
+    map(([orgs, branches, farms]) => (orgs?.length ?? 0) > 1 || (branches?.length ?? 0) > 1 || (farms?.length ?? 0) > 1)
+  );
 
   readonly user = this.authService.currentUserSignal;
   readonly displayName = computed(() => {

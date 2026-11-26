@@ -40,21 +40,21 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header 
-      [title]="'Investors & Equity' | t" 
-      [description]="'Manage farm equity partners, track capital injections, profit distributions, and share ratios.' | t"
+      [title]="'Investors' | t" 
+      [description]="'Partners who put money into the farm and share its profit.' | t"
       [breadcrumbActiveNode]="'Investors' | t">
-      <div actions class="flex items-center gap-2">
-        <a routerLink="/finance/shares" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-teal-300 dark:!border-teal-700 !text-teal-700 dark:!text-teal-300 hover:!bg-teal-50 dark:hover:!bg-teal-950/40 flex items-center gap-1.5 transition-all">
+      <div actions class="flex flex-wrap items-center gap-2">
+        <a routerLink="/finance/shares" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">pie_chart</mat-icon>
-          <span>{{ 'Share Market' | t }}</span>
+          <span>{{ 'Farm Shares' | t }}</span>
         </a>
 
-        <a routerLink="/finance/investors/pnl" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-teal-300 dark:!border-teal-700 !text-teal-700 dark:!text-teal-300 hover:!bg-teal-50 dark:hover:!bg-teal-950/40 flex items-center gap-1.5 transition-all">
+        <a routerLink="/finance/investors/pnl" mat-stroked-button class="!rounded-xl !px-4 !py-2 !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">query_stats</mat-icon>
-          <span>{{ 'Profit & Loss Sharing' | t }}</span>
+          <span>{{ 'Profit sharing' | t }}</span>
         </a>
 
-        <button mat-flat-button color="primary" (click)="openInvestorDialog()" class="!rounded-xl !px-5 !py-2 !bg-gradient-to-r !from-teal-600 !to-emerald-600 hover:!from-teal-700 hover:!to-emerald-700 !text-white flex items-center gap-2 shadow-sm shadow-teal-500/30 transition-all">
+        <button mat-flat-button color="primary" (click)="openInvestorDialog()" class="!rounded-xl !px-5 !py-2 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 transition-all">
           <mat-icon class="!text-[20px]">person_add</mat-icon>
           <span>{{ 'New Investor' | t }}</span>
         </button>
@@ -75,35 +75,35 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <!-- Top Stat Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Active Investors' | t }}</p>
                 <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ totalActiveInvestors() }}</h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <mat-icon>groups</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Equity partners in this farm' | t }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Partners in this farm' | t }}</p>
           </div>
 
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Total Capital Pool' | t }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Total money invested' | t }}</p>
                 <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                   {{ totalActiveCapital() | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <mat-icon>account_balance</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Active net invested capital' | t }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Money invested, less withdrawals' | t }}</p>
           </div>
 
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Profit Distributed' | t }}</p>
@@ -111,14 +111,14 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   {{ totalProfitPaid() | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center">
                 <mat-icon>payments</mat-icon>
               </div>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Paid dividends to date' | t }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ 'Profit paid out so far' | t }}</p>
           </div>
 
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Capital Withdrawn' | t }}</p>
@@ -126,7 +126,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   {{ totalCapitalWithdrawn() | money }}
                 </h3>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+              <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <mat-icon>money_off</mat-icon>
               </div>
             </div>
@@ -136,7 +136,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </div>
 
         <!-- Filter & Search Controls -->
-        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div class="relative w-full sm:w-80">
             <mat-icon class="absolute left-3 top-2.5 text-gray-400 !text-[20px]">search</mat-icon>
             <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
@@ -158,7 +158,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           *ngIf="!filteredInvestors() || filteredInvestors().length === 0"
           icon="groups"
           [title]="'No Investors Found' | t"
-          [description]="'There are no equity investors registered for this farm yet. Add an investor to track capital and profit sharing.' | t"
+          [description]="'No investors yet. Add one to track the money they put in and their profit share.' | t"
           actionText="Register First Investor"
           (action)="openInvestorDialog()">
         </app-empty-state>
@@ -168,16 +168,15 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           <div *ngFor="let investor of filteredInvestors()" 
-               class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 flex flex-col justify-between transition-all hover:shadow-md">
+               class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative p-6 flex flex-col justify-between transition-all hover:shadow-md">
             
             <!-- Background Watermark -->
-            <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-teal-500/5 rotate-[-10deg] pointer-events-none">groups</mat-icon>
 
             <!-- Top Row: Avatar & Status -->
             <div>
               <div class="flex justify-between items-start mb-5">
                 <div class="flex items-center gap-3">
-                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-teal-500/20">
+                  <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
                     {{ investor.name.charAt(0).toUpperCase() }}
                   </div>
                   <div>
@@ -296,7 +295,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             <!-- Action Buttons Footer -->
             <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-2">
               <button (click)="openTransactionDialog(investor, 'CapitalContribution')"
-                      class="flex-1 py-2 px-2.5 text-xs font-bold text-white bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl hover:from-teal-600 hover:to-emerald-700 transition-all shadow-sm shadow-teal-500/20 flex items-center justify-center gap-1">
+                      class="flex-1 py-2 px-2.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-xl hover:from-teal-600 hover:to-emerald-700 transition-all flex items-center justify-center gap-1">
                 <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">add</mat-icon>
                 <span>{{ 'Capital' | t }}</span>
               </button>

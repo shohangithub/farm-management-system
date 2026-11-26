@@ -1,243 +1,158 @@
-<app-page-header 
-  [title]="'Health Dashboard' | t"
-  [description]="'Monitor farm health, treatments, and vaccination schedules.' | t"
+<app-page-header
+  [title]="'Health' | t"
+  [description]="'What needs your attention today.' | t"
+  [breadcrumbActiveNode]="'Overview' | t"
   [primaryActionLabel]="'Schedule Vaccine' | t"
   primaryActionIcon="vaccines"
   (primaryAction)="openScheduleVaccinationDialog()">
   <div actions class="flex flex-wrap items-center gap-2">
-    <button (click)="openLogTreatmentDialog()"
-      class="px-3 py-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors shadow-sm inline-flex items-center gap-1.5">
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">medical_services</mat-icon> {{ 'Log Treatment' | t }}
+    <button type="button" [attr.aria-label]="'Log Treatment' | t" [title]="'Log Treatment' | t" (click)="openLogTreatmentDialog()"
+      class="inline-flex items-center justify-center gap-1.5 h-10 min-w-10 px-3 sm:px-3.5 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-600 dark:text-amber-400">medical_services</mat-icon><span class="hidden sm:inline">{{ 'Log Treatment' | t }}</span>
     </button>
-    <button (click)="openReportIncidentDialog()"
-      class="px-3 py-1.5 text-xs font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md transition-colors shadow-sm inline-flex items-center gap-1.5">
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">report_problem</mat-icon> {{ 'Report Incident' | t }}
+    <button type="button" [attr.aria-label]="'Report Incident' | t" [title]="'Report Incident' | t" (click)="openReportIncidentDialog()"
+      class="inline-flex items-center justify-center gap-1.5 h-10 min-w-10 px-3 sm:px-3.5 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-orange-600 dark:text-orange-400">coronavirus</mat-icon><span class="hidden sm:inline">{{ 'Report Incident' | t }}</span>
     </button>
-    <button (click)="openRecordMortalityDialog()"
-      class="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors shadow-sm inline-flex items-center gap-1.5">
-      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">warning</mat-icon> {{ 'Record Mortality' | t }}
+    <button type="button" [attr.aria-label]="'Record Mortality' | t" [title]="'Record Mortality' | t" (click)="openRecordMortalityDialog()"
+      class="inline-flex items-center justify-center gap-1.5 h-10 min-w-10 px-3 sm:px-3.5 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-500 dark:text-gray-400">heart_broken</mat-icon><span class="hidden sm:inline">{{ 'Record Mortality' | t }}</span>
     </button>
   </div>
 </app-page-header>
 
+<app-health-nav></app-health-nav>
+
 <app-loading *ngIf="isLoading()" [message]="'Loading health data...' | t"></app-loading>
 
-<div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
-  <div class="flex">
-    <div class="flex-shrink-0">
-      <mat-icon class="text-red-500">error</mat-icon>
-    </div>
-    <div class="ml-3">
-      <p class="text-sm text-red-700">{{ error() }}</p>
-      <button mat-button color="warn" (click)="loadDashboard()" class="mt-2">{{ 'Try Again' | t }}</button>
+<app-error-state *ngIf="!isLoading() && error()" class="block mb-6" [message]="error()" (retry)="loadDashboard()"></app-error-state>
+
+<ng-container *ngIf="!isLoading() && !error() && dashboardData() as d">
+  <!-- Today's numbers: each tile opens the matching list -->
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
+    <a routerLink="../vaccinations"
+       class="rounded-2xl border shadow-sm p-4 transition-shadow hover:shadow-md"
+       [ngClass]="d.vaccinationsOverdue > 0
+         ? 'bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-800/60'
+         : 'bg-white border-gray-200/70 dark:bg-gray-800/80 dark:border-gray-700/60'">
+      <div class="flex items-center gap-1.5 text-xs font-medium" [ngClass]="d.vaccinationsOverdue > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-gray-500 dark:text-gray-400'">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">event_busy</mat-icon>{{ 'Overdue Vaccines' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold" [ngClass]="d.vaccinationsOverdue > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-gray-900 dark:text-white'">{{ d.vaccinationsOverdue }}</div>
+    </a>
+
+    <a routerLink="../vaccinations" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4 transition-shadow hover:shadow-md">
+      <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-blue-600 dark:text-blue-400">event_available</mat-icon>{{ 'Vaccines due this week' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ d.vaccinationsDueThisWeek }}</div>
+    </a>
+
+    <a routerLink="../treatments" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4 transition-shadow hover:shadow-md">
+      <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-amber-600 dark:text-amber-400">medical_services</mat-icon>{{ 'Under treatment' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ d.activeTreatments }}</div>
+    </a>
+
+    <a routerLink="../incidents" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4 transition-shadow hover:shadow-md">
+      <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-orange-600 dark:text-orange-400">coronavirus</mat-icon>{{ 'Active Incidents' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ d.activeDiseaseIncidents }}</div>
+    </a>
+
+    <a routerLink="../mortality-records" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4 transition-shadow hover:shadow-md">
+      <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">heart_broken</mat-icon>{{ 'Deaths (30 days)' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ d.recentMortalityCount }}</div>
+    </a>
+
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
+      <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">payments</mat-icon>{{ 'Health cost (30 days)' | t }}
+      </div>
+      <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white truncate">{{ d.monthlyHealthCostBdt | money }}</div>
     </div>
   </div>
-</div>
 
-<ng-container *ngIf="!isLoading() && !error() && dashboardData() as dashboardData">
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-    <!-- Vaccinations Due -->
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200 dark:border-gray-800/50 dark:hover:border-blue-500/30 cursor-pointer flex flex-col transform hover:-translate-y-1" routerLink="../vaccinations">
-      <mat-icon class="absolute -right-6 -bottom-6 !text-[120px] !w-[120px] !h-[120px] text-blue-500/5 dark:text-blue-400/5 rotate-[-15deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">event_available</mat-icon>
-      
-      <div class="p-6 flex-1 flex flex-col relative z-10">
-        <div class="flex items-center">
-          <div class="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20 mr-4 transition-transform duration-300 group-hover:scale-110">
-            <mat-icon>event_available</mat-icon>
-          </div>
-          <div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-blue-500 transition-colors duration-300">{{ 'Vaccines Due' | t }}</p>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ dashboardData.vaccinationsDueThisWeek }}</h3>
-          </div>
-        </div>
-        <div class="mt-4 flex items-center text-sm border-t border-gray-100 dark:border-gray-800/50 pt-4">
-          <span class="text-gray-500 dark:text-gray-400">{{ 'Scheduled for this week' | t }}</span>
-        </div>
-      </div>
-    </div>
+  <!-- To-do lists -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm flex flex-col min-w-0">
+      <header class="px-4 sm:px-5 py-4 flex items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-700/60">
+        <h2 class="font-semibold text-[15px] text-gray-900 dark:text-white">{{ 'Vaccines to give' | t }}</h2>
+        <a routerLink="../vaccinations" class="text-sm font-semibold text-primary-700 dark:text-primary-400 hover:underline">{{ 'See all' | t }}</a>
+      </header>
+      @if (vaccinesDue().length) {
+        <ul class="divide-y divide-gray-100 dark:divide-gray-700/60">
+          @for (v of vaccinesDue(); track v.id) {
+            <li class="px-4 sm:px-5 py-3 flex items-center gap-3">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-blue-600 dark:text-blue-400 shrink-0">vaccines</mat-icon>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ v.vaccineName }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ tags()[v.animalId] || (v.animalId | slice:0:8) }} · {{ v.scheduledDate | date:'mediumDate' }}</p>
+              </div>
+              @if (isOverdue(v.scheduledDate)) {
+                <span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{{ 'Overdue' | t }}</span>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-5 py-6 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400">check_circle</mat-icon>
+          {{ 'No vaccine is due this week.' | t }}
+        </p>
+      }
+    </section>
 
-    <!-- Vaccinations Overdue -->
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-xl hover:shadow-rose-500/10 transition-all duration-300 overflow-hidden border border-gray-100 hover:border-rose-200 dark:border-gray-800/50 dark:hover:border-rose-500/30 cursor-pointer flex flex-col transform hover:-translate-y-1" routerLink="../vaccinations">
-      <mat-icon class="absolute -right-6 -bottom-6 !text-[120px] !w-[120px] !h-[120px] text-rose-500/5 dark:text-rose-400/5 rotate-[-15deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">event_busy</mat-icon>
-      
-      <div class="p-6 flex-1 flex flex-col relative z-10">
-        <div class="flex items-center">
-          <div class="p-3 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-lg shadow-rose-500/20 mr-4 transition-transform duration-300 group-hover:scale-110">
-            <mat-icon>event_busy</mat-icon>
-          </div>
-          <div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-rose-500 transition-colors duration-300">{{ 'Overdue Vaccines' | t }}</p>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ dashboardData.vaccinationsOverdue }}</h3>
-          </div>
-        </div>
-        <div class="mt-4 flex items-center text-sm border-t border-gray-100 dark:border-gray-800/50 pt-4">
-          <mat-icon class="text-rose-500 !text-[16px] !w-[16px] !h-[16px] mr-1">warning</mat-icon>
-          <span class="text-rose-600 font-medium group-hover:text-rose-700 transition-colors">{{ 'Requires immediate action' | t }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Active Treatments -->
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-xl hover:shadow-fuchsia-500/10 transition-all duration-300 overflow-hidden border border-gray-100 hover:border-fuchsia-200 dark:border-gray-800/50 dark:hover:border-fuchsia-500/30 cursor-pointer flex flex-col transform hover:-translate-y-1" routerLink="../treatments">
-      <mat-icon class="absolute -right-6 -bottom-6 !text-[120px] !w-[120px] !h-[120px] text-fuchsia-500/5 dark:text-fuchsia-400/5 rotate-[-15deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">healing</mat-icon>
-      
-      <div class="p-6 flex-1 flex flex-col relative z-10">
-        <div class="flex items-center">
-          <div class="p-3 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-fuchsia-500/20 mr-4 transition-transform duration-300 group-hover:scale-110">
-            <mat-icon>healing</mat-icon>
-          </div>
-          <div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-fuchsia-500 transition-colors duration-300">{{ 'Active Treatments' | t }}</p>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ dashboardData.activeTreatments }}</h3>
-          </div>
-        </div>
-        <div class="mt-4 flex items-center text-sm border-t border-gray-100 dark:border-gray-800/50 pt-4">
-          <span class="text-gray-500 dark:text-gray-400">{{ 'Ongoing medical treatments' | t }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Active Incidents -->
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300 overflow-hidden border border-gray-100 hover:border-orange-200 dark:border-gray-800/50 dark:hover:border-orange-500/30 cursor-pointer flex flex-col transform hover:-translate-y-1" routerLink="../incidents">
-      <mat-icon class="absolute -right-6 -bottom-6 !text-[120px] !w-[120px] !h-[120px] text-orange-500/5 dark:text-orange-400/5 rotate-[-15deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">coronavirus</mat-icon>
-      
-      <div class="p-6 flex-1 flex flex-col relative z-10">
-        <div class="flex items-center">
-          <div class="p-3 rounded-xl bg-gradient-to-br from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-500/20 mr-4 transition-transform duration-300 group-hover:scale-110">
-            <mat-icon>coronavirus</mat-icon>
-          </div>
-          <div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-orange-500 transition-colors duration-300">{{ 'Active Incidents' | t }}</p>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ dashboardData.activeDiseaseIncidents }}</h3>
-          </div>
-        </div>
-        <div class="mt-4 flex items-center text-sm border-t border-gray-100 dark:border-gray-800/50 pt-4">
-          <span class="text-gray-500 dark:text-gray-400">{{ 'Unresolved disease incidents' | t }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Mortalities -->
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-500/10 transition-all duration-300 overflow-hidden border border-gray-100 hover:border-slate-300 dark:border-gray-800/50 dark:hover:border-slate-500/30 cursor-pointer flex flex-col transform hover:-translate-y-1" routerLink="../mortality-records">
-      <mat-icon class="absolute -right-6 -bottom-6 !text-[120px] !w-[120px] !h-[120px] text-slate-500/5 dark:text-slate-400/5 rotate-[-15deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">sentiment_very_dissatisfied</mat-icon>
-      
-      <div class="p-6 flex-1 flex flex-col relative z-10">
-        <div class="flex items-center">
-          <div class="p-3 rounded-xl bg-gradient-to-br from-slate-600 to-gray-800 text-white shadow-lg shadow-slate-500/20 mr-4 transition-transform duration-300 group-hover:scale-110">
-            <mat-icon>sentiment_very_dissatisfied</mat-icon>
-          </div>
-          <div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors duration-300">{{ 'Mortalities (30d)' | t }}</p>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ dashboardData.recentMortalityCount }}</h3>
-          </div>
-        </div>
-        <div class="mt-4 flex items-center text-sm border-t border-gray-100 dark:border-gray-800/50 pt-4">
-          <span class="text-gray-500 dark:text-gray-400">{{ 'Animals lost in last 30 days' | t }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Monthly Health Cost -->
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden border border-gray-100 hover:border-emerald-200 dark:border-gray-800/50 dark:hover:border-emerald-500/30 flex flex-col transform hover:-translate-y-1">
-      <mat-icon class="absolute -right-6 -bottom-6 !text-[120px] !w-[120px] !h-[120px] text-emerald-500/5 dark:text-emerald-400/5 rotate-[-15deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">payments</mat-icon>
-      
-      <div class="p-6 flex-1 flex flex-col relative z-10">
-        <div class="flex items-center">
-          <div class="p-3 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20 mr-4 transition-transform duration-300 group-hover:scale-110">
-            <mat-icon>payments</mat-icon>
-          </div>
-          <div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-emerald-500 transition-colors duration-300">{{ 'Health Costs (30d)' | t }}</p>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ dashboardData.monthlyHealthCostBdt | money }}</h3>
-          </div>
-        </div>
-        <div class="mt-4 flex items-center text-sm border-t border-gray-100 dark:border-gray-800/50 pt-4">
-          <span class="text-gray-500 dark:text-gray-400">{{ 'Treatments and Vet visits' | t }}</span>
-        </div>
-      </div>
-    </div>
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm flex flex-col min-w-0">
+      <header class="px-4 sm:px-5 py-4 flex items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-700/60">
+        <h2 class="font-semibold text-[15px] text-gray-900 dark:text-white">{{ 'Sick animals now' | t }}</h2>
+        <a routerLink="../treatments" class="text-sm font-semibold text-primary-700 dark:text-primary-400 hover:underline">{{ 'See all' | t }}</a>
+      </header>
+      @if (openIncidents().length || ongoingTreatments().length) {
+        <ul class="divide-y divide-gray-100 dark:divide-gray-700/60">
+          @for (i of openIncidents(); track i.id) {
+            <li>
+              <a [routerLink]="['/health/incidents', i.id]" class="px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-orange-600 dark:text-orange-400 shrink-0">coronavirus</mat-icon>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ i.diseaseName }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ '{count} animals' | t: { count: i.affectedAnimalCount } }} · {{ i.incidentDate | date:'mediumDate' }}</p>
+                </div>
+                <span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">{{ 'Outbreak' | t }}</span>
+              </a>
+            </li>
+          }
+          @for (t of ongoingTreatments(); track t.id) {
+            <li class="px-4 sm:px-5 py-3 flex items-center gap-3">
+              <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-amber-600 dark:text-amber-400 shrink-0">medical_services</mat-icon>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ t.diagnosis }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t.animalTagId || (t.animalId | slice:0:8) }} · {{ t.medicationName }}</p>
+              </div>
+              <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{{ t.startDate | date:'MMM d' }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-5 py-6 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400">check_circle</mat-icon>
+          {{ 'No animal is under treatment right now.' | t }}
+        </p>
+      }
+    </section>
   </div>
-  
-  <!-- Quick Navigation / Secondary Actions -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 dark:border-gray-800/50 dark:hover:border-blue-500/30 cursor-pointer flex items-center justify-between p-6 overflow-hidden transform hover:-translate-y-1" routerLink="../vaccination-protocols">
-      <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-blue-50 to-transparent dark:from-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      <div class="flex items-center relative z-10">
-        <div class="p-3.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 mr-5 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-blue-500/20 group-hover:scale-110">
-          <mat-icon>library_books</mat-icon>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">{{ 'Vaccination Protocols' | t }}</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Manage standard vaccination schedules for species' | t }}</p>
-        </div>
-      </div>
-      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-blue-900/30 dark:group-hover:text-blue-400 transition-all duration-300 transform group-hover:translate-x-1 relative z-10">
-        <mat-icon class="!w-5 !h-5 !text-[20px]">arrow_forward</mat-icon>
-      </div>
-    </div>
 
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-teal-200 dark:border-gray-800/50 dark:hover:border-teal-500/30 cursor-pointer flex items-center justify-between p-6 overflow-hidden transform hover:-translate-y-1" routerLink="../vet-visits">
-      <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-teal-50 to-transparent dark:from-teal-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      <div class="flex items-center relative z-10">
-        <div class="p-3.5 rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400 mr-5 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-teal-400 group-hover:to-emerald-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-teal-500/20 group-hover:scale-110">
-          <mat-icon>local_hospital</mat-icon>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors duration-300">{{ 'Veterinary Visits' | t }}</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Track professional vet visits and recommendations' | t }}</p>
-        </div>
-      </div>
-      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:bg-teal-50 group-hover:text-teal-600 dark:group-hover:bg-teal-900/30 dark:group-hover:text-teal-400 transition-all duration-300 transform group-hover:translate-x-1 relative z-10">
-        <mat-icon class="!w-5 !h-5 !text-[20px]">arrow_forward</mat-icon>
-      </div>
+  <a routerLink="../analytics"
+     class="flex items-center gap-3 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm px-4 sm:px-5 py-4 hover:shadow-md transition-shadow">
+    <mat-icon class="text-primary-600 dark:text-primary-400 shrink-0">insights</mat-icon>
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ '12-month health trends' | t }}</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'Deaths by month, common illnesses and vaccine coverage.' | t }}</p>
     </div>
-
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 dark:border-gray-800/50 dark:hover:border-purple-500/30 cursor-pointer flex items-center justify-between p-6 overflow-hidden transform hover:-translate-y-1" routerLink="../deworming-calendar">
-      <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-purple-50 to-transparent dark:from-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      <div class="flex items-center relative z-10">
-        <div class="p-3.5 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 mr-5 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-purple-500 group-hover:to-fuchsia-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-purple-500/20 group-hover:scale-110">
-          <mat-icon>calendar_month</mat-icon>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">{{ 'Deworming Calendar' | t }}</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Track regular deworming schedules' | t }}</p>
-        </div>
-      </div>
-      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-600 dark:group-hover:bg-purple-900/30 dark:group-hover:text-purple-400 transition-all duration-300 transform group-hover:translate-x-1 relative z-10">
-        <mat-icon class="!w-5 !h-5 !text-[20px]">arrow_forward</mat-icon>
-      </div>
-    </div>
-
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-amber-200 dark:border-gray-800/50 dark:hover:border-amber-500/30 cursor-pointer flex items-center justify-between p-6 overflow-hidden transform hover:-translate-y-1" routerLink="../milk-withdrawal">
-      <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-amber-50 to-transparent dark:from-amber-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      <div class="flex items-center relative z-10">
-        <div class="p-3.5 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 mr-5 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-amber-400 group-hover:to-orange-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-amber-500/20 group-hover:scale-110">
-          <mat-icon>warning</mat-icon>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors duration-300">{{ 'Milk Withdrawal' | t }}</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Monitor active milk/meat withdrawal periods' | t }}</p>
-        </div>
-      </div>
-      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:bg-amber-50 group-hover:text-amber-600 dark:group-hover:bg-amber-900/30 dark:group-hover:text-amber-400 transition-all duration-300 transform group-hover:translate-x-1 relative z-10">
-        <mat-icon class="!w-5 !h-5 !text-[20px]">arrow_forward</mat-icon>
-      </div>
-    </div>
-
-    <div class="group relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-rose-200 dark:border-gray-800/50 dark:hover:border-rose-500/30 cursor-pointer flex items-center justify-between p-6 overflow-hidden transform hover:-translate-y-1" routerLink="../analytics">
-      <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-rose-50 to-transparent dark:from-rose-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      <div class="flex items-center relative z-10">
-        <div class="p-3.5 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 mr-5 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-rose-500 group-hover:to-red-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-rose-500/20 group-hover:scale-110">
-          <mat-icon>insights</mat-icon>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors duration-300">{{ 'Health Analytics' | t }}</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Mortality trend and vaccination compliance' | t }}</p>
-        </div>
-      </div>
-      <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-400 group-hover:bg-rose-50 group-hover:text-rose-600 dark:group-hover:bg-rose-900/30 dark:group-hover:text-rose-400 transition-all duration-300 transform group-hover:translate-x-1 relative z-10">
-        <mat-icon class="!w-5 !h-5 !text-[20px]">arrow_forward</mat-icon>
-      </div>
-    </div>
-  </div>
+    <mat-icon class="text-gray-400 shrink-0">chevron_right</mat-icon>
+  </a>
 </ng-container>

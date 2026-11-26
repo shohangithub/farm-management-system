@@ -3,8 +3,8 @@ import {
 } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,6 +19,7 @@ import { AccountHeadSummary, IncomeExpenseReport } from '../../models/finance.mo
 import { ACCOUNTS_PAPER_CSS, RANGE_PRESETS, addDays, printPaper, toIsoDate } from '../../utils/accounts-report-print';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 type ReportMode = 'daily' | 'range';
@@ -44,8 +45,8 @@ interface SummaryCell {
 @Component({
   selector: 'app-income-expense-report',
   standalone: true,
-  imports: [MoneyPipe, 
-    CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, MatTooltipModule,
+  imports: [FinanceSubnavComponent, MatMenuModule, MoneyPipe, 
+    CommonModule, FormsModule, MatIconModule, MatButtonModule, MatTooltipModule,
     PageHeaderComponent, DecimalPipe, DatePipe, TranslatePipe,
   ],
   templateUrl: './income-expense-report.html',

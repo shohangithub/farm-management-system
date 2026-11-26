@@ -1,14 +1,14 @@
 <app-page-header 
   [title]="'Protocol Details' | t"
-  [description]="'View comprehensive information about the vaccination protocol.' | t"
+  [description]="'The doses in this schedule and when each is given.' | t"
   [breadcrumbActiveNode]="protocol()?.title || ('Protocol Details' | t)"
   icon="library_books" 
   iconColor="text-blue-600">
   <div actions class="flex gap-2">
-    <button routerLink=".." class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+    <button routerLink=".." class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> {{ 'Back to List' | t }}
     </button>
-    <button *ngIf="protocol()" (click)="openAssignDialog()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+    <button *ngIf="protocol()" (click)="openAssignDialog()" class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">group_add</mat-icon> {{ 'Assign Protocol' | t }}
     </button>
   </div>
@@ -31,7 +31,7 @@
         </div>
         <p class="text-gray-600 dark:text-gray-400 flex items-center">
           <mat-icon class="mr-1 scale-75">pets</mat-icon>
-          {{ 'Target Species:' | t }} <strong class="ml-1 text-gray-900 dark:text-white">{{ protocol()?.targetSpecies | t }}</strong>
+          {{ 'Target Species:' | t }} <strong class="ml-1 text-gray-900 dark:text-white">{{ speciesLabel(protocol()?.targetSpecies) | t }}</strong>
         </p>
       </div>
       

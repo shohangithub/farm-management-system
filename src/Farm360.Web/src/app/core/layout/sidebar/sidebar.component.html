@@ -42,9 +42,10 @@
   <div class="shrink-0 border-t border-gray-100 dark:border-gray-800/50" [class.p-3]="!isCollapsed" [class.p-1]="isCollapsed">
     <mat-nav-list class="pt-0">
       <ng-container *ngFor="let item of bottomMenuItems">
+        <!-- Settings must not light up together with Subscription (/settings/billing sits under /settings). -->
         <a mat-list-item
            [routerLink]="item.route"
-           routerLinkActive="active-menu-item"
+           [class.active-menu-item]="isBottomItemActive(item)"
            [matTooltip]="isCollapsed ? (item.label | t) : ''"
            matTooltipPosition="right"
            class="sidebar-nav-item rounded-xl mb-1 text-sm font-medium transition-all duration-200 group">

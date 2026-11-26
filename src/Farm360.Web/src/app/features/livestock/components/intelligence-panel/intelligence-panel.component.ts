@@ -46,37 +46,31 @@ export interface GrowthCurve {
   template: `
     <div class="space-y-6 animate-fade-in-up">
       <!-- Financial Projection Card -->
-      <div *ngIf="snapshot()" class="bg-gradient-to-r from-emerald-900 to-teal-900 rounded-2xl shadow-lg border border-emerald-700/50 p-6 text-white relative overflow-hidden">
-        <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-emerald-500/10 rotate-[-15deg] pointer-events-none">account_balance_wallet</mat-icon>
+      <div *ngIf="snapshot()" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 text-gray-900 dark:text-white relative overflow-hidden">
         
         <div class="relative z-10 flex flex-col lg:flex-row gap-6 items-center justify-between">
           <div class="flex-1 w-full">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                {{ 'Smart Financials' | t }}
-              </span>
-            </div>
-            <h3 class="text-xl font-bold text-white tracking-tight">{{ 'Financial Projection' | t }}</h3>
-            <p class="text-emerald-100/80 text-sm mt-1 max-w-md">{{ 'Real-time cost & profit analysis based on live weight and feed history.' | t }}</p>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Value today' | t }}</h3>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-md">{{ 'Based on the latest weight and all costs so far.' | t }}</p>
           </div>
 
           <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4">
-              <p class="text-[11px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">{{ 'Total Invested' | t }}</p>
-              <p class="text-xl font-bold text-white">{{ snapshot()?.totalInvestmentBdt | money }}</p>
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-1">{{ 'Total Invested' | t }}</p>
+              <p class="text-xl font-bold text-gray-900 dark:text-white tabular-nums">{{ snapshot()?.totalInvestmentBdt | money }}</p>
             </div>
-            <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4">
-              <p class="text-[11px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">{{ 'Estimated Value' | t }}</p>
-              <p class="text-xl font-bold text-white">{{ snapshot()?.estimatedMarketValueBdt | money }}</p>
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-1">{{ 'Estimated Value' | t }}</p>
+              <p class="text-xl font-bold text-gray-900 dark:text-white tabular-nums">{{ snapshot()?.estimatedMarketValueBdt | money }}</p>
             </div>
-            <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4"
-                 [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'border-emerald-400/50 bg-emerald-500/20' : 'border-red-400/50 bg-red-500/20'">
-              <p class="text-[11px] text-emerald-200 uppercase tracking-wider font-semibold mb-1">{{ 'Net Profit Margin' | t }}</p>
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3"
+                 [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? '' : ''">
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-1">{{ 'Profit if sold today' | t }}</p>
               <div class="flex items-center gap-1">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-300' : 'text-red-300'">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
                   {{ (snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'arrow_upward' : 'arrow_downward' }}
                 </mat-icon>
-                <p class="text-xl font-bold" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-100' : 'text-red-100'">
+                <p class="text-xl font-bold" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
                   {{ Math.abs(snapshot()?.currentProfitMarginBdt ?? 0) | money }}
                 </p>
               </div>
@@ -89,43 +83,36 @@ export interface GrowthCurve {
       <div *ngIf="intelData()" class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
         <!-- Growth Projection Card -->
-        <div *ngIf="intelData()?.growthCurve as curve" class="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-2xl shadow-lg border border-indigo-700/50 p-6 text-white relative overflow-hidden h-full">
-          <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-indigo-500/10 rotate-[-15deg] pointer-events-none">trending_up</mat-icon>
+        <div *ngIf="intelData()?.growthCurve as curve" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 text-gray-900 dark:text-white relative overflow-hidden h-full">
           <div class="relative z-10">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-0.5 text-[11px] uppercase tracking-wider font-bold rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                {{ 'AI Growth Engine' | t }}
-              </span>
-            </div>
-            <h3 class="text-xl font-bold text-white tracking-tight mb-4">{{ 'Growth Trajectory' | t }}</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">{{ 'Expected weight' | t }}</h3>
             
             <div class="grid grid-cols-2 gap-4 mb-2">
-               <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">{{ 'Current ADG' | t }}</p>
-                 <p class="text-2xl font-bold mt-1">{{ curve.currentAdgKg | number:'1.2-2' }} <span class="text-xs font-normal text-indigo-300">{{ 'kg/day' | t }}</span></p>
+               <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
+                 <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Current ADG' | t }}</p>
+                 <p class="text-2xl font-bold mt-1">{{ curve.currentAdgKg | number:'1.2-2' }} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{ 'kg/day' | t }}</span></p>
                </div>
-               <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">{{ '30-Day Projection' | t }}</p>
-                 <p class="text-2xl font-bold mt-1">{{ curve.projected30DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">{{ 'kg' | t }}</span></p>
+               <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
+                 <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ '30-Day Projection' | t }}</p>
+                 <p class="text-2xl font-bold mt-1">{{ curve.projected30DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{ 'kg' | t }}</span></p>
                </div>
-               <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">{{ '60-Day Projection' | t }}</p>
-                 <p class="text-xl font-bold mt-1">{{ curve.projected60DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">{{ 'kg' | t }}</span></p>
+               <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
+                 <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ '60-Day Projection' | t }}</p>
+                 <p class="text-xl font-bold mt-1">{{ curve.projected60DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{ 'kg' | t }}</span></p>
                </div>
-               <div class="bg-black/20 rounded-xl p-4">
-                 <p class="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold">{{ '90-Day Projection' | t }}</p>
-                 <p class="text-xl font-bold mt-1">{{ curve.projected90DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-indigo-300">{{ 'kg' | t }}</span></p>
+               <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3">
+                 <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ '90-Day Projection' | t }}</p>
+                 <p class="text-xl font-bold mt-1">{{ curve.projected90DayWeightKg | number:'1.1-1' }} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">{{ 'kg' | t }}</span></p>
                </div>
             </div>
           </div>
         </div>
 
         <!-- Actionable Insights Card -->
-        <div *ngIf="intelData()?.activeInsights?.length" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden">
-          <mat-icon class="absolute -right-4 -bottom-4 text-[120px] text-amber-500/5 rotate-[-10deg] pointer-events-none">lightbulb</mat-icon>
+        <div *ngIf="intelData()?.activeInsights?.length" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 text-gray-900 dark:text-white relative overflow-hidden">
           <div class="relative z-10">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <mat-icon class="text-amber-500">tips_and_updates</mat-icon> {{ 'Actionable Insights' | t }}
+              <mat-icon class="text-amber-500">tips_and_updates</mat-icon> {{ 'Things to check' | t }}
             </h3>
             
             <div class="space-y-3">

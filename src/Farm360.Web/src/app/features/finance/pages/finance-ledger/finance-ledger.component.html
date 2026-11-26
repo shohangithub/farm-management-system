@@ -1,44 +1,41 @@
 <app-page-header
-  [title]="'General Ledger & Transactions' | t"
-  [description]="'Real-time multi-module financial journal, expense tracking, and cash-flow ledger.' | t"
-  [breadcrumbActiveNode]="'General Ledger' | t">
-  <div actions class="flex flex-wrap items-center gap-3">
-    <button mat-stroked-button 
-      class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-4 py-2"
-      [disabled]="isExporting() || isLoading()"
-      (click)="exportCsv()">
-      <mat-icon *ngIf="!isExporting()" class="text-emerald-600">file_download</mat-icon>
-      <mat-spinner *ngIf="isExporting()" diameter="18" class="mr-1"></mat-spinner>
-      <span>{{ (isExporting() ? 'Exporting...' : 'Export CSV') | t }}</span>
-    </button>
-    <button mat-flat-button 
-      class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-4 py-2 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50"
-      [disabled]="isExportingPdf() || isLoading() || transactions().length === 0"
-      (click)="exportPdf()">
-      <mat-icon class="text-sm">{{ isExportingPdf() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ (isExportingPdf() ? 'Exporting...' : 'Export PDF') | t }}</span>
-    </button>
-    <button mat-flat-button color="accent" 
-      class="rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 px-4 py-2" 
+  [title]="'Ledger' | t"
+  [description]="'Every income and expense entry, newest first.' | t"
+  [breadcrumbActiveNode]="'Ledger' | t">
+  <div actions class="flex flex-wrap items-center gap-2">
+    <button mat-flat-button
+      class="!rounded-xl !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2"
       (click)="openIncomeDialog()">
       <mat-icon>arrow_downward</mat-icon>
       <span>{{ 'Record Income' | t }}</span>
     </button>
-    <button mat-flat-button color="warn" 
-      class="rounded-xl shadow-md bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-2 px-4 py-2" 
+    <button mat-stroked-button
+      class="!rounded-xl !border-rose-200 dark:!border-rose-800 !text-rose-700 dark:!text-rose-300 hover:!bg-rose-50 dark:hover:!bg-rose-950/30 flex items-center gap-2"
       (click)="openExpenseDialog()">
       <mat-icon>arrow_upward</mat-icon>
       <span>{{ 'Record Expense' | t }}</span>
     </button>
+    <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu" [disabled]="isLoading()"
+      class="!rounded-xl !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800">
+      <mat-icon>{{ (isExporting() || isExportingPdf()) ? 'hourglass_empty' : 'download' }}</mat-icon>
+      <span>{{ 'Download' | t }}</span>
+      <mat-icon iconPositionEnd>expand_more</mat-icon>
+    </button>
+    <mat-menu #exportMenu="matMenu" xPosition="before">
+      <button mat-menu-item (click)="exportCsv()" [disabled]="isExporting() || isLoading()"><mat-icon>grid_on</mat-icon><span>{{ 'Download CSV' | t }}</span></button>
+      <button mat-menu-item (click)="exportPdf()" [disabled]="isExportingPdf() || isLoading() || transactions().length === 0"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+    </mat-menu>
   </div>
 </app-page-header>
 
 <div class="px-6 py-4 mx-auto max-w-7xl space-y-6">
 
+  <app-finance-subnav></app-finance-subnav>
+
   <!-- Summary KPI Bar -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <!-- Total Income -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
         <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Cash In (filtered)' | t }}</p>
         <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
@@ -49,11 +46,10 @@
       <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
         <mat-icon class="text-2xl">trending_up</mat-icon>
       </div>
-      <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-emerald-500/5 rotate-[-10deg] pointer-events-none">trending_up</mat-icon>
     </div>
 
     <!-- Total Expense -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
         <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Cash Out (filtered)' | t }}</p>
         <h3 class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
@@ -64,11 +60,10 @@
       <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
         <mat-icon class="text-2xl">trending_down</mat-icon>
       </div>
-      <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-rose-500/5 rotate-[-10deg] pointer-events-none">trending_down</mat-icon>
     </div>
 
     <!-- Net Cash Flow -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
+    <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-800/50 shadow-sm flex items-center justify-between relative overflow-hidden">
       <div>
         <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Net Cash Flow' | t }}</p>
         <h3 class="text-2xl font-bold mt-1"
@@ -81,12 +76,11 @@
         [ngClass]="netCashFlow() >= 0 ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'">
         <mat-icon class="text-2xl">account_balance_wallet</mat-icon>
       </div>
-      <mat-icon class="absolute -right-3 -bottom-3 text-7xl text-teal-500/5 rotate-[-10deg] pointer-events-none">account_balance_wallet</mat-icon>
     </div>
   </div>
 
   <!-- Filter & Search Toolbar -->
-  <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50 shadow-sm">
+  <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50 shadow-sm">
     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
       
       <!-- Search Input -->
@@ -197,7 +191,7 @@
   </div>
 
   <!-- Transactions Table Card -->
-  <div #reportSheet id="financeLedgerCard" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
+  <div #reportSheet id="financeLedgerCard" class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
     
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 

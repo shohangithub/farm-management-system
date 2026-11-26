@@ -42,7 +42,7 @@ export class BreedingDashboardComponent {
   private workingContext = inject(WorkingContextService);
   private router = inject(Router);
   private i18n = inject(I18nService);
-  readonly noDataDescription = this.i18n.t("No pregnancies, upcoming calvings or checked matings for this farm. Matings are recorded on a female animal's page, in the Breeding History tab.");
+  readonly noDataDescription = this.i18n.t("No matings recorded yet. Record one from a female animal's page, in its Breeding History tab.");
 
   /** The farm picked in the context selector; the page re-loads whenever it changes. */
   private farm = toSignal(this.workingContext.currentFarm$, { initialValue: this.workingContext.currentFarmValue });

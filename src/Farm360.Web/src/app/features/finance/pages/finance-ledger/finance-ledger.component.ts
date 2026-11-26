@@ -41,11 +41,12 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-finance-ledger',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, HasPermissionDirective, 
+  imports: [FinanceSubnavComponent, TranslatePipe, MoneyPipe, HasPermissionDirective, 
     CommonModule,
     FormsModule,
     RouterLink,

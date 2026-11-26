@@ -1,16 +1,16 @@
 <app-page-header 
-  [title]="'Breeding Analytics' | t" 
-  [description]="'Insights into conception rates and upcoming calvings.' | t"
-  [breadcrumbActiveNode]="'Breeding Analytics' | t">
+  [title]="'Breeding overview' | t"
+  [description]="'Pregnancies, upcoming calvings and how often matings succeed.' | t"
+  [breadcrumbActiveNode]="'Breeding' | t">
   <div actions>
-    <button mat-flat-button color="primary" class="print:hidden" [disabled]="!hasData()" (click)="printReport()">
+    <button *ngIf="hasData()" mat-stroked-button class="print:hidden" (click)="printReport()">
       <mat-icon>print</mat-icon>
       {{ 'Print Report' | t }}
     </button>
   </div>
 </app-page-header>
 
-<div class="p-6 relative min-h-[400px]">
+<div class="relative min-h-[400px]">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
   <app-empty-state
@@ -33,48 +33,46 @@
     [title]="'No Breeding Data Yet' | t"
     [description]="noDataDescription"
     [actionLabel]="'Go to Animals' | t"
+    actionIcon="arrow_forward"
     (action)="goToAnimals()">
   </app-empty-state>
 
-  <div *ngIf="hasFarm() && !isLoading() && hasData()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div *ngIf="hasFarm() && !isLoading() && hasData()" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     
     <!-- KPI Card: Total Confirmed Pregnancies -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
+    <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 relative overflow-hidden flex flex-col justify-between">
       <div class="flex justify-between items-start mb-4">
         <div>
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Active Pregnancies' | t }}</p>
           <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalConfirmedPregnancies }}</h3>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+        <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 flex items-center justify-center">
           <mat-icon>favorite</mat-icon>
         </div>
       </div>
       <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
-        <mat-icon class="text-[14px] w-[14px] h-[14px] mr-1 text-emerald-500">trending_up</mat-icon>
         {{ 'Confirmed, not yet calved, dam still on the farm.' | t }}
       </p>
-      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-indigo-500/5 rotate-[-10deg] pointer-events-none">favorite</mat-icon>
     </div>
 
     <!-- KPI Card: Expected Calvings Next 30 Days -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
+    <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 relative overflow-hidden flex flex-col justify-between">
       <div class="flex justify-between items-start mb-4">
         <div>
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Calvings (Next 30 Days)' | t }}</p>
           <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.expectedCalvingsNext30Days }}</h3>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+        <div class="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 flex items-center justify-center">
           <mat-icon>calendar_today</mat-icon>
         </div>
       </div>
       <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
         {{ 'Upcoming births based on expected calving dates.' | t }}
       </p>
-      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">calendar_today</mat-icon>
     </div>
 
     <!-- Chart: Conception Rate -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden col-span-1 lg:col-span-3">
+    <div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 relative overflow-hidden sm:col-span-2">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ 'Conception Rate' | t }}</h3>
       <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ 'Share of checked matings that resulted in a pregnancy. Matings still awaiting a pregnancy check are not counted.' | t }}</p>
       <div echarts [options]="chartOptions()" class="w-full h-[300px]"></div>

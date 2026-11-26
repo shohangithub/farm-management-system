@@ -1,122 +1,118 @@
-<app-page-header 
-  [title]="'Medical Treatments' | t"
-  [description]="'Log and track medication, dosages, and withdrawal periods.' | t"
-  icon="healing" 
-  iconColor="text-purple-600">
-  <div actions class="flex items-center gap-2">
-    <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !dataSource().length"
-      class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
-      <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-      <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
-    </button>
-    <button mat-flat-button (click)="openLogTreatmentDialog()"
-      class="rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-purple-600/20">
-      <mat-icon class="text-sm">add</mat-icon>
-      <span>{{ 'Log Treatment' | t }}</span>
+<app-page-header
+  [title]="'Treatments' | t"
+  [description]="'Medicines given to sick animals, with dose and cost.' | t">
+  <div actions class="flex flex-wrap items-center gap-2">
+    @if (dataSource().length) {
+      <button type="button" (click)="exportPdf()" [disabled]="isExporting()"
+        class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ isExporting() ? 'hourglass_empty' : 'download' }}</mat-icon>
+        {{ (isExporting() ? 'Preparing PDF...' : 'Download PDF') | t }}
+      </button>
+    }
+    <button type="button" (click)="openLogTreatmentDialog()"
+      class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Log Treatment' | t }}
     </button>
   </div>
 </app-page-header>
 
-  <div #reportSheet id="treatmentListContainer" class="bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative">
-    <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
-  <app-error-state *ngIf="!isLoading() && loadError()" class="block p-6" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
-  <!-- Empty State -->
-  <app-empty-state 
-    *ngIf="!isLoading() && (!dataSource() || dataSource().length === 0) && !loadError()"
-    icon="medical_services"
-    [title]="'No treatments found' | t"
-    [description]="'Log a new treatment to start tracking animal health.' | t"
-    [actionLabel]="'Log Treatment' | t"
-    (action)="openLogTreatmentDialog()">
-  </app-empty-state>
+<app-health-nav></app-health-nav>
 
-  <!-- Premium Grid Design -->
-  <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" *ngIf="!isLoading() && dataSource() && dataSource().length > 0">
-    <div *ngFor="let element of dataSource()" class="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 flex flex-col">
-      <!-- Watermark -->
-      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-amber-500/5 dark:text-amber-400/5 rotate-[-10deg] pointer-events-none transition-transform duration-500 group-hover:scale-110">healing</mat-icon>
-      
-      <!-- Card Header -->
-      <div class="p-5 flex items-start justify-between border-b border-gray-50 dark:border-gray-700/50 relative z-10">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-110 transition-transform duration-300">
-            <mat-icon class="!w-5 !h-5 !text-[20px]">medical_services</mat-icon>
-          </div>
-          <div>
-            <h3 class="font-bold text-gray-900 dark:text-white text-lg leading-tight group-hover:text-amber-600 transition-colors">{{ element.diagnosis }}</h3>
-            <span class="inline-flex items-center mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-              <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mr-1">pets</mat-icon>
-              {{ element.animalTagId || (element.animalId | slice:0:8) }}
-            </span>
-          </div>
+<app-health-filter-bar
+  [placeholder]="'Search illness or medicine'"
+  [options]="statusOptions"
+  [selected]="statusFilter()"
+  (selectedChange)="setStatus($event)"
+  (searchChange)="setSearch($event)">
+</app-health-filter-bar>
+
+<div class="relative min-h-[200px]">
+  <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="!isLoading() && loadError()" class="block" [message]="loadError()!" (retry)="retryLoad()"></app-error-state>
+
+  <div *ngIf="!isLoading() && !loadError() && dataSource().length === 0">
+    <app-empty-state
+      icon="medical_services"
+      [title]="(isFiltered() ? 'No treatments match' : 'No treatments yet') | t"
+      [description]="(isFiltered() ? 'Try another word or filter.' : 'Log a treatment when an animal gets medicine.') | t"
+      [actionLabel]="isFiltered() ? undefined : ('Log Treatment' | t)"
+      (action)="openLogTreatmentDialog()">
+    </app-empty-state>
+  </div>
+
+  <div #reportSheet id="treatmentListContainer" *ngIf="!isLoading() && dataSource().length > 0"
+       class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div *ngFor="let element of dataSource()"
+         class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm flex flex-col min-w-0">
+      <div class="p-4 flex items-start gap-3">
+        <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+          <mat-icon class="!w-5 !h-5 !text-[20px]">medical_services</mat-icon>
         </div>
-        
-        <div class="flex items-center gap-2">
-          <button type="button" 
-                  (click)="openEditTreatmentDialog(element)"
-                  class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
-                  [title]="'Edit Treatment Details' | t" [attr.aria-label]="'Edit' | t">
-            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
-          </button>
-          
-          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
-                [ngClass]="{
-                  'bg-blue-50 text-blue-700 border-blue-200': element.status === treatmentStatus.Ongoing,
-                  'bg-emerald-50 text-emerald-700 border-emerald-200': element.status === treatmentStatus.Completed,
-                  'bg-red-50 text-red-700 border-red-200': element.status === treatmentStatus.Failed,
-                  'bg-gray-50 text-gray-700 border-gray-200': element.status === treatmentStatus.Discontinued
-                }">
-            {{ element.status | t }}
-          </span>
+        <div class="min-w-0 flex-1">
+          <h3 class="font-semibold text-[15px] leading-snug text-gray-900 dark:text-white break-words">{{ element.diagnosis }}</h3>
+          <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">pets</mat-icon>{{ element.animalTagId || (element.animalId | slice:0:8) }}
+          </p>
         </div>
+        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
+              [ngClass]="{
+                'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300': element.status === treatmentStatus.Ongoing,
+                'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300': element.status === treatmentStatus.Completed,
+                'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300': element.status === treatmentStatus.Failed,
+                'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300': element.status === treatmentStatus.Discontinued
+              }">
+          {{ element.status | t }}
+        </span>
       </div>
 
-      <!-- Card Body -->
-      <div class="p-5 flex-1 relative z-10 flex flex-col justify-center">
-        <div class="grid grid-cols-2 gap-y-4 gap-x-2">
-          <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Medication' | t }}</div>
-            <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ element.medicationName }}</div>
-            <div class="text-xs text-gray-500">{{ element.dosageAmount }} {{ element.dosageUnit }}</div>
-          </div>
-          
-          <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Start Date' | t }}</div>
-            <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ element.startDate | date:'mediumDate' }}</div>
-          </div>
-
-          <div>
-            <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">{{ 'Cost' | t }}</div>
-            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ element.costBdt | money:2 }}</div>
-          </div>
+      <dl class="px-4 pb-4 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+        <div class="col-span-2">
+          <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ 'Medicine' | t }}</dt>
+          <dd class="font-semibold text-gray-900 dark:text-white">{{ element.medicationName }}
+            <span class="font-normal text-gray-500 dark:text-gray-400">· {{ element.dosageAmount }} {{ element.dosageUnit }}</span></dd>
         </div>
-      </div>
+        <div>
+          <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ 'Start Date' | t }}</dt>
+          <dd class="font-semibold text-gray-900 dark:text-white">{{ element.startDate | date:'mediumDate' }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ 'Cost' | t }}</dt>
+          <dd class="font-semibold text-gray-900 dark:text-white">{{ element.costBdt | money:2 }}</dd>
+        </div>
+        <div *ngIf="meatSafeDate(element) as safe" class="col-span-2 flex items-center gap-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-1.5 text-xs font-medium text-amber-800 dark:text-amber-300">
+          <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">block</mat-icon>
+          {{ 'Do not sell for meat before {date}' | t: { date: (safe | date:'mediumDate') } }}
+        </div>
+      </dl>
 
-      <!-- Card Footer Actions -->
-      <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 relative z-10 no-print">
+      <div class="mt-auto px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2 no-print">
         <ng-container *ngIf="element.status === treatmentStatus.Ongoing">
-          <button class="flex-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1" (click)="updateStatus(element, treatmentStatus.Completed)">
-            <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">check_circle</mat-icon> {{ 'Complete' | t }}
+          <button type="button" (click)="updateStatus(element, treatmentStatus.Completed)"
+            class="flex-1 inline-flex items-center justify-center gap-1 h-10 px-3 text-[13px] font-semibold rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
+            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon> {{ 'Cured' | t }}
           </button>
-          <button class="flex-1 px-3 py-1.5 text-xs font-semibold text-red-700 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1" (click)="updateStatus(element, treatmentStatus.Failed)">
-            <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">cancel</mat-icon> {{ 'Failed' | t }}
+          <button type="button" (click)="updateStatus(element, treatmentStatus.Failed)"
+            class="flex-1 inline-flex items-center justify-center gap-1 h-10 px-3 text-[13px] font-semibold rounded-lg border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 bg-white dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors">
+            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">cancel</mat-icon> {{ 'Not cured' | t }}
           </button>
         </ng-container>
-        <button class="px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-lg transition-colors shadow-sm inline-flex items-center justify-center gap-1" (click)="openEditTreatmentDialog(element)">
-          <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">edit</mat-icon> {{ 'Edit' | t }}
+        <button type="button" (click)="openEditTreatmentDialog(element)"
+          class="inline-flex items-center justify-center gap-1 h-10 px-3 text-[13px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          [class.flex-1]="element.status !== treatmentStatus.Ongoing">
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">edit</mat-icon> {{ 'Edit' | t }}
         </button>
       </div>
     </div>
   </div>
 
-    <div class="border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30 no-print">
-      <mat-paginator [length]="totalItems()"
-                     [pageSize]="pageSize()"
-                     [pageSizeOptions]="[5, 10, 25, 100]"
-                     [pageIndex]="pageIndex()"
-                     (page)="onPageChange($event)"
-                     [attr.aria-label]="'Select page' | t"
-                     class="!bg-transparent">
-      </mat-paginator>
-    </div>
+  <div *ngIf="totalItems() > 0" class="mt-4 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden no-print">
+    <mat-paginator [length]="totalItems()"
+                   [pageSize]="pageSize()"
+                   [pageSizeOptions]="[12, 24, 48, 96]"
+                   [pageIndex]="pageIndex()"
+                   (page)="onPageChange($event)"
+                   [attr.aria-label]="'Select page' | t"
+                   class="!bg-transparent">
+    </mat-paginator>
   </div>
+</div>

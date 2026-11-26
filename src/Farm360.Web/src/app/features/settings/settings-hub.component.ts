@@ -4,121 +4,82 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+
+interface HubLink {
+  route: string;
+  icon: string;
+  title: string;
+  description: string;
+}
 
 @Component({
   selector: 'app-settings-hub',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, HasPermissionDirective, TranslatePipe],
+  imports: [CommonModule, RouterModule, MatIconModule, HasPermissionDirective, TranslatePipe, PageHeaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="space-y-6 animate-fade-in-up p-6">
-      <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{{ 'System Settings & Setup' | t }}</h2>
-        <p class="text-gray-500 dark:text-gray-400 mt-1">{{ 'Manage organizations, master data, and reference tables.' | t }}</p>
-      </div>
+    <app-page-header
+      [title]="'Settings' | t"
+      [description]="'Set up your farm, your team and your account.' | t">
+    </app-page-header>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        <!-- Organizations -->
-        <a routerLink="/organizations" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-            <mat-icon class="!w-24 !h-24 !text-[96px]">business</mat-icon>
-          </div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <mat-icon>business</mat-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Organizations' | t }}</h3>
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Manage multi-tenant organizations, branches, and farm setups.' | t }}</p>
-        </a>
+    <div class="max-w-5xl space-y-8">
 
-        <!-- Breeds -->
-        <a routerLink="/livestock/breeds" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-            <mat-icon class="!w-24 !h-24 !text-[96px]">pets</mat-icon>
-          </div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <mat-icon>pets</mat-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Breeds Setup' | t }}</h3>
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Configure animal breeds, genetic traits, and predictive growth metrics.' | t }}</p>
-        </a>
+      <!-- Farm setup -->
+      <section aria-labelledby="settings-farm" class="space-y-3">
+        <h2 id="settings-farm" class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide m-0">{{ 'Farm setup' | t }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ng-container *ngFor="let link of farmLinks">
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: link }"></ng-container>
+          </ng-container>
+        </div>
+      </section>
 
-        <!-- Batches -->
-        <a routerLink="/livestock/batches" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-            <mat-icon class="!w-24 !h-24 !text-[96px]">group_work</mat-icon>
-          </div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-              <mat-icon>group_work</mat-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Batches & Groups' | t }}</h3>
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Group livestock into manageable batches for bulk feeding and health operations.' | t }}</p>
-        </a>
+      <!-- People & account -->
+      <section aria-labelledby="settings-account" class="space-y-3">
+        <h2 id="settings-account" class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide m-0">{{ 'People & account' | t }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ng-container *hasPermission="'users.view'">
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: teamLink }"></ng-container>
+          </ng-container>
+          <ng-container *ngFor="let link of accountLinks">
+            <ng-container *ngTemplateOutlet="card; context: { $implicit: link }"></ng-container>
+          </ng-container>
+        </div>
+      </section>
 
-        <!-- Master Data -->
-        <a routerLink="/settings/master-data" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-            <mat-icon class="!w-24 !h-24 !text-[96px]">settings_applications</mat-icon>
-          </div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 flex items-center justify-center">
-              <mat-icon>settings_applications</mat-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'General Master Data' | t }}</h3>
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Configure geographic locations, user permissions and global attributes.' | t }}</p>
-        </a>
-
-        <!-- Farm rules (per-organisation business rules) -->
-        <a routerLink="/settings/farm-rules" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-            <mat-icon class="!w-24 !h-24 !text-[96px]">rule</mat-icon>
-          </div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-              <mat-icon>rule</mat-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Farm rules' | t }}</h3>
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Meat and live-weight prices, how animals are valued, and how feed and overhead costs are shared.' | t }}</p>
-        </a>
-
-        <!-- Team -->
-        <a *hasPermission="'users.view'" routerLink="/settings/team" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-            <mat-icon class="!w-24 !h-24 !text-[96px]">groups</mat-icon>
-          </div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-              <mat-icon>groups</mat-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Team' | t }}</h3>
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Invite people, set roles and branches, and deactivate or remove members.' | t }}</p>
-        </a>
-
-        <!-- Subscription & Billing -->
-        <a routerLink="/settings/billing" class="block bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-            <mat-icon class="!w-24 !h-24 !text-[96px]">workspace_premium</mat-icon>
-          </div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
-              <mat-icon>workspace_premium</mat-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ 'Subscription & Plans' | t }}</h3>
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 relative z-10">{{ 'Manage monthly, yearly, or lifetime plans, free trials, quotas, and invoices.' | t }}</p>
-        </a>
-
-      </div>
     </div>
+
+    <ng-template #card let-link>
+      <a [routerLink]="link.route"
+         class="group flex items-center gap-4 bg-white dark:bg-gray-800/80 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-800 hover:border-primary-300 dark:hover:border-primary-500/40 hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+        <span class="w-11 h-11 shrink-0 rounded-xl bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
+          <mat-icon>{{ link.icon }}</mat-icon>
+        </span>
+        <span class="flex-1 min-w-0">
+          <span class="block text-base font-semibold text-gray-900 dark:text-white">{{ link.title | t }}</span>
+          <span class="block text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ link.description | t }}</span>
+        </span>
+        <mat-icon class="shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" aria-hidden="true">chevron_right</mat-icon>
+      </a>
+    </ng-template>
   `
 })
-export class SettingsHubComponent { }
+export class SettingsHubComponent {
+  readonly farmLinks: HubLink[] = [
+    { route: '/organizations', icon: 'business', title: 'Business & farms', description: 'Your business, branches, farms and sheds.' },
+    { route: '/livestock/breeds', icon: 'pets', title: 'Breeds', description: 'The breeds you keep and their growth targets.' },
+    { route: '/livestock/batches', icon: 'group_work', title: 'Batches', description: 'Groups of animals you feed and treat together.' },
+    { route: '/settings/farm-rules', icon: 'rule', title: 'Farm rules', description: 'Meat prices, animal values and how costs are shared.' },
+  ];
+
+  readonly teamLink: HubLink = {
+    route: '/settings/team', icon: 'groups', title: 'Team', description: 'Invite people and choose what they can do.'
+  };
+
+  readonly accountLinks: HubLink[] = [
+    { route: '/settings/profile', icon: 'person_outline', title: 'My Profile', description: 'Your name, email and password.' },
+    { route: '/settings/billing', icon: 'workspace_premium', title: 'Subscription & Plans', description: 'Your plan, free trial and invoices.' },
+  ];
+}

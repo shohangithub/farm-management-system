@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, D
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,12 +19,13 @@ import { formatMoney } from '../../../../shared/pipes/money.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-monthly-pnl-report',
   standalone: true,
-  imports: [MoneyPipe, ErrorStateComponent,
+  imports: [FinanceSubnavComponent, MatMenuModule, MoneyPipe, ErrorStateComponent,
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
@@ -37,15 +39,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   template: `
     <app-page-header 
       [title]="'Monthly Profit & Loss' | t" 
-      [description]="'Detailed breakdown of income and expenses by category for a specific month.' | t"
+      [description]="'Income and expenses by category for one month.' | t"
       [breadcrumbActiveNode]="'Monthly P&L' | t">
-      <div actions class="flex items-center gap-3">
-        <a mat-stroked-button routerLink="/finance"
-          class="rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center gap-2 px-3 py-1.5 text-xs">
-          <mat-icon class="text-sm">arrow_back</mat-icon>
-          <span>{{ 'Overview' | t }}</span>
-        </a>
-        <form [formGroup]="filterForm" class="flex items-center gap-2">
+      <div actions class="flex flex-wrap items-center gap-2">
+        <form [formGroup]="filterForm" class="flex flex-wrap items-center gap-2">
           <select formControlName="year" class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 outline-none">
             <option *ngFor="let y of years" [value]="y">{{ y }}</option>
           </select>
@@ -53,28 +50,25 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             <option *ngFor="let m of months" [value]="m.value">{{ m.label | t }}</option>
           </select>
         </form>
-        <a mat-stroked-button routerLink="/reports/finance.monthly-pnl"
-          matTooltip="Open in Enterprise SAP Report Viewer with multi-page table banding"
-          class="rounded-xl border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px] text-emerald-600 dark:text-emerald-400">table_view</mat-icon>
-          <span>{{ 'SAP Report' | t }}</span>
-        </a>
-        <button mat-flat-button (click)="exportPdf()" [disabled]="isExporting() || !reportData()"
-          class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 disabled:opacity-50">
-          <mat-icon class="text-sm">{{ isExporting() ? 'hourglass_empty' : 'picture_as_pdf' }}</mat-icon>
-          <span>{{ (isExporting() ? 'Exporting...' : 'Export PDF') | t }}</span>
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu"
+          class="!rounded-xl !min-h-[40px] !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 !text-xs !font-semibold">
+          <mat-icon class="!w-4 !h-4 !text-[16px]">download</mat-icon>
+          <span>{{ 'Download' | t }}</span>
+          <mat-icon iconPositionEnd class="!w-4 !h-4 !text-[16px]">expand_more</mat-icon>
         </button>
-        <button mat-stroked-button (click)="exportExcel()" [disabled]="!reportData()"
-          class="rounded-xl border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-          <mat-icon class="!w-4 !h-4 !text-[16px]">file_download</mat-icon>
-          <span>Excel</span>
-        </button>
+        <mat-menu #exportMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="exportPdf()" [disabled]="isExporting() || !reportData()"><mat-icon>picture_as_pdf</mat-icon><span>{{ 'Download PDF' | t }}</span></button>
+          <button mat-menu-item (click)="exportExcel()" [disabled]="!reportData()"><mat-icon>grid_on</mat-icon><span>{{ 'Download Excel' | t }}</span></button>
+          <a mat-menu-item routerLink="/reports/finance.monthly-pnl"><mat-icon>table_view</mat-icon><span>{{ 'Open as report' | t }}</span></a>
+        </mat-menu>
       </div>
     </app-page-header>
 
     <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
     <div *ngIf="!isLoading()" class="p-6 max-w-6xl mx-auto space-y-6">
+      <app-finance-subnav></app-finance-subnav>
+
       
       <app-error-state *ngIf="loadError() as err" [title]="loadErrorTitle" [message]="err" (retry)="retryLoad()"></app-error-state>
 
@@ -90,7 +84,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         
         <!-- KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
             <div>
               <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Total Income' | t }}</p>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
@@ -102,7 +96,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             </div>
           </div>
 
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between">
             <div>
               <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Total Expense' | t }}</p>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
@@ -114,7 +108,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             </div>
           </div>
 
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between relative overflow-hidden"
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between relative overflow-hidden"
                [ngClass]="report.netProfitBdt >= 0 ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10' : 'bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/10 dark:to-red-900/10'">
             <div class="relative z-10">
               <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Net Profit' | t }}</p>
@@ -134,7 +128,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <!-- Income Breakdown -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6">
             <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <mat-icon class="!w-4 !h-4 !text-[16px]">add</mat-icon>
@@ -152,7 +146,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <!-- Expense Breakdown -->
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6">
+          <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6">
             <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                 <mat-icon class="!w-4 !h-4 !text-[16px]">remove</mat-icon>

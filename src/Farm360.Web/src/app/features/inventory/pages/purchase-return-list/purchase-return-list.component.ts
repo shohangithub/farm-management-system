@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -33,7 +34,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-purchase-return-list',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -48,7 +49,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   template: `
     <app-page-header
       [title]="'Purchase Returns' | t"
-      [description]="'Track goods returned to suppliers, credit notes, and stock deductions.' | t"
+      [description]="'Goods sent back to suppliers.' | t"
       [breadcrumbActiveNode]="'Purchase Returns' | t">
       <div actions class="flex items-center gap-3">
         <button [routerLink]="['/inventory/purchase-orders']"
@@ -57,8 +58,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
       <app-error-state *ngIf="error() as err" [message]="err" (retry)="retryLoad()"></app-error-state>
 

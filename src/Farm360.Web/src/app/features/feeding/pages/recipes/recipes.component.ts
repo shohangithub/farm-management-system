@@ -16,7 +16,7 @@ type RecipeTab = 'recipes' | 'ingredients';
   standalone: true,
   imports: [CommonModule, MatIconModule, FeedingSubnavComponent, FormulaListComponent, IngredientListComponent, TranslatePipe],
   template: `
-    <div class="px-6 pt-4 mx-auto max-w-7xl">
+    <div>
       <app-feeding-subnav></app-feeding-subnav>
       <div class="flex items-center gap-2 text-xs font-semibold">
         <button (click)="show('recipes')" class="px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5"

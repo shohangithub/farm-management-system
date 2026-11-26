@@ -23,6 +23,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
+import { SPECIES_LABELS } from '../../../livestock/models/animal.models';
+
 @Component({
   selector: 'app-vaccination-protocol-detail',
   standalone: true,
@@ -121,5 +123,10 @@ export class VaccinationProtocolDetailComponent {
       width: '720px',
       data: { protocol: p }
     });
+  }
+
+  /** "CattleBeef" -> "Cattle (Beef)". */
+  speciesLabel(species: string | undefined): string {
+    return species ? ((SPECIES_LABELS as Record<string, string>)[species] ?? species) : '';
   }
 }

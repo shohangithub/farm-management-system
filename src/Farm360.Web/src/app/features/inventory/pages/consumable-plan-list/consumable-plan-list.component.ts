@@ -1,3 +1,4 @@
+import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -30,7 +31,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-consumable-plan-list',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -45,22 +46,19 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   ],
   template: `
     <app-page-header
-      [title]="'Daily Consumable Plans' | t"
-      [description]="'Define recurring daily supply plans (shampoo, mosquito coils, Dettol, sanitation chemicals) to automate stock tracking and costs.' | t"
-      [breadcrumbActiveNode]="'Consumable Plans' | t">
+      [title]="'Supply Plans' | t"
+      [description]="'Supplies used every day, like shampoo, coils or Dettol.' | t"
+      [breadcrumbActiveNode]="'Supply Plans' | t">
       <div actions class="flex items-center gap-2">
-        <a routerLink="/inventory/daily-consumables"
-          class="px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors shadow-sm inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-teal-500">today</mat-icon> {{ "Today's Consumables" | t }}
-        </a>
         <button (click)="openCreatePlanDialog()"
-          class="px-4 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-md shadow-teal-500/20 inline-flex items-center gap-1.5">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'New Consumable Plan' | t }}
+          class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'New Supply Plan' | t }}
         </button>
       </div>
     </app-page-header>
+    <app-inventory-subnav></app-inventory-subnav>
 
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden relative min-h-[400px]">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative min-h-[400px]">
       <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
 
       <!-- Filters Toolbar -->
@@ -101,12 +99,11 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               <div class="bg-white dark:bg-gray-800/90 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm hover:shadow-md hover:border-teal-500/30 transition-all flex flex-col relative overflow-hidden group">
                 
                 <!-- Watermark Background Icon -->
-                <mat-icon class="absolute -right-4 -bottom-4 text-[100px] !w-[100px] !h-[100px] text-teal-500/5 rotate-[-10deg] pointer-events-none">cleaning_services</mat-icon>
 
                 <!-- Card Header -->
                 <div class="p-4 border-b border-gray-100 dark:border-gray-700/50 flex items-start justify-between relative z-10">
                   <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center shadow-md shadow-teal-500/20 shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 shrink-0">
                       <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">sanitizer</mat-icon>
                     </div>
                     <div>

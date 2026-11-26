@@ -110,9 +110,9 @@ export interface FeedsCostReportDialogData {
           </div>
 
           <button type="button" (click)="openSapReport()"
-            [matTooltip]="'Open in Enterprise SAP Report Viewer with multi-page table banding' | t"
+            [matTooltip]="'Open this as a full printable report' | t"
             class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-all flex items-center gap-1 shadow-xs hover:bg-emerald-100">
-            <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">open_in_new</mat-icon> {{ 'SAP Report' | t }}
+            <mat-icon class="!w-3.5 !h-3.5 !text-[14px]">open_in_new</mat-icon> {{ 'Open as report' | t }}
           </button>
 
           <button mat-icon-button (click)="close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors" [attr.aria-label]="'Close' | t">
@@ -300,8 +300,8 @@ export interface FeedsCostReportDialogData {
             <div class="flex justify-between items-start border-b border-slate-200 pb-4 mb-4">
               <div>
                 <h1 class="text-xl font-extrabold text-slate-900 tracking-tight m-0">FARM360 AI</h1>
-                <p class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider mt-0.5 m-0">{{ 'Intelligent Livestock Nutrition & Expenditure Suite' | t }}</p>
-                <p class="text-xs text-slate-500 mt-1 m-0">{{ 'Farm:' | t }} <strong>{{ data.farmName || ('Primary Farm' | t) }}</strong> | {{ 'Org:' | t }} <strong>{{ data.orgName || 'Farm360 Enterprise' }}</strong></p>
+                <p class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider mt-0.5 m-0">{{ 'Feed cost per animal' | t }}</p>
+                <p class="text-xs text-slate-500 mt-1 m-0">{{ 'Farm:' | t }} <strong>{{ data.farmName || ('Primary Farm' | t) }}</strong> | {{ 'Org:' | t }} <strong>{{ data.orgName || 'Farm360' }}</strong></p>
               </div>
               <div class="text-right">
                 <h2 class="text-base font-black text-emerald-700 m-0">{{ 'ANIMAL-WISE FEEDS & COST REPORT' | t }}</h2>

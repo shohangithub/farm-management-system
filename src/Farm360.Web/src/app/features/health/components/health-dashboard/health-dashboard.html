@@ -1,58 +1,94 @@
-<app-page-header 
-  [title]="'Health & Mortality Analytics' | t"
-  [description]="'Trends on mortality and vaccination compliance.' | t"
-  [breadcrumbActiveNode]="'Health Analytics' | t">
+<app-page-header
+  [title]="'Health Trends' | t"
+  [description]="'The last 12 months: deaths, common illnesses and vaccine coverage.' | t"
+  [breadcrumbActiveNode]="'Trends' | t">
   <div actions>
-    <button mat-flat-button color="primary" class="print:hidden" [disabled]="!hasData()" (click)="printReport()">
-      <mat-icon>print</mat-icon>
-      {{ 'Print Report' | t }}
+    <button type="button" class="print:hidden inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+      [disabled]="!hasData()" (click)="printReport()">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">print</mat-icon>
+      {{ 'Print' | t }}
     </button>
   </div>
 </app-page-header>
 
-<div class="p-6 relative min-h-[400px]">
+<app-health-nav></app-health-nav>
+
+<div class="relative min-h-[300px]">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
 
-  <app-empty-state
-    *ngIf="!hasFarm()"
-    icon="agriculture"
-    [title]="'Choose a farm at the top' | t"
-    [description]="'Health analytics are shown per farm. Pick a farm in the selector at the top of the page.' | t">
-  </app-empty-state>
+  <div *ngIf="!hasFarm()">
+    <app-empty-state
+      icon="agriculture"
+      [title]="'Choose a farm at the top' | t"
+      [description]="'Health trends are shown per farm.' | t">
+    </app-empty-state>
+  </div>
 
-  <app-empty-state
-    *ngIf="hasFarm() && !isLoading() && !hasData()"
-    icon="health_and_safety"
-    [title]="'Could not load health analytics' | t"
-    [description]="'Something went wrong while loading the numbers for this farm. You can still record treatments, vaccinations and mortality from the Health dashboard.' | t"
-    [actionLabel]="'Open Health Dashboard' | t"
-    (action)="goToHealthDashboard()">
-  </app-empty-state>
+  <div *ngIf="hasFarm() && !isLoading() && !hasData()">
+    <app-empty-state
+      icon="health_and_safety"
+      [title]="'Could not load health trends' | t"
+      [description]="'Please try again in a moment.' | t"
+      [actionLabel]="'Try Again' | t"
+      actionIcon="refresh"
+      (action)="reload()">
+    </app-empty-state>
+  </div>
 
-  <div *ngIf="hasFarm() && !isLoading() && hasData()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    
-    <!-- KPI Card: Total Deaths Last 12 Months -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden flex flex-col justify-between">
-      <div class="flex justify-between items-start mb-4">
-        <div>
-          <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ 'Mortality (Last 12 Mos)' | t }}</p>
-          <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalDeathsLast12Months }}</h3>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-red-500/20">
-          <mat-icon>warning</mat-icon>
+  <ng-container *ngIf="hasFarm() && !isLoading() && hasData()">
+    <!-- 12-month totals -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Deaths (12 months)' | t }}</p>
+        <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalDeathsLast12Months }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Vaccine coverage' | t }}</p>
+        <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ coverage() }}%</p>
+        <div class="mt-2 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden" role="meter" [attr.aria-valuenow]="coverage()" aria-valuemin="0" aria-valuemax="100">
+          <div class="h-full rounded-full bg-emerald-500" [style.width.%]="coverage()"></div>
         </div>
       </div>
-      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-2">
-        <mat-icon class="text-[14px] w-[14px] h-[14px] mr-1 text-red-500">trending_down</mat-icon>
-        {{ 'Total animal deaths recorded.' | t }}
-      </p>
-      <mat-icon class="absolute -right-4 -bottom-4 text-[100px] text-red-500/5 rotate-[-10deg] pointer-events-none">warning</mat-icon>
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Treatments (12 months)' | t }}</p>
+        <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ treatmentCount() }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Medicine cost (12 months)' | t }}</p>
+        <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white truncate">{{ treatmentCost() | money }}</p>
+      </div>
     </div>
 
-    <!-- Chart: Vaccination Compliance -->
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 relative overflow-hidden col-span-1 lg:col-span-2">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ 'Vaccination Compliance' | t }}</h3>
-      <div echarts [options]="chartOptions()" class="w-full h-[300px]"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <!-- Deaths by month -->
+      <section class="lg:col-span-3 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4 sm:p-5 min-w-0">
+        <h2 class="font-semibold text-[15px] text-gray-900 dark:text-white">{{ 'Deaths by month' | t }}</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'A rising bar is an early warning.' | t }}</p>
+        <div echarts [options]="deathsChart()" class="w-full h-[240px] mt-2"></div>
+      </section>
+
+      <!-- Most common illnesses -->
+      <section class="lg:col-span-2 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4 sm:p-5 min-w-0">
+        <h2 class="font-semibold text-[15px] text-gray-900 dark:text-white">{{ 'Most common illnesses' | t }}</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Number of treatments in 12 months.' | t }}</p>
+        @if (topIllnesses().length) {
+          <ul class="mt-4 space-y-3">
+            @for (row of topIllnesses(); track row.name) {
+              <li>
+                <div class="flex items-baseline justify-between gap-3 text-sm">
+                  <span class="text-gray-800 dark:text-gray-200 truncate">{{ row.name }}</span>
+                  <span class="font-semibold text-gray-900 dark:text-white tabular-nums">{{ row.count }}</span>
+                </div>
+                <div class="mt-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                  <div class="h-full rounded-full bg-amber-500" [style.width.%]="row.share"></div>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-6 text-sm text-gray-500 dark:text-gray-400">{{ 'No treatments in the last 12 months.' | t }}</p>
+        }
+      </section>
     </div>
-  </div>
+  </ng-container>
 </div>
