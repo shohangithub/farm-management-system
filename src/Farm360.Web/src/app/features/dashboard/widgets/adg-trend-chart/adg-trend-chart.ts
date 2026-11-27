@@ -64,7 +64,7 @@ export class AdgTrendChartComponent implements OnChanges {
   public readonly chartType = 'line' as const;
 
   private readonly palette = [
-    { border: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' },
+    { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
     { border: '#6366f1', bg: 'rgba(99, 102, 241, 0.12)' },
     { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' },
     { border: '#0284c7', bg: 'rgba(2, 132, 199, 0.12)' }

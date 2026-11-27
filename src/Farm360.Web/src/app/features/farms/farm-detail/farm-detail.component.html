@@ -39,7 +39,7 @@
       <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider"
             [ngClass]="statusClass()">
         <span class="w-2 h-2 rounded-full mr-2"
-              [ngClass]="{'bg-emerald-500': farm()?.status === 'Active', 'bg-gray-400': farm()?.status === 'Inactive', 'bg-amber-500': farm()?.status === 'UnderMaintenance', 'bg-red-500': farm()?.status === 'Closed'}"></span>
+              [ngClass]="{'bg-success-500': farm()?.status === 'Active', 'bg-gray-400': farm()?.status === 'Inactive', 'bg-amber-500': farm()?.status === 'UnderMaintenance', 'bg-red-500': farm()?.status === 'Closed'}"></span>
         {{ statusLabel() | t }}
       </span>
     </div>
@@ -219,7 +219,7 @@
                   </td>
                   <td class="px-6 py-4 text-sm text-center">
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border"
-                          [ngClass]="s.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
+                          [ngClass]="s.status === 'Active' ? 'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-400' : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
                       {{ s.status | t }}
                     </span>
                   </td>

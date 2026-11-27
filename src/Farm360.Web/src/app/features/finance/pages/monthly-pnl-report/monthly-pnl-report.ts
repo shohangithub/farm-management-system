@@ -109,16 +109,16 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 flex items-center justify-between relative overflow-hidden"
-               [ngClass]="report.netProfitBdt >= 0 ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10' : 'bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/10 dark:to-red-900/10'">
+               [ngClass]="report.netProfitBdt >= 0 ? 'bg-gradient-to-br from-success-50 to-teal-50 dark:from-success-900/10 dark:to-teal-900/10' : 'bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/10 dark:to-red-900/10'">
             <div class="relative z-10">
               <p class="text-sm font-bold uppercase tracking-wider text-gray-500">{{ 'Net Profit' | t }}</p>
-              <h2 class="text-2xl font-bold mt-1" [ngClass]="report.netProfitBdt >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+              <h2 class="text-2xl font-bold mt-1" [ngClass]="report.netProfitBdt >= 0 ? 'text-success-700 dark:text-success-400' : 'text-red-700 dark:text-red-400'">
                 {{ Math.abs(report.netProfitBdt) | money }}
                 <span *ngIf="report.netProfitBdt < 0" class="text-sm font-normal">{{ 'Loss' | t }}</span>
               </h2>
             </div>
             <div class="absolute right-[-10px] bottom-[-10px] opacity-20">
-              <mat-icon class="!w-[80px] !h-[80px] !text-[80px]" [ngClass]="report.netProfitBdt >= 0 ? 'text-emerald-500' : 'text-rose-500'">
+              <mat-icon class="!w-[80px] !h-[80px] !text-[80px]" [ngClass]="report.netProfitBdt >= 0 ? 'text-success-500' : 'text-rose-500'">
                 {{ report.netProfitBdt >= 0 ? 'trending_up' : 'trending_down' }}
               </mat-icon>
             </div>

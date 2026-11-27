@@ -108,9 +108,9 @@ export class HerdCompositionChartComponent implements OnChanges {
 
   public readonly chartType = 'doughnut' as const;
 
-  private readonly speciesPalette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+  private readonly speciesPalette = ['#8b5cf6', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
   private readonly sexPalette = ['#0284c7', '#ec4899', '#94a3b8'];
-  private readonly statusPalette = ['#10b981', '#f59e0b', '#6366f1', '#ef4444', '#64748b'];
+  private readonly statusPalette = ['#8b5cf6', '#f59e0b', '#6366f1', '#ef4444', '#64748b'];
 
   public chartData: ChartData<'doughnut'> = {
     labels: [],

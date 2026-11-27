@@ -121,7 +121,7 @@ export class VaccinationComplianceChartComponent implements OnChanges {
     labels: SEGMENT_LABELS.map(l => translate(l)),
     datasets: [{
       data: [],
-      backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+      backgroundColor: ['#8b5cf6', '#f59e0b', '#f43f5e'],
       borderWidth: 0,
       spacing: 2,
       hoverOffset: 4
@@ -163,7 +163,7 @@ export class VaccinationComplianceChartComponent implements OnChanges {
           labels: SEGMENT_LABELS.map(l => translate(l)),
           datasets: [{
             data: [this.data.completed, this.data.due, this.data.overdue],
-            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+            backgroundColor: ['#8b5cf6', '#f59e0b', '#f43f5e'],
             borderWidth: 0,
             spacing: 2,
             hoverOffset: 4

@@ -163,15 +163,15 @@ export class PdfExportService {
       .join(' &nbsp;|&nbsp; ');
 
     wrapper.innerHTML = `
-      <div style="height: 5px; background: linear-gradient(to right, #059669, #0d9488); border-radius: 9999px; margin-bottom: 16px;"></div>
+      <div style="height: 5px; background: linear-gradient(to right, #7c3aed, #0d9488); border-radius: 9999px; margin-bottom: 16px;"></div>
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
           <h1 style="font-size: 22px; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: -0.5px;">FARM360 AI</h1>
-          <p style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.8px; margin: 2px 0 0 0;">Agricultural Operations & Financial Intelligence Suite</p>
+          <p style="font-size: 11px; font-weight: 700; color: #6d28d9; text-transform: uppercase; letter-spacing: 0.8px; margin: 2px 0 0 0;">Agricultural Operations & Financial Intelligence Suite</p>
           <p style="font-size: 12px; color: #475569; margin: 4px 0 0 0;">Farm: <strong>${header.farmName || 'Primary Farm'}</strong> ${header.orgName ? `| Org: <strong>${header.orgName}</strong>` : ''}</p>
         </div>
         <div style="text-align: right;">
-          <h2 style="font-size: 17px; font-weight: 800; color: #047857; margin: 0; text-transform: uppercase;">${header.title}</h2>
+          <h2 style="font-size: 17px; font-weight: 800; color: #6d28d9; margin: 0; text-transform: uppercase;">${header.title}</h2>
           ${header.subtitle ? `<p style="font-size: 12px; color: #475569; margin: 2px 0 0 0;">${header.subtitle}</p>` : ''}
           <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">
             ${header.dateRange ? `${header.dateRange} | ` : ''}Date: ${nowFormatted} | Currency: ${header.currency || 'BDT (৳)'}

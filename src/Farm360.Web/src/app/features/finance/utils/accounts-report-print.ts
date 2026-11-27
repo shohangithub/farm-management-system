@@ -103,7 +103,7 @@ function escapeHtml(text: string): string {
 export const ACCOUNTS_PAPER_CSS = `
 .acct-paper {
   --ink: #111827; --muted: #6b7280; --line: #d1d5db; --soft: #f3f4f6;
-  --inc: #047857; --inc-bg: #ecfdf5; --exp: #b91c1c; --exp-bg: #fef2f2;
+  --inc: #6d28d9; --inc-bg: #f5f3ff; --exp: #b91c1c; --exp-bg: #fef2f2;
   --cap: #6d28d9; --cap-bg: #f5f3ff; --fin: #b45309; --fin-bg: #fffbeb; --brand: #0f766e;
   background: #fff; color: var(--ink);
   font-family: 'Hind Siliguri', 'Nirmala UI', 'Inter', 'Segoe UI', Arial, sans-serif; font-size: 12px; line-height: 1.45;

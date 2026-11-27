@@ -71,7 +71,7 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
             </div>
             <div class="text-right">
               <span class="text-gray-400 block text-[11px] uppercase font-bold">{{ 'Available Stock' | t }}</span>
-              <span class="font-bold" [ngClass]="data.entry.currentStock < data.entry.expectedQuantity ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'">
+              <span class="font-bold" [ngClass]="data.entry.currentStock < data.entry.expectedQuantity ? 'text-red-500' : 'text-success-600 dark:text-success-400'">
                 {{ data.entry.currentStock }} {{ data.entry.unitOfMeasure }}
               </span>
             </div>

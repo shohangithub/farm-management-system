@@ -106,12 +106,12 @@ interface BatchPnLReportView extends BatchPnLReport {
           <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
               <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">{{ 'Realised Profit / Loss' | t }}</p>
-              <h3 class="text-2xl font-bold" [ngClass]="report.grossProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+              <h3 class="text-2xl font-bold" [ngClass]="report.grossProfitBdt >= 0 ? 'text-success-600 dark:text-success-400' : 'text-red-600 dark:text-red-400'">
                 {{ Math.abs(report.grossProfitBdt) | money }}
                 <span *ngIf="report.grossProfitBdt < 0" class="text-sm">{{ 'Loss' | t }}</span>
               </h3>
             </div>
-            <div class="w-12 h-12 rounded-full flex items-center justify-center" [ngClass]="report.grossProfitBdt >= 0 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" [ngClass]="report.grossProfitBdt >= 0 ? 'bg-success-100 dark:bg-success-900/40 text-success-600 dark:text-success-400' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'">
               <mat-icon>{{ report.grossProfitBdt >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
             </div>
           </div>
@@ -141,7 +141,7 @@ interface BatchPnLReportView extends BatchPnLReport {
           </div>
           <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
             <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">{{ 'Estimated Total P&L' | t }}</p>
-            <h3 class="text-2xl font-bold" [ngClass]="(report.estimatedTotalProfitBdt ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+            <h3 class="text-2xl font-bold" [ngClass]="(report.estimatedTotalProfitBdt ?? 0) >= 0 ? 'text-success-600 dark:text-success-400' : 'text-red-600 dark:text-red-400'">
               {{ Math.abs(report.estimatedTotalProfitBdt ?? 0) | money }}
               <span *ngIf="(report.estimatedTotalProfitBdt ?? 0) < 0" class="text-sm">{{ 'Loss' | t }}</span>
             </h3>

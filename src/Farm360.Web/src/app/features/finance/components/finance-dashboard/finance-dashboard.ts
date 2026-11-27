@@ -74,7 +74,7 @@ export class FinanceDashboardComponent {
       yAxis: {
         type: 'value'
       },
-      color: ['#10b981', '#ef4444'], // Green for revenue, Red for expense
+      color: ['#8b5cf6', '#ef4444'], // Green for revenue, Red for expense
       series: [
         {
           name: revenueName,

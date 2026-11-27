@@ -71,7 +71,7 @@
 
     <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
       <div class="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
-        <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600 dark:text-emerald-400">payments</mat-icon>{{ 'Health cost (30 days)' | t }}
+        <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-success-600 dark:text-success-400">payments</mat-icon>{{ 'Health cost (30 days)' | t }}
       </div>
       <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white truncate">{{ d.monthlyHealthCostBdt | money }}</div>
     </div>
@@ -101,7 +101,7 @@
         </ul>
       } @else {
         <p class="px-5 py-6 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400">check_circle</mat-icon>
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-success-600 dark:text-success-400">check_circle</mat-icon>
           {{ 'No vaccine is due this week.' | t }}
         </p>
       }
@@ -139,7 +139,7 @@
         </ul>
       } @else {
         <p class="px-5 py-6 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-emerald-600 dark:text-emerald-400">check_circle</mat-icon>
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-success-600 dark:text-success-400">check_circle</mat-icon>
           {{ 'No animal is under treatment right now.' | t }}
         </p>
       }

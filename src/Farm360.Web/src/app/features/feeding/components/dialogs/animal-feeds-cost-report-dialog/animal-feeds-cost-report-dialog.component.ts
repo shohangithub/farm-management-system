@@ -313,7 +313,7 @@ export interface FeedsCostReportDialogData {
             <!-- KPI Ribbon in Sheet -->
             <div class="grid grid-cols-5 gap-2.5 mb-5 text-center">
               <div class="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200">
-                <div class="text-[9px] uppercase font-bold text-emerald-800">{{ 'Active Animals' | t }}</div>
+                <div class="text-[9px] uppercase font-bold text-success-800">{{ 'Active Animals' | t }}</div>
                 <div class="text-base font-black text-slate-900 mt-0.5">{{ '{n} Head' | t: { n: filteredTotals().totalAnimals } }}</div>
               </div>
               <div class="p-2.5 rounded-lg bg-sky-50/70 border border-sky-200">
@@ -451,7 +451,7 @@ export interface FeedsCostReportDialogData {
       <div class="px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 z-10 shadow-sm shrink-0">
         
         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-600">verified</mat-icon>
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-success-600">verified</mat-icon>
           <span>{{ 'Full Unicode rendering with high-resolution A4 Landscape export' | t }}</span>
         </div>
 

@@ -83,7 +83,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               </div>
 
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
-                [ngClass]="ruleSet.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-50 text-gray-700 border border-gray-200'">
+                [ngClass]="ruleSet.isActive ? 'bg-success-50 text-success-700 border border-success-200' : 'bg-gray-50 text-gray-700 border border-gray-200'">
                 {{ (ruleSet.isActive ? 'Active' : 'Inactive') | t }}
               </span>
             </div>
@@ -216,12 +216,12 @@ export class RuleSetListComponent implements OnInit {
         @page { size: A4; margin: 16mm; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; color: #111827; font-size: 12px; margin: 0; }
-        header { border-bottom: 2px solid #059669; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+        header { border-bottom: 2px solid #7c3aed; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
         header .org { font-size: 16px; font-weight: 700; }
         header .farm, header .printed { color: #6b7280; font-size: 11px; }
         h1 { font-size: 18px; margin: 0 0 4px; }
         .status { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase;
-                  border: 1px solid ${ruleSet.isActive ? '#a7f3d0' : '#e5e7eb'}; color: ${ruleSet.isActive ? '#047857' : '#374151'}; }
+                  border: 1px solid ${ruleSet.isActive ? '#ddd6fe' : '#e5e7eb'}; color: ${ruleSet.isActive ? '#6d28d9' : '#374151'}; }
         dl { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin: 12px 0 16px; }
         dt { color: #6b7280; } dd { margin: 0; font-weight: 600; }
         table { width: 100%; border-collapse: collapse; }
@@ -229,7 +229,7 @@ export class RuleSetListComponent implements OnInit {
         th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
         td.num, th.num { text-align: right; width: 1%; white-space: nowrap; }
         td.empty { text-align: center; color: #9ca3af; font-style: italic; }
-        .notes { margin-top: 14px; padding: 8px 10px; background: #f9fafb; border-left: 3px solid #059669; }
+        .notes { margin-top: 14px; padding: 8px 10px; background: #f9fafb; border-left: 3px solid #7c3aed; }
         .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
         .signatures div { width: 30%; border-top: 1px solid #6b7280; padding-top: 4px; text-align: center; color: #6b7280; font-size: 11px; }
       </style></head><body>

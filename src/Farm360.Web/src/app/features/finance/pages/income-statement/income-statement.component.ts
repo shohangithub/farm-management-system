@@ -143,7 +143,7 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
                   <td></td>
                   <td class="px-3 py-3 text-xs uppercase tracking-wider">{{ (st.totals.netProfitBdt >= 0 ? 'Net Profit for the period' : 'Net Loss for the period') | t }}</td>
                   <td class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200"
-                      [ngClass]="st.totals.netProfitBdt >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">{{ fmt(st.totals.netProfitBdt) }}</td>
+                      [ngClass]="st.totals.netProfitBdt >= 0 ? 'text-success-700 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">{{ fmt(st.totals.netProfitBdt) }}</td>
                   <td *ngIf="st.priorTotals" class="px-5 py-3 text-right font-mono border-b-4 border-double border-gray-800 dark:border-gray-200 text-gray-600">{{ fmt(st.priorTotals.netProfitBdt) }}</td>
                 </tr>
               </tbody>
@@ -197,9 +197,9 @@ export class IncomeStatementComponent {
   kpis(t: IncomeStatementTotals) {
     return [
       { label: 'Revenue', value: t.revenueBdt, color: 'text-gray-900 dark:text-white', hint: '' },
-      { label: 'Gross Profit', value: t.grossProfitBdt, color: 'text-emerald-600 dark:text-emerald-400', hint: this.i18n.t('{value}% margin', { value: t.grossMarginPercent }) },
+      { label: 'Gross Profit', value: t.grossProfitBdt, color: 'text-success-600 dark:text-success-400', hint: this.i18n.t('{value}% margin', { value: t.grossMarginPercent }) },
       { label: 'Operating Expenses', value: t.operatingExpensesBdt, color: 'text-amber-600 dark:text-amber-400', hint: this.i18n.t('incl. depreciation') },
-      { label: 'Net Profit', value: t.netProfitBdt, color: 'text-emerald-600 dark:text-emerald-400', hint: this.i18n.t('{value}% of revenue', { value: t.netMarginPercent }) },
+      { label: 'Net Profit', value: t.netProfitBdt, color: 'text-success-600 dark:text-success-400', hint: this.i18n.t('{value}% of revenue', { value: t.netMarginPercent }) },
     ];
   }
 

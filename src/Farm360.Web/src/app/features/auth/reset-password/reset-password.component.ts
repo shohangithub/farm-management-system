@@ -35,7 +35,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
           <p class="login-subtitle">{{ 'Enter the code we texted you and choose a new password.' | t }}</p>
         </div>
 
-        <div *ngIf="sent" class="login-error" role="status" style="background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #10b981;">
+        <div *ngIf="sent" class="login-error" role="status" style="background: rgba(139, 92, 246,0.12); border-color: rgba(139, 92, 246,0.35); color: #8b5cf6;">
           <span class="material-icons">sms</span>
           <span>{{ 'If an account exists for this number, a 6-digit code has been sent. It expires in 5 minutes.' | t }}</span>
         </div>

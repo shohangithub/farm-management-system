@@ -226,7 +226,7 @@ interface GroupedPlanEntries {
                           
                           <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shrink-0"
                             [ngClass]="{
-                              'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400': entry.status === DailyConsumableEntryStatus.Confirmed || entry.status === DailyConsumableEntryStatus.Adjusted,
+                              'bg-success-50 dark:bg-success-950/40 text-success-700 dark:text-success-400': entry.status === DailyConsumableEntryStatus.Confirmed || entry.status === DailyConsumableEntryStatus.Adjusted,
                               'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400': entry.status === DailyConsumableEntryStatus.Pending,
                               'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400': entry.status === DailyConsumableEntryStatus.Skipped
                             }">

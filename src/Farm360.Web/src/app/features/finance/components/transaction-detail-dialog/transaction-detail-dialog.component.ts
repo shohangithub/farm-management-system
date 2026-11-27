@@ -24,7 +24,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex items-center justify-between shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md"
-               [ngClass]="data.type === 'Income' ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20' : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'">
+               [ngClass]="data.type === 'Income' ? 'bg-gradient-to-br from-success-500 to-teal-600 shadow-success-500/20' : 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/20'">
             <mat-icon>{{ data.type === 'Income' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
           </div>
           <div>
@@ -41,14 +41,14 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       <div class="p-6 space-y-4 overflow-y-auto">
         <!-- Amount Banner -->
         <div class="p-4 rounded-xl border text-center"
-             [ngClass]="data.type === 'Income' ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-800/30' : 'bg-rose-50/50 border-rose-100 dark:bg-rose-950/20 dark:border-rose-800/30'">
+             [ngClass]="data.type === 'Income' ? 'bg-success-50/50 border-success-100 dark:bg-success-950/20 dark:border-success-800/30' : 'bg-rose-50/50 border-rose-100 dark:bg-rose-950/20 dark:border-rose-800/30'">
           <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Total Amount' | t }}</span>
           <h3 class="text-3xl font-extrabold mt-1"
-              [ngClass]="data.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              [ngClass]="data.type === 'Income' ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
             {{ data.type === 'Income' ? '+' : '-' }}{{ data.amountBdt | money:2 }}
           </h3>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mt-2"
-                [ngClass]="data.type === 'Income' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'">
+                [ngClass]="data.type === 'Income' ? 'bg-success-100 text-success-800 dark:bg-success-900/40 dark:text-success-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'">
             {{ data.type | t }} • {{ categoryText }}
           </span>
         </div>

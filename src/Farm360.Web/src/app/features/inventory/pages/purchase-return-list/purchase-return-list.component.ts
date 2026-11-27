@@ -142,7 +142,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm"
                     [ngClass]="{
                       'bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300': ret.status === PurchaseReturnStatus.Draft,
-                      'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300': ret.status === PurchaseReturnStatus.Completed,
+                      'bg-success-50 text-success-700 border border-success-200 dark:bg-success-900/40 dark:text-success-300': ret.status === PurchaseReturnStatus.Completed,
                       'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-300': ret.status === PurchaseReturnStatus.Cancelled
                     }">
                     {{ getStatusName(ret.status) | t }}

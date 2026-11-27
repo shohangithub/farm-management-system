@@ -196,7 +196,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
                   <button (click)="toggleInvestorStatus(investor)" [title]="(investor.isActive ? 'Deactivate Investor' : 'Activate Investor') | t"
                           class="px-2.5 py-1 text-xs font-semibold rounded-full transition-colors"
-                          [ngClass]="investor.isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'">
+                          [ngClass]="investor.isActive ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 hover:bg-success-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'">
                     {{ (investor.isActive ? 'Active' : 'Inactive') | t }}
                   </button>
                 </div>

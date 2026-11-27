@@ -137,7 +137,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
               <span class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap"
                 [ngClass]="{
-                  'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800': item.status === InventoryStatus.Sufficient || item.status === InventoryStatus.Excess,
+                  'bg-success-50 text-success-700 border border-success-200 dark:bg-success-950/40 dark:text-success-300 dark:border-success-800': item.status === InventoryStatus.Sufficient || item.status === InventoryStatus.Excess,
                   'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800': item.status === InventoryStatus.LowStock,
                   'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800': item.status === InventoryStatus.OutOfStock
                 }">

@@ -234,7 +234,7 @@
             </td>
             <td class="py-4 px-6 text-sm">
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                [ngClass]="txn.type === 'Income' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'">
+                [ngClass]="txn.type === 'Income' ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'">
                 {{ txn.type | t }}
               </span>
             </td>
@@ -287,7 +287,7 @@
               {{ txn.notes || txn.description || '-' }}
             </td>
             <td class="py-4 px-6 text-sm font-bold text-right whitespace-nowrap"
-              [ngClass]="txn.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              [ngClass]="txn.type === 'Income' ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | money:2 }}
             </td>
             <td class="py-4 px-6 text-sm text-center no-print" (click)="$event.stopPropagation()">

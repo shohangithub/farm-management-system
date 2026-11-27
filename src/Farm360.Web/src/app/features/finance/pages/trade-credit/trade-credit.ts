@@ -210,7 +210,7 @@ export class TradeCreditComponent {
   statusClass(bill: TradeBill): string {
     if (bill.daysOverdue > 0) return 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300';
     switch (bill.status) {
-      case 'Paid': return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300';
+      case 'Paid': return 'bg-success-100 dark:bg-success-900/40 text-success-700 dark:text-success-300';
       case 'PartiallyPaid': return 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300';
       case 'Overpaid': return 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300';
       default: return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300';

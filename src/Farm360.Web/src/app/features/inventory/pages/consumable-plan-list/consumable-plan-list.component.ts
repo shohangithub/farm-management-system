@@ -120,7 +120,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
                   <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
                     [ngClass]="{
-                      'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800': plan.status === ConsumableUsagePlanStatus.Active,
+                      'bg-success-50 dark:bg-success-950/40 text-success-700 dark:text-success-400 border border-success-200 dark:border-success-800': plan.status === ConsumableUsagePlanStatus.Active,
                       'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800': plan.status === ConsumableUsagePlanStatus.Paused,
                       'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700': plan.status === ConsumableUsagePlanStatus.Completed
                     }">

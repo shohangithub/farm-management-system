@@ -67,10 +67,10 @@ export interface GrowthCurve {
                  [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? '' : ''">
               <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-1">{{ 'Profit if sold today' | t }}</p>
               <div class="flex items-center gap-1">
-                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+                <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-success-600 dark:text-success-400' : 'text-red-600 dark:text-red-400'">
                   {{ (snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'arrow_upward' : 'arrow_downward' }}
                 </mat-icon>
-                <p class="text-xl font-bold" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+                <p class="text-xl font-bold" [ngClass]="(snapshot()?.currentProfitMarginBdt ?? 0) >= 0 ? 'text-success-700 dark:text-success-400' : 'text-red-700 dark:text-red-400'">
                   {{ Math.abs(snapshot()?.currentProfitMarginBdt ?? 0) | money }}
                 </p>
               </div>
@@ -122,14 +122,14 @@ export interface GrowthCurve {
                      'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/30': insight.severity === 'Warning',
                      'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700/30': insight.severity === 'Critical',
                      'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700/30': insight.severity === 'Info',
-                     'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/30': insight.severity === 'Success'
+                     'bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-700/30': insight.severity === 'Success'
                    }">
                 
                 <mat-icon [ngClass]="{
                   'text-amber-500': insight.severity === 'Warning',
                   'text-red-500': insight.severity === 'Critical',
                   'text-blue-500': insight.severity === 'Info',
-                  'text-emerald-500': insight.severity === 'Success'
+                  'text-success-500': insight.severity === 'Success'
                 }">
                   {{ getInsightIcon(insight.severity) }}
                 </mat-icon>
@@ -139,13 +139,13 @@ export interface GrowthCurve {
                     'text-amber-900 dark:text-amber-200': insight.severity === 'Warning',
                     'text-red-900 dark:text-red-200': insight.severity === 'Critical',
                     'text-blue-900 dark:text-blue-200': insight.severity === 'Info',
-                    'text-emerald-900 dark:text-emerald-200': insight.severity === 'Success'
+                    'text-success-900 dark:text-success-200': insight.severity === 'Success'
                   }">{{ insight.title }}</h4>
                   <p class="text-sm mt-1" [ngClass]="{
                     'text-amber-800 dark:text-amber-300': insight.severity === 'Warning',
                     'text-red-800 dark:text-red-300': insight.severity === 'Critical',
                     'text-blue-800 dark:text-blue-300': insight.severity === 'Info',
-                    'text-emerald-800 dark:text-emerald-300': insight.severity === 'Success'
+                    'text-success-800 dark:text-success-300': insight.severity === 'Success'
                   }">{{ insight.message }}</p>
                 </div>
               </div>

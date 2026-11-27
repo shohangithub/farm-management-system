@@ -146,12 +146,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'Net Farm Profit / Loss' | t }}</p>
                 <h3 class="text-2xl font-bold mt-1"
-                    [ngClass]="summary()!.netFarmProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                    [ngClass]="summary()!.netFarmProfitBdt >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
                   {{ summary()!.netFarmProfitBdt | money }}
                 </h3>
               </div>
               <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-md text-white"
-                   [ngClass]="summary()!.netFarmProfitBdt >= 0 ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20' : 'bg-gradient-to-br from-rose-500 to-pink-600 shadow-rose-500/20'">
+                   [ngClass]="summary()!.netFarmProfitBdt >= 0 ? 'bg-gradient-to-br from-success-500 to-teal-600 shadow-success-500/20' : 'bg-gradient-to-br from-rose-500 to-pink-600 shadow-rose-500/20'">
                 <mat-icon>{{ summary()!.netFarmProfitBdt >= 0 ? 'savings' : 'warning' }}</mat-icon>
               </div>
             </div>
@@ -248,7 +248,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     </div>
                     <div>
                       <span class="block">{{ share.investorName }}</span>
-                      <span class="text-[11px] font-normal" [ngClass]="share.isActive ? 'text-emerald-500' : 'text-gray-400'">
+                      <span class="text-[11px] font-normal" [ngClass]="share.isActive ? 'text-success-500' : 'text-gray-400'">
                         {{ (share.isActive ? 'Active Partner' : 'Inactive') | t }}
                       </span>
                     </div>
@@ -271,7 +271,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
                   <!-- Allocated Profit / Loss -->
                   <td class="px-4 py-4 text-right font-bold"
-                      [ngClass]="share.allocatedProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                      [ngClass]="share.allocatedProfitBdt >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
                     {{ share.allocatedProfitBdt | money }}
                   </td>
 
@@ -283,7 +283,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <!-- Undistributed Balance -->
                   <td class="px-4 py-4 text-right">
                     <span class="inline-block px-2.5 py-1 rounded-full font-bold text-[11px]"
-                          [ngClass]="share.undistributedProfitBdt > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : (share.undistributedProfitBdt < 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400')">
+                          [ngClass]="share.undistributedProfitBdt > 0 ? 'bg-success-100 text-success-800 dark:bg-success-950/50 dark:text-success-300' : (share.undistributedProfitBdt < 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400')">
                       {{ share.undistributedProfitBdt | money }}
                     </span>
                   </td>
@@ -317,7 +317,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     {{ summary()!.distributableProfitBdt | money }}
                   </td>
                   <td class="px-4 py-3.5 text-right text-indigo-600">{{ summary()!.totalDistributedProfitBdt | money }}</td>
-                  <td class="px-4 py-3.5 text-right text-emerald-600">{{ summary()!.totalUndistributedProfitBdt | money }}</td>
+                  <td class="px-4 py-3.5 text-right text-success-600">{{ summary()!.totalUndistributedProfitBdt | money }}</td>
                   <td class="px-4 py-3.5 text-right">{{ (summary()!.totalActiveCapitalBdt + summary()!.totalUndistributedProfitBdt) | money }}</td>
                   <td class="px-6 py-3.5"></td>
                 </tr>

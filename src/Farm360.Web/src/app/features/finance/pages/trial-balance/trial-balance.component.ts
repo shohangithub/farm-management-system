@@ -128,24 +128,24 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
           <!-- Balance Integrity -->
           <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-5 relative overflow-hidden"
-               [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20' : 'bg-gradient-to-br from-amber-50/60 to-rose-50/60 dark:from-amber-950/20 dark:to-rose-950/20'">
+               [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-success-50/50 to-teal-50/50 dark:from-success-950/20 dark:to-teal-950/20' : 'bg-gradient-to-br from-amber-50/60 to-rose-50/60 dark:from-amber-950/20 dark:to-rose-950/20'">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Ledger Integrity' | t }}</p>
                 <div class="flex items-center gap-2 mt-1">
-                  <span *ngIf="data.isBalanced" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                  <span *ngIf="data.isBalanced" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-success-100 dark:bg-success-900/50 text-success-700 dark:text-success-300 flex items-center gap-1">
                     <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">check_circle</mat-icon> {{ 'Balanced' | t }}
                   </span>
                   <span *ngIf="!data.isBalanced" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 flex items-center gap-1">
                     <mat-icon class="text-xs !w-3.5 !h-3.5 !text-[14px]">warning</mat-icon> {{ 'Discrepancy' | t }}
                   </span>
                 </div>
-                <p class="text-[11px] mt-1 font-semibold" [ngClass]="data.isBalanced ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                <p class="text-[11px] mt-1 font-semibold" [ngClass]="data.isBalanced ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
                   {{ data.isBalanced ? ('Debits equal Credits (100% in sync)' | t) : ('Difference: {amount}' | t: { amount: (data.differenceBdt | money:2) }) }}
                 </p>
               </div>
               <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white"
-                   [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-rose-500 to-amber-600 shadow-md shadow-rose-500/20'">
+                   [ngClass]="data.isBalanced ? 'bg-gradient-to-br from-success-500 to-teal-600' : 'bg-gradient-to-br from-rose-500 to-amber-600 shadow-md shadow-rose-500/20'">
                 <mat-icon class="text-lg">{{ data.isBalanced ? 'verified' : 'priority_high' }}</mat-icon>
               </div>
             </div>
@@ -263,7 +263,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 <tr class="border-t-2 border-b-4 border-gray-900 dark:border-gray-200 bg-gray-50 dark:bg-gray-900/60 font-black text-sm">
                   <td colspan="3" class="py-4 px-5 text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                     <span>{{ 'Total Balances' | t }}</span>
-                    <span *ngIf="data.isBalanced" class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ '✓ In Equilibrium' | t }}</span>
+                    <span *ngIf="data.isBalanced" class="text-xs font-bold text-success-600 dark:text-success-400">{{ '✓ In Equilibrium' | t }}</span>
                   </td>
                   <td class="py-4 px-5 text-right font-mono text-base font-black text-blue-700 dark:text-blue-400">
                     {{ data.totalDebitBdt | money:2 }}

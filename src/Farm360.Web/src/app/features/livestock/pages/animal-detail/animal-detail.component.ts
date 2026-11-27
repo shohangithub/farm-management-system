@@ -447,15 +447,15 @@ export class AnimalDetailComponent {
           data: weights,
           smooth: true,
           symbolSize: 8,
-          itemStyle: { color: '#10b981' },
-          lineStyle: { width: 3, color: '#10b981' },
+          itemStyle: { color: '#8b5cf6' },
+          lineStyle: { width: 3, color: '#8b5cf6' },
           areaStyle: {
             color: {
               type: 'linear',
               x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
-                { offset: 1, color: 'rgba(16, 185, 129, 0.0)' }
+                { offset: 0, color: 'rgba(139, 92, 246, 0.3)' },
+                { offset: 1, color: 'rgba(139, 92, 246, 0.0)' }
               ]
             }
           }
@@ -488,7 +488,7 @@ export class AnimalDetailComponent {
   statusClass = computed(() => {
     const status = this.animal()?.status;
     switch (status) {
-      case AnimalStatus.Active: return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
+      case AnimalStatus.Active: return 'bg-success-50 text-success-700 dark:bg-success-900/20 dark:text-success-400 border border-success-200 dark:border-success-800';
       case AnimalStatus.Quarantined: return 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
       case AnimalStatus.Sold: return 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800';
       case AnimalStatus.Dead: return 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800';

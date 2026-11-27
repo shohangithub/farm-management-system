@@ -410,7 +410,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                   </div>
                 </div>
                 <div class="text-sm font-semibold text-gray-600 dark:text-gray-300 tabular-nums">
-                  <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">{{ shed.totalActualKg | number:'1.2-2' }}{{ 'kg' | t }}</span> / {{ shed.totalExpectedKg | number:'1.2-2' }}{{ 'kg' | t }} {{ 'Confirmed' | t }}
+                  <span class="text-success-700 dark:text-success-400 font-extrabold">{{ shed.totalActualKg | number:'1.2-2' }}{{ 'kg' | t }}</span> / {{ shed.totalExpectedKg | number:'1.2-2' }}{{ 'kg' | t }} {{ 'Confirmed' | t }}
                 </div>
               </header>
 
@@ -1081,7 +1081,7 @@ export class TodayFeedingDashboardComponent implements OnInit {
   statusDotClass(status: string): string {
     switch (status) {
       case 'Pending': return 'bg-amber-500';
-      case 'Confirmed': return 'bg-emerald-500';
+      case 'Confirmed': return 'bg-success-500';
       case 'Adjusted': return 'bg-blue-500';
       default: return 'bg-gray-400';
     }

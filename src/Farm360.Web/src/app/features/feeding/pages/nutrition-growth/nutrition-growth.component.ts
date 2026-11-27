@@ -220,16 +220,16 @@ export class NutritionGrowthComponent {
 
   barClass(v: number | null | undefined): string {
     if (v == null) return 'bg-gray-300';
-    return v < 90 ? 'bg-rose-500' : v > 125 ? 'bg-amber-500' : 'bg-emerald-500';
+    return v < 90 ? 'bg-rose-500' : v > 125 ? 'bg-amber-500' : 'bg-success-500';
   }
 
   pctClass(v: number | null | undefined): string {
     if (v == null) return '';
-    return v < 90 ? 'text-rose-600' : v > 125 ? 'text-amber-600' : 'text-emerald-700';
+    return v < 90 ? 'text-rose-600' : v > 125 ? 'text-amber-600' : 'text-success-700';
   }
 
   verdictClass(v: string): string {
-    return v === 'Well balanced' ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100'
+    return v === 'Well balanced' ? 'bg-success-50 dark:bg-success-950/30 border-success-200 dark:border-success-800 text-success-900 dark:text-success-100'
       : v === 'No data' ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700'
       : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100';
   }

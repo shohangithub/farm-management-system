@@ -58,7 +58,7 @@ export interface TradeBillDialogData {
           <!-- Context -->
           @if (data.bill; as b) {
             <div class="rounded-xl p-4 border"
-              [ngClass]="isPayable ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/40' : 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/40'">
+              [ngClass]="isPayable ? 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/40' : 'bg-success-50/60 dark:bg-success-950/20 border-success-100 dark:border-success-900/40'">
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <div class="text-sm font-bold text-gray-900 dark:text-white">{{ b.partyName }}</div>
@@ -66,7 +66,7 @@ export interface TradeBillDialogData {
                 </div>
                 <div class="text-right">
                   <div class="text-[11px] uppercase tracking-wider font-bold text-gray-400">{{ 'Outstanding' | t }}</div>
-                  <div class="text-base font-black" [ngClass]="isPayable ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-300'">
+                  <div class="text-base font-black" [ngClass]="isPayable ? 'text-rose-600 dark:text-rose-400' : 'text-success-700 dark:text-success-300'">
                     {{ b.outstandingBdt | money:2 }}
                   </div>
                   <div class="text-[11px] text-gray-500">{{ 'of {amount}' | t: { amount: (b.amountBdt | money:2) } }}</div>

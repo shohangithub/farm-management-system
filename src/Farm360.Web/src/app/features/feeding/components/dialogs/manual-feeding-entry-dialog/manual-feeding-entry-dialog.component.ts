@@ -31,7 +31,7 @@ export interface ManualFeedingDialogData {
   imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, AnimalPickerComponent, UnitPickerComponent, TranslatePipe],
   styles: [`
     .field { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 1px solid rgb(209 213 219); background: white; font-size: 0.8125rem; color: rgb(17 24 39); outline: none; }
-    .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(16, 185, 129, .15); }
+    .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(139, 92, 246, .15); }
     :host-context(.dark) .field { background: rgb(17 24 39); border-color: rgb(55 65 81); color: white; }
   `],
   template: `

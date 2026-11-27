@@ -442,7 +442,7 @@
 
             <!-- Status Badge -->
             <div *ngIf="isExited() || hasValuationWeight()" class="px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider"
-                 [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'">
+                 [ngClass]="netProfit() >= 0 ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'">
               {{ (netProfit() >= 0 ? 'PROFIT' : 'LOSS') | t }}
             </div>
           </div>
@@ -450,10 +450,10 @@
 
         <ng-container *ngIf="isExited() || hasValuationWeight(); else noWeightForValuation">
           <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mt-3">
-            <p class="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+            <p class="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums" [ngClass]="netProfit() >= 0 ? 'text-success-600 dark:text-success-400' : 'text-red-600 dark:text-red-400'">
               {{ netProfit() > 0 ? '+' : '' }}{{ netProfit() | money }}
             </p>
-            <p *ngIf="totalCost() > 0" class="text-sm font-semibold" [ngClass]="netProfit() >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+            <p *ngIf="totalCost() > 0" class="text-sm font-semibold" [ngClass]="netProfit() >= 0 ? 'text-success-700 dark:text-success-400' : 'text-red-700 dark:text-red-400'">
               ({{ '{pct} on cost' | t: { pct: (netProfit() / totalCost() | percent:'1.1-1') } }})
             </p>
           </div>
@@ -922,7 +922,7 @@
                       <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ v.scheduledDate | date:'mediumDate' }}</td>
                       <td class="px-4 py-3 text-sm">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                          [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300')">
+                          [ngClass]="v.status === VaccinationStatus.Administered ? 'bg-success-100 text-success-800 dark:bg-success-900/40 dark:text-success-300' : (v.status === VaccinationStatus.Scheduled ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300')">
                           {{ v.status | t }}
                         </span>
                         <div class="text-[11px] text-gray-400 mt-0.5" *ngIf="v.administeredDate">{{ 'On {date}' | t: { date: (v.administeredDate | date:'shortDate') } }}</div>
@@ -1230,7 +1230,7 @@
                       <td class="px-4 py-3 text-sm whitespace-nowrap">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                               [ngClass]="{
-                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300': entry.status.toString() === 'Confirmed',
+                                'bg-success-100 text-success-800 dark:bg-success-900/40 dark:text-success-300': entry.status.toString() === 'Confirmed',
                                 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300': entry.status.toString() === 'Adjusted',
                                 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300': entry.status.toString() === 'Pending',
                                 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300': entry.status.toString() === 'Skipped'
@@ -1310,9 +1310,9 @@
                 <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2 tabular-nums">{{ totalCost() | money }}</p>
               </div>
               <div class="rounded-xl border p-4"
-                   [ngClass]="netProfit() >= 0 ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'">
+                   [ngClass]="netProfit() >= 0 ? 'border-success-200 bg-success-50 dark:border-success-800 dark:bg-success-900/20' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'">
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ (netProfit() >= 0 ? 'Final Profit' : 'Final Loss') | t }}</p>
-                <p class="text-2xl font-bold mt-2 tabular-nums" [ngClass]="netProfit() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">
+                <p class="text-2xl font-bold mt-2 tabular-nums" [ngClass]="netProfit() >= 0 ? 'text-success-600 dark:text-success-400' : 'text-red-600 dark:text-red-400'">
                   {{ netProfit() > 0 ? '+' : '' }}{{ netProfit() | money }}
                 </p>
               </div>
@@ -1481,14 +1481,14 @@
               {{ 'Rate: {source}' | t: { source: (liveWeightPrice() | money:2) } }}/{{ 'kg' | t }}
             </span>
             <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase"
-                  [ngClass]="netProfit() >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'">
+                  [ngClass]="netProfit() >= 0 ? 'bg-success-100 text-success-800' : 'bg-red-100 text-red-800'">
               {{ (netProfit() >= 0 ? 'PROFIT' : 'LOSS') | t }}
             </span>
           </div>
         </div>
         <div class="flex items-baseline gap-3 mt-2">
           <p class="text-3xl font-black tracking-tight"
-             [ngClass]="netProfit() >= 0 ? 'text-emerald-700' : 'text-red-700'">
+             [ngClass]="netProfit() >= 0 ? 'text-success-700' : 'text-red-700'">
             {{ netProfit() >= 0 ? '+' : '' }}{{ netProfit() | money }}
           </p>
           <span class="text-xs text-slate-500 font-medium">
@@ -1527,17 +1527,17 @@
           <svg [attr.viewBox]="'0 0 ' + weightChartSvg()!.width + ' ' + weightChartSvg()!.height" class="w-full h-full overflow-visible">
             <defs>
               <linearGradient id="dossierWeightGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#059669" stop-opacity="0.28" />
-                <stop offset="100%" stop-color="#059669" stop-opacity="0.01" />
+                <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.28" />
+                <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.01" />
               </linearGradient>
             </defs>
             <!-- Area fill -->
             <path [attr.d]="weightChartSvg()!.areaPath" fill="url(#dossierWeightGrad)" />
             <!-- Line stroke -->
-            <polyline [attr.points]="weightChartSvg()!.polylinePoints" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <polyline [attr.points]="weightChartSvg()!.polylinePoints" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
             <!-- Circles and values -->
             <g *ngFor="let pt of weightChartSvg()!.points">
-              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#ffffff" stroke="#059669" stroke-width="2" />
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
               <text [attr.x]="pt.x" [attr.y]="pt.y - 8" font-size="9" font-weight="700" fill="#0f172a" text-anchor="middle">
                 {{ pt.weight }}{{ 'kg' | t }}
               </text>

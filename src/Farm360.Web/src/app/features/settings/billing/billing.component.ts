@@ -67,7 +67,7 @@ import { I18nService } from '../../../core/i18n/i18n.service';
       <!-- Hero Card: Current Subscription Status -->
       <div *ngIf="status() as sub" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-6 md:p-8 relative overflow-hidden">
         <!-- Background watermark -->
-        <mat-icon class="absolute -right-6 -bottom-6 text-[140px] text-emerald-500/5 rotate-[-10deg] pointer-events-none">verified</mat-icon>
+        <mat-icon class="absolute -right-6 -bottom-6 text-[140px] text-success-500/5 rotate-[-10deg] pointer-events-none">verified</mat-icon>
 
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <!-- Plan Info -->
@@ -77,9 +77,9 @@ import { I18nService } from '../../../core/i18n/i18n.service';
               
               <!-- Status Badge -->
               <span
-                [class.bg-emerald-50]="sub.status === 'Active'"
-                [class.text-emerald-700]="sub.status === 'Active'"
-                [class.border-emerald-200]="sub.status === 'Active'"
+                [class.bg-success-50]="sub.status === 'Active'"
+                [class.text-success-700]="sub.status === 'Active'"
+                [class.border-success-200]="sub.status === 'Active'"
                 [class.bg-blue-50]="sub.isTrial"
                 [class.text-blue-700]="sub.isTrial"
                 [class.border-blue-200]="sub.isTrial"
@@ -91,7 +91,7 @@ import { I18nService } from '../../../core/i18n/i18n.service';
                 [class.border-red-200]="sub.status === 'Suspended' || sub.status === 'Expired'"
                 class="px-2.5 py-0.5 rounded-full text-xs font-bold border inline-flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full"
-                  [class.bg-emerald-500]="sub.status === 'Active' && !sub.isTrial"
+                  [class.bg-success-500]="sub.status === 'Active' && !sub.isTrial"
                   [class.bg-blue-500]="sub.isTrial"
                   [class.bg-amber-500]="sub.status === 'GracePeriod'"
                   [class.bg-red-500]="sub.status === 'Suspended' || sub.status === 'Expired'"></span>
@@ -341,15 +341,15 @@ import { I18nService } from '../../../core/i18n/i18n.service';
               <!-- Limits Overview -->
               <div class="py-3 border-y border-gray-100 dark:border-gray-700/60 space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
                 <div class="flex items-center gap-2">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-500">check_circle</mat-icon>
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-success-500">check_circle</mat-icon>
                   <span><strong>{{ plan.maxUsers }}</strong> {{ 'User Seats' | t }}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-500">check_circle</mat-icon>
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-success-500">check_circle</mat-icon>
                   <span><strong>{{ plan.maxFarms }}</strong> {{ (plan.maxFarms > 1 ? 'Farm Locations' : 'Farm Location') | t }}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-emerald-500">check_circle</mat-icon>
+                  <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-success-500">check_circle</mat-icon>
                   <span><strong>{{ plan.maxAnimals | number }}</strong> {{ 'Livestock Head' | t }}</span>
                 </div>
               </div>
@@ -429,7 +429,7 @@ import { I18nService } from '../../../core/i18n/i18n.service';
                 </td>
                 <td class="py-4 px-6 text-right">
                   <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border"
-                    [class.bg-emerald-50]="item.status === 'Completed'" [class.text-emerald-700]="item.status === 'Completed'" [class.dark:bg-emerald-950/40]="item.status === 'Completed'" [class.dark:text-emerald-300]="item.status === 'Completed'" [class.border-emerald-200]="item.status === 'Completed'" [class.dark:border-emerald-800]="item.status === 'Completed'"
+                    [class.bg-success-50]="item.status === 'Completed'" [class.text-success-700]="item.status === 'Completed'" [class.dark:bg-success-950/40]="item.status === 'Completed'" [class.dark:text-success-300]="item.status === 'Completed'" [class.border-success-200]="item.status === 'Completed'" [class.dark:border-success-800]="item.status === 'Completed'"
                     [class.bg-amber-50]="item.status === 'Pending'" [class.text-amber-700]="item.status === 'Pending'" [class.dark:bg-amber-950/40]="item.status === 'Pending'" [class.dark:text-amber-300]="item.status === 'Pending'" [class.border-amber-200]="item.status === 'Pending'" [class.dark:border-amber-800]="item.status === 'Pending'"
                     [class.bg-red-50]="item.status === 'Rejected'" [class.text-red-700]="item.status === 'Rejected'" [class.dark:bg-red-950/40]="item.status === 'Rejected'" [class.dark:text-red-300]="item.status === 'Rejected'" [class.border-red-200]="item.status === 'Rejected'" [class.dark:border-red-800]="item.status === 'Rejected'">
                     <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">{{ item.status === 'Completed' ? 'check' : item.status === 'Pending' ? 'hourglass_top' : 'close' }}</mat-icon> {{ item.status | t }}

@@ -71,7 +71,7 @@ export class BreedingDashboardComponent {
         orient: 'vertical',
         left: 'left'
       },
-      color: ['#10b981', '#f43f5e'],
+      color: ['#8b5cf6', '#f43f5e'],
       series: [
         {
           name: this.i18n.t('Conception'),

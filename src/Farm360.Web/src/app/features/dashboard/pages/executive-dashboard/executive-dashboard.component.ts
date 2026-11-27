@@ -48,14 +48,14 @@ interface KpiCard {
 
 const KPI_ICON_CLASS: Record<KpiTone, string> = {
   neutral: 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400',
-  good: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  good: 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400',
   warn: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
   bad: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400',
 };
 
 const KPI_HINT_CLASS: Record<KpiTone, string> = {
   neutral: 'text-gray-500 dark:text-gray-400',
-  good: 'text-emerald-700 dark:text-emerald-400',
+  good: 'text-success-700 dark:text-success-400',
   warn: 'text-amber-700 dark:text-amber-400',
   bad: 'text-rose-700 dark:text-rose-400',
 };

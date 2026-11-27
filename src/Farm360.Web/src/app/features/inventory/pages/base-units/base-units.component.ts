@@ -87,7 +87,7 @@ interface BaseUnitForm { id: string | null; name: string; description: string; i
                 <td class="px-3 py-2.5 text-gray-600 dark:text-gray-300">{{ u.description || '—' }}</td>
                 <td class="px-3 py-2.5 text-xs text-gray-500">{{ packs(u) || '—' }}</td>
                 <td class="px-3 py-2.5">
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" [ngClass]="u.isActive ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" [ngClass]="u.isActive ? 'bg-success-100 text-success-800 dark:bg-success-900/40 dark:text-success-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'">
                     {{ (u.isActive ? 'Active' : 'Inactive') | t }}
                   </span>
                 </td>

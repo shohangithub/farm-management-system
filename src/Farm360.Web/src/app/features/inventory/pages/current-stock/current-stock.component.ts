@@ -124,7 +124,7 @@ export class CurrentStockComponent implements OnInit {
 
   getStatusClass(status: InventoryStatus): string {
     switch (status) {
-      case InventoryStatus.Sufficient: return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
+      case InventoryStatus.Sufficient: return 'bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400 border border-success-200 dark:border-success-800';
       case InventoryStatus.LowStock: return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
       case InventoryStatus.OutOfStock: return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800';
       case InventoryStatus.Excess: return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';

@@ -87,7 +87,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Disbursed: {date}' | t: { date: (loan.disbursementDate | date:'mediumDate') } }}</p>
               </div>
             </div>
-            <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="loan.isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'">
+            <span class="px-2.5 py-1 text-xs font-semibold rounded-full" [ngClass]="loan.isActive ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'">
               {{ (loan.isActive ? 'Active' : 'Settled') | t }}
             </span>
           </div>
@@ -105,7 +105,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 
             <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700/50">
               <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ 'Outstanding Balance' | t }}</span>
-              <span class="text-sm font-bold" [ngClass]="loan.outstandingBalanceBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
+              <span class="text-sm font-bold" [ngClass]="loan.outstandingBalanceBdt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-success-600 dark:text-success-400'">
                 {{ loan.outstandingBalanceBdt | money }}
               </span>
             </div>

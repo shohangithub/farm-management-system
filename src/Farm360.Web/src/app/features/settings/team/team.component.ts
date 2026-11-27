@@ -79,7 +79,7 @@ import { I18nService } from '../../../core/i18n/i18n.service';
                   <td class="px-4 py-3">{{ m.branchName || ('All branches' | t) }}</td>
                   <td class="px-4 py-3">
                     <span class="px-2 py-0.5 rounded-full text-xs font-semibold"
-                          [class.bg-emerald-50]="m.status === 'Active'" [class.text-emerald-700]="m.status === 'Active'"
+                          [class.bg-success-50]="m.status === 'Active'" [class.text-success-700]="m.status === 'Active'"
                           [class.bg-gray-100]="m.status !== 'Active'" [class.text-gray-600]="m.status !== 'Active'">
                       {{ m.status | t }}
                     </span>

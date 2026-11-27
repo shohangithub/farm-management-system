@@ -79,7 +79,7 @@ import { HealthNavComponent } from '../../components/health-nav/health-nav.compo
         </div>
         <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
               [ngClass]="{
-                'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300': ev.status === 'Completed' || ev.status === 'Administered',
+                'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-300': ev.status === 'Completed' || ev.status === 'Administered',
                 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300': ev.status === 'Scheduled',
                 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300': ev.status === 'Overdue' || ev.status === 'Missed'
               }">

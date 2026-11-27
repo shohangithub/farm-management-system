@@ -101,7 +101,7 @@ interface ConversionForm {
                 <td class="px-3 py-2.5 text-right font-mono">{{ c.factor | number:'1.0-6' }}</td>
                 <td class="px-3 py-2.5 text-gray-600 dark:text-gray-300">{{ c.description || ('1 ' + c.name + ' = ' + (c.factor | number:'1.0-6') + ' ' + c.baseUnitName) }}</td>
                 <td class="px-3 py-2.5">
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" [ngClass]="c.isActive ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold" [ngClass]="c.isActive ? 'bg-success-100 text-success-800 dark:bg-success-900/40 dark:text-success-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'">
                     {{ (c.isActive ? 'Active' : 'Inactive') | t }}
                   </span>
                 </td>

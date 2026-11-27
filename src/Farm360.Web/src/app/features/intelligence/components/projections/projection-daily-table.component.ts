@@ -59,10 +59,10 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
               <td class="px-4 py-3">{{ day.totalInvestmentBdt | number:'1.0-0' }}</td>
               <td class="px-4 py-3 font-medium text-indigo-600 dark:text-indigo-400">{{ day.meatValueBdt | number:'1.0-0' }}</td>
               <td class="px-4 py-3 font-medium" 
-                  [ngClass]="day.profitLossBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                  [ngClass]="day.profitLossBdt >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
                 {{ day.profitLossBdt | number:'1.0-0' }}
               </td>
-              <td class="px-4 py-3" [ngClass]="day.profitPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              <td class="px-4 py-3" [ngClass]="day.profitPercent >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
                 {{ day.profitPercent | percent:'1.1-1' }}
               </td>
             </tr>

@@ -38,7 +38,7 @@
         <h3 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ batch.name }}</h3>
       </div>
       <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border"
-        [ngClass]="batch.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'">
+        [ngClass]="batch.status === 'Active' ? 'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-800' : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'">
         {{ batch.status | t }}
       </span>
     </div>

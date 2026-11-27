@@ -68,7 +68,7 @@
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
           <span class="font-semibold flex items-center"
-            [ngClass]="data.revenueMomPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            [ngClass]="data.revenueMomPercent >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
             <mat-icon class="text-sm mr-0.5">{{ data.revenueMomPercent >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             {{ Math.abs(data.revenueMomPercent) }}%
           </span>
@@ -92,7 +92,7 @@
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
           <span class="font-semibold flex items-center"
-            [ngClass]="data.expensesMomPercent <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            [ngClass]="data.expensesMomPercent <= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
             <mat-icon class="text-sm mr-0.5">{{ data.expensesMomPercent <= 0 ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
             {{ Math.abs(data.expensesMomPercent) }}%
           </span>
@@ -107,7 +107,7 @@
           <div>
             <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Profit this month' | t }}</p>
             <h3 class="text-lg sm:text-2xl font-bold mt-1"
-              [ngClass]="data.netProfitMtdBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              [ngClass]="data.netProfitMtdBdt >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ data.netProfitMtdBdt | money }}
             </h3>
           </div>
@@ -117,7 +117,7 @@
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
           <span class="font-semibold flex items-center"
-            [ngClass]="data.netProfitMomPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            [ngClass]="data.netProfitMomPercent >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
             <mat-icon class="text-sm mr-0.5">{{ data.netProfitMomPercent >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             {{ Math.abs(data.netProfitMomPercent) }}%
           </span>
@@ -132,7 +132,7 @@
           <div>
             <p class="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ 'Profit Margin' | t }}</p>
             <h3 class="text-lg sm:text-2xl font-bold mt-1"
-              [ngClass]="(data.profitMarginPercent ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+              [ngClass]="(data.profitMarginPercent ?? 0) >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ data.profitMarginPercent | number:'1.1-1' }}%
             </h3>
           </div>
@@ -194,7 +194,7 @@
 
             <!-- Month Label -->
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-3">{{ item.monthLabel }}</span>
-            <span class="text-[11px] font-medium" [ngClass]="item.netProfitBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            <span class="text-[11px] font-medium" [ngClass]="item.netProfitBdt >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ item.netProfitBdt >= 0 ? '+' : '' }}{{ item.netProfitBdt | money }}
             </span>
           </div>
@@ -271,7 +271,7 @@
               </td>
               <td class="py-3 px-4">
                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
-                  [ngClass]="txn.type === 'Income' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'">
+                  [ngClass]="txn.type === 'Income' ? 'bg-success-50 text-success-700 dark:bg-success-950/40 dark:text-success-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'">
                   {{ txn.type | t }}
                 </span>
               </td>
@@ -282,7 +282,7 @@
                 {{ txn.notes || txn.description || '-' }}
               </td>
               <td class="py-3 px-4 font-bold text-right whitespace-nowrap"
-                [ngClass]="txn.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                [ngClass]="txn.type === 'Income' ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
                 {{ txn.type === 'Income' ? '+' : '-' }}{{ txn.amountBdt | money:2 }}
               </td>
             </tr>

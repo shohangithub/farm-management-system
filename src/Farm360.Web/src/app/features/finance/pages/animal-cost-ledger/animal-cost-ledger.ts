@@ -163,11 +163,11 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ 'Realized Sale Revenue' | t }}</p>
                 <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ ledger.saleRevenueBdt | money }}</p>
               </div>
-              <div class="p-5 rounded-xl border" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'border-emerald-200 bg-emerald-50/70 dark:bg-emerald-950/30' : 'border-red-200 bg-red-50/70 dark:bg-red-950/30'">
-                <p class="text-xs font-bold uppercase tracking-wider" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+              <div class="p-5 rounded-xl border" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'border-success-200 bg-success-50/70 dark:bg-success-950/30' : 'border-red-200 bg-red-50/70 dark:bg-red-950/30'">
+                <p class="text-xs font-bold uppercase tracking-wider" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-success-700 dark:text-success-400' : 'text-red-700 dark:text-red-400'">
                   {{ ((ledger.profitLossBdt || 0) >= 0 ? 'Net Realized Profit' : 'Net Realized Loss') | t }}
                 </p>
-                <p class="text-2xl font-black mt-1" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+                <p class="text-2xl font-black mt-1" [ngClass]="(ledger.profitLossBdt || 0) >= 0 ? 'text-success-700 dark:text-success-400' : 'text-red-700 dark:text-red-400'">
                   {{ Math.abs(ledger.profitLossBdt || 0) | money }}
                 </p>
               </div>

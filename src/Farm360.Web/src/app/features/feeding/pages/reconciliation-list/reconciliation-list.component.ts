@@ -176,7 +176,7 @@ export class ReconciliationListComponent implements OnInit {
     if (variance === 0) return 'text-gray-500 dark:text-gray-400';
     // If we used more feed than expected (negative variance relative to remaining stock, or positive variance relative to expected consumption)
     // Assuming variance = actual - expected. So positive means overfed.
-    return variance > 0 ? 'text-red-500' : 'text-emerald-500';
+    return variance > 0 ? 'text-red-500' : 'text-success-500';
   }
 
   async approve(rec: FeedingCycleReconciliation): Promise<void> {

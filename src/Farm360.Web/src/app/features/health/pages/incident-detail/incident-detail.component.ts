@@ -273,7 +273,7 @@ export class IncidentDetailComponent {
       case IncidentStatus.Reported: return 'bg-amber-100 dark:bg-amber-400/30 text-amber-600 dark:text-amber-400';
       case IncidentStatus.UnderTreatment: return 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-400';
       case IncidentStatus.Contained: return 'bg-blue-100 dark:bg-blue-500/30 text-blue-600 dark:text-blue-400';
-      case IncidentStatus.Resolved: return 'bg-emerald-100 dark:bg-emerald-400/30 text-emerald-600 dark:text-emerald-400';
+      case IncidentStatus.Resolved: return 'bg-success-100 dark:bg-success-400/30 text-success-600 dark:text-success-400';
       default: return 'bg-slate-100 text-slate-500';
     }
   }

@@ -146,7 +146,7 @@ type Scope = 'all' | 'shed' | 'batch' | 'animals';
                 <td class="px-3 py-2 text-right font-mono">{{ i.perDay | number:'1.0-3' }} {{ i.baseUnit }}</td>
                 <td class="px-3 py-2 text-right font-mono">{{ i.total | number:'1.0-2' }} {{ i.baseUnit }}</td>
                 <td class="px-3 py-2 text-right font-mono text-gray-500">{{ i.linkedToStock ? (i.inStock | number:'1.0-2') : '—' }}</td>
-                <td class="px-3 py-2 text-right font-mono font-bold" [ngClass]="i.toBuy > 0 ? 'text-rose-600' : 'text-emerald-600'">
+                <td class="px-3 py-2 text-right font-mono font-bold" [ngClass]="i.toBuy > 0 ? 'text-rose-600' : 'text-success-600'">
                   {{ i.toBuy > 0 ? (i.toBuy | number:'1.0-2') + ' ' + i.baseUnit : ('enough' | t) }}
                 </td>
                 <td class="px-3 py-2 text-xs">{{ i.packsToBuy ? i.packsToBuy + ' × ' + i.packName : (i.toBuy > 0 && i.linkedToStock ? '—' : '') }}</td>

@@ -40,11 +40,11 @@ const bdt = (v: number) => formatMoney(v);
             <p class="text-xl font-bold text-gray-900 dark:text-white">{{ summary.expectedSaleValueBdt | money }}</p>
             <p class="text-[11px] text-gray-400 mt-1">{{ '{weight} kg meat × {price}' | t: { weight: (summary.finalMeatWeightKg | number:'1.1-1'), price: (summary.meatPriceUsedBdtPerKg | money:2) } }}</p>
           </div>
-          <div class="p-4 rounded-xl" [ngClass]="isProfit(summary.profitLossBdt) ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'bg-rose-50 dark:bg-rose-500/10'">
-            <p class="text-xs uppercase tracking-wider mb-1" [ngClass]="isProfit(summary.profitLossBdt) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+          <div class="p-4 rounded-xl" [ngClass]="isProfit(summary.profitLossBdt) ? 'bg-success-50 dark:bg-success-500/10' : 'bg-rose-50 dark:bg-rose-500/10'">
+            <p class="text-xs uppercase tracking-wider mb-1" [ngClass]="isProfit(summary.profitLossBdt) ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ (isProfit(summary.profitLossBdt) ? 'Projected Profit' : 'Projected Loss') | t }}
             </p>
-            <p class="text-xl font-bold" [ngClass]="isProfit(summary.profitLossBdt) ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            <p class="text-xl font-bold" [ngClass]="isProfit(summary.profitLossBdt) ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ summary.profitLossBdt > 0 ? '+' : '' }}{{ summary.profitLossBdt | money }}
             </p>
             <p class="text-[11px] text-gray-400 mt-1">{{ '≈ {amount} per day' | t: { amount: (summary.dailyProfitRateBdt | money) } }}</p>
@@ -68,7 +68,7 @@ const bdt = (v: number) => formatMoney(v);
           </div>
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Break-even Day' | t }}</p>
-            <p class="font-semibold" [ngClass]="summary.breakEvenDay ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            <p class="font-semibold" [ngClass]="summary.breakEvenDay ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ summary.breakEvenDay ? ('Day {day}' | t: { day: summary.breakEvenDay }) : ('Not reached' | t) }}
             </p>
             <p class="text-[11px] text-gray-400">{{ 'First day value ≥ investment' | t }}</p>
@@ -76,7 +76,7 @@ const bdt = (v: number) => formatMoney(v);
           <div class="rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
             <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Best Day to Sell' | t }}</p>
             <p class="font-semibold text-gray-900 dark:text-white">{{ 'Day {day}' | t: { day: summary.optimalSaleDay } }}</p>
-            <p class="text-[11px]" [ngClass]="isProfit(summary.optimalProfitBdt ?? 0) ? 'text-emerald-600' : 'text-rose-600'">
+            <p class="text-[11px]" [ngClass]="isProfit(summary.optimalProfitBdt ?? 0) ? 'text-success-600' : 'text-rose-600'">
               {{ (summary.optimalProfitBdt ?? 0) > 0 ? '+' : '' }}{{ summary.optimalProfitBdt | money }}
             </p>
           </div>
@@ -175,8 +175,8 @@ export class ProjectionResultsChartComponent {
           {
             label: this.i18n.t('Meat Value'),
             data: values,
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.08)',
             borderWidth: 2,
             pointRadius: 0,
             fill: false,

@@ -124,7 +124,7 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
           </div>
           <div class="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 p-4">
             <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Profit for the year' | t }}</p>
-            <h3 class="text-xl font-black mt-1" [ngClass]="(sheet.currentYearProfitBdt || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+            <h3 class="text-xl font-black mt-1" [ngClass]="(sheet.currentYearProfitBdt || 0) >= 0 ? 'text-success-600 dark:text-success-400' : 'text-rose-600 dark:text-rose-400'">
               {{ (sheet.currentYearProfitBdt || 0) | money }}
             </h3>
             <p class="text-[11px] text-gray-400 mt-0.5">{{ 'since {date}' | t: { date: (sheet.fiscalYearStart | date:'d MMM yyyy') } }}</p>
@@ -213,7 +213,7 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
             <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">info</mat-icon>
             <span>
               <strong class="text-gray-700 dark:text-gray-200">{{ 'Livestock is valued at cost' | t }}</strong> {{ '(purchase price of the animals on the farm), not at market value — herd values shown elsewhere in the app (e.g. at meat-yield market price) are estimates and do not affect these statements; the gain is recognised only when an animal is sold. Livestock and inventory are carried at cost until sold, used or written off. Fixed assets are shown at cost less depreciation from the fixed-asset register. Retained earnings brought forward are the profits of earlier financial years; the profit for the year runs from {date}.' | t: { date: (sheet.fiscalYearStart | date:'d MMM yyyy') } }}
-              <span *ngIf="sheet.isBalanced" class="font-semibold text-emerald-600 dark:text-emerald-400">{{ 'Assets = Liabilities + Equity ✓' | t }}</span>
+              <span *ngIf="sheet.isBalanced" class="font-semibold text-success-600 dark:text-success-400">{{ 'Assets = Liabilities + Equity ✓' | t }}</span>
             </span>
           </div>
         </div>

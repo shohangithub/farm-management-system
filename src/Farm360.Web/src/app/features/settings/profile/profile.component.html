@@ -6,9 +6,9 @@
 <div>
   <div class="max-w-3xl mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden relative">
     
-    <div *ngIf="successMessage()" class="m-6 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4 rounded-r-md flex items-center shadow-sm">
-      <mat-icon class="text-emerald-500 mr-3">check_circle</mat-icon>
-      <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{{ successMessage() | t }}</p>
+    <div *ngIf="successMessage()" class="m-6 bg-success-50 dark:bg-success-900/20 border-l-4 border-success-500 p-4 rounded-r-md flex items-center shadow-sm">
+      <mat-icon class="text-success-500 mr-3">check_circle</mat-icon>
+      <p class="text-sm font-semibold text-success-700 dark:text-success-400">{{ successMessage() | t }}</p>
     </div>
 
     <div *ngIf="error()" class="m-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r-md flex items-center shadow-sm">

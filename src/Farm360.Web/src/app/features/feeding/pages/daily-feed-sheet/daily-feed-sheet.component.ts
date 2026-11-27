@@ -53,7 +53,7 @@ interface AnimalGroup {
     UnitPickerComponent, PageHeaderComponent, FeedingSubnavComponent, MoneyPipe, TranslatePipe],
   styles: [`
     .field { width: 100%; padding: 0.45rem 0.65rem; border-radius: 0.6rem; border: 1px solid rgb(209 213 219); background: white; font-size: 0.8125rem; color: rgb(17 24 39); outline: none; }
-    .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(16, 185, 129, .15); }
+    .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(139, 92, 246, .15); }
     :host-context(.dark) .field { background: rgb(17 24 39); border-color: rgb(55 65 81); color: white; }
     .card { background: white; border: 1px solid rgb(243 244 246); border-radius: 1rem; }
     :host-context(.dark) .card { background: rgb(31 41 55); border-color: rgb(55 65 81); }

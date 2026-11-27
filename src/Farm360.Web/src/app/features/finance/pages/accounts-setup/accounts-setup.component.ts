@@ -88,7 +88,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">{{ 'Assets' | t }} <span class="block font-mono font-bold text-sm">{{ openingTotals().assets | money:2 }}</span></div>
           <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40">{{ 'Liabilities + equity' | t }} <span class="block font-mono font-bold text-sm">{{ openingTotals().claims | money:2 }}</span></div>
-          <div class="p-3 rounded-xl" [ngClass]="openingTotals().difference === 0 ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700' : 'bg-rose-50 dark:bg-rose-950/30 text-rose-700'">
+          <div class="p-3 rounded-xl" [ngClass]="openingTotals().difference === 0 ? 'bg-success-50 dark:bg-success-950/30 text-success-700' : 'bg-rose-50 dark:bg-rose-950/30 text-rose-700'">
             {{ 'Difference (excl. opening fixed assets)' | t }}
             <span class="block font-mono font-bold text-sm">{{ openingTotals().difference | money:2 }}</span>
           </div>

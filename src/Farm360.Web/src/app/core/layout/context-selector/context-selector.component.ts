@@ -83,9 +83,9 @@ import { Subject, takeUntil, combineLatest, take } from 'rxjs';
     }
     /* Brief green-pulse animation when the active farm context changes */
     @keyframes context-flash-anim {
-      0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
-      50%  { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      0%   { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5); }
+      50%  { box-shadow: 0 0 0 6px rgba(139, 92, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
     }
     .context-flash {
       animation: context-flash-anim 0.7s ease-out;

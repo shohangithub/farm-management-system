@@ -215,7 +215,7 @@ export interface RuleSetGroup {
                       {{ group.ruleSet.name }}
                     </h3>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
-                      [ngClass]="group.ruleSet.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' : 'bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
+                      [ngClass]="group.ruleSet.isActive ? 'bg-success-50 text-success-700 border border-success-200 dark:bg-success-950/40 dark:text-success-300 dark:border-success-800' : 'bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-400'">
                       {{ (group.ruleSet.isActive ? 'Active' : 'Inactive') | t }}
                     </span>
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
@@ -308,7 +308,7 @@ export interface RuleSetGroup {
                       </td>
                       <td class="px-6 py-3.5">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-xs"
-                          [ngClass]="plan.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'">
+                          [ngClass]="plan.isActive ? 'bg-success-50 text-success-700 border border-success-200 dark:bg-success-950/40 dark:text-success-300 dark:border-success-800' : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'">
                           {{ (plan.isActive ? 'Active' : 'Canceled') | t }}
                         </span>
                       </td>
@@ -386,7 +386,7 @@ export interface RuleSetGroup {
                   </td>
                   <td class="px-6 py-4">
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm"
-                      [ngClass]="plan.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'">
+                      [ngClass]="plan.isActive ? 'bg-success-50 text-success-700 border border-success-200' : 'bg-red-50 text-red-700 border border-red-200'">
                       {{ (plan.isActive ? 'Active' : 'Canceled') | t }}
                     </span>
                   </td>

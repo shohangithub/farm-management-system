@@ -414,7 +414,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     {{ s.currentValueBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right">
-                    <span [class]="s.unrealizedGainLossBdt >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'">
+                    <span [class]="s.unrealizedGainLossBdt >= 0 ? 'text-success-600 dark:text-success-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'">
                       {{ s.unrealizedGainLossBdt >= 0 ? '+' : '' }}{{ s.unrealizedGainLossBdt | money }}
                       <span class="text-[11px] font-normal">({{ s.returnOnInvestmentPercent >= 0 ? '+' : '' }}{{ s.returnOnInvestmentPercent | number:'1.1-1' }}%)</span>
                     </span>

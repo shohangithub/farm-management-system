@@ -101,8 +101,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         <!-- Result summary -->
         <div class="p-6 space-y-4">
           <div class="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-            <mat-icon class="!text-[22px] !w-[22px] !h-[22px] text-emerald-600 dark:text-emerald-400">check_circle</mat-icon>
-            <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">{{ 'Allocation complete' | t }}</span>
+            <mat-icon class="!text-[22px] !w-[22px] !h-[22px] text-success-600 dark:text-success-400">check_circle</mat-icon>
+            <span class="text-sm font-semibold text-success-800 dark:text-success-300">{{ 'Allocation complete' | t }}</span>
           </div>
 
           <dl class="grid grid-cols-2 gap-3 text-sm">

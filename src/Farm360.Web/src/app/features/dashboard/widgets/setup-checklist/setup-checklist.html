@@ -118,7 +118,7 @@
             <ul class="mt-2 space-y-1">
               @for (row of doneRows(); track row.key) {
                 <li class="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <mat-icon class="text-emerald-500 shrink-0 text-[20px] w-[20px] h-[20px]">check_circle</mat-icon>
+                  <mat-icon class="text-success-500 shrink-0 text-[20px] w-[20px] h-[20px]">check_circle</mat-icon>
                   <a class="flex-1 min-w-0 truncate text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" [routerLink]="row.link">{{ row.title | t }}</a>
                   <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ countLabel(row) }}</span>
                 </li>
