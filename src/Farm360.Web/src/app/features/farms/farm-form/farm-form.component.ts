@@ -7,6 +7,8 @@ import { FarmService } from '../services/farm.service';
 import { CreateFarmCommand, UpdateFarmCommand } from '../models/farm.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, merge } from 'rxjs';
+import { FarmMapComponent, PickedLocation } from '../../../shared/components/farm-map/farm-map.component';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -16,7 +18,7 @@ import { HasUnsavedChanges } from '../../../shared/utils/unsaved-changes.guard';
 @Component({
   selector: 'app-farm-form',
   standalone: true,
-  imports: [TranslatePipe, CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule],
+  imports: [TranslatePipe, CommonModule, ReactiveFormsModule, RouterModule, PageHeaderComponent, MatSnackBarModule, FarmMapComponent],
   templateUrl: './farm-form.component.html'
 })
 export class FarmFormComponent implements OnInit, HasUnsavedChanges {
@@ -42,6 +44,72 @@ export class FarmFormComponent implements OnInit, HasUnsavedChanges {
   isSubmitting = signal<boolean>(false);
   error = signal<string | null>(null);
 
+  /** Reading the browser's location for the farm coordinates. */
+  locating = signal<boolean>(false);
+  locationError = signal<string | null>(null);
+
+  /** The point shown on the location map: follows the Latitude/Longitude fields (typing is debounced). */
+  mapLat = signal<number | null>(null);
+  mapLon = signal<number | null>(null);
+  mapLabel = signal<string>('');
+
+  /** A click or drag on the map fills the fields and marks the form dirty (the unsaved-changes guard sees it). */
+  onLocationPicked(point: PickedLocation): void {
+    this.locationError.set(null);
+    this.setCoordinates(point.lat, point.lon);
+  }
+
+  private setCoordinates(lat: number, lon: number): void {
+    this.farmForm.patchValue({ latitude: lat, longitude: lon });
+    for (const name of ['latitude', 'longitude']) {
+      this.farmForm.get(name)?.markAsDirty();
+      this.farmForm.get(name)?.markAsTouched();
+    }
+    this.farmForm.markAsDirty();
+    this.mapLat.set(lat);
+    this.mapLon.set(lon);
+  }
+
+  /** Bangladesh, roughly (with a margin): coordinates outside get a warning, not an error. */
+  private static readonly BD_BOUNDS = { minLat: 20.5, maxLat: 26.8, minLon: 88.0, maxLon: 92.8 };
+
+  /** Fill latitude/longitude from the device's GPS / browser location (stand at the farm). */
+  useCurrentLocation(): void {
+    this.locationError.set(null);
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.locationError.set(this.i18n.t('This browser cannot share its location. Copy the point from Google Maps instead.'));
+      return;
+    }
+    this.locating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        this.locating.set(false);
+        this.setCoordinates(
+          Math.round(position.coords.latitude * 1e6) / 1e6,
+          Math.round(position.coords.longitude * 1e6) / 1e6);
+      },
+      err => {
+        this.locating.set(false);
+        this.locationError.set(this.i18n.t(err.code === err.PERMISSION_DENIED
+          ? 'Location permission was refused. Allow it in the browser, or copy the point from Google Maps.'
+          : 'Could not read your location. Try again outdoors, or copy the point from Google Maps.'));
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  }
+
+  /** Both coordinates are set and valid but the point is outside Bangladesh (probably swapped or mistyped). */
+  get outsideBangladesh(): boolean {
+    const lat = Number(this.farmForm?.get('latitude')?.value);
+    const lon = Number(this.farmForm?.get('longitude')?.value);
+    const latRaw = this.farmForm?.get('latitude')?.value;
+    const lonRaw = this.farmForm?.get('longitude')?.value;
+    if (latRaw === null || latRaw === '' || lonRaw === null || lonRaw === '' || !Number.isFinite(lat) || !Number.isFinite(lon)) return false;
+    if (this.farmForm.get('latitude')?.invalid || this.farmForm.get('longitude')?.invalid) return false;
+    const b = FarmFormComponent.BD_BOUNDS;
+    return lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon;
+  }
+
   ngOnInit(): void {
     this.initForm();
 
@@ -57,6 +125,20 @@ export class FarmFormComponent implements OnInit, HasUnsavedChanges {
       this.farmId.set(farmId);
       this.loadFarm(farmId);
     }
+
+    // Typed coordinates move the map pin (debounced so a half-typed number does not jump the map around).
+    const latControl = this.farmForm.get('latitude')!;
+    const lonControl = this.farmForm.get('longitude')!;
+    merge(latControl.valueChanges, lonControl.valueChanges)
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        const toNumber = (v: unknown) => v === null || v === '' || v === undefined || !Number.isFinite(Number(v)) ? null : Number(v);
+        this.mapLat.set(latControl.valid ? toNumber(latControl.value) : null);
+        this.mapLon.set(lonControl.valid ? toNumber(lonControl.value) : null);
+      });
+    this.farmForm.get('farmName')!.valueChanges
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe(name => this.mapLabel.set(name ?? ''));
 
     // Auto-uppercase farm code as the user types
     this.farmForm.get('farmCode')?.valueChanges

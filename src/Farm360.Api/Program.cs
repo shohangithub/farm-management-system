@@ -277,6 +277,7 @@ try
     app.MapTenantEndpoints();
     app.MapFarmEndpoints();
     app.MapDashboardEndpoints();
+    Farm360.Api.Endpoints.Weather.WeatherEndpoints.MapWeatherEndpoints(app);
     app.MapReportEndpoints();
     app.MapDocumentEndpoints();
     app.MapShedEndpoints();
@@ -343,6 +344,13 @@ try
             "health-reminders-daily",
             sender => sender.Send(new Farm360.Application.InAppNotifications.GenerateHealthRemindersCommand(), CancellationToken.None),
             Hangfire.Cron.Hourly(), jobTimeZone);
+
+        // Weather alerts: hourly at :30, so each farm with a location gets at most one bell alert a day
+        // (severe heat, heavy rain, cold wave, storm today/tomorrow) once its own clock reaches 6:30.
+        jobService.AddOrUpdateRecurring<MediatR.ISender>(
+            "weather-alerts-daily",
+            sender => sender.Send(new Farm360.Application.Weather.GenerateWeatherAlertsCommand(), CancellationToken.None),
+            "30 * * * *", jobTimeZone);
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "allocate-overhead-monthly",

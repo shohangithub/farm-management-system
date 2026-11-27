@@ -115,6 +115,26 @@ public static class InfrastructureServiceExtensions
         else
             services.AddScoped<IEmailService, LoggingEmailService>();
 
+        // ── Farm weather (Weather section) ─────────────────────────────────────
+        // Open-Meteo behind IWeatherProvider. The free endpoint is non-commercial only: production
+        // commercial use needs a customer plan (customer-api.open-meteo.com + Weather:ApiKey from a
+        // secret store) or another provider. Typed client: per-attempt timeout, 2 retries with
+        // back-off and a circuit breaker; a failure shows "Weather unavailable", never an error page.
+        services.Configure<Farm360.Application.Weather.WeatherOptions>(
+            configuration.GetSection(Farm360.Application.Weather.WeatherOptions.SectionName));
+        var weatherTimeout = TimeSpan.FromSeconds(Math.Clamp(
+            configuration.GetValue($"{Farm360.Application.Weather.WeatherOptions.SectionName}:TimeoutSeconds", 10), 2, 30));
+        services.AddHttpClient<Farm360.Application.Weather.IWeatherProvider, Farm360.Infrastructure.Weather.OpenMeteoWeatherProvider>(
+                Farm360.Infrastructure.Weather.OpenMeteoWeatherProvider.HttpClientName,
+                c => c.Timeout = (weatherTimeout * 3) + TimeSpan.FromSeconds(5))
+            .AddStandardResilienceHandler(o =>
+            {
+                o.AttemptTimeout.Timeout = weatherTimeout;
+                o.TotalRequestTimeout.Timeout = weatherTimeout * 3;
+                o.Retry.MaxRetryAttempts = 2;
+                o.CircuitBreaker.SamplingDuration = weatherTimeout * 6;
+            });
+
         // ── Storage Services ──────────────────────────────────────────────────
         services.AddScoped<IFileStorageService, Farm360.Infrastructure.Storage.LocalFileStorageService>();
 

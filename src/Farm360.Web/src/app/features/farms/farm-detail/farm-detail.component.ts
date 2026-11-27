@@ -11,6 +11,7 @@ import { ShedService } from '../services/shed.service';
 import { ShedList } from '../models/shed.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { FarmMapComponent } from '../../../shared/components/farm-map/farm-map.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
@@ -33,6 +34,7 @@ import { parseApiError } from '../../../core/utils/error-parser';
     MatDividerModule,
     PageHeaderComponent,
     LoadingComponent,
+    FarmMapComponent,
     DatePipe,
     DecimalPipe
   ],

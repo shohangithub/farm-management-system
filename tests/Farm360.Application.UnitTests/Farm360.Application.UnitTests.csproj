@@ -22,6 +22,11 @@
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
 
+  <ItemGroup Label="Test data">
+    <!-- A real Open-Meteo answer for Dhaka (23.81, 90.41); the parser tests read it, no network. -->
+    <None Include="Weather\open-meteo-dhaka.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\src\Farm360.Application\Farm360.Application.csproj" />
     <ProjectReference Include="..\..\src\Farm360.Domain\Farm360.Domain.csproj" />

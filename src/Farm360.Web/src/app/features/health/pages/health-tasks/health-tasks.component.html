@@ -14,6 +14,9 @@
 
 <app-health-nav></app-health-nav>
 
+<!-- Today's weather; on a hot midday, tasks below get a "do it in the morning" hint -->
+<app-weather-banner></app-weather-banner>
+
 <!-- Overdue / today / tomorrow, also the filter -->
 <div class="grid grid-cols-4 gap-2 mb-4" role="tablist" [attr.aria-label]="'Show tasks' | t">
   @for (f of ['all', 'overdue', 'today', 'tomorrow']; track f) {
@@ -152,6 +155,11 @@
                   }
                   @if (t.instruction) {
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-300 m-0">{{ t.instruction }}</p>
+                  }
+                  @if (heatHint(t)) {
+                    <p class="mt-1 text-xs font-semibold text-amber-800 dark:text-amber-300 inline-flex items-center gap-1 m-0 print:hidden">
+                      <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">wb_sunny</mat-icon> {{ 'Hot day: do this in the morning (best before 10:00)' | t }}
+                    </p>
                   }
                   @if (t.stockShort) {
                     <p class="mt-1 text-xs font-semibold text-rose-700 dark:text-rose-300 inline-flex items-center gap-1 m-0">

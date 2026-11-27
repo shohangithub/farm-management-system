@@ -1,0 +1,235 @@
+<app-page-header
+  [title]="'Weather' | t"
+  [description]="(farmName() ? 'Heat stress and work advice for {farm}' : 'Heat stress and work advice for your cattle') | t: { farm: farmName() }"
+  [breadcrumbActiveNode]="'Weather' | t">
+  <div actions class="flex flex-wrap items-center gap-2 print:hidden">
+    @if (report()) {
+      <button type="button" (click)="refresh()"
+        class="inline-flex items-center gap-1.5 h-11 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> {{ 'Refresh' | t }}
+      </button>
+      <button type="button" (click)="print()"
+        class="inline-flex items-center gap-1.5 h-11 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">print</mat-icon> {{ 'Print' | t }}
+      </button>
+    }
+  </div>
+</app-page-header>
+
+<div class="max-w-7xl mx-auto pb-12 space-y-6 print:space-y-4 print:pb-0">
+
+  <!-- Printed heading -->
+  <div class="hidden print:block">
+    <h1 class="text-lg font-bold m-0">{{ 'Weather' | t }} · {{ farmName() }}</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-pulse" aria-busy="true">
+      <div class="lg:col-span-2 h-48 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700/60"></div>
+      <div class="h-48 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700/60"></div>
+      <div class="lg:col-span-3 h-40 rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-200/70 dark:border-gray-700/60"></div>
+    </div>
+  } @else if (!farmId()) {
+    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'Choose a farm to see its weather.' | t }}</p>
+  } @else if (weather()?.needsLocation) {
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-6 sm:p-8 text-center space-y-3">
+      <mat-icon class="!text-[40px] !w-[40px] !h-[40px] text-gray-300 dark:text-gray-600" aria-hidden="true">location_off</mat-icon>
+      <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ "Set your farm's location to see weather" | t }}</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 m-0 max-w-md mx-auto">{{ 'Add the latitude and longitude on the farm form. Only these coordinates are sent to the weather service.' | t }}</p>
+      <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
+        class="inline-flex items-center gap-1.5 h-11 px-5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit_location_alt</mat-icon> {{ 'Set location' | t }}
+      </a>
+    </section>
+  } @else if (report(); as r) {
+
+    <!-- 1. Now + farm location -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 print:grid-cols-3">
+      <section aria-labelledby="now-heading" class="lg:col-span-2 print:col-span-3 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-5 sm:p-6 print:shadow-none print:break-inside-avoid">
+        <div class="flex items-start justify-between gap-3">
+          <h2 id="now-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Right now' | t }}</h2>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ring-1 ring-inset" [ngClass]="bandPill(r.current.band)">
+            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">thermostat</mat-icon>
+            {{ 'Heat stress: {band} (THI {thi})' | t: { band: (bandLabel(r.current.band) | t), thi: r.current.thi } }}
+          </span>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center gap-x-8 gap-y-4">
+          <div class="flex items-center gap-4">
+            <mat-icon class="!text-[56px] !w-[56px] !h-[56px] text-primary-600 dark:text-primary-400" aria-hidden="true">{{ r.current.icon }}</mat-icon>
+            <div>
+              <p class="m-0 text-5xl font-semibold tracking-tight tabular-nums text-gray-900 dark:text-white">{{ round(r.current.temperatureC) }}°</p>
+              <p class="m-0 mt-1 text-sm font-medium text-gray-700 dark:text-gray-200">{{ r.current.condition | t }}</p>
+            </div>
+          </div>
+          <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 m-0 text-sm">
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Feels like' | t }}</dt><dd class="m-0 font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(r.current.feelsLikeC) }}°</dd></div>
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Humidity' | t }}</dt><dd class="m-0 font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(r.current.humidityPercent) }}%</dd></div>
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Wind' | t }}</dt><dd class="m-0 font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(r.current.windSpeedKmh) }} {{ 'km/h' | t }}</dd></div>
+            <div><dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Gusts' | t }}</dt><dd class="m-0 font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(r.current.windGustsKmh) }} {{ 'km/h' | t }}</dd></div>
+            @if (r.daily[0]; as d) {
+              <div><dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Today' | t }}</dt><dd class="m-0 font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(d.maxTemperatureC) }}° / {{ round(d.minTemperatureC) }}°</dd></div>
+              <div><dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ 'Rain' | t }}</dt><dd class="m-0 font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(d.rainChance ?? 0) }}% · {{ round(d.rainMm) }} {{ 'mm' | t }}</dd></div>
+            }
+          </dl>
+        </div>
+
+        @if (r.peak48Hours; as p) {
+          <p class="m-0 mt-4 text-xs text-gray-500 dark:text-gray-400">
+            {{ 'Hottest in the next 48 hours: THI {thi} at {time}' | t: { thi: p.thi, time: clock(p.time) } }}
+          </p>
+        }
+        <p class="m-0 mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+          {{ 'Source: {provider}, updated {time}. Location {lat}, {lon}.' | t: { provider: weather()?.provider ?? '', time: fetchedAt(), lat: weather()?.location?.latitude ?? '', lon: weather()?.location?.longitude ?? '' } }}
+        </p>
+      </section>
+
+      <!-- Farm location -->
+      <section aria-labelledby="map-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-5 sm:p-6 print:hidden">
+        <h2 id="map-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 mb-3 flex items-center gap-2">
+          <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-600 dark:text-primary-400" aria-hidden="true">location_on</mat-icon>
+          {{ 'Farm location' | t }}
+          <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
+            class="ml-auto inline-flex items-center gap-1 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10">
+            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">edit_location_alt</mat-icon> {{ 'Change location' | t }}
+          </a>
+        </h2>
+        @if (weather()?.location; as loc) {
+          <app-farm-map [lat]="loc.latitude" [lon]="loc.longitude" [label]="farmName()" height="280px">
+            <div class="absolute bottom-2.5 left-2.5 z-[1000] pointer-events-none inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/95 dark:bg-gray-800/95 shadow-md ring-1 ring-black/10 dark:ring-white/10">
+              <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(r.current.temperatureC) }}°</span>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" [ngClass]="bandPill(r.current.band)">{{ bandLabel(r.current.band) | t }}</span>
+            </div>
+          </app-farm-map>
+        } @else {
+          <div class="h-[280px] rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-3 p-4 text-center">
+            <mat-icon class="!text-[32px] !w-[32px] !h-[32px] text-gray-300 dark:text-gray-600" aria-hidden="true">location_off</mat-icon>
+            <p class="m-0 text-sm text-gray-500 dark:text-gray-400">{{ "Set your farm's location to see weather" | t }}</p>
+            <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
+              class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold">
+              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit_location_alt</mat-icon> {{ 'Set location' | t }}
+            </a>
+          </div>
+        }
+      </section>
+    </div>
+
+    <!-- Best hours -->
+    <section aria-labelledby="best-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-5 sm:p-6 print:shadow-none print:break-inside-avoid">
+      <h2 id="best-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 flex items-center gap-2">
+        <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-600 dark:text-primary-400" aria-hidden="true">schedule</mat-icon>
+        {{ (r.bestHours?.isToday === false ? 'Best hours tomorrow' : 'Best hours today') | t }}
+      </h2>
+      <p class="m-0 mt-1 text-xs text-gray-500 dark:text-gray-400">{{ 'For transport, weighing, vaccination and bathing: coolest daylight hours with little rain.' | t }}</p>
+      @if (r.bestHours?.hours?.length) {
+        <ul class="m-0 mt-4 p-0 list-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          @for (h of r.bestHours!.hours; track h.time) {
+            <li class="flex items-center gap-3 p-3 rounded-xl bg-gray-50/70 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-700/60">
+              <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white w-14">{{ clock(h.time) }}</span>
+              <span class="text-sm tabular-nums text-gray-600 dark:text-gray-300 flex-1">{{ round(h.temperatureC) }}° · {{ 'Rain {p}%' | t: { p: h.rainChance ?? 0 } }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" [ngClass]="bandPill(h.band)">THI {{ h.thi }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="m-0 mt-4 text-sm text-gray-500 dark:text-gray-400">{{ 'No good hours left today.' | t }}</p>
+      }
+    </section>
+
+    <!-- 2. Next 48 hours -->
+    <section aria-labelledby="hours-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden print:shadow-none print:break-inside-avoid">
+      <div class="px-5 sm:px-6 pt-5 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="hours-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Next 48 hours' | t }}</h2>
+        <ul class="m-0 p-0 list-none flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400" [attr.aria-label]="'Heat stress bands' | t">
+          @for (b of bands; track b) {
+            <li class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full" [ngClass]="bandSwatch(b)" aria-hidden="true"></span>{{ bandLabel(b) | t }}</li>
+          }
+        </ul>
+      </div>
+      <div class="mt-3 overflow-x-auto pb-4 print:overflow-visible" tabindex="0" [attr.aria-label]="'Hourly forecast' | t">
+        <ol class="m-0 px-5 sm:px-6 list-none flex gap-1.5 w-max print:w-auto print:flex-wrap">
+          @for (h of r.hourly; track h.time; let i = $index) {
+            <li class="w-14 shrink-0 flex flex-col items-center gap-1 text-center">
+              <span class="h-4 text-[10px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300 whitespace-nowrap">{{ isNewDay(i) ? hourDay(h.time) : '' }}</span>
+              <span class="text-xs font-medium tabular-nums text-gray-500 dark:text-gray-400">{{ clock(h.time) }}</span>
+              <span class="text-sm font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(h.temperatureC) }}°</span>
+              <span class="text-[11px] tabular-nums inline-flex items-center gap-0.5"
+                [ngClass]="(h.rainChance ?? 0) >= 50 ? 'text-sky-700 dark:text-sky-300 font-semibold' : 'text-gray-400 dark:text-gray-500'">
+                <mat-icon class="!text-[12px] !w-[12px] !h-[12px]" aria-hidden="true">water_drop</mat-icon>{{ h.rainChance ?? 0 }}%
+              </span>
+              <span class="w-full py-1 rounded-md text-[11px] font-bold tabular-nums ring-1 ring-inset" [ngClass]="bandPill(h.band)"
+                [attr.title]="('Heat stress' | t) + ': ' + (bandLabel(h.band) | t)">{{ h.thi }}</span>
+            </li>
+          }
+        </ol>
+      </div>
+    </section>
+
+    <!-- 3. Seven days -->
+    <section aria-labelledby="days-heading" class="space-y-3 print:break-inside-avoid">
+      <h2 id="days-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ '7-day forecast' | t }}</h2>
+      <ol class="m-0 p-0 list-none grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 print:grid-cols-7">
+        @for (d of r.daily; track d.date) {
+          <li class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4 flex flex-col items-start gap-2 min-w-0 print:shadow-none print:p-2">
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ dayName(d) }}</span>
+            <mat-icon class="!text-[28px] !w-[28px] !h-[28px] text-primary-600 dark:text-primary-400" aria-hidden="true">{{ d.icon }}</mat-icon>
+            <span class="text-xs text-gray-600 dark:text-gray-300 leading-tight min-h-[2rem]">{{ d.condition | t }}</span>
+            <span class="text-sm tabular-nums"><span class="font-semibold text-gray-900 dark:text-white">{{ round(d.maxTemperatureC) }}°</span> <span class="text-gray-500 dark:text-gray-400">/ {{ round(d.minTemperatureC) }}°</span></span>
+            <span class="text-[11px] tabular-nums inline-flex items-center gap-0.5"
+              [ngClass]="(d.rainChance ?? 0) >= 70 || d.rainMm >= 20 ? 'text-sky-700 dark:text-sky-300 font-semibold' : 'text-gray-500 dark:text-gray-400'">
+              <mat-icon class="!text-[13px] !w-[13px] !h-[13px]" aria-hidden="true">water_drop</mat-icon>{{ d.rainChance ?? 0 }}% · {{ round(d.rainMm) }} {{ 'mm' | t }}
+            </span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap" [ngClass]="bandPill(d.peakBand)">
+              {{ bandLabel(d.peakBand) | t }} · {{ d.peakThi }}
+            </span>
+          </li>
+        }
+      </ol>
+    </section>
+
+    <!-- 4. Advice -->
+    <section aria-labelledby="advice-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-5 sm:p-6 print:shadow-none">
+      <h2 id="advice-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'What to do' | t }}</h2>
+      <p class="m-0 mt-1 text-xs text-gray-500 dark:text-gray-400">{{ 'Practical advice for your cattle from the forecast. General guidance: ask your vet about sick animals.' | t }}</p>
+
+      @for (g of adviceGroups(); track g.window) {
+        <div class="mt-5 print:break-inside-avoid">
+          <h3 class="text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 m-0 mb-2">{{ g.label | t }}</h3>
+          <ul class="m-0 p-0 list-none grid grid-cols-1 md:grid-cols-2 gap-2">
+            @for (a of g.items; track a.code + a.fromDate) {
+              <li class="flex gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/60 dark:bg-gray-900/20 print:break-inside-avoid">
+                <span class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" [ngClass]="severityClass(a)" aria-hidden="true">
+                  <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ a.icon }}</mat-icon>
+                </span>
+                <div class="min-w-0">
+                  <p class="m-0 text-sm font-semibold text-gray-900 dark:text-white">{{ title(a) }}</p>
+                  <p class="m-0 mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ action(a) }}</p>
+                  @if (g.window === 'later') {
+                    <p class="m-0 mt-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400">{{ range(a) }}</p>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      } @empty {
+        <p class="m-0 mt-4 text-sm text-gray-500 dark:text-gray-400">{{ 'No special care needed this week.' | t }}</p>
+      }
+
+      <p class="m-0 mt-6 text-[11px] text-gray-400 dark:text-gray-500">
+        {{ 'THI (temperature-humidity index) = (1.8×T + 32) − (0.55 − 0.0055×RH) × (1.8×T − 26). Beef cattle: below 72 comfortable, 72–78 mild, 79–88 moderate, 89–98 severe, above 98 danger.' | t }}
+      </p>
+    </section>
+
+  } @else {
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-6 text-center space-y-3">
+      <mat-icon class="!text-[40px] !w-[40px] !h-[40px] text-gray-300 dark:text-gray-600" aria-hidden="true">cloud_off</mat-icon>
+      <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ 'Weather unavailable' | t }}</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 m-0">{{ 'The weather service could not be reached. Try again in a few minutes.' | t }}</p>
+      <button type="button" (click)="refresh()"
+        class="inline-flex items-center gap-1.5 h-11 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">refresh</mat-icon> {{ 'Try again' | t }}
+      </button>
+    </section>
+  }
+</div>

@@ -24,6 +24,7 @@ Redis password and a JWT signing key. Anyone with repository access has these va
 - [ ] `Cors__AllowedOrigins__0` is the public SPA origin.
 - [ ] **Several API instances.** Set `Cache__Provider=Redis` (the Data Protection key ring then lives in Redis too) and share the uploads volume (`/app/wwwroot/uploads`) between instances. Run Hangfire jobs on one instance, or keep `Hangfire__RunServer=true` on all of them (Hangfire coordinates workers through SQL Server).
 - [ ] QuestPDF licence: Community is only valid below USD 1M annual revenue (`Farm360__BusinessRules__PdfLicence`).
+- [ ] **Weather licence.** The farm weather uses Open-Meteo. The free endpoint `api.open-meteo.com` is for **non-commercial use only**. For a commercial production deployment, buy an Open-Meteo customer plan and set `Weather__BaseUrl=https://customer-api.open-meteo.com/v1/forecast` and `Weather__ApiKey` (secret store, never appsettings), or plug in another `IWeatherProvider`. See section 7.
 - [ ] SQL Server edition: the bundled container defaults to **Express** (10 GB per database). Use Standard or a managed service (Azure SQL, RDS) once data grows.
 
 ## 2. Deploy
@@ -127,3 +128,23 @@ Off by default (`Demo:Enabled=false`). To turn it on in production, set the envi
 - A platform admin can rebuild now with `POST /api/v1/admin/demo/rebuild` (202 Accepted; runs in the background).
 
 To turn it off again, set `Demo__Enabled=false` and restart: the demo login returns 404 immediately.
+
+## 7. Farm weather (Open-Meteo)
+
+The dashboard weather card, the Weather page (`/weather`), the Today's-tasks banner and the daily weather
+bell alert read `GET /api/v1/farms/{farmId}/weather`. The API calls the provider with **only the farm's
+coordinates, rounded to 2 decimals** (no names, ids or users), and caches each point for `Weather:CacheMinutes`.
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `Weather__Enabled` | `true` | `false`: the card says "Weather unavailable" and no alerts are made. |
+| `Weather__Provider` | `OpenMeteo` | The only provider today (`IWeatherProvider`). |
+| `Weather__BaseUrl` | `https://api.open-meteo.com/v1/forecast` | Free endpoint: **non-commercial use only**. Commercial: `https://customer-api.open-meteo.com/v1/forecast`. |
+| `Weather__ApiKey` | empty | Customer-plan key. Secret: environment / secret store only. Sent as `apikey`. |
+| `Weather__CacheMinutes` | `30` | Per rounded point, in the shared cache (Redis when configured). |
+| `Weather__TimeoutSeconds` | `10` | Per attempt; 2 retries and a circuit breaker (standard resilience handler). |
+
+The API needs outbound HTTPS to the provider. If it cannot reach it, the weather shows as unavailable;
+nothing else breaks. The recurring job `weather-alerts-daily` runs hourly at :30 and creates at most one
+bell notification per farm, user and day, from 06:30 farm time, only for a storm, severe heat (THI 89+),
+heavy rain (70%+ or 20 mm+) or cold (below 12 °C) today or tomorrow. Viewers and the demo tenant get none.

@@ -518,3 +518,31 @@ html.dark {
 html.lang-bn body {
   line-height: 1.6;
 }
+
+/* ── Leaflet maps (FarmMapComponent): the tiles stay as they are; the controls follow the theme ── */
+.leaflet-container {
+  font-family: var(--font-family);
+  &:focus-visible { outline: 2px solid #7c3aed; outline-offset: -2px; }
+}
+.farm-map-pin { background: transparent; border: 0; }
+.farm-map-pin svg { filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.35)); }
+.leaflet-bar a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 1px; }
+
+html.dark {
+  .leaflet-container { background: #111827; }
+  .leaflet-bar { border-color: rgb(55 65 81 / 0.9); }
+  .leaflet-bar a {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border-bottom-color: #374151;
+    &:hover, &:focus { background-color: #374151; color: #fff; }
+    &.leaflet-disabled { background-color: #111827; color: #6b7280; }
+  }
+  .leaflet-control-attribution {
+    background: rgb(17 24 39 / 0.8);
+    color: #d1d5db;
+    a { color: #c4b5fd; }
+  }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #1f2937; color: #f9fafb; }
+  .leaflet-container a.leaflet-popup-close-button { color: #9ca3af; }
+}

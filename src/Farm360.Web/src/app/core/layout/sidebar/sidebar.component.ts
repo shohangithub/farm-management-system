@@ -31,6 +31,7 @@ export class SidebarComponent {
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
     { icon: 'pets', label: 'Livestock', route: '/livestock' },
     { icon: 'healing', label: 'Health', route: '/health' },
+    { icon: 'wb_sunny', label: 'Weather', route: '/weather' },
     { icon: 'restaurant_menu', label: 'Feeding', route: '/feeding' },
     { icon: 'inventory', label: 'Inventory', route: '/inventory' },
     { icon: 'account_balance_wallet', label: 'Finance', route: '/finance' },

@@ -66,4 +66,15 @@ export const BN_SHARED: Record<string, string> = {
   'Equipment': 'যন্ত্রপাতি',
   'Other': 'অন্যান্য',
   'Consumable': 'ব্যবহার্য সামগ্রী',
+
+  // ── Farm map (shared/components/farm-map) ──────────────────────────────────────────────
+  'Map of {name}': '{name}-এর মানচিত্র',
+  'Farm location map': 'খামারের অবস্থানের মানচিত্র',
+  'Farm location': 'খামারের অবস্থান',
+  'Map type': 'মানচিত্রের ধরন',
+  'Street': 'রাস্তা',
+  'Satellite': 'স্যাটেলাইট',
+  'Loading map…': 'মানচিত্র লোড হচ্ছে…',
+  'The map could not be loaded. Check the internet connection.': 'মানচিত্র লোড করা যায়নি। ইন্টারনেট সংযোগ দেখুন।',
+  'Open in Google Maps': 'Google Maps-এ খুলুন',
 };

@@ -113,6 +113,28 @@
         <p *ngIf="getError('landArea')" class="text-xs text-red-500 mt-1">{{ getError('landArea') | t }}</p>
       </div>
       
+      <!-- Farm location: GPS button + how to copy from Google Maps (used for the farm weather) -->
+      <div class="sm:col-span-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/30 p-4 space-y-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" (click)="useCurrentLocation()" [disabled]="locating()"
+            class="inline-flex items-center gap-1.5 h-11 px-4 rounded-xl border border-primary-200 dark:border-primary-800 bg-white dark:bg-gray-800 text-primary-700 dark:text-primary-300 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-500/10 disabled:opacity-60">
+            <span class="material-icons text-[18px]" aria-hidden="true">{{ locating() ? 'hourglass_top' : 'my_location' }}</span>
+            {{ (locating() ? 'Finding your location…' : 'Use my current location') | t }}
+          </button>
+          <p class="m-0 flex-1 min-w-[14rem] text-xs text-gray-500 dark:text-gray-400">{{ 'Stand at the farm and tap the button. The location gives the farm its weather forecast and heat-stress advice.' | t }}</p>
+        </div>
+        <p *ngIf="locationError()" class="m-0 text-xs font-medium text-rose-700 dark:text-rose-300">{{ locationError() }}</p>
+        <details class="text-xs text-gray-600 dark:text-gray-300">
+          <summary class="cursor-pointer font-semibold text-gray-700 dark:text-gray-200">{{ 'How to copy the location from Google Maps' | t }}</summary>
+          <ol class="mt-2 ml-4 list-decimal space-y-1">
+            <li>{{ 'Open Google Maps and find your farm.' | t }}</li>
+            <li>{{ 'Phone: touch and hold the farm until a red pin drops. Computer: right-click the farm.' | t }}</li>
+            <li>{{ 'The coordinates appear like 23.8103, 90.4125 (tap or click them to copy).' | t }}</li>
+            <li>{{ 'Put the first number in Latitude and the second in Longitude.' | t }}</li>
+          </ol>
+        </details>
+      </div>
+
       <!-- Latitude -->
       <div class="sm:col-span-3 space-y-1.5">
         <label for="latitude" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Latitude' | t }}</label>
@@ -130,7 +152,18 @@
                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         <p *ngIf="getError('longitude')" class="text-xs text-red-500 mt-1">{{ getError('longitude') | t }}</p>
       </div>
+
+      <p *ngIf="outsideBangladesh" class="sm:col-span-6 m-0 -mt-3 text-xs font-medium text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
+        <span class="material-icons text-[16px]" aria-hidden="true">warning_amber</span>
+        {{ 'This point is outside Bangladesh. Check that latitude (about 20.5 to 26.6) and longitude (about 88 to 92.7) are not swapped.' | t }}
+      </p>
       
+      <!-- Location map: click or drag the pin to fill Latitude/Longitude -->
+      <div class="sm:col-span-6">
+        <app-farm-map [lat]="mapLat()" [lon]="mapLon()" [label]="mapLabel()" [editable]="true" height="300px"
+          (locationPicked)="onLocationPicked($event)" />
+      </div>
+
       <!-- Map Polygon -->
       <div class="sm:col-span-6 space-y-1.5">
         <label for="mapPolygon" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ 'Map Polygon (GeoJSON)' | t }}</label>

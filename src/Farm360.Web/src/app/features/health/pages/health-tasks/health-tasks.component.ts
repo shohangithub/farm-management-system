@@ -21,6 +21,8 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
+import { WeatherBannerComponent, isHeatSensitiveTask, isHotMidday } from '../../../weather/components/weather-banner/weather-banner.component';
+import { WeatherService } from '../../../weather/services/weather.service';
 
 type Focus = 'all' | 'overdue' | 'today' | 'tomorrow';
 type GroupBy = 'animal' | 'task';
@@ -45,7 +47,7 @@ interface TaskGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule, RouterModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent,
-    ErrorStateComponent, HasPermissionDirective, CanPipe, TranslatePipe, HealthNavComponent,
+    ErrorStateComponent, HasPermissionDirective, CanPipe, TranslatePipe, HealthNavComponent, WeatherBannerComponent,
   ],
   templateUrl: './health-tasks.component.html',
 })
@@ -55,6 +57,7 @@ export class HealthTasksComponent {
   private readonly notify = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
+  private readonly weatherService = inject(WeatherService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -96,6 +99,18 @@ export class HealthTasksComponent {
     ),
     { initialValue: null }
   );
+
+  /** Today's weather (shared with the banner): hot middays get a "do it in the morning" hint on outdoor tasks. */
+  private readonly weather = toSignal(
+    toObservable(computed(() => this.farm()?.id ?? '')).pipe(
+      switchMap(farmId => farmId ? this.weatherService.getFarmWeather(farmId) : of(null))),
+    { initialValue: null });
+  readonly hotMidday = computed(() => isHotMidday(this.weather()));
+
+  /** Vaccination, bath or transport-like task due today (or late) on a hot day. A hint only, never a block. */
+  heatHint(t: HealthTaskDto): boolean {
+    return this.hotMidday() && t.bucket !== 'tomorrow' && isHeatSensitiveTask(t);
+  }
 
   readonly all = computed(() => this.result()?.items ?? []);
   readonly farmName = computed(() => this.farm()?.name ?? '');

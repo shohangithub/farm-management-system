@@ -30,6 +30,8 @@ public sealed class UpdateFarmCommandValidator : AbstractValidator<UpdateFarmCom
         RuleFor(x => x.FarmName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Type).IsInEnum();
         RuleFor(x => x.Capacity).GreaterThanOrEqualTo(0).When(x => x.Capacity.HasValue);
+        RuleFor(x => x.Latitude).InclusiveBetween(-90, 90).When(x => x.Latitude.HasValue);
+        RuleFor(x => x.Longitude).InclusiveBetween(-180, 180).When(x => x.Longitude.HasValue);
         RuleFor(x => x.OwnerId).MaximumLength(36);
         RuleFor(x => x.ManagerId).MaximumLength(36);
         RuleFor(x => x.Description).MaximumLength(1000);

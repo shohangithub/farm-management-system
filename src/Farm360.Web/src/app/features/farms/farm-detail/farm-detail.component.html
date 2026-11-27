@@ -123,6 +123,11 @@
               </dd>
             </div>
 
+            <!-- Location map (read-only) -->
+            <div *ngIf="farm()?.latitude != null && farm()?.longitude != null" class="md:col-span-2">
+              <app-farm-map [lat]="farm()!.latitude" [lon]="farm()!.longitude" [label]="farm()!.farmName" height="220px" />
+            </div>
+
             <!-- Land Area -->
             <div>
               <dt class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">

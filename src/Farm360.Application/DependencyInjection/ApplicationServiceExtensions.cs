@@ -66,6 +66,10 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Farm360.Application.Health.Tasks.IHealthTaskCompletionService, Farm360.Application.Health.Tasks.HealthTaskCompletionService>();
         services.AddScoped<Farm360.Application.InAppNotifications.IHealthReminderService, Farm360.Application.InAppNotifications.HealthReminderService>();
 
+        // ── Farm weather: forecast (IWeatherProvider, Infrastructure) → cattle heat-stress advice + daily bell alert ──
+        services.AddScoped<Farm360.Application.Weather.IFarmWeatherService, Farm360.Application.Weather.FarmWeatherService>();
+        services.AddScoped<Farm360.Application.Weather.IWeatherAlertService, Farm360.Application.Weather.WeatherAlertService>();
+
         // ── Users / team management: shared guards for member commands ───────
         services.AddScoped<Farm360.Application.Users.Commands.MemberCommandContext>();
         services.AddScoped<Farm360.Application.Users.Commands.InvitationSender>();

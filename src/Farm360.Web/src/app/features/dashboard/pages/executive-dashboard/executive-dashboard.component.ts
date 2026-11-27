@@ -1,6 +1,7 @@
 import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { HealthTasksCardComponent } from '../../../health/components/health-tasks-card/health-tasks-card.component';
+import { WeatherCardComponent } from '../../../weather/components/weather-card/weather-card.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -64,7 +65,7 @@ const KPI_HINT_CLASS: Record<KpiTone, string> = {
 @Component({
   selector: 'app-executive-dashboard',
   standalone: true,
-  imports: [HasPermissionDirective, CanPipe, MoneyPipe, HealthTasksCardComponent, 
+  imports: [HasPermissionDirective, CanPipe, MoneyPipe, HealthTasksCardComponent, WeatherCardComponent, 
     CommonModule,
     MatIconModule,
     MatButtonModule,

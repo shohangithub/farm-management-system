@@ -63,7 +63,7 @@
                [ngClass]="n.type === 'Warning' || n.type === 'Alert'
                  ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
                  : 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'">
-            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">{{ n.type === 'Warning' || n.type === 'Alert' ? 'event_busy' : 'medical_services' }}</mat-icon>
+            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">{{ n.category?.startsWith('weather') ? 'thermostat' : (n.type === 'Warning' || n.type === 'Alert' ? 'event_busy' : 'medical_services') }}</mat-icon>
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-sm leading-tight m-0" [ngClass]="n.isRead ? 'font-medium text-gray-700 dark:text-gray-300' : 'font-semibold text-gray-900 dark:text-white'">{{ center.title(n) }}</p>

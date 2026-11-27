@@ -13,6 +13,7 @@ import { BN_LIVESTOCK } from './livestock';
 import { BN_REPORTS } from './reports';
 import { BN_SETTINGS } from './settings';
 import { BN_INTELLIGENCE } from './intelligence';
+import { BN_WEATHER } from './weather';
 
 /**
  * The whole Bangla dictionary, loaded only when the interface is in Bangla.
@@ -34,4 +35,5 @@ export const BN: Record<string, string> = {
   ...BN_REPORTS,
   ...BN_SETTINGS,
   ...BN_INTELLIGENCE,
+  ...BN_WEATHER,
 };

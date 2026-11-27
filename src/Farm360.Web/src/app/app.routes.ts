@@ -33,6 +33,13 @@ export const routes: Routes = [
           import('./features/health/health.routes').then(m => m.HEALTH_ROUTES),
       },
       {
+        path: 'weather',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.Dashboard.View },
+        loadChildren: () =>
+          import('./features/weather/weather.routes').then(m => m.WEATHER_ROUTES),
+      },
+      {
         path: 'feeding',
         loadChildren: () =>
           import('./features/feeding/feeding.routes').then(m => m.FEEDING_ROUTES),

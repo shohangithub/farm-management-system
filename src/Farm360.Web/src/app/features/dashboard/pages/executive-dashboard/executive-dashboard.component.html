@@ -32,6 +32,9 @@
     <!-- Health tasks due (overdue / today / tomorrow), links to Today's tasks -->
     <app-health-tasks-card *hasPermission="'health.view'" class="block empty:hidden"></app-health-tasks-card>
 
+    <!-- Farm weather: now, cattle heat stress and the most urgent tips; links to the Weather page -->
+    <app-weather-card class="block empty:hidden"></app-weather-card>
+
     <!-- Loading skeleton -->
     <div *ngIf="isLoading()" class="space-y-8" aria-busy="true" [attr.aria-label]="'Loading dashboard' | t">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">

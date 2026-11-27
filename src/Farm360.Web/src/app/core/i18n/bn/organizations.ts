@@ -363,4 +363,9 @@ export const BN_ORGANIZATIONS: Record<string, string> = {
   'Failed to update pen. Please check the inputs.': 'পেন হালনাগাদ করা যায়নি। দেওয়া তথ্য যাচাই করুন।',
   'Pen created successfully!': 'পেন তৈরি হয়েছে!',
   'Failed to create pen. Please check the inputs.': 'পেন তৈরি করা যায়নি। দেওয়া তথ্য যাচাই করুন।',
+
+  // ── Farm form: location map ─────────────────────────────────────────────────────────────
+  'Click the map or drag the pin to set the location.': 'অবস্থান দিতে মানচিত্রে ক্লিক করুন বা পিন টেনে সরান।',
+  'Click the map or drag the pin to set the location. Press Enter to put the pin at the map centre.':
+    'অবস্থান দিতে মানচিত্রে ক্লিক করুন বা পিন টেনে সরান। মানচিত্রের মাঝখানে পিন বসাতে Enter চাপুন।',
 };
