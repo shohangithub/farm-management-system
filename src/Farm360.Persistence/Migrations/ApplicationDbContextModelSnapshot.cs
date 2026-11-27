@@ -4567,6 +4567,9 @@ namespace Farm360.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<decimal?>("ExpectedPricePerKgBdt")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("FatPercentageMax")
                         .HasColumnType("decimal(18,2)");
 

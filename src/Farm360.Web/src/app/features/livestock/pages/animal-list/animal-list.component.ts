@@ -22,7 +22,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { switchMap, catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { switchMap, catchError, debounceTime, distinctUntilChanged, tap, map } from 'rxjs/operators';
+import { SellOrKeepAdvice } from '../../models/sell-or-keep.models';
 import { of } from 'rxjs';
 import { BatchWeightDialogComponent, BatchWeightDialogData } from '../../components/dialogs/batch-weight-dialog.component';
 import { BatchVaccinationDialogComponent, BatchVaccinationDialogData } from '../../components/dialogs/batch-vaccination-dialog.component';
@@ -144,6 +145,38 @@ export class AnimalListComponent {
   );
 
   refresh(): void { this.refreshTrigger.update(v => v + 1); }
+
+  /**
+   * Sell-or-keep verdicts for the whole farm in one call, keyed by animal id, for the card badges.
+   * Re-fetched only when the farm changes or the list is refreshed (not on paging or search).
+   */
+  private readonly sellOrKeepKey = computed(() => `${this.params().farmId ?? ''}|${this.refreshTrigger()}`);
+  readonly sellOrKeep = toSignal(
+    toObservable(this.sellOrKeepKey).pipe(
+      distinctUntilChanged(),
+      switchMap(key => {
+        const farmId = key.split('|')[0];
+        if (!farmId) return of(new Map<string, SellOrKeepAdvice>());
+        return this.svc.getFarmSellOrKeep(farmId).pipe(
+          map(list => new Map(list.map(a => [a.animalId, a] as const))),
+          catchError(() => of(new Map<string, SellOrKeepAdvice>())));
+      })
+    ),
+    { initialValue: new Map<string, SellOrKeepAdvice>() }
+  );
+
+  /** Badge text and colour for a card; null when there is no advice (left the farm, or not loaded). */
+  sellOrKeepBadge(animalId: string): { text: string; params?: Record<string, string | number>; css: string; title: string } | null {
+    const a = this.sellOrKeep().get(animalId);
+    if (!a) return null;
+    const title = this.i18n.isBangla ? a.reasonBn : a.reasonEn;
+    switch (a.verdict) {
+      case 'SellNow': return { text: 'Sell now', css: 'bg-primary-50 text-primary-800 border-primary-200/70 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800/60', title };
+      case 'Keep': return { text: 'Keep ~{days} days', params: { days: a.bestDay ?? 0 }, css: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700', title };
+      case 'LosingMoney': return { text: 'Losing money', css: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-900/50', title };
+      default: return { text: 'Weigh first', css: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/50', title };
+    }
+  }
 
   /** "Fattening Shed B · B1" for a card; null when the animal has no shed or pen. */
   locationLabel(a: AnimalListItemDto): string | null {

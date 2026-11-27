@@ -56,7 +56,7 @@ public static class BreedEndpoints
     private static async Task<IResult> UpdateBreed(
         Guid id, [FromBody] UpdateBreedRequest request, ISender sender, CancellationToken cancellationToken)
     {
-        var command = new UpdateBreedCommand(id, request.Name, request.Description, request.Category, request.Origin, request.MainPurpose, request.BestFor, request.AdgPoorManagement, request.AdgAverageFarm, request.AdgGoodCommercialFarm, request.AdgIntensiveFattening, request.StandardAdgMin, request.StandardAdgMax, request.FcrMin, request.FcrMax, request.MilkYieldMinLiters, request.MilkYieldMaxLiters, request.FatPercentageMin, request.FatPercentageMax);
+        var command = new UpdateBreedCommand(id, request.Name, request.Description, request.Category, request.Origin, request.MainPurpose, request.BestFor, request.AdgPoorManagement, request.AdgAverageFarm, request.AdgGoodCommercialFarm, request.AdgIntensiveFattening, request.StandardAdgMin, request.StandardAdgMax, request.FcrMin, request.FcrMax, request.MilkYieldMinLiters, request.MilkYieldMaxLiters, request.FatPercentageMin, request.FatPercentageMax, request.ExpectedPricePerKgBdt);
         var result = await sender.Send(command, cancellationToken);
         return Results.Ok(result);
     }
@@ -109,4 +109,5 @@ public sealed record UpdateBreedRequest(
     decimal MilkYieldMinLiters,
     decimal MilkYieldMaxLiters,
     decimal FatPercentageMin,
-    decimal FatPercentageMax);
+    decimal FatPercentageMax,
+    decimal? ExpectedPricePerKgBdt = null);

@@ -138,6 +138,12 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
                   <dt class="text-[11px] text-gray-500 dark:text-gray-400" [title]="'Kg of feed needed for 1 kg of weight gain (FCR)' | t">{{ 'Feed per kg gain (FCR)' | t }}</dt>
                   <dd class="font-semibold text-gray-900 dark:text-white text-sm mt-0.5 tabular-nums">{{ breed.fcrMin }}–{{ breed.fcrMax }} {{ 'kg' | t }}</dd>
                 </div>
+                @if (breed.expectedPricePerKgBdt) {
+                  <div class="col-span-2">
+                    <dt class="text-[11px] text-gray-500 dark:text-gray-400">{{ 'Expected sale price' | t }}</dt>
+                    <dd class="font-semibold text-gray-900 dark:text-white text-sm mt-0.5 tabular-nums">৳ {{ breed.expectedPricePerKgBdt }}/{{ 'kg' | t }}</dd>
+                  </div>
+                }
               </dl>
             </div>
           </div>

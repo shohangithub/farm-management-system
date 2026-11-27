@@ -54,6 +54,7 @@ import { UploadPhotoDialogComponent } from '../../dialogs/upload-photo-dialog/up
 import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/record-sale-dialog.component';
 import { AnimalIntelligenceDialogComponent } from '../../dialogs/animal-intelligence-dialog/animal-intelligence-dialog.component';
 import { AnimalEditDialogComponent } from '../../components/animal-edit-dialog/animal-edit-dialog';
+import { SellOrKeepCardComponent } from '../../components/sell-or-keep-card/sell-or-keep-card.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap, catchError, map, forkJoin, tap, filter } from 'rxjs';
 import { of } from 'rxjs';
@@ -85,7 +86,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule, MatTooltipModule, HasPermissionDirective,
     NgxEchartsModule,
-    CattleProfitProjectionComponent, TranslatePipe
+    CattleProfitProjectionComponent, TranslatePipe, SellOrKeepCardComponent
   ],
   templateUrl: './animal-detail.component.html',
   styleUrl: './animal-detail.component.scss'
@@ -346,6 +347,8 @@ export class AnimalDetailComponent {
    * actions that record new facts are hidden and profit is final, not projected.
    */
   readonly isOnFarm = computed(() => isOnFarm(this.animal()?.status));
+  /** Re-fetches the sell-or-keep advice whenever the page reloads the animal. */
+  readonly sellOrKeepRefresh = computed(() => this.refreshTrigger());
   readonly isExited = computed(() => !!this.animal() && !this.isOnFarm());
 
   /** Exit date: saleDate (Sold) or deathDate (Dead); backend also supplies exitDate. */
@@ -809,7 +812,7 @@ export class AnimalDetailComponent {
       maxWidth: '1200px',
       autoFocus: false,
       panelClass: 'bg-transparent',
-      data: { animalId: a.id, tagId: a.tagId }
+      data: { animalId: a.id, tagId: a.tagId, farmId: a.farmId }
     });
   }
 

@@ -21,6 +21,7 @@ import {
   BcsRecordDto,
   RecordMatingRequest
 } from '../models/animal.models';
+import { SellOrKeepAdvice } from '../models/sell-or-keep.models';
 
 /**
  * Livestock API service.
@@ -134,5 +135,19 @@ export class AnimalService {
 
   delete(id: string): Observable<void> {
     return this.http.delete(`${this.base}/${id}`).pipe(map(() => undefined));
+  }
+
+  // ── Sell or keep? ────────────────────────────────────────────────────────
+
+  /** Sell-or-keep advice for one animal on the farm, with its day-by-day profit projection. */
+  getSellOrKeep(animalId: string): Observable<SellOrKeepAdvice> {
+    return this.http.get<SellOrKeepAdvice>(`${this.base}/${animalId}/sell-or-keep`);
+  }
+
+  /** Sell-or-keep advice for every animal on a farm (no projections) — one call for the list badges. */
+  getFarmSellOrKeep(farmId: string, batchId?: string | null): Observable<SellOrKeepAdvice[]> {
+    let params = new HttpParams();
+    if (batchId) params = params.set('batchId', batchId);
+    return this.http.get<SellOrKeepAdvice[]>(`/api/v1/livestock/farms/${farmId}/sell-or-keep`, { params });
   }
 }

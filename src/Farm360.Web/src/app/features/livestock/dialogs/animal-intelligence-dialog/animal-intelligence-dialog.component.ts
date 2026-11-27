@@ -4,11 +4,13 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/materia
 import { MatIconModule } from '@angular/material/icon';
 import { IntelligencePanelComponent } from '../../components/intelligence-panel/intelligence-panel.component';
 import { WhatIfSimulatorComponent } from '../../components/what-if-simulator/what-if-simulator.component';
+import { SellOrKeepCardComponent } from '../../components/sell-or-keep-card/sell-or-keep-card.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface AnimalIntelligenceDialogData {
   animalId: string;
   tagId: string;
+  farmId?: string | null;
 }
 
 @Component({
@@ -21,6 +23,7 @@ export interface AnimalIntelligenceDialogData {
     MatIconModule,
     IntelligencePanelComponent,
     WhatIfSimulatorComponent,
+    SellOrKeepCardComponent,
     TranslatePipe
   ],
   template: `
@@ -30,7 +33,7 @@ export interface AnimalIntelligenceDialogData {
         <div>
           <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 m-0">
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-600 dark:text-primary-400">event_available</mat-icon>
-            {{ 'When to sell?' | t }}
+            {{ 'Sell or keep?' | t }}
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">{{ 'Expected weight and profit for {tag}' | t: { tag: data.tagId } }}</p>
         </div>
@@ -41,6 +44,9 @@ export interface AnimalIntelligenceDialogData {
 
       <!-- Scrollable Body -->
       <div class="p-4 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 bg-gray-50 dark:bg-gray-900/50">
+        <!-- The verdict first; the simulator below lets the farmer try other prices and dates -->
+        <app-sell-or-keep-card [animalId]="data.animalId" [farmId]="data.farmId ?? null" [showWhatIf]="false"></app-sell-or-keep-card>
+
         <!-- Intelligence Panel -->
         <app-intelligence-panel [animalId]="data.animalId"></app-intelligence-panel>
         

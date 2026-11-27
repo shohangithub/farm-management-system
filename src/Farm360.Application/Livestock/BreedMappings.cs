@@ -25,5 +25,6 @@ public static class BreedMappings
             MilkYieldMinLiters: breed.MilkYieldMinLiters,
             MilkYieldMaxLiters: breed.MilkYieldMaxLiters,
             FatPercentageMin: breed.FatPercentageMin,
-            FatPercentageMax: breed.FatPercentageMax);
+            FatPercentageMax: breed.FatPercentageMax,
+            ExpectedPricePerKgBdt: breed.ExpectedPricePerKgBdt);
 }

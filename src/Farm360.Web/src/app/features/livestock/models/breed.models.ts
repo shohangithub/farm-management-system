@@ -18,6 +18,8 @@ export interface BreedDto {
   milkYieldMaxLiters: number;
   fatPercentageMin: number;
   fatPercentageMax: number;
+  /** Optional price per kg live weight this breed is expected to fetch (BDT); used by the sell-or-keep advice. */
+  expectedPricePerKgBdt?: number | null;
 }
 
 export interface CreateBreedRequest {
@@ -39,4 +41,6 @@ export interface CreateBreedRequest {
   milkYieldMaxLiters: number;
   fatPercentageMin: number;
   fatPercentageMax: number;
+  /** Optional price per kg live weight this breed is expected to fetch (BDT); used by the sell-or-keep advice. */
+  expectedPricePerKgBdt?: number | null;
 }

@@ -1,3 +1,4 @@
+using Farm360.Application.Intelligence.SellOrKeep;
 using Farm360.Application.Livestock.Commands;
 using Farm360.Application.Livestock.DTOs;
 using Farm360.Application.Livestock.Queries;
@@ -200,7 +201,34 @@ public static class LivestockEndpoints
             .Produces(422)
             .RequireAuthorization("Permission:animals.edit");
 
+        // ── Sell or keep? ──
+        group.MapGet("/animals/{id:guid}/sell-or-keep", GetAnimalSellOrKeep)
+            .WithName("GetAnimalSellOrKeep")
+            .WithSummary("Sell-or-keep advice for one animal on the farm, with its day-by-day profit projection")
+            .Produces<SellOrKeepAdvice>()
+            .Produces(404)
+            .RequireAuthorization("Permission:animals.view");
+
+        group.MapGet("/farms/{farmId:guid}/sell-or-keep", GetFarmSellOrKeep)
+            .WithName("GetFarmSellOrKeep")
+            .WithSummary("Sell-or-keep advice for every animal on a farm (optionally one batch)")
+            .Produces<IReadOnlyList<SellOrKeepAdvice>>()
+            .RequireAuthorization("Permission:animals.view");
+
         return group;
+    }
+
+    private static async Task<IResult> GetAnimalSellOrKeep(Guid id, ISender sender, CancellationToken cancellationToken)
+    {
+        var advice = await sender.Send(new GetAnimalSellOrKeepQuery(id), cancellationToken);
+        return advice is null ? Results.NotFound() : Results.Ok(advice);
+    }
+
+    private static async Task<IResult> GetFarmSellOrKeep(
+        Guid farmId, ISender sender, [FromQuery] Guid? batchId = null, CancellationToken cancellationToken = default)
+    {
+        var advice = await sender.Send(new GetFarmSellOrKeepQuery(farmId, batchId), cancellationToken);
+        return Results.Ok(advice);
     }
 
     // ══════════════════════════════════════════════════════════════════════════

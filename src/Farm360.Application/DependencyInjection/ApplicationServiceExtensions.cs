@@ -47,6 +47,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Farm360.Application.Intelligence.Interfaces.ISimulationEngine, Farm360.Application.Intelligence.Services.SimulationEngine>();
         services.AddScoped<Farm360.Application.Intelligence.Services.IProjectionDefaultsResolver, Farm360.Application.Intelligence.Services.ProjectionDefaultsResolver>();
         services.AddScoped<Farm360.Application.Intelligence.Services.IAnimalValuationService, Farm360.Application.Intelligence.Services.AnimalValuationService>();
+        services.AddScoped<Farm360.Application.Intelligence.SellOrKeep.IAnimalSellOrKeepAdvisor, Farm360.Application.Intelligence.SellOrKeep.AnimalSellOrKeepAdvisor>();
 
         // ── Finance: labour and overhead allocation (docs/32 GAP-2) ──────────
         services.AddScoped<Farm360.Application.Finance.Services.IOverheadAllocationService, Farm360.Application.Finance.Services.OverheadAllocationService>();

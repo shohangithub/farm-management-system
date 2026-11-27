@@ -29,7 +29,8 @@ public sealed record CreateBreedCommand(
     decimal MilkYieldMinLiters,
     decimal MilkYieldMaxLiters,
     decimal FatPercentageMin,
-    decimal FatPercentageMax) : IRequest<BreedDto>;
+    decimal FatPercentageMax,
+    decimal? ExpectedPricePerKgBdt = null) : IRequest<BreedDto>;
 
 public sealed class CreateBreedCommandValidator : AbstractValidator<CreateBreedCommand>
 {
@@ -39,6 +40,7 @@ public sealed class CreateBreedCommandValidator : AbstractValidator<CreateBreedC
         RuleFor(x => x.Description).MaximumLength(500);
         RuleFor(x => x.Category).NotEmpty().MaximumLength(50);
         RuleFor(x => x.MainPurpose).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.ExpectedPricePerKgBdt).InclusiveBetween(0m, 100_000m).When(x => x.ExpectedPricePerKgBdt.HasValue);
     }
 }
 
@@ -74,6 +76,7 @@ public sealed class CreateBreedCommandHandler(
             request.FatPercentageMin,
             request.FatPercentageMax,
             request.BestFor ?? "");
+        breed.SetExpectedPricePerKg(request.ExpectedPricePerKgBdt);
 
         repository.Add(breed);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -101,7 +104,8 @@ public sealed record UpdateBreedCommand(
     decimal MilkYieldMinLiters,
     decimal MilkYieldMaxLiters,
     decimal FatPercentageMin,
-    decimal FatPercentageMax) : IRequest<BreedDto>;
+    decimal FatPercentageMax,
+    decimal? ExpectedPricePerKgBdt = null) : IRequest<BreedDto>;
 
 public sealed class UpdateBreedCommandValidator : AbstractValidator<UpdateBreedCommand>
 {
@@ -111,6 +115,7 @@ public sealed class UpdateBreedCommandValidator : AbstractValidator<UpdateBreedC
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Category).NotEmpty().MaximumLength(50);
         RuleFor(x => x.MainPurpose).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.ExpectedPricePerKgBdt).InclusiveBetween(0m, 100_000m).When(x => x.ExpectedPricePerKgBdt.HasValue);
     }
 }
 
@@ -127,6 +132,7 @@ public sealed class UpdateBreedCommandHandler(
         breed.UpdateGrowthMetrics(request.AdgPoorManagement, request.AdgAverageFarm, request.AdgGoodCommercialFarm, request.AdgIntensiveFattening, request.StandardAdgMin, request.StandardAdgMax);
         breed.UpdateEfficiencyMetrics(request.FcrMin, request.FcrMax);
         breed.UpdateDairyMetrics(request.MilkYieldMinLiters, request.MilkYieldMaxLiters, request.FatPercentageMin, request.FatPercentageMax);
+        breed.SetExpectedPricePerKg(request.ExpectedPricePerKgBdt);
 
         repository.Update(breed);
         await unitOfWork.SaveChangesAsync(cancellationToken);

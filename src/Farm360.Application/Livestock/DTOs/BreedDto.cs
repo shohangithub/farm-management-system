@@ -22,4 +22,5 @@ public sealed record BreedDto(
     decimal MilkYieldMinLiters,
     decimal MilkYieldMaxLiters,
     decimal FatPercentageMin,
-    decimal FatPercentageMax);
+    decimal FatPercentageMax,
+    decimal? ExpectedPricePerKgBdt = null);

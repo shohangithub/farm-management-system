@@ -52,5 +52,8 @@ public sealed class BreedConfiguration : IEntityTypeConfiguration<Breed>
         builder.Property(b => b.MilkYieldMaxLiters).HasColumnType("decimal(18,2)");
         builder.Property(b => b.FatPercentageMin).HasColumnType("decimal(18,2)");
         builder.Property(b => b.FatPercentageMax).HasColumnType("decimal(18,2)");
+
+        // Market
+        builder.Property(b => b.ExpectedPricePerKgBdt).HasColumnType("decimal(18,2)");
     }
 }

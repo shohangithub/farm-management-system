@@ -189,7 +189,7 @@
       <!-- Sale planner: projects weight and profit for a future sale date -->
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onOpenIntelligence()" class="!rounded-xl">
         <mat-icon class="!text-gray-500">event_available</mat-icon>
-        <span class="text-sm">{{ 'When to sell?' | t }}</span>
+        <span class="text-sm">{{ 'Sell or keep? Try other prices' | t }}</span>
       </button>
       <ng-container *hasPermission="'animals.edit'">
       <mat-divider class="!my-1"></mat-divider>
@@ -480,6 +480,10 @@
     </div>
 
   </div>
+
+  <!-- Sell or keep? — verdict, profit curve and key numbers (same service as the report) -->
+  <app-sell-or-keep-card *ngIf="isOnFarm()" [animalId]="animal()!.id" [farmId]="animal()!.farmId" [refresh]="sellOrKeepRefresh()"
+    (whatIf)="onOpenIntelligence()"></app-sell-or-keep-card>
 
   <!-- Tabbed Details -->
   <div

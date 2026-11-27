@@ -138,6 +138,13 @@ import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
               </div>
             </div>
+
+            <div class="space-y-1.5 max-w-sm">
+              <label for="breedExpectedPrice" class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Expected sale price (৳ per kg live weight)' | t }}</label>
+              <input id="breedExpectedPrice" type="number" min="0" step="1" formControlName="expectedPricePerKgBdt" [placeholder]="'Optional' | t"
+                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'Good breeds often sell above meat value. Used by "Sell or keep?" when you have fewer than 2 recent sales of this breed.' | t }}</p>
+            </div>
           </div>
         </div>
 
@@ -202,7 +209,8 @@ export class BreedSetupDialogComponent implements OnInit {
     milkYieldMinLiters: [this.data?.breed?.milkYieldMinLiters ?? 0],
     milkYieldMaxLiters: [this.data?.breed?.milkYieldMaxLiters ?? 0],
     fatPercentageMin: [this.data?.breed?.fatPercentageMin ?? 0],
-    fatPercentageMax: [this.data?.breed?.fatPercentageMax ?? 0]
+    fatPercentageMax: [this.data?.breed?.fatPercentageMax ?? 0],
+    expectedPricePerKgBdt: [this.data?.breed?.expectedPricePerKgBdt ?? null, Validators.min(0)]
   });
 
   private readonly dialog = inject(MatDialog);

@@ -84,6 +84,15 @@ public sealed class Breed : AuditableEntity, IAggregateRoot
     public decimal FatPercentageMin { get; private set; }
     public decimal FatPercentageMax { get; private set; }
 
+    // ── Market ─────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Optional price per kg live weight the farm expects this breed to fetch (BDT). Good breeds
+    /// often sell above meat value; when set, the sell-or-keep advice prices the breed with it
+    /// (the farm's own recent sales of the breed still take priority). Null = not set.
+    /// </summary>
+    public decimal? ExpectedPricePerKgBdt { get; private set; }
+
     // ── Domain Methods ────────────────────────────────────────────────────────
     
     public void UpdateDetails(
@@ -113,6 +122,12 @@ public sealed class Breed : AuditableEntity, IAggregateRoot
     {
         FcrMin = fcrMin;
         FcrMax = fcrMax;
+    }
+
+    /// <summary>Sets or clears (null or not positive) the expected live-weight price per kg.</summary>
+    public void SetExpectedPricePerKg(decimal? pricePerKgBdt)
+    {
+        ExpectedPricePerKgBdt = pricePerKgBdt is > 0m ? decimal.Round(pricePerKgBdt.Value, 2) : null;
     }
 
     public void UpdateDairyMetrics(decimal yieldMin, decimal yieldMax, decimal fatMin, decimal fatMax)

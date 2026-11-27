@@ -245,6 +245,9 @@
             </span>
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ animal.breedName }} · {{ speciesLabel(animal.species) }}</p>
+          <span *ngIf="sellOrKeepBadge(animal.id) as b" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-full border" [ngClass]="b.css" [title]="b.title">
+            <mat-icon class="!text-[13px] !w-[13px] !h-[13px]" aria-hidden="true">event_available</mat-icon>{{ b.text | t: b.params }}
+          </span>
           <p *ngIf="locationLabel(animal) as loc" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1 truncate">
             <mat-icon class="!text-[14px] !w-[14px] !h-[14px] shrink-0 text-gray-400">place</mat-icon>
             <span class="truncate">{{ loc }}</span>
