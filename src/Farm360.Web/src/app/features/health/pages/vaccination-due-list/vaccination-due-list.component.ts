@@ -139,6 +139,15 @@ export class VaccinationDueListComponent {
     return '';
   }
 
+  /** "Dose: 2 tablet for 290 kg" for weight-based doses, "Dose: 5 ml" for fixed ones. */
+  doseText(ev: VaccinationEventDto): string | null {
+    if (ev.kind === 'CareTask' || ev.dosageQuantity == null) return null;
+    const unit = ev.doseUnit ? this.i18n.t(ev.doseUnit) : '';
+    return ev.weightBased && ev.doseWeightKg
+      ? this.i18n.t('Dose: {dose} {unit} for {kg} kg', { dose: ev.dosageQuantity, unit, kg: ev.doseWeightKg })
+      : this.i18n.t('Dose: {dose} {unit}', { dose: ev.dosageQuantity, unit });
+  }
+
   administer(id: string): void {
     const todayStr = toLocalIsoDate();
     this.healthService.administerVaccination(id, todayStr, 'Administered routinely')

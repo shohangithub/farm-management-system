@@ -11,7 +11,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { NotificationCenterService, StoredNotification } from '../../services/notification-center.service';
 import { combineLatest, map } from 'rxjs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { WorkingContextService } from '../../services/working-context.service';
@@ -83,6 +84,11 @@ export class HeaderComponent implements OnInit {
   readonly i18n = inject(I18nService);
   private dialog = inject(MatDialog);
   readonly signalRService = inject(IntelligenceSignalRService);
+  /** Stored notifications (daily health reminders), merged with the live insights in the bell. */
+  readonly center = inject(NotificationCenterService);
+  private readonly router = inject(Router);
+  readonly totalUnread = computed(() => this.center.unreadCount() + this.signalRService.unreadCount());
+  readonly bellEmpty = computed(() => this.center.items().length === 0 && this.signalRService.notifications().length === 0);
   private readonly context = inject(WorkingContextService);
   readonly currentOrg$ = this.context.currentOrg$;
   /** True when the user has more than one organisation, branch or farm to switch between. */
@@ -111,6 +117,20 @@ export class HeaderComponent implements OnInit {
   }
 
   onNotificationsOpen(): void {
+    // Live insights are session-only and count as seen once the bell is opened; stored reminders
+    // stay unread until opened or "Mark all as read".
+    this.signalRService.markAllAsRead();
+    if (!this.center.loaded()) this.center.load();
+  }
+
+  openStored(notification: StoredNotification): void {
+    this.center.markRead(notification);
+    if (notification.link) this.router.navigateByUrl(notification.link);
+  }
+
+  markAllRead(event: Event): void {
+    event.stopPropagation();
+    this.center.markAllRead();
     this.signalRService.markAllAsRead();
   }
 }

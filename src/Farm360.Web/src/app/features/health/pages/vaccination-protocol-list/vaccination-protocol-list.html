@@ -2,6 +2,10 @@
   [title]="'Vaccination Protocols' | t"
   [description]="'Ready-made vaccine schedules you can apply to many animals at once.' | t">
   <div actions class="flex flex-wrap items-center gap-2">
+    <button type="button" *hasPermission="'health.create'" (click)="toggleTemplatePanel()"
+      class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">auto_awesome</mat-icon> {{ 'Ready-made programme' | t }}
+    </button>
     <button type="button" *hasPermission="'health.create'" (click)="openCreateDialog()"
       class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Create Protocol' | t }}
@@ -10,6 +14,38 @@
 </app-page-header>
 
 <app-health-nav></app-health-nav>
+
+<!-- Ready-made template from the vet's slides -->
+@if (templatePanelOpen()) {
+  <section class="mb-4 p-4 rounded-2xl border border-primary-200 dark:border-primary-800/60 bg-primary-50/60 dark:bg-primary-500/5 space-y-3">
+    <div class="flex items-start gap-3">
+      <mat-icon class="text-primary-600 dark:text-primary-300 shrink-0">auto_awesome</mat-icon>
+      <div class="min-w-0">
+        <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ "Add the 'Cattle bought at market – 108 days' programme" | t }}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-0">
+          {{ "The vet's programme from the purchase day: potash wash and rest, Fast Vet by weight, dewormer, zinc + liver tonic, daily checks, FMD, Ivermectin, LSD, Anthrax, a day-90 sell-or-keep decision, then dewormer and Ivermectin again." | t }}
+        </p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-0">{{ 'Medicines are not linked to stock: link your stock item in each step after adding.' | t }}</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-end gap-3">
+      <label class="space-y-1">
+        <span class="block text-[11px] font-semibold text-gray-500">{{ 'Repeat dewormer and Ivermectin every (days)' | t }}</span>
+        <input type="number" min="1" max="365" [ngModel]="templateRepeatDays()" (ngModelChange)="templateRepeatDays.set($event)"
+          class="block w-36 h-11 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
+      </label>
+      <label class="flex items-center gap-2 min-h-[44px] cursor-pointer">
+        <input type="checkbox" [ngModel]="templateAutoStart()" (ngModelChange)="templateAutoStart.set($event)" class="w-5 h-5 text-primary-600 rounded border-gray-300">
+        <span class="text-sm text-gray-700 dark:text-gray-200">{{ 'Start automatically for new purchased animals' | t }}</span>
+      </label>
+      <button type="button" (click)="addTemplate()" [disabled]="addingTemplate()"
+        class="h-11 px-5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold disabled:opacity-50">
+        {{ (addingTemplate() ? 'Adding...' : 'Add programme') | t }}
+      </button>
+      <button type="button" (click)="toggleTemplatePanel()" class="h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200">{{ 'Cancel' | t }}</button>
+    </div>
+  </section>
+}
 
 <div class="relative min-h-[200px]">
   <app-loading *ngIf="isLoading()" [overlay]="true"></app-loading>
@@ -40,6 +76,17 @@
           <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             {{ speciesLabel(element.targetSpecies) | t }}<span *ngIf="element.isDeworming"> · {{ 'Deworming' | t }}</span>
           </p>
+          <div class="mt-1.5 flex flex-wrap gap-1">
+            <span *ngIf="element.autoStartForPurchased" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+              <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">bolt</mat-icon>{{ 'Starts for purchased animals' | t }}
+            </span>
+            <span *ngIf="repeatChip(element) as days" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">autorenew</mat-icon>{{ 'repeats every {days} days' | t: { days: days } }}
+            </span>
+            <span *ngIf="unlinkedCount(element) as n" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+              <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">link_off</mat-icon>{{ '{count} medicines to link to stock' | t: { count: n } }}
+            </span>
+          </div>
         </div>
         <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
               [ngClass]="element.isActive
@@ -50,8 +97,11 @@
       </div>
 
       <dl class="px-4 pb-4 text-sm">
-        <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ 'Doses' | t }}</dt>
-        <dd class="font-semibold text-gray-900 dark:text-white">{{ '{count} doses' | t: { count: element.steps ? element.steps.length : 0 } }}</dd>
+        <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ 'Tasks' | t }}</dt>
+        <dd class="font-semibold text-gray-900 dark:text-white">
+          {{ '{count} doses' | t: { count: element.steps ? element.steps.length : 0 } }}
+          <span *ngIf="element.spanDays" class="font-normal text-gray-500 dark:text-gray-400"> · {{ 'over {days} days' | t: { days: element.spanDays } }}</span>
+        </dd>
       </dl>
 
       <div class="mt-auto px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2">

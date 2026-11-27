@@ -22,8 +22,20 @@ public static class HealthMappingExtensions
                 s.VaccineName,
                 s.DosageInstruction,
                 s.InventoryItemId,
-                s.DosageQuantity
-            )).ToList()
+                s.DosageQuantity,
+                s.Kind,
+                s.RepeatEveryDays,
+                s.DoseAmount,
+                s.DosePerKg,
+                s.DoseRounding,
+                s.DoseMin,
+                s.DoseMax,
+                s.DoseUnit,
+                s.DoseUnitId,
+                s.ActionLink
+            )).ToList(),
+            protocol.AutoStartForPurchased,
+            protocol.SpanDays
         );
     }
 
@@ -38,7 +50,17 @@ public static class HealthMappingExtensions
             @event.AdministeredDate,
             @event.Status,
             @event.Notes,
-            animalTag
+            animalTag,
+            @event.Kind,
+            @event.StepName,
+            @event.IsCareTask ? null : @event.DosageQuantity,
+            @event.DoseUnit,
+            @event.DoseRule is not null,
+            @event.DoseWeightKg,
+            @event.DoseWeightEstimated,
+            @event.RepeatEveryDays,
+            @event.SkippedDate,
+            @event.SkipReason
         );
     }
 

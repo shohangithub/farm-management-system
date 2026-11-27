@@ -51,6 +51,46 @@ public sealed class Notification : AuditableEntity
     public bool IsRead { get; private set; }
     public DateTime? ReadAt { get; private set; }
 
+    /// <summary>The farm it is about (health reminders); null for tenant-wide notices.</summary>
+    public Guid? FarmId { get; private set; }
+
+    /// <summary>What produced it, e.g. "health.today", "health.tomorrow", "health.overdue".</summary>
+    public string? Category { get; private set; }
+
+    /// <summary>The in-app page it opens, e.g. "/health/today?focus=overdue".</summary>
+    public string? Link { get; private set; }
+
+    /// <summary>
+    /// Keeps a reminder from being created twice for the same user (one per farm, kind and day). Null
+    /// for one-off notifications.
+    /// </summary>
+    public string? DedupKey { get; private set; }
+
+    /// <summary>
+    /// A translatable reminder: <paramref name="titleKey"/> and <paramref name="bodyKey"/> are the English
+    /// texts the web dictionary translates, with <c>{name}</c> placeholders filled from
+    /// <paramref name="paramsJson"/> (stored in <see cref="Data"/>), so each user reads it in their language.
+    /// </summary>
+    public static Notification CreateReminder(
+        Guid tenantId,
+        Guid userId,
+        Guid? farmId,
+        NotificationType type,
+        string category,
+        string titleKey,
+        string bodyKey,
+        string? paramsJson,
+        string? link,
+        string? dedupKey)
+    {
+        var notification = Create(tenantId, userId, type, titleKey, bodyKey, paramsJson);
+        notification.FarmId = farmId;
+        notification.Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim();
+        notification.Link = string.IsNullOrWhiteSpace(link) ? null : link.Trim();
+        notification.DedupKey = string.IsNullOrWhiteSpace(dedupKey) ? null : dedupKey.Trim();
+        return notification;
+    }
+
     // ── Factory ──────────────────────────────────────────────────────────────
     public static Notification Create(
         Guid tenantId,

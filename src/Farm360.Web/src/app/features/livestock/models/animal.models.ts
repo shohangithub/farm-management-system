@@ -193,6 +193,8 @@ export interface RegisterAnimalRequest {
   acquisitionDate: string;
   acquisitionPriceBdt?: number;
   notes?: string;
+  /** Opt out of the health programmes that start automatically for purchased animals. */
+  skipHealthProgramme?: boolean;
   shedId?: string;
   penId?: string;
 }

@@ -10,7 +10,9 @@ public sealed record VaccinationProtocolDto(
     string? Description,
     bool IsActive,
     bool IsDeworming,
-    IReadOnlyList<VaccinationProtocolStepDto> Steps
+    IReadOnlyList<VaccinationProtocolStepDto> Steps,
+    bool AutoStartForPurchased = false,
+    int SpanDays = 0
 );
 
 public sealed record VaccinationProtocolStepDto(
@@ -21,7 +23,17 @@ public sealed record VaccinationProtocolStepDto(
     string VaccineName,
     string DosageInstruction,
     Guid? InventoryItemId,
-    decimal? DosageQuantity
+    decimal? DosageQuantity,
+    HealthTaskKind Kind = HealthTaskKind.Medicine,
+    int? RepeatEveryDays = null,
+    decimal? DoseAmount = null,
+    decimal? DosePerKg = null,
+    DoseRounding DoseRounding = DoseRounding.None,
+    decimal? DoseMin = null,
+    decimal? DoseMax = null,
+    string? DoseUnit = null,
+    Guid? DoseUnitId = null,
+    string? ActionLink = null
 );
 
 public sealed record VaccinationEventDto(
@@ -34,7 +46,17 @@ public sealed record VaccinationEventDto(
     VaccinationStatus Status,
     string? Notes,
     // The animal's ear-tag number; null when the animal is unknown.
-    string? AnimalTag = null
+    string? AnimalTag = null,
+    HealthTaskKind Kind = HealthTaskKind.Medicine,
+    string? StepName = null,
+    decimal? DosageQuantity = null,
+    string? DoseUnit = null,
+    bool WeightBased = false,
+    decimal? DoseWeightKg = null,
+    bool DoseWeightEstimated = false,
+    int? RepeatEveryDays = null,
+    DateOnly? SkippedDate = null,
+    string? SkipReason = null
 );
 
 public sealed record DewormingCalendarEventDto(

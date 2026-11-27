@@ -18,7 +18,9 @@ import {
   MedicalTreatmentParams,
   DiseaseIncidentParams,
   MortalityRecordParams,
-  VetVisitParams
+  VetVisitParams,
+  AutoStartProgrammeDto,
+  HealthTasksDto
 } from '../models/health.models';
 
 @Injectable({
@@ -62,6 +64,33 @@ export class HealthService {
 
   assignProtocolToAnimals(data: any): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/protocols/assign`, data);
+  }
+
+  /** Adds the vet's "Cattle bought at market – 108 days" programme to this organisation's protocols. */
+  addMarketCattleProgramme(repeatEveryDays = 90, autoStartForPurchased = true): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${this.apiUrl}/protocols/templates/market-cattle-108`, { repeatEveryDays, autoStartForPurchased });
+  }
+
+  /** Programmes that will start by themselves for a newly purchased animal of this species. */
+  getAutoStartProgrammes(species: string): Observable<AutoStartProgrammeDto[]> {
+    return this.http.get<AutoStartProgrammeDto[]>(`${this.apiUrl}/protocols/auto-start`, { params: new HttpParams().set('species', species) });
+  }
+
+  // --- Today's tasks ---
+  getHealthTasks(farmId: string): Observable<HealthTasksDto> {
+    return this.http.get<HealthTasksDto>(`${this.apiUrl}/tasks`, { params: new HttpParams().set('farmId', farmId) });
+  }
+
+  completeHealthTasks(eventIds: string[], date: string, notes?: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/tasks/complete`, { eventIds, date, notes });
+  }
+
+  skipHealthTask(id: string, date: string, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/tasks/${id}/skip`, { date, reason });
+  }
+
+  rescheduleHealthTask(id: string, newDate: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/tasks/${id}/reschedule`, { newDate });
   }
 
   // --- Vaccinations ---

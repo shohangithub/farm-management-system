@@ -9,6 +9,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { FormsModule } from '@angular/forms';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
@@ -32,6 +35,7 @@ import { SPECIES_LABELS } from '../../../livestock/models/animal.models';
   standalone: true,
   imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, 
     CommonModule,
+    FormsModule,
     RouterModule,
     MatButtonModule,
     MatIconModule,
@@ -51,6 +55,48 @@ export class VaccinationProtocolListComponent {
   private healthService = inject(HealthService);
   private contextService = inject(WorkingContextService);
   private dialog = inject(MatDialog);
+  private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
+
+  // Ready-made "Cattle bought at market – 108 days" programme
+  readonly templatePanelOpen = signal(false);
+  readonly templateRepeatDays = signal(90);
+  readonly templateAutoStart = signal(true);
+  readonly addingTemplate = signal(false);
+
+  toggleTemplatePanel(): void {
+    this.templatePanelOpen.update(v => !v);
+  }
+
+  addTemplate(): void {
+    const days = Number(this.templateRepeatDays());
+    if (!(days >= 1 && days <= 365)) {
+      this.notify.error(this.i18n.t('The repeat must be between 1 and 365 days.'));
+      return;
+    }
+    this.addingTemplate.set(true);
+    this.healthService.addMarketCattleProgramme(days, this.templateAutoStart()).subscribe({
+      next: () => {
+        this.addingTemplate.set(false);
+        this.templatePanelOpen.set(false);
+        this.notify.success(this.i18n.t('Programme added. Link your stock items in its medicine steps.'));
+        this.loadProtocols();
+      },
+      error: err => {
+        this.addingTemplate.set(false);
+        this.notify.error(parseApiError(err, 'Could not add the programme.'));
+      }
+    });
+  }
+
+  /** The repeat of a protocol's repeating steps (the first one), for the chip. */
+  repeatChip(protocol: VaccinationProtocolDto): number | null {
+    return protocol.steps?.find(s => s.repeatEveryDays)?.repeatEveryDays ?? null;
+  }
+
+  unlinkedCount(protocol: VaccinationProtocolDto): number {
+    return (protocol.steps ?? []).filter(s => (s.kind ?? 'Medicine') === 'Medicine' && !s.inventoryItemId).length;
+  }
 
   displayedColumns: string[] = ['title', 'targetSpecies', 'steps', 'status', 'actions'];
   

@@ -33,6 +33,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 export class HealthNavComponent {
   readonly links = [
     { path: 'dashboard', label: 'Overview', icon: 'space_dashboard' },
+    { path: 'today', label: "Today's tasks", icon: 'task_alt' },
     { path: 'vaccinations', label: 'Vaccinations', icon: 'vaccines' },
     { path: 'treatments', label: 'Treatments', icon: 'medical_services' },
     { path: 'incidents', label: 'Incidents', icon: 'coronavirus' },

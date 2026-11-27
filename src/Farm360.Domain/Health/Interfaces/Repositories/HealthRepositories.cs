@@ -8,6 +8,9 @@ public interface IVaccinationRepository
     // Protocols
     Task<VaccinationProtocol?> GetProtocolByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<VaccinationProtocol>> GetProtocolsBySpeciesAsync(AnimalSpecies species, CancellationToken ct = default);
+
+    /// <summary>Active protocols marked "start automatically for new purchased animals" for this species.</summary>
+    Task<IReadOnlyList<VaccinationProtocol>> GetAutoStartProtocolsAsync(AnimalSpecies species, CancellationToken ct = default);
     Task<(IReadOnlyList<VaccinationProtocol> Items, int TotalCount)> GetPagedProtocolsAsync(
         int pageNumber,
         int pageSize,

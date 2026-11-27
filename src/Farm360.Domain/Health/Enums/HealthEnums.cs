@@ -9,6 +9,26 @@ public enum VaccinationStatus
     Completed = 2,
     Overdue   = 3,
     Cancelled = 4,
+    /// <summary>Deliberately not given (with a reason); a repeating task schedules its next one from the skip date.</summary>
+    Skipped   = 5,
+}
+
+/// <summary>
+/// What a protocol step / scheduled health task is: a medicine or vaccine (optionally taken from
+/// stock) or a care task with no medicine (potash leg wash, daily health check) that is just marked done.
+/// </summary>
+public enum HealthTaskKind
+{
+    Medicine = 1,
+    CareTask = 2,
+}
+
+/// <summary>How a weight-based dose is rounded: not at all (2 decimals), up to the next half, or up to a whole unit.</summary>
+public enum DoseRounding
+{
+    None  = 0,
+    Half  = 1,
+    Whole = 2,
 }
 
 /// <summary>

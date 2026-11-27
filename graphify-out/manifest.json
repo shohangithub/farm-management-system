@@ -80,9 +80,9 @@
     "semantic_hash": ""
   },
   "src/Farm360.Api/Endpoints/Health/HealthEndpoints.cs": {
-    "mtime": 1789061107.714951,
-    "ast_hash": "02338fa235ae15587d2d38292b929c15",
-    "semantic_hash": "02338fa235ae15587d2d38292b929c15"
+    "mtime": 1795771412.3373308,
+    "ast_hash": "dcf149ba5c4ff54635de0211dec5ea70",
+    "semantic_hash": ""
   },
   "src/Farm360.Api/Endpoints/IntelligenceEndpoints.cs": {
     "mtime": 1794818682.6210926,
@@ -150,8 +150,8 @@
     "semantic_hash": "d8ebf3b7dbd6520fe5251e7796d41774"
   },
   "src/Farm360.Api/Program.cs": {
-    "mtime": 1795714667.388022,
-    "ast_hash": "0a93db31cc0621e7a46731646c69d1bf",
+    "mtime": 1795771412.3373308,
+    "ast_hash": "d6bef776f0f0b8343deb73d896aabc39",
     "semantic_hash": ""
   },
   "src/Farm360.Api/appsettings.Development.json": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/DependencyInjection/ApplicationServiceExtensions.cs": {
-    "mtime": 1795763243.4659784,
-    "ast_hash": "f9ea8bf87ae180a39b512ee708b0a567",
+    "mtime": 1795771275.6909983,
+    "ast_hash": "24fd405a7b3c70968e4c4a255b87241e",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Farm360.Application.csproj": {
@@ -680,9 +680,9 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/GlobalSuppressions.cs": {
-    "mtime": 1784148136.0785275,
-    "ast_hash": "15657c933806fb6331ae7bb598f8cc77",
-    "semantic_hash": "15657c933806fb6331ae7bb598f8cc77"
+    "mtime": 1795771275.7139976,
+    "ast_hash": "f6ef6ac05e8c167d724c3841823ce1cc",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/DiseaseIncidents/ReportDiseaseIncidentCommand.cs": {
     "mtime": 1794909941.297496,
@@ -715,8 +715,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/VaccinationEvents/RecordVaccinationAdministrationCommand.cs": {
-    "mtime": 1795081029.2967663,
-    "ast_hash": "340d6f618fb656fa0e515cd879497c60",
+    "mtime": 1795771032.0254471,
+    "ast_hash": "1aec80092683094642f257121ebfd23c",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/VaccinationEvents/ScheduleVaccinationCommand.cs": {
@@ -725,19 +725,19 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/VaccinationProtocols/AssignProtocolToAnimalsCommand.cs": {
-    "mtime": 1795595171.802156,
-    "ast_hash": "a9d0c44bea3296cd6fc424c936de0032",
+    "mtime": 1795771025.0169194,
+    "ast_hash": "dda60b42ce4f8cac537b1c8ab2db2e0e",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/VaccinationProtocols/CreateVaccinationProtocolCommand.cs": {
-    "mtime": 1787033476.962523,
-    "ast_hash": "8ec896aebbd888c5657aded97802bf6c",
-    "semantic_hash": "8ec896aebbd888c5657aded97802bf6c"
+    "mtime": 1795771025.012421,
+    "ast_hash": "40acd3f7d978e69fa2263d74432a036b",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/VaccinationProtocols/UpdateVaccinationProtocolCommand.cs": {
-    "mtime": 1785176863.1776285,
-    "ast_hash": "11d72d867fe1132c5ab027d5bc0efdfa",
-    "semantic_hash": "11d72d867fe1132c5ab027d5bc0efdfa"
+    "mtime": 1795771025.0169194,
+    "ast_hash": "8ad021f9880ae6fb49ef29864ff93b92",
+    "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Commands/VetVisits/CreateVetVisitCommand.cs": {
     "mtime": 1788840146.7008023,
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/DTOs/HealthDtos.cs": {
-    "mtime": 1795710180.346678,
-    "ast_hash": "abec77e87f7d7d18daff31738c401572",
+    "mtime": 1795771050.513661,
+    "ast_hash": "047f463d685ca709c4a871b6f7253822",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/EventHandlers/TreatmentLoggedStockDeductionHandler.cs": {
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Mappings/HealthMappingExtensions.cs": {
-    "mtime": 1795710180.346678,
-    "ast_hash": "2cae526e678e16805f1e22780ecafe88",
+    "mtime": 1795771050.513661,
+    "ast_hash": "bece0867126c5f7ed9837c2132df1829",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/Queries/AnimalHealth/GetAnimalHealthHistoryQuery.cs": {
@@ -1100,8 +1100,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/Commands/AnimalCommands.cs": {
-    "mtime": 1795597998.949888,
-    "ast_hash": "0dc687d8ddcf3d79a971fb6cce5dc813",
+    "mtime": 1795771092.076303,
+    "ast_hash": "9d71408cded1326626fd885fe766c6f0",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/Commands/AssignAnimalsToBatchCommand.cs": {
@@ -1675,9 +1675,9 @@
     "semantic_hash": "6544a7fbbe14d5dbcf06c251a8bb83ac"
   },
   "src/Farm360.Domain/Health/Enums/HealthEnums.cs": {
-    "mtime": 1785131167.1930406,
-    "ast_hash": "43ce5251d14c0bbf9ba21b2049852a8d",
-    "semantic_hash": "43ce5251d14c0bbf9ba21b2049852a8d"
+    "mtime": 1795770631.88097,
+    "ast_hash": "238953d6ad4122f876f477da46c1f0ff",
+    "semantic_hash": ""
   },
   "src/Farm360.Domain/Health/Events/HealthEvents.cs": {
     "mtime": 1788840133.5230546,
@@ -1690,8 +1690,8 @@
     "semantic_hash": "bbc26d6f625549810be977c5ac02c8f1"
   },
   "src/Farm360.Domain/Health/Interfaces/Repositories/HealthRepositories.cs": {
-    "mtime": 1795083613.1251376,
-    "ast_hash": "ae408d4d6361fcf7721b7c7adba96ba7",
+    "mtime": 1795771092.0732763,
+    "ast_hash": "b1daf1ae84a494b39b5dde48efbf8c94",
     "semantic_hash": ""
   },
   "src/Farm360.Domain/Health/MedicalTreatment.cs": {
@@ -1705,14 +1705,14 @@
     "semantic_hash": "6c765b3d591cea8de42871f3ab843880"
   },
   "src/Farm360.Domain/Health/VaccinationEvent.cs": {
-    "mtime": 1795083583.779703,
-    "ast_hash": "6a0f6cea0fe4fc21d190f6bdfaef7081",
+    "mtime": 1795770729.6578348,
+    "ast_hash": "849532a26d5c8dea91bb4c0ac529536d",
     "semantic_hash": ""
   },
   "src/Farm360.Domain/Health/VaccinationProtocol.cs": {
-    "mtime": 1787045995.1255393,
-    "ast_hash": "cef6cf4363995af00f9fa36e887f6ac3",
-    "semantic_hash": "cef6cf4363995af00f9fa36e887f6ac3"
+    "mtime": 1795770660.573797,
+    "ast_hash": "0d06f9c01f71a058fe6d14f95e96680a",
+    "semantic_hash": ""
   },
   "src/Farm360.Domain/Health/ValueObjects/HealthValueObjects.cs": {
     "mtime": 1784147421.8114681,
@@ -2130,9 +2130,9 @@
     "semantic_hash": "07d69effd082a89c7e26ffd460c58e4f"
   },
   "src/Farm360.Domain/Tenancy/Notification.cs": {
-    "mtime": 1784098504.893819,
-    "ast_hash": "c40289d08e595bd31710997bf3995a5f",
-    "semantic_hash": "c40289d08e595bd31710997bf3995a5f"
+    "mtime": 1795770729.703658,
+    "ast_hash": "74b54d7a815b9671e4d3bda3b6029873",
+    "semantic_hash": ""
   },
   "src/Farm360.Domain/Tenancy/Repositories/ITenantRepository.cs": {
     "mtime": 1794909115.1355772,
@@ -2360,14 +2360,14 @@
     "semantic_hash": "8166163a3b5fe6f26c6e07096651c0b7"
   },
   "src/Farm360.Persistence/Configurations/Health/VaccinationEventConfiguration.cs": {
-    "mtime": 1784147847.1562254,
-    "ast_hash": "4d9bc61a193be52002ac74e9090ca2ba",
-    "semantic_hash": "4d9bc61a193be52002ac74e9090ca2ba"
+    "mtime": 1795770763.664961,
+    "ast_hash": "7ce525c1e47e8262fcc764fe655bbf55",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Configurations/Health/VaccinationProtocolConfiguration.cs": {
-    "mtime": 1784147546.3994844,
-    "ast_hash": "6af85993405ef84705e376af70286166",
-    "semantic_hash": "6af85993405ef84705e376af70286166"
+    "mtime": 1795770763.664961,
+    "ast_hash": "9407f50a2d274e70c1229134d8dfa00e",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Configurations/Health/VetVisitConfiguration.cs": {
     "mtime": 1794818297.109419,
@@ -2455,9 +2455,9 @@
     "semantic_hash": "bd1ceb10118ae68a2377783fe1cd412c"
   },
   "src/Farm360.Persistence/Configurations/NotificationConfiguration.cs": {
-    "mtime": 1784098683.2134018,
-    "ast_hash": "0493fc05bd6f579cb0752a09ca4539fd",
-    "semantic_hash": "0493fc05bd6f579cb0752a09ca4539fd"
+    "mtime": 1795770763.664961,
+    "ast_hash": "4b744a93072c3b372f5470abb3fdea44",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Configurations/Organizations/BranchConfiguration.cs": {
     "mtime": 1784173085.4223647,
@@ -2505,8 +2505,8 @@
     "semantic_hash": "06ccdd1e7ff9cc39157584cb69aa34dc"
   },
   "src/Farm360.Persistence/DependencyInjection/PersistenceServiceExtensions.cs": {
-    "mtime": 1795710329.8891191,
-    "ast_hash": "51fe648615db3cb20084ad2355b2910b",
+    "mtime": 1795771275.7794125,
+    "ast_hash": "145dead1b7382aa68c1ac4ed146d79ae",
     "semantic_hash": ""
   },
   "src/Farm360.Persistence/Farm360.Persistence.csproj": {
@@ -2620,8 +2620,8 @@
     "semantic_hash": "c498405e853c06a050269123669aa152"
   },
   "src/Farm360.Persistence/Migrations/ApplicationDbContextModelSnapshot.cs": {
-    "mtime": 1795762977.8457558,
-    "ast_hash": "1e12aa3c2a882319630b40d1858e271e",
+    "mtime": 1795771349.2438345,
+    "ast_hash": "479ec1157cb23486421ba012b6d4a930",
     "semantic_hash": ""
   },
   "src/Farm360.Persistence/Migrations/ApplicationDb/20260715203750_AddHealthModule.Designer.cs": {
@@ -2865,8 +2865,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Persistence/Repositories/Health/VaccinationRepository.cs": {
-    "mtime": 1795081038.6409,
-    "ast_hash": "ff786833ca893e944d04faf2516de8cb",
+    "mtime": 1795771092.0752907,
+    "ast_hash": "9711e70904ef2d8223c164e5fa41dbbc",
     "semantic_hash": ""
   },
   "src/Farm360.Persistence/Repositories/Health/VetVisitRepository.cs": {
@@ -2940,8 +2940,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Persistence/Seed/DataSeeder.cs": {
-    "mtime": 1795710451.6349933,
-    "ast_hash": "0a836af5ab730214e7655b9482c18cca",
+    "mtime": 1795771412.3373308,
+    "ast_hash": "7c16283e04113ae9ce8b6fbcdc61c827",
     "semantic_hash": ""
   },
   "src/Farm360.Persistence/Seed/PermissionConstants.cs": {
@@ -3040,8 +3040,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/layout/header/header.component.ts": {
-    "mtime": 1795601530.6187782,
-    "ast_hash": "289d53aa818954e068d7df6ca514afcd",
+    "mtime": 1795772054.3618011,
+    "ast_hash": "a5ad459fe6945b64c065659ae3eee256",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/layout/main-layout/main-layout.component.ts": {
@@ -3065,8 +3065,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/services/intelligence-signalr.service.ts": {
-    "mtime": 1795599002.041361,
-    "ast_hash": "611238ab61a28fe6e389298c3c1dfc89",
+    "mtime": 1795772044.2073796,
+    "ast_hash": "af49c80ee988f6086779fb259bf61725",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/services/lookup.service.ts": {
@@ -3110,8 +3110,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/dashboard/pages/executive-dashboard/executive-dashboard.component.ts": {
-    "mtime": 1795755974.826328,
-    "ast_hash": "e00db9491d824977fea9776748cf76bb",
+    "mtime": 1795772103.1461458,
+    "ast_hash": "7cf448c2955b29d527e2287158b31f5f",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/dashboard/services/dashboard.service.ts": {
@@ -3410,8 +3410,8 @@
     "semantic_hash": "9a4f47ccda502c03e052815db48d8512"
   },
   "src/Farm360.Web/src/app/features/health/components/dialogs/create-protocol-dialog/create-protocol-dialog.component.ts": {
-    "mtime": 1795530376.8544393,
-    "ast_hash": "ef5555055d6fb406810e62a52fad2983",
+    "mtime": 1795772195.9344153,
+    "ast_hash": "3ba39511de47999dd7041a657587ac9c",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/components/dialogs/log-treatment-dialog/log-treatment-dialog.component.ts": {
@@ -3470,13 +3470,13 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/health.routes.ts": {
-    "mtime": 1786170656.1977403,
-    "ast_hash": "b86f546bc3cbc4412cb526ca388f87ff",
-    "semantic_hash": "b86f546bc3cbc4412cb526ca388f87ff"
+    "mtime": 1795771994.688708,
+    "ast_hash": "ef97be989e1e74f1713fc69bf6f9e79e",
+    "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/models/health.models.ts": {
-    "mtime": 1795710236.7307632,
-    "ast_hash": "cc34ad827b737760ad87eab7d7d034ab",
+    "mtime": 1795771824.7752347,
+    "ast_hash": "248104370b955684af62bf25da4e1e18",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/pages/deworming-calendar/deworming-calendar.component.ts": {
@@ -3530,8 +3530,8 @@
     "semantic_hash": "35bd8d782d183c5e879f39ea2c0257f0"
   },
   "src/Farm360.Web/src/app/features/health/pages/vaccination-due-list/vaccination-due-list.component.ts": {
-    "mtime": 1795710626.260463,
-    "ast_hash": "0d72c9746162a41fca245c9ef567c2c4",
+    "mtime": 1795772257.3950818,
+    "ast_hash": "89e29b516d9aed32c0b13e66212d5d5b",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/pages/vaccination-protocol-detail/vaccination-protocol-detail.component.ts": {
@@ -3545,8 +3545,8 @@
     "semantic_hash": "36e41952ea1a56ceee521f5006e77101"
   },
   "src/Farm360.Web/src/app/features/health/pages/vaccination-protocol-list/vaccination-protocol-list.component.ts": {
-    "mtime": 1795710626.3677197,
-    "ast_hash": "36e5af8a54c5ce84ee373a9486a586b9",
+    "mtime": 1795772228.633256,
+    "ast_hash": "750db9a9920c29a029dda0e95ea99787",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/pages/vaccination-protocol-list/vaccination-protocol-list.spec.ts": {
@@ -3565,8 +3565,8 @@
     "semantic_hash": "c116cf188fab65479599069ea6592c2d"
   },
   "src/Farm360.Web/src/app/features/health/services/health.service.ts": {
-    "mtime": 1795500277.3696127,
-    "ast_hash": "1c6933c11ad1f1e9b4017e72ce8fd5dd",
+    "mtime": 1795771843.6234858,
+    "ast_hash": "14acb81904760795da872b40d77324cb",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/intelligence/components/projections/cattle-profit-projection.component.ts": {
@@ -3795,8 +3795,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/models/animal.models.ts": {
-    "mtime": 1795083826.563784,
-    "ast_hash": "c48dd85244f1b810a0ef98fb73a6de7d",
+    "mtime": 1795772125.7779539,
+    "ast_hash": "274778a0668b866e82655c066f063c7f",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/models/batch.models.ts": {
@@ -3810,8 +3810,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-detail/animal-detail.component.ts": {
-    "mtime": 1795763811.3302078,
-    "ast_hash": "c6a29736a91700b84857a1deed54c96d",
+    "mtime": 1795772267.1303084,
+    "ast_hash": "eb17d3a5df2e389f90e45f186cdf207d",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-list/animal-list.component.ts": {
@@ -3820,8 +3820,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-register/animal-register.component.ts": {
-    "mtime": 1795530753.792312,
-    "ast_hash": "c30a9825e7459f5f9de2e28f35982a45",
+    "mtime": 1795772125.7789588,
+    "ast_hash": "3c1dad89b058b9cfd42bfb99f4057986",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/batch-detail/batch-detail.ts": {
@@ -5190,8 +5190,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/layout/header/header.component.html": {
-    "mtime": 1795755974.7144053,
-    "ast_hash": "aeaacac465f11092202af9a51bea412c",
+    "mtime": 1795772078.6440516,
+    "ast_hash": "1f1d75f1c27ed78c610946d414de5670",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/layout/main-layout/main-layout.component.html": {
@@ -5215,8 +5215,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/dashboard/pages/executive-dashboard/executive-dashboard.component.html": {
-    "mtime": 1795710777.9758513,
-    "ast_hash": "502ae2399382f2703cfe9531c7fbce73",
+    "mtime": 1795772103.1449022,
+    "ast_hash": "25061688f278c7f52db04bd60084f9eb",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/farms/components/farm-card/farm-card.component.html": {
@@ -5315,18 +5315,18 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/pages/vaccination-due-list/vaccination-due-list.component.html": {
-    "mtime": 1795710626.2592537,
-    "ast_hash": "e12eed59332c62b75d64abc02724c0ab",
+    "mtime": 1795772267.1262844,
+    "ast_hash": "fbd753ec92dc68c6cd9169d07d657a0b",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/pages/vaccination-protocol-detail/vaccination-protocol-detail.html": {
-    "mtime": 1795710626.3697207,
-    "ast_hash": "6bf1e5e677f7f9e4a06b66e0eefffebc",
+    "mtime": 1795772244.8958206,
+    "ast_hash": "f9580ae434c2f97a8094c5df51facf2f",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/pages/vaccination-protocol-list/vaccination-protocol-list.html": {
-    "mtime": 1795710626.3667188,
-    "ast_hash": "c2429b1e6cec11517ee50706c1e86def",
+    "mtime": 1795772228.6316352,
+    "ast_hash": "b1f4ca5f9d82c118283e9f8005c5f2d7",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/pages/vet-visit-list/vet-visit-list.html": {
@@ -5415,8 +5415,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-detail/animal-detail.component.html": {
-    "mtime": 1795763811.3108494,
-    "ast_hash": "74549a7f2ec8a5a120782e4b4c6a7ebd",
+    "mtime": 1795772267.1277907,
+    "ast_hash": "e0ed13cc7e0cc5e02fe062a4ebad430a",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-list/animal-list.component.html": {
@@ -5425,8 +5425,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-register/animal-register.component.html": {
-    "mtime": 1795530719.2974858,
-    "ast_hash": "9f01f1ded61443ccde9ab7e879e3417d",
+    "mtime": 1795772125.780147,
+    "ast_hash": "ff8698ba14365265cbf3ac84af7203b6",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/batch-detail/batch-detail.html": {
@@ -7440,8 +7440,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Health/EventHandlers/AnimalExitReversedHealthHandler.cs": {
-    "mtime": 1795083682.2713635,
-    "ast_hash": "b1f8288a1376ea761a6aadb39fe6d916",
+    "mtime": 1795771092.076303,
+    "ast_hash": "9fd64852f1c078a09354f4d32e868f7f",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/Commands/ReverseAnimalExitCommand.cs": {
@@ -7670,8 +7670,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/i18n/bn/health.ts": {
-    "mtime": 1795700697.300633,
-    "ast_hash": "e2e3868f6ae8a5c03ba69c12b40f8f59",
+    "mtime": 1795772426.8902786,
+    "ast_hash": "109d6b1ba37fbaa2203776ae7c33091b",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/i18n/bn/index.ts": {
@@ -7690,13 +7690,13 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/i18n/bn/layout.ts": {
-    "mtime": 1795601638.1397827,
-    "ast_hash": "d7d123832faf7d61990eef3b6136d1a5",
+    "mtime": 1795772426.8955922,
+    "ast_hash": "30e21ebe68569d15163a5dcc4e1936d8",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/i18n/bn/livestock.ts": {
-    "mtime": 1795764041.9262826,
-    "ast_hash": "ebd46d46757f9ff355a3b00dc5962eef",
+    "mtime": 1795772426.8967621,
+    "ast_hash": "683b7405348a9d9308c5989ccb533286",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/i18n/bn/organizations.ts": {
@@ -7830,8 +7830,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/health/components/health-nav/health-nav.component.ts": {
-    "mtime": 1795700800.074651,
-    "ast_hash": "00f1a29b9adcfeacacb5bc6a617ecf6a",
+    "mtime": 1795771994.6897137,
+    "ast_hash": "7bf972fc10aa9d3b71f4e5f6afd953e5",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/inventory/components/inventory-subnav/inventory-subnav.component.ts": {
@@ -7890,8 +7890,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Common/Localization/BanglaMessageCatalogue.cs": {
-    "mtime": 1795714592.3248746,
-    "ast_hash": "a7108c040d82271dc0154e2eb16e5b1a",
+    "mtime": 1795771439.5242424,
+    "ast_hash": "a16832006c62a9085496a050988ec7fb",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Common/Localization/IMessageTranslator.cs": {
@@ -8037,6 +8037,111 @@
   "tests/Farm360.Application.UnitTests/Reporting/SellOrKeepReportTests.cs": {
     "mtime": 1795763682.353515,
     "ast_hash": "9c3fdb1c5f9c4eb0bfc1a811fda3ca34",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Api/Endpoints/NotificationEndpoints.cs": {
+    "mtime": 1795771406.456887,
+    "ast_hash": "a911ea6096f13c1aa366b282776869aa",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Health/Programmes/HealthProgrammeFeatures.cs": {
+    "mtime": 1795771202.6440897,
+    "ast_hash": "04247f2a0be44e505d8b6fd9fbc4518b",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Health/Programmes/MarketCattleProgrammeTemplate.cs": {
+    "mtime": 1795770954.978715,
+    "ast_hash": "3b52637f2f918703238baa21c6ed1001",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Health/Tasks/GetHealthTasksQuery.cs": {
+    "mtime": 1795771202.6440897,
+    "ast_hash": "ce08e28127958447eb876a0fa6f6421d",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Health/Tasks/HealthTaskCommands.cs": {
+    "mtime": 1795770883.3119042,
+    "ast_hash": "6c37327aa113486b4ee630cbd2366217",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Health/Tasks/HealthTaskCompletionService.cs": {
+    "mtime": 1795770869.816882,
+    "ast_hash": "3c79f6bfd2cda1631325c93fd3980052",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/Health/Tasks/HealthTaskScheduling.cs": {
+    "mtime": 1795770985.049962,
+    "ast_hash": "a44954fb266dfc285d67fee0c230d976",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/InAppNotifications/HealthReminderService.cs": {
+    "mtime": 1795771275.730708,
+    "ast_hash": "7f6cfcd10f463f54f35ce9e589ce9dfc",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Application/InAppNotifications/NotificationFeatures.cs": {
+    "mtime": 1795771275.7504005,
+    "ast_hash": "2b982fc15528745cdd37869c671b50c2",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Health/WeightDoseRule.cs": {
+    "mtime": 1795770641.6814618,
+    "ast_hash": "0d7d91d91d09aeaf6d0cfdcaf5417716",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261127092229_AddHealthScheduleRemindersAndNotifications.Designer.cs": {
+    "mtime": 1795771349.2438345,
+    "ast_hash": "541ce5703c8e6952f55a2f7cbb72fc7f",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261127092229_AddHealthScheduleRemindersAndNotifications.cs": {
+    "mtime": 1795771349.2416215,
+    "ast_hash": "59333b58c0890eb0f91b58d3ed8e0e89",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Queries/HealthTaskSource.cs": {
+    "mtime": 1795771275.8071358,
+    "ast_hash": "7edc0afb206a588636580c4c5d98247d",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/core/services/notification-center.service.ts": {
+    "mtime": 1795772016.661794,
+    "ast_hash": "d43c35cd26d0d1fa316ff73416b47515",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/health/components/health-tasks-card/health-tasks-card.component.ts": {
+    "mtime": 1795772096.2299912,
+    "ast_hash": "86a20c67b3fd519ccab0f2e021f46b11",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/health/pages/health-tasks/health-tasks.component.ts": {
+    "mtime": 1795771986.1738808,
+    "ast_hash": "12ac8bfda04f673a5429b00fad0083b4",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.IntegrationTests/Persistence/HealthScheduleNotificationTests.cs": {
+    "mtime": 1795772529.1486275,
+    "ast_hash": "b9e5b0beea989ffeb12b895adbb2aca7",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.UnitTests/Health/HealthReminderTests.cs": {
+    "mtime": 1795771682.0296233,
+    "ast_hash": "8023aaac0e4d9de77db7d0ef2aeb1992",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.UnitTests/Health/HealthScheduleFeatureTests.cs": {
+    "mtime": 1795771604.0147488,
+    "ast_hash": "4dae562a8a503598f81c755209859cb6",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Domain.UnitTests/Health/HealthScheduleTests.cs": {
+    "mtime": 1795771525.0510986,
+    "ast_hash": "ee4ec1689b9a09cd3f6a5431baa7c167",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/health/pages/health-tasks/health-tasks.component.html": {
+    "mtime": 1795771986.3767638,
+    "ast_hash": "a0f098544e36a23894cf808edb1b1405",
     "semantic_hash": ""
   }
 }

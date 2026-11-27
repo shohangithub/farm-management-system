@@ -168,6 +168,10 @@ export class AnimalDetailComponent {
               sheds: animal.farmId ? this.shedSvc.getShedsByFarm(animal.farmId).pipe(catchError(() => of([]))) : of([]),
             }).pipe(
               tap(result => {
+                // Opened from a health task's "Sell or Keep" link: bring that card into view.
+                if (this.route.snapshot.fragment === 'sell-or-keep') {
+                  setTimeout(() => document.getElementById('sell-or-keep')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
+                }
                 // Add to recently viewed
                 if (result.animal) {
                   if (result.breedName) {

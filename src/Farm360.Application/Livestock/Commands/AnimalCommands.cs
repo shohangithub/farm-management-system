@@ -32,7 +32,9 @@ public sealed record RegisterAnimalCommand(
     decimal? AcquisitionPriceBdt,
     string? Notes,
     Guid? ShedId,
-    Guid? PenId) : IRequest<AnimalDto>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
+    Guid? PenId,
+    // Opt out of the health programmes that start automatically for purchased animals.
+    bool SkipHealthProgramme = false) : IRequest<AnimalDto>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterAnimalCommand>
 {
@@ -139,6 +141,14 @@ public sealed class RegisterAnimalCommandHandler(
         foreach (var domainEvent in domainEvents)
         {
             await publisher.Publish(domainEvent, cancellationToken);
+        }
+
+        // A purchased animal starts the farm's automatic health programmes (e.g. the 108-day market
+        // cattle programme) from its acquisition date, unless the user opted out for this animal.
+        if (request.AcquisitionType == AcquisitionType.Purchased && !request.SkipHealthProgramme)
+        {
+            await publisher.Publish(new Farm360.Application.Health.Programmes.PurchasedAnimalRegisteredNotification(
+                animal.TenantId, animal.FarmId, animal.Id, animal.Species, animal.AcquisitionDate), cancellationToken);
         }
 
         return animal.ToDto();

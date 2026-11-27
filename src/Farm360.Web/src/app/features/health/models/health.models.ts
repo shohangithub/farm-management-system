@@ -109,6 +109,11 @@ export interface VetVisitParams {
   sortDesc?: boolean;
 }
 
+/** A medicine/vaccine (optionally taken from stock) or a care task with no medicine. */
+export type HealthTaskKind = 'Medicine' | 'CareTask';
+/** How a weight-based dose is rounded up. */
+export type DoseRounding = 'None' | 'Half' | 'Whole';
+
 export interface VaccinationProtocolStepDto {
   id: string;
   stepName: string;
@@ -117,6 +122,19 @@ export interface VaccinationProtocolStepDto {
   dosageInstruction?: string;
   inventoryItemId?: string;
   dosageQuantity?: number;
+  kind?: HealthTaskKind;
+  /** Giving (or skipping) it schedules the next one this many days later. */
+  repeatEveryDays?: number | null;
+  /** Weight-based dose: doseAmount units per dosePerKg kg. */
+  doseAmount?: number | null;
+  dosePerKg?: number | null;
+  doseRounding?: DoseRounding;
+  doseMin?: number | null;
+  doseMax?: number | null;
+  doseUnit?: string | null;
+  doseUnitId?: string | null;
+  /** 'sell-or-keep' opens the animal's Sell or Keep card. */
+  actionLink?: string | null;
 }
 
 export interface VaccinationProtocolDto {
@@ -127,6 +145,54 @@ export interface VaccinationProtocolDto {
   isActive: boolean;
   isDeworming: boolean;
   steps: VaccinationProtocolStepDto[];
+  /** Starts by itself (from the acquisition date) for every newly registered purchased animal. */
+  autoStartForPurchased?: boolean;
+  /** Days the programme spans, counting the start day. */
+  spanDays?: number;
+}
+
+/** A programme that starts automatically for a purchased animal (register step 4). */
+export interface AutoStartProgrammeDto {
+  id: string;
+  title: string;
+  taskCount: number;
+  spanDays: number;
+}
+
+/** One row of "Today's tasks". */
+export interface HealthTaskDto {
+  eventId: string;
+  animalId: string;
+  animalTag: string;
+  shedId?: string | null;
+  shedName?: string | null;
+  penName?: string | null;
+  taskName: string;
+  stepName?: string | null;
+  instruction?: string | null;
+  kind: HealthTaskKind;
+  scheduledDate: string;
+  bucket: 'overdue' | 'today' | 'tomorrow';
+  daysOverdue: number;
+  dose?: number | null;
+  doseUnit?: string | null;
+  weightBased: boolean;
+  doseWeightKg?: number | null;
+  doseWeightEstimated: boolean;
+  inventoryItemId?: string | null;
+  inventoryItemName?: string | null;
+  stockAvailable?: number | null;
+  stockUnit?: string | null;
+  stockShort: boolean;
+  needsStockLink: boolean;
+  repeatEveryDays?: number | null;
+  actionLink?: string | null;
+  protocolId?: string | null;
+}
+
+export interface HealthTasksDto {
+  today: string;
+  items: HealthTaskDto[];
 }
 
 export interface VaccinationEventDto {
@@ -140,6 +206,14 @@ export interface VaccinationEventDto {
   notes?: string;
   /** The animal's ear-tag number (sent by the API with each row). */
   animalTag?: string;
+  kind?: HealthTaskKind;
+  stepName?: string | null;
+  dosageQuantity?: number | null;
+  doseUnit?: string | null;
+  weightBased?: boolean;
+  doseWeightKg?: number | null;
+  doseWeightEstimated?: boolean;
+  repeatEveryDays?: number | null;
 }
 
 export interface MedicalTreatmentDto {

@@ -16,6 +16,15 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(n => n.Title).IsRequired().HasMaxLength(200);
         builder.Property(n => n.Body).IsRequired().HasMaxLength(1000);
         builder.Property(n => n.Data).HasColumnType("nvarchar(max)");
+        builder.Property(n => n.Category).HasMaxLength(50);
+        builder.Property(n => n.Link).HasMaxLength(300);
+        builder.Property(n => n.DedupKey).HasMaxLength(200);
+
+        // A daily reminder exists once per user (the job can run again safely).
+        builder.HasIndex(n => new { n.TenantId, n.UserId, n.DedupKey })
+            .IsUnique()
+            .HasFilter("[DedupKey] IS NOT NULL")
+            .HasDatabaseName("UX_Notifications_User_DedupKey");
 
         builder.Property(n => n.Type)
             .HasConversion<int>()

@@ -68,6 +68,9 @@ public static class PersistenceServiceExtensions
         services.AddScoped<Farm360.Application.Livestock.Queries.IAnimalLocationNames, Farm360.Persistence.Queries.AnimalLocationNames>();
         services.AddScoped<Farm360.Application.Livestock.Queries.IAnimalTagNames, Farm360.Persistence.Queries.AnimalTagNames>();
         services.AddScoped<Farm360.Application.Analytics.Queries.IHealthTrendSource, Farm360.Persistence.Queries.HealthTrendSource>();
+        services.AddScoped<Farm360.Application.Health.Tasks.IHealthTaskSource, Farm360.Persistence.Queries.HealthTaskSource>();
+        services.AddScoped<Farm360.Application.InAppNotifications.INotificationStore, Farm360.Persistence.Queries.NotificationStore>();
+        services.AddScoped<Farm360.Application.InAppNotifications.IHealthReminderRecipients, Farm360.Persistence.Queries.HealthReminderRecipients>();
 
         // ── Permission service (Redis-cached, DB-backed) ──────────────────────
         services.AddScoped<IPermissionService, PermissionService>();

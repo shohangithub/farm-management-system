@@ -29,17 +29,20 @@ internal sealed class AssignProtocolToAnimalsCommandHandler : IRequestHandler<As
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAnimalRepository? _animalRepository;
+    private readonly IFarmBusinessRulesProvider? _rules;
 
     public AssignProtocolToAnimalsCommandHandler(
         IVaccinationRepository repository,
         ITenantService tenantService,
         IUnitOfWork unitOfWork,
-        IAnimalRepository? animalRepository = null)
+        IAnimalRepository? animalRepository = null,
+        IFarmBusinessRulesProvider? rules = null)
     {
         _repository = repository;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
         _animalRepository = animalRepository;
+        _rules = rules;
     }
 
     public async Task Handle(AssignProtocolToAnimalsCommand request, CancellationToken cancellationToken)
@@ -52,9 +55,16 @@ internal sealed class AssignProtocolToAnimalsCommandHandler : IRequestHandler<As
         // A protocol schedules future doses: only animals still on the farm can be enrolled.
         // Doses are scheduled only for animals that exist in this tenant (unknown ids are refused).
         var animalIds = request.AnimalIds.Distinct().ToList();
+        var weights = new Dictionary<Guid, Farm360.Application.Health.Tasks.DoseWeight>();
         if (_animalRepository is not null)
         {
             var animals = await _animalRepository.GetByIdsAsync(animalIds, cancellationToken);
+            foreach (var animal in animals)
+            {
+                var fallback = _rules?.For(animal.TenantId, animal.FarmId).FallbackAnimalWeightKg ?? 150m;
+                weights[animal.Id] = Farm360.Application.Health.Tasks.DoseWeight.For(animal.LatestWeightKg, fallback);
+            }
+
             foreach (var animal in animals)
             {
                 animal.EnsureOnFarm("a vaccination protocol");
@@ -69,24 +79,13 @@ internal sealed class AssignProtocolToAnimalsCommandHandler : IRequestHandler<As
 
         foreach (var animalId in animalIds)
         {
-            foreach (var step in protocol.Steps)
-            {
-                var scheduledDate = request.StartDate.AddDays(step.TargetAgeDays);
-
-                var @event = VaccinationEvent.Schedule(
-                    _tenantService.TenantId,
-                    animalId,
-                    step.Id,
-                    step.VaccineName,
-                    string.Empty,
-                    scheduledDate,
-                    $"Scheduled from protocol '{protocol.Title}' - Step '{step.StepName}'",
-                    // The step's vaccine stock item and dose, so giving the dose deducts the stock and books its cost.
-                    step.InventoryItemId,
-                    step.DosageQuantity);
-
-                events.Add(@event);
-            }
+            // Each step keeps its stock item and dose (so giving it deducts stock and books the cost),
+            // its kind and repeat, and works a weight-based dose out from the animal's latest weight.
+            var weight = weights.TryGetValue(animalId, out var w)
+                ? w
+                : Farm360.Application.Health.Tasks.DoseWeight.For(null, _rules?.Current.FallbackAnimalWeightKg ?? 150m);
+            events.AddRange(Farm360.Application.Health.Tasks.HealthTaskScheduling.BuildEvents(
+                protocol, _tenantService.TenantId, animalId, request.StartDate, weight));
         }
 
         _repository.AddEvents(events);

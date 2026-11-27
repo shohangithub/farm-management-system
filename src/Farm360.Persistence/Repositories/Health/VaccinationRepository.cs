@@ -24,6 +24,15 @@ internal sealed class VaccinationRepository(ApplicationDbContext context) : IVac
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<VaccinationProtocol>> GetAutoStartProtocolsAsync(AnimalSpecies species, CancellationToken ct = default)
+    {
+        return await context.VaccinationProtocols
+            .Include(p => p.Steps)
+            .Where(p => p.TargetSpecies == species && p.IsActive && p.AutoStartForPurchased)
+            .OrderBy(p => p.CreatedAtUtc)
+            .ToListAsync(ct);
+    }
+
     public void AddProtocol(VaccinationProtocol protocol) => context.VaccinationProtocols.Add(protocol);
     public void UpdateProtocol(VaccinationProtocol protocol) => context.VaccinationProtocols.Update(protocol);
 

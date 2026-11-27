@@ -85,8 +85,23 @@
           </div>
           <div class="flex-1">
             <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ step.stepName }}</h4>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">{{ step.kind === 'CareTask' ? 'volunteer_activism' : 'vaccines' }}</mat-icon>
+                {{ (step.kind === 'CareTask' ? 'Care task' : 'Medicine / vaccine') | t }}
+              </span>
+              <span *ngIf="step.repeatEveryDays" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">autorenew</mat-icon>{{ 'repeats every {days} days' | t: { days: step.repeatEveryDays } }}
+              </span>
+              <span *ngIf="step.doseAmount && step.dosePerKg" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">monitor_weight</mat-icon>{{ '{dose} {unit} per {kg} kg' | t: { dose: step.doseAmount, unit: ((step.doseUnit || '') | t), kg: step.dosePerKg } }}
+              </span>
+              <span *ngIf="step.kind !== 'CareTask' && !step.inventoryItemId" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">link_off</mat-icon>{{ 'Link your stock item' | t }}
+              </span>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm text-gray-600 dark:text-gray-400 mt-3">
-              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">event</mat-icon> <span class="font-medium mr-1">{{ 'Target Age:' | t }}</span> {{ '{days} days' | t: { days: step.targetAgeDays } }}</div>
+              <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">event</mat-icon> <span class="font-medium mr-1">{{ 'Target Age:' | t }}</span> {{ '{days} days' | t: { days: step.targetAgeDays } }}<span class="ml-1 text-gray-400">({{ 'day {day}' | t: { day: step.targetAgeDays + 1 } }})</span></div>
               <div class="flex items-center"><mat-icon class="scale-[0.6] mr-1 opacity-70">science</mat-icon> <span class="font-medium mr-1">{{ 'Vaccine:' | t }}</span> {{ step.vaccineName }}</div>
               <div class="flex items-center md:col-span-2"><mat-icon class="scale-[0.6] mr-1 opacity-70">info</mat-icon> <span class="font-medium mr-1">{{ 'Dosage:' | t }}</span> {{ step.dosageInstruction }}</div>
             </div>

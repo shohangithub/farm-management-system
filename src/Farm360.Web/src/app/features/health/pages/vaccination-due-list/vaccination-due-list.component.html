@@ -49,10 +49,10 @@
            : 'border-gray-200/70 dark:border-gray-700/60'">
       <div class="p-4 flex items-start gap-3">
         <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-          <mat-icon class="!w-5 !h-5 !text-[20px]">vaccines</mat-icon>
+          <mat-icon class="!w-5 !h-5 !text-[20px]">{{ ev.kind === 'CareTask' ? 'volunteer_activism' : 'vaccines' }}</mat-icon>
         </div>
         <div class="min-w-0 flex-1">
-          <h3 class="font-semibold text-[15px] leading-snug text-gray-900 dark:text-white break-words">{{ ev.vaccineName }}</h3>
+          <h3 class="font-semibold text-[15px] leading-snug text-gray-900 dark:text-white break-words">{{ ev.stepName || ev.vaccineName }}</h3>
           <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
             <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">pets</mat-icon>{{ ev.animalTag || (ev.animalId | slice:0:8) }}
           </p>
@@ -80,12 +80,24 @@
           <dt class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ 'Batch No' | t }}</dt>
           <dd class="font-semibold text-gray-900 dark:text-white">{{ ev.batchNumber || '—' }}</dd>
         </div>
+        @if (doseText(ev); as dose) {
+          <div class="col-span-2">
+            <dd class="font-semibold text-gray-900 dark:text-white">{{ dose }}@if (ev.doseWeightEstimated) { <span class="text-[11px] text-amber-700 dark:text-amber-300"> ({{ 'estimated weight' | t }})</span> }</dd>
+          </div>
+        }
+        @if (ev.repeatEveryDays) {
+          <div class="col-span-2">
+            <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">autorenew</mat-icon>{{ 'repeats every {days} days' | t: { days: ev.repeatEveryDays } }}
+            </span>
+          </div>
+        }
       </dl>
 
       <div *hasPermission="'health.edit'" class="mt-auto px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2 no-print">
         <button type="button" (click)="administer(ev.id)"
           class="flex-1 inline-flex items-center justify-center gap-1 h-10 px-3 text-[13px] font-semibold rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
-          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon> {{ 'Mark as given today' | t }}
+          <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon> {{ (ev.kind === 'CareTask' ? 'Mark as done today' : 'Mark as given today') | t }}
         </button>
       </div>
     </div>

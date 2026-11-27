@@ -2761,6 +2761,10 @@ namespace Farm360.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ActionLink")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<Guid?>("AdministeredBy")
                         .HasColumnType("uniqueidentifier");
 
@@ -2790,11 +2794,59 @@ namespace Farm360.Persistence.Migrations
                     b.Property<decimal?>("DosageQuantity")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("DoseAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("DoseMax")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("DoseMin")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("DosePerKg")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("DoseRounding")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)")
+                        .HasDefaultValue("None");
+
+                    b.Property<string>("DoseUnit")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid?>("DoseUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("DoseWeightEstimated")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("DoseWeightKg")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Instruction")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
                     b.Property<Guid?>("InventoryItemId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Medicine");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
@@ -2806,8 +2858,17 @@ namespace Farm360.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<Guid?>("PreviousEventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ProtocolId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("ProtocolStepId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("RepeatEveryDays")
+                        .HasColumnType("int");
 
                     b.Property<byte[]>("RowVersion")
                         .IsRequired()
@@ -2816,10 +2877,21 @@ namespace Farm360.Persistence.Migrations
                     b.Property<DateOnly>("ScheduledDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("SkipReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateOnly?>("SkippedDate")
+                        .HasColumnType("date");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("StepName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -2833,6 +2905,12 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasIndex("AnimalId");
 
+                    b.HasIndex("PreviousEventId")
+                        .HasDatabaseName("IX_VaccinationEvents_PreviousEventId");
+
+                    b.HasIndex("TenantId", "Status", "ScheduledDate")
+                        .HasDatabaseName("IX_VaccinationEvents_Tenant_Status_Date");
+
                     b.ToTable("VaccinationEvents", "app");
                 });
 
@@ -2841,6 +2919,11 @@ namespace Farm360.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("AutoStartForPurchased")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
@@ -5455,6 +5538,10 @@ namespace Farm360.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -5464,10 +5551,17 @@ namespace Farm360.Persistence.Migrations
                     b.Property<string>("Data")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DedupKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<DateTime?>("DeletedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FarmId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -5475,6 +5569,10 @@ namespace Farm360.Persistence.Migrations
 
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
@@ -5509,6 +5607,11 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasIndex("TenantId", "UserId", "CreatedAtUtc")
                         .HasDatabaseName("IX_Notifications_UserId_CreatedAt");
+
+                    b.HasIndex("TenantId", "UserId", "DedupKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Notifications_User_DedupKey")
+                        .HasFilter("[DedupKey] IS NOT NULL");
 
                     b.HasIndex("TenantId", "UserId", "IsRead")
                         .HasDatabaseName("IX_Notifications_UserId_IsRead");
@@ -5997,6 +6100,10 @@ namespace Farm360.Persistence.Migrations
                                 .ValueGeneratedOnAdd()
                                 .HasColumnType("uniqueidentifier");
 
+                            b1.Property<string>("ActionLink")
+                                .HasMaxLength(50)
+                                .HasColumnType("nvarchar(50)");
+
                             b1.Property<string>("DosageInstruction")
                                 .IsRequired()
                                 .HasMaxLength(250)
@@ -6005,11 +6112,51 @@ namespace Farm360.Persistence.Migrations
                             b1.Property<decimal?>("DosageQuantity")
                                 .HasColumnType("decimal(18,2)");
 
+                            b1.Property<decimal?>("DoseAmount")
+                                .HasPrecision(18, 4)
+                                .HasColumnType("decimal(18,4)");
+
+                            b1.Property<decimal?>("DoseMax")
+                                .HasPrecision(18, 4)
+                                .HasColumnType("decimal(18,4)");
+
+                            b1.Property<decimal?>("DoseMin")
+                                .HasPrecision(18, 4)
+                                .HasColumnType("decimal(18,4)");
+
+                            b1.Property<decimal?>("DosePerKg")
+                                .HasPrecision(18, 4)
+                                .HasColumnType("decimal(18,4)");
+
+                            b1.Property<string>("DoseRounding")
+                                .IsRequired()
+                                .ValueGeneratedOnAdd()
+                                .HasMaxLength(10)
+                                .HasColumnType("nvarchar(10)")
+                                .HasDefaultValue("None");
+
+                            b1.Property<string>("DoseUnit")
+                                .HasMaxLength(30)
+                                .HasColumnType("nvarchar(30)");
+
+                            b1.Property<Guid?>("DoseUnitId")
+                                .HasColumnType("uniqueidentifier");
+
                             b1.Property<Guid?>("InventoryItemId")
                                 .HasColumnType("uniqueidentifier");
 
+                            b1.Property<string>("Kind")
+                                .IsRequired()
+                                .ValueGeneratedOnAdd()
+                                .HasMaxLength(20)
+                                .HasColumnType("nvarchar(20)")
+                                .HasDefaultValue("Medicine");
+
                             b1.Property<Guid>("ProtocolId")
                                 .HasColumnType("uniqueidentifier");
+
+                            b1.Property<int?>("RepeatEveryDays")
+                                .HasColumnType("int");
 
                             b1.Property<string>("StepName")
                                 .IsRequired()

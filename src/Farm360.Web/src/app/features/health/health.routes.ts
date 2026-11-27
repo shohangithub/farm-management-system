@@ -17,6 +17,11 @@ export const HEALTH_ROUTES: Routes = [
     title: 'Health Analytics - Farm360'
   },
   {
+    path: 'today',
+    loadComponent: () => import('./pages/health-tasks/health-tasks.component').then(c => c.HealthTasksComponent),
+    title: "Today's Tasks - Farm360"
+  },
+  {
     path: 'vaccinations',
     loadComponent: () => import('./pages/vaccination-due-list/vaccination-due-list.component').then(c => c.VaccinationDueListComponent),
     title: 'Due Vaccinations - Farm360'

@@ -8,7 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HealthService } from '../../../services/health.service';
 import { InventoryService } from '../../../../inventory/services/inventory.service';
-import { InventoryItem, InventoryCategory } from '../../../../inventory/models/inventory.models';
+import { InventoryItem, InventoryCategory, UnitConversion } from '../../../../inventory/models/inventory.models';
 import { AnimalSpecies, SPECIES_LABELS } from '../../../../livestock/models/animal.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { NotificationService } from '../../../../../shared/services/notification.service';
@@ -90,6 +90,15 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
             </label>
           </div>
 
+          <label class="flex items-start gap-2 p-3 bg-primary-50/60 dark:bg-primary-500/5 border border-primary-200 dark:border-primary-800/60 rounded-xl cursor-pointer">
+            <input type="checkbox" formControlName="autoStartForPurchased"
+                   class="mt-0.5 w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500">
+            <span>
+              <span class="block text-sm font-medium text-gray-900 dark:text-white">{{ 'Start automatically for new purchased animals' | t }}</span>
+              <span class="block text-xs text-gray-500 dark:text-gray-400">{{ 'Every animal registered as Purchased gets these tasks, counted from its acquisition date.' | t }}</span>
+            </span>
+          </label>
+
           <!-- Protocol Steps Section -->
           <div class="pt-2 border-t border-gray-100 dark:border-gray-800">
             <div class="flex items-center justify-between mb-3">
@@ -110,6 +119,25 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete_outline</mat-icon>
                 </button>
 
+                <div class="flex flex-wrap items-center gap-2 mb-3 pr-8">
+                  <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden" role="group" [attr.aria-label]="'Step type' | t">
+                    <button type="button" (click)="setKind(i, 'Medicine')"
+                      class="h-9 px-3 text-xs font-semibold"
+                      [ngClass]="step.get('kind')?.value !== 'CareTask' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'">
+                      {{ 'Medicine / vaccine' | t }}
+                    </button>
+                    <button type="button" (click)="setKind(i, 'CareTask')"
+                      class="h-9 px-3 text-xs font-semibold border-l border-gray-300 dark:border-gray-600"
+                      [ngClass]="step.get('kind')?.value === 'CareTask' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'">
+                      {{ 'Care task' | t }}
+                    </button>
+                  </div>
+                  <span *ngIf="step.get('repeatEveryDays')?.value" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">autorenew</mat-icon>
+                    {{ 'repeats every {days} days' | t: { days: step.get('repeatEveryDays')?.value } }}
+                  </span>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div class="space-y-1">
                     <label class="block text-[11px] font-semibold text-gray-500">{{ 'Step Name' | t }} <span class="text-red-500">*</span></label>
@@ -127,7 +155,7 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
                     <p *ngIf="step.get('targetAgeDays')?.touched && step.get('targetAgeDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
                   </div>
 
-                  <div class="space-y-1">
+                  <div class="space-y-1" *ngIf="step.get('kind')?.value !== 'CareTask'">
                     <label class="block text-[11px] font-semibold text-gray-500">{{ 'Link Inventory Item' | t }}</label>
                     <select formControlName="inventoryItemId" (change)="onInventoryItemChange(i)"
                             class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
@@ -139,7 +167,7 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
                   </div>
 
                   <div class="space-y-1">
-                    <label class="block text-[11px] font-semibold text-gray-500">{{ (form.get('isDeworming')?.value ? 'Medicine Name' : 'Vaccine Name') | t }} <span class="text-red-500">*</span></label>
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ (step.get('kind')?.value === 'CareTask' ? 'Task' : (form.get('isDeworming')?.value ? 'Medicine Name' : 'Vaccine Name')) | t }} <span class="text-red-500">*</span></label>
                     <input type="text" formControlName="vaccineName" [placeholder]="(form.get('isDeworming')?.value ? 'e.g. Ivermectin' : 'e.g. Anthrax Vaccine') | t"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
                     <p *ngIf="step.get('vaccineName')?.touched && step.get('vaccineName')?.hasError('required')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'This field is required.' | t }}</p>
@@ -154,12 +182,69 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
                   </div>
                   
-                  <div class="space-y-1">
+                  <div class="space-y-1" *ngIf="step.get('kind')?.value !== 'CareTask'">
                     <label class="block text-[11px] font-semibold text-gray-500" [title]="'Quantity deducted from inventory per administration' | t">{{ 'Deduct Quantity' | t }}</label>
                     <input type="number" formControlName="dosageQuantity" step="0.01" min="0" [placeholder]="'e.g. 2' | t"
                            class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 disabled:opacity-50">
                     <p *ngIf="step.get('dosageQuantity')?.touched && step.get('dosageQuantity')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 0 } }}</p>
                   </div>
+                </div>
+
+                <p *ngIf="step.get('kind')?.value !== 'CareTask' && !step.get('inventoryItemId')?.value" class="mt-2 mb-0 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">link</mat-icon>
+                  {{ 'Link your stock item so the dose is taken from stock when given.' | t }}
+                </p>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                  <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ 'Repeat every (days)' | t }}</label>
+                    <input type="number" formControlName="repeatEveryDays" min="1" step="1" [placeholder]="'No repeat' | t"
+                           class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    <p *ngIf="step.get('repeatEveryDays')?.touched && step.get('repeatEveryDays')?.hasError('min')" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ 'Must be at least {min}.' | t: { min: 1 } }}</p>
+                  </div>
+                </div>
+
+                <!-- Dose by body weight: "X units per Y kg" -->
+                <div *ngIf="step.get('kind')?.value !== 'CareTask'" class="mt-3 p-3 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-500 m-0 mb-2">{{ 'Dose by body weight (optional)' | t }}</p>
+                  <div class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
+                    <div class="space-y-1">
+                      <label class="block text-[11px] font-semibold text-gray-500">{{ 'Dose' | t }}</label>
+                      <input type="number" formControlName="doseAmount" min="0" step="0.01" placeholder="1" class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[11px] font-semibold text-gray-500">{{ 'Unit' | t }}</label>
+                      <input type="text" formControlName="doseUnit" maxlength="30" [placeholder]="'tablet' | t" class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[11px] font-semibold text-gray-500">{{ 'per kg' | t }}</label>
+                      <input type="number" formControlName="dosePerKg" min="0" step="1" placeholder="150" class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[11px] font-semibold text-gray-500">{{ 'Round up to' | t }}</label>
+                      <select formControlName="doseRounding" class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                        <option value="None">{{ 'No rounding' | t }}</option>
+                        <option value="Half">{{ 'Nearest 0.5' | t }}</option>
+                        <option value="Whole">{{ 'Whole unit' | t }}</option>
+                      </select>
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[11px] font-semibold text-gray-500">{{ 'Min' | t }}</label>
+                      <input type="number" formControlName="doseMin" min="0" step="0.01" class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="space-y-1">
+                      <label class="block text-[11px] font-semibold text-gray-500">{{ 'Max' | t }}</label>
+                      <input type="number" formControlName="doseMax" min="0" step="0.01" class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                    </div>
+                  </div>
+                  <div *ngIf="step.get('inventoryItemId')?.value && (itemUnits()[step.get('inventoryItemId')?.value] || []).length > 1" class="mt-3 space-y-1 max-w-xs">
+                    <label class="block text-[11px] font-semibold text-gray-500">{{ 'The dose is counted in (stock unit)' | t }}</label>
+                    <select formControlName="doseUnitId" class="block w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                      <option [ngValue]="null">{{ 'Base unit of the item' | t }}</option>
+                      <option *ngFor="let u of itemUnits()[step.get('inventoryItemId')?.value]" [ngValue]="u.id">{{ u.name }}</option>
+                    </select>
+                  </div>
+                  <p *ngIf="doseExample(i) as ex" class="mt-2 mb-0 text-xs text-gray-600 dark:text-gray-300">{{ ex }}</p>
                 </div>
               </div>
             </div>
@@ -227,19 +312,14 @@ export class CreateProtocolDialogComponent {
       targetSpecies: [data?.targetSpecies ?? null, Validators.required],
       description: [data?.description || ''],
       isDeworming: [{ value: data?.isDeworming || false, disabled: this.isEditMode || data?.lockIsDeworming }],
+      autoStartForPurchased: [data?.autoStartForPurchased || false],
       steps: this.fb.array([])
     });
     
     if (this.isEditMode && data.steps?.length > 0) {
       data.steps.forEach((step: any) => {
-        this.steps.push(this.fb.group({
-          stepName: [step.stepName, [Validators.required, Validators.maxLength(100)]],
-          targetAgeDays: [step.targetAgeDays, [Validators.required, Validators.min(0)]],
-          vaccineName: [step.vaccineName, [Validators.required, Validators.maxLength(100)]],
-          dosageInstruction: [step.dosageInstruction || ''],
-          inventoryItemId: [step.inventoryItemId || null],
-          dosageQuantity: [{ value: step.dosageQuantity || null, disabled: !step.inventoryItemId }, [Validators.min(0)]]
-        }));
+        this.steps.push(this.stepGroup(step));
+        if (step.inventoryItemId) this.loadItemUnits(step.inventoryItemId);
       });
     } else {
       this.addStep();
@@ -251,14 +331,64 @@ export class CreateProtocolDialogComponent {
   }
 
   addStep() {
-    this.steps.push(this.fb.group({
-      stepName: ['', [Validators.required, Validators.maxLength(100)]],
-      targetAgeDays: [null, [Validators.required, Validators.min(0)]],
-      vaccineName: ['', [Validators.required, Validators.maxLength(100)]],
-      dosageInstruction: [''],
-      inventoryItemId: [null],
-      dosageQuantity: [{ value: null, disabled: true }, [Validators.min(0)]]
-    }));
+    this.steps.push(this.stepGroup());
+  }
+
+  /** One step's form: name, day, medicine or care task, stock link, repeat and weight-based dose. */
+  private stepGroup(step?: any): FormGroup {
+    return this.fb.group({
+      stepName: [step?.stepName ?? '', [Validators.required, Validators.maxLength(100)]],
+      targetAgeDays: [step?.targetAgeDays ?? null, [Validators.required, Validators.min(0)]],
+      vaccineName: [step?.vaccineName ?? '', [Validators.required, Validators.maxLength(100)]],
+      dosageInstruction: [step?.dosageInstruction || '', [Validators.maxLength(250)]],
+      inventoryItemId: [step?.inventoryItemId || null],
+      dosageQuantity: [{ value: step?.dosageQuantity ?? null, disabled: !step?.inventoryItemId }, [Validators.min(0)]],
+      kind: [step?.kind || 'Medicine'],
+      repeatEveryDays: [step?.repeatEveryDays ?? null, [Validators.min(1)]],
+      doseAmount: [step?.doseAmount ?? null, [Validators.min(0)]],
+      dosePerKg: [step?.dosePerKg ?? null, [Validators.min(0)]],
+      doseUnit: [step?.doseUnit ?? '', [Validators.maxLength(30)]],
+      doseRounding: [step?.doseRounding || 'None'],
+      doseMin: [step?.doseMin ?? null, [Validators.min(0)]],
+      doseMax: [step?.doseMax ?? null, [Validators.min(0)]],
+      doseUnitId: [step?.doseUnitId ?? null],
+      actionLink: [step?.actionLink ?? null],
+    });
+  }
+
+  setKind(index: number, kind: 'Medicine' | 'CareTask') {
+    const step = this.steps.at(index) as FormGroup;
+    step.get('kind')?.setValue(kind);
+    if (kind === 'CareTask') {
+      step.patchValue({ inventoryItemId: null, dosageQuantity: null, doseAmount: null, dosePerKg: null, doseUnitId: null });
+      step.get('dosageQuantity')?.disable();
+    }
+  }
+
+  /** "Example: a 290 kg animal gets 2 tablet" for the weight-based dose being entered. */
+  doseExample(index: number): string | null {
+    const v = (this.steps.at(index) as FormGroup).getRawValue();
+    const amount = Number(v.doseAmount), perKg = Number(v.dosePerKg);
+    if (!(amount > 0) || !(perKg > 0)) return null;
+    const weight = 290;
+    let dose = weight / perKg * amount;
+    if (v.doseRounding === 'Whole') dose = Math.ceil(dose);
+    else if (v.doseRounding === 'Half') dose = Math.ceil(dose * 2) / 2;
+    else dose = Math.round(dose * 100) / 100;
+    if (v.doseMin != null && v.doseMin !== '' && dose < Number(v.doseMin)) dose = Number(v.doseMin);
+    if (v.doseMax != null && v.doseMax !== '' && dose > Number(v.doseMax)) dose = Number(v.doseMax);
+    return this.i18n.t('Example: a {kg} kg animal gets {dose} {unit}', { kg: weight, dose, unit: v.doseUnit ? this.i18n.t(v.doseUnit) : '' });
+  }
+
+  /** Stock units per linked item (for a dose counted in a pack or other unit of the item). */
+  readonly itemUnits = signal<Record<string, UnitConversion[]>>({});
+
+  private loadItemUnits(itemId: string) {
+    if (this.itemUnits()[itemId]) return;
+    this.inventoryService.getItemUnits(itemId).subscribe({
+      next: res => this.itemUnits.update(m => ({ ...m, [itemId]: res.units ?? [] })),
+      error: () => this.itemUnits.update(m => ({ ...m, [itemId]: [] })),
+    });
   }
 
   onInventoryItemChange(index: number) {
@@ -266,7 +396,9 @@ export class CreateProtocolDialogComponent {
     const itemId = stepForm.get('inventoryItemId')?.value;
     const qtyCtrl = stepForm.get('dosageQuantity');
     
+    stepForm.get('doseUnitId')?.setValue(null);
     if (itemId) {
+      this.loadItemUnits(itemId);
       qtyCtrl?.enable();
       const item = this.inventoryItems().find(i => i.id === itemId);
       if (item && !stepForm.get('vaccineName')?.value) {
@@ -300,10 +432,26 @@ export class CreateProtocolDialogComponent {
       targetSpecies: val.targetSpecies,
       description: val.description,
       isDeworming: this.form.get('isDeworming')?.value || false,
-      steps: val.steps.map((s: any) => ({
-        ...s,
-        dosageQuantity: s.inventoryItemId ? s.dosageQuantity : null
-      }))
+      autoStartForPurchased: !!val.autoStartForPurchased,
+      steps: this.steps.controls.map(c => {
+        const s = (c as FormGroup).getRawValue();
+        const num = (x: any) => x === null || x === undefined || x === '' ? null : Number(x);
+        const care = s.kind === 'CareTask';
+        const weightBased = !care && num(s.doseAmount) && num(s.dosePerKg);
+        return {
+          ...s,
+          inventoryItemId: care ? null : s.inventoryItemId,
+          dosageQuantity: !care && s.inventoryItemId ? num(s.dosageQuantity) : null,
+          repeatEveryDays: num(s.repeatEveryDays),
+          doseAmount: weightBased ? num(s.doseAmount) : null,
+          dosePerKg: weightBased ? num(s.dosePerKg) : null,
+          doseMin: weightBased ? num(s.doseMin) : null,
+          doseMax: weightBased ? num(s.doseMax) : null,
+          doseUnit: weightBased ? (s.doseUnit || null) : null,
+          doseRounding: weightBased ? s.doseRounding : 'None',
+          doseUnitId: !care && s.inventoryItemId ? s.doseUnitId : null,
+        };
+      })
     };
 
     if (this.isEditMode) {

@@ -257,6 +257,8 @@ public sealed class DataSeeder(
         {
             PermissionConstants.Animals.View, PermissionConstants.Animals.Create,
             PermissionConstants.FeedingModule.View, PermissionConstants.FeedingModule.Create, PermissionConstants.FeedingModule.Edit,
+            // Read-only health: workers get the daily health reminders and open "Today's tasks" (the checklist).
+            PermissionConstants.HealthModule.View,
             PermissionConstants.InventoryModule.View,
             PermissionConstants.Notifications.View,
             PermissionConstants.DashboardModule.View,

@@ -289,6 +289,7 @@ try
     app.MapGroup("/api/v1/users").MapUsersEndpoints();
     app.MapGroup("/api/v1/subscriptions").MapSubscriptionEndpoints();
     app.MapIntelligenceEndpoints();
+    app.MapNotificationEndpoints();
     app.MapFinanceEndpoints();
     app.MapAnalyticsEndpoints();
     app.MapDemoAdminEndpoints();
@@ -335,6 +336,13 @@ try
             "close-feeding-cycles",
             sender => sender.Send(new Farm360.Application.Feeding.Jobs.CloseFeedingCycleCommand(), CancellationToken.None),
             Hangfire.Cron.Daily(23, 59), jobTimeZone); // Runs at 11:59 PM
+
+        // Health reminders: hourly, so each farm gets today's / tomorrow's / overdue reminders once a
+        // day as soon as its own clock reaches 7:00 (idempotent: one per user, kind and day).
+        jobService.AddOrUpdateRecurring<MediatR.ISender>(
+            "health-reminders-daily",
+            sender => sender.Send(new Farm360.Application.InAppNotifications.GenerateHealthRemindersCommand(), CancellationToken.None),
+            Hangfire.Cron.Hourly(), jobTimeZone);
 
         jobService.AddOrUpdateRecurring<MediatR.ISender>(
             "allocate-overhead-monthly",

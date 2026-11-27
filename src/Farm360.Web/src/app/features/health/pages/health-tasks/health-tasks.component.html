@@ -1,0 +1,274 @@
+<div class="print:hidden">
+<app-page-header
+  [title]="'Today\'s tasks' | t"
+  [description]="'Health work due today, overdue and tomorrow. Tick what is done.' | t">
+  <div actions class="flex flex-wrap items-center gap-2">
+    @if (all().length) {
+      <button type="button" (click)="print()"
+        class="inline-flex items-center gap-1.5 h-11 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">print</mat-icon> {{ 'Print checklist' | t }}
+      </button>
+    }
+  </div>
+</app-page-header>
+
+<app-health-nav></app-health-nav>
+
+<!-- Overdue / today / tomorrow, also the filter -->
+<div class="grid grid-cols-4 gap-2 mb-4" role="tablist" [attr.aria-label]="'Show tasks' | t">
+  @for (f of ['all', 'overdue', 'today', 'tomorrow']; track f) {
+    <button type="button" role="tab" (click)="setFocus($any(f))" [attr.aria-selected]="focus() === f"
+      class="min-h-[56px] rounded-xl border px-2 py-2 text-left transition-colors"
+      [ngClass]="focus() === f
+        ? 'bg-primary-600 border-primary-600 text-white'
+        : 'bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-gray-300'">
+      <span class="block text-[11px] font-semibold uppercase tracking-wide opacity-80">
+        {{ (f === 'all' ? 'All' : f === 'overdue' ? 'Overdue' : f === 'today' ? 'Today' : 'Tomorrow') | t }}
+      </span>
+      <span class="block text-xl font-bold leading-tight"
+            [ngClass]="{ 'text-rose-600 dark:text-rose-400': f === 'overdue' && focus() !== f && counts().overdue > 0 }">
+        {{ f === 'all' ? all().length : f === 'overdue' ? counts().overdue : f === 'today' ? counts().today : counts().tomorrow }}
+      </span>
+    </button>
+  }
+</div>
+
+<!-- Group, shed filter, select all -->
+@if (all().length) {
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <div class="inline-flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden" role="group" [attr.aria-label]="'Group by' | t">
+      <button type="button" (click)="groupBy.set('animal')" [attr.aria-pressed]="groupBy() === 'animal'"
+        class="h-11 px-4 text-sm font-semibold transition-colors"
+        [ngClass]="groupBy() === 'animal' ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'">
+        {{ 'By animal' | t }}
+      </button>
+      <button type="button" (click)="groupBy.set('task')" [attr.aria-pressed]="groupBy() === 'task'"
+        class="h-11 px-4 text-sm font-semibold border-l border-gray-200 dark:border-gray-700 transition-colors"
+        [ngClass]="groupBy() === 'task' ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'">
+        {{ 'By task' | t }}
+      </button>
+    </div>
+
+    @if (sheds().length > 0) {
+      <label class="sr-only" for="shedFilter">{{ 'Shed' | t }}</label>
+      <select id="shedFilter" [ngModel]="shedFilter()" (ngModelChange)="shedFilter.set($event)"
+        class="h-11 px-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 min-w-[9rem]">
+        <option value="">{{ 'All sheds' | t }}</option>
+        @for (s of sheds(); track s.id) { <option [value]="s.id">{{ s.name }}</option> }
+        @if (hasUnplaced()) { <option value="none">{{ 'No shed' | t }}</option> }
+      </select>
+    }
+
+    <button type="button" *hasPermission="'health.edit'" (click)="toggleAll()"
+      class="h-11 px-4 ml-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-200 inline-flex items-center gap-1.5">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ allVisibleSelected() ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+      {{ (allVisibleSelected() ? 'Clear all' : 'Select all due') | t }}
+    </button>
+  </div>
+}
+
+<div class="relative min-h-[200px] pb-24">
+  <app-loading *ngIf="loading()" [overlay]="true"></app-loading>
+  <app-error-state *ngIf="error()" class="block" [message]="error()!" (retry)="retry()"></app-error-state>
+
+  @if (!loading() && !error() && visible().length === 0) {
+    <app-empty-state
+      icon="task_alt"
+      [title]="(all().length ? 'Nothing here' : 'No health tasks') | t"
+      [description]="(all().length ? 'Try another filter.' : 'Nothing is due today, overdue or tomorrow.') | t">
+    </app-empty-state>
+  }
+
+  <div class="space-y-4">
+    @for (group of groups(); track group.key) {
+      <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
+        <header class="px-4 py-3 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-3">
+          <mat-icon class="text-gray-400 !w-5 !h-5 !text-[20px]">{{ groupBy() === 'animal' ? 'pets' : 'checklist' }}</mat-icon>
+          <div class="min-w-0 flex-1">
+            @if (group.animalId) {
+              <a [routerLink]="['/livestock', group.animalId]" class="font-bold text-base text-gray-900 dark:text-white hover:underline">{{ group.title }}</a>
+            } @else {
+              <h2 class="font-bold text-base text-gray-900 dark:text-white break-words m-0">{{ group.title }}</h2>
+            }
+            @if (group.subtitle) { <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ group.subtitle }}</p> }
+          </div>
+          <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ group.items.length }}</span>
+        </header>
+
+        <ul class="divide-y divide-gray-100 dark:divide-gray-700/60">
+          @for (t of group.items; track t.eventId) {
+            <li class="px-3 sm:px-4 py-3" [ngClass]="{ 'bg-primary-50/50 dark:bg-primary-500/5': isSelected(t.eventId) }">
+              <div class="flex items-start gap-3">
+                <!-- Big tap target for selection (only for users who may record) -->
+                @if ('health.edit' | can) {
+                  <button type="button" (click)="toggle(t)" [disabled]="t.bucket === 'tomorrow'"
+                    [attr.aria-pressed]="isSelected(t.eventId)"
+                    [attr.aria-label]="'Select {task} for {tag}' | t: { task: t.taskName, tag: t.animalTag }"
+                    class="shrink-0 w-11 h-11 -ml-1 inline-flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30">
+                    <mat-icon class="!text-[26px] !w-[26px] !h-[26px]" [ngClass]="{ 'text-primary-600 dark:text-primary-400': isSelected(t.eventId) }">
+                      {{ isSelected(t.eventId) ? 'check_box' : 'check_box_outline_blank' }}
+                    </mat-icon>
+                  </button>
+                }
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-400">{{ t.kind === 'CareTask' ? 'volunteer_activism' : 'vaccines' }}</mat-icon>
+                    <span class="font-semibold text-[15px] text-gray-900 dark:text-white break-words">
+                      {{ groupBy() === 'animal' ? (t.stepName || t.taskName) : t.animalTag }}
+                    </span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                      [ngClass]="{
+                        'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300': t.bucket === 'overdue',
+                        'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300': t.bucket === 'today',
+                        'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300': t.bucket === 'tomorrow'
+                      }">
+                      @if (t.bucket === 'overdue') { {{ '{days} days late' | t: { days: t.daysOverdue } }} }
+                      @else if (t.bucket === 'today') { {{ 'Today' | t }} }
+                      @else { {{ 'Tomorrow' | t }} }
+                    </span>
+                    @if (t.repeatEveryDays) {
+                      <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                        <mat-icon class="!text-[13px] !w-[13px] !h-[13px]">autorenew</mat-icon>
+                        {{ 'repeats every {days} days' | t: { days: t.repeatEveryDays } }}
+                      </span>
+                    }
+                  </div>
+
+                  @if (groupBy() === 'task' && location(t)) {
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 m-0">{{ location(t) }}</p>
+                  }
+                  @if (groupBy() === 'animal' && t.stepName && t.stepName !== t.taskName) {
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 m-0">{{ t.taskName }}</p>
+                  }
+
+                  @if (doseText(t); as dose) {
+                    <p class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100 m-0">
+                      {{ dose }}
+                      @if (t.doseWeightEstimated) {
+                        <span class="ml-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">({{ 'estimated weight' | t }})</span>
+                      }
+                    </p>
+                  }
+                  @if (t.instruction) {
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-300 m-0">{{ t.instruction }}</p>
+                  }
+                  @if (t.stockShort) {
+                    <p class="mt-1 text-xs font-semibold text-rose-700 dark:text-rose-300 inline-flex items-center gap-1 m-0">
+                      <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">inventory_2</mat-icon> {{ stockText(t) }}
+                    </p>
+                  }
+                  @if (t.needsStockLink) {
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 m-0">
+                      <mat-icon class="!text-[14px] !w-[14px] !h-[14px] align-middle">link</mat-icon>
+                      {{ 'Not linked to stock — link your stock item in the protocol to deduct it automatically.' | t }}
+                    </p>
+                  }
+
+                  <!-- Actions: big buttons, wrap on small screens -->
+                  <div class="mt-3 flex flex-wrap gap-2">
+                    @if (t.actionLink === 'sell-or-keep') {
+                      <a [routerLink]="['/livestock', t.animalId]" fragment="sell-or-keep"
+                        class="inline-flex items-center gap-1 h-11 px-3 rounded-xl border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 text-sm font-semibold">
+                        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">sell</mat-icon> {{ 'Open Sell or Keep' | t }}
+                      </a>
+                    }
+                    <ng-container *hasPermission="'health.edit'">
+                      @if (t.bucket !== 'tomorrow') {
+                        <button type="button" (click)="completeOne(t)" [disabled]="saving()"
+                          class="inline-flex items-center gap-1 h-11 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold disabled:opacity-50">
+                          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">check</mat-icon>
+                          {{ (t.kind === 'CareTask' ? 'Done' : 'Administer') | t }}
+                        </button>
+                        <button type="button" (click)="openPanel(t, 'skip')"
+                          class="inline-flex items-center gap-1 h-11 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold">
+                          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">block</mat-icon> {{ 'Skip' | t }}
+                        </button>
+                      }
+                      <button type="button" (click)="openPanel(t, 'move')"
+                        class="inline-flex items-center gap-1 h-11 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold">
+                        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">event</mat-icon> {{ 'Move date' | t }}
+                      </button>
+                    </ng-container>
+                  </div>
+
+                  @if (panel()?.id === t.eventId && panel()?.type === 'skip') {
+                    <div class="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 space-y-2">
+                      <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300" [for]="'skip-' + t.eventId">{{ 'Why is it skipped?' | t }}</label>
+                      <input [id]="'skip-' + t.eventId" type="text" maxlength="500" [ngModel]="skipReason()" (ngModelChange)="skipReason.set($event)"
+                        [placeholder]="'e.g. animal weak, vet advised to wait' | t"
+                        class="block w-full h-11 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
+                      @if (t.repeatEveryDays) {
+                        <p class="text-xs text-gray-500 dark:text-gray-400 m-0">{{ 'The next one will be due {days} days from today.' | t: { days: t.repeatEveryDays } }}</p>
+                      }
+                      <div class="flex gap-2">
+                        <button type="button" (click)="confirmSkip(t)" [disabled]="saving() || !skipReason().trim()"
+                          class="h-11 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold disabled:opacity-50">{{ 'Skip this task' | t }}</button>
+                        <button type="button" (click)="panel.set(null)" class="h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200">{{ 'Cancel' | t }}</button>
+                      </div>
+                    </div>
+                  }
+                  @if (panel()?.id === t.eventId && panel()?.type === 'move') {
+                    <div class="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 space-y-2">
+                      <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300" [for]="'move-' + t.eventId">{{ 'New date' | t }}</label>
+                      <input [id]="'move-' + t.eventId" type="date" [min]="todayIso" [ngModel]="moveDate()" (ngModelChange)="moveDate.set($event)"
+                        class="block w-full h-11 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white">
+                      <div class="flex gap-2">
+                        <button type="button" (click)="confirmMove(t)" [disabled]="saving() || !moveDate()"
+                          class="h-11 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold disabled:opacity-50">{{ 'Move' | t }}</button>
+                        <button type="button" (click)="panel.set(null)" class="h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200">{{ 'Cancel' | t }}</button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+</div>
+
+<!-- Bulk bar: sticks to the bottom of the screen while tasks are selected -->
+@if (selectedCount() > 0) {
+  <div class="fixed inset-x-0 bottom-0 z-30 px-3 pb-3 pt-2 bg-gradient-to-t from-white via-white/95 to-white/0 dark:from-gray-900 dark:via-gray-900/95">
+    <div class="max-w-3xl mx-auto flex items-center gap-2 p-2 rounded-2xl bg-gray-900 dark:bg-gray-800 text-white shadow-xl">
+      <span class="px-2 text-sm font-semibold">{{ '{count} selected' | t: { count: selectedCount() } }}</span>
+      <button type="button" (click)="clearSelection()" class="h-11 px-3 rounded-xl text-sm font-semibold text-gray-300 hover:text-white">{{ 'Clear' | t }}</button>
+      <button type="button" (click)="completeSelected()" [disabled]="saving()"
+        class="ml-auto h-11 px-5 rounded-xl bg-primary-600 hover:bg-primary-700 text-sm font-semibold inline-flex items-center gap-1 disabled:opacity-50">
+        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> {{ 'Mark done today' | t }}
+      </button>
+    </div>
+  </div>
+}
+</div>
+
+<!-- Printable checklist for workers -->
+<div class="hidden print:block text-black">
+  <h1 class="text-xl font-bold m-0">{{ 'Health checklist' | t }} — {{ farmName() }}</h1>
+  <p class="text-sm m-0 mb-3">{{ printedOn | date:'fullDate' }}</p>
+  @for (group of groups(); track group.key) {
+    <h2 class="text-base font-bold mt-4 mb-1">{{ group.title }}@if (group.subtitle) { <span class="font-normal"> — {{ group.subtitle }}</span> }</h2>
+    <table class="w-full text-sm border-collapse">
+      <tbody>
+        @for (t of group.items; track t.eventId) {
+          <tr class="border-b border-gray-300">
+            <td class="py-1.5 w-8 align-top text-lg">☐</td>
+            <td class="py-1.5 align-top">
+              <strong>{{ groupBy() === 'animal' ? (t.stepName || t.taskName) : t.animalTag }}</strong>
+              @if (groupBy() === 'task' && location(t)) { <span> — {{ location(t) }}</span> }
+              @if (doseText(t); as dose) { <div>{{ dose }}@if (t.doseWeightEstimated) { ({{ 'estimated weight' | t }}) }</div> }
+              @if (t.instruction) { <div class="text-xs">{{ t.instruction }}</div> }
+            </td>
+            <td class="py-1.5 w-28 align-top text-right">
+              {{ (t.bucket === 'overdue' ? 'Overdue' : t.bucket === 'today' ? 'Today' : 'Tomorrow') | t }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+  <p class="mt-6 text-sm">{{ 'Done by' | t }}: ____________________ &nbsp; {{ 'Signature' | t }}: ____________________</p>
+</div>

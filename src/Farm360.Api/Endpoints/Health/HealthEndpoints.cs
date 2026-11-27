@@ -14,6 +14,9 @@ using Farm360.Application.Health.Queries.VaccinationEvents;
 using Farm360.Application.Health.Queries.VaccinationProtocols;
 using Farm360.Application.Health.Queries.VetVisits;
 using Farm360.Application.Health.Queries.Dashboard;
+using Farm360.Application.Health.Programmes;
+using Farm360.Application.Health.Tasks;
+using Farm360.Domain.Livestock.Enums;
 using Farm360.Domain.Health.Enums;
 using Farm360.Persistence.Seed;
 using MediatR;
@@ -105,6 +108,78 @@ public static class HealthEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
         .WithSummary("Assign a vaccination protocol to a list of animals");
+
+        group.MapPost("/protocols/templates/market-cattle-108", async (
+            [FromBody] AddMarketCattleProgrammeRequest? request,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var id = await sender.Send(new AddMarketCattleProgrammeCommand(
+                request?.RepeatEveryDays ?? MarketCattleProgrammeTemplate.DefaultRepeatEveryDays,
+                request?.AutoStartForPurchased ?? true), ct);
+            return Results.Ok(new { Id = id });
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Create}")
+        .WithSummary("Add the vet's 'Cattle bought at market – 108 days' programme");
+
+        group.MapGet("/protocols/auto-start", async (
+            [FromQuery] AnimalSpecies species,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetAutoStartProgrammesQuery(species), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Protocols that start automatically for a newly purchased animal of this species");
+
+        // ── Today's tasks ────────────────────────────────────────────────────────
+
+        group.MapGet("/tasks", async (
+            [FromQuery] Guid farmId,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetHealthTasksQuery(farmId), ct);
+            return Results.Ok(result);
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.View}")
+        .WithSummary("Overdue, today's and tomorrow's health tasks with weight-based doses and stock warnings");
+
+        group.MapPost("/tasks/complete", async (
+            [FromBody] CompleteHealthTasksCommand command,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(command, ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Mark health tasks as given / done (bulk)");
+
+        group.MapPost("/tasks/{id:guid}/skip", async (
+            [FromRoute] Guid id,
+            [FromBody] SkipHealthTaskRequest request,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new SkipHealthTaskCommand(id, request.Date, request.Reason), ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Skip a health task with a reason");
+
+        group.MapPost("/tasks/{id:guid}/reschedule", async (
+            [FromRoute] Guid id,
+            [FromBody] RescheduleHealthTaskRequest request,
+            [FromServices] ISender sender,
+            CancellationToken ct) =>
+        {
+            await sender.Send(new RescheduleHealthTaskCommand(id, request.NewDate), ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        .WithSummary("Move a health task to another date");
 
         // ── Vaccinations ─────────────────────────────────────────────────────────
 
@@ -408,6 +483,9 @@ public static class HealthEndpoints
 }
 
 public record AdministerVaccinationRequest(DateOnly AdministeredDate, string? Notes);
+public record AddMarketCattleProgrammeRequest(int? RepeatEveryDays, bool? AutoStartForPurchased);
+public record SkipHealthTaskRequest(DateOnly Date, string Reason);
+public record RescheduleHealthTaskRequest(DateOnly NewDate);
 public record UpdateTreatmentStatusRequest(TreatmentStatus Status, string? Notes);
 public record UpdateIncidentStatusRequest(IncidentStatus Status, int AffectedAnimalCount, string? Notes);
 public record UpdateMedicalTreatmentRequest(

@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import * as signalR from '@microsoft/signalr';
 import { ActionableInsight } from '../../features/livestock/components/intelligence-panel/intelligence-panel.component';
 import { NotificationService } from '../../shared/services/notification.service';
+import { NotificationCenterService, StoredNotification } from './notification-center.service';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +37,22 @@ export class IntelligenceSignalRService {
       .catch(err => console.error('Error while starting SignalR connection: ' + err));
 
     this.addIntelligenceInsightListener();
+    this.addStoredNotificationListener();
+
+    // Stored notifications (health reminders) missed while signed out or offline.
+    this.injector.get(NotificationCenterService).load();
+  }
+
+  /** Daily health reminders etc.: stored on the server, pushed live here, shown in the bell. */
+  private addStoredNotificationListener(): void {
+    if (!this.hubConnection) return;
+
+    this.hubConnection.on('NewNotification', (data: StoredNotification) => {
+      const center = this.injector.get(NotificationCenterService);
+      center.receive(data);
+      const text = `${center.title(data)}: ${center.body(data)}`;
+      if (data.type === 'Warning' || data.type === 'Alert') this.notify.warning(text); else this.notify.info(text);
+    });
   }
 
   private addIntelligenceInsightListener(): void {

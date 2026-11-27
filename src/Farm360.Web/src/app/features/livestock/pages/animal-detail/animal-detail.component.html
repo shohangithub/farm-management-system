@@ -482,7 +482,7 @@
   </div>
 
   <!-- Sell or keep? — verdict, profit curve and key numbers (same service as the report) -->
-  <app-sell-or-keep-card *ngIf="isOnFarm()" [animalId]="animal()!.id" [farmId]="animal()!.farmId" [refresh]="sellOrKeepRefresh()"
+  <app-sell-or-keep-card id="sell-or-keep" class="block scroll-mt-20" *ngIf="isOnFarm()" [animalId]="animal()!.id" [farmId]="animal()!.farmId" [refresh]="sellOrKeepRefresh()"
     (whatIf)="onOpenIntelligence()"></app-sell-or-keep-card>
 
   <!-- Tabbed Details -->

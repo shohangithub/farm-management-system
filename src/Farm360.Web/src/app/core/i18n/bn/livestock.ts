@@ -804,4 +804,9 @@ export const BN_LIVESTOCK: Record<string, string> = {
   'Expected sale price (৳ per kg live weight)': 'প্রত্যাশিত বিক্রয়মূল্য (জীবিত ওজনের প্রতি কেজি ৳)',
   'Good breeds often sell above meat value. Used by "Sell or keep?" when you have fewer than 2 recent sales of this breed.': 'ভালো জাত প্রায়ই মাংসের দামের চেয়ে বেশি দামে বিক্রি হয়। এই জাতের সাম্প্রতিক বিক্রি ২টির কম হলে "রাখবেন না বিক্রি করবেন?" এই দাম ব্যবহার করে।',
   'Expected sale price': 'প্রত্যাশিত বিক্রয়মূল্য',
+
+  // Register animal: automatic health programme
+  "The '{name}' programme will start: {tasks} tasks over {days} days": "'{name}' কর্মসূচি শুরু হবে: {days} দিনে {tasks}টি কাজ",
+  "Counted from the acquisition date. The tasks appear in Today's tasks.": "কেনার তারিখ থেকে গোনা হবে। কাজগুলো 'আজকের কাজ'-এ দেখা যাবে।",
+  "Don't start it for this animal": "এই পশুর জন্য শুরু করবেন না",
 };

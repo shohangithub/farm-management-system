@@ -150,4 +150,8 @@ export const BN_LAYOUT: Record<string, string> = {
   'Vaccinations': 'টিকা',
   'Vet Visits': 'পশু চিকিৎসকের ভিজিট',
   'Demo farm, view only': 'ডেমো খামার, শুধু দেখার জন্য',
+
+  // Notification bell
+  "Mark all as read": "সব পড়া হয়েছে",
+  "Open today's tasks": "আজকের কাজ খুলুন",
 };

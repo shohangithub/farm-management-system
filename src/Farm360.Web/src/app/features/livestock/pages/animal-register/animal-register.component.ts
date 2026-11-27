@@ -26,6 +26,10 @@ import { HasUnsavedChanges } from '../../../../shared/utils/unsaved-changes.guar
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { HealthService } from '../../../health/services/health.service';
+import { AutoStartProgrammeDto } from '../../../health/models/health.models';
+import { AuthService } from '../../../../core/services/auth.service';
+import { combineLatest, startWith, switchMap, of, catchError } from 'rxjs';
 
 @Component({
   selector: 'app-animal-register',
@@ -58,6 +62,13 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
   readonly error       = signal<string | null>(null);
   readonly today       = toLocalIsoDate();
   readonly breeds      = signal<BreedDto[]>([]);
+
+  private readonly healthSvc = inject(HealthService);
+  private readonly auth = inject(AuthService);
+  /** Health programmes that start by themselves for this purchased animal (step 4 summary). */
+  readonly autoProgrammes = signal<AutoStartProgrammeDto[]>([]);
+  /** The user unticked "start the programme" for this animal. */
+  readonly skipHealthProgramme = signal(false);
   
   private readonly shedSvc = inject(ShedService);
   private readonly penSvc = inject(PenService);
@@ -102,6 +113,17 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
       shedId:             [null as string | null],
       penId:              [null as string | null],
     });
+
+    // Step 4: which automatic health programmes will start (purchased animals only).
+    combineLatest([
+      this.idForm.get('species')!.valueChanges.pipe(startWith(this.idForm.get('species')!.value)),
+      this.acquisitionForm.get('acquisitionType')!.valueChanges.pipe(startWith(this.acquisitionForm.get('acquisitionType')!.value)),
+    ]).pipe(
+      switchMap(([species, type]) => type === AcquisitionType.Purchased && species && this.auth.hasAnyPermission(['health.view'])
+        ? this.healthSvc.getAutoStartProgrammes(species).pipe(catchError(() => of([] as AutoStartProgrammeDto[])))
+        : of([] as AutoStartProgrammeDto[])),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(list => this.autoProgrammes.set(list));
 
     // Auto-uppercase tagId
     this.idForm.get('tagId')?.valueChanges
@@ -192,6 +214,7 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
       acquisitionDate:     acqVals.acquisitionDate!,
       acquisitionPriceBdt: acqVals.acquisitionPriceBdt ?? undefined,
       notes:               notesVals.notes ?? undefined,
+      skipHealthProgramme: this.autoProgrammes().length > 0 && this.skipHealthProgramme(),
       shedId:              placementVals.shedId ?? undefined,
       penId:               placementVals.penId ?? undefined,
     }).subscribe({

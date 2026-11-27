@@ -63,6 +63,8 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Farm360.Application.Feeding.Services.IDirectFeedService, Farm360.Application.Feeding.Services.DirectFeedService>();
         services.AddScoped<Farm360.Application.Feeding.Services.IAnimalExitService, Farm360.Application.Feeding.Services.AnimalExitService>();
         services.AddScoped<Farm360.Application.Inventory.Units.IUnitService, Farm360.Application.Inventory.Units.UnitService>();
+        services.AddScoped<Farm360.Application.Health.Tasks.IHealthTaskCompletionService, Farm360.Application.Health.Tasks.HealthTaskCompletionService>();
+        services.AddScoped<Farm360.Application.InAppNotifications.IHealthReminderService, Farm360.Application.InAppNotifications.HealthReminderService>();
 
         // ── Users / team management: shared guards for member commands ───────
         services.AddScoped<Farm360.Application.Users.Commands.MemberCommandContext>();

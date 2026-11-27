@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "CQRS Handlers are instantiated by MediatR via reflection.", Scope = "namespaceanddescendants", Target = "~N:Farm360.Application.Health")]
+[assembly: SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "CQRS Handlers are instantiated by MediatR via reflection.", Scope = "namespaceanddescendants", Target = "~N:Farm360.Application.InAppNotifications")]
