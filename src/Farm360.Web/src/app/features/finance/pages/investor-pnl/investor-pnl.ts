@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -28,7 +29,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-investor-pnl',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent,
+  imports: [TranslatePipe, MoneyPipe, CanPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -233,7 +234,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <th class="px-4 py-3.5 text-right">{{ 'Profit Paid' | t }}</th>
                   <th class="px-4 py-3.5 text-right">{{ 'Profit not yet paid' | t }}</th>
                   <th class="px-4 py-3.5 text-right">{{ 'Investor total stake' | t }}</th>
-                  <th class="px-6 py-3.5 text-center no-print">{{ 'Action' | t }}</th>
+                  <th *ngIf="'finance.admin' | can" class="px-6 py-3.5 text-center no-print">{{ 'Action' | t }}</th>
                 </tr>
               </thead>
 
@@ -294,7 +295,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   </td>
 
                   <!-- Action -->
-                  <td class="px-6 py-4 text-center no-print">
+                  <td *ngIf="'finance.admin' | can" class="px-6 py-4 text-center no-print">
                     <button (click)="openPayoutDialog(share)"
                             [title]="'Distribute Profit' | t"
                             class="px-3 py-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors inline-flex items-center gap-1">
@@ -319,7 +320,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <td class="px-4 py-3.5 text-right text-indigo-600">{{ summary()!.totalDistributedProfitBdt | money }}</td>
                   <td class="px-4 py-3.5 text-right text-success-600">{{ summary()!.totalUndistributedProfitBdt | money }}</td>
                   <td class="px-4 py-3.5 text-right">{{ (summary()!.totalActiveCapitalBdt + summary()!.totalUndistributedProfitBdt) | money }}</td>
-                  <td class="px-6 py-3.5"></td>
+                  <td *ngIf="'finance.admin' | can" class="px-6 py-3.5"></td>
                 </tr>
               </tfoot>
 

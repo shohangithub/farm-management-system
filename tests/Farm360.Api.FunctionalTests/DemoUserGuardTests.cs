@@ -38,7 +38,7 @@ public class DemoUserGuardTests
     [InlineData("POST", "/api/v1/auth/logout")]
     [InlineData("POST", "/api/v1/reports/animal-summary/run")]
     [InlineData("POST", "/api/v1/reports/animal-summary/export/pdf")]
-    [InlineData("POST", "/api/v1/intelligence/projections/calculate")]
+    [InlineData("POST", "/api/v1/feeding/requirements")]
     [InlineData("POST", "/api/v1/feeding/plans/preview")]
     public async Task DemoUserReadsAndReadOnlyCalculationsAreAllowed(string method, string path)
     {

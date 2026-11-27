@@ -43,12 +43,6 @@ public sealed record SellOrKeepAssumptions
     /// <summary>When the most profitable day is this close (or closer), the advice is "Sell now".</summary>
     public int SellNowWithinDays { get; init; } = 7;
 
-    /// <summary>The farm's own sales of the same breed count when sold within this many days.</summary>
-    public int OwnSalesLookbackDays { get; init; } = 365;
-
-    /// <summary>Own sales of the breed needed before their average price per kg is used.</summary>
-    public int MinOwnSales { get; init; } = 2;
-
     /// <summary>Treatments in <see cref="HealthWindowDays"/> that mark an animal as frequently sick.</summary>
     public int FrequentlySickTreatments { get; init; } = 3;
 

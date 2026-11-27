@@ -225,7 +225,7 @@
                     <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap" [ngClass]="statusClass(b)">{{ statusLabel(b) }}</span>
                   </td>
                   <td class="px-5 py-3 text-right whitespace-nowrap">
-                    @if (b.outstandingBdt > 0.01) {
+                    @if (b.outstandingBdt > 0.01 && ('finance.create' | can)) {
                       <button type="button" (click)="open('payment', b)"
                         class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700">
                         {{ (b.kind === 'Payable' ? 'Pay' : 'Collect') | t }}
@@ -235,13 +235,15 @@
                       <button type="button" (click)="printSaleInvoice(b)" [disabled]="printing() === b.id" [title]="'Sale invoice (PDF)' | t" [attr.aria-label]="'Sale invoice' | t"
                         class="ml-1 p-1 rounded-lg text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-50"><mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === b.id ? 'hourglass_top' : 'description' }}</mat-icon></button>
                     }
-                    <button type="button" (click)="open('terms', b)" [title]="'Edit party / due date' | t"
-                      class="ml-1 p-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><mat-icon class="!w-4 !h-4 !text-[16px]">edit_calendar</mat-icon></button>
-                    @if (b.outstandingBdt > 0.01) {
+                    @if ('finance.edit' | can) {
+                      <button type="button" (click)="open('terms', b)" [title]="'Edit party / due date' | t"
+                        class="ml-1 p-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><mat-icon class="!w-4 !h-4 !text-[16px]">edit_calendar</mat-icon></button>
+                    }
+                    @if (b.outstandingBdt > 0.01 && ('finance.create' | can)) {
                       <button type="button" (click)="open('write-off', b)" [title]="(b.kind === 'Payable' ? 'Supplier waived the rest' : 'Write off as bad debt') | t"
                         class="ml-1 p-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30"><mat-icon class="!w-4 !h-4 !text-[16px]">money_off</mat-icon></button>
                     }
-                    @if (b.paidBdt === 0 && b.adjustedBdt === 0) {
+                    @if (b.paidBdt === 0 && b.adjustedBdt === 0 && ('finance.delete' | can)) {
                       <button type="button" (click)="cancel(b)" [title]="'Cancel bill — treat as paid in cash' | t"
                         class="ml-1 p-1 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30"><mat-icon class="!w-4 !h-4 !text-[16px]">block</mat-icon></button>
                     }
@@ -266,7 +268,9 @@
                                     class="mr-2 p-0.5 rounded text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 align-middle disabled:opacity-50">
                                     <mat-icon class="!w-4 !h-4 !text-[16px]">{{ printing() === p.id ? 'hourglass_top' : 'receipt_long' }}</mat-icon>
                                   </button>
-                                  <button type="button" (click)="voidPayment(b, p)" class="text-rose-500 hover:underline">{{ 'Void' | t }}</button>
+                                  @if ('finance.delete' | can) {
+                                    <button type="button" (click)="voidPayment(b, p)" class="text-rose-500 hover:underline">{{ 'Void' | t }}</button>
+                                  }
                                 </td>
                               </tr>
                             }

@@ -209,6 +209,13 @@ public static class LivestockEndpoints
             .Produces(404)
             .RequireAuthorization("Permission:animals.view");
 
+        group.MapGet("/animals/{id:guid}/fattening-plan", GetAnimalFatteningPlan)
+            .WithName("GetAnimalFatteningPlan")
+            .WithSummary("The Sell-or-keep projection for one animal with optional what-if overrides (price per kg live, extra per head, gain per day, feed / labour & overhead / health per day, days ahead, growth slowdown %)")
+            .Produces<FatteningPlan>()
+            .Produces(404)
+            .RequireAuthorization("Permission:animals.view");
+
         group.MapGet("/farms/{farmId:guid}/sell-or-keep", GetFarmSellOrKeep)
             .WithName("GetFarmSellOrKeep")
             .WithSummary("Sell-or-keep advice for every animal on a farm (optionally one batch)")
@@ -222,6 +229,34 @@ public static class LivestockEndpoints
     {
         var advice = await sender.Send(new GetAnimalSellOrKeepQuery(id), cancellationToken);
         return advice is null ? Results.NotFound() : Results.Ok(advice);
+    }
+
+    private static async Task<IResult> GetAnimalFatteningPlan(
+        Guid id,
+        ISender sender,
+        [FromQuery] decimal? pricePerKg = null,
+        [FromQuery] decimal? perHead = null,
+        [FromQuery] decimal? adg = null,
+        [FromQuery] decimal? feedPerDay = null,
+        [FromQuery] decimal? labourPerDay = null,
+        [FromQuery] decimal? healthPerDay = null,
+        [FromQuery] int? horizonDays = null,
+        [FromQuery] decimal? growthSlowdownPercent = null,
+        CancellationToken cancellationToken = default)
+    {
+        var overrides = new SellOrKeepOverrides
+        {
+            PricePerKgBdt = pricePerKg,
+            PerHeadBdt = perHead,
+            AdgKgPerDay = adg,
+            FeedPerDayBdt = feedPerDay,
+            LabourOverheadPerDayBdt = labourPerDay,
+            HealthPerDayBdt = healthPerDay,
+            HorizonDays = horizonDays,
+            GrowthSlowdownPercent = growthSlowdownPercent,
+        };
+        var plan = await sender.Send(new GetAnimalFatteningPlanQuery(id, overrides), cancellationToken);
+        return plan is null ? Results.NotFound() : Results.Ok(plan);
     }
 
     private static async Task<IResult> GetFarmSellOrKeep(

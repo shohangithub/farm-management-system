@@ -26,6 +26,10 @@ export interface BusinessRulesValues {
   bengaliNumeralsByDefault: boolean;
   /** Carry the feed & care of animals still on the farm as part of their value (default on). */
   carryLivestockGrowingCosts: boolean;
+  /** By-products sold separately (head, feet, tripe, liver, hide), taka per head; meat-yield method only. */
+  byProductsValuePerHeadBdt: number;
+  /** By-products as a fraction of the meat value, 0–0.5; meat-yield method only. */
+  byProductsPercentOfMeat: number;
 }
 
 /** Stored overrides: a null field inherits the default. */

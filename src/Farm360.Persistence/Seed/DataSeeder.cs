@@ -143,7 +143,7 @@ public sealed class DataSeeder(
             Role.CreateSystemRole(SystemRoleIds.Owner,        "Owner",       "Full access. Account owner."),
             Role.CreateSystemRole(SystemRoleIds.FarmManager,  "FarmManager", "Manages farm operations, animals, feeding, health."),
             Role.CreateSystemRole(SystemRoleIds.Veterinarian, "Veterinarian","Views animals, full health access, can prescribe."),
-            Role.CreateSystemRole(SystemRoleIds.Worker,       "Worker",      "Records feeding, basic animal operations."),
+            Role.CreateSystemRole(SystemRoleIds.Worker,       "Worker",      "Records feeding, basic animal operations, does the daily health tasks."),
             Role.CreateSystemRole(SystemRoleIds.Viewer,       "Viewer",      "Read-only access to all modules."),
         };
 
@@ -215,6 +215,24 @@ public sealed class DataSeeder(
     }
 
     // ── Role → Permission Matrix ──────────────────────────────────────────────
+
+    /// <summary>
+    /// The permission codes a system role is seeded with (the matrix below, by code). Lets tests check
+    /// what a role can reach without a database.
+    /// </summary>
+    public static IReadOnlySet<string> SystemRolePermissionCodes(Guid roleId)
+    {
+        var perms = PermissionConstants.All
+            .Select(p => p.Code)
+            .Distinct(StringComparer.Ordinal)
+            .ToDictionary(c => c, c => DeterministicGuid("perm", c), StringComparer.Ordinal);
+        var codeById = perms.ToDictionary(kv => kv.Value, kv => kv.Key);
+        return BuildRolePermissionMappings(perms)
+            .Where(m => m.roleId == roleId)
+            .Select(m => codeById[m.permId])
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
     private static List<(Guid roleId, Guid permId)> BuildRolePermissionMappings(Dictionary<string, Guid> perms)
     {
         var result = new List<(Guid, Guid)>();
@@ -241,6 +259,7 @@ public sealed class DataSeeder(
             PermissionConstants.HealthModule.Edit,
             PermissionConstants.HealthModule.Delete,
             PermissionConstants.HealthModule.Prescribe,
+            PermissionConstants.HealthModule.Tasks,
             PermissionConstants.FeedingModule.View,
             PermissionConstants.ReportsModule.View,
             PermissionConstants.Notifications.View,
@@ -252,13 +271,15 @@ public sealed class DataSeeder(
             if (perms.TryGetValue(code, out var permId))
                 result.Add((SystemRoleIds.Veterinarian, permId));
 
-        // Worker — animals (view, create), feeding (all), inventory (view), notifications
+        // Worker — animals (view, create), feeding (all), health (view, daily tasks), inventory (view), notifications
         var workerPerms = new[]
         {
             PermissionConstants.Animals.View, PermissionConstants.Animals.Create,
             PermissionConstants.FeedingModule.View, PermissionConstants.FeedingModule.Create, PermissionConstants.FeedingModule.Edit,
-            // Read-only health: workers get the daily health reminders and open "Today's tasks" (the checklist).
+            // Health: workers see the health records, get the daily reminders and do "Today's tasks"
+            // (mark a dose given or skip it); rescheduling and editing records stay with health.edit.
             PermissionConstants.HealthModule.View,
+            PermissionConstants.HealthModule.Tasks,
             PermissionConstants.InventoryModule.View,
             PermissionConstants.Notifications.View,
             PermissionConstants.DashboardModule.View,

@@ -164,6 +164,7 @@ export const BN_DASHBOARD: Record<string, string> = {
   '{n} steps done': '{n}টি ধাপ সম্পন্ন',
   'Add your sheds': 'আপনার শেড যোগ করুন',
   'Tell us where your animals live, so you can find them by shed.': 'আপনার পশু কোথায় থাকে তা জানান, যাতে শেড ধরে খুঁজে পান।',
+  'Mark your farm on the map so you get the local weather forecast.': 'মানচিত্রে আপনার খামার চিহ্নিত করুন, যাতে এলাকার আবহাওয়ার পূর্বাভাস পান।',
   'Pick your breeds': 'আপনার জাত বেছে নিন',
   'Breeds set the growth targets your animals are measured against.': 'জাত অনুযায়ী আপনার পশুর বৃদ্ধির লক্ষ্য ঠিক হয়।',
   'Register your animals': 'আপনার পশু নিবন্ধন করুন',

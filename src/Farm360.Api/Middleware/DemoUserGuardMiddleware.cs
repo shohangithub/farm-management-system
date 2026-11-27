@@ -9,7 +9,7 @@ namespace Farm360.Api.Middleware;
 /// the routes that only need "any signed-in user" (change password, sign out everywhere, profile,
 /// onboarding, subscription and checkout), which would otherwise let one prospect lock every other
 /// one out or reach billing. Every write is refused except an explicit list of read-only POSTs
-/// (reports, projections, feed calculators) and signing out.
+/// (reports, feed calculators) and signing out.
 /// </summary>
 public sealed class DemoUserGuardMiddleware(RequestDelegate next)
 {
@@ -21,8 +21,6 @@ public sealed class DemoUserGuardMiddleware(RequestDelegate next)
         "/api/v1/auth/demo-login",
         "/hubs/farm-notifications/negotiate", // read-only live notifications
         "/api/v1/reports/",
-        "/api/v1/intelligence/projections/calculate",
-        "/api/v1/intelligence/projections/solve-break-even",
         "/api/v1/feeding/requirements",
         "/api/v1/feeding/routine",
         "/api/v1/feeding/plans/preview",

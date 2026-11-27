@@ -116,6 +116,9 @@ public sealed class TenantMembershipService(ApplicationDbContext dbContext) : IT
 
         dbContext.Organizations.Add(organization);
 
+        // New tenants value animals at live weight (existing tenants keep what they inherit).
+        dbContext.TenantBusinessSettings.Add(Farm360.Domain.BusinessRules.TenantBusinessSettings.CreateForNewTenant(tenant.Id));
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return tenant.Id;
     }

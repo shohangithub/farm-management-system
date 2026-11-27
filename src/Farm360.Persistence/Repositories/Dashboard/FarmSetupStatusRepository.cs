@@ -28,6 +28,9 @@ public sealed class FarmSetupStatusRepository : IFarmSetupStatusRepository
 
     public async Task<FarmSetupCounts> GetCountsAsync(Guid tenantId, Guid farmId, CancellationToken cancellationToken = default)
     {
+        var hasLocation = await _context.Farms.AsNoTracking()
+            .AnyAsync(f => f.TenantId == tenantId && f.Id == farmId && f.Latitude != null && f.Longitude != null, cancellationToken);
+
         var sheds = await _context.Sheds.AsNoTracking()
             .CountAsync(s => s.TenantId == tenantId && s.FarmId == farmId, cancellationToken);
 
@@ -79,6 +82,7 @@ public sealed class FarmSetupStatusRepository : IFarmSetupStatusRepository
             activePlans,
             accountingSaved,
             members,
-            pendingInvitations);
+            pendingInvitations,
+            hasLocation);
     }
 }

@@ -76,14 +76,17 @@ internal sealed class OnboardTenantCommandHandler : IRequestHandler<OnboardTenan
     private readonly IOrganizationRepository _organizationRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Domain.BusinessRules.ITenantBusinessSettingsRepository _businessSettings;
 
     public OnboardTenantCommandHandler(
         ITenantRepository tenantRepository,
         ITenantUserRepository tenantUserRepository,
         IOrganizationRepository organizationRepository,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Domain.BusinessRules.ITenantBusinessSettingsRepository businessSettings)
     {
+        _businessSettings = businessSettings;
         _tenantRepository = tenantRepository;
         _tenantUserRepository = tenantUserRepository;
         _organizationRepository = organizationRepository;
@@ -152,6 +155,10 @@ internal sealed class OnboardTenantCommandHandler : IRequestHandler<OnboardTenan
             request.BusinessType);
 
         _organizationRepository.Add(organization);
+
+        // 5. New tenants value animals at live weight × live-weight price. Stored on the tenant's own
+        // settings row, so existing tenants (which inherit the platform default) are not affected.
+        _businessSettings.Add(Farm360.Domain.BusinessRules.TenantBusinessSettings.CreateForNewTenant(tenant.Id));
 
         // SaveChangesAsync persists within the pipeline-managed transaction (TransactionBehavior).
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -18,7 +18,7 @@ public class GetFarmSetupStatusQueryTests
     private static readonly Guid FarmId = Guid.NewGuid();
 
     private static readonly string[] StepOrder =
-        ["sheds", "breeds", "animals", "weights", "inventory", "recipes", "feedChart", "plans", "accounts", "team"];
+        ["sheds", "location", "breeds", "animals", "weights", "inventory", "recipes", "feedChart", "plans", "accounts", "team"];
 
     private readonly Mock<IFarmSetupStatusRepository> _repository = new();
     private readonly Mock<ITenantService> _tenant = new();
@@ -28,7 +28,7 @@ public class GetFarmSetupStatusQueryTests
         _tenant.SetupGet(t => t.TenantId).Returns(TenantId);
     }
 
-    private static FarmSetupCounts Empty() => new(0, 0, 0, 0, 0, 0, 0, 0, 0, false, 1, 0);
+    private static FarmSetupCounts Empty() => new(0, 0, 0, 0, 0, 0, 0, 0, 0, false, 1, 0, false);
 
     private async Task<Farm360.Application.Dashboard.DTOs.FarmSetupStatusDto> Run(FarmSetupCounts counts)
     {
@@ -46,7 +46,7 @@ public class GetFarmSetupStatusQueryTests
         result.Steps.Select(s => s.Key).Should().Equal(StepOrder);
         result.Steps.Should().OnlyContain(s => !s.IsDone);
         result.CompletedSteps.Should().Be(0);
-        result.TotalSteps.Should().Be(10);
+        result.TotalSteps.Should().Be(11);
         result.IsComplete.Should().BeFalse();
     }
 
@@ -71,6 +71,20 @@ public class GetFarmSetupStatusQueryTests
         withFeed.Steps.Single(s => s.Key == "inventory").IsDone.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task Location_DoneOnlyWhenTheFarmHasCoordinates_RightAfterFarmStructure()
+    {
+        var without = await Run(Empty() with { Sheds = 1 });
+        without.Steps.Single(s => s.Key == "location").IsDone.Should().BeFalse();
+        without.Steps.Single(s => s.Key == "location").Count.Should().Be(0);
+
+        var with = await Run(Empty() with { HasLocation = true });
+        with.Steps.Single(s => s.Key == "location").IsDone.Should().BeTrue();
+        with.Steps.Single(s => s.Key == "location").Count.Should().Be(1);
+        with.CompletedSteps.Should().Be(1);
+        with.Steps.Select(s => s.Key).ToList().IndexOf("location").Should().Be(1);
+    }
+
     [Theory]
     [InlineData(1, 0, false)]
     [InlineData(2, 0, true)]
@@ -85,9 +99,9 @@ public class GetFarmSetupStatusQueryTests
     [Fact]
     public async Task EverythingSetUp_IsComplete()
     {
-        var result = await Run(new FarmSetupCounts(1, 1, 1, 1, 1, 1, 1, 1, 1, true, 2, 0));
+        var result = await Run(new FarmSetupCounts(1, 1, 1, 1, 1, 1, 1, 1, 1, true, 2, 0, true));
 
-        result.CompletedSteps.Should().Be(10);
+        result.CompletedSteps.Should().Be(11);
         result.IsComplete.Should().BeTrue();
     }
 }

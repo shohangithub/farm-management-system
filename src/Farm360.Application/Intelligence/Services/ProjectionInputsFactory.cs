@@ -1,11 +1,10 @@
 using System;
 using Farm360.Contracts.Intelligence;
-using Farm360.Domain.Intelligence.Projections;
 
 namespace Farm360.Application.Intelligence.Services;
 
 /// <summary>
-/// Builds calculator inputs for a projection that starts <b>today</b>.
+/// The investment a projection that starts <b>today</b> begins from.
 /// </summary>
 /// <remarks>
 /// The projection's day 0 is the animal's latest weight, i.e. now, so its day-0 investment has
@@ -22,24 +21,5 @@ public static class ProjectionInputsFactory
         return defaults.CostToDateBdt is { Value: > 0 } costToDate
             ? Math.Max(costToDate.Value, defaults.PurchasePriceBdt.Value)
             : defaults.PurchasePriceBdt.Value;
-    }
-
-    public static FatteningProjectionInputs FromToday(ProjectionDefaultsDto defaults, int periodDays)
-    {
-        ArgumentNullException.ThrowIfNull(defaults);
-
-        return new FatteningProjectionInputs(
-            defaults.StartingLiveWeightKg.Value,
-            InvestmentToDate(defaults),
-            defaults.CurrentMeatPriceBdtPerKg.Value,
-            defaults.InitialMeatYieldRatio.Value,
-            defaults.DailyLiveWeightGainKg.Value,
-            defaults.MeatYieldOnDailyGainRatio.Value,
-            defaults.DailyFeedQuantityKgAtStart.Value,
-            defaults.FeedPriceBdtPerKg.Value,
-            defaults.DailyGrassCostBdt.Value,
-            defaults.DailyOtherCostBdt.Value,
-            defaults.MonthlyLaborCostBdt.Value,
-            Math.Max(1, periodDays));
     }
 }

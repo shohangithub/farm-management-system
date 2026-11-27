@@ -19,72 +19,21 @@ export interface ProjectionDefaults {
   fatteningPeriodDays: ProjectionDefaultValue<number>;
   /** Everything already spent on the animal (acquisition + feed + vet + labour + overhead). */
   costToDateBdt?: ProjectionDefaultValue<number> | null;
-  /** Farm live-weight valuation rate (meat price × dressing %, or the live market rate). */
+  /** The animal's resolved price per kg live weight (kept for older screens; see marketPrice). */
   liveWeightValuePerKgBdt?: ProjectionDefaultValue<number> | null;
+  /** What this animal sells for, from the app's one price resolver (same as the Sell-or-Keep card). */
+  marketPrice?: AnimalMarketPrice | null;
 }
 
-export interface FatteningProjectionInputs {
-  startingLiveWeightKg: number;
-  purchasePriceBdt: number;
-  currentMeatPriceBdtPerKg: number;
-  initialMeatYieldRatio: number;
-  dailyLiveWeightGainKg: number;
-  meatYieldOnDailyGainRatio: number;
-  dailyFeedQuantityKgAtStart: number;
-  feedPriceBdtPerKg: number;
-  dailyGrassCostBdt: number;
-  dailyOtherCostBdt: number;
-  monthlyLaborCostBdt: number;
-  fatteningPeriodDays: number;
-}
-
-export interface ProfitProjectionDayResult {
-  day: number;
-  liveWeightKg: number;
-  meatWeightKg: number;
-  feedQtyKg: number;
-  feedCostBdt: number;
-  grassCostBdt: number;
-  otherCostBdt: number;
-  laborCostBdt: number;
-  dailyTotalCostBdt: number;
-  meatGainKg: number;
-  meatValueBdt: number;
-  cumulativeCostBdt: number;
-  totalInvestmentBdt: number;
-  profitLossBdt: number;
-  profitPercent: number;
-}
-
-export interface ProfitProjectionSummary {
-  startingWeightKg: number;
-  finalWeightKg: number;
-  totalGainKg: number;
-  purchaseCostBdt: number;
-  totalFeedCostBdt: number;
-  totalGrassCostBdt: number;
-  totalOtherCostBdt: number;
-  totalLaborCostBdt: number;
-  totalFarmingCostBdt: number;
-  totalInvestmentBdt: number;
-  finalMeatWeightKg: number;
-  expectedSaleValueBdt: number;
-  profitLossBdt: number;
-  profitPercent: number;
-  breakEvenPricePerLiveKgBdt: number;
-  breakEvenPricePerMeatKgBdt: number;
-  breakEvenDay: number | null;
-  optimalSaleDay: number | null;
-  optimalProfitBdt: number | null;
-  totalFeedQtyKg: number;
-  costPerKgGainBdt: number;
-  roiPercent: number;
-  dailyProfitRateBdt: number;
-  meatPriceUsedBdtPerKg: number;
-}
-
-export interface ProfitProjectionResponse {
-  inputs?: FatteningProjectionInputs;
-  summary: ProfitProjectionSummary;
-  days: ProfitProjectionDayResult[];
+/** Mirrors Farm360.Contracts.Intelligence.AnimalMarketPriceDto. */
+export interface AnimalMarketPrice {
+  pricePerKgBdt: number;
+  /** Added once to the animal's value (by-products under the meat-yield rule), else 0. */
+  perHeadBdt: number;
+  source: 'OwnSales' | 'BreedExpected' | 'FarmLiveRate' | 'MeatAndDressing' | 'CostBasis';
+  salesCount: number;
+  /** The farm values animals at cost: no market value to show. */
+  valuedAtCost: boolean;
+  explanationEn: string;
+  explanationBn: string;
 }

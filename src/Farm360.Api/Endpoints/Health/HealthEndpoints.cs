@@ -154,7 +154,8 @@ public static class HealthEndpoints
             await sender.Send(command, ct);
             return Results.NoContent();
         })
-        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        // Workers do the daily checklist: health.tasks is enough (any of health.edit | health.tasks).
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}|{PermissionConstants.HealthModule.Tasks}")
         .WithSummary("Mark health tasks as given / done (bulk)");
 
         group.MapPost("/tasks/{id:guid}/skip", async (
@@ -166,7 +167,8 @@ public static class HealthEndpoints
             await sender.Send(new SkipHealthTaskCommand(id, request.Date, request.Reason), ct);
             return Results.NoContent();
         })
-        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}")
+        // Workers do the daily checklist: health.tasks is enough (any of health.edit | health.tasks).
+        .RequireAuthorization($"Permission:{PermissionConstants.HealthModule.Edit}|{PermissionConstants.HealthModule.Tasks}")
         .WithSummary("Skip a health task with a reason");
 
         group.MapPost("/tasks/{id:guid}/reschedule", async (

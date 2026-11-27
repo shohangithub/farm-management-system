@@ -32,14 +32,21 @@
   } @else if (!farmId()) {
     <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'Choose a farm to see its weather.' | t }}</p>
   } @else if (weather()?.needsLocation) {
-    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-6 sm:p-8 text-center space-y-3">
-      <mat-icon class="!text-[40px] !w-[40px] !h-[40px] text-gray-300 dark:text-gray-600" aria-hidden="true">location_off</mat-icon>
-      <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ "Set your farm's location to see weather" | t }}</h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 m-0 max-w-md mx-auto">{{ 'Add the latitude and longitude on the farm form. Only these coordinates are sent to the weather service.' | t }}</p>
-      <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
-        class="inline-flex items-center gap-1.5 h-11 px-5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold">
-        <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit_location_alt</mat-icon> {{ 'Set location' | t }}
-      </a>
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-6 sm:p-8 space-y-4">
+      <div class="text-center space-y-3">
+        <mat-icon class="!text-[40px] !w-[40px] !h-[40px] text-gray-300 dark:text-gray-600" aria-hidden="true">location_off</mat-icon>
+        <h2 class="text-base font-bold text-gray-900 dark:text-white m-0">{{ "Set your farm's location to see weather" | t }}</h2>
+        @if ('farms.edit' | can) {
+          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 max-w-md mx-auto">{{ 'Click the map or drag the pin to mark your farm, or use your current location. Only these coordinates are sent to the weather service.' | t }}</p>
+        } @else {
+          <p class="text-sm text-gray-500 dark:text-gray-400 m-0 max-w-md mx-auto">{{ "Ask the farm owner or manager to set the farm's location." | t }}</p>
+        }
+      </div>
+      @if ('farms.edit' | can) {
+        <div class="max-w-3xl mx-auto">
+          <ng-container *ngTemplateOutlet="locationEditor; context: { $implicit: null }"></ng-container>
+        </div>
+      }
     </section>
   } @else if (report(); as r) {
 
@@ -89,12 +96,16 @@
         <h2 id="map-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0 mb-3 flex items-center gap-2">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-primary-600 dark:text-primary-400" aria-hidden="true">location_on</mat-icon>
           {{ 'Farm location' | t }}
-          <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
-            class="ml-auto inline-flex items-center gap-1 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10">
-            <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">edit_location_alt</mat-icon> {{ 'Change location' | t }}
-          </a>
+          @if (('farms.edit' | can) && weather()?.location && !editingLocation()) {
+            <button type="button" (click)="startLocationEdit()"
+              class="ml-auto inline-flex items-center gap-1 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10">
+              <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">edit_location_alt</mat-icon> {{ 'Change location' | t }}
+            </button>
+          }
         </h2>
-        @if (weather()?.location; as loc) {
+        @if (editingLocation() && weather()?.location) {
+          <ng-container *ngTemplateOutlet="locationEditor; context: { $implicit: weather()?.location }"></ng-container>
+        } @else if (weather()?.location; as loc) {
           <app-farm-map [lat]="loc.latitude" [lon]="loc.longitude" [label]="farmName()" height="280px">
             <div class="absolute bottom-2.5 left-2.5 z-[1000] pointer-events-none inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/95 dark:bg-gray-800/95 shadow-md ring-1 ring-black/10 dark:ring-white/10">
               <span class="text-base font-semibold tabular-nums text-gray-900 dark:text-white">{{ round(r.current.temperatureC) }}°</span>
@@ -105,10 +116,12 @@
           <div class="h-[280px] rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-3 p-4 text-center">
             <mat-icon class="!text-[32px] !w-[32px] !h-[32px] text-gray-300 dark:text-gray-600" aria-hidden="true">location_off</mat-icon>
             <p class="m-0 text-sm text-gray-500 dark:text-gray-400">{{ "Set your farm's location to see weather" | t }}</p>
-            <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
-              class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold">
-              <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit_location_alt</mat-icon> {{ 'Set location' | t }}
-            </a>
+            @if ('farms.edit' | can) {
+              <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
+                class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold">
+                <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit_location_alt</mat-icon> {{ 'Set location' | t }}
+              </a>
+            }
           </div>
         }
       </section>
@@ -233,3 +246,41 @@
     </section>
   }
 </div>
+
+<!-- Location editor (users with farms.edit): editable map, GPS, Save / Cancel. `loc` = the saved point, or null when none yet. -->
+<ng-template #locationEditor let-loc>
+  <app-farm-map [lat]="draftLocation()?.lat ?? loc?.latitude ?? null" [lon]="draftLocation()?.lon ?? loc?.longitude ?? null"
+    [label]="farmName()" [editable]="true" height="300px" (locationPicked)="onLocationPicked($event)" />
+  <p class="m-0 mt-2 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+    @if (draftLocation(); as d) {
+      {{ 'New point: {lat}, {lon}' | t: { lat: d.lat, lon: d.lon } }}
+    } @else {
+      {{ 'Click the map or drag the pin to mark your farm.' | t }}
+    }
+  </p>
+  @if (locationError()) {
+    <p class="m-0 mt-1 text-xs font-medium text-rose-700 dark:text-rose-300" role="alert">{{ locationError() }}</p>
+  }
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <button type="button" (click)="useCurrentLocation()" [disabled]="locating() || savingLocation()"
+      class="inline-flex items-center gap-1.5 h-11 px-4 rounded-xl border border-primary-200 dark:border-primary-800 bg-white dark:bg-gray-800 text-primary-700 dark:text-primary-300 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-500/10 disabled:opacity-60">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">{{ locating() ? 'hourglass_top' : 'my_location' }}</mat-icon>
+      {{ (locating() ? 'Finding your location…' : 'Use my current location') | t }}
+    </button>
+    <button type="button" (click)="saveLocation()" [disabled]="!draftLocation() || savingLocation()"
+      class="inline-flex items-center gap-1.5 h-11 px-5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold disabled:opacity-50">
+      <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">check</mat-icon>
+      {{ (savingLocation() ? 'Saving…' : 'Save location') | t }}
+    </button>
+    @if (loc) {
+      <button type="button" (click)="cancelLocationEdit()" [disabled]="savingLocation()"
+        class="inline-flex items-center h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        {{ 'Cancel' | t }}
+      </button>
+    }
+    <a [routerLink]="['/organizations/branches', weather()!.branchId, 'farms', weather()!.farmId, 'edit']"
+      class="inline-flex items-center gap-1 min-h-[44px] px-2 text-xs font-semibold text-primary-700 dark:text-primary-300 hover:underline">
+      <mat-icon class="!text-[16px] !w-[16px] !h-[16px]" aria-hidden="true">edit_note</mat-icon> {{ 'Edit on the farm form' | t }}
+    </a>
+  </div>
+</ng-template>

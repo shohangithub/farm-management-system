@@ -8,10 +8,9 @@ namespace Farm360.Contracts.Intelligence;
 /// is the money already sunk into the animal at day 0.
 /// </param>
 /// <param name="LiveWeightValuePerKgBdt">
-/// The farm's live-weight valuation rate under its valuation policy (meat price × dressing % for
-/// MeatYieldMarket, the live-animal rate for LiveWeightMarket). Used for "if sold today" figures
-/// so they agree with the projection engine.
+/// The animal's resolved price per kg live weight (see <paramref name="MarketPrice"/>), kept for older clients.
 /// </param>
+/// <param name="MarketPrice">The animal's price from the one price resolver, with its source and explanation.</param>
 public sealed record ProjectionDefaultsDto(
     ProjectionDefaultValueDto<decimal> StartingLiveWeightKg,
     ProjectionDefaultValueDto<decimal> PurchasePriceBdt,
@@ -26,4 +25,26 @@ public sealed record ProjectionDefaultsDto(
     ProjectionDefaultValueDto<decimal> MonthlyLaborCostBdt,
     ProjectionDefaultValueDto<int> FatteningPeriodDays,
     ProjectionDefaultValueDto<decimal>? CostToDateBdt = null,
-    ProjectionDefaultValueDto<decimal>? LiveWeightValuePerKgBdt = null);
+    ProjectionDefaultValueDto<decimal>? LiveWeightValuePerKgBdt = null,
+    AnimalMarketPriceDto? MarketPrice = null);
+
+/// <summary>
+/// What this live animal sells for, from the app's one price resolver (own sales of the breed, the breed
+/// price, then the farm rule). The animal page's "Profit if sold today" card and the Sell-or-Keep card
+/// show the same figure.
+/// </summary>
+/// <param name="PricePerKgBdt">Taka per kg live weight.</param>
+/// <param name="PerHeadBdt">Added once to the animal's value (by-products under the meat-yield rule), else 0.</param>
+/// <param name="Source">OwnSales | BreedExpected | FarmLiveRate | MeatAndDressing | CostBasis.</param>
+/// <param name="SalesCount">Own sales the average is built on.</param>
+/// <param name="ValuedAtCost">The farm values animals at cost: there is no market value to show.</param>
+/// <param name="ExplanationEn">One line, e.g. "breed price ৳420/kg".</param>
+/// <param name="ExplanationBn">The same in Bangla.</param>
+public sealed record AnimalMarketPriceDto(
+    decimal PricePerKgBdt,
+    decimal PerHeadBdt,
+    string Source,
+    int SalesCount,
+    bool ValuedAtCost,
+    string ExplanationEn,
+    string ExplanationBn);

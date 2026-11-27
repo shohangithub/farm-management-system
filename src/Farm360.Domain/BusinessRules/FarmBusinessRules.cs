@@ -156,6 +156,22 @@ public sealed class FarmBusinessRules
     /// <summary>Fallback live-animal rate, used only by <see cref="AnimalValuationPolicy.LiveWeightMarket"/>.</summary>
     public decimal DefaultLiveWeightPricePerKgBdt { get; set; } = 400m;
 
+    /// <summary>
+    /// By-products sold separately per head (head, feet, tripe, liver/lungs, hide), in taka, added to
+    /// the meat-yield value of each animal. 0 by default, so existing values do not change silently.
+    /// </summary>
+    /// <remarks>
+    /// Dressing % is carcass (meat + bone) only. A live-weight market price already includes the
+    /// by-products, so this applies to <see cref="AnimalValuationPolicy.MeatYieldMarket"/> only.
+    /// </remarks>
+    public decimal ByProductsValuePerHeadBdt { get; set; }
+
+    /// <summary>
+    /// By-products as a fraction of the meat value (0–0.5; 0.12 = 12 %), added to the meat-yield
+    /// rate: weight × dressing × meat price × (1 + this). 0 by default.
+    /// </summary>
+    public decimal ByProductsPercentOfMeat { get; set; }
+
     // ── Accounts ────────────────────────────────────────────────────────────
 
     /// <summary>

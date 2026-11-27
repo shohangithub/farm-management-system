@@ -46,6 +46,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
     private readonly IAnimalCostLedgerRepository _ledgers;
     private readonly IAnimalFeedAllocationRepository _feed;
     private readonly IAnimalValuationService _valuation;
+    private readonly Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver _prices;
 
     public HerdSummaryReportDefinition(
         IAnimalRepository animals,
@@ -53,7 +54,8 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
         IShedRepository sheds,
         IAnimalCostLedgerRepository ledgers,
         IAnimalFeedAllocationRepository feed,
-        IAnimalValuationService valuation)
+        IAnimalValuationService valuation,
+        Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver prices)
     {
         _animals = animals;
         _breeds = breeds;
@@ -61,6 +63,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
         _ledgers = ledgers;
         _feed = feed;
         _valuation = valuation;
+        _prices = prices;
     }
 
     public override string Key => "livestock.herd-summary";
@@ -114,8 +117,8 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
             "প্রতিটি সারি একটি পশু, অবস্থা অনুযায়ী ভাগ করা: খামারে থাকা পশু আগে, তারপর বিক্রি, জবাই, মৃত বা চলে যাওয়া পশু।"),
         new("Total cost = purchase + confirmed feed + vet + this animal's share of labour and overhead, from arrival up to today (or the sale/death date).",
             "মোট খরচ = কেনার দাম + নিশ্চিত খাদ্য + চিকিৎসা + শ্রম ও অন্যান্য খরচে এই পশুর ভাগ, আসার দিন থেকে আজ (বা বিক্রি/মৃত্যুর দিন) পর্যন্ত।"),
-        new("Value: for an animal on the farm, latest weight × live-weight rate (an estimate); for a sold animal, the sale price; for a dead animal, zero.",
-            "মূল্য: খামারে থাকা পশুর জন্য সর্বশেষ ওজন × জীবন্ত ওজনের দর (আনুমানিক); বিক্রি হলে বিক্রয়মূল্য; মৃত পশুর জন্য শূন্য।"),
+        new("Value: for an animal on the farm, latest weight × its price per live kg (an estimate, the same price as the animal page: your own sales of the breed in the last 12 months, else the breed price, else the farm rule, which may add by-products per head); for a sold animal, the sale price; for a dead animal, zero.",
+            "মূল্য: খামারে থাকা পশুর জন্য সর্বশেষ ওজন × প্রতি কেজি জীবন্ত ওজনের দাম (আনুমানিক, পশুর পাতার একই দাম: গত ১২ মাসে জাতের নিজের বিক্রি, না হলে জাতের দাম, না হলে খামারের নিয়ম, যাতে প্রতি পশুর উপজাত যোগ হতে পারে); বিক্রি হলে বিক্রয়মূল্য; মৃত পশুর জন্য শূন্য।"),
         new("Profit / loss = value − total cost; for animals still on the farm it is expected, not yet earned.",
             "লাভ / ক্ষতি = মূল্য − মোট খরচ; খামারে থাকা পশুর ক্ষেত্রে এটি সম্ভাব্য, এখনো অর্জিত নয়।"),
         new("Age stops at the sale or death date.",
@@ -126,10 +129,10 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
     {
         ArgumentNullException.ThrowIfNull(context);
         var asOf = context.Today.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
-        var rate = LiveWeightRateParameter.EffectiveRate(context, _valuation).ToString("N0", CultureInfo.InvariantCulture);
+        var basis = LiveWeightRateParameter.SubjectBasis(context, _valuation);
         return Task.FromResult<string?>(context.Language == ReportLanguage.Bn
-            ? $"{asOf} পর্যন্ত · খামারে থাকা পশুর মূল্য ৳ {rate}/কেজি জীবন্ত ওজন দরে"
-            : $"As of {asOf} · animals on the farm valued at ৳ {rate} per live kg");
+            ? $"{asOf} পর্যন্ত · {basis}"
+            : $"As of {asOf} · {basis}");
     }
 
     protected override async Task<IReadOnlyList<HerdSummaryReportRow>> FetchAsync(
@@ -189,6 +192,9 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
         var breedsMap = breeds.ToDictionary(b => b.Id);
         var shedsMap = sheds.ToDictionary(s => s.Id);
 
+        // Each on-farm animal at its own price — own sales of its breed, breed price, farm rule — as on the animal page.
+        var prices = await _prices.ForFarmAsync(farmId, context.Today, cancellationToken).ConfigureAwait(false);
+
         var today = context.Today;
         var bn = context.Language == ReportLanguage.Bn;
         var rows = new List<(int Order, HerdSummaryReportRow Row)>(animals.Count);
@@ -216,7 +222,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
             var totalCost = cost.TotalBdt;
 
             // On-farm animals at weight × rate, sold at realised revenue, dead at zero.
-            var projectedValue = _valuation.CurrentValue(a, ledger, totalCost, rateOverride);
+            var projectedValue = _valuation.CurrentValue(a, ledger, totalCost, prices.For(a), rateOverride);
             var projectedProfit = projectedValue - totalCost;
 
             rows.Add(((int)a.Status, new HerdSummaryReportRow(

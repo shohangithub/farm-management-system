@@ -41,3 +41,24 @@ internal static class TestAnimals
         return animal;
     }
 }
+
+/// <summary>A real <see cref="Farm360.Application.Intelligence.Pricing.AnimalPriceResolver"/> over in-memory animals and breeds.</summary>
+internal static class TestPrices
+{
+    public static Farm360.Application.Intelligence.Pricing.AnimalPriceResolver Resolver(
+        IFarmBusinessRulesProvider rules,
+        System.Collections.Generic.IReadOnlyList<Animal>? farmAnimals = null,
+        System.Collections.Generic.IReadOnlyList<Breed>? breeds = null,
+        Guid? farmId = null)
+    {
+        var animals = NSubstitute.Substitute.For<Farm360.Domain.Livestock.Repositories.IAnimalRepository>();
+        NSubstitute.SubstituteExtensions.Returns(
+            animals.GetAllByFarmAsync(farmId ?? TestAnimals.FarmId, NSubstitute.Arg.Any<System.Threading.CancellationToken>()),
+            System.Threading.Tasks.Task.FromResult(farmAnimals ?? Array.Empty<Animal>()));
+        var breedRepo = NSubstitute.Substitute.For<Farm360.Domain.Livestock.Repositories.IBreedRepository>();
+        NSubstitute.SubstituteExtensions.Returns(
+            breedRepo.GetAllAsync(NSubstitute.Arg.Any<System.Threading.CancellationToken>()),
+            System.Threading.Tasks.Task.FromResult(breeds ?? Array.Empty<Breed>()));
+        return new Farm360.Application.Intelligence.Pricing.AnimalPriceResolver(animals, breedRepo, rules);
+    }
+}

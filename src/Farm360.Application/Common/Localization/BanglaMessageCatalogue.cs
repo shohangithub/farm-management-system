@@ -219,6 +219,8 @@ public static class BanglaMessageCatalogue
         { "Metabolic weight exponent must be between 0.5 and 1.0 (0.75 is the standard).", "বিপাকীয় ওজনের ঘাত 0.5 থেকে 1.0-এর মধ্যে হতে হবে (সাধারণত 0.75)।" },
         { "Fallback animal weight must be between 1 and 2,000 kg.", "ধরে নেওয়া পশুর ওজন 1 থেকে 2,000 কেজির মধ্যে হতে হবে।" },
         { "Dressing percentage must be between 30% and 70% (0.30–0.70).", "মাংসের হার (ড্রেসিং %) 30% থেকে 70%-এর মধ্যে হতে হবে (0.30–0.70)।" },
+        { "By-products value per head must be between 0 and 1,000,000 taka.", "প্রতি পশুর উপজাতের দাম 0 থেকে 10,00,000 টাকার মধ্যে হতে হবে।" },
+        { "By-products must be between 0% and 50% of the meat value.", "উপজাতের দাম মাংসের দামের 0% থেকে 50%-এর মধ্যে হতে হবে।" },
         { "{field:w} is outside its allowed range.", "{field} অনুমোদিত সীমার বাইরে।" },
         { "FarmId must be null (tenant-wide) or a real farm.", "একটি সঠিক খামার বেছে নিন, বা সব খামারের জন্য রাখুন।" },
 

@@ -53,7 +53,7 @@ public class BatchPnLReportQueryTests
         transactions.GetAllByFarmIdAsync(TestAnimals.FarmId, Arg.Any<CancellationToken>())
             .Returns(new List<FinancialTransaction> { sale });
 
-        var sut = new GetBatchPnLReportQueryHandler(transactions, ledgers, animals, valuation);
+        var sut = new GetBatchPnLReportQueryHandler(transactions, ledgers, animals, valuation, TestPrices.Resolver(new TestRulesProvider()));
 
         var r = await sut.Handle(new GetBatchPnLReportQuery(TestAnimals.FarmId, batchId), CancellationToken.None);
 

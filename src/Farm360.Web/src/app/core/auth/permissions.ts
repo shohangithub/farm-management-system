@@ -12,7 +12,7 @@ export const Permissions = {
     Sell: 'animals.sell',
     Quarantine: 'animals.quarantine',
   },
-  Health: { View: 'health.view', Create: 'health.create', Edit: 'health.edit', Delete: 'health.delete' },
+  Health: { View: 'health.view', Create: 'health.create', Edit: 'health.edit', Delete: 'health.delete', Tasks: 'health.tasks' },
   Feeding: { View: 'feeding.view', Create: 'feeding.create', Edit: 'feeding.edit', Delete: 'feeding.delete' },
   Inventory: { View: 'inventory.view', Create: 'inventory.create', Edit: 'inventory.edit', Delete: 'inventory.delete' },
   Finance: {

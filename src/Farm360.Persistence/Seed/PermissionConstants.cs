@@ -28,6 +28,8 @@ public static class PermissionConstants
         public const string Edit   = "health.edit";
         public const string Delete = "health.delete";
         public const string Prescribe = "health.prescribe";
+        /// <summary>Tick off / skip the daily health tasks (Today's tasks). Not a ".view" code, so Viewers never get it.</summary>
+        public const string Tasks  = "health.tasks";
     }
 
     // ── Feeding ───────────────────────────────────────────────────────────────
@@ -184,6 +186,7 @@ public static class PermissionConstants
         (HealthModule.Edit,      "Health", "Edit health records"),
         (HealthModule.Delete,    "Health", "Delete health records"),
         (HealthModule.Prescribe, "Health", "Issue prescriptions and medication orders"),
+        (HealthModule.Tasks,     "Health", "Do daily health tasks"),
 
         (FeedingModule.View,   "Feeding", "View feeding schedules and records"),
         (FeedingModule.Create, "Feeding", "Record feeding events"),

@@ -21,7 +21,7 @@ import {
   BcsRecordDto,
   RecordMatingRequest
 } from '../models/animal.models';
-import { SellOrKeepAdvice } from '../models/sell-or-keep.models';
+import { FatteningPlan, FatteningPlanOverrides, SellOrKeepAdvice } from '../models/sell-or-keep.models';
 
 /**
  * Livestock API service.
@@ -142,6 +142,15 @@ export class AnimalService {
   /** Sell-or-keep advice for one animal on the farm, with its day-by-day profit projection. */
   getSellOrKeep(animalId: string): Observable<SellOrKeepAdvice> {
     return this.http.get<SellOrKeepAdvice>(`${this.base}/${animalId}/sell-or-keep`);
+  }
+
+  /** The Sell-or-keep projection with what-if overrides (same engine, so no overrides = the card's figures). */
+  getFatteningPlan(animalId: string, overrides: FatteningPlanOverrides = {}): Observable<FatteningPlan> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(overrides)) {
+      if (value !== null && value !== undefined && Number.isFinite(value)) params = params.set(key, String(value));
+    }
+    return this.http.get<FatteningPlan>(`${this.base}/${animalId}/fattening-plan`, { params });
   }
 
   /** Sell-or-keep advice for every animal on a farm (no projections) — one call for the list badges. */

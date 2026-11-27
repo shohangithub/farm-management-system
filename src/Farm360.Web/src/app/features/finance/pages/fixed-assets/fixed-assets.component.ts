@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,13 +34,13 @@ interface AssetForm extends SaveFixedAssetRequest {
 @Component({
   selector: 'app-fixed-assets',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
+  imports: [MoneyPipe, CanPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
   template: `
     <app-page-header
       [title]="'Fixed Assets' | t"
       [description]="pageDescription"
       [breadcrumbActiveNode]="'Fixed Assets' | t">
-      <div actions>
+      <div actions *ngIf="'finance.create' | can">
         <button mat-flat-button (click)="newAsset()" class="!rounded-xl !bg-emerald-600 !text-white">
           <mat-icon>add</mat-icon> {{ 'New Asset' | t }}
         </button>
@@ -182,7 +183,7 @@ interface AssetForm extends SaveFixedAssetRequest {
             <tr>
               <th class="text-left px-4 py-2">{{ 'Code' | t }}</th><th class="text-left px-3 py-2">{{ 'Asset' | t }}</th><th class="text-left px-3 py-2">{{ 'Acquired' | t }}</th>
               <th class="text-left px-3 py-2">{{ 'Depreciation' | t }}</th><th class="text-right px-3 py-2">{{ 'Cost' | t }}</th>
-              <th class="text-right px-3 py-2">{{ 'Acc. dep.' | t }}</th><th class="text-right px-3 py-2">{{ 'WDV' | t }}</th><th class="px-3 py-2"></th>
+              <th class="text-right px-3 py-2">{{ 'Acc. dep.' | t }}</th><th class="text-right px-3 py-2">{{ 'WDV' | t }}</th><th *ngIf="assetWritePermissions | can" class="px-3 py-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -202,11 +203,11 @@ interface AssetForm extends SaveFixedAssetRequest {
               <td class="px-3 py-2 text-right font-mono">{{ a.costBdt | money }}</td>
               <td class="px-3 py-2 text-right font-mono text-amber-600">{{ a.accumulatedDepreciationBdt | money }}</td>
               <td class="px-3 py-2 text-right font-mono font-bold">{{ a.writtenDownValueBdt | money }}</td>
-              <td class="px-3 py-2 text-right whitespace-nowrap">
-                <button *ngIf="!a.disposalDate" (click)="edit(a)" [title]="'Edit' | t" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
-                <button *ngIf="!a.disposalDate" (click)="startDispose(a)" [title]="'Sell / scrap' | t" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">sell</mat-icon></button>
-                <button *ngIf="a.disposalDate" (click)="cancelDisposal(a)" [title]="'Undo disposal' | t" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">undo</mat-icon></button>
-                <button (click)="remove(a)" [title]="'Delete' | t" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+              <td *ngIf="assetWritePermissions | can" class="px-3 py-2 text-right whitespace-nowrap">
+                <button *ngIf="!a.disposalDate && ('finance.edit' | can)" (click)="edit(a)" [title]="'Edit' | t" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
+                <button *ngIf="!a.disposalDate && ('finance.create' | can)" (click)="startDispose(a)" [title]="'Sell / scrap' | t" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">sell</mat-icon></button>
+                <button *ngIf="a.disposalDate && ('finance.delete' | can)" (click)="cancelDisposal(a)" [title]="'Undo disposal' | t" class="p-1 text-gray-500 hover:text-amber-600"><mat-icon class="!text-[18px]">undo</mat-icon></button>
+                <button *ngIf="'finance.delete' | can" (click)="remove(a)" [title]="'Delete' | t" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
               </td>
             </tr>
           </tbody>
@@ -276,6 +277,9 @@ interface AssetForm extends SaveFixedAssetRequest {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FixedAssetsComponent {
+  /** Show the row action column only to users who can change something in it (finance.create / edit / delete). */
+  readonly assetWritePermissions = ['finance.create', 'finance.edit', 'finance.delete'];
+
   private readonly confirmService = inject(ConfirmService);
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);

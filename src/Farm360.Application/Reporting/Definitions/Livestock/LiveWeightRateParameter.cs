@@ -9,8 +9,8 @@ namespace Farm360.Application.Reporting.Definitions.Livestock;
 /// The "live-weight rate" option shared by the animal and herd summary reports.
 /// </summary>
 /// <remarks>
-/// Defaults to the farm's own valuation rate (<see cref="IAnimalValuationService"/>), so the
-/// reports agree with the projections and the animal screen out of the box. An entered rate is a
+/// Blank values each animal with <see cref="Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver"/>,
+/// so the reports agree with the animal page and the Sell-or-Keep advice out of the box. An entered rate is a
 /// what-if override for a particular market, not a benchmark.
 /// </remarks>
 internal static class LiveWeightRateParameter
@@ -29,12 +29,31 @@ internal static class LiveWeightRateParameter
         return new ReportParameter(
             Name,
             new LocalizedText(
-                $"Live-weight rate override, ৳/kg (blank = farm rate ৳ {rate})",
-                $"জীবন্ত ওজনের দর, ৳/কেজি (খালি = খামারের দর ৳ {rate})"),
+                $"Live-weight rate override, ৳/kg (blank = each animal's own price)",
+                $"জীবন্ত ওজনের দর, ৳/কেজি (খালি = প্রতিটি পশুর নিজের দাম)"),
             ReportParameterType.Number,
             Required: false,
             DefaultValue: null,
-            HelpText: $"Leave blank to use the farm valuation rate (৳ {rate} / live kg — {valuation.RateBasisDescription}). Enter a rate to see a what-if valuation.");
+            HelpText: $"Leave blank to value each animal at its own price, as on the animal page: your own sales of its breed in the last 12 months, else the breed price, else the farm rule (৳ {rate} / live kg — {valuation.RateBasisDescription}). Enter a rate to see a what-if valuation.");
+    }
+
+    /// <summary>"As of … · valued at …" for the report subject line.</summary>
+    public static string SubjectBasis(ReportContext context, IAnimalValuationService valuation)
+    {
+        var bn = context.Language == ReportLanguage.Bn;
+        if (ReadOverride(context) is { } entered)
+        {
+            var r = entered.ToString("N0", CultureInfo.InvariantCulture);
+            return bn ? $"খামারে থাকা পশুর মূল্য ৳ {r}/কেজি জীবন্ত ওজন দরে" : $"animals on the farm valued at ৳ {r} per live kg";
+        }
+
+        if (valuation.Policy == Farm360.Domain.BusinessRules.AnimalValuationPolicy.CostBasis)
+            return bn ? "খামারে থাকা পশুর মূল্য: নিজের বিক্রি বা জাতের দাম, না থাকলে খরচে" : "animals on the farm valued at own sales or breed price, else at cost";
+
+        var rate = valuation.LiveWeightRatePerKgBdt.ToString("N0", CultureInfo.InvariantCulture);
+        return bn
+            ? $"খামারে থাকা পশুর মূল্য: নিজের বিক্রি বা জাতের দাম, না থাকলে ৳ {rate}/কেজি"
+            : $"animals on the farm valued at own sales or breed price, else ৳ {rate} per live kg";
     }
 
     /// <summary>The user's override rate, or null to use the farm's valuation policy.</summary>

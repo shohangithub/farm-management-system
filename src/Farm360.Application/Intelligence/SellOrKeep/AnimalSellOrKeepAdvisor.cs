@@ -1,6 +1,6 @@
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Intelligence.Pricing;
 using Farm360.Application.Intelligence.Services;
-using Farm360.Domain.BusinessRules;
 using Farm360.Domain.Feeding.Interfaces.Repositories;
 using Farm360.Domain.Finance.Interfaces;
 using Farm360.Domain.Health.Interfaces.Repositories;
@@ -31,6 +31,12 @@ public interface IAnimalSellOrKeepAdvisor
         Guid? animalId = null,
         bool includeProjection = false,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The Fattening plan for one animal: the same inputs and calculator as <see cref="AdviseAnimalAsync"/>,
+    /// with optional what-if <paramref name="overrides"/>. Null when not found or no longer on the farm.
+    /// </summary>
+    Task<FatteningPlan?> PlanAnimalAsync(Guid animalId, SellOrKeepOverrides? overrides, DateOnly? today = null, CancellationToken cancellationToken = default);
 }
 
 /// <inheritdoc cref="IAnimalSellOrKeepAdvisor"/>
@@ -38,7 +44,8 @@ public interface IAnimalSellOrKeepAdvisor
 /// Reads everything a farm needs in a handful of set-based calls (animals, weigh-ins, cost books, feed
 /// eaten in the last 30 days, labour/overhead shares and treatments in the last 90 days) and hands each
 /// animal to <see cref="SellOrKeepCalculator"/>. Cost to date is <see cref="IAnimalValuationService.CostToDate"/>,
-/// the same figure every other report prints.
+/// the same figure every other report prints; the sale price is <see cref="IAnimalPriceResolver"/>, the same
+/// price the animal page's "Profit if sold today" card shows.
 /// </remarks>
 public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
 {
@@ -52,6 +59,7 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
     private readonly IVaccinationRepository _vaccinations;
     private readonly IInventoryItemRepository _items;
     private readonly IAnimalValuationService _valuation;
+    private readonly IAnimalPriceResolver _prices;
     private readonly IFarmClock _clock;
 
     public AnimalSellOrKeepAdvisor(
@@ -65,6 +73,7 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
         IVaccinationRepository vaccinations,
         IInventoryItemRepository items,
         IAnimalValuationService valuation,
+        IAnimalPriceResolver prices,
         IFarmClock? clock = null,
         SellOrKeepAssumptions? assumptions = null)
     {
@@ -78,6 +87,7 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
         _vaccinations = vaccinations;
         _items = items;
         _valuation = valuation;
+        _prices = prices;
         _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         Assumptions = assumptions ?? SellOrKeepAssumptions.Default;
     }
@@ -94,6 +104,22 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
         return list.Count > 0 ? list[0] : null;
     }
 
+    public async Task<FatteningPlan?> PlanAnimalAsync(Guid animalId, SellOrKeepOverrides? overrides, DateOnly? today = null, CancellationToken cancellationToken = default)
+    {
+        var animal = await _animals.GetByIdAsync(animalId, cancellationToken).ConfigureAwait(false);
+        if (animal is null || !AnimalStatusGroups.IsOnFarm(animal.Status))
+            return null;
+
+        var inputs = await LoadInputsAsync(animal.FarmId, today ?? _clock.Today, null, animal.Id, cancellationToken).ConfigureAwait(false);
+        if (inputs.Count == 0)
+            return null;
+
+        var o = overrides ?? new SellOrKeepOverrides();
+        var plan = SellOrKeepCalculator.Advise(inputs[0], Assumptions, includeProjection: true, o);
+        var defaults = o.IsEmpty ? plan with { Projection = [] } : SellOrKeepCalculator.Advise(inputs[0], Assumptions, includeProjection: false);
+        return new FatteningPlan(defaults, plan, o);
+    }
+
     public async Task<IReadOnlyList<SellOrKeepAdvice>> AdviseFarmAsync(
         Guid farmId,
         DateOnly? today = null,
@@ -102,7 +128,18 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
         bool includeProjection = false,
         CancellationToken cancellationToken = default)
     {
-        var day = today ?? _clock.Today;
+        var inputs = await LoadInputsAsync(farmId, today ?? _clock.Today, batchId, animalId, cancellationToken).ConfigureAwait(false);
+        return inputs.Select(i => SellOrKeepCalculator.Advise(i, Assumptions, includeProjection)).ToList();
+    }
+
+    /// <summary>Everything the calculator needs, for every animal on the farm (optionally one batch or one animal).</summary>
+    private async Task<IReadOnlyList<SellOrKeepInput>> LoadInputsAsync(
+        Guid farmId,
+        DateOnly day,
+        Guid? batchId,
+        Guid? animalId,
+        CancellationToken cancellationToken)
+    {
         var a = Assumptions;
 
         var all = await _animals.GetAllByFarmAsync(farmId, cancellationToken).ConfigureAwait(false);
@@ -195,13 +232,8 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
             health[v.AnimalId] = (current.Cost + dose, current.Treatments);
         }
 
-        // The farm's own sales in the last 12 months, by breed: price per kg = Σ price ÷ Σ sale weight.
-        var salesFrom = day.AddDays(-a.OwnSalesLookbackDays);
-        var ownSales = all
-            .Where(x => x.Status == AnimalStatus.Sold && x.SaleDate is { } d && d >= salesFrom && d <= day
-                        && x.SalePriceBdt is > 0m && x.SaleWeightKg is > 0m)
-            .GroupBy(x => x.BreedId)
-            .ToDictionary(g => g.Key, g => (Count: g.Count(), PerKg: g.Sum(x => x.SalePriceBdt!.Value) / g.Sum(x => x.SaleWeightKg!.Value)));
+        // One price resolver for the whole app: own sales of the breed, breed price, then the farm rule.
+        var prices = _prices.FromLoaded(targets[0].TenantId, farmId, all, breeds, day);
 
         // Recent deaths in the same batch.
         var batchDeaths = all
@@ -216,22 +248,16 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
                 batchNames[id] = b.Name;
         }
 
-        var meat = _valuation.MeatPricePerKgBdt;
-        var dressing = _valuation.DressingRatio;
-        var liveRate = _valuation.LiveWeightRatePerKgBdt;
-        var usesLive = _valuation.Policy == AnimalValuationPolicy.LiveWeightMarket && liveRate != Math.Round(meat * dressing, 2);
-
-        var result = new List<SellOrKeepAdvice>(targets.Count);
+        var result = new List<SellOrKeepInput>(targets.Count);
         foreach (var animal in targets)
         {
             breeds.TryGetValue(animal.BreedId, out var breed);
             ledgers.TryGetValue(animal.Id, out var ledger);
             var cost = _valuation.CostToDate(animal, ledger, lifetimeFeed.GetValueOrDefault(animal.Id));
-            var sales = ownSales.TryGetValue(animal.BreedId, out var s) ? s : (Count: 0, PerKg: 0m);
-            var price = SellOrKeepCalculator.ResolvePrice(
-                sales.PerKg, sales.Count, breed?.ExpectedPricePerKgBdt, usesLive, liveRate, meat, dressing, a);
+            var price = prices.For(animal);
             var lab = labour.TryGetValue(animal.Id, out var l) ? l : (Amount: 0m, Days: new HashSet<int>());
             var h = health.GetValueOrDefault(animal.Id);
+            var target = BreedTargetDetail(breed);
 
             var input = new SellOrKeepInput
             {
@@ -250,11 +276,14 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
                 HealthCostInWindowBdt = h.Cost,
                 TreatmentsInWindow = h.Treatments,
                 BatchDeathsInWindow = animal.BatchId is { } b2 ? batchDeaths.GetValueOrDefault(b2) : 0,
-                BreedTargetAdgKg = BreedTarget(breed),
+                BreedTargetAdgKg = target.TargetKg,
+                BreedTargetBasis = target.Basis,
+                BreedTargetMinKg = target.MinKg,
+                BreedTargetMaxKg = target.MaxKg,
                 Price = price,
             };
 
-            result.Add(SellOrKeepCalculator.Advise(input, a, includeProjection));
+            result.Add(input);
         }
 
         return result;
@@ -264,15 +293,23 @@ public sealed class AnimalSellOrKeepAdvisor : IAnimalSellOrKeepAdvisor
     /// The breed's growth target: the middle of its standard ADG range, else its good-commercial-farm
     /// ADG, else its average-farm ADG. Null when the breed has none.
     /// </summary>
-    public static decimal? BreedTarget(Breed? breed)
+    public static decimal? BreedTarget(Breed? breed) => BreedTargetDetail(breed).TargetKg;
+
+    /// <summary>
+    /// <see cref="BreedTarget"/> with where it came from. All breed ADG figures are kg/day (Deshi's standard
+    /// range is 0.20–0.40 kg/day, so its target is 0.30 kg/day).
+    /// </summary>
+    public static (decimal? TargetKg, SellOrKeepBreedTargetBasis Basis, decimal? MinKg, decimal? MaxKg) BreedTargetDetail(Breed? breed)
     {
         if (breed is null)
-            return null;
+            return (null, SellOrKeepBreedTargetBasis.None, null, null);
         if (breed.StandardAdgMin > 0m && breed.StandardAdgMax > 0m)
-            return Math.Round((breed.StandardAdgMin + breed.StandardAdgMax) / 2m, 3);
+            return (Math.Round((breed.StandardAdgMin + breed.StandardAdgMax) / 2m, 3), SellOrKeepBreedTargetBasis.StandardRange, breed.StandardAdgMin, breed.StandardAdgMax);
         if (breed.AdgGoodCommercialFarm > 0m)
-            return breed.AdgGoodCommercialFarm;
-        return breed.AdgAverageFarm > 0m ? breed.AdgAverageFarm : null;
+            return (breed.AdgGoodCommercialFarm, SellOrKeepBreedTargetBasis.GoodCommercialFarm, null, null);
+        return breed.AdgAverageFarm > 0m
+            ? (breed.AdgAverageFarm, SellOrKeepBreedTargetBasis.AverageFarm, null, null)
+            : (null, SellOrKeepBreedTargetBasis.None, null, null);
     }
 
     private static IReadOnlyList<SellOrKeepWeighing> FallbackWeighing(Animal animal) =>

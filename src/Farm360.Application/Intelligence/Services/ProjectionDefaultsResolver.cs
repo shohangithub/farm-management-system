@@ -1,4 +1,5 @@
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Intelligence.Pricing;
 using System;
 using System.Linq;
 using System.Threading;
@@ -25,6 +26,7 @@ public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
     private readonly IAnimalFeedAllocationRepository _feedAllocationRepository;
     private readonly IAnimalFeedingPlanRepository _feedingPlanRepository;
     private readonly IAnimalValuationService _valuation;
+    private readonly IAnimalPriceResolver _prices;
 
     public ProjectionDefaultsResolver(
         IAnimalRepository animalRepository,
@@ -33,6 +35,7 @@ public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
         IAnimalFeedAllocationRepository feedAllocationRepository,
         IAnimalFeedingPlanRepository feedingPlanRepository,
         IAnimalValuationService valuation,
+        IAnimalPriceResolver prices,
         IFarmClock? clock = null)
     {
         _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
@@ -42,6 +45,7 @@ public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
         _feedAllocationRepository = feedAllocationRepository;
         _feedingPlanRepository = feedingPlanRepository;
         _valuation = valuation;
+        _prices = prices;
     }
 
     public async Task<ProjectionDefaultsDto> ResolveDefaultsAsync(Guid animalId, CancellationToken cancellationToken)
@@ -112,9 +116,21 @@ public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
                 ? "Purchase price + allocated feed (no cost ledger yet)"
                 : "Cost to date (acquisition + feed + vet + labour + overhead)");
 
-        // 11. Live-weight valuation rate under the farm's valuation policy.
+        // 11. What the animal sells for today: the one price resolver (own sales, breed price, farm rule),
+        //     the same price the Sell-or-Keep advisor uses.
+        var price = await _prices.ForAnimalAsync(animal, _clock.Today, cancellationToken);
         var liveRate = new ProjectionDefaultValueDto<decimal>(
-            _valuation.LiveWeightRatePerKgBdt, ProjectionSourceCode.FarmSetting, _valuation.RateBasisDescription);
+            price.PricePerKgBdt,
+            price.Source switch
+            {
+                AnimalPriceSource.OwnSales => ProjectionSourceCode.AnimalRecord,
+                AnimalPriceSource.BreedExpected => ProjectionSourceCode.BreedStandard,
+                _ => ProjectionSourceCode.FarmSetting,
+            },
+            price.ExplanationEn);
+        var marketPrice = new AnimalMarketPriceDto(
+            price.PricePerKgBdt, price.PerHeadBdt, price.Source.ToString(), price.SalesCount, price.ValuedAtCost,
+            price.ExplanationEn, price.ExplanationBn);
 
         return new ProjectionDefaultsDto(
             StartingLiveWeightKg: startingWeight,
@@ -130,7 +146,8 @@ public class ProjectionDefaultsResolver : IProjectionDefaultsResolver
             MonthlyLaborCostBdt: laborCost,
             FatteningPeriodDays: period,
             CostToDateBdt: costToDate,
-            LiveWeightValuePerKgBdt: liveRate
+            LiveWeightValuePerKgBdt: liveRate,
+            MarketPrice: marketPrice
         );
     }
 

@@ -34,6 +34,8 @@ internal sealed class GetFarmSetupStatusQueryHandler : IRequestHandler<GetFarmSe
         var steps = new List<FarmSetupStepDto>
         {
             new("sheds", c.Sheds > 0, c.Sheds),
+            // Latitude + longitude drive the weather forecast and the farm map.
+            new("location", c.HasLocation, c.HasLocation ? 1 : 0),
             new("breeds", c.Breeds > 0, c.Breeds),
             new("animals", c.Animals > 0, c.Animals),
             new("weights", c.WeightRecords > 0, c.WeightRecords),

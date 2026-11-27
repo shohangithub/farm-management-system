@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Intelligence.Pricing;
 using Farm360.Application.Intelligence.SellOrKeep;
 using Farm360.Application.Reporting.Abstractions;
 using Farm360.Application.Reporting.Definitions.Finance;
@@ -95,16 +96,16 @@ public sealed class SellOrKeepReportDefinition : ReportDefinition<SellOrKeepRepo
             var decline = (a.GrowthDeclineFraction * 100m).ToString("0", Invariant);
             return
             [
-                new("Invested = purchase + feed + vet & medicine + labour and overhead share so far (the animal's cost book). Profit = weight × price per kg − invested.",
-                    "বিনিয়োগ = ক্রয়মূল্য + খাদ্য + চিকিৎসা ও ওষুধ + এ পর্যন্ত শ্রম ও পরোক্ষ খরচের অংশ (পশুর খরচের হিসাব)। লাভ = ওজন × প্রতি কেজি দাম − বিনিয়োগ।"),
+                new("Invested = purchase + feed + vet & medicine + labour and overhead share so far (the animal's cost book). Profit = weight × price per kg (+ by-products per head, if any) − invested.",
+                    "বিনিয়োগ = ক্রয়মূল্য + খাদ্য + চিকিৎসা ও ওষুধ + এ পর্যন্ত শ্রম ও পরোক্ষ খরচের অংশ (পশুর খরচের হিসাব)। লাভ = ওজন × প্রতি কেজি দাম (+ প্রতি পশুর উপজাত, যদি থাকে) − বিনিয়োগ।"),
                 new($"Growth = the straight-line trend of the weighings in the last {a.RecentGrowthWindowDays} days (at least 2); otherwise the gain from the first to the last weighing. Today's weight adds the growth since the last weighing.",
                     $"বৃদ্ধি = গত {a.RecentGrowthWindowDays} দিনের ওজনগুলোর সরলরেখা প্রবণতা (অন্তত ২টি); না থাকলে প্রথম থেকে শেষ ওজনের বৃদ্ধি। আজকের ওজনে শেষ ওজনের পরের বৃদ্ধি যোগ করা হয়েছে।"),
                 new($"Growth slows as the animal gets heavier: the projected gain per day falls by {decline}% over {a.GrowthDeclineDays} days and then stays there. It is compared with the breed's standard gain (±{(a.AtTargetBand * 100m).ToString("0", Invariant)}% = at target).",
                     $"ওজন বাড়লে বৃদ্ধি কমে: অনুমিত দৈনিক বৃদ্ধি {a.GrowthDeclineDays} দিনে {decline}% কমে, তারপর সেখানেই থাকে। জাতের মান বৃদ্ধির সাথে তুলনা করা হয়েছে (±{(a.AtTargetBand * 100m).ToString("0", Invariant)}% = লক্ষ্যে)।"),
                 new($"Daily cost = feed eaten in the last {a.FeedWindowDays} days ÷ days + labour & overhead and health (treatments, vaccines) per day over the last {a.HealthWindowDays} days. Feed grows with body size (weight^0.75).",
                     $"দৈনিক খরচ = গত {a.FeedWindowDays} দিনের খাদ্য ÷ দিন + গত {a.HealthWindowDays} দিনের দৈনিক শ্রম ও পরোক্ষ এবং স্বাস্থ্য (চিকিৎসা, টিকা) খরচ। শরীর বড় হলে খাদ্য বাড়ে (ওজন^০.৭৫)।"),
-                new($"Price per kg live weight: your own sales of the same breed in the last {a.OwnSalesLookbackDays / 30} months (at least {a.MinOwnSales}), else the breed's expected price, else the farm's live-weight rate, else meat price × dressing %.",
-                    $"প্রতি কেজি জীবিত ওজনের দাম: গত {a.OwnSalesLookbackDays / 30} মাসে একই জাতের নিজের বিক্রি (অন্তত {a.MinOwnSales}টি), না হলে জাতের প্রত্যাশিত দাম, না হলে খামারের জীবিত ওজনের দর, না হলে মাংসের দাম × ড্রেসিং %।"),
+                new($"Price per kg live weight — the same price the animal page uses: your own sales of the same breed in the last {AnimalPriceResolution.OwnSalesLookbackDays / 30} months (at least {AnimalPriceResolution.MinOwnSales}), else the breed's price, else the farm rule: the live-weight price, or meat price × dressing % × (1 + by-products %) plus by-products per head. A farm that values at cost uses the meat estimate here.",
+                    $"প্রতি কেজি জীবিত ওজনের দাম — পশুর পাতায় যে দাম, সেটিই: গত {AnimalPriceResolution.OwnSalesLookbackDays / 30} মাসে একই জাতের নিজের বিক্রি (অন্তত {AnimalPriceResolution.MinOwnSales}টি), না হলে জাতের দাম, না হলে খামারের নিয়ম: জীবিত ওজনের দাম, অথবা মাংসের দাম × ড্রেসিং % × (১ + উপজাত %) এবং প্রতি পশুর উপজাতের দাম। খরচে মূল্যায়ন করা খামারে এখানে মাংসের অনুমান ব্যবহার হয়।"),
                 new($"Best day = the day profit is highest in the next {a.HorizonDays} days: keep while one more day's gain is worth more than that day's cost. Sell now when it is within {a.SellNowWithinDays} days, or when an often-sick animal is in profit.",
                     $"সেরা দিন = আগামী {a.HorizonDays} দিনে যেদিন লাভ সবচেয়ে বেশি: যতদিন একদিনের বৃদ্ধির দাম সেদিনের খরচের চেয়ে বেশি, ততদিন রাখুন। {a.SellNowWithinDays} দিনের মধ্যে হলে, বা প্রায়ই অসুস্থ পশু লাভে থাকলে এখনই বিক্রি।"),
                 new($"Often sick = {a.FrequentlySickTreatments} or more treatments in {a.HealthWindowDays} days, or health cost above {(a.FrequentlySickHealthShareOfFeed * 100m).ToString("0", Invariant)}% of feed cost. Confidence is lower with few or scattered weighings, sickness, or a weighing older than {a.StaleWeighingDays} days.",
@@ -415,13 +416,7 @@ public sealed class SellOrKeepReportDefinition : ReportDefinition<SellOrKeepRepo
     {
         ArgumentNullException.ThrowIfNull(x);
         var bn = language == ReportLanguage.Bn;
-        return x.Price.Source switch
-        {
-            SellOrKeepPriceSource.OwnSales => bn ? $"আপনার নিজের {x.Price.SalesCount}টি {x.BreedName} বিক্রির গড়" : $"based on your own sales of {x.Price.SalesCount} {x.BreedName}",
-            SellOrKeepPriceSource.BreedExpected => bn ? $"{x.BreedName} জাতের প্রত্যাশিত দাম" : $"the expected price set for {x.BreedName}",
-            SellOrKeepPriceSource.FarmLiveRate => bn ? "খামারের জীবিত ওজনের দর" : "the farm's live-weight rate",
-            _ => bn ? "মাংসের দাম × ড্রেসিং %" : "meat price × dressing %",
-        };
+        return bn ? x.Price.ExplanationBn : x.Price.ExplanationEn;
     }
 
     // ── Summary boxes ───────────────────────────────────────────────────────
@@ -520,7 +515,7 @@ public sealed class SellOrKeepReportDefinition : ReportDefinition<SellOrKeepRepo
                 $"আগে ওজন নিন: {Tags(weigh)} — পরামর্শের জন্য অন্তত দুবার ওজন দরকার।"));
         }
 
-        var sources = advice.GroupBy(x => x.Price.Source).OrderBy(g => g.Key)
+        var sources = advice.GroupBy(x => (x.Price.Source, x.Price.ExplanationEn)).OrderBy(g => g.Key.Source)
             .Select(g => $"{N(g.Count())} — {PriceSourceText(g.First(), language)}").ToList();
         if (sources.Count > 0)
             insights.Add(T("Price per kg used: ", "যে দামে হিসাব: ") + string.Join("; ", sources) + T(".", "।"));

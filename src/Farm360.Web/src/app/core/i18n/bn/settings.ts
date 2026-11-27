@@ -102,8 +102,7 @@ export const BN_SETTINGS: Record<string, string> = {
   'Valuation & prices': 'মূল্যায়ন ও দাম',
   'Custom': 'নিজস্ব',
   'How an animal is valued': 'পশুর মূল্য কীভাবে ধরা হবে',
-  'Sets the "current value" shown for each animal and herd on dashboards, projections and the balance sheet. Default: {value}.':
-    'ড্যাশবোর্ড, পূর্বাভাস ও স্থিতিপত্রে প্রতিটি পশু ও পালের "বর্তমান মূল্য" এটি দিয়ে ঠিক হয়। ডিফল্ট: {value}।',
+  'Sets the market value shown for each animal and herd on dashboards, projections and sell-or-keep advice (the balance sheet always values animals at cost). Default: {value}.': 'ড্যাশবোর্ড, ভবিষ্যৎ হিসাব আর বিক্রির পরামর্শে প্রতিটি পশু ও পালের বাজারমূল্য এটা দিয়ে ধরা হয় (স্থিতিপত্রে পশুর মূল্য সবসময় খরচে ধরা হয়)। সাধারণ: {value}।',
   'Dressing percentage (%)': 'মাংসের হার (%)',
   'Enter a percentage between 30 and 70.': '30 থেকে 70-এর মধ্যে একটি শতাংশ লিখুন।',
   "How much of a live animal's weight becomes saleable meat, for breeds that don't state their own. Used by the meat-yield valuation. Default: {value}%.":
@@ -115,6 +114,18 @@ export const BN_SETTINGS: Record<string, string> = {
   'Live-weight price per kg (৳)': 'প্রতি কেজি জীবিত ওজনের দাম (৳)',
   'What a buyer pays per kg of live animal. Only used when animals are valued by live weight. Default: {value}.':
     'ক্রেতা জীবিত পশুর প্রতি কেজিতে যা দেন। শুধু জীবিত ওজন দিয়ে মূল্যায়ন করলে ব্যবহার হয়। ডিফল্ট: {value}।',
+  'By-products as % of meat value': 'উপজাতের দাম: মাংসের দামের %',
+  'Enter a percentage between 0 and 50.': '0 থেকে 50-এর মধ্যে একটি শতাংশ লিখুন।',
+  'Added on top of the meat value: weight × dressing × meat price × (1 + this %). Used by the meat-yield valuation only. Default: {value}%.':
+    'মাংসের দামের উপর যোগ হয়: ওজন × মাংসের হার × মাংসের দাম × (১ + এই %)। শুধু মাংসের ফলন দিয়ে মূল্যায়নে ব্যবহার হয়। ডিফল্ট: {value}%।',
+  'By-products value per head (৳)': 'প্রতি পশুর উপজাতের দাম (মাথা, পা, ভুড়ি, কলিজা, চামড়া) (৳)',
+  'Enter an amount between 0 and ৳ 10,00,000.': '0 থেকে ৳ 10,00,000-এর মধ্যে একটি পরিমাণ লিখুন।',
+  'Added once to each animal valued by meat yield. Default: {value}.':
+    'মাংসের ফলন দিয়ে মূল্যায়ন করা প্রতিটি পশুর দামে একবার যোগ হয়। ডিফল্ট: {value}।',
+  'Head, feet, tripe, liver and hide are sold separately; the market live price already includes them.':
+    'মাথা, পা, ভুড়ি, কলিজা ও চামড়া আলাদা বিক্রি হয়; বাজারের জীবিত ওজনের দামে এগুলো আগে থেকেই ধরা আছে।',
+  'If you know the local live price per kg, choose "Live weight × live-weight price": it is the simplest and already counts everything.':
+    'এলাকার জীবিত ওজনের প্রতি কেজি দাম জানলে "জীবিত ওজন × জীবিত ওজনের দাম" বেছে নিন: এটি সবচেয়ে সহজ এবং সবকিছু আগে থেকেই ধরে।',
   'Feed allocation': 'খাদ্য খরচ বণ্টন',
   'How shared feed is split': 'একসাথে দেওয়া খাদ্য কীভাবে ভাগ হবে',
   "When a batch, shed or pen is fed together, decides how much of that feed's cost each animal carries. Default: {value}.":

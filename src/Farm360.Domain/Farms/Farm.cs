@@ -145,6 +145,23 @@ public sealed class Farm : AuditableEntity, IAggregateRoot
             this));
     }
 
+    /// <summary>Sets only the farm's map point (e.g. from the Weather page); every other field is kept.</summary>
+    public void SetLocation(double latitude, double longitude)
+    {
+        if (double.IsNaN(latitude) || latitude is < -90 or > 90)
+            throw new ArgumentOutOfRangeException(nameof(latitude), "Latitude must be between -90 and 90.");
+        if (double.IsNaN(longitude) || longitude is < -180 or > 180)
+            throw new ArgumentOutOfRangeException(nameof(longitude), "Longitude must be between -180 and 180.");
+
+        Latitude = latitude;
+        Longitude = longitude;
+
+        RaiseDomainEvent(new FarmUpdatedEvent(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            this));
+    }
+
     public void ChangeStatus(FarmStatus status)
     {
         if (Status == status) return;

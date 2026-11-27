@@ -118,7 +118,8 @@ public class AnimalLifeHistoryReportRunTests
             NSubstitute.Substitute.For<Farm360.Domain.Inventory.Interfaces.Repositories.IInventoryItemRepository>(),
             NSubstitute.Substitute.For<Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository>(),
             valuation,
-            NSubstitute.Substitute.For<Farm360.Domain.Finance.Interfaces.ITradeBillRepository>());
+            NSubstitute.Substitute.For<Farm360.Domain.Finance.Interfaces.ITradeBillRepository>(),
+            NSubstitute.Substitute.For<Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver>());
 
         var data = await ReportingTestKit.RunAsync(report, ReportingTestKit.Context(
             new System.Collections.Generic.Dictionary<string, string?> { ["animalId"] = animal.Id.ToString() }));

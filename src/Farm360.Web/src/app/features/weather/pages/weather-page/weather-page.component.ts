@@ -8,7 +8,11 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { FarmMapComponent } from '../../../../shared/components/farm-map/farm-map.component';
+import { FarmMapComponent, PickedLocation } from '../../../../shared/components/farm-map/farm-map.component';
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { parseApiError } from '../../../../core/utils/error-parser';
+import { FarmService } from '../../../farms/services/farm.service';
 import { WeatherService } from '../../services/weather.service';
 import { FarmWeather, HeatStressBand, WeatherAdvice, WeatherDay, WeatherWindow } from '../../models/weather.model';
 import {
@@ -31,13 +35,15 @@ interface AdviceGroup {
   selector: 'app-weather-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, MatIconModule, TranslatePipe, PageHeaderComponent, FarmMapComponent],
+  imports: [CommonModule, RouterModule, MatIconModule, TranslatePipe, CanPipe, PageHeaderComponent, FarmMapComponent],
   templateUrl: './weather-page.component.html',
 })
 export class WeatherPageComponent {
   private readonly weatherService = inject(WeatherService);
   private readonly context = inject(WorkingContextService);
   private readonly i18n = inject(I18nService);
+  private readonly farms = inject(FarmService);
+  private readonly notify = inject(NotificationService);
   private readonly farm = toSignal(this.context.currentFarm$, { initialValue: null });
   private readonly refreshTick = signal(0);
 
@@ -68,6 +74,79 @@ export class WeatherPageComponent {
   readonly bands = BANDS;
   readonly round = round;
   readonly clock = clockOf;
+
+  // ── Set / change the farm location here (users with farms.edit) ──────────────────────────────────
+  /** True while an existing location is being changed (the map turns editable). */
+  readonly editingLocation = signal(false);
+  /** The point picked on the map or from GPS, not saved yet. */
+  readonly draftLocation = signal<PickedLocation | null>(null);
+  readonly savingLocation = signal(false);
+  readonly locating = signal(false);
+  readonly locationError = signal<string | null>(null);
+
+  startLocationEdit(): void {
+    this.draftLocation.set(null);
+    this.locationError.set(null);
+    this.editingLocation.set(true);
+  }
+
+  cancelLocationEdit(): void {
+    this.draftLocation.set(null);
+    this.locationError.set(null);
+    this.editingLocation.set(false);
+  }
+
+  onLocationPicked(point: PickedLocation): void {
+    this.locationError.set(null);
+    this.draftLocation.set(point);
+  }
+
+  /** Fill the point from the device's GPS / browser location (stand at the farm). */
+  useCurrentLocation(): void {
+    this.locationError.set(null);
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.locationError.set(this.i18n.t('This browser cannot share its location. Copy the point from Google Maps instead.'));
+      return;
+    }
+    this.locating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        this.locating.set(false);
+        this.draftLocation.set({
+          lat: Math.round(position.coords.latitude * 1e6) / 1e6,
+          lon: Math.round(position.coords.longitude * 1e6) / 1e6,
+        });
+      },
+      err => {
+        this.locating.set(false);
+        this.locationError.set(this.i18n.t(err.code === err.PERMISSION_DENIED
+          ? 'Location permission was refused. Allow it in the browser, or copy the point from Google Maps.'
+          : 'Could not read your location. Try again outdoors, or copy the point from Google Maps.'));
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  }
+
+  /** Saves the picked point, then loads the weather again (the server's forecast cache is keyed by the coordinates). */
+  saveLocation(): void {
+    const id = this.farmId();
+    const point = this.draftLocation();
+    if (!id || !point || this.savingLocation()) return;
+    this.savingLocation.set(true);
+    this.farms.setFarmLocation(id, point.lat, point.lon).subscribe({
+      next: () => {
+        this.savingLocation.set(false);
+        this.editingLocation.set(false);
+        this.draftLocation.set(null);
+        this.notify.success(this.i18n.t('Farm location saved.'));
+        this.refresh();
+      },
+      error: err => {
+        this.savingLocation.set(false);
+        this.notify.error(parseApiError(err, 'Could not save the farm location.'));
+      },
+    });
+  }
 
   refresh(): void { this.refreshTick.update(v => v + 1); }
   print(): void { window.print(); }

@@ -93,7 +93,7 @@ export interface ActivityFeedItem {
 
 /** Stable keys of the "Get your farm ready" checklist steps, in setup order (server: GetFarmSetupStatusQuery). */
 export type FarmSetupStepKey =
-  | 'sheds' | 'breeds' | 'animals' | 'weights' | 'inventory'
+  | 'sheds' | 'location' | 'breeds' | 'animals' | 'weights' | 'inventory'
   | 'recipes' | 'feedChart' | 'plans' | 'accounts' | 'team';
 
 export interface FarmSetupStep {

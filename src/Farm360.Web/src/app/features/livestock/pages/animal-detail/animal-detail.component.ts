@@ -3,7 +3,7 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { parseApiError } from '../../../../core/utils/error-parser';
 import {
   Component, inject, signal, ChangeDetectionStrategy, computed,
-  ViewChild
+  ViewChild, ViewChildren, QueryList, ElementRef
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -30,7 +30,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTabsModule, MatTab } from '@angular/material/tabs';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
@@ -52,7 +52,6 @@ import { RecordBcsDialogComponent } from '../../dialogs/record-bcs-dialog/record
 import { RecordWeightDialogComponent } from '../../dialogs/record-weight-dialog/record-weight-dialog.component';
 import { UploadPhotoDialogComponent } from '../../dialogs/upload-photo-dialog/upload-photo-dialog.component';
 import { RecordSaleDialogComponent } from '../../dialogs/record-sale-dialog/record-sale-dialog.component';
-import { AnimalIntelligenceDialogComponent } from '../../dialogs/animal-intelligence-dialog/animal-intelligence-dialog.component';
 import { AnimalEditDialogComponent } from '../../components/animal-edit-dialog/animal-edit-dialog';
 import { SellOrKeepCardComponent } from '../../components/sell-or-keep-card/sell-or-keep-card.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -61,7 +60,8 @@ import { of } from 'rxjs';
 import { NgxEchartsModule } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
-import { CattleProfitProjectionComponent } from '../../../intelligence/components/projections/cattle-profit-projection.component';
+import { FatteningPlanComponent } from '../../components/fattening-plan/fattening-plan.component';
+import { SellOrKeepAdvice, firstWeighingIsArrival } from '../../models/sell-or-keep.models';
 import { IntelligenceService } from '../../../intelligence/services/intelligence.service';
 import { FeedingService } from '../../../feeding/services/feeding.service';
 import { AssignFeedingPlanDialogComponent, SetRationDialogData } from '../../../feeding/components/dialogs/assign-feeding-plan-dialog/assign-feeding-plan-dialog.component';
@@ -86,7 +86,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule, MatTooltipModule, HasPermissionDirective,
     NgxEchartsModule,
-    CattleProfitProjectionComponent, TranslatePipe, SellOrKeepCardComponent
+    FatteningPlanComponent, TranslatePipe, SellOrKeepCardComponent
   ],
   templateUrl: './animal-detail.component.html',
   styleUrl: './animal-detail.component.scss'
@@ -115,6 +115,16 @@ export class AnimalDetailComponent {
   readonly couldNotLoadTitle = this.i18n.t("Couldn't load animal");
 
   readonly isExporting = signal(false);
+  /** The Sell-or-keep advice the card loaded: gives the header the recent (60-day) gain per day. */
+  readonly sellOrKeep = signal<SellOrKeepAdvice | null>(null);
+  /**
+   * The header ADG is (newest − oldest weighing) ÷ days between them: "since arrival" when the first
+   * weighing was within a week of arrival, otherwise "since the first weighing".
+   */
+  readonly adgLifetimeLabel = computed(() => {
+    const a = this.sellOrKeep();
+    return a && firstWeighingIsArrival(a) ? 'since arrival' : 'since the first weighing';
+  });
   readonly AnimalStatus = AnimalStatus;
   readonly AnimalSex = AnimalSex;
   readonly VaccinationStatus = VaccinationStatus;
@@ -126,16 +136,28 @@ export class AnimalDetailComponent {
   private refreshTrigger = signal(0);
   /** Fallback live rate until the farm's valuation rate loads (FarmBusinessRules default). */
   private static readonly FALLBACK_LIVE_RATE = 400;
-  /** Rate the user typed into the card; null = use the farm's valuation rate. */
+  /** Rate the user typed into the card (a what-if); null = the animal's resolved price. */
   private readonly liveWeightPriceOverride = signal<number | null>(null);
+  /** The animal's price from the server's one resolver — the same price the Sell-or-Keep card uses. */
+  readonly marketPrice = computed(() => this.animalDataResult()?.projectionDefaults?.marketPrice ?? null);
+  /** A typed rate is in use. */
+  readonly isManualRate = computed(() => this.liveWeightPriceOverride() !== null);
+  /** The farm values animals at cost and no what-if rate is typed: value = total investment. */
+  readonly valuedAtCost = computed(() => !this.isManualRate() && !!this.marketPrice()?.valuedAtCost);
   readonly liveWeightPrice = computed(() =>
     this.liveWeightPriceOverride()
+    ?? this.marketPrice()?.pricePerKgBdt
     ?? this.animalDataResult()?.projectionDefaults?.liveWeightValuePerKgBdt?.value
     ?? AnimalDetailComponent.FALLBACK_LIVE_RATE);
-  readonly liveWeightPriceSource = computed(() =>
-    this.liveWeightPriceOverride() !== null
-      ? 'Manual rate'
-      : this.animalDataResult()?.projectionDefaults?.liveWeightValuePerKgBdt?.sourceLabel ?? 'Default live rate');
+  /** Added once on top of weight × rate (by-products under the meat-yield rule); none for a typed rate. */
+  readonly perHeadAddition = computed(() => this.isManualRate() ? 0 : (this.marketPrice()?.perHeadBdt ?? 0));
+  /** Where the rate came from, in the user's language. */
+  readonly liveWeightPriceSource = computed(() => {
+    if (this.isManualRate()) return this.i18n.t('Manual rate');
+    const p = this.marketPrice();
+    if (p) return this.i18n.isBangla ? p.explanationBn : p.explanationEn;
+    return this.i18n.t(this.animalDataResult()?.projectionDefaults?.liveWeightValuePerKgBdt?.sourceLabel ?? 'Default live rate');
+  });
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -339,7 +361,9 @@ export class AnimalDetailComponent {
   readonly currentEstimatedValue = computed(() => {
     const a = this.animal();
     if (!a) return 0;
-    return (a.latestWeightKg || 0) * this.liveWeightPrice();
+    if (this.valuedAtCost()) return this.totalCost();
+    const w = a.latestWeightKg || 0;
+    return w > 0 ? w * this.liveWeightPrice() + this.perHeadAddition() : 0;
   });
 
   readonly isSold = computed(() => this.animal()?.status === AnimalStatus.Sold);
@@ -392,7 +416,7 @@ export class AnimalDetailComponent {
   /** Live-weight price at which selling today exactly recovers the cost to date. */
   readonly breakEvenLiveRate = computed(() => {
     const w = this.animal()?.latestWeightKg ?? 0;
-    return w > 0 ? this.totalCost() / w : 0;
+    return w > 0 ? Math.max(0, this.totalCost() - this.perHeadAddition()) / w : 0;
   });
 
   onLiveWeightPriceChange(value: number | string | null): void {
@@ -808,16 +832,18 @@ export class AnimalDetailComponent {
     });
   }
 
-  onOpenIntelligence(): void {
-    const a = this.animal();
-    if (!a) return;
-    this.dialog.open(AnimalIntelligenceDialogComponent, { disableClose: true,
-      width: '90vw',
-      maxWidth: '1200px',
-      autoFocus: false,
-      panelClass: 'bg-transparent',
-      data: { animalId: a.id, tagId: a.tagId, farmId: a.farmId }
-    });
+  /** Tabs of the details card, in display order (the Breeding tab only exists for females). */
+  @ViewChildren(MatTab) private readonly detailTabs?: QueryList<MatTab>;
+  @ViewChild('fatteningTab') private readonly fatteningTab?: MatTab;
+  @ViewChild('detailTabsCard') private readonly detailTabsCard?: ElementRef<HTMLElement>;
+  readonly selectedTabIndex = signal(0);
+
+  /** "Try other prices" on the Sell-or-keep card: open the Fattening plan tab and bring it into view. */
+  openFatteningPlan(): void {
+    const tabs = this.detailTabs?.toArray() ?? [];
+    const index = this.fatteningTab ? tabs.indexOf(this.fatteningTab) : -1;
+    if (index >= 0) this.selectedTabIndex.set(index);
+    this.detailTabsCard?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   async exportDossierPdf(): Promise<void> {

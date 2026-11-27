@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -35,7 +36,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   selector: 'app-share-market',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent,
+  imports: [TranslatePipe, MoneyPipe, CanPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -55,19 +56,19 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       [description]="'Split the farm into shares and see who owns how much.' | t"
       [breadcrumbActiveNode]="'Farm Shares' | t">
       <div actions class="flex flex-wrap items-center gap-2">
-        <button *ngIf="overview()?.isConfigured" mat-stroked-button (click)="openTradeDialog('valuation')"
+        <button *ngIf="overview()?.isConfigured && ('finance.admin' | can)" mat-stroked-button (click)="openTradeDialog('valuation')"
                 class="!rounded-xl !px-4 !py-2 !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">trending_up</mat-icon>
           <span>{{ 'Update farm value' | t }}</span>
         </button>
 
-        <button *ngIf="overview()?.isConfigured" mat-stroked-button (click)="openConfigureDialog()"
+        <button *ngIf="overview()?.isConfigured && ('finance.admin' | can)" mat-stroked-button (click)="openConfigureDialog()"
                 class="!rounded-xl !px-4 !py-2 !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-1.5 transition-all">
           <mat-icon class="!text-[18px]">tune</mat-icon>
           <span>{{ 'Share settings' | t }}</span>
         </button>
 
-        <button *ngIf="overview()?.isConfigured" mat-flat-button color="primary" (click)="openTradeDialog('purchase')"
+        <button *ngIf="overview()?.isConfigured && ('finance.admin' | can)" mat-flat-button color="primary" (click)="openTradeDialog('purchase')"
                 class="!rounded-xl !px-5 !py-2 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 transition-all">
           <mat-icon class="!text-[20px]">add_shopping_cart</mat-icon>
           <span>{{ 'Sell shares' | t }}</span>
@@ -97,7 +98,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
             {{ 'Split the farm value into shares, keep most of them yourself, and sell some to partners.' | t }}
           </p>
-          <button mat-flat-button color="primary" (click)="openConfigureDialog()"
+          <button *ngIf="'finance.admin' | can" mat-flat-button color="primary" (click)="openConfigureDialog()"
                   class="!rounded-xl !px-6 !py-2.5 !bg-primary-600 hover:!bg-primary-700 !text-white">
             <mat-icon class="mr-1.5">tune</mat-icon>
             {{ 'Set up farm shares' | t }}
@@ -133,7 +134,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <div class="bg-white dark:bg-gray-800/80 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800/50 relative overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ 'Current Share Price' | t }}</span>
-              <button (click)="openTradeDialog('valuation')" [title]="'Update share price' | t"
+              <button *ngIf="'finance.admin' | can" (click)="openTradeDialog('valuation')" [title]="'Update share price' | t"
                       class="px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition-colors">
                 {{ 'Revalue' | t }}
               </button>
@@ -274,7 +275,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               </div>
 
               <!-- Quick Market Actions Bar -->
-              <div class="p-4 rounded-xl bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent border border-teal-200/60 dark:border-teal-800/40 flex flex-wrap items-center justify-between gap-3">
+              <div *ngIf="'finance.admin' | can" class="p-4 rounded-xl bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent border border-teal-200/60 dark:border-teal-800/40 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
                     <mat-icon>shopping_bag</mat-icon>
@@ -340,7 +341,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <th class="py-3 px-4 text-right">{{ 'Invested Capital' | t }}</th>
                   <th class="py-3 px-4 text-right">{{ 'Current Market Value' | t }}</th>
                   <th class="py-3 px-4 text-right">{{ 'Gain / Loss' | t }}</th>
-                  <th class="py-3 px-4 text-center">{{ 'Actions' | t }}</th>
+                  <th *ngIf="'finance.admin' | can" class="py-3 px-4 text-center">{{ 'Actions' | t }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -372,7 +373,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     {{ config.ownerEquityValueBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right text-gray-400">—</td>
-                  <td class="py-3.5 px-4 text-center">
+                  <td *ngIf="'finance.admin' | can" class="py-3.5 px-4 text-center">
                     <button (click)="openConfigureDialog()"
                             class="px-2 py-1 text-xs text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg transition-colors">
                       {{ 'Edit' | t }}
@@ -419,7 +420,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                       <span class="text-[11px] font-normal">({{ s.returnOnInvestmentPercent >= 0 ? '+' : '' }}{{ s.returnOnInvestmentPercent | number:'1.1-1' }}%)</span>
                     </span>
                   </td>
-                  <td class="py-3.5 px-4 text-center">
+                  <td *ngIf="'finance.admin' | can" class="py-3.5 px-4 text-center">
                     <div class="inline-flex items-center gap-1">
                       <button (click)="openTradeDialogForInvestor('purchase', s.investorId)" [title]="'Issue more shares' | t"
                               class="p-1.5 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 rounded-lg transition-colors">
@@ -465,7 +466,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     {{ config.availableValuationBdt | money }}
                   </td>
                   <td class="py-3.5 px-4 text-right text-gray-400">—</td>
-                  <td class="py-3.5 px-4 text-center">
+                  <td *ngIf="'finance.admin' | can" class="py-3.5 px-4 text-center">
                     <button (click)="openTradeDialog('purchase')"
                             class="px-2 py-1 text-xs text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 rounded-lg font-semibold transition-colors">
                       {{ 'Sell Shares' | t }}

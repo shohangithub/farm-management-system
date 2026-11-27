@@ -1,87 +1,28 @@
-/** Bangla text for the intelligence screens. Key = the English text exactly as shown; value = Bangla. */
+/**
+ * Bangla text for the intelligence screens. Key = the English text exactly as shown; value = Bangla.
+ * The Fattening plan's text lives in livestock.ts. Words shared with other screens stay here
+ * because this file is merged last.
+ */
 export const BN_INTELLIGENCE: Record<string, string> = {
-  // Cattle profit projection: messages
-  "Could not load this animal's figures — showing generic assumptions. Enter its weight and cost to date manually.":
-    'এই পশুর তথ্য লোড করা যায়নি — সাধারণ অনুমান দেখানো হচ্ছে। ওজন ও এ পর্যন্ত খরচ নিজে লিখে দিন।',
-  'Projection could not be calculated. Check the inputs and try again.': 'হিসাব করা যায়নি। দেওয়া তথ্যগুলো দেখে আবার চেষ্টা করুন।',
-  'Generic assumption — animal defaults unavailable': 'সাধারণ অনুমান — পশুর নিজস্ব তথ্য পাওয়া যায়নি',
-
-  // Daily table
-  'Daily Breakdown': 'দৈনিক হিসাব',
   'Day': 'দিন',
   'Weight (kg)': 'ওজন (কেজি)',
-  'Meat (kg)': 'মাংস (কেজি)',
   'Feed (kg)': 'খাদ্য (কেজি)',
   'Feed Cost': 'খাদ্য খরচ',
-  'Fixed Cost': 'নির্দিষ্ট খরচ',
   'Day Cost': 'দিনের খরচ',
-  'Total Inv.': 'মোট বিনিয়োগ',
-  'Meat Val.': 'মাংসের দাম',
   'Profit / Loss': 'লাভ / ক্ষতি',
   'Best': 'সেরা',
   'Break-Even': 'লাভ-ক্ষতিহীন',
-  'Grass + other + labour (monthly ÷ 30)': 'ঘাস + অন্যান্য + শ্রম (মাসিক ÷ 30)',
 
-  // Inputs
-  'Projection Levers': 'হিসাবের উপাদানগুলো',
-  "Projection starts today, from the animal's latest weight. Adjust any value to simulate outcomes.":
-    'হিসাব শুরু হয় আজ থেকে, পশুর সর্বশেষ ওজন ধরে। ফলাফল দেখতে যেকোনো মান বদলে দেখুন।',
   'Reset': 'রিসেট',
-  'Animal & market': 'পশু ও বাজার',
-  'Starting Live Weight (kg)': 'শুরুর জীবন্ত ওজন (কেজি)',
   'Must be greater than 0': '0-এর বেশি হতে হবে',
-  'Investment to Date (BDT)': 'এ পর্যন্ত বিনিয়োগ (টাকা)',
-  'Cannot be negative': 'ঋণাত্মক হতে পারবে না',
-  'Meat Price (BDT/kg)': 'মাংসের দাম (টাকা/কেজি)',
-  'Fattening Period (days)': 'মোটাতাজাকরণের সময় (দিন)',
-  'Whole number of days, 1–1095': 'পূর্ণ সংখ্যায় দিন, 1–1095',
-  'Daily Live-Weight Gain (kg)': 'দৈনিক জীবন্ত ওজন বৃদ্ধি (কেজি)',
-  'Meat Yield / Dressing (%)': 'মাংসের হার / ড্রেসিং (%)',
-  'Between 0 and 100': '0 থেকে 100-এর মধ্যে',
-  'Meat Yield on Daily Gain (%)': 'দৈনিক বাড়তি ওজনে মাংসের হার (%)',
-  "Share of each day's live-weight gain that becomes meat. Shown in the daily 'Meat Gain' column.":
-    'প্রতিদিনের বাড়তি জীবন্ত ওজনের যে অংশ মাংস হয়। দৈনিক হিসাবের মাংস কলামে দেখানো হয়।',
-  'Running costs': 'চলতি খরচ',
-  'Daily Feed at Start (kg)': 'শুরুতে দৈনিক খাদ্য (কেজি)',
-  'Scales with body weight as the animal grows.': 'পশু বড় হওয়ার সাথে সাথে ওজন অনুযায়ী বাড়ে।',
-  'Feed Price (BDT/kg)': 'খাদ্যের দাম (টাকা/কেজি)',
-  'Grass Cost (BDT/day)': 'ঘাসের খরচ (টাকা/দিন)',
-  'Other Cost (BDT/day)': 'অন্যান্য খরচ (টাকা/দিন)',
-  'Labour Cost (BDT/month)': 'শ্রম খরচ (টাকা/মাস)',
-  'Charged per day as monthly ÷ 30.': 'প্রতিদিন মাসিক খরচ ÷ 30 হিসেবে ধরা হয়।',
-  'Default: {source}': 'ডিফল্ট: {source}',
 
-  // Results and chart
-  'Projection Trajectory': 'লাভ-ক্ষতির গতিপথ',
-  'Total investment vs meat value, day by day': 'দিনে দিনে মোট বিনিয়োগ বনাম মাংসের দাম',
   'Total Investment': 'মোট বিনিয়োগ',
-  'Start {start} + running {running}': 'শুরুতে {start} + চলতি {running}',
-  'Expected Sale Value': 'সম্ভাব্য বিক্রয়মূল্য',
-  '{weight} kg meat × {price}': '{weight} কেজি মাংস × {price}',
   'Projected Profit': 'সম্ভাব্য লাভ',
-  'Projected Loss': 'সম্ভাব্য ক্ষতি',
-  '≈ {amount} per day': 'দিনে ≈ {amount}',
-  'Profit ÷ total investment': 'লাভ ÷ মোট বিনিয়োগ',
-  'Final Weight': 'শেষ ওজন',
   'kg': 'কেজি',
-  '+{weight} kg gain': '+{weight} কেজি বৃদ্ধি',
-  'Break-even Day': 'লাভ-ক্ষতিহীন দিন',
-  'Day {day}': 'দিন {day}',
-  'Not reached': 'পৌঁছায়নি',
-  'First day value ≥ investment': 'যেদিন প্রথম দাম ≥ বিনিয়োগ',
-  'Best Day to Sell': 'বিক্রির সেরা দিন',
-  'Break-even Meat Price': 'লাভ-ক্ষতিহীন মাংসের দাম',
-  'to sell on day {day}': '{day} নম্বর দিনে বিক্রির জন্য',
-  'Break-even Live Price': 'লাভ-ক্ষতিহীন জীবন্ত দাম',
   'per kg live weight': 'প্রতি কেজি জীবন্ত ওজনে',
-  'Cost per kg Gain': 'প্রতি কেজি বৃদ্ধিতে খরচ',
-  '{weight} kg feed total': 'মোট {weight} কেজি খাদ্য',
   'Feed': 'খাদ্য',
   'Grass': 'ঘাস',
   'Other': 'অন্যান্য',
   'Labour': 'শ্রম',
   'Running cost': 'চলতি খরচ',
-  'Meat Value': 'মাংসের দাম',
-  'Investment / Value (BDT)': 'বিনিয়োগ / মূল্য (টাকা)',
-  'Profit / Loss (BDT)': 'লাভ / ক্ষতি (টাকা)',
 };

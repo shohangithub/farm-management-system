@@ -35,9 +35,22 @@ public interface IAnimalValuationService
     /// <summary>Dressing (carcass) yield as a 0–1 fraction (farm rule, guarded).</summary>
     decimal DressingRatio { get; }
 
+    /// <summary>By-products as a 0–0.5 fraction of meat value (farm rule; meat-yield method only).</summary>
+    decimal ByProductsPercent { get; }
+
+    /// <summary>By-products per head in taka (farm rule; meat-yield method only).</summary>
+    decimal ByProductsPerHeadBdt { get; }
+
     /// <summary>
-    /// Value of one kg of live weight: the live-animal rate under
-    /// <see cref="AnimalValuationPolicy.LiveWeightMarket"/>, otherwise meat price × dressing %.
+    /// Added once to an animal's value on top of weight × <see cref="LiveWeightRatePerKgBdt"/>: the
+    /// by-products per head under the meat-yield method, else 0.
+    /// </summary>
+    decimal PerHeadAdditionBdt { get; }
+
+    /// <summary>
+    /// The farm rule's value of one kg of live weight (step 3 of <see cref="Pricing.IAnimalPriceResolver"/>,
+    /// which puts own sales and the breed price first): the live-animal rate under
+    /// <see cref="AnimalValuationPolicy.LiveWeightMarket"/>, otherwise meat price × dressing % × (1 + by-products %).
     /// Under <see cref="AnimalValuationPolicy.CostBasis"/> this is still the market rate used for
     /// forward projections; current value is the cost itself.
     /// </summary>
@@ -71,6 +84,13 @@ public interface IAnimalValuationService
     /// (ledger sale revenue, else the sale price on the record); Dead animals are worth nothing.
     /// </summary>
     decimal CurrentValue(Animal animal, AnimalCostLedger? ledger, decimal costToDateBdt, decimal? ratePerKgOverride = null);
+
+    /// <summary>
+    /// As <see cref="CurrentValue(Animal, AnimalCostLedger?, decimal, decimal?)"/>, but an on-farm animal is
+    /// valued with <paramref name="price"/> from <see cref="Pricing.IAnimalPriceResolver"/> (own sales, breed
+    /// price, then the farm rule).
+    /// </summary>
+    decimal CurrentValue(Animal animal, AnimalCostLedger? ledger, decimal costToDateBdt, Pricing.AnimalPrice price, decimal? ratePerKgOverride = null);
 
     /// <summary>True for animals still on the farm, whose value is an estimate rather than realised.</summary>
     bool IsOnHand(Animal animal);

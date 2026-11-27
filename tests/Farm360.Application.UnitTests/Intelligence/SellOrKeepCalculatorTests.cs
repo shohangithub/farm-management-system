@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Farm360.Application.Intelligence.Pricing;
 using Farm360.Application.Intelligence.SellOrKeep;
 using Farm360.Application.Intelligence.Services;
 using Farm360.Domain.BusinessRules;
@@ -59,7 +60,7 @@ public class SellOrKeepCalculatorTests
             FeedCostInWindowBdt = feedPerDay * 30m,
             TreatmentsInWindow = treatments,
             BreedTargetAdgKg = breedTarget,
-            Price = new SellOrKeepPrice(pricePerKg, SellOrKeepPriceSource.OwnSales, 3),
+            Price = new AnimalPrice(pricePerKg, AnimalPriceSource.OwnSales, 3),
         };
 
     [Fact]
@@ -101,16 +102,15 @@ public class SellOrKeepCalculatorTests
     }
 
     [Fact]
-    public void Price_source_priority_is_own_sales_then_breed_then_live_rate_then_meat()
+    public void By_products_per_head_add_to_value_and_profit_but_not_to_the_best_day()
     {
-        SellOrKeepCalculator.ResolvePrice(425m, 2, 450m, true, 400m, 680m, 0.55m)
-            .Should().Be(new SellOrKeepPrice(425m, SellOrKeepPriceSource.OwnSales, 2));
-        SellOrKeepCalculator.ResolvePrice(425m, 1, 450m, true, 400m, 680m, 0.55m)
-            .Should().Be(new SellOrKeepPrice(450m, SellOrKeepPriceSource.BreedExpected));
-        SellOrKeepCalculator.ResolvePrice(null, 0, null, true, 400m, 680m, 0.55m)
-            .Should().Be(new SellOrKeepPrice(400m, SellOrKeepPriceSource.FarmLiveRate));
-        SellOrKeepCalculator.ResolvePrice(null, 0, null, false, 400m, 680m, 0.55m)
-            .Should().Be(new SellOrKeepPrice(374m, SellOrKeepPriceSource.MeatAndDressing));
+        var plain = SellOrKeepCalculator.Advise(Input(), HandCase);
+        var withByProducts = SellOrKeepCalculator.Advise(Input() with { Price = new AnimalPrice(400m, AnimalPriceSource.MeatAndDressing, 0, 3_000m) }, HandCase);
+
+        withByProducts.ValueTodayBdt.Should().Be(plain.ValueTodayBdt + 3_000m);
+        withByProducts.ProfitTodayBdt.Should().Be(plain.ProfitTodayBdt + 3_000m);
+        withByProducts.Projection[10].ValueBdt.Should().Be(plain.Projection[10].ValueBdt + 3_000m);
+        withByProducts.BestDay.Should().Be(plain.BestDay, "a fixed amount per head does not change when to sell");
     }
 
     [Fact]
@@ -230,6 +230,163 @@ public class SellOrKeepCalculatorTests
         advice.BestDay.Should().Be(0);
         advice.Verdict.Should().Be(SellOrKeepVerdict.SellNow);
     }
+
+    // ── Fattening plan (one engine with the card) ──────────────────────────
+
+    /// <summary>
+    /// Like the owner's B-05: weighed 105.2 kg on arrival 120 days ago and 150 kg four days ago (0.386 kg/day
+    /// since arrival), 0.55 kg/day over the last 60 days, ৳67,192 invested, feed ৳129/day + labour ৳65/day,
+    /// priced ৳374/kg live (680 × 55 %) + ৳3,000 by-products per head.
+    /// </summary>
+    internal static SellOrKeepInput B05() => new()
+    {
+        AnimalId = Guid.NewGuid(),
+        TagId = "B-05",
+        BreedName = "Deshi (Local)",
+        AcquisitionDate = Today.AddDays(-120),
+        Today = Today,
+        Weighings =
+        [
+            new(Today.AddDays(-120), 105.2m),
+            new(Today.AddDays(-58), 120.3m),
+            new(Today.AddDays(-31), 135.15m),
+            new(Today.AddDays(-4), 150m),
+        ],
+        Cost = new AnimalCostBreakdown(67_192m, 0m, 0m, 0m, 0m),
+        FeedCostInWindowBdt = 129m * 30m,
+        LabourOverheadInWindowBdt = 65m * 90m,
+        LabourOverheadDaysCovered = 90,
+        BreedTargetAdgKg = 0.30m,
+        BreedTargetBasis = SellOrKeepBreedTargetBasis.StandardRange,
+        BreedTargetMinKg = 0.2m,
+        BreedTargetMaxKg = 0.4m,
+        Price = new AnimalPrice(374m, AnimalPriceSource.MeatAndDressing, 0, 3_000m),
+    };
+
+    [Fact]
+    public void Plan_without_overrides_is_the_card_figure_for_figure()
+    {
+        var card = SellOrKeepCalculator.Advise(B05());
+        var plan = SellOrKeepCalculator.Advise(B05(), null, true, new SellOrKeepOverrides());
+
+        plan.Should().BeEquivalentTo(card, o => o.Excluding(x => x.AnimalId));
+        plan.Projection[0].Should().Be(card.Projection[0]);
+        card.WeightTodayKg.Should().Be(152.2m, "150 kg four days ago + 4 × 0.55");
+        card.ProfitTodayBdt.Should().Be(-7_269m, "152.2 × 374 + 3,000 − 67,192");
+        card.DailyCostBdt.Should().Be(194m);
+        card.FeedCostBasis.Should().Be(SellOrKeepCostBasis.RecentRecords);
+        card.LabourOverheadCostBasis.Should().Be(SellOrKeepCostBasis.RecentRecords);
+        card.HealthCostBasis.Should().Be(SellOrKeepCostBasis.None);
+    }
+
+    [Fact]
+    public void Adg_is_labelled_since_arrival_and_last_60_days_and_the_projection_uses_the_recent_one()
+    {
+        var x = SellOrKeepCalculator.Advise(B05());
+
+        x.FirstWeighingDate.Should().Be(Today.AddDays(-120));
+        x.LifetimeAdgKgPerDay.Should().Be(0.3862m, "(150 − 105.2) ÷ 116 days: the animal page header's figure");
+        x.RecentAdgKgPerDay.Should().Be(0.55m);
+        x.RecentGrowthWindowDays.Should().Be(60);
+        x.GrowthSource.Should().Be(SellOrKeepGrowthSource.Recent);
+        x.AdgKgPerDay.Should().Be(0.55m);
+        x.ProjectionAdgKgPerDay.Should().Be(0.55m);
+        x.AdgOverridden.Should().BeFalse();
+        x.BreedTargetAdgKg.Should().Be(0.30m);
+        x.BreedTargetBasis.Should().Be(SellOrKeepBreedTargetBasis.StandardRange);
+        x.BreedTargetMinKg.Should().Be(0.2m);
+        x.BreedTargetMaxKg.Should().Be(0.4m);
+        x.GrowthVsTarget.Should().Be(SellOrKeepGrowthVsTarget.Above);
+    }
+
+    [Fact]
+    public void Deshi_breed_target_is_the_middle_of_its_standard_range_in_kg_per_day()
+    {
+        var deshi = new Breed(Guid.NewGuid(), Guid.NewGuid(), "Deshi (Local)", "", "Indigenous", "Bangladesh", "Dual-purpose",
+            0.2m, 0.3m, 0.4m, 0.5m, 8m, 10m, 0.2m, 0.4m, 1m, 3m, 4.5m, 5.5m, "");
+
+        var (target, basis, min, max) = AnimalSellOrKeepAdvisor.BreedTargetDetail(deshi);
+
+        target.Should().Be(0.30m);
+        basis.Should().Be(SellOrKeepBreedTargetBasis.StandardRange);
+        (min, max).Should().Be((0.2m, 0.4m));
+    }
+
+    [Fact]
+    public void Cost_per_kg_gain_is_the_whole_daily_cost_over_the_gain()
+    {
+        var x = SellOrKeepCalculator.Advise(B05());
+
+        x.CostPerKgGainBdt.Should().Be(353m, "194 ÷ 0.55 = 352.7");
+        x.FeedCostPerKgGainBdt.Should().Be(235m, "129 ÷ 0.55 = 234.5");
+    }
+
+    [Fact]
+    public void Overrides_change_the_projection_but_not_todays_weight()
+    {
+        var card = SellOrKeepCalculator.Advise(B05());
+        var x = SellOrKeepCalculator.Advise(B05(), null, true, new SellOrKeepOverrides
+        {
+            AdgKgPerDay = 0.8m,
+            FeedPerDayBdt = 100m,
+            LabourOverheadPerDayBdt = 40m,
+            HealthPerDayBdt = 10m,
+            HorizonDays = 90,
+            GrowthSlowdownPercent = 0m,
+        });
+
+        x.WeightTodayKg.Should().Be(card.WeightTodayKg, "today's weight always comes from the weighings");
+        x.ProfitTodayBdt.Should().Be(card.ProfitTodayBdt, "the price was not changed");
+        x.AdgKgPerDay.Should().Be(0.55m, "the measured gain is still reported");
+        x.ProjectionAdgKgPerDay.Should().Be(0.8m);
+        x.AdgOverridden.Should().BeTrue();
+        x.DailyCostBdt.Should().Be(150m);
+        x.FeedCostBasis.Should().Be(SellOrKeepCostBasis.Override);
+        x.LabourOverheadCostBasis.Should().Be(SellOrKeepCostBasis.Override);
+        x.HealthCostBasis.Should().Be(SellOrKeepCostBasis.Override);
+        x.HorizonDays.Should().Be(90);
+        x.Projection.Should().HaveCount(91);
+        x.GrowthSlowdownPercent.Should().Be(0m);
+        x.Projection[90].WeightKg.Should().Be(152.2m + 90 * 0.8m, "no slowdown: a straight 0.8 kg/day");
+        x.CostPerKgGainBdt.Should().Be(188m, "150 ÷ 0.8 = 187.5");
+    }
+
+    [Fact]
+    public void A_price_override_revalues_today_and_every_day()
+    {
+        var x = SellOrKeepCalculator.Advise(B05(), null, true, new SellOrKeepOverrides { PricePerKgBdt = 450m, PerHeadBdt = 0m });
+
+        x.PriceOverridden.Should().BeTrue();
+        x.Price.PricePerKgBdt.Should().Be(450m);
+        x.Price.PerHeadBdt.Should().Be(0m);
+        x.ProfitTodayBdt.Should().Be(Math.Round(152.2m * 450m, 0) - 67_192m);
+        x.Projection[0].ProfitBdt.Should().Be(x.ProfitTodayBdt);
+    }
+
+    [Fact]
+    public void Break_even_price_at_the_horizon_makes_the_last_day_break_even()
+    {
+        var x = SellOrKeepCalculator.Advise(B05(), null, true, new SellOrKeepOverrides { HorizonDays = 120 });
+        var last = x.Projection[^1];
+
+        x.WeightAtHorizonKg.Should().Be(last.WeightKg);
+        x.CostAtHorizonBdt.Should().Be(last.CostBdt);
+        x.BreakEvenPricePerKgAtHorizonBdt.Should().BeApproximately((last.CostBdt - 3_000m) / last.WeightKg, 0.5m,
+            "(total cost − per-head addition) ÷ weight on the last day");
+
+        var atBreakEven = SellOrKeepCalculator.Advise(B05(), null, true,
+            new SellOrKeepOverrides { HorizonDays = 120, PricePerKgBdt = x.BreakEvenPricePerKgAtHorizonBdt });
+        atBreakEven.Projection[^1].ProfitBdt.Should().BeInRange(-2m, 2m);
+    }
+
+    [Fact]
+    public void Roi_at_best_day_is_profit_over_cost()
+    {
+        var x = SellOrKeepCalculator.Advise(Input());
+        var best = x.Projection[x.BestDay!.Value];
+
+        x.RoiAtBestDayPercent.Should().Be(Math.Round(best.ProfitBdt / best.CostBdt * 100m, 1));
+    }
 }
 
 public class AnimalSellOrKeepAdvisorTests
@@ -238,6 +395,51 @@ public class AnimalSellOrKeepAdvisorTests
 
     [Fact]
     public async Task Prices_with_the_farms_own_sales_of_the_same_breed()
+    {
+        var (advisor, farm, _) = Build();
+
+        var advice = await advisor.AdviseFarmAsync(farm, Today, includeProjection: true);
+
+        advice.Should().ContainSingle();
+        var x = advice[0];
+        x.TagId.Should().Be("T-01");
+        x.Price.PricePerKgBdt.Should().Be(425m, "(80,000 + 90,000) ÷ (200 + 200) kg; own sales beat the breed's expected price");
+        x.Price.Source.Should().Be(AnimalPriceSource.OwnSales);
+        x.Price.SalesCount.Should().Be(2);
+        x.Price.ExplanationEn.Should().Be("your own sales of 2 Sahiwal Cross in the last 12 months, average ৳425/kg");
+        x.Cost.TotalBdt.Should().Be(69_000m, "purchase + allocated feed when there is no cost book yet");
+        x.FeedPerDayBdt.Should().Be(300m);
+        x.AdgKgPerDay.Should().Be(1m);
+        x.BreedTargetAdgKg.Should().Be(1.0m, "the middle of the breed's standard 0.8–1.2 kg/day range");
+        x.BreedTargetBasis.Should().Be(SellOrKeepBreedTargetBasis.StandardRange);
+        x.Projection.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task Fattening_plan_day_0_and_best_day_equal_the_sell_or_keep_card()
+    {
+        var (advisor, _, animalId) = Build();
+
+        var card = await advisor.AdviseAnimalAsync(animalId, Today);
+        var plan = await advisor.PlanAnimalAsync(animalId, null, Today);
+
+        card.Should().NotBeNull();
+        plan.Should().NotBeNull();
+        plan!.Plan.Should().BeEquivalentTo(card);
+        plan.Plan.Projection[0].Should().Be(card!.Projection[0]);
+        plan.Defaults.ProfitTodayBdt.Should().Be(card.ProfitTodayBdt);
+        plan.Defaults.Projection.Should().BeEmpty();
+
+        // Overrides change the plan, never the defaults it shows next to each lever.
+        var whatIf = await advisor.PlanAnimalAsync(animalId, new SellOrKeepOverrides { PricePerKgBdt = 500m, HorizonDays = 60 }, Today);
+        whatIf!.Defaults.Price.PricePerKgBdt.Should().Be(425m);
+        whatIf.Defaults.HorizonDays.Should().Be(240);
+        whatIf.Plan.Price.PricePerKgBdt.Should().Be(500m);
+        whatIf.Plan.Projection.Should().HaveCount(61);
+        whatIf.Plan.Projection[0].WeightKg.Should().Be(card.Projection[0].WeightKg);
+    }
+
+    private static (AnimalSellOrKeepAdvisor Advisor, Guid FarmId, Guid AnimalId) Build()
     {
         var tenant = Guid.NewGuid();
         var farm = Guid.NewGuid();
@@ -276,22 +478,15 @@ public class AnimalSellOrKeepAdvisorTests
         var vaccinations = Substitute.For<IVaccinationRepository>();
         vaccinations.GetAdministeredByFarmAsync(farm, Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<(VaccinationEvent, string)>());
-        var valuation = new AnimalValuationService(new FixedRules());
+        var rules = new FixedRules();
+        var valuation = new AnimalValuationService(rules);
+        var prices = new AnimalPriceResolver(animals, breeds, rules);
+
+        animals.GetByIdAsync(onFarm.Id, Arg.Any<CancellationToken>()).Returns(onFarm);
 
         var advisor = new AnimalSellOrKeepAdvisor(animals, breeds, Substitute.For<IAnimalBatchRepository>(), ledgers, feed, overheads,
-            treatments, vaccinations, Substitute.For<IInventoryItemRepository>(), valuation);
-
-        var advice = await advisor.AdviseFarmAsync(farm, Today, includeProjection: true);
-
-        advice.Should().ContainSingle();
-        var x = advice[0];
-        x.TagId.Should().Be("T-01");
-        x.Price.Should().Be(new SellOrKeepPrice(425m, SellOrKeepPriceSource.OwnSales, 2), "(80,000 + 90,000) ÷ (200 + 200) kg; own sales beat the breed's expected price");
-        x.Cost.TotalBdt.Should().Be(69_000m, "purchase + allocated feed when there is no cost book yet");
-        x.FeedPerDayBdt.Should().Be(300m);
-        x.AdgKgPerDay.Should().Be(1m);
-        x.BreedTargetAdgKg.Should().Be(1.0m, "the middle of the breed's standard 0.8–1.2 kg/day range");
-        x.Projection.Should().NotBeEmpty();
+            treatments, vaccinations, Substitute.For<IInventoryItemRepository>(), valuation, prices);
+        return (advisor, farm, onFarm.Id);
     }
 
     private sealed class FixedRules : Farm360.Application.Common.Interfaces.IFarmBusinessRulesProvider

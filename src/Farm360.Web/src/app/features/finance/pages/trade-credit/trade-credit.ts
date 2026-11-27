@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +29,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-trade-credit',
   standalone: true,
-  imports: [FinanceSubnavComponent, TranslatePipe, MoneyPipe, CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
+  imports: [FinanceSubnavComponent, TranslatePipe, CanPipe, MoneyPipe, CommonModule, FormsModule, MatIconModule, MatButtonModule, PageHeaderComponent, DecimalPipe, DatePipe],
   templateUrl: './trade-credit.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -22,13 +22,15 @@ public sealed record BusinessRulesValuesDto(
     decimal DefaultLiveWeightPricePerKgBdt,
     ReportLanguagePreference DefaultReportLanguage,
     bool BengaliNumeralsByDefault,
-    bool CarryLivestockGrowingCosts = true)
+    bool CarryLivestockGrowingCosts = true,
+    decimal ByProductsValuePerHeadBdt = 0m,
+    decimal ByProductsPercentOfMeat = 0m)
 {
     public static BusinessRulesValuesDto From(FarmBusinessRules r) => new(
         r.FeedAllocation, r.MetabolicWeightExponent, r.GroupPlanQuantityBasis, r.FallbackAnimalWeightKg,
         r.OverheadAllocation, r.OverheadCostPeriod, r.Valuation, r.DefaultDressingPercentage,
         r.DefaultMeatPricePerKgBdt, r.DefaultLiveWeightPricePerKgBdt, r.DefaultReportLanguage, r.BengaliNumeralsByDefault,
-        r.CarryLivestockGrowingCosts);
+        r.CarryLivestockGrowingCosts, r.ByProductsValuePerHeadBdt, r.ByProductsPercentOfMeat);
 }
 
 /// <summary>
@@ -110,6 +112,7 @@ public sealed class SaveBusinessRulesSettingsCommandHandler(
 public sealed class SaveBusinessRulesSettingsCommandValidator : AbstractValidator<SaveBusinessRulesSettingsCommand>
 {
     public const decimal MaxPricePerKgBdt = 100_000m;
+    public const decimal MaxByProductsPerHeadBdt = 1_000_000m;
 
     public SaveBusinessRulesSettingsCommandValidator()
     {
@@ -153,6 +156,16 @@ public sealed class SaveBusinessRulesSettingsCommandValidator : AbstractValidato
             RuleFor(c => c.Values.DefaultLiveWeightPricePerKgBdt)
                 .GreaterThan(0m).LessThanOrEqualTo(MaxPricePerKgBdt).When(c => c.Values.DefaultLiveWeightPricePerKgBdt.HasValue)
                 .WithName("Live weight price per kg");
+
+            RuleFor(c => c.Values.ByProductsValuePerHeadBdt)
+                .InclusiveBetween(0m, MaxByProductsPerHeadBdt).When(c => c.Values.ByProductsValuePerHeadBdt.HasValue)
+                .WithName("By-products value per head")
+                .WithMessage("By-products value per head must be between 0 and 1,000,000 taka.");
+
+            RuleFor(c => c.Values.ByProductsPercentOfMeat)
+                .InclusiveBetween(0m, 0.5m).When(c => c.Values.ByProductsPercentOfMeat.HasValue)
+                .WithName("By-products percentage")
+                .WithMessage("By-products must be between 0% and 50% of the meat value.");
         });
     }
 }

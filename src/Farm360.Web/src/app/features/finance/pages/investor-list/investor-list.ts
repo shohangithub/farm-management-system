@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -25,7 +26,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-investor-list',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent, 
+  imports: [TranslatePipe, MoneyPipe, CanPipe, ErrorStateComponent, 
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -54,7 +55,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <span>{{ 'Profit sharing' | t }}</span>
         </a>
 
-        <button mat-flat-button color="primary" (click)="openInvestorDialog()" class="!rounded-xl !px-5 !py-2 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 transition-all">
+        <button *ngIf="'finance.admin' | can" mat-flat-button color="primary" (click)="openInvestorDialog()" class="!rounded-xl !px-5 !py-2 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 transition-all">
           <mat-icon class="!text-[20px]">person_add</mat-icon>
           <span>{{ 'New Investor' | t }}</span>
         </button>
@@ -189,13 +190,13 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 </div>
 
                 <div class="flex items-center gap-1.5">
-                  <button (click)="openEditInvestorDialog(investor)" [title]="'Edit Investor' | t"
+                  <button *ngIf="'finance.admin' | can" (click)="openEditInvestorDialog(investor)" [title]="'Edit Investor' | t"
                           class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                   </button>
 
-                  <button (click)="toggleInvestorStatus(investor)" [title]="(investor.isActive ? 'Deactivate Investor' : 'Activate Investor') | t"
-                          class="px-2.5 py-1 text-xs font-semibold rounded-full transition-colors"
+                  <button (click)="toggleInvestorStatus(investor)" [disabled]="!('finance.admin' | can)" [title]="(('finance.admin' | can) ? (investor.isActive ? 'Deactivate Investor' : 'Activate Investor') : '') | t"
+                          class="px-2.5 py-1 text-xs font-semibold rounded-full transition-colors disabled:cursor-default disabled:pointer-events-none"
                           [ngClass]="investor.isActive ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 hover:bg-success-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'">
                     {{ (investor.isActive ? 'Active' : 'Inactive') | t }}
                   </button>
@@ -292,8 +293,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               </div>
             </div>
 
-            <!-- Action Buttons Footer -->
-            <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-2">
+            <!-- Action Buttons Footer (capital transactions need finance.admin) -->
+            <div *ngIf="'finance.admin' | can" class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-2">
               <button (click)="openTransactionDialog(investor, 'CapitalContribution')"
                       class="flex-1 py-2 px-2.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-xl hover:from-teal-600 hover:to-emerald-700 transition-all flex items-center justify-center gap-1">
                 <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">add</mat-icon>

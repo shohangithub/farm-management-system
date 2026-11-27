@@ -18,6 +18,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -50,7 +51,7 @@ interface AnimalGroup {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule,
-    UnitPickerComponent, PageHeaderComponent, FeedingSubnavComponent, MoneyPipe, TranslatePipe],
+    UnitPickerComponent, PageHeaderComponent, FeedingSubnavComponent, MoneyPipe, CanPipe, TranslatePipe],
   styles: [`
     .field { width: 100%; padding: 0.45rem 0.65rem; border-radius: 0.6rem; border: 1px solid rgb(209 213 219); background: white; font-size: 0.8125rem; color: rgb(17 24 39); outline: none; }
     .field:focus { border-color: rgb(16 185 129); box-shadow: 0 0 0 3px rgba(139, 92, 246, .15); }
@@ -81,9 +82,9 @@ interface AnimalGroup {
 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <!-- ── Animals ─────────────────────────────────────────── -->
-          <section class="card p-4 lg:col-span-2 flex flex-col min-h-[420px]">
+          <section class="card p-4 flex flex-col min-h-[420px]" [ngClass]="('feeding.edit' | can) ? 'lg:col-span-2' : 'lg:col-span-5'">
             <div class="flex items-center justify-between gap-2 mb-3">
-              <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">1. {{ 'Animals' | t }} @if (!i18n.isBangla) {<span class="font-normal text-gray-400">· পশু</span>}</h3>
+              <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">{{ ('feeding.edit' | can) ? '1. ' : '' }}{{ 'Animals' | t }} @if (!i18n.isBangla) {<span class="font-normal text-gray-400">· পশু</span>}</h3>
               <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">{{ '{n} selected' | t: { n: selected().size } }}</span>
             </div>
 
@@ -129,8 +130,8 @@ interface AnimalGroup {
             </div>
           </section>
 
-          <!-- ── Feeds ───────────────────────────────────────────── -->
-          <section class="card p-4 lg:col-span-3 space-y-3">
+          <!-- ── Feeds (recording needs feeding.edit) ───────────────── -->
+          <section *ngIf="'feeding.edit' | can" class="card p-4 lg:col-span-3 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0">2. {{ 'What they ate' | t }} @if (!i18n.isBangla) {<span class="font-normal text-gray-400">· কী খেয়েছে</span>}</h3>
               <div class="flex gap-2">
@@ -223,7 +224,7 @@ interface AnimalGroup {
         <!-- ── Already recorded ─────────────────────────────────── -->
         <section class="card p-4" *ngIf="recorded().length">
           <h3 class="text-sm font-bold text-gray-900 dark:text-white m-0 mb-1">{{ 'Recorded for {date}' | t: { date: (date() | date:'EEE dd MMM yyyy') } }} @if (!i18n.isBangla) {<span class="font-normal text-gray-400">· যা রেকর্ড হয়েছে</span>}</h3>
-          <p class="text-[11px] text-gray-500 m-0 mb-3">{{ 'To correct a feed, remove it here and add the right one above. The stock is returned and the cost is reversed.' | t }}{{ selected().size ? ' ' + ('Showing the selected animals.' | t) : '' }}</p>
+          <p class="text-[11px] text-gray-500 m-0 mb-3">{{ ('feeding.edit' | can) ? ('To correct a feed, remove it here and add the right one above. The stock is returned and the cost is reversed.' | t) : '' }}{{ selected().size ? ' ' + ('Showing the selected animals.' | t) : '' }}</p>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead class="text-gray-500 text-left">
@@ -237,7 +238,7 @@ interface AnimalGroup {
                   <td class="py-1.5 pr-3 text-right">{{ r.fed.costBdt | money:2 }}</td>
                   <td class="py-1.5 pr-3 text-gray-500">{{ r.fed.source | t }}</td>
                   <td class="py-1.5 text-right">
-                    <button *ngIf="r.fed.canRemove" mat-icon-button (click)="removeRecorded(r.tag, r.fed)" [disabled]="busy()" [matTooltip]="'Remove this feed and return its stock' | t">
+                    <button *ngIf="r.fed.canRemove && ('feeding.edit' | can)" mat-icon-button (click)="removeRecorded(r.tag, r.fed)" [disabled]="busy()" [matTooltip]="'Remove this feed and return its stock' | t">
                       <mat-icon class="!text-[18px] text-red-500">undo</mat-icon>
                     </button>
                   </td>

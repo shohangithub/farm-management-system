@@ -61,6 +61,7 @@ public sealed class AnimalLifeHistoryReportDefinition : ReportDefinition<AnimalL
     private readonly IAnimalCostLedgerRepository _ledgers;
     private readonly IAnimalValuationService _valuation;
     private readonly ITradeBillRepository _bills;
+    private readonly Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver _prices;
 
     public AnimalLifeHistoryReportDefinition(
         IAnimalRepository animals,
@@ -74,8 +75,10 @@ public sealed class AnimalLifeHistoryReportDefinition : ReportDefinition<AnimalL
         IInventoryItemRepository items,
         IAnimalCostLedgerRepository ledgers,
         IAnimalValuationService valuation,
-        ITradeBillRepository bills)
+        ITradeBillRepository bills,
+        Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver prices)
     {
+        _prices = prices;
         _animals = animals;
         _breeds = breeds;
         _sheds = sheds;
@@ -434,7 +437,11 @@ public sealed class AnimalLifeHistoryReportDefinition : ReportDefinition<AnimalL
             var runningDaily = daysOnFarm > 0 ? (cost.TotalBdt - cost.PurchaseBdt) / daysOnFarm : 0m;
 
             var endWeight = animal.SaleWeightKg is > 0m ? animal.SaleWeightKg : animal.LatestWeightKg;
-            decimal? estimated = animal.HasLeftFarm ? null : _valuation.CurrentValue(animal, ledger, cost.TotalBdt);
+            // On the farm: valued with its own price (own sales, breed price, farm rule), as on the animal page.
+            var livePrice = animal.HasLeftFarm ? null : await _prices.ForAnimalAsync(animal, today, cancellationToken).ConfigureAwait(false);
+            decimal? estimated = animal.HasLeftFarm ? null
+                : livePrice is null ? _valuation.CurrentValue(animal, ledger, cost.TotalBdt)
+                : _valuation.CurrentValue(animal, ledger, cost.TotalBdt, livePrice);
             var undated = ordered.Where(r => r.Date is null).Sum(r => r.CostBdt ?? 0m);
 
             var facts = new LifeFacts(

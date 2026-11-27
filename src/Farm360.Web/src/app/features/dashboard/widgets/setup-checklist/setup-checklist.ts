@@ -35,6 +35,7 @@ type LoadState =
 
 const STEP_INFO: Record<FarmSetupStepKey, StepInfo> = {
   sheds: { title: 'Add your sheds', description: 'Tell us where your animals live, so you can find them by shed.', icon: 'warehouse', unit: ['shed', 'sheds'] },
+  location: { title: 'Farm location', description: 'Mark your farm on the map so you get the local weather forecast.', icon: 'location_on', unit: ['saved', 'saved'] },
   breeds: { title: 'Pick your breeds', description: 'Breeds set the growth targets your animals are measured against.', icon: 'category', unit: ['breed', 'breeds'] },
   animals: { title: 'Register your animals', description: 'Add each animal with its tag, breed and shed.', icon: 'pets', unit: ['animal', 'animals'] },
   weights: { title: 'Record a weight', description: 'Weights show how well each animal is growing.', icon: 'monitor_weight', unit: ['weight', 'weights'] },
@@ -46,7 +47,7 @@ const STEP_INFO: Record<FarmSetupStepKey, StepInfo> = {
   team: { title: 'Invite your team', description: 'Bring in a manager or worker so they can record work too.', icon: 'group_add', unit: ['member', 'members'] },
 };
 
-const STATIC_LINKS: Record<Exclude<FarmSetupStepKey, 'sheds'>, string[]> = {
+const STATIC_LINKS: Record<Exclude<FarmSetupStepKey, 'sheds' | 'location'>, string[]> = {
   breeds: ['/livestock/breeds'],
   animals: ['/livestock/register'],
   weights: ['/livestock'],
@@ -164,7 +165,7 @@ export class SetupChecklistComponent {
   }
 
   public countLabel(row: StepRow): string {
-    if (row.key === 'accounts') return translate('Saved');
+    if (row.key === 'accounts' || row.key === 'location') return translate('Saved');
     return translate(`{n} ${row.count === 1 ? row.unit[0] : row.unit[1]}`, { n: row.count });
   }
 
@@ -180,12 +181,13 @@ export class SetupChecklistComponent {
   }
 
   private linkFor(key: FarmSetupStepKey, farmId: string): string[] {
-    if (key !== 'sheds') return STATIC_LINKS[key];
+    if (key !== 'sheds' && key !== 'location') return STATIC_LINKS[key];
     const branchId = this.branchId();
     // A selected farm always has a selected branch; fall back to the organisation list just in case.
-    return branchId
+    if (!branchId) return ['/organizations'];
+    return key === 'sheds'
       ? ['/organizations/branches', branchId, 'farms', farmId, 'sheds']
-      : ['/organizations'];
+      : ['/organizations/branches', branchId, 'farms', farmId, 'edit'];
   }
 
   private static readHidden(farmId: string): boolean {

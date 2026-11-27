@@ -190,4 +190,14 @@ export const BN_WEATHER: Record<string, string> = {
   'Could not read your location. Try again outdoors, or copy the point from Google Maps.':
     'অবস্থান পাওয়া যায়নি। খোলা জায়গায় আবার চেষ্টা করুন, অথবা Google Maps থেকে অবস্থান কপি করুন।',
   'Change location': 'অবস্থান বদলান',
+  // Set / change the location on the Weather page
+  'Click the map or drag the pin to mark your farm, or use your current location. Only these coordinates are sent to the weather service.':
+    'মানচিত্রে ক্লিক করুন বা পিন টেনে খামার চিহ্নিত করুন, অথবা আপনার বর্তমান অবস্থান নিন। শুধু এই স্থানাঙ্ক আবহাওয়া সেবায় পাঠানো হয়।',
+  "Ask the farm owner or manager to set the farm's location.": 'খামারের অবস্থান দিতে মালিক বা ম্যানেজারকে বলুন।',
+  'Click the map or drag the pin to mark your farm.': 'মানচিত্রে ক্লিক করুন বা পিন টেনে খামার চিহ্নিত করুন।',
+  'New point: {lat}, {lon}': 'নতুন অবস্থান: {lat}, {lon}',
+  'Save location': 'অবস্থান সংরক্ষণ করুন',
+  'Edit on the farm form': 'খামারের ফর্মে সম্পাদনা করুন',
+  'Farm location saved.': 'খামারের অবস্থান সংরক্ষিত হয়েছে।',
+  'Could not save the farm location.': 'খামারের অবস্থান সংরক্ষণ করা যায়নি।',
 };

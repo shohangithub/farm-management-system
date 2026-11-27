@@ -1,28 +1,10 @@
+using Farm360.Application.Intelligence.Pricing;
 using Farm360.Application.Intelligence.Services;
 
 namespace Farm360.Application.Intelligence.SellOrKeep;
 
 /// <summary>One weighing.</summary>
 public sealed record SellOrKeepWeighing(DateOnly Date, decimal WeightKg);
-
-/// <summary>Where the sale price per kg live weight came from, in priority order.</summary>
-public enum SellOrKeepPriceSource
-{
-    /// <summary>Average of the farm's own sales of the same breed in the last 12 months (at least two).</summary>
-    OwnSales = 0,
-
-    /// <summary>The expected price per kg set on the breed.</summary>
-    BreedExpected = 1,
-
-    /// <summary>The farm rule's live-weight price (valuation method "live weight market").</summary>
-    FarmLiveRate = 2,
-
-    /// <summary>The farm rule's meat price × dressing %.</summary>
-    MeatAndDressing = 3,
-}
-
-/// <summary>The sale price per kg live weight and where it came from.</summary>
-public sealed record SellOrKeepPrice(decimal PricePerKgBdt, SellOrKeepPriceSource Source, int SalesCount = 0);
 
 /// <summary>What the advice is.</summary>
 public enum SellOrKeepVerdict
@@ -51,6 +33,76 @@ public enum SellOrKeepGrowthSource
 
     /// <summary>(last − first weighing) ÷ days between them.</summary>
     Lifetime = 2,
+}
+
+/// <summary>Where a breed's growth target came from.</summary>
+public enum SellOrKeepBreedTargetBasis
+{
+    None = 0,
+
+    /// <summary>The middle of the breed's standard ADG range (kg/day).</summary>
+    StandardRange = 1,
+
+    /// <summary>The breed's ADG on a good commercial farm (kg/day).</summary>
+    GoodCommercialFarm = 2,
+
+    /// <summary>The breed's ADG on an average farm (kg/day).</summary>
+    AverageFarm = 3,
+}
+
+/// <summary>Where a cost-per-day figure came from.</summary>
+public enum SellOrKeepCostBasis
+{
+    /// <summary>Nothing recorded: 0 per day.</summary>
+    None = 0,
+
+    /// <summary>The records of the last few weeks (feed 30 days, labour/overhead and health 90 days).</summary>
+    RecentRecords = 1,
+
+    /// <summary>The animal's lifetime total ÷ days on the farm (no recent records).</summary>
+    LifetimeAverage = 2,
+
+    /// <summary>Typed in as a what-if.</summary>
+    Override = 3,
+}
+
+/// <summary>
+/// What-if changes to the projection. Every field is optional: <c>null</c> keeps the figure worked out
+/// from the animal's own records, so a plan with no overrides is exactly the "Sell or keep?" advice.
+/// </summary>
+public sealed record SellOrKeepOverrides
+{
+    /// <summary>The longest projection allowed (two years).</summary>
+    public const int MaxHorizonDays = 730;
+
+    /// <summary>Sale price per kg LIVE weight.</summary>
+    public decimal? PricePerKgBdt { get; init; }
+
+    /// <summary>Fixed amount added once per head (by-products sold separately).</summary>
+    public decimal? PerHeadBdt { get; init; }
+
+    /// <summary>Gain per day (kg) the projection starts from.</summary>
+    public decimal? AdgKgPerDay { get; init; }
+
+    /// <summary>Feed cost per day today (it still grows with the animal's weight).</summary>
+    public decimal? FeedPerDayBdt { get; init; }
+
+    /// <summary>Labour and overhead per day.</summary>
+    public decimal? LabourOverheadPerDayBdt { get; init; }
+
+    /// <summary>Treatments and vaccinations per day.</summary>
+    public decimal? HealthPerDayBdt { get; init; }
+
+    /// <summary>How many days ahead to project.</summary>
+    public int? HorizonDays { get; init; }
+
+    /// <summary>How much growth slows (percent of today's gain) over <see cref="SellOrKeepAssumptions.GrowthDeclineDays"/> days.</summary>
+    public decimal? GrowthSlowdownPercent { get; init; }
+
+    /// <summary>True when nothing is overridden.</summary>
+    public bool IsEmpty =>
+        PricePerKgBdt is null && PerHeadBdt is null && AdgKgPerDay is null && FeedPerDayBdt is null &&
+        LabourOverheadPerDayBdt is null && HealthPerDayBdt is null && HorizonDays is null && GrowthSlowdownPercent is null;
 }
 
 /// <summary>Recent gain per day against the breed's target.</summary>
@@ -108,7 +160,17 @@ public sealed record SellOrKeepInput
     /// <summary>The breed's target gain per day (kg), when set.</summary>
     public decimal? BreedTargetAdgKg { get; init; }
 
-    public required SellOrKeepPrice Price { get; init; }
+    /// <summary>Where <see cref="BreedTargetAdgKg"/> came from.</summary>
+    public SellOrKeepBreedTargetBasis BreedTargetBasis { get; init; }
+
+    /// <summary>The breed's standard ADG range (kg/day), when the target is its middle.</summary>
+    public decimal? BreedTargetMinKg { get; init; }
+
+    /// <inheritdoc cref="BreedTargetMinKg"/>
+    public decimal? BreedTargetMaxKg { get; init; }
+
+    /// <summary>The sale price from <see cref="IAnimalPriceResolver"/>: per kg live weight plus any per-head addition.</summary>
+    public required AnimalPrice Price { get; init; }
 }
 
 /// <summary>One day of the projection.</summary>
@@ -151,21 +213,67 @@ public sealed record SellOrKeepAdvice
     public int GrowthWeighings { get; init; }
     public decimal? GrowthFitR2 { get; init; }
     public decimal? BreedTargetAdgKg { get; init; }
+    public SellOrKeepBreedTargetBasis BreedTargetBasis { get; init; }
+    public decimal? BreedTargetMinKg { get; init; }
+    public decimal? BreedTargetMaxKg { get; init; }
     public SellOrKeepGrowthVsTarget GrowthVsTarget { get; init; }
+
+    /// <summary>Gain per day since the first weighing: (last − first weighing) ÷ days between them.</summary>
+    public decimal? LifetimeAdgKgPerDay { get; init; }
+
+    /// <summary>The first weighing (usually the arrival weighing).</summary>
+    public DateOnly? FirstWeighingDate { get; init; }
+
+    /// <summary>Least-squares gain per day over the last <see cref="RecentGrowthWindowDays"/> days (2+ weighings), else null.</summary>
+    public decimal? RecentAdgKgPerDay { get; init; }
+
+    /// <summary>The window behind <see cref="RecentAdgKgPerDay"/>.</summary>
+    public int RecentGrowthWindowDays { get; init; }
+
+    /// <summary>The gain per day the projection starts from: the typed what-if, else <see cref="AdgKgPerDay"/>.</summary>
+    public decimal? ProjectionAdgKgPerDay { get; init; }
+
+    /// <summary>The projection's gain per day was typed in.</summary>
+    public bool AdgOverridden { get; init; }
+
+    /// <summary>Growth slows by this percent of today's gain over <see cref="GrowthDeclineDays"/> days.</summary>
+    public decimal GrowthSlowdownPercent { get; init; }
+
+    /// <summary>Days over which <see cref="GrowthSlowdownPercent"/> is reached.</summary>
+    public int GrowthDeclineDays { get; init; }
 
     // ── Cost run-rate ──
     public decimal FeedPerDayBdt { get; init; }
     public decimal LabourOverheadPerDayBdt { get; init; }
     public decimal HealthPerDayBdt { get; init; }
     public decimal DailyCostBdt => FeedPerDayBdt + LabourOverheadPerDayBdt + HealthPerDayBdt;
+    public SellOrKeepCostBasis FeedCostBasis { get; init; }
+    public SellOrKeepCostBasis LabourOverheadCostBasis { get; init; }
+    public SellOrKeepCostBasis HealthCostBasis { get; init; }
+
+    /// <summary>Feed per day is averaged over this many days.</summary>
+    public int FeedWindowDays { get; init; }
+
+    /// <summary>Labour, overhead and health per day are averaged over this many days.</summary>
+    public int HealthWindowDays { get; init; }
+
+    /// <summary>Total cost per kg gained: today's cost per day ÷ the projection's gain per day.</summary>
+    public decimal? CostPerKgGainBdt { get; init; }
 
     /// <summary>Feed cost per kg gained (feed per day ÷ gain per day), when it grows.</summary>
     public decimal? FeedCostPerKgGainBdt { get; init; }
 
     // ── Price ──
-    public required SellOrKeepPrice Price { get; init; }
+    /// <summary>The same price the animal page's "Profit if sold today" card uses (<see cref="IAnimalPriceResolver"/>).</summary>
+    public required AnimalPrice Price { get; init; }
+
+    /// <summary>The price per kg or per-head addition was typed in (a what-if).</summary>
+    public bool PriceOverridden { get; init; }
 
     // ── Projection ──
+    /// <summary>How many days ahead the projection looks.</summary>
+    public int HorizonDays { get; init; }
+
     public int? BestDay { get; init; }
     public DateOnly? BestDate { get; init; }
     public decimal? BestWeightKg { get; init; }
@@ -173,6 +281,21 @@ public sealed record SellOrKeepAdvice
     public decimal? ExtraProfitBdt => ProfitAtBestDayBdt - ProfitTodayBdt;
     public int? BreakEvenDay { get; init; }
     public DateOnly? BreakEvenDate { get; init; }
+
+    /// <summary>Profit at the best day ÷ total cost at the best day, in percent.</summary>
+    public decimal? RoiAtBestDayPercent { get; init; }
+
+    /// <summary>Weight, total cost and profit on the last day of the projection.</summary>
+    public decimal? WeightAtHorizonKg { get; init; }
+
+    /// <inheritdoc cref="WeightAtHorizonKg"/>
+    public decimal? CostAtHorizonBdt { get; init; }
+
+    /// <inheritdoc cref="WeightAtHorizonKg"/>
+    public decimal? ProfitAtHorizonBdt { get; init; }
+
+    /// <summary>Live price per kg needed to break even on the last day: (total cost − per-head addition) ÷ weight.</summary>
+    public decimal? BreakEvenPricePerKgAtHorizonBdt { get; init; }
 
     /// <summary>What tomorrow's gain is worth at the sale price.</summary>
     public decimal? ValueOfDailyGainBdt { get; init; }
@@ -196,3 +319,10 @@ public sealed record SellOrKeepAdvice
     /// <summary>Day-by-day projection (day 0 = today). Empty for herd lists.</summary>
     public IReadOnlyList<SellOrKeepPoint> Projection { get; init; } = [];
 }
+
+/// <summary>
+/// The Fattening plan: the animal's own figures (<see cref="Defaults"/>, the same advice as the
+/// "Sell or keep?" card, without its projection) and the projection with the what-if
+/// <see cref="Overrides"/> applied (<see cref="Plan"/>). With no overrides the two agree on every figure.
+/// </summary>
+public sealed record FatteningPlan(SellOrKeepAdvice Defaults, SellOrKeepAdvice Plan, SellOrKeepOverrides Overrides);

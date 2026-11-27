@@ -62,7 +62,7 @@
       </select>
     }
 
-    <button type="button" *hasPermission="'health.edit'" (click)="toggleAll()"
+    <button type="button" *hasPermission="taskPermissions" (click)="toggleAll()"
       class="h-11 px-4 ml-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-200 inline-flex items-center gap-1.5">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ allVisibleSelected() ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
       {{ (allVisibleSelected() ? 'Clear all' : 'Select all due') | t }}
@@ -103,7 +103,7 @@
             <li class="px-3 sm:px-4 py-3" [ngClass]="{ 'bg-primary-50/50 dark:bg-primary-500/5': isSelected(t.eventId) }">
               <div class="flex items-start gap-3">
                 <!-- Big tap target for selection (only for users who may record) -->
-                @if ('health.edit' | can) {
+                @if (taskPermissions | can) {
                   <button type="button" (click)="toggle(t)" [disabled]="t.bucket === 'tomorrow'"
                     [attr.aria-pressed]="isSelected(t.eventId)"
                     [attr.aria-label]="'Select {task} for {tag}' | t: { task: t.taskName, tag: t.animalTag }"
@@ -181,7 +181,7 @@
                         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">sell</mat-icon> {{ 'Open Sell or Keep' | t }}
                       </a>
                     }
-                    <ng-container *hasPermission="'health.edit'">
+                    <ng-container *hasPermission="taskPermissions">
                       @if (t.bucket !== 'tomorrow') {
                         <button type="button" (click)="completeOne(t)" [disabled]="saving()"
                           class="inline-flex items-center gap-1 h-11 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold disabled:opacity-50">
@@ -193,6 +193,9 @@
                           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">block</mat-icon> {{ 'Skip' | t }}
                         </button>
                       }
+                    </ng-container>
+                    <!-- Rescheduling changes the plan, so it stays with health.edit -->
+                    <ng-container *hasPermission="'health.edit'">
                       <button type="button" (click)="openPanel(t, 'move')"
                         class="inline-flex items-center gap-1 h-11 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold">
                         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">event</mat-icon> {{ 'Move date' | t }}

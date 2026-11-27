@@ -28,17 +28,20 @@ public class GetBatchPnLReportQueryHandler : IRequestHandler<GetBatchPnLReportQu
     private readonly IAnimalCostLedgerRepository _ledgerRepository;
     private readonly IAnimalRepository _animalRepository;
     private readonly IAnimalValuationService _valuation;
+    private readonly Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver _prices;
 
     public GetBatchPnLReportQueryHandler(
         IFinancialTransactionRepository transactionRepository,
         IAnimalCostLedgerRepository ledgerRepository,
         IAnimalRepository animalRepository,
-        IAnimalValuationService valuation)
+        IAnimalValuationService valuation,
+        Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver prices)
     {
         _transactionRepository = transactionRepository;
         _ledgerRepository = ledgerRepository;
         _animalRepository = animalRepository;
         _valuation = valuation;
+        _prices = prices;
     }
 
     public async Task<BatchPnLReportDto> Handle(GetBatchPnLReportQuery request, CancellationToken cancellationToken)
@@ -53,6 +56,10 @@ public class GetBatchPnLReportQueryHandler : IRequestHandler<GetBatchPnLReportQu
         var batchAnimals = animals.Select(a => a.Id).ToHashSet();
 
         // 2. Costs: ledger total per animal; purchase price when an animal has no ledger yet.
+        //    On-hand animals are valued with the app's one price resolver (own sales, breed price, farm rule).
+        var prices = animals.Any(_valuation.IsOnHand)
+            ? await _prices.ForFarmAsync(request.FarmId, null, cancellationToken)
+            : null;
         decimal totalCost = 0m;
         decimal unrealisedValue = 0m;
         var onHand = 0;
@@ -65,7 +72,9 @@ public class GetBatchPnLReportQueryHandler : IRequestHandler<GetBatchPnLReportQu
             if (_valuation.IsOnHand(animal))
             {
                 onHand++;
-                unrealisedValue += _valuation.CurrentValue(animal, ledger, cost);
+                unrealisedValue += prices is null
+                    ? _valuation.CurrentValue(animal, ledger, cost)
+                    : _valuation.CurrentValue(animal, ledger, cost, prices.For(animal));
             }
         }
 

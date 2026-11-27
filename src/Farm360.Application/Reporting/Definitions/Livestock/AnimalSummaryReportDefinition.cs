@@ -37,6 +37,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
     private readonly IAnimalFeedAllocationRepository _feed;
     private readonly IAnimalValuationService _valuation;
     private readonly IAnimalBatchRepository _batches;
+    private readonly Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver _prices;
 
     public AnimalSummaryReportDefinition(
         IAnimalRepository animals,
@@ -46,9 +47,11 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         IAnimalCostLedgerRepository ledgers,
         IAnimalFeedAllocationRepository feed,
         IAnimalValuationService valuation,
-        IAnimalBatchRepository batches)
+        IAnimalBatchRepository batches,
+        Farm360.Application.Intelligence.Pricing.IAnimalPriceResolver prices)
     {
         _batches = batches;
+        _prices = prices;
         _animals = animals;
         _breeds = breeds;
         _sheds = sheds;
@@ -125,13 +128,16 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
 
         var animalId = context.Id("animalId");
         var rateOverride = LiveWeightRateParameter.ReadOverride(context);
-        var marketPricePerKg = LiveWeightRateParameter.EffectiveRate(context, _valuation);
 
         var animal = await _animals.GetByIdAsync(animalId, cancellationToken).ConfigureAwait(false);
         if (animal is null)
         {
             return [];
         }
+
+        // The animal's own price — own sales of its breed, breed price, farm rule — as on the animal page.
+        var price = await _prices.ForAnimalAsync(animal, context.Today, cancellationToken).ConfigureAwait(false);
+        var marketPricePerKg = rateOverride ?? price.PricePerKgBdt;
 
         var movement = animal.CurrentMovement;
         var shedId = movement?.ShedId;
@@ -187,13 +193,15 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         // Valuation by status: on-farm animals at latest weight × rate, sold animals at what they
         // realised, dead animals at nothing.
         var onHand = _valuation.IsOnHand(animal);
-        var projectedValue = _valuation.CurrentValue(animal, ledger, totalInvestment, rateOverride);
+        var projectedValue = _valuation.CurrentValue(animal, ledger, totalInvestment, price, rateOverride);
         var projectedProfit = projectedValue - totalInvestment;
         var marginPct = totalInvestment > 0 ? decimal.Round((projectedProfit / totalInvestment) * 100m, 1) : 0m;
         var valueBasis = onHand
-            ? (rateOverride is null && _valuation.Policy == Farm360.Domain.BusinessRules.AnimalValuationPolicy.CostBasis
+            ? (rateOverride is null && price.ValuedAtCost
                 ? "Valued at cost (farm setting): value = cost so far"
-                : $"Latest weight {latestWeight:N1} kg × ৳ {marketPricePerKg:N0}/kg")
+                : rateOverride is null && price.PerHeadBdt > 0m
+                    ? $"Latest weight {latestWeight:N1} kg × ৳ {marketPricePerKg:N2}/kg + ৳ {price.PerHeadBdt:N0} by-products per head"
+                    : $"Latest weight {latestWeight:N1} kg × ৳ {marketPricePerKg:N2}/kg")
             : animal.Status is Farm360.Domain.Livestock.Enums.AnimalStatus.Sold or Farm360.Domain.Livestock.Enums.AnimalStatus.Slaughtered
                 ? "Sale price received"
                 : animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Dead
@@ -236,7 +244,7 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             new("4. Financial Investment Breakdown", "Total cost so far", $"৳ {totalInvestment:N2}", "Sum of the five costs above"),
 
             // ── Section 5: Valuation & Profit Projections ─────────────────────
-            new("5. Valuation & Profit Projections", "Live-weight rate (BDT/kg)", $"৳ {marketPricePerKg:N2} / kg", rateOverride is null ? _valuation.RateBasisDescription : "Rate entered for this report"),
+            new("5. Valuation & Profit Projections", "Live-weight rate (BDT/kg)", $"৳ {marketPricePerKg:N2} / kg", rateOverride is null ? Capitalise(price.ExplanationEn) : "Rate entered for this report"),
             new("5. Valuation & Profit Projections", onHand ? "Estimated value today" : "Value realised", $"৳ {projectedValue:N2}", valueBasis),
             new("5. Valuation & Profit Projections", onHand ? "Expected profit / loss" : "Actual profit / loss", $"৳ {projectedProfit:N2}", projectedProfit >= 0 ? "Profit: value is above total cost" : "Loss: value is below total cost"),
             new("5. Valuation & Profit Projections", "Return on cost (%)", $"{marginPct:+0.0;-0.0;0.0}%", $"Profit ÷ total cost (৳ {totalInvestment:N0})")
@@ -244,6 +252,9 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
 
         return rows;
     }
+
+    private static string Capitalise(string text) =>
+        string.IsNullOrEmpty(text) ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
     private static LocalizedText SectionLabel(string section) => section switch
     {

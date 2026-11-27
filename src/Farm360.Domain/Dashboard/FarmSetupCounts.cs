@@ -16,4 +16,5 @@ public sealed record FarmSetupCounts(
     int ActiveFeedingPlans,
     bool AccountingSettingsSaved,
     int TeamMembers,
-    int PendingInvitations);
+    int PendingInvitations,
+    bool HasLocation);

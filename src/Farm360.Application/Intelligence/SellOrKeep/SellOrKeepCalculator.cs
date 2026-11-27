@@ -14,7 +14,7 @@ namespace Farm360.Application.Intelligence.SellOrKeep;
 /// <item>gain(d) = recent gain/day × (1 − decline × min(d, decline days) ÷ decline days);</item>
 /// <item>weight(d) = weight today + Σ gain(1…d);</item>
 /// <item>daily cost(d) = feed/day × (weight(d) ÷ weight today)^0.75 + labour &amp; overhead/day + health/day;</item>
-/// <item>cost(d) = invested today + Σ daily cost(1…d); value(d) = weight(d) × price/kg; profit(d) = value(d) − cost(d).</item>
+/// <item>cost(d) = invested today + Σ daily cost(1…d); value(d) = weight(d) × price/kg + per-head addition; profit(d) = value(d) − cost(d).</item>
 /// </list>
 /// <para>The best day is the first day with the highest profit; it is reached when one more day's gain is
 /// worth less than that day's cost.</para>
@@ -71,36 +71,27 @@ public static class SellOrKeepCalculator
         return (Math.Round((decimal)slope, 4), Math.Round((decimal)r2, 3));
     }
 
-    /// <summary>
-    /// The sale price per kg live weight, in priority order: the farm's own recent sales of the breed
-    /// (at least <see cref="SellOrKeepAssumptions.MinOwnSales"/>), the breed's expected price, the farm's
-    /// live-weight rate (when its valuation method is live weight), else meat price × dressing %.
-    /// </summary>
-    public static SellOrKeepPrice ResolvePrice(
-        decimal? ownSalesPricePerKg,
-        int ownSalesCount,
-        decimal? breedExpectedPricePerKg,
-        bool farmUsesLiveRate,
-        decimal farmLiveRatePerKg,
-        decimal meatPricePerKg,
-        decimal dressingRatio,
-        SellOrKeepAssumptions? assumptions = null)
-    {
-        var a = assumptions ?? SellOrKeepAssumptions.Default;
-        if (ownSalesPricePerKg is > 0m && ownSalesCount >= a.MinOwnSales)
-            return new SellOrKeepPrice(Math.Round(ownSalesPricePerKg.Value, 2), SellOrKeepPriceSource.OwnSales, ownSalesCount);
-        if (breedExpectedPricePerKg is > 0m)
-            return new SellOrKeepPrice(breedExpectedPricePerKg.Value, SellOrKeepPriceSource.BreedExpected);
-        if (farmUsesLiveRate && farmLiveRatePerKg > 0m)
-            return new SellOrKeepPrice(farmLiveRatePerKg, SellOrKeepPriceSource.FarmLiveRate);
-        return new SellOrKeepPrice(Math.Round(meatPricePerKg * dressingRatio, 2), SellOrKeepPriceSource.MeatAndDressing);
-    }
-
     /// <summary>Works out the advice for one animal.</summary>
-    public static SellOrKeepAdvice Advise(SellOrKeepInput input, SellOrKeepAssumptions? assumptions = null, bool includeProjection = true)
+    /// <param name="input">The animal's figures.</param>
+    /// <param name="assumptions">The assumptions (defaults when null).</param>
+    /// <param name="includeProjection">Return the day-by-day projection.</param>
+    /// <param name="overrides">
+    /// What-if changes (Fattening plan). Null or empty gives exactly the "Sell or keep?" advice. They change
+    /// the projection only: today's weight, value and profit always come from the records.
+    /// </param>
+    public static SellOrKeepAdvice Advise(
+        SellOrKeepInput input,
+        SellOrKeepAssumptions? assumptions = null,
+        bool includeProjection = true,
+        SellOrKeepOverrides? overrides = null)
     {
         ArgumentNullException.ThrowIfNull(input);
         var a = assumptions ?? SellOrKeepAssumptions.Default;
+        var o = overrides ?? new SellOrKeepOverrides();
+        if (o.HorizonDays is { } horizon)
+            a = a with { HorizonDays = Math.Clamp(horizon, 1, SellOrKeepOverrides.MaxHorizonDays) };
+        if (o.GrowthSlowdownPercent is { } slowdown)
+            a = a with { GrowthDeclineFraction = Math.Clamp(slowdown, 0m, 100m) / 100m };
         var today = input.Today;
         var daysOnFarm = Math.Max(0, today.DayNumber - input.AcquisitionDate.DayNumber);
 
@@ -128,9 +119,13 @@ public static class SellOrKeepCalculator
             growthSource = SellOrKeepGrowthSource.Recent;
             growthPoints = recent.Count;
         }
-        else if (weighings.Count >= 2 && weighings[^1].Date > weighings[0].Date)
+        // Since the first weighing (the animal page header's ADG).
+        decimal? lifetimeAdg = weighings.Count >= 2 && weighings[^1].Date > weighings[0].Date
+            ? Math.Round((weighings[^1].WeightKg - weighings[0].WeightKg) / (weighings[^1].Date.DayNumber - weighings[0].Date.DayNumber), 4)
+            : null;
+        if (adg is null && lifetimeAdg is not null)
         {
-            adg = Math.Round((weighings[^1].WeightKg - weighings[0].WeightKg) / (weighings[^1].Date.DayNumber - weighings[0].Date.DayNumber), 4);
+            adg = lifetimeAdg;
             growthSource = SellOrKeepGrowthSource.Lifetime;
             growthPoints = weighings.Count;
         }
@@ -150,35 +145,83 @@ public static class SellOrKeepCalculator
 
         // ── 3. Cost run-rate ──
         var feedDays = Math.Max(1, Math.Min(a.FeedWindowDays, daysOnFarm));
-        var feedPerDay = input.FeedCostInWindowBdt > 0m
-            ? input.FeedCostInWindowBdt / feedDays
-            : daysOnFarm > 0 ? input.Cost.FeedBdt / daysOnFarm : 0m;
-        var labourPerDay = input.LabourOverheadDaysCovered > 0 && input.LabourOverheadInWindowBdt > 0m
-            ? input.LabourOverheadInWindowBdt / input.LabourOverheadDaysCovered
-            : daysOnFarm > 0 ? (input.Cost.LabourBdt + input.Cost.OverheadBdt) / daysOnFarm : 0m;
+        var feedBasis = input.FeedCostInWindowBdt > 0m ? SellOrKeepCostBasis.RecentRecords
+            : daysOnFarm > 0 && input.Cost.FeedBdt > 0m ? SellOrKeepCostBasis.LifetimeAverage
+            : SellOrKeepCostBasis.None;
+        var feedPerDay = feedBasis switch
+        {
+            SellOrKeepCostBasis.RecentRecords => input.FeedCostInWindowBdt / feedDays,
+            SellOrKeepCostBasis.LifetimeAverage => input.Cost.FeedBdt / daysOnFarm,
+            _ => 0m,
+        };
+        var labourBasis = input.LabourOverheadDaysCovered > 0 && input.LabourOverheadInWindowBdt > 0m ? SellOrKeepCostBasis.RecentRecords
+            : daysOnFarm > 0 && input.Cost.LabourBdt + input.Cost.OverheadBdt > 0m ? SellOrKeepCostBasis.LifetimeAverage
+            : SellOrKeepCostBasis.None;
+        var labourPerDay = labourBasis switch
+        {
+            SellOrKeepCostBasis.RecentRecords => input.LabourOverheadInWindowBdt / input.LabourOverheadDaysCovered,
+            SellOrKeepCostBasis.LifetimeAverage => (input.Cost.LabourBdt + input.Cost.OverheadBdt) / daysOnFarm,
+            _ => 0m,
+        };
         var healthDays = Math.Max(1, Math.Min(a.HealthWindowDays, daysOnFarm));
+        var healthBasis = input.HealthCostInWindowBdt > 0m ? SellOrKeepCostBasis.RecentRecords : SellOrKeepCostBasis.None;
         var healthPerDay = Math.Max(0m, input.HealthCostInWindowBdt) / healthDays;
         feedPerDay = Math.Round(Math.Max(0m, feedPerDay), 2);
         labourPerDay = Math.Round(Math.Max(0m, labourPerDay), 2);
         healthPerDay = Math.Round(healthPerDay, 2);
+
+        // What-if costs replace the recorded run-rate.
+        if (o.FeedPerDayBdt is { } feedOverride)
+        {
+            feedPerDay = Math.Round(Math.Max(0m, feedOverride), 2);
+            feedBasis = SellOrKeepCostBasis.Override;
+        }
+
+        if (o.LabourOverheadPerDayBdt is { } labourOverride)
+        {
+            labourPerDay = Math.Round(Math.Max(0m, labourOverride), 2);
+            labourBasis = SellOrKeepCostBasis.Override;
+        }
+
+        if (o.HealthPerDayBdt is { } healthOverride)
+        {
+            healthPerDay = Math.Round(Math.Max(0m, healthOverride), 2);
+            healthBasis = SellOrKeepCostBasis.Override;
+        }
 
         // ── 6. Health risk ──
         var sick = input.TreatmentsInWindow >= a.FrequentlySickTreatments
                    || (feedPerDay > 0m && healthPerDay > feedPerDay * a.FrequentlySickHealthShareOfFeed);
 
         // ── 4. Price ──
-        var price = input.Price.PricePerKgBdt;
+        // Price per kg live weight, plus a fixed amount per head (by-products under the meat-yield rule).
+        // A what-if price applies from today on ("what if the market paid X?"). Without one this is the
+        // resolved price, so day 0 matches the "Profit if sold today" figure on the animal page.
+        var priceOverridden = o.PricePerKgBdt is not null || o.PerHeadBdt is not null;
+        var usedPrice = priceOverridden
+            ? input.Price with
+            {
+                PricePerKgBdt = Math.Max(0m, o.PricePerKgBdt ?? input.Price.PricePerKgBdt),
+                PerHeadBdt = Math.Max(0m, o.PerHeadBdt ?? input.Price.PerHeadBdt),
+            }
+            : input.Price;
+        var price = usedPrice.PricePerKgBdt;
+        var perHead = usedPrice.PerHeadBdt;
         var invested = input.Cost.TotalBdt;
-        decimal? valueToday = weightToday is { } wt ? Math.Round(wt * price, 0) : null;
+        decimal? valueToday = weightToday is { } wt ? Math.Round(wt * price + perHead, 0) : null;
         decimal? profitToday = valueToday - invested;
 
         // ── 5. Projection ──
+        // The measured gain, or the what-if one. Today's weight always uses the measured gain.
+        var projectionAdg = o.AdgKgPerDay is { } adgOverride ? Math.Round(adgOverride, 4) : adg;
         var points = new List<SellOrKeepPoint>();
-        if (adg is { } g && weightToday is { } w0)
+        decimal? endWeight = null;
+        decimal? endCost = null;
+        if (projectionAdg is { } g && weightToday is { } w0)
         {
             var weight = w0;
             var cost = invested;
-            points.Add(new SellOrKeepPoint(0, today, Math.Round(weight, 1), g, 0m, Math.Round(cost, 0), Math.Round(weight * price, 0), Math.Round(weight * price - cost, 0)));
+            points.Add(new SellOrKeepPoint(0, today, Math.Round(weight, 1), g, 0m, Math.Round(cost, 0), Math.Round(weight * price + perHead, 0), Math.Round(weight * price + perHead - cost, 0)));
             for (var d = 1; d <= a.HorizonDays; d++)
             {
                 var decline = a.GrowthDeclineDays > 0 ? a.GrowthDeclineFraction * Math.Min(d, a.GrowthDeclineDays) / a.GrowthDeclineDays : 0m;
@@ -187,9 +230,12 @@ public static class SellOrKeepCalculator
                 var feedScale = w0 > 0m && weight > 0m ? (decimal)Math.Pow((double)(weight / w0), a.FeedScalingExponent) : 1m;
                 var daily = feedPerDay * feedScale + labourPerDay + healthPerDay;
                 cost += daily;
-                var value = weight * price;
+                var value = weight * price + perHead;
                 points.Add(new SellOrKeepPoint(d, today.AddDays(d), Math.Round(weight, 1), Math.Round(gain, 3), Math.Round(daily, 2), Math.Round(cost, 0), Math.Round(value, 0), Math.Round(value - cost, 0)));
             }
+
+            endWeight = weight;
+            endCost = cost;
         }
 
         // Best day = the first day with the highest profit (in whole taka); break-even = the first day a
@@ -206,7 +252,15 @@ public static class SellOrKeepCalculator
 
         decimal? valueOfGain = points.Count > 1 ? Math.Round(points[1].AdgKg * price, 0) : null;
         decimal? marginPerDay = points.Count > 1 ? Math.Round(points[1].AdgKg * price - points[1].DailyCostBdt, 0) : null;
-        decimal? feedPerKgGain = adg is > 0m ? Math.Round(feedPerDay / adg.Value, 0) : null;
+        decimal? feedPerKgGain = projectionAdg is > 0m ? Math.Round(feedPerDay / projectionAdg.Value, 0) : null;
+        // Total cost per kg gained: every taka spent per day ÷ kg gained per day.
+        decimal? costPerKgGain = projectionAdg is > 0m ? Math.Round((feedPerDay + labourPerDay + healthPerDay) / projectionAdg.Value, 0) : null;
+        decimal? roiAtBest = best is { CostBdt: > 0m } ? Math.Round(best.ProfitBdt / best.CostBdt * 100m, 1) : null;
+        var last = points.Count > 0 ? points[^1] : null;
+        // Price per kg live that makes value = cost on the last day: (cost − per head) ÷ weight.
+        decimal? breakEvenPriceAtHorizon = endWeight is > 0m && endCost is { } ec
+            ? Math.Round(Math.Max(0m, ec - perHead) / endWeight.Value, 2)
+            : null;
 
         // ── 7. Verdict ──
         SellOrKeepVerdict verdict;
@@ -223,7 +277,7 @@ public static class SellOrKeepCalculator
         if (verdict == SellOrKeepVerdict.LosingMoney || profitToday < 0m)
         {
             cause = sick ? SellOrKeepLossCause.Sickness
-                : vsTarget == SellOrKeepGrowthVsTarget.Below || adg is <= 0m ? SellOrKeepLossCause.SlowGrowth
+                : vsTarget == SellOrKeepGrowthVsTarget.Below || projectionAdg is <= 0m ? SellOrKeepLossCause.SlowGrowth
                 : feedPerKgGain is { } fpk && fpk >= price ? SellOrKeepLossCause.FeedCost
                 : SellOrKeepLossCause.PurchasePrice;
         }
@@ -264,18 +318,42 @@ public static class SellOrKeepCalculator
             GrowthWeighings = growthPoints,
             GrowthFitR2 = fit,
             BreedTargetAdgKg = target,
+            BreedTargetBasis = target is null ? SellOrKeepBreedTargetBasis.None : input.BreedTargetBasis,
+            BreedTargetMinKg = target is null ? null : input.BreedTargetMinKg,
+            BreedTargetMaxKg = target is null ? null : input.BreedTargetMaxKg,
             GrowthVsTarget = vsTarget,
+            LifetimeAdgKgPerDay = lifetimeAdg,
+            FirstWeighingDate = weighings.Count > 0 ? weighings[0].Date : null,
+            RecentAdgKgPerDay = recentSlope,
+            RecentGrowthWindowDays = a.RecentGrowthWindowDays,
+            ProjectionAdgKgPerDay = projectionAdg,
+            AdgOverridden = o.AdgKgPerDay is not null,
+            GrowthSlowdownPercent = Math.Round(a.GrowthDeclineFraction * 100m, 1),
+            GrowthDeclineDays = a.GrowthDeclineDays,
             FeedPerDayBdt = feedPerDay,
             LabourOverheadPerDayBdt = labourPerDay,
             HealthPerDayBdt = healthPerDay,
+            FeedCostBasis = feedBasis,
+            LabourOverheadCostBasis = labourBasis,
+            HealthCostBasis = healthBasis,
+            FeedWindowDays = a.FeedWindowDays,
+            HealthWindowDays = a.HealthWindowDays,
             FeedCostPerKgGainBdt = feedPerKgGain,
-            Price = input.Price,
+            CostPerKgGainBdt = costPerKgGain,
+            Price = usedPrice,
+            PriceOverridden = priceOverridden,
+            HorizonDays = a.HorizonDays,
             BestDay = best?.Day,
             BestDate = best?.Date,
             BestWeightKg = best?.WeightKg,
             ProfitAtBestDayBdt = best?.ProfitBdt,
             BreakEvenDay = breakEven?.Day,
             BreakEvenDate = breakEven?.Date,
+            RoiAtBestDayPercent = roiAtBest,
+            WeightAtHorizonKg = last?.WeightKg,
+            CostAtHorizonBdt = last?.CostBdt,
+            ProfitAtHorizonBdt = last?.ProfitBdt,
+            BreakEvenPricePerKgAtHorizonBdt = breakEvenPriceAtHorizon,
             ValueOfDailyGainBdt = valueOfGain,
             MarginPerDayKeptBdt = marginPerDay,
             TreatmentsLast90Days = input.TreatmentsInWindow,

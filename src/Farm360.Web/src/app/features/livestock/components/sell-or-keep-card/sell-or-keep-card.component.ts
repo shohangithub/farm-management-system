@@ -4,12 +4,11 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, of } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
-import { SellOrKeepAdvice, SellOrKeepPoint } from '../../models/sell-or-keep.models';
+import { SellOrKeepAdvice, SellOrKeepPoint, adgBasisText, breedTargetSourceText } from '../../models/sell-or-keep.models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
-
-interface ChartMark { x: number; y: number; label: string; kind: 'today' | 'best' | 'even'; }
+import { ChartMark, placeChartMarks, shortTaka } from './chart-marks';
 
 /**
  * "Sell or keep?" card on the animal page: the verdict and its reason, a small profit curve for the
@@ -62,22 +61,27 @@ interface ChartMark { x: number; y: number; label: string; kind: 'today' | 'best
         <div *ngIf="chart() as c" class="mt-4">
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'Profit if sold on each of the next {days} days' | t: { days: c.horizon } }}</p>
           <div class="relative">
-            <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" class="w-full h-40 overflow-visible" role="img"
+            <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" class="w-full h-44 overflow-visible" role="img"
                  [attr.aria-label]="'Profit curve: today, best day and break-even are marked' | t"
                  (mousemove)="onHover($event)" (mouseleave)="hover.set(null)">
-              <!-- zero line -->
-              <line [attr.x1]="PAD_L" [attr.x2]="W - PAD_R" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" class="stroke-gray-300 dark:stroke-gray-600" stroke-width="1" stroke-dasharray="4 4" />
-              <text [attr.x]="PAD_L - 4" [attr.y]="c.zeroY + 3" text-anchor="end" class="fill-gray-400 text-[10px]">0</text>
-              <text [attr.x]="PAD_L - 4" [attr.y]="c.topY + 3" text-anchor="end" class="fill-gray-400 text-[10px]">{{ c.maxLabel }}</text>
-              <text [attr.x]="PAD_L - 4" [attr.y]="c.bottomY + 3" text-anchor="end" class="fill-gray-400 text-[10px]">{{ c.minLabel }}</text>
+              <!-- zero line: above it the animal is in profit, below it at a loss -->
+              <line [attr.x1]="PAD_L" [attr.x2]="W - PAD_R" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" class="stroke-gray-400 dark:stroke-gray-500" stroke-width="1" stroke-dasharray="4 4" />
+              <text [attr.x]="PAD_L - 4" [attr.y]="c.zeroY + 3" text-anchor="end" class="fill-gray-500 dark:fill-gray-400 text-[10px] font-semibold">৳0</text>
+              <text [attr.x]="W - PAD_R" [attr.y]="c.zeroY - 3" text-anchor="end" class="fill-gray-500 dark:fill-gray-400 text-[9px]">{{ 'no profit, no loss' | t }}</text>
+              <text *ngIf="c.maxLabel" [attr.x]="PAD_L - 4" [attr.y]="c.topY + 3" text-anchor="end" class="fill-gray-400 text-[10px]">{{ c.maxLabel }}</text>
+              <text *ngIf="c.minLabel" [attr.x]="PAD_L - 4" [attr.y]="c.bottomY + 3" text-anchor="end" class="fill-gray-400 text-[10px]">{{ c.minLabel }}</text>
+              <!-- x axis: first and last day -->
+              <text [attr.x]="PAD_L" [attr.y]="H - 3" text-anchor="start" class="fill-gray-400 text-[10px]">{{ c.startDate | date:'d MMM' }}</text>
+              <text [attr.x]="W - PAD_R" [attr.y]="H - 3" text-anchor="end" class="fill-gray-400 text-[10px]">{{ c.endDate | date:'d MMM yyyy' }}</text>
               <!-- curve -->
               <polyline [attr.points]="c.points" fill="none" class="stroke-primary-600 dark:stroke-primary-400" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
               <!-- marks -->
               <g *ngFor="let m of c.marks">
-                <line [attr.x1]="m.x" [attr.x2]="m.x" [attr.y1]="PAD_T" [attr.y2]="H - PAD_B" class="stroke-gray-200 dark:stroke-gray-700" stroke-width="1" />
+                <line [attr.x1]="m.x" [attr.x2]="m.x" [attr.y1]="PAD_T - 6 - m.row * 12" [attr.y2]="H - PAD_B" class="stroke-gray-200 dark:stroke-gray-700" stroke-width="1" />
                 <circle [attr.cx]="m.x" [attr.cy]="m.y" r="5" stroke-width="2"
                         [ngClass]="m.kind === 'best' ? 'fill-primary-600 dark:fill-primary-400 stroke-white dark:stroke-gray-900' : 'fill-white dark:fill-gray-900 stroke-gray-500 dark:stroke-gray-400'" />
-                <text [attr.x]="m.x" [attr.y]="H - 2" [attr.text-anchor]="m.kind === 'today' ? 'start' : 'middle'" class="fill-gray-600 dark:fill-gray-300 text-[10px] font-semibold">{{ m.label | t }}</text>
+                <text [attr.x]="m.anchor === 'start' ? m.x - 2 : m.anchor === 'end' ? m.x + 2 : m.x" [attr.y]="PAD_T - 9 - m.row * 12" [attr.text-anchor]="m.anchor"
+                      class="fill-gray-600 dark:fill-gray-300 text-[10px] font-semibold">{{ m.label | t }}</text>
               </g>
               <!-- hover -->
               <g *ngIf="hoverPoint() as h">
@@ -120,7 +124,8 @@ interface ChartMark { x: number; y: number; label: string; kind: 'today' | 'best
             <dt class="text-xs text-gray-500 dark:text-gray-400">{{ 'Gain per day' | t }}</dt>
             <dd class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
               <ng-container *ngIf="a.adgKgPerDay != null; else dash">{{ a.adgKgPerDay | number:'1.2-2' }} {{ 'kg' | t }}</ng-container>
-              <span *ngIf="a.breedTargetAdgKg" class="block text-xs font-normal text-gray-500 dark:text-gray-400">{{ growthLabel(a) | t: { target: (a.breedTargetAdgKg | number:'1.2-2') } }}</span>
+              <span *ngIf="a.adgKgPerDay != null" class="block text-xs font-normal text-gray-500 dark:text-gray-400">{{ adgBasis(a).text | t: adgBasis(a).params }}</span>
+              <span *ngIf="a.breedTargetAdgKg" class="block text-xs font-normal text-gray-500 dark:text-gray-400" [title]="breedTargetSource(a).text | t: breedTargetSource(a).params">{{ growthLabel(a) | t: { target: (a.breedTargetAdgKg | number:'1.2-2') } }}</span>
             </dd>
           </div>
           <div>
@@ -146,7 +151,7 @@ interface ChartMark { x: number; y: number; label: string; kind: 'today' | 'best
         <div class="mt-4 flex flex-col gap-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-800">
           <span class="flex items-start gap-1.5">
             <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mt-px shrink-0 text-gray-400" aria-hidden="true">sell</mat-icon>
-            <span>{{ 'Price {price}/kg live weight — {source}' | t: { price: (a.price.pricePerKgBdt | money), source: (priceSource().text | t: priceSource().params) } }}</span>
+            <span>{{ 'Price {price}/kg live weight — {source}' | t: { price: (a.price.pricePerKgBdt | money:2), source: priceSource() } }}</span>
           </span>
           <span *ngIf="a.frequentlySick" class="flex items-start gap-1.5 text-rose-700 dark:text-rose-400">
             <mat-icon class="!text-[14px] !w-[14px] !h-[14px] mt-px shrink-0" aria-hidden="true">healing</mat-icon>
@@ -169,6 +174,8 @@ export class SellOrKeepCardComponent {
   readonly refresh = input<number>(0);
   readonly showWhatIf = input<boolean>(true);
   readonly whatIf = output<void>();
+  /** The advice once loaded (null when unavailable), so the page can show the recent gain per day. */
+  readonly adviceLoaded = output<SellOrKeepAdvice | null>();
 
   private readonly svc = inject(AnimalService);
   private readonly i18n = inject(I18nService);
@@ -181,8 +188,9 @@ export class SellOrKeepCardComponent {
   readonly H = 160;
   readonly PAD_L = 52;
   readonly PAD_R = 12;
-  readonly PAD_T = 10;
-  readonly PAD_B = 18;
+  /** Room above the plot for the marker labels (two stacked rows). */
+  readonly PAD_T = 34;
+  readonly PAD_B = 16;
 
   constructor() {
     effect(onCleanup => {
@@ -192,6 +200,7 @@ export class SellOrKeepCardComponent {
       const sub = this.svc.getSellOrKeep(id).pipe(catchError(() => of(null))).subscribe(a => {
         this.advice.set(a);
         this.loading.set(false);
+        this.adviceLoaded.emit(a);
       });
       onCleanup(() => sub.unsubscribe());
     });
@@ -222,14 +231,10 @@ export class SellOrKeepCardComponent {
     }
   });
 
-  readonly priceSource = computed((): { text: string; params?: Record<string, string | number> } => {
-    const a = this.advice();
-    switch (a?.price.source) {
-      case 'OwnSales': return { text: 'based on your own sales of {count} {breed}', params: { count: a.price.salesCount, breed: a.breedName } };
-      case 'BreedExpected': return { text: 'the expected price set for {breed}', params: { breed: a.breedName } };
-      case 'FarmLiveRate': return { text: "the farm's live-weight rate" };
-      default: return { text: 'meat price × dressing %' };
-    }
+  /** Where the price came from, in the user's language — the same line the animal page's profit card shows. */
+  readonly priceSource = computed(() => {
+    const p = this.advice()?.price;
+    return p ? (this.i18n.isBangla ? p.explanationBn : p.explanationEn) : '';
   });
 
   /** Scaled SVG geometry for the profit curve. */
@@ -244,19 +249,22 @@ export class SellOrKeepCardComponent {
     const horizon = pts[pts.length - 1].day;
     const x = (d: number) => this.PAD_L + (d / horizon) * (this.W - this.PAD_L - this.PAD_R);
     const y = (v: number) => this.PAD_T + ((max - v) / span) * (this.H - this.PAD_T - this.PAD_B);
-    const marks: ChartMark[] = [{ x: x(0), y: y(pts[0].profitBdt), label: 'Today', kind: 'today' }];
-    if (a.breakEvenDay != null) marks.push({ x: x(a.breakEvenDay), y: y(pts[a.breakEvenDay].profitBdt), label: 'Break-even', kind: 'even' });
-    if (a.bestDay != null && a.bestDay > 0) marks.push({ x: x(a.bestDay), y: y(pts[a.bestDay].profitBdt), label: 'Best day', kind: 'best' });
-    const short = (v: number) => (Math.abs(v) >= 1000 ? `${Math.round(v / 1000)}k` : `${Math.round(v)}`);
+    const marks: ChartMark[] = [{ day: 0, x: x(0), y: y(pts[0].profitBdt), label: 'Today', kind: 'today' }];
+    if (a.breakEvenDay != null) marks.push({ day: a.breakEvenDay, x: x(a.breakEvenDay), y: y(pts[a.breakEvenDay].profitBdt), label: 'Break-even', kind: 'even' });
+    if (a.bestDay != null) marks.push({ day: a.bestDay, x: x(a.bestDay), y: y(pts[a.bestDay].profitBdt), label: 'Best day', kind: 'best' });
+    // An axis label closer than 12px to the ৳0 label would print over it: drop it.
+    const zeroY = y(0);
     return {
       horizon,
       points: pts.map(p => `${x(p.day).toFixed(1)},${y(p.profitBdt).toFixed(1)}`).join(' '),
-      marks,
-      zeroY: y(0),
+      marks: placeChartMarks(marks, this.PAD_L, this.W - this.PAD_R),
+      zeroY,
       topY: y(max),
       bottomY: y(min),
-      maxLabel: max > 0 ? short(max) : '',
-      minLabel: min < 0 ? short(min) : '',
+      maxLabel: max > 0 && Math.abs(y(max) - zeroY) >= 12 ? shortTaka(max) : '',
+      minLabel: min < 0 && Math.abs(y(min) - zeroY) >= 12 ? shortTaka(min) : '',
+      startDate: pts[0].date,
+      endDate: pts[pts.length - 1].date,
       x, y,
     };
   });
@@ -292,6 +300,16 @@ export class SellOrKeepCardComponent {
       case 'At': return 'at the breed target of {target}';
       default: return 'breed target {target}';
     }
+  }
+
+  /** Which gain per day the advice uses. */
+  adgBasis(a: SellOrKeepAdvice): { text: string; params?: Record<string, string | number> } {
+    return adgBasisText(a);
+  }
+
+  /** Where the breed target comes from. */
+  breedTargetSource(a: SellOrKeepAdvice): { text: string; params?: Record<string, string | number> } {
+    return breedTargetSourceText(a);
   }
 
   profitClass(v: number | null | undefined): string {

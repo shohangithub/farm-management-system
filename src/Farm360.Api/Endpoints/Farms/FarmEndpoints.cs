@@ -70,6 +70,15 @@ public static class FarmEndpoints
         })
         .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.Edit}");
 
+        // Only the map point (Weather page "Set location"); the rest of the farm is left as it is.
+        rootGroup.MapPut("/{farmId:guid}/location", async (Guid farmId, [FromBody] SetFarmLocationRequest request, ISender sender) =>
+        {
+            await sender.Send(new SetFarmLocationCommand(farmId, request.Latitude, request.Longitude));
+            return Results.NoContent();
+        })
+        .RequireAuthorization($"Permission:{PermissionConstants.FarmModule.Edit}")
+        .WithSummary("Set the farm's latitude and longitude");
+
         rootGroup.MapDelete("/{id:guid}", async (Guid id, ISender sender) =>
         {
             await sender.Send(new DeleteFarmCommand(id));
@@ -80,3 +89,6 @@ public static class FarmEndpoints
         return app;
     }
 }
+
+/// <summary>Body of PUT /api/v1/farms/{farmId}/location.</summary>
+public sealed record SetFarmLocationRequest(double Latitude, double Longitude);

@@ -48,7 +48,11 @@ public class SellOrKeepReportTests
             FeedCostInWindowBdt = 301m * 30m,
             TreatmentsInWindow = treatments,
             BreedTargetAdgKg = 0.9m,
-            Price = new SellOrKeepPrice(price, SellOrKeepPriceSource.OwnSales, 3),
+            Price = new Farm360.Application.Intelligence.Pricing.AnimalPrice(price, Farm360.Application.Intelligence.Pricing.AnimalPriceSource.OwnSales, 3)
+            {
+                ExplanationEn = "your own sales of 3 Sahiwal Cross in the last 12 months, average ৳400/kg",
+                ExplanationBn = "গত ১২ মাসে আপনার নিজের ৩টি Sahiwal Cross বিক্রির গড় ৳400/কেজি",
+            },
         }, HandCase);
 
     private static IReadOnlyList<SellOrKeepAdvice> Herd() =>
@@ -110,7 +114,7 @@ public class SellOrKeepReportTests
         summary.Insights.Should().Contain(i => i.StartsWith("Sell now: 1 animal(s) — S-01", StringComparison.Ordinal));
         summary.Insights.Should().Contain(i => i.StartsWith("Losing money: 1 animal(s)", StringComparison.Ordinal) && i.Contains("L-01: slow growth", StringComparison.Ordinal));
         summary.Insights.Should().Contain(i => i.StartsWith("Weigh first: W-01", StringComparison.Ordinal));
-        summary.Insights.Should().Contain(i => i.Contains("based on your own sales of 3 Sahiwal Cross", StringComparison.Ordinal));
+        summary.Insights.Should().Contain(i => i.Contains("your own sales of 3 Sahiwal Cross", StringComparison.Ordinal));
     }
 
     [Theory]

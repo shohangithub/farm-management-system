@@ -30,6 +30,11 @@ export class FarmService {
     return this.http.put<void>(`${this.apiUrl}/${id}`, command);
   }
 
+  /** Sets only the farm's map point (PUT /farms/{id}/location); the other farm fields are left as they are. */
+  setFarmLocation(id: string, latitude: number, longitude: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/location`, { latitude, longitude });
+  }
+
   deleteFarm(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

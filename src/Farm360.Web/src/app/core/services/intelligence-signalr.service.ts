@@ -1,7 +1,7 @@
 import { Injectable, Injector, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 import * as signalR from '@microsoft/signalr';
-import { ActionableInsight } from '../../features/livestock/components/intelligence-panel/intelligence-panel.component';
+import { ActionableInsight } from '../models/actionable-insight.model';
 import { NotificationService } from '../../shared/services/notification.service';
 import { NotificationCenterService, StoredNotification } from './notification-center.service';
 

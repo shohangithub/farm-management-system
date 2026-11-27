@@ -95,6 +95,23 @@ public sealed class TenantBusinessRulesTests : IDisposable
     }
 
     [Fact]
+    public void New_tenants_value_at_live_weight_while_existing_tenants_keep_the_inherited_method()
+    {
+        // TenantA was just created (sign-up / onboarding store this row); TenantB is an existing tenant with no row.
+        _repository.Rows.Add(TenantBusinessSettings.CreateForNewTenant(TenantA));
+
+        var created = ProviderFor(TenantA).Current;
+        created.Valuation.Should().Be(AnimalValuationPolicy.LiveWeightMarket);
+        created.DefaultLiveWeightPricePerKgBdt.Should().Be(_config.DefaultLiveWeightPricePerKgBdt, "the configured live price is kept");
+        TenantBusinessSettings.NewTenantDefaults.Valuation.Should().Be(AnimalValuationPolicy.LiveWeightMarket);
+        TenantBusinessSettings.NewTenantDefaults.DefaultLiveWeightPricePerKgBdt.Should().BeNull("only the method is set; the price is inherited");
+
+        ProviderFor(TenantB).Current.Valuation.Should().Be(AnimalValuationPolicy.MeatYieldMarket,
+            "an existing tenant without a stored override must not silently change method");
+        new FarmBusinessRules().Valuation.Should().Be(AnimalValuationPolicy.MeatYieldMarket, "the platform default is unchanged");
+    }
+
+    [Fact]
     public void Tenants_are_isolated()
     {
         _repository.Rows.Add(TenantBusinessSettings.Create(TenantA, null, new BusinessRulesOverrides(DefaultMeatPricePerKgBdt: 750m)));

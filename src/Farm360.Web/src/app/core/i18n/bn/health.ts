@@ -609,4 +609,7 @@ export const BN_HEALTH: Record<string, string> = {
   "{count} animal is due tomorrow: {items}": "আগামীকাল {count}টি পশুর কাজ আছে: {items}",
   "{count} animals have overdue tasks: {items}": "{count}টি পশুর কাজ সময় পেরিয়ে গেছে: {items}",
   "{count} animal has overdue tasks: {items}": "{count}টি পশুর কাজ সময় পেরিয়ে গেছে: {items}",
+  // Permission: workers do the daily health checklist
+  'Do daily health tasks': 'দৈনিক স্বাস্থ্য কাজ করা',
+  'Records feeding, basic animal operations, does the daily health tasks.': 'খাওয়ানোর হিসাব রাখে, পশুর সাধারণ কাজ করে, দৈনিক স্বাস্থ্য কাজ করে।',
 };

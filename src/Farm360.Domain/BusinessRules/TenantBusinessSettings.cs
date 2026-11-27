@@ -24,7 +24,9 @@ public sealed record BusinessRulesOverrides(
     decimal? DefaultLiveWeightPricePerKgBdt = null,
     ReportLanguagePreference? DefaultReportLanguage = null,
     bool? BengaliNumeralsByDefault = null,
-    bool? CarryLivestockGrowingCosts = null)
+    bool? CarryLivestockGrowingCosts = null,
+    decimal? ByProductsValuePerHeadBdt = null,
+    decimal? ByProductsPercentOfMeat = null)
 {
     /// <summary>True when no field is overridden.</summary>
     public bool IsEmpty =>
@@ -32,7 +34,7 @@ public sealed record BusinessRulesOverrides(
         FallbackAnimalWeightKg is null && OverheadAllocation is null && OverheadCostPeriod is null &&
         Valuation is null && DefaultDressingPercentage is null && DefaultMeatPricePerKgBdt is null &&
         DefaultLiveWeightPricePerKgBdt is null && DefaultReportLanguage is null && BengaliNumeralsByDefault is null &&
-        CarryLivestockGrowingCosts is null;
+        CarryLivestockGrowingCosts is null && ByProductsValuePerHeadBdt is null && ByProductsPercentOfMeat is null;
 }
 
 /// <summary>
@@ -67,6 +69,8 @@ public sealed class TenantBusinessSettings : AuditableEntity, IAggregateRoot
     public ReportLanguagePreference? DefaultReportLanguage { get; private set; }
     public bool? BengaliNumeralsByDefault { get; private set; }
     public bool? CarryLivestockGrowingCosts { get; private set; }
+    public decimal? ByProductsValuePerHeadBdt { get; private set; }
+    public decimal? ByProductsPercentOfMeat { get; private set; }
 
     private TenantBusinessSettings() { } // EF Core
 
@@ -77,6 +81,16 @@ public sealed class TenantBusinessSettings : AuditableEntity, IAggregateRoot
 
         FarmId = farmId;
     }
+
+    /// <summary>
+    /// What a NEW tenant starts with: animals valued at live weight × the live-weight price (the price is
+    /// inherited from <c>Farm360:BusinessRules</c>). Stored as an explicit tenant-wide override so the
+    /// platform default (still meat yield) and every existing tenant that inherits it stay unchanged.
+    /// </summary>
+    public static BusinessRulesOverrides NewTenantDefaults { get; } = new(Valuation: AnimalValuationPolicy.LiveWeightMarket);
+
+    /// <summary>The tenant-wide row a new tenant is created with (<see cref="NewTenantDefaults"/>).</summary>
+    public static TenantBusinessSettings CreateForNewTenant(Guid tenantId) => Create(tenantId, null, NewTenantDefaults);
 
     public static TenantBusinessSettings Create(Guid tenantId, Guid? farmId, BusinessRulesOverrides values)
     {
@@ -95,6 +109,8 @@ public sealed class TenantBusinessSettings : AuditableEntity, IAggregateRoot
         Guard(values.DefaultDressingPercentage is null or (>= 0.3m and <= 0.7m), nameof(values.DefaultDressingPercentage));
         Guard(values.DefaultMeatPricePerKgBdt is null or > 0m, nameof(values.DefaultMeatPricePerKgBdt));
         Guard(values.DefaultLiveWeightPricePerKgBdt is null or > 0m, nameof(values.DefaultLiveWeightPricePerKgBdt));
+        Guard(values.ByProductsValuePerHeadBdt is null or >= 0m, nameof(values.ByProductsValuePerHeadBdt));
+        Guard(values.ByProductsPercentOfMeat is null or (>= 0m and <= 0.5m), nameof(values.ByProductsPercentOfMeat));
 
         FeedAllocation = values.FeedAllocation;
         MetabolicWeightExponent = values.MetabolicWeightExponent;
@@ -109,6 +125,8 @@ public sealed class TenantBusinessSettings : AuditableEntity, IAggregateRoot
         DefaultReportLanguage = values.DefaultReportLanguage;
         BengaliNumeralsByDefault = values.BengaliNumeralsByDefault;
         CarryLivestockGrowingCosts = values.CarryLivestockGrowingCosts;
+        ByProductsValuePerHeadBdt = values.ByProductsValuePerHeadBdt;
+        ByProductsPercentOfMeat = values.ByProductsPercentOfMeat;
     }
 
     /// <summary>The stored values, <c>null</c> where this row inherits.</summary>
@@ -116,7 +134,7 @@ public sealed class TenantBusinessSettings : AuditableEntity, IAggregateRoot
         FeedAllocation, MetabolicWeightExponent, GroupPlanQuantityBasis, FallbackAnimalWeightKg,
         OverheadAllocation, OverheadCostPeriod, Valuation, DefaultDressingPercentage,
         DefaultMeatPricePerKgBdt, DefaultLiveWeightPricePerKgBdt, DefaultReportLanguage, BengaliNumeralsByDefault,
-        CarryLivestockGrowingCosts);
+        CarryLivestockGrowingCosts, ByProductsValuePerHeadBdt, ByProductsPercentOfMeat);
 
     private static void Guard(bool ok, string field)
     {
@@ -151,6 +169,8 @@ public static class FarmBusinessRulesResolution
         if (overrides.DefaultReportLanguage is { } lang) r.DefaultReportLanguage = lang;
         if (overrides.BengaliNumeralsByDefault is { } bn) r.BengaliNumeralsByDefault = bn;
         if (overrides.CarryLivestockGrowingCosts is { } carry) r.CarryLivestockGrowingCosts = carry;
+        if (overrides.ByProductsValuePerHeadBdt is { } bph) r.ByProductsValuePerHeadBdt = bph;
+        if (overrides.ByProductsPercentOfMeat is { } bpp) r.ByProductsPercentOfMeat = bpp;
         return r;
     }
 }

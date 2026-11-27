@@ -1,5 +1,6 @@
 using System;
 using Farm360.Application.Common.Interfaces;
+using Farm360.Application.Intelligence.Pricing;
 using Farm360.Domain.BusinessRules;
 using Farm360.Domain.Finance;
 using Farm360.Domain.Livestock;
@@ -31,18 +32,18 @@ public sealed class AnimalValuationService : IAnimalValuationService
     public decimal DressingRatio =>
         Rules.DefaultDressingPercentage is > 0 and <= 1 ? Rules.DefaultDressingPercentage : Defaults.DefaultDressingPercentage;
 
-    private bool UsesLiveRate =>
-        Rules.Valuation == AnimalValuationPolicy.LiveWeightMarket && Rules.DefaultLiveWeightPricePerKgBdt > 0;
+    /// <summary>The farm rule's price (step 3 of the price resolver) under the ambient rules.</summary>
+    private AnimalPrice FarmRule => AnimalPriceResolution.FarmRule(Rules);
 
-    public decimal LiveWeightRatePerKgBdt =>
-        UsesLiveRate
-            ? Rules.DefaultLiveWeightPricePerKgBdt
-            : Math.Round(MeatPricePerKgBdt * DressingRatio, 2);
+    public decimal ByProductsPercent => FarmRule.ByProductsPercent;
 
-    public string RateBasisDescription =>
-        UsesLiveRate
-            ? "Farm live-weight market rate"
-            : $"Meat price ৳ {MeatPricePerKgBdt:N0}/kg × dressing {DressingRatio:P0}";
+    public decimal ByProductsPerHeadBdt => FarmRule.ByProductsPerHeadBdt;
+
+    public decimal LiveWeightRatePerKgBdt => FarmRule.PricePerKgBdt;
+
+    public decimal PerHeadAdditionBdt => FarmRule.PerHeadBdt;
+
+    public string RateBasisDescription => FarmRule.ExplanationEn;
 
     public decimal PurchaseCostBdt(Animal animal, AnimalCostLedger? ledger)
     {
@@ -85,16 +86,20 @@ public sealed class AnimalValuationService : IAnimalValuationService
             return Math.Round(costBasisBdt, 2);
         }
 
-        return Math.Round(Math.Max(0m, liveWeightKg) * LiveWeightRatePerKgBdt, 2);
+        return FarmRule.MarketValueAt(liveWeightKg);
     }
 
-    public decimal CurrentValue(Animal animal, AnimalCostLedger? ledger, decimal costToDateBdt, decimal? ratePerKgOverride = null)
+    public decimal CurrentValue(Animal animal, AnimalCostLedger? ledger, decimal costToDateBdt, decimal? ratePerKgOverride = null) =>
+        CurrentValue(animal, ledger, costToDateBdt, FarmRule, ratePerKgOverride);
+
+    public decimal CurrentValue(Animal animal, AnimalCostLedger? ledger, decimal costToDateBdt, AnimalPrice price, decimal? ratePerKgOverride = null)
     {
         ArgumentNullException.ThrowIfNull(animal);
+        ArgumentNullException.ThrowIfNull(price);
 
         if (AnimalStatusGroups.IsOnFarm(animal.Status))
         {
-            return ValueAtWeight(animal.LatestWeightKg ?? 0m, costToDateBdt, ratePerKgOverride);
+            return price.ValueAt(animal.LatestWeightKg ?? 0m, costToDateBdt, ratePerKgOverride);
         }
 
         return animal.Status switch

@@ -31,6 +31,14 @@ namespace Farm360.Persistence.Migrations
                     b.Property<bool?>("BengaliNumeralsByDefault")
                         .HasColumnType("bit");
 
+                    b.Property<decimal?>("ByProductsPercentOfMeat")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<decimal?>("ByProductsValuePerHeadBdt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool?>("CarryLivestockGrowingCosts")
                         .HasColumnType("bit");
 

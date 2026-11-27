@@ -103,7 +103,7 @@ interface Option<T extends string> { value: T; label: string; }
               <select id="valuation" formControlName="valuation" class="field">
                 <option *ngFor="let o of valuationOptions" [value]="o.value">{{ o.label | t }}</option>
               </select>
-              <p class="help">{{ 'Sets the "current value" shown for each animal and herd on dashboards, projections and the balance sheet. Default: {value}.' | t: { value: (label(valuationOptions, s.inherited.valuation) | t) } }}</p>
+              <p class="help">{{ 'Sets the market value shown for each animal and herd on dashboards, projections and sell-or-keep advice (the balance sheet always values animals at cost). Default: {value}.' | t: { value: (label(valuationOptions, s.inherited.valuation) | t) } }}</p>
             </div>
 
             <div class="row">
@@ -125,6 +125,28 @@ interface Option<T extends string> { value: T; label: string; }
               <input id="livePrice" type="number" step="1" min="1" formControlName="defaultLiveWeightPricePerKgBdt" class="field w-40" />
               <p *ngIf="invalid('defaultLiveWeightPricePerKgBdt')" class="err">{{ 'Enter a price greater than zero (up to ৳ 1,00,000).' | t }}</p>
               <p class="help">{{ 'What a buyer pays per kg of live animal. Only used when animals are valued by live weight. Default: {value}.' | t: { value: (s.inherited.defaultLiveWeightPricePerKgBdt | money) } }}</p>
+            </div>
+
+            <div class="row">
+              <label for="byProductsPercent">{{ 'By-products as % of meat value' | t }} <span *ngIf="isCustom('byProductsPercentOfMeat')" class="chip">{{ 'Custom' | t }}</span></label>
+              <input id="byProductsPercent" type="number" step="0.5" min="0" max="50" formControlName="byProductsPercent" class="field w-40" />
+              <p *ngIf="invalid('byProductsPercent')" class="err">{{ 'Enter a percentage between 0 and 50.' | t }}</p>
+              <p class="help">{{ 'Added on top of the meat value: weight × dressing × meat price × (1 + this %). Used by the meat-yield valuation only. Default: {value}%.' | t: { value: (s.inherited.byProductsPercentOfMeat * 100 | number:'1.0-1') } }}</p>
+            </div>
+
+            <div class="row">
+              <label for="byProductsPerHead">{{ 'By-products value per head (৳)' | t }} <span *ngIf="isCustom('byProductsValuePerHeadBdt')" class="chip">{{ 'Custom' | t }}</span></label>
+              <input id="byProductsPerHead" type="number" step="100" min="0" formControlName="byProductsValuePerHeadBdt" class="field w-40" />
+              <p *ngIf="invalid('byProductsValuePerHeadBdt')" class="err">{{ 'Enter an amount between 0 and ৳ 10,00,000.' | t }}</p>
+              <p class="help">{{ 'Added once to each animal valued by meat yield. Default: {value}.' | t: { value: (s.inherited.byProductsValuePerHeadBdt | money) } }}</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 flex gap-2">
+              <mat-icon class="!text-[18px] shrink-0 text-gray-400" aria-hidden="true">lightbulb</mat-icon>
+              <span>
+                {{ 'Head, feet, tripe, liver and hide are sold separately; the market live price already includes them.' | t }}
+                <span class="block mt-1">{{ 'If you know the local live price per kg, choose "Live weight × live-weight price": it is the simplest and already counts everything.' | t }}</span>
+              </span>
             </div>
           </section>
 
@@ -303,6 +325,8 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
     defaultReportLanguage: this.fb.nonNullable.control<BusinessRulesValues['defaultReportLanguage']>('English'),
     bengaliNumeralsByDefault: [false],
     carryLivestockGrowingCosts: [true],
+    byProductsPercent: [0, [Validators.required, Validators.min(0), Validators.max(50)]],
+    byProductsValuePerHeadBdt: [0, [Validators.required, Validators.min(0), Validators.max(1000000)]],
   });
 
   ngOnInit(): void {
@@ -411,6 +435,8 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
       defaultReportLanguage: e.defaultReportLanguage,
       bengaliNumeralsByDefault: e.bengaliNumeralsByDefault,
       carryLivestockGrowingCosts: e.carryLivestockGrowingCosts ?? true,
+      byProductsPercent: Math.round((e.byProductsPercentOfMeat ?? 0) * 10000) / 100,
+      byProductsValuePerHeadBdt: e.byProductsValuePerHeadBdt ?? 0,
     });
     if (this.canEdit()) this.form.enable(); else this.form.disable();
   }
@@ -439,6 +465,8 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
       defaultReportLanguage: pick('defaultReportLanguage', v.defaultReportLanguage),
       bengaliNumeralsByDefault: pick('bengaliNumeralsByDefault', !!v.bengaliNumeralsByDefault),
       carryLivestockGrowingCosts: pick('carryLivestockGrowingCosts', !!v.carryLivestockGrowingCosts),
+      byProductsPercentOfMeat: pick('byProductsPercentOfMeat', Math.round(Number(v.byProductsPercent) * 100) / 10000),
+      byProductsValuePerHeadBdt: pick('byProductsValuePerHeadBdt', Number(v.byProductsValuePerHeadBdt)),
     };
   }
 
@@ -447,7 +475,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
       valuation: null, defaultDressingPercentage: null, defaultMeatPricePerKgBdt: null, defaultLiveWeightPricePerKgBdt: null,
       feedAllocation: null, metabolicWeightExponent: null, groupPlanQuantityBasis: null, fallbackAnimalWeightKg: null,
       overheadAllocation: null, overheadCostPeriod: null, defaultReportLanguage: null, bengaliNumeralsByDefault: null,
-      carryLivestockGrowingCosts: null,
+      carryLivestockGrowingCosts: null, byProductsPercentOfMeat: null, byProductsValuePerHeadBdt: null,
     };
   }
 }

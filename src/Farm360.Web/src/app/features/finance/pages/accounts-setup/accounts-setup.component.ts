@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +27,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-accounts-setup',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
+  imports: [MoneyPipe, CanPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
   template: `
     <app-page-header
       [title]="'Accounts Setup' | t"
@@ -52,14 +53,14 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         </div>
         <div class="flex flex-wrap gap-4 items-end text-xs">
           <label class="flex flex-col gap-1">{{ 'Financial year starts in' | t }}
-            <select [(ngModel)]="fyMonth" class="field">
+            <select [(ngModel)]="fyMonth" class="field" [disabled]="!('finance.edit' | can)">
               <option *ngFor="let m of months; let i = index" [ngValue]="i + 1">{{ m | t }}</option>
             </select>
           </label>
           <label class="flex flex-col gap-1">{{ 'Books start date (opening position)' | t }}
-            <input type="date" [(ngModel)]="booksStart" class="field" />
+            <input type="date" [(ngModel)]="booksStart" class="field" [disabled]="!('finance.edit' | can)" />
           </label>
-          <button mat-flat-button (click)="saveSettings()" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">{{ 'Save settings' | t }}</button>
+          <button *ngIf="'finance.edit' | can" mat-flat-button (click)="saveSettings()" [disabled]="busy()" class="!rounded-xl !bg-emerald-600 !text-white">{{ 'Save settings' | t }}</button>
           <span *ngIf="settings() && !settings()!.isConfigured" class="text-amber-600">{{ 'Not saved yet — the statements use July–June and no opening balances.' | t }}</span>
         </div>
       </section>
@@ -74,7 +75,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               {{ 'Fixed assets owned on that date go in the' | t }} <a routerLink="/finance/fixed-assets" class="underline">{{ 'fixed-asset register' | t }}</a> {{ 'as "opening".' | t }}
             </p>
           </div>
-          <div class="flex gap-2">
+          <div *ngIf="'finance.create' | can" class="flex gap-2">
             <button mat-stroked-button (click)="generate()" [disabled]="busy() || !settings()?.booksStartDate" class="!rounded-xl !text-xs"
                     [title]="'Turn every ledger entry up to the books start into opening balances' | t">
               <mat-icon class="!text-[16px]">auto_fix_high</mat-icon> {{ 'Generate from ledger' | t }}
@@ -106,7 +107,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               {{ 'Accrued expenses (a bill for this year not yet received), prepayments and provisions. Each one moves a balance-sheet line and an income or expense account. Set a reversal date (usually the first day of the next year) so it undoes itself when the real bill is posted.' | t }}
             </p>
           </div>
-          <button mat-flat-button (click)="startEntry('Adjustment')" class="!rounded-xl !text-xs !bg-emerald-600 !text-white">
+          <button *ngIf="'finance.create' | can" mat-flat-button (click)="startEntry('Adjustment')" class="!rounded-xl !text-xs !bg-emerald-600 !text-white">
             <mat-icon class="!text-[16px]">add</mat-icon> {{ 'Adjustment' | t }}
           </button>
         </div>
@@ -160,7 +161,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             <thead class="bg-gray-50 dark:bg-gray-900/40 text-[11px] uppercase tracking-wider text-gray-500">
               <tr>
                 <th class="text-left px-3 py-2">{{ 'Code' | t }}</th><th class="text-left px-3 py-2">{{ 'Date' | t }}</th><th class="text-left px-3 py-2">{{ 'Line' | t }}</th>
-                <th class="text-left px-3 py-2">{{ 'Description' | t }}</th><th class="text-right px-3 py-2">{{ 'Amount' | t }}</th><th></th>
+                <th class="text-left px-3 py-2">{{ 'Description' | t }}</th><th class="text-right px-3 py-2">{{ 'Amount' | t }}</th><th *ngIf="entryWritePermissions | can"></th>
               </tr>
             </thead>
             <tbody>
@@ -177,9 +178,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 </td>
                 <td class="px-3 py-2 text-xs">{{ r.description }}</td>
                 <td class="px-3 py-2 text-right font-mono" [class.text-rose-600]="r.amountBdt < 0">{{ r.amountBdt | money:2 }}</td>
-                <td class="px-3 py-2 text-right whitespace-nowrap">
-                  <button type="button" (click)="editEntry(r)" [attr.aria-label]="'Edit entry' | t" [title]="'Edit entry' | t" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
-                  <button type="button" (click)="deleteEntry(r)" [attr.aria-label]="'Delete entry' | t" [title]="'Delete entry' | t" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
+                <td *ngIf="entryWritePermissions | can" class="px-3 py-2 text-right whitespace-nowrap">
+                  <button *ngIf="'finance.edit' | can" type="button" (click)="editEntry(r)" [attr.aria-label]="'Edit entry' | t" [title]="'Edit entry' | t" class="p-1 text-gray-500 hover:text-emerald-600"><mat-icon class="!text-[18px]">edit</mat-icon></button>
+                  <button *ngIf="'finance.delete' | can" type="button" (click)="deleteEntry(r)" [attr.aria-label]="'Delete entry' | t" [title]="'Delete entry' | t" class="p-1 text-gray-500 hover:text-rose-600"><mat-icon class="!text-[18px]">delete</mat-icon></button>
                 </td>
               </tr>
             </tbody>
@@ -201,6 +202,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountsSetupComponent {
+  /** Show the row action column only to users who can change something in it. */
+  readonly entryWritePermissions = ['finance.edit', 'finance.delete'];
+
   private readonly confirmService = inject(ConfirmService);
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);

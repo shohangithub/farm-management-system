@@ -52,6 +52,9 @@ interface TaskGroup {
   templateUrl: './health-tasks.component.html',
 })
 export class HealthTasksComponent {
+  /** Giving / skipping a task: health.edit or the Worker's health.tasks (rescheduling needs health.edit). */
+  readonly taskPermissions = ['health.edit', 'health.tasks'];
+
   private readonly health = inject(HealthService);
   private readonly context = inject(WorkingContextService);
   private readonly notify = inject(NotificationService);
