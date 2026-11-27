@@ -34,7 +34,7 @@ public class GetIncomeStatementQueryHandler : IRequestHandler<GetIncomeStatement
     /// <summary>Direct costs of the livestock sold: the animals and what it took to raise them.</summary>
     public static readonly IReadOnlySet<string> CostOfSalesAccounts = new HashSet<string>(StringComparer.Ordinal)
     {
-        "5000", "5005", "5020", "5030", "5040", "5090", "5100",
+        "5000", "5005", AccountChart.GrowingCostsCarriedAccount, "5020", "5030", "5040", "5090", "5100",
     };
 
     public static readonly IReadOnlySet<string> FinanceCostAccounts = new HashSet<string>(StringComparer.Ordinal)

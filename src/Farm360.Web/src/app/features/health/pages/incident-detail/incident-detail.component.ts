@@ -1,3 +1,4 @@
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -19,7 +20,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-incident-detail',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule, PageHeaderComponent, LoadingComponent, TranslatePipe],
+  imports: [HasPermissionDirective, ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule, PageHeaderComponent, LoadingComponent, TranslatePipe],
   template: `
 <app-page-header 
   [title]="'Incident Details' | t"
@@ -66,7 +67,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium" *ngIf="incident()?.status !== undefined" [ngClass]="getStatusClass(incident()!.status)">
               {{ getStatusName(incident()!.status) | t }}
             </span>
-            <div class="mt-3 flex flex-wrap items-center gap-2">
+            <div *hasPermission="'health.edit'" class="mt-3 flex flex-wrap items-center gap-2">
               <label for="incident-status" class="sr-only">{{ 'Change status' | t }}</label>
               <select id="incident-status"
                 class="text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2.5 py-1.5"

@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -31,7 +33,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-consumable-plan-list',
   standalone: true,
-  imports: [InventorySubnavComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -50,7 +52,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       [description]="'Supplies used every day, like shampoo, coils or Dettol.' | t"
       [breadcrumbActiveNode]="'Supply Plans' | t">
       <div actions class="flex items-center gap-2">
-        <button (click)="openCreatePlanDialog()"
+        <button *hasPermission="'inventory.create'" (click)="openCreatePlanDialog()"
           class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'New Supply Plan' | t }}
         </button>
@@ -90,7 +92,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             icon="cleaning_services"
             [title]="'No Consumable Plans Found' | t"
             [description]="'Create your first recurring consumable plan to start tracking daily items like shampoo, coils, and cleaning supplies.' | t"
-            [actionLabel]="'Create Plan' | t"
+            [actionLabel]="('inventory.create' | can) ? ('Create Plan' | t) : undefined"
             (action)="openCreatePlanDialog()">
           </app-empty-state>
         } @else {
@@ -149,11 +151,11 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                 <div class="p-3 bg-gray-50/80 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between relative z-10">
                   <span class="text-[11px] text-gray-400">{{ 'From {date}' | t: { date: plan.startDate } }}</span>
                   <div class="flex items-center gap-1">
-                    <button [attr.aria-label]="'Edit Plan' | t" (click)="openEditPlanDialog(plan)"
+                    <button *hasPermission="'inventory.edit'" [attr.aria-label]="'Edit Plan' | t" (click)="openEditPlanDialog(plan)"
                       class="p-1.5 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [title]="'Edit Plan' | t">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
                     </button>
-                    <button [attr.aria-label]="'Delete Plan' | t" (click)="deletePlan(plan)"
+                    <button *hasPermission="'inventory.delete'" [attr.aria-label]="'Delete Plan' | t" (click)="deletePlan(plan)"
                       class="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" [title]="'Delete Plan' | t">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                     </button>

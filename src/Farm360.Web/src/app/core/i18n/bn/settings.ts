@@ -137,6 +137,10 @@ export const BN_SETTINGS: Record<string, string> = {
   'A farm-wide expense covers': 'খামারের সাধারণ খরচ যে সময়ের জন্য',
   'Which animals share an expense: those on the farm during its whole month (good for salaries and bills) or only on the day it was paid. Default: {value}.':
     'কোন পশুরা খরচ ভাগ করবে: পুরো মাস খামারে থাকা পশু (বেতন ও বিলের জন্য ভালো) নাকি শুধু পরিশোধের দিনে থাকা পশু। ডিফল্ট: {value}।',
+  'Accounts': 'হিসাব',
+  'Carry feed & care costs of animals on the farm': 'খামারে থাকা পশুর খাদ্য ও যত্নের খরচ পশুর মূল্যে ধরুন',
+  'Feed, medicine, labour and other costs spent on animals still on the farm are counted in their value, and become a cost when the animal is sold or dies — so a month of fattening does not show as a loss. Turn off to show these costs in the month they were spent. Default: {value}.':
+    'খামারে থাকা পশুর পেছনে খাদ্য, ওষুধ, শ্রম ও অন্যান্য খরচ পশুর মূল্যে ধরা হয়, এবং পশু বিক্রি বা মারা গেলে তা খরচ হয় — ফলে মোটাতাজাকরণের মাস লোকসান দেখায় না। বন্ধ করলে খরচগুলো যে মাসে হয়েছে সেই মাসেই দেখাবে। ডিফল্ট: {value}।',
   'Reports & language': 'প্রতিবেদন ও ভাষা',
   'Default report language': 'প্রতিবেদনের ডিফল্ট ভাষা',
   'The language printed reports start in. You can still pick another language when running a report. Default: {value}.':

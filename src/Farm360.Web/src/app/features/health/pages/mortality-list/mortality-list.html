@@ -9,7 +9,7 @@
         {{ (isExporting() ? 'Preparing PDF...' : 'Download PDF') | t }}
       </button>
     }
-    <button type="button" (click)="openRecordMortalityDialog()"
+    <button type="button" *hasPermission="'health.create'" (click)="openRecordMortalityDialog()"
       class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Record Mortality' | t }}
     </button>
@@ -32,7 +32,7 @@
       icon="heart_broken"
       [title]="(search() ? 'No records match' : 'No deaths recorded') | t"
       [description]="(search() ? 'Try another word.' : 'Good news. Record a death here if an animal dies.') | t"
-      [actionLabel]="search() ? undefined : ('Record Mortality' | t)"
+      [actionLabel]="search() || !('health.create' | can) ? undefined : ('Record Mortality' | t)"
       (action)="openRecordMortalityDialog()">
     </app-empty-state>
   </div>
@@ -47,7 +47,7 @@
         </div>
         <div class="min-w-0 flex-1">
           <h3 class="font-semibold text-[15px] leading-snug text-gray-900 dark:text-white inline-flex items-center gap-1">
-            <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-gray-400">pets</mat-icon>{{ tags()[element.animalId] || (element.animalId | slice:0:8) }}
+            <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-gray-400">pets</mat-icon>{{ element.animalTag || (element.animalId | slice:0:8) }}
           </h3>
           <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ element.deathDate | date:'mediumDate' }}</p>
         </div>

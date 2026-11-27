@@ -31,6 +31,9 @@ namespace Farm360.Persistence.Migrations
                     b.Property<bool?>("BengaliNumeralsByDefault")
                         .HasColumnType("bit");
 
+                    b.Property<bool?>("CarryLivestockGrowingCosts")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 

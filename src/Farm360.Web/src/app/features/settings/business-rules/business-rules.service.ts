@@ -24,6 +24,8 @@ export interface BusinessRulesValues {
   defaultLiveWeightPricePerKgBdt: number;
   defaultReportLanguage: ReportLanguagePreference;
   bengaliNumeralsByDefault: boolean;
+  /** Carry the feed & care of animals still on the farm as part of their value (default on). */
+  carryLivestockGrowingCosts: boolean;
 }
 
 /** Stored overrides: a null field inherits the default. */

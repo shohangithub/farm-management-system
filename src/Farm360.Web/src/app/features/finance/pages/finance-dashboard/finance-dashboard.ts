@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -26,7 +27,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-finance-dashboard',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, HasPermissionDirective, ErrorStateComponent,
+  imports: [CanPipe, TranslatePipe, MoneyPipe, HasPermissionDirective, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterLink,

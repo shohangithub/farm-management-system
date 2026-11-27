@@ -27,7 +27,7 @@ public static class HealthMappingExtensions
         );
     }
 
-    public static VaccinationEventDto ToDto(this VaccinationEvent @event)
+    public static VaccinationEventDto ToDto(this VaccinationEvent @event, string? animalTag = null)
     {
         return new VaccinationEventDto(
             @event.Id,
@@ -37,16 +37,17 @@ public static class HealthMappingExtensions
             @event.ScheduledDate,
             @event.AdministeredDate,
             @event.Status,
-            @event.Notes
+            @event.Notes,
+            animalTag
         );
     }
 
-    public static MedicalTreatmentDto ToDto(this MedicalTreatment treatment, string? animalTagId = null)
+    public static MedicalTreatmentDto ToDto(this MedicalTreatment treatment, string? animalTag = null)
     {
         return new MedicalTreatmentDto(
             treatment.Id,
             treatment.AnimalId,
-            animalTagId,
+            animalTag,
             treatment.Diagnosis,
             treatment.MedicationName,
             treatment.Dosage.Amount,
@@ -79,7 +80,7 @@ public static class HealthMappingExtensions
             incident.Notes
         );
     }
-    public static MortalityRecordDto ToDto(this MortalityRecord record)
+    public static MortalityRecordDto ToDto(this MortalityRecord record, string? animalTag = null)
     {
         return new MortalityRecordDto(
             record.Id,
@@ -90,7 +91,8 @@ public static class HealthMappingExtensions
             record.PostMortemNotes,
             record.EstimatedEconomicLossBdt,
             record.DiseaseIncidentId,
-            record.RecordedByUserId
+            record.RecordedByUserId,
+            animalTag
         );
     }
 

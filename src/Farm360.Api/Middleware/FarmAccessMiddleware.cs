@@ -22,14 +22,16 @@ public sealed class FarmAccessMiddleware(RequestDelegate next)
                 if (!await farmAccess.CanAccessFarmAsync(farmId, context.RequestAborted))
                 {
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    var problem = new ProblemDetails
+                    {
+                        Type = "https://farm360.ai/errors/forbidden",
+                        Title = "Forbidden",
+                        Status = StatusCodes.Status403Forbidden,
+                        Detail = "You do not have access to this farm.",
+                    };
+                    Localization.ProblemDetailsLocalizer.Localize(problem, context);
                     await context.Response.WriteAsJsonAsync(
-                        new ProblemDetails
-                        {
-                            Type = "https://farm360.ai/errors/forbidden",
-                            Title = "Forbidden",
-                            Status = StatusCodes.Status403Forbidden,
-                            Detail = "You do not have access to this farm.",
-                        },
+                        problem,
                         options: (System.Text.Json.JsonSerializerOptions?)null,
                         contentType: "application/problem+json");
                     return;

@@ -28,6 +28,7 @@ public class TenantBusinessSettingsConfiguration : IEntityTypeConfiguration<Tena
         builder.Property(s => s.DefaultMeatPricePerKgBdt).HasPrecision(18, 2);
         builder.Property(s => s.DefaultLiveWeightPricePerKgBdt).HasPrecision(18, 2);
         builder.Property(s => s.BengaliNumeralsByDefault);
+        builder.Property(s => s.CarryLivestockGrowingCosts);
 
         // One tenant-wide row (FarmId NULL) and at most one row per farm, per tenant.
         // SQL Server unique indexes treat NULLs as equal, so (TenantId, NULL) is unique too.

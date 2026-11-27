@@ -103,6 +103,9 @@ public sealed class BalanceSheetReportDefinition : ReportDefinition<BalanceSheet
             "Animals and stock are shown at what they cost, not at today's market price; sheds and machinery at cost less wear-and-tear (depreciation).",
             "পশু ও মজুদ মালামাল ক্রয়মূল্যে দেখানো হয়েছে, আজকের বাজারদরে নয়; শেড ও যন্ত্রপাতি ক্রয়মূল্য থেকে ক্ষয় (অবচয়) বাদে।"),
         new(
+            "Animals on the farm are shown at their purchase cost plus the feed & care spent on them so far (farm rule \"Carry feed & care costs of animals on the farm\"); that feed & care becomes a cost when the animal is sold or dies.",
+            "খামারে থাকা পশু দেখানো হয়েছে ক্রয়মূল্য ও এ পর্যন্ত তাদের খাদ্য ও যত্নের খরচ মিলিয়ে (খামারের নিয়ম \"খামারে থাকা পশুর খাদ্য ও যত্নের খরচ পশুর মূল্যে ধরুন\"); পশু বিক্রি বা মারা গেলে সেই খরচ তখনকার খরচ হয়।"),
+        new(
             "Lines starting \"Less:\" carry a minus sign and are taken off their section (depreciation, owner's drawings, profit paid out).",
             "\"বাদ:\" দিয়ে শুরু লাইনগুলো ঋণাত্মক এবং তাদের অংশ থেকে বাদ যায় (অবচয়, মালিকের উত্তোলন, বণ্টিত মুনাফা)।"),
     ];
@@ -122,8 +125,10 @@ public sealed class BalanceSheetReportDefinition : ReportDefinition<BalanceSheet
             "Paid in advance, to be used or refunded later", "আগাম পরিশোধ, পরে সমন্বয় বা ফেরতযোগ্য"),
         ["1200"] = ("Feed, medicine & supplies in stock (inventory)", "মজুদে থাকা খাদ্য, ঔষধ ও সামগ্রী (মজুদ)",
             "Stock bought or brought in, less used, returned or written off — at cost", "ক্রয় বা আনা মজুদ, বাদ ব্যবহৃত, ফেরত বা বাতিল — ক্রয়মূল্যে"),
-        ["1300"] = ("Animals on the farm (livestock, at cost)", "খামারের পশু (গবাদিপশু, ক্রয়মূল্যে)",
+        ["1300"] = ("Animals on the farm: purchase cost", "খামারে থাকা পশু: ক্রয়মূল্য",
             "Animals bought, less cost of animals sold, slaughtered or dead", "ক্রয়কৃত পশু, বাদ বিক্রিত, জবাইকৃত বা মৃত পশুর ক্রয়মূল্য"),
+        ["1310"] = ("Animals on the farm: feed & care to date", "খামারে থাকা পশু: এ পর্যন্ত খাদ্য ও যত্নের খরচ",
+            "Feed, health, labour and overhead spent on the animals still on the farm", "খামারে থাকা পশুর পেছনে খাদ্য, চিকিৎসা, শ্রম ও অন্যান্য খরচ"),
         ["2100"] = ("We owe suppliers (payable)", "সরবরাহকারীদের পাওনা (প্রদেয়)",
             "Bought on credit, not yet paid", "বাকিতে কেনা, এখনো পরিশোধ হয়নি"),
         ["2010"] = ("Loans still to repay (principal)", "পরিশোধযোগ্য ঋণ (আসল)",

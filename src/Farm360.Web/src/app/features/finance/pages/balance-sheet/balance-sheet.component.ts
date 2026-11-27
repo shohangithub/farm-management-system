@@ -173,7 +173,7 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
                       <td class="px-5 py-1.5 font-mono text-[11px] text-gray-400">{{ line.lineCode }}</td>
                       <td class="px-3 py-1.5">
                         <span class="text-gray-800 dark:text-gray-200" [class.pl-4]="line.isDeduction">{{ (i18n.isBangla && line.nameBn) ? line.nameBn : line.lineName }}</span>
-                        <span *ngIf="line.notes" class="block text-[11px] text-gray-400 print:hidden">{{ line.notes }}</span>
+                        <span *ngIf="line.notes" class="block text-[11px] text-gray-400 print:hidden">{{ line.notes | t }}</span>
                       </td>
                       <td class="px-5 py-1.5 text-right font-mono" [ngClass]="line.amountBdt < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-white'">{{ fmt(line.amountBdt) }}</td>
                       <td *ngIf="sheet.priorDate" class="px-5 py-1.5 text-right font-mono text-gray-500">{{ fmt(line.priorAmountBdt) }}</td>

@@ -21,12 +21,14 @@ public sealed record BusinessRulesValuesDto(
     decimal DefaultMeatPricePerKgBdt,
     decimal DefaultLiveWeightPricePerKgBdt,
     ReportLanguagePreference DefaultReportLanguage,
-    bool BengaliNumeralsByDefault)
+    bool BengaliNumeralsByDefault,
+    bool CarryLivestockGrowingCosts = true)
 {
     public static BusinessRulesValuesDto From(FarmBusinessRules r) => new(
         r.FeedAllocation, r.MetabolicWeightExponent, r.GroupPlanQuantityBasis, r.FallbackAnimalWeightKg,
         r.OverheadAllocation, r.OverheadCostPeriod, r.Valuation, r.DefaultDressingPercentage,
-        r.DefaultMeatPricePerKgBdt, r.DefaultLiveWeightPricePerKgBdt, r.DefaultReportLanguage, r.BengaliNumeralsByDefault);
+        r.DefaultMeatPricePerKgBdt, r.DefaultLiveWeightPricePerKgBdt, r.DefaultReportLanguage, r.BengaliNumeralsByDefault,
+        r.CarryLivestockGrowingCosts);
 }
 
 /// <summary>

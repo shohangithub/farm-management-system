@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -26,7 +28,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-supplier-list',
   standalone: true,
-  imports: [InventorySubnavComponent, 
+  imports: [HasPermissionDirective, CanPipe, InventorySubnavComponent, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -45,7 +47,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       [description]="'Feed mills, medicine sellers and others you buy from.' | t"
       [breadcrumbActiveNode]="'Suppliers' | t">
       <div actions>
-        <button (click)="openCreateSupplierDialog()"
+        <button *hasPermission="'inventory.create'" (click)="openCreateSupplierDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Supplier' | t }}
         </button>
@@ -79,7 +81,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         icon="local_shipping"
         [title]="'No suppliers registered' | t"
         [description]="'Add suppliers to associate them with incoming stock purchases and receipts.' | t"
-        [actionLabel]="'Add Supplier' | t"
+        [actionLabel]="('inventory.create' | can) ? ('Add Supplier' | t) : undefined"
         (action)="openCreateSupplierDialog()">
       </app-empty-state>
 
@@ -94,10 +96,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   <mat-icon class="!w-5 !h-5 !text-[20px]">local_shipping</mat-icon>
                 </div>
                 <div class="flex items-center gap-1">
-                  <button (click)="openEditDialog(sup); $event.stopPropagation()" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-flex items-center gap-1">
+                  <button *hasPermission="'inventory.edit'" (click)="openEditDialog(sup); $event.stopPropagation()" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-flex items-center gap-1">
                     <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Edit' | t }}
                   </button>
-                  <button [attr.aria-label]="'Delete' | t" (click)="onDelete(sup, $event)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                  <button *hasPermission="'inventory.delete'" [attr.aria-label]="'Delete' | t" (click)="onDelete(sup, $event)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
                     <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">delete</mat-icon>
                   </button>
                 </div>

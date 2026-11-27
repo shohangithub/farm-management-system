@@ -76,6 +76,9 @@ public sealed class FullAccountsReportDefinition : ReportDefinition<FullAccounts
         new(
             "Stock and animals are assets at cost: buying them is not a cost until feed is used or an animal is sold or dies.",
             "মজুদ ও পশু ক্রয়মূল্যে সম্পদ: খাদ্য ব্যবহার না হওয়া বা পশু বিক্রি বা মারা না যাওয়া পর্যন্ত কেনাটা খরচ নয়।"),
+        new(
+            "Feed & care spent on animals still on the farm is part of their value until the animal is sold or dies, when it becomes a cost of that period.",
+            "খামারে থাকা পশুর খাদ্য ও যত্নের খরচ পশু বিক্রি বা মারা যাওয়া পর্যন্ত তার মূল্যের অংশ; তখন তা সেই সময়ের খরচ হয়।"),
     ];
 
     public override async Task<string?> ResolveSubjectAsync(ReportContext context, CancellationToken cancellationToken)
@@ -170,6 +173,13 @@ public sealed class FullAccountsReportDefinition : ReportDefinition<FullAccounts
         Add(assets, "", T("(−) Cost of animals sold / slaughtered", "(−) বিক্রিত / জবাইকৃত পশুর ক্রয়মূল্য"), T("Counted as a cost", "খরচ হিসেবে ধরা"), a.CostOfAnimalsSoldBdt);
         Add(assets, "", T("(−) Animals that died", "(−) মৃত পশু"), T("Counted as a cost (mortality loss)", "খরচ হিসেবে ধরা (মৃত্যুজনিত ক্ষতি)"), a.MortalityLossBdt);
         Add(assets, "1300", T("Animals at the end (at cost)", "শেষে পশু (ক্রয়মূল্যে)"), "", a.LivestockClosingBdt);
+        if (a.LivestockCarriedOpeningBdt != 0m || a.LivestockCarriedClosingBdt != 0m)
+        {
+            Add(assets, "1310", T("Animals on the farm: feed & care to date, at the start", "শুরুতে খামারে থাকা পশু: এ পর্যন্ত খাদ্য ও যত্নের খরচ"),
+                T("Part of the animals' value", "পশুর মূল্যের অংশ"), a.LivestockCarriedOpeningBdt);
+            Add(assets, "1310", T("Animals on the farm: feed & care to date, at the end", "শেষে খামারে থাকা পশু: এ পর্যন্ত খাদ্য ও যত্নের খরচ"),
+                T("Becomes a cost when the animal is sold or dies", "পশু বিক্রি বা মারা গেলে খরচ হয়"), a.LivestockCarriedClosingBdt);
+        }
 
         // Credit book (receivables & payables)
         if (d.Credit is { } c)

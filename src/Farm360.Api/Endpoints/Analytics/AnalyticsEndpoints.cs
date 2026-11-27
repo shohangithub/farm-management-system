@@ -32,6 +32,12 @@ public static class AnalyticsEndpoints
             .WithName("GetHealthAnalytics")
             .WithSummary("Gets health and mortality analytics.")
             .WithTags("Analytics");
+
+        group.MapGet("/health/trends", GetHealthTrends)
+            .WithName("GetHealthTrends")
+            .WithSummary("Gets 12-month health aggregates: deaths and treatments per month, top illnesses, vaccine coverage.")
+            .WithTags("Analytics")
+            .Produces<HealthTrendsDto>();
     }
 
     private static async Task<IResult> GetBreedingAnalytics(
@@ -59,6 +65,15 @@ public static class AnalyticsEndpoints
     {
         var query = new GetHealthAnalyticsQuery(farmId);
         var result = await sender.Send(query);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetHealthTrends(
+        Guid farmId,
+        [FromServices] ISender sender,
+        System.Threading.CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetHealthTrendsQuery(farmId), cancellationToken);
         return Results.Ok(result);
     }
 }

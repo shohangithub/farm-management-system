@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import {
   Component, inject, signal, computed, ChangeDetectionStrategy
 } from '@angular/core';
@@ -20,10 +22,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { switchMap, catchError, debounceTime, distinctUntilChanged, tap, filter, map } from 'rxjs/operators';
-import { of, forkJoin } from 'rxjs';
-import { ShedService } from '../../../farms/services/shed.service';
-import { PenService } from '../../../farms/services/pen.service';
+import { switchMap, catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { BatchWeightDialogComponent, BatchWeightDialogData } from '../../components/dialogs/batch-weight-dialog.component';
 import { BatchVaccinationDialogComponent, BatchVaccinationDialogData } from '../../components/dialogs/batch-vaccination-dialog.component';
 import { RecentlyViewedService } from '../../services/recently-viewed.service';
@@ -41,7 +41,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
   selector: 'app-animal-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HasPermissionDirective, CanPipe, 
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, EmptyStateComponent, MatIconModule, MatMenuModule, MatButtonModule, TranslatePipe
   ],
@@ -58,8 +58,6 @@ export class AnimalListComponent {
   private readonly pdfService = inject(PdfExportService);
   private readonly reportService = inject(ReportService);
   private readonly i18n = inject(I18nService);
-  private readonly shedSvc = inject(ShedService);
-  private readonly penSvc = inject(PenService);
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly isExporting = signal(false);
@@ -147,40 +145,10 @@ export class AnimalListComponent {
 
   refresh(): void { this.refreshTrigger.update(v => v + 1); }
 
-  /**
-   * Shed / pen names for the current farm, keyed by id. The animal list only carries the ids,
-   * so the cards look the names up here instead of showing "Shed Assigned".
-   */
-  private readonly locationNames = toSignal(
-    this.contextService.currentFarm$.pipe(
-      switchMap(farm => {
-        const empty = { sheds: new Map<string, string>(), pens: new Map<string, string>() };
-        if (!farm?.id) return of(empty);
-        return this.shedSvc.getShedsByFarm(farm.id).pipe(
-          switchMap(sheds => {
-            const shedMap = new Map(sheds.map(s => [s.id, s.shedName || s.shedNumber] as [string, string]));
-            if (!sheds.length) return of({ sheds: shedMap, pens: new Map<string, string>() });
-            return forkJoin(sheds.map(s => this.penSvc.getPensByShed(s.id).pipe(catchError(() => of([]))))).pipe(
-              map(penLists => ({
-                sheds: shedMap,
-                pens: new Map(penLists.flat().map(p => [p.id, p.penNumber || p.penName] as [string, string]))
-              }))
-            );
-          }),
-          catchError(() => of(empty))
-        );
-      })
-    ),
-    { initialValue: { sheds: new Map<string, string>(), pens: new Map<string, string>() } }
-  );
-
   /** "Fattening Shed B · B1" for a card; null when the animal has no shed or pen. */
   locationLabel(a: AnimalListItemDto): string | null {
-    if (!a.shedId && !a.penId) return null;
-    const names = this.locationNames();
-    const shed = a.shedId ? (a.shedName || names.sheds.get(a.shedId)) : undefined;
-    const pen = a.penId ? (a.penName || names.pens.get(a.penId)) : undefined;
-    const parts = [shed, pen].filter((x): x is string => !!x);
+    // The list API sends the shed / pen labels with each row.
+    const parts = [a.shedId ? a.shedName : undefined, a.penId ? a.penName : undefined].filter((x): x is string => !!x);
     return parts.length ? parts.join(' · ') : null;
   }
 

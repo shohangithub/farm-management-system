@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -61,7 +63,7 @@ const KPI_HINT_CLASS: Record<KpiTone, string> = {
 @Component({
   selector: 'app-executive-dashboard',
   standalone: true,
-  imports: [MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, MoneyPipe, 
     CommonModule,
     MatIconModule,
     MatButtonModule,

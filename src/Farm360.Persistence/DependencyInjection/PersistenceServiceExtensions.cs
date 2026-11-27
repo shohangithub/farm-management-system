@@ -63,7 +63,11 @@ public static class PersistenceServiceExtensions
         
         // Register Queries
         services.AddScoped<Farm360.Application.Analytics.Queries.IAnalyticsQueryService, AnalyticsQueryService>();
+        services.AddScoped<Farm360.Application.Finance.Services.ILivestockCarriedCostSource, Farm360.Persistence.Queries.LivestockCarriedCostSource>();
         services.AddScoped<Farm360.Application.Livestock.Queries.IAnimalListQueries, Farm360.Persistence.Queries.AnimalListQueries>();
+        services.AddScoped<Farm360.Application.Livestock.Queries.IAnimalLocationNames, Farm360.Persistence.Queries.AnimalLocationNames>();
+        services.AddScoped<Farm360.Application.Livestock.Queries.IAnimalTagNames, Farm360.Persistence.Queries.AnimalTagNames>();
+        services.AddScoped<Farm360.Application.Analytics.Queries.IHealthTrendSource, Farm360.Persistence.Queries.HealthTrendSource>();
 
         // ── Permission service (Redis-cached, DB-backed) ──────────────────────
         services.AddScoped<IPermissionService, PermissionService>();

@@ -37,14 +37,16 @@ public static class RateLimitingSetup
                         ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(System.Globalization.CultureInfo.InvariantCulture);
                 }
 
+                var problem = new ProblemDetails
+                {
+                    Type = "https://farm360.ai/errors/rate-limited",
+                    Title = "Too Many Requests",
+                    Status = StatusCodes.Status429TooManyRequests,
+                    Detail = "Too many requests. Please wait a moment and try again.",
+                };
+                Localization.ProblemDetailsLocalizer.Localize(problem, context.HttpContext);
                 await context.HttpContext.Response.WriteAsJsonAsync(
-                    new ProblemDetails
-                    {
-                        Type = "https://farm360.ai/errors/rate-limited",
-                        Title = "Too Many Requests",
-                        Status = StatusCodes.Status429TooManyRequests,
-                        Detail = "Too many requests. Please wait a moment and try again.",
-                    },
+                    problem,
                     options: (System.Text.Json.JsonSerializerOptions?)null,
                     contentType: "application/problem+json",
                     cancellationToken: cancellationToken);

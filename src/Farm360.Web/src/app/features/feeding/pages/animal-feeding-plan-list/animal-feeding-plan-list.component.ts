@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -39,7 +41,7 @@ export interface RuleSetGroup {
 @Component({
   selector: 'app-animal-feeding-plan-list',
   standalone: true,
-  imports: [ErrorStateComponent, FeedingSubnavComponent, 
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, FeedingSubnavComponent, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -122,14 +124,14 @@ export interface RuleSetGroup {
         </mat-menu>
 
         <!-- New Rule Set Button -->
-        <button (click)="openCreateRuleSetDialog()"
+        <button *hasPermission="'feeding.create'" (click)="openCreateRuleSetDialog()"
           class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px] text-gray-500">tune</mat-icon>
           <span>{{ 'New Feed Chart' | t }}</span>
         </button>
 
         <!-- Sync Weights Button -->
-        <button (click)="syncPlanWeights()"
+        <button *hasPermission="'feeding.edit'" (click)="syncPlanWeights()"
           [disabled]="isSyncing()"
           [matTooltip]="syncTooltip | t"
           class="h-9 px-3 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 rounded-xl transition-all shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50">
@@ -138,7 +140,7 @@ export interface RuleSetGroup {
         </button>
 
         <!-- Assign Plan Primary Button -->
-        <button (click)="openAssignDialog()"
+        <button *hasPermission="'feeding.create'" (click)="openAssignDialog()"
           class="h-9 px-3.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm shadow-emerald-500/20 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">add</mat-icon>
           <span>{{ 'Assign Plan' | t }}</span>
@@ -188,7 +190,7 @@ export interface RuleSetGroup {
         icon="assignment"
         [title]="'No feeding plans yet' | t"
         [description]="'Make a feed chart, then give it to your animals.' | t"
-        [actionLabel]="'Assign Plan' | t"
+        [actionLabel]="('feeding.create' | can) ? ('Assign Plan' | t) : undefined"
         (action)="openAssignDialog()">
       </app-empty-state>
 
@@ -240,14 +242,14 @@ export interface RuleSetGroup {
               <!-- Right: Group Action Buttons -->
               <div class="flex items-center gap-2 self-end md:self-center shrink-0">
                 <!-- Edit Rule Set Button -->
-                <button (click)="openEditRuleDialog(group.ruleSet, $event)"
+                <button *hasPermission="'feeding.edit'" (click)="openEditRuleDialog(group.ruleSet, $event)"
                   [matTooltip]="'Change this feed chart' | t"
                   class="px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-300 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl border border-gray-200 dark:border-gray-700 transition-all shadow-sm inline-flex items-center gap-1.5">
                   <mat-icon class="!text-[15px] !w-[15px] !h-[15px] text-emerald-600 dark:text-emerald-400">edit_note</mat-icon> {{ 'Edit Chart' | t }}
                 </button>
 
                 <!-- Assign Animals Button -->
-                <button (click)="openAssignDialog(group.ruleSet.id, $event)"
+                <button *hasPermission="'feeding.create'" (click)="openAssignDialog(group.ruleSet.id, $event)"
                   [matTooltip]="'Give this feed chart to more animals' | t"
                   class="px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-xl border border-emerald-200 dark:border-emerald-800/60 transition-all shadow-sm inline-flex items-center gap-1.5">
                   <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">person_add</mat-icon> {{ 'Assign Animals' | t }}
@@ -317,7 +319,7 @@ export interface RuleSetGroup {
                         {{ plan.assignedOn | date:'mediumDate' }}
                       </td>
                       <td class="px-6 py-3.5 text-right">
-                        <button *ngIf="plan.isActive" (click)="cancelPlan(plan)"
+                        <button *ngIf="plan.isActive && ('feeding.edit' | can)" (click)="cancelPlan(plan)"
                           class="px-2.5 py-1 text-xs font-semibold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg border border-red-200 transition-all shadow-xs inline-flex items-center gap-1">
                           <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> {{ 'Cancel' | t }}
                         </button>
@@ -333,7 +335,7 @@ export interface RuleSetGroup {
                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                   {{ 'No animals are on this feed chart yet.' | t }}
                 </p>
-                <button (click)="openAssignDialog(group.ruleSet.id)"
+                <button *hasPermission="'feeding.create'" (click)="openAssignDialog(group.ruleSet.id)"
                   class="px-3.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-all inline-flex items-center gap-1">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">person_add</mat-icon> {{ 'Assign Animals Now' | t }}
                 </button>
@@ -375,7 +377,7 @@ export interface RuleSetGroup {
                   <td class="px-6 py-4">
                     <div class="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                       <span>{{ plan.ruleSetName }}</span>
-                      <button *ngIf="getRuleSetForPlan(plan)" (click)="openEditRuleDialog(getRuleSetForPlan(plan)!, $event)"
+                      <button *ngIf="getRuleSetForPlan(plan) && ('feeding.edit' | can)" (click)="openEditRuleDialog(getRuleSetForPlan(plan)!, $event)"
                         [matTooltip]="'Change this feed chart' | t"
                         class="text-gray-400 hover:text-emerald-600 transition-colors" [attr.aria-label]="'Change this feed chart' | t">
                         <mat-icon class="!text-[15px] !w-[15px] !h-[15px]">edit_note</mat-icon>
@@ -395,7 +397,7 @@ export interface RuleSetGroup {
                     {{ plan.assignedOn | date:'mediumDate' }}
                   </td>
                   <td class="px-6 py-4 text-right">
-                    <button *ngIf="plan.isActive" (click)="cancelPlan(plan)"
+                    <button *ngIf="plan.isActive && ('feeding.edit' | can)" (click)="cancelPlan(plan)"
                       class="px-3 py-1.5 text-xs font-semibold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg border border-red-200 transition-all shadow-sm inline-flex items-center gap-1">
                       <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">cancel</mat-icon> {{ 'Cancel' | t }}
                     </button>

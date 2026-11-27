@@ -8,7 +8,7 @@
     <button routerLink=".." class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">arrow_back</mat-icon> {{ 'Back to List' | t }}
     </button>
-    <button *ngIf="protocol()" (click)="openAssignDialog()" class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
+    <button *ngIf="protocol() && ('health.create' | can)" (click)="openAssignDialog()" class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">group_add</mat-icon> {{ 'Assign Protocol' | t }}
     </button>
   </div>
@@ -35,7 +35,7 @@
         </p>
       </div>
       
-      <button (click)="openEditDialog()" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+      <button *hasPermission="'health.edit'" (click)="openEditDialog()" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
         <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon> {{ 'Edit Protocol' | t }}
       </button>
     </div>

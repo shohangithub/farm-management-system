@@ -4,6 +4,17 @@
  * screens and actions the user cannot perform.
  */
 export const Permissions = {
+  Animals: {
+    View: 'animals.view',
+    Create: 'animals.create',
+    Edit: 'animals.edit',
+    Delete: 'animals.delete',
+    Sell: 'animals.sell',
+    Quarantine: 'animals.quarantine',
+  },
+  Health: { View: 'health.view', Create: 'health.create', Edit: 'health.edit', Delete: 'health.delete' },
+  Feeding: { View: 'feeding.view', Create: 'feeding.create', Edit: 'feeding.edit', Delete: 'feeding.delete' },
+  Inventory: { View: 'inventory.view', Create: 'inventory.create', Edit: 'inventory.edit', Delete: 'inventory.delete' },
   Finance: {
     View: 'finance.view',
     Create: 'finance.create',

@@ -191,7 +191,7 @@ internal sealed class DemoSeedRun(
             {
                 var existing = await breeds.GetByNameAsync(b.Name, ct);
                 _breeds[b.Key] = existing?.Id ?? (await s.Send(new CreateBreedCommand(
-                    b.Name, $"{b.Name} - {b.BestFor}.", b.Category, b.Origin, b.MainPurpose, b.BestFor,
+                    b.Name, b.SeedDescription, b.Category, b.Origin, b.MainPurpose, b.BestFor,
                     b.AdgPoor, b.AdgAverage, b.AdgGood, b.AdgIntensive, b.StandardAdgMin, b.StandardAdgMax,
                     b.FcrMin, b.FcrMax, 0m, 0m, 0m, 0m), ct)).Id;
             }

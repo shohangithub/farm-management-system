@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -26,7 +28,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-inventory-dashboard',
   standalone: true,
-  imports: [InventorySubnavComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,
@@ -44,7 +46,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       [title]="'Stock Overview' | t"
       [description]="'Stock value, items running low and the latest movements.' | t"
       [breadcrumbActiveNode]="'Overview' | t">
-      <div actions class="flex items-center gap-2">
+      <div actions *hasPermission="'inventory.create'" class="flex items-center gap-2">
         <button (click)="openStockInDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add_business</mat-icon> {{ 'Record Stock In' | t }}
@@ -117,7 +119,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             icon="task_alt"
             [title]="'All stock levels healthy' | t"
             [description]="'No items are currently below their reorder threshold.' | t"
-            [actionLabel]="'Add Stock Item' | t"
+            [actionLabel]="('inventory.create' | can) ? ('Add Stock Item' | t) : undefined"
             (action)="openCreateItemDialog()">
           </app-empty-state>
 
@@ -135,7 +137,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     <div class="font-extrabold text-amber-600 dark:text-amber-400 text-sm">{{ item.currentStock | number:'1.0-2' }} {{ item.unitOfMeasure }}</div>
                     <div class="text-[11px] uppercase font-bold text-gray-400">{{ 'Current' | t }}</div>
                   </div>
-                  <button (click)="openStockInDialogForItem(item)" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
+                  <button *hasPermission="'inventory.create'" (click)="openStockInDialogForItem(item)" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
                     {{ 'Reorder' | t }}
                   </button>
                 </div>
@@ -165,7 +167,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             icon="history_toggle_off"
             [title]="'No transactions recorded' | t"
             [description]="'Record a stock-in receipt to start logging inventory movements.' | t"
-            [actionLabel]="'Record Stock In' | t"
+            [actionLabel]="('inventory.create' | can) ? ('Record Stock In' | t) : undefined"
             (action)="openStockInDialog()">
           </app-empty-state>
 

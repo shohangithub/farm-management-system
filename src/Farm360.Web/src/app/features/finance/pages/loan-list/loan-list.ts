@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -24,7 +26,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-loan-list',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, ErrorStateComponent,
+  imports: [HasPermissionDirective, CanPipe, TranslatePipe, MoneyPipe, ErrorStateComponent,
     FinanceSubnavComponent,
     CommonModule,
     RouterModule,
@@ -42,7 +44,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       [description]="'Track farm loans and their repayments.' | t"
       [breadcrumbActiveNode]="'Loans' | t">
       <div actions>
-        <button mat-flat-button color="primary" (click)="openLoanDialog()" class="!rounded-xl !px-6 !py-2.5 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 shadow-sm shadow-primary-500/30 transition-all">
+        <button mat-flat-button color="primary" *hasPermission="'finance.create'" (click)="openLoanDialog()" class="!rounded-xl !px-6 !py-2.5 !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 shadow-sm shadow-primary-500/30 transition-all">
           <mat-icon class="!text-[20px]">add</mat-icon>
           <span>{{ 'New Loan' | t }}</span>
         </button>
@@ -136,7 +138,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           </div>
 
           <!-- Action Button -->
-          <div *ngIf="loan.isActive" class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+          <div *ngIf="loan.isActive && ('finance.create' | can)" class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/50">
             <button (click)="openRepaymentDialog(loan)" 
               class="w-full py-2.5 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">payments</mat-icon>

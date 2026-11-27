@@ -1,4 +1,5 @@
 using System.Globalization;
+using Farm360.Application.Livestock;
 using Farm360.Domain.Feeding.Enums;
 using Farm360.Domain.Health.Enums;
 using Farm360.Domain.Inventory.Enums;
@@ -15,7 +16,11 @@ namespace Farm360.Application.Demo;
 public sealed record DemoBreedSpec(
     string Key, string Name, string Category, string Origin, string MainPurpose, string BestFor,
     decimal AdgPoor, decimal AdgAverage, decimal AdgGood, decimal AdgIntensive,
-    decimal StandardAdgMin, decimal StandardAdgMax, decimal FcrMin, decimal FcrMax);
+    decimal StandardAdgMin, decimal StandardAdgMax, decimal FcrMin, decimal FcrMax)
+{
+    /// <summary>The description the demo seeder writes for this breed (also how a seeded row is recognised).</summary>
+    public string SeedDescription => $"{Name} - {BestFor}.";
+}
 
 public sealed record DemoShedSpec(string Number, string Name, int Capacity, string AnimalType);
 
@@ -167,6 +172,22 @@ public sealed class DemoSeedPlan
     public decimal OpeningCashBdt { get; private init; }
     public decimal OpeningOwnerCapitalBdt { get; private init; }
 
+    /// <summary>
+    /// The demo farm's breeds (ADG targets in kg/day). Categories use the same set as the breed
+    /// screens and the default breed list: Indigenous / Exotic / Crossbred.
+    /// </summary>
+    public static IReadOnlyList<DemoBreedSpec> BreedSpecs { get; } =
+    [
+        new("deshi", "Local (Deshi)", BreedCategories.Indigenous, "Bangladesh", "Beef", "Low-input fattening, hardy in local conditions",
+            0.30m, 0.45m, 0.60m, 0.70m, 0.45m, 0.65m, 7.5m, 9.5m),
+        new("sahiwal", "Sahiwal Cross", BreedCategories.Crossbred, "Pakistan / India (crossbred locally)", "Dual Purpose", "Eid fattening, good feed conversion",
+            0.40m, 0.60m, 0.75m, 0.90m, 0.60m, 0.85m, 6.5m, 8.5m),
+        new("brahman", "Brahman Cross", BreedCategories.Crossbred, "USA (crossbred locally)", "Beef", "Heavy Eid bulls, heat tolerant",
+            0.45m, 0.65m, 0.85m, 1.00m, 0.70m, 0.95m, 6.0m, 8.0m),
+        new("blackbengal", "Black Bengal Goat", BreedCategories.Indigenous, "Bangladesh", "Meat", "Meat and skin, prolific",
+            0.03m, 0.05m, 0.07m, 0.09m, 0.05m, 0.09m, 7.0m, 9.0m),
+    ];
+
     public IReadOnlyList<DemoBreedSpec> Breeds { get; private init; } = [];
     public IReadOnlyList<DemoShedSpec> Sheds { get; private init; } = [];
     public IReadOnlyList<DemoPenSpec> Pens { get; private init; } = [];
@@ -249,18 +270,7 @@ public sealed class DemoSeedPlan
         var start = D(-FarmAgeDays);
         var feedStart = D(-FeedingHistoryDays);
 
-        // ── Breeds (ADG targets in kg/day) ────────────────────────────────────
-        var breeds = new List<DemoBreedSpec>
-        {
-            new("deshi", "Local (Deshi)", "Cattle", "Bangladesh", "Beef", "Low-input fattening, hardy in local conditions",
-                0.30m, 0.45m, 0.60m, 0.70m, 0.45m, 0.65m, 7.5m, 9.5m),
-            new("sahiwal", "Sahiwal Cross", "Cattle", "Pakistan / India (crossbred locally)", "Dual Purpose", "Eid fattening, good feed conversion",
-                0.40m, 0.60m, 0.75m, 0.90m, 0.60m, 0.85m, 6.5m, 8.5m),
-            new("brahman", "Brahman Cross", "Cattle", "USA (crossbred locally)", "Beef", "Heavy Eid bulls, heat tolerant",
-                0.45m, 0.65m, 0.85m, 1.00m, 0.70m, 0.95m, 6.0m, 8.0m),
-            new("blackbengal", "Black Bengal Goat", "Goat", "Bangladesh", "Meat", "Meat and skin, prolific",
-                0.03m, 0.05m, 0.07m, 0.09m, 0.05m, 0.09m, 7.0m, 9.0m),
-        };
+        var breeds = BreedSpecs.ToList();
 
         var sheds = new List<DemoShedSpec>
         {

@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -34,7 +36,7 @@ import { HealthFilterBarComponent, HealthFilterOption } from '../../components/h
 @Component({
   selector: 'app-treatment-list',
   standalone: true,
-  imports: [ErrorStateComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, MoneyPipe, 
     CommonModule, 
     RouterModule, 
     MatCardModule, 

@@ -352,6 +352,13 @@ export const BN_STATEMENTS: Record<string, string> = {
   '(−) Written off': '(−) বাতিল (নষ্ট/মেয়াদোত্তীর্ণ)',
   'Closing stock value': 'সমাপনী মজুদের মূল্য',
   'গবাদিপশু / Livestock (at cost)': 'গবাদিপশু (কেনা দামে)',
+  'Animals on the farm: feed & care to date': 'খামারে থাকা পশু: এ পর্যন্ত খাদ্য ও যত্নের খরচ',
+  'Animals on the farm: purchase cost': 'খামারে থাকা পশু: ক্রয়মূল্য',
+  'At the start': 'শুরুতে',
+  'At the end': 'শেষে',
+  'Feed & care of animals still on the farm (carried to next period)': 'খামারে থাকা পশুর খাদ্য ও যত্নের খরচ (পরবর্তী সময়ে স্থানান্তরিত)',
+  'Feed, health, labour and overhead spent on animals still on the farm are part of their value until they are sold or die, when they become a cost of that sale or loss.':
+    'খামারে থাকা পশুর খাদ্য, চিকিৎসা, শ্রম ও অন্যান্য খরচ পশুটি বিক্রি বা মারা যাওয়া পর্যন্ত তার মূল্যের অংশ হিসেবে ধরা হয়; তখন তা সেই বিক্রি বা ক্ষতির খরচ হয়।',
   'Opening herd value': 'পালের প্রারম্ভিক মূল্য',
   '(+) Animals bought': '(+) কেনা পশু',
   '(+) Animals brought in by owner': '(+) মালিকের দেওয়া পশু',

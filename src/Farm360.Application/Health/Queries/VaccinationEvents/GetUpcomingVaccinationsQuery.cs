@@ -1,5 +1,6 @@
 using Farm360.Application.Health.DTOs;
 using Farm360.Application.Health.Mappings;
+using Farm360.Application.Livestock.Queries;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using FluentValidation;
 using MediatR;
@@ -20,12 +21,15 @@ public sealed class GetUpcomingVaccinationsQueryValidator : AbstractValidator<Ge
 }
 
 internal sealed class GetUpcomingVaccinationsQueryHandler(
-    IVaccinationRepository vaccinationRepository) : IRequestHandler<GetUpcomingVaccinationsQuery, IReadOnlyList<VaccinationEventDto>>
+    IVaccinationRepository vaccinationRepository,
+    IAnimalTagNames? tags = null) : IRequestHandler<GetUpcomingVaccinationsQuery, IReadOnlyList<VaccinationEventDto>>
 {
     public async Task<IReadOnlyList<VaccinationEventDto>> Handle(GetUpcomingVaccinationsQuery request, CancellationToken cancellationToken)
     {
         var events = await vaccinationRepository.GetUpcomingEventsAsync(request.FarmId, request.BeforeDate, cancellationToken);
-        
-        return events.Select(e => e.ToDto()).ToList();
+
+        // Ear tags for the whole list in one lookup.
+        var tagById = await tags.TagsForAsync(events.Select(e => e.AnimalId), cancellationToken);
+        return events.Select(e => e.ToDto(tagById.GetValueOrDefault(e.AnimalId))).ToList();
     }
 }

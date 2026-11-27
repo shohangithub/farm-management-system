@@ -34,14 +34,16 @@ public sealed class DemoUserGuardMiddleware(RequestDelegate next)
         if (DemoConstants.IsDemoViewer(currentUser.UserId) && !IsAllowed(context.Request))
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Type = "https://farm360.ai/errors/demo-read-only",
+                Title = "Demo is read-only",
+                Status = StatusCodes.Status403Forbidden,
+                Detail = "You're exploring a demo farm with sample data. Nothing can be changed. Start your free trial to manage your own farm.",
+            };
+            Localization.ProblemDetailsLocalizer.Localize(problem, context);
             await context.Response.WriteAsJsonAsync(
-                new Microsoft.AspNetCore.Mvc.ProblemDetails
-                {
-                    Type = "https://farm360.ai/errors/demo-read-only",
-                    Title = "Demo is read-only",
-                    Status = StatusCodes.Status403Forbidden,
-                    Detail = "You're exploring a demo farm with sample data. Nothing can be changed. Start your free trial to manage your own farm.",
-                },
+                problem,
                 options: (System.Text.Json.JsonSerializerOptions?)null,
                 contentType: "application/problem+json");
             return;

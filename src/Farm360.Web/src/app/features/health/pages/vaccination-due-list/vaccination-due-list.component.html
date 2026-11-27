@@ -9,7 +9,7 @@
         {{ (isExporting() ? 'Preparing PDF...' : 'Download PDF') | t }}
       </button>
     }
-    <button type="button" (click)="openRecordVaccinationDialog()"
+    <button type="button" *hasPermission="'health.create'" (click)="openRecordVaccinationDialog()"
       class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Record Vaccination' | t }}
     </button>
@@ -35,7 +35,7 @@
       icon="health_and_safety"
       [title]="(upcomingVaccinations().length ? 'Nothing matches this filter' : 'No vaccines due') | t"
       [description]="(upcomingVaccinations().length ? 'Try another word or filter.' : 'No vaccine is due in the next 30 days.') | t"
-      [actionLabel]="upcomingVaccinations().length ? undefined : ('Record Vaccination' | t)"
+      [actionLabel]="upcomingVaccinations().length || !('health.create' | can) ? undefined : ('Record Vaccination' | t)"
       (action)="openRecordVaccinationDialog()">
     </app-empty-state>
   </div>
@@ -54,7 +54,7 @@
         <div class="min-w-0 flex-1">
           <h3 class="font-semibold text-[15px] leading-snug text-gray-900 dark:text-white break-words">{{ ev.vaccineName }}</h3>
           <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
-            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">pets</mat-icon>{{ tags()[ev.animalId] || (ev.animalId | slice:0:8) }}
+            <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">pets</mat-icon>{{ ev.animalTag || (ev.animalId | slice:0:8) }}
           </p>
         </div>
         <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
@@ -82,7 +82,7 @@
         </div>
       </dl>
 
-      <div class="mt-auto px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2 no-print">
+      <div *hasPermission="'health.edit'" class="mt-auto px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2 no-print">
         <button type="button" (click)="administer(ev.id)"
           class="flex-1 inline-flex items-center justify-center gap-1 h-10 px-3 text-[13px] font-semibold rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">check_circle</mat-icon> {{ 'Mark as given today' | t }}

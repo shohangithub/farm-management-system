@@ -343,6 +343,7 @@ public sealed class GlobalExceptionMiddleware(
         context.Response.StatusCode = (int)statusCode;
         context.Response.ContentType = "application/problem+json";
 
+        Farm360.Api.Localization.ProblemDetailsLocalizer.Localize(problemDetails, context);
         var json = JsonSerializer.Serialize(problemDetails, JsonOptions);
         await context.Response.WriteAsync(json);
     }

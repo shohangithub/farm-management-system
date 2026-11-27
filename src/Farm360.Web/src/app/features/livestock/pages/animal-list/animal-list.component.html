@@ -1,7 +1,7 @@
 <app-page-header
   [title]="'Livestock' | t"
   [description]="'Register, track and look after every animal on your farm.' | t"
-  [primaryActionLabel]="'Register Animal' | t"
+  [primaryActionLabel]="('animals.create' | can) ? ('Register Animal' | t) : undefined"
   primaryActionIcon="add"
   (primaryAction)="onRegister()">
   <div actions class="flex flex-wrap items-center gap-2 no-print w-full sm:w-auto">
@@ -198,7 +198,7 @@
     icon="pets"
     [title]="'No Animals Found' | t"
     [description]="'You have not registered any animals yet. Start tracking your livestock by adding the first one.' | t"
-    [actionLabel]="'Register First Animal' | t"
+    [actionLabel]="('animals.create' | can) ? ('Register First Animal' | t) : undefined"
     (action)="onRegister()">
   </app-empty-state>
 
@@ -219,7 +219,7 @@
       <!-- Identity -->
       <div class="p-4 flex items-start gap-3">
         <!-- Select for bulk weight / vaccination (on-farm animals only) -->
-        <button *ngIf="isOnFarm(animal.status)" type="button"
+        <button *ngIf="isOnFarm(animal.status) && (['animals.edit', 'animals.create', 'health.create'] | can)" type="button"
                 class="-m-2 p-2 shrink-0 flex items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 [attr.aria-label]="'Select {tag}' | t: { tag: animal.tagId }" [attr.aria-pressed]="selectedAnimals().has(animal)"
                 (click)="toggleSelection(animal, $event)">
@@ -281,6 +281,7 @@
           {{ 'View' | t }}
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">chevron_right</mat-icon>
         </a>
+        <ng-container *hasPermission="'animals.delete'">
         <button [attr.aria-label]="'More actions' | t" [matMenuTriggerFor]="actionMenu"
                 class="w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
           <mat-icon class="!text-[20px] !w-[20px] !h-[20px]">more_vert</mat-icon>
@@ -291,6 +292,7 @@
             <span class="text-red-600 font-medium text-sm">{{ 'Delete Animal' | t }}</span>
           </button>
         </mat-menu>
+        </ng-container>
       </div>
     </div>
   </div>
@@ -322,11 +324,11 @@
     <span class="text-sm font-semibold">{{ 'animals selected' | t }}</span>
   </div>
   <div class="h-6 w-[1px] bg-gray-700"></div>
-  <button (click)="openBatchWeightDialog()" class="px-4 py-1.5 bg-primary-600 hover:bg-primary-500 rounded-full text-sm font-bold transition-colors shadow-md flex items-center gap-1.5">
+  <button *hasPermission="['animals.edit', 'animals.create']" (click)="openBatchWeightDialog()" class="px-4 py-1.5 bg-primary-600 hover:bg-primary-500 rounded-full text-sm font-bold transition-colors shadow-md flex items-center gap-1.5">
     <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">scale</mat-icon>
     {{ 'Record Weights' | t }}
   </button>
-  <button (click)="openBatchVaccinationDialog()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-sm font-bold transition-colors shadow-md flex items-center gap-1.5">
+  <button *hasPermission="'health.create'" (click)="openBatchVaccinationDialog()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-full text-sm font-bold transition-colors shadow-md flex items-center gap-1.5">
     <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">vaccines</mat-icon>
     {{ 'Batch Vaccinate' | t }}
   </button>

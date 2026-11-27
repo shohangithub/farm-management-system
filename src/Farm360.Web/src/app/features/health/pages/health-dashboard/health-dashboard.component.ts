@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -24,13 +26,12 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
-import { AnimalTagLookupService } from '../../services/animal-tag-lookup.service';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 
 @Component({
   selector: 'app-health-dashboard',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent, TranslatePipe, ErrorStateComponent, HealthNavComponent],
+  imports: [HasPermissionDirective, CanPipe, MoneyPipe, CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule, PageHeaderComponent, LoadingComponent, TranslatePipe, ErrorStateComponent, HealthNavComponent],
   templateUrl: './health-dashboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -38,7 +39,6 @@ export class HealthDashboardComponent {
   private healthService = inject(HealthService);
   private dialog = inject(MatDialog);
   private contextService = inject(WorkingContextService);
-  private tagLookup = inject(AnimalTagLookupService);
 
   // --- Reactive State (Signals) ---
   isLoading = signal(true);
@@ -93,12 +93,6 @@ export class HealthDashboardComponent {
     [...(this.data()?.vaccines ?? [])].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate)).slice(0, 5));
   readonly ongoingTreatments = computed(() => this.data()?.treatments ?? []);
   readonly openIncidents = computed(() => this.data()?.incidents ?? []);
-
-  /** Ear tags for the vaccine list (the API row only carries the animal id). */
-  readonly tags = toSignal(
-    toObservable(this.vaccinesDue).pipe(switchMap(list => this.tagLookup.tagsFor(list.map(v => v.animalId)))),
-    { initialValue: {} as Record<string, string> }
-  );
 
   isOverdue(date: string): boolean {
     return date < toLocalIsoDate();

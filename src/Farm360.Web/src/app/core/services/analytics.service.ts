@@ -24,6 +24,30 @@ export interface HealthAnalyticsDto {
   vaccinationCompliancePercentage: number;
 }
 
+/** One month of the health trend window (months with no records come back as zeros). */
+export interface HealthTrendMonthDto {
+  year: number;
+  /** 1-12 */
+  month: number;
+  deaths: number;
+  treatments: number;
+  treatmentCostBdt: number;
+}
+
+/** 12-month health aggregates, counted on the server over every record (oldest month first). */
+export interface HealthTrendsDto {
+  from: string;
+  to: string;
+  months: HealthTrendMonthDto[];
+  topIllnesses: { name: string; count: number }[];
+  totalDeaths: number;
+  totalTreatments: number;
+  totalTreatmentCostBdt: number;
+  onFarmAnimals: number;
+  vaccinatedAnimals: number;
+  vaccinationCoveragePercent: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -45,5 +69,9 @@ export class AnalyticsService {
 
   getHealthAnalytics(farmId: string): Observable<HealthAnalyticsDto> {
     return this.http.get<HealthAnalyticsDto>(`${this.apiUrl}/${farmId}/analytics/health`);
+  }
+
+  getHealthTrends(farmId: string): Observable<HealthTrendsDto> {
+    return this.http.get<HealthTrendsDto>(`${this.apiUrl}/${farmId}/analytics/health/trends`);
   }
 }

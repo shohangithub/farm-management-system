@@ -3,6 +3,7 @@
   [description]="'Money in, money out and profit for this farm.' | t"
   [breadcrumbActiveNode]="'Finance Overview' | t">
   <div actions class="flex flex-wrap items-center gap-2">
+    <ng-container *hasPermission="'finance.create'">
     <button mat-flat-button
       class="!rounded-xl !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2 !min-h-[44px]"
       (click)="openIncomeDialog()">
@@ -15,6 +16,7 @@
       <mat-icon>arrow_upward</mat-icon>
       <span>{{ 'Record Expense' | t }}</span>
     </button>
+    </ng-container>
     <button mat-stroked-button *hasPermission="'finance.admin'"
       class="!rounded-xl !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800 flex items-center gap-2 !min-h-[44px]"
       (click)="openAllocateOverheadDialog()">
@@ -42,7 +44,7 @@
     icon="account_balance_wallet"
     [title]="'No Financial Activity' | t"
     [description]="'There is no financial data recorded for this farm yet. Start by recording farm revenue or operating expenses.' | t"
-    [actionLabel]="'Record First Transaction' | t"
+    [actionLabel]="('finance.create' | can) ? ('Record First Transaction' | t) : undefined"
     (action)="openIncomeDialog()">
   </app-empty-state>
 

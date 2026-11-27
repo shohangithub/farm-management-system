@@ -41,6 +41,7 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
         (AccountChart.CostOverhead, "Utilities, Transport & Overhead", "ইউটিলিটি, পরিবহন ও অন্যান্য"),
         (AccountChart.CostFinance, "Loan Interest & Bad Debts", "ঋণের সুদ ও অনাদায়ী পাওনা"),
         (AccountChart.CostDepreciation, "Depreciation & Asset Disposals", "অবচয় ও সম্পদ বিক্রয়"),
+        (AccountChart.CostCarried, "Feed & care of animals still on the farm (carried to next period)", "খামারে থাকা পশুর খাদ্য ও যত্নের খরচ (পরবর্তী সময়ে স্থানান্তরিত)"),
     ];
 
     private readonly IFinancialStatementEngine _engine;
@@ -299,7 +300,11 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             R(Sum(TransactionCategory.OwnerCapital, SettlementAccount.Livestock)),
             R(Sum(TransactionCategory.CostOfAnimalsSold)),
             R(Sum(TransactionCategory.LivestockLoss)),
-            R(closing.GetValueOrDefault(AccountChart.LivestockAccount)));
+            R(closing.GetValueOrDefault(AccountChart.LivestockAccount)))
+        {
+            LivestockCarriedOpeningBdt = R(opening.GetValueOrDefault(AccountChart.LivestockCarriedCostAccount)),
+            LivestockCarriedClosingBdt = R(closing.GetValueOrDefault(AccountChart.LivestockCarriedCostAccount)),
+        };
     }
 
     private static List<InvestorAccountDto> BuildInvestorAccounts(

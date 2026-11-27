@@ -76,7 +76,14 @@ public record AssetMovementDto(
     decimal CostOfAnimalsSoldBdt,
     decimal MortalityLossBdt,
     decimal LivestockClosingBdt
-);
+)
+{
+    /// <summary>Feed &amp; care carried in the animals on the farm at the start (statement-only line 1310; 0 when the farm rule is off).</summary>
+    public decimal LivestockCarriedOpeningBdt { get; init; }
+
+    /// <summary>Feed &amp; care carried in the animals on the farm at the end.</summary>
+    public decimal LivestockCarriedClosingBdt { get; init; }
+}
 
 public record InvestorAccountDto(
     Guid InvestorId,

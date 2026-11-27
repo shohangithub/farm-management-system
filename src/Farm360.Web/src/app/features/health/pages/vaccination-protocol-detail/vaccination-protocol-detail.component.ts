@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -28,7 +30,7 @@ import { SPECIES_LABELS } from '../../../livestock/models/animal.models';
 @Component({
   selector: 'app-vaccination-protocol-detail',
   standalone: true,
-  imports: [ErrorStateComponent, 
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, 
     CommonModule,
     RouterModule,
     MatButtonModule,

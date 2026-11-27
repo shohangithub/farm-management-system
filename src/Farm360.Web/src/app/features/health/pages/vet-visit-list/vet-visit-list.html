@@ -9,7 +9,7 @@
         {{ (isExporting() ? 'Preparing PDF...' : 'Download PDF') | t }}
       </button>
     }
-    <button type="button" (click)="openScheduleVisitDialog()"
+    <button type="button" *hasPermission="'health.create'" (click)="openScheduleVisitDialog()"
       class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Log Visit' | t }}
     </button>
@@ -32,7 +32,7 @@
       icon="local_hospital"
       [title]="(search() ? 'No visits match' : 'No vet visits yet') | t"
       [description]="(search() ? 'Try another word.' : emptyDescription) | t"
-      [actionLabel]="search() ? undefined : ('Log Visit' | t)"
+      [actionLabel]="search() || !('health.create' | can) ? undefined : ('Log Visit' | t)"
       (action)="openScheduleVisitDialog()">
     </app-empty-state>
   </div>

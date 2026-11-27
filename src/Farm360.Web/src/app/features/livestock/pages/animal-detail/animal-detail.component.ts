@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import {
@@ -79,7 +80,7 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
   selector: 'app-animal-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ErrorStateComponent, MoneyPipe, 
+  imports: [CanPipe, ErrorStateComponent, MoneyPipe, 
     CommonModule, RouterModule, FormsModule,
     PageHeaderComponent, LoadingComponent, DatePipe, DecimalPipe,
     MatButtonModule, MatIconModule, MatDialogModule, MatTabsModule, MatSnackBarModule, MatMenuModule, MatDividerModule, MatTooltipModule, HasPermissionDirective,

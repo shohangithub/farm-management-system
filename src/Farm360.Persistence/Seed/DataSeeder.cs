@@ -49,6 +49,7 @@ public sealed class DataSeeder(
         }
 
         await SeedBreedsAsync(cancellationToken);
+        await FixSeedBreedCategoriesAsync(cancellationToken);
 
         logger.LogInformation("Farm360 DataSeeder: Completed.");
     }
@@ -377,6 +378,36 @@ public sealed class DataSeeder(
             if (logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
                 logger.LogInformation("Farm360 DataSeeder: Seeded {Count} default breeds across {TenantCount} tenants", addedCount, tenants.Count);
         }
+    }
+
+    // ── 4b. Breed category fix (idempotent) ───────────────────────────────────
+    // Older demo seeds stored breeds with a species ("Cattle", "Goat") as the category, while the
+    // breed screens use Indigenous / Exotic / Crossbred. Only rows with the seed's exact fingerprint
+    // and a non-standard category are corrected (see SeedBreedCategoryFix); tenant-created or
+    // tenant-edited breeds are left alone. Once fixed, the query finds nothing and this is a no-op.
+    private async Task FixSeedBreedCategoriesAsync(CancellationToken cancellationToken)
+    {
+        var seedNames = Farm360.Application.Livestock.SeedBreedCategoryFix.SeedBreedNames();
+        var knownCategories = Farm360.Application.Livestock.BreedCategories.All;
+
+        var candidates = await context.Breeds
+            .IgnoreQueryFilters()
+            .Where(b => !b.IsDeleted && seedNames.Contains(b.Name) && !knownCategories.Contains(b.Category))
+            .ToListAsync(cancellationToken);
+        if (candidates.Count == 0)
+            return;
+
+        var fixes = Farm360.Application.Livestock.SeedBreedCategoryFix.Plan(candidates.Select(b =>
+            new Farm360.Application.Livestock.SeedBreedCategoryFix.StoredBreed(b.Id, b.Name, b.Category, b.Origin, b.Description)));
+        if (fixes.Count == 0)
+            return;
+
+        foreach (var breed in candidates.Where(b => fixes.ContainsKey(b.Id)))
+            breed.UpdateDetails(breed.Name, breed.Description, fixes[breed.Id], breed.Origin, breed.MainPurpose, breed.BestFor);
+
+        await context.SaveChangesAsync(cancellationToken);
+        if (logger.IsEnabled(LogLevel.Information))
+            logger.LogInformation("Farm360 DataSeeder: Corrected the category of {Count} seeded breeds", fixes.Count);
     }
 
     // ── 5. Default Tenant & Organization ──────────────────────────────────────

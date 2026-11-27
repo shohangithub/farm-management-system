@@ -1,3 +1,4 @@
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -28,7 +29,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-current-stock',
   standalone: true,
-  imports: [InventorySubnavComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,

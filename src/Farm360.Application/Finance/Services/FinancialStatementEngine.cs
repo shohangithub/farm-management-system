@@ -20,6 +20,12 @@ public enum LedgerLineSource
     Reversal,
     Depreciation,
     Disposal,
+
+    /// <summary>
+    /// Statement-level adjustment, never posted: growing costs of animals still on the farm carried
+    /// as part of their value (farm rule <c>CarryLivestockGrowingCosts</c>). The trial balance leaves it out.
+    /// </summary>
+    CarriedCost,
 }
 
 /// <summary>One side of a double entry. <paramref name="Amount"/> is debit-positive (credit negative).</summary>
@@ -47,6 +53,32 @@ public sealed class FarmLedger
 
     /// <summary>True once the farm's accounting settings have been saved.</summary>
     public bool IsConfigured { get; init; }
+
+    /// <summary>
+    /// True when the statements carry the feed &amp; care of animals still on the farm as part of their
+    /// value (lines with <see cref="LedgerLineSource.CarriedCost"/>).
+    /// </summary>
+    public bool CarriesGrowingCosts { get; init; }
+
+    /// <summary>
+    /// The same books without the statement-level carried-cost lines — the pure double-entry ledger
+    /// the trial balance is read from.
+    /// </summary>
+    public FarmLedger LedgerOnly() =>
+        CarriesGrowingCosts
+            ? new FarmLedger(FarmId, FiscalYearStartMonth, BooksStartDate,
+                Lines.Where(l => l.Source != LedgerLineSource.CarriedCost).ToList(), AllPostings)
+            {
+                IsConfigured = IsConfigured,
+            }
+            : this;
+
+    /// <summary>
+    /// Feed &amp; care carried in the animals on the farm at the end of <paramref name="asOf"/>
+    /// (the statement-only asset line 1310). Zero when the farm rule is off.
+    /// </summary>
+    public decimal CarriedGrowingCostAt(DateOnly asOf) =>
+        Lines.Where(l => l.Date <= asOf && l.Account == AccountChart.LivestockCarriedCostAccount).Sum(l => l.Amount);
 
     /// <summary>Position date of the opening entries; postings on or before it are excluded.</summary>
     public DateOnly? BooksStartDate { get; }
@@ -160,17 +192,20 @@ public sealed class FinancialStatementEngine : IFinancialStatementEngine
     private readonly IFarmAccountingSettingsRepository? _settings;
     private readonly IBalanceSheetEntryRepository? _entries;
     private readonly IFixedAssetRepository? _assets;
+    private readonly ILivestockCarriedCostService? _carried;
 
     public FinancialStatementEngine(
         IFinancialTransactionRepository transactions,
         IFarmAccountingSettingsRepository? settings = null,
         IBalanceSheetEntryRepository? entries = null,
-        IFixedAssetRepository? assets = null)
+        IFixedAssetRepository? assets = null,
+        ILivestockCarriedCostService? carried = null)
     {
         _transactions = transactions;
         _settings = settings;
         _entries = entries;
         _assets = assets;
+        _carried = carried;
     }
 
     public async Task<FarmLedger> LoadAsync(Guid farmId, DateOnly upTo, CancellationToken cancellationToken = default)
@@ -208,10 +243,51 @@ public sealed class FinancialStatementEngine : IFinancialStatementEngine
                 AddAssetLines(lines, asset, upTo, fyStartMonth);
         }
 
+        // ── Growing costs of animals still on the farm (statement-level) ───
+        var carries = _carried is not null && _carried.IsEnabled(farmId);
+        if (carries)
+        {
+            var movements = await _carried!.GetMovementsAsync(farmId, upTo, cancellationToken);
+            AddCarriedCostLines(lines, movements, booksStart);
+        }
+
         return new FarmLedger(farmId, fyStartMonth, booksStart, lines, all.ToList())
         {
             IsConfigured = settings is not null,
+            CarriesGrowingCosts = carries,
         };
+    }
+
+    /// <summary>
+    /// Turns the carried-cost movements into balanced lines: Dr 1310 (animals on the farm: feed &amp;
+    /// care to date) / Cr 5010 (feed &amp; care carried to the next period, in cost of sales). A rise
+    /// in the carried cost lowers the period's costs; a fall (an animal sold or dead) releases it as a
+    /// cost of that period. Whatever was carried at the books start is part of the opening position,
+    /// so it opens against retained earnings rather than any period's profit.
+    /// </summary>
+    internal static void AddCarriedCostLines(List<LedgerLine> lines, IEnumerable<CarriedCostMovement> movements, DateOnly? booksStart)
+    {
+        var opening = 0m;
+        foreach (var m in movements)
+        {
+            if (m.AmountBdt == 0m)
+                continue;
+
+            if (booksStart is { } start && m.Date <= start)
+            {
+                opening += m.AmountBdt;
+                continue;
+            }
+
+            lines.Add(new LedgerLine(m.Date, AccountChart.LivestockCarriedCostAccount, m.AmountBdt, LedgerLineSource.CarriedCost));
+            lines.Add(new LedgerLine(m.Date, AccountChart.GrowingCostsCarriedAccount, -m.AmountBdt, LedgerLineSource.CarriedCost));
+        }
+
+        if (opening != 0m && booksStart is { } day)
+        {
+            lines.Add(new LedgerLine(day, AccountChart.LivestockCarriedCostAccount, opening, LedgerLineSource.CarriedCost));
+            lines.Add(new LedgerLine(day, AccountChart.RetainedEarningsAccount, -opening, LedgerLineSource.CarriedCost));
+        }
     }
 
     internal static void AddEntryLines(List<LedgerLine> lines, BalanceSheetEntry entry, DateOnly upTo)

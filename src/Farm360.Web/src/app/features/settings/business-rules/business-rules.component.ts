@@ -184,6 +184,19 @@ interface Option<T extends string> { value: T; label: string; }
             </div>
           </section>
 
+          <!-- ── Accounts ───────────────────────────────────────────────── -->
+          <section class="card">
+            <h3 class="section-title"><mat-icon>menu_book</mat-icon> {{ 'Accounts' | t }}</h3>
+
+            <div class="row">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" formControlName="carryLivestockGrowingCosts" />
+                {{ 'Carry feed & care costs of animals on the farm' | t }} <span *ngIf="isCustom('carryLivestockGrowingCosts')" class="chip">{{ 'Custom' | t }}</span>
+              </label>
+              <p class="help">{{ 'Feed, medicine, labour and other costs spent on animals still on the farm are counted in their value, and become a cost when the animal is sold or dies — so a month of fattening does not show as a loss. Turn off to show these costs in the month they were spent. Default: {value}.' | t: { value: ((s.inherited.carryLivestockGrowingCosts ? 'on' : 'off') | t) } }}</p>
+            </div>
+          </section>
+
           <!-- ── Reports & language ─────────────────────────────────────── -->
           <section class="card">
             <h3 class="section-title"><mat-icon>translate</mat-icon> {{ 'Reports & language' | t }}</h3>
@@ -289,6 +302,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
     overheadCostPeriod: this.fb.nonNullable.control<BusinessRulesValues['overheadCostPeriod']>('CalendarMonth'),
     defaultReportLanguage: this.fb.nonNullable.control<BusinessRulesValues['defaultReportLanguage']>('English'),
     bengaliNumeralsByDefault: [false],
+    carryLivestockGrowingCosts: [true],
   });
 
   ngOnInit(): void {
@@ -396,6 +410,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
       overheadCostPeriod: e.overheadCostPeriod,
       defaultReportLanguage: e.defaultReportLanguage,
       bengaliNumeralsByDefault: e.bengaliNumeralsByDefault,
+      carryLivestockGrowingCosts: e.carryLivestockGrowingCosts ?? true,
     });
     if (this.canEdit()) this.form.enable(); else this.form.disable();
   }
@@ -423,6 +438,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
       overheadCostPeriod: pick('overheadCostPeriod', v.overheadCostPeriod),
       defaultReportLanguage: pick('defaultReportLanguage', v.defaultReportLanguage),
       bengaliNumeralsByDefault: pick('bengaliNumeralsByDefault', !!v.bengaliNumeralsByDefault),
+      carryLivestockGrowingCosts: pick('carryLivestockGrowingCosts', !!v.carryLivestockGrowingCosts),
     };
   }
 
@@ -431,6 +447,7 @@ export class BusinessRulesComponent implements OnInit, HasUnsavedChanges {
       valuation: null, defaultDressingPercentage: null, defaultMeatPricePerKgBdt: null, defaultLiveWeightPricePerKgBdt: null,
       feedAllocation: null, metabolicWeightExponent: null, groupPlanQuantityBasis: null, fallbackAnimalWeightKg: null,
       overheadAllocation: null, overheadCostPeriod: null, defaultReportLanguage: null, bengaliNumeralsByDefault: null,
+      carryLivestockGrowingCosts: null,
     };
   }
 }

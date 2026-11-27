@@ -93,6 +93,7 @@ try
 
     // ── API layer services ───────────────────────────────────────────────────
     builder.Services.AddHttpContextAccessor();
+    builder.Services.AddFarm360Localization(); // Accept-Language: bn → Bangla error messages (UI culture only)
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.ConfigureHttpJsonOptions(options =>
     {
@@ -164,6 +165,10 @@ try
     {
         app.UseForwardedHeaders();
     }
+
+    // [0b] Request language (Accept-Language en|bn) — before the exception handler so its messages can be translated.
+    // Sets only the UI culture; number/date formatting culture is unchanged.
+    app.UseFarm360RequestLocalization();
 
     // [1] Exception handling — MUST be outermost (catches all downstream exceptions)
     app.UseMiddleware<GlobalExceptionMiddleware>();

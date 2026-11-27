@@ -60,6 +60,7 @@ public static class AccountChart
     public const string CostOverhead = "overhead";
     public const string CostFinance = "finance";
     public const string CostDepreciation = "depreciation";
+    public const string CostCarried = "carried";
 
     // ── Ledger (balance) accounts ───────────────────────────────────────────
     public const string CashAccount = "1010";
@@ -82,6 +83,22 @@ public static class AccountChart
     public const string OtherLiabilitiesAccount = "2300";
     public const string DepreciationAccount = "5400";
     public const string AssetDisposalAccount = "5410";
+
+    /// <summary>
+    /// Statement-only asset line: feed, health, labour and overhead spent on animals still on the
+    /// farm, carried as part of their value (farm rule <c>CarryLivestockGrowingCosts</c>). Never
+    /// posted; the statement engine derives it (see <see cref="ILivestockCarriedCostService"/>).
+    /// </summary>
+    public const string LivestockCarriedCostAccount = "1310";
+
+    /// <summary>
+    /// Statement-only cost-of-sales line, the other side of <see cref="LivestockCarriedCostAccount"/>:
+    /// a credit while growing costs are carried forward, a debit when they are released on sale or death.
+    /// </summary>
+    public const string GrowingCostsCarriedAccount = "5010";
+
+    /// <summary>The category key the monthly P&amp;L reports <see cref="GrowingCostsCarriedAccount"/> under.</summary>
+    public const string GrowingCostsCarriedKey = "GrowingCostsCarried";
 
     /// <summary>Statement-only line for the year's profit (not a ledger account).</summary>
     public const string CurrentYearProfitLine = "3950";
@@ -167,6 +184,11 @@ public static class AccountChart
         [ProvisionsAccount] = new(ProvisionsAccount, "Provisions & Accrued Expenses", "সঞ্চিতি ও বকেয়া খরচ", AccountClass.Liability),
         [OtherLiabilitiesAccount] = new(OtherLiabilitiesAccount, "Other Liabilities", "অন্যান্য দায়", AccountClass.Liability),
         [DepreciationAccount] = new(DepreciationAccount, "Depreciation", "অবচয়", AccountClass.Expense),
+        [LivestockCarriedCostAccount] = new(LivestockCarriedCostAccount,
+            "Animals on the farm: feed & care to date", "খামারে থাকা পশু: এ পর্যন্ত খাদ্য ও যত্নের খরচ", AccountClass.Asset),
+        [GrowingCostsCarriedAccount] = new(GrowingCostsCarriedAccount,
+            "Feed & care of animals still on the farm (carried to next period)",
+            "খামারে থাকা পশুর খাদ্য ও যত্নের খরচ (পরবর্তী সময়ে স্থানান্তরিত)", AccountClass.Expense),
     };
 
     /// <summary>Balance-sheet lines an opening entry may set (fixed assets come from the asset register).</summary>
@@ -284,7 +306,12 @@ public static class AccountChart
     /// </summary>
     public static string CategoryKey(string accountCode) =>
         Heads.Where(h => h.Value.Code == accountCode).Select(h => h.Key.ToString()).FirstOrDefault()
-        ?? (accountCode == DepreciationAccount ? "Depreciation" : Account(accountCode).Name);
+        ?? accountCode switch
+        {
+            DepreciationAccount => "Depreciation",
+            GrowingCostsCarriedAccount => GrowingCostsCarriedKey,
+            _ => Account(accountCode).Name,
+        };
 
     /// <summary>
     /// The cost-analysis bucket of a profit &amp; loss account. Depreciation and the book value of
@@ -293,6 +320,7 @@ public static class AccountChart
     public static string CostGroupOf(string accountCode) =>
         accountCode is DepreciationAccount or AssetDisposalAccount
             ? CostDepreciation
+            : accountCode == GrowingCostsCarriedAccount ? CostCarried
             : Heads.Values.Where(h => h.Code == accountCode).Select(h => h.CostGroup).FirstOrDefault() ?? CostOverhead;
 
     public static string SettlementCode(SettlementAccount settlement) => settlement switch

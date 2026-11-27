@@ -73,6 +73,9 @@ public sealed class IncomeStatementReportDefinition : ReportDefinition<IncomeSta
             "Buying animals or stock is not a cost on its own: an animal's purchase price becomes a cost only when it is sold or dies, and feed only when it is used.",
             "পশু বা মালামাল কেনা নিজে খরচ নয়: পশুর ক্রয়মূল্য খরচ হয় যখন পশুটি বিক্রি হয় বা মারা যায়, আর খাদ্য খরচ হয় যখন তা ব্যবহার হয়।"),
         new(
+            "Feed, health, labour and overhead spent on animals still on the farm are carried as part of their value (the \"Feed & care of animals still on the farm\" line) and become a cost when the animal is sold or dies.",
+            "খামারে থাকা পশুর খাদ্য, চিকিৎসা, শ্রম ও অন্যান্য খরচ তাদের মূল্যের অংশ হিসেবে পরবর্তী সময়ে নেওয়া হয় (\"খামারে থাকা পশুর খাদ্য ও যত্নের খরচ\" লাইন) এবং পশু বিক্রি বা মারা গেলে তা খরচ হয়।"),
+        new(
             "Loans received and owner or investor money are not income, and loan repayments are not costs — only the interest is.",
             "গৃহীত ঋণ এবং মালিক বা বিনিয়োগকারীর অর্থ আয় নয়, আর ঋণের আসল পরিশোধ খরচ নয় — শুধু সুদ খরচ।"),
     ];

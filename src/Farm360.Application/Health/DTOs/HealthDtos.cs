@@ -32,7 +32,9 @@ public sealed record VaccinationEventDto(
     DateOnly ScheduledDate,
     DateOnly? AdministeredDate,
     VaccinationStatus Status,
-    string? Notes
+    string? Notes,
+    // The animal's ear-tag number; null when the animal is unknown.
+    string? AnimalTag = null
 );
 
 public sealed record DewormingCalendarEventDto(
@@ -47,7 +49,8 @@ public sealed record DewormingCalendarEventDto(
 public sealed record MedicalTreatmentDto(
     Guid Id,
     Guid AnimalId,
-    string? AnimalTagId,
+    // The animal's ear-tag number; null when the animal is unknown.
+    string? AnimalTag,
     string Diagnosis,
     string MedicationName,
     decimal DosageAmount,
@@ -100,7 +103,9 @@ public sealed record MortalityRecordDto(
     string? PostMortemNotes,
     decimal? EstimatedEconomicLossBdt,
     Guid? DiseaseIncidentId,
-    Guid RecordedByUserId
+    Guid RecordedByUserId,
+    // The animal's ear-tag number; null when the animal is unknown.
+    string? AnimalTag = null
 );
 
 public sealed record VetVisitDto(

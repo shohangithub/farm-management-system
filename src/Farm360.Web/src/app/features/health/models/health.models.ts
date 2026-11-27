@@ -138,12 +138,15 @@ export interface VaccinationEventDto {
   administeredDate?: string;
   status: VaccinationStatus;
   notes?: string;
+  /** The animal's ear-tag number (sent by the API with each row). */
+  animalTag?: string;
 }
 
 export interface MedicalTreatmentDto {
   id: string;
   animalId: string;
-  animalTagId?: string;
+  /** The animal's ear-tag number (sent by the API with each row). */
+  animalTag?: string;
   diagnosis: string;
   medicationName: string;
   dosageAmount: number;
@@ -185,6 +188,8 @@ export interface MortalityRecordDto {
   estimatedEconomicLossBdt?: number;
   diseaseIncidentId?: string;
   recordedByUserId: string;
+  /** The animal's ear-tag number (sent by the API with each row). */
+  animalTag?: string;
 }
 
 export interface VetVisitDto {

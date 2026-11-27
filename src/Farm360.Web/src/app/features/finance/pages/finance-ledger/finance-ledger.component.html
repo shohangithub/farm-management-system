@@ -3,6 +3,7 @@
   [description]="'Every income and expense entry, newest first.' | t"
   [breadcrumbActiveNode]="'Ledger' | t">
   <div actions class="flex flex-wrap items-center gap-2">
+    <ng-container *hasPermission="'finance.create'">
     <button mat-flat-button
       class="!rounded-xl !bg-primary-600 hover:!bg-primary-700 !text-white flex items-center gap-2"
       (click)="openIncomeDialog()">
@@ -15,6 +16,7 @@
       <mat-icon>arrow_upward</mat-icon>
       <span>{{ 'Record Expense' | t }}</span>
     </button>
+    </ng-container>
     <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu" [disabled]="isLoading()"
       class="!rounded-xl !border-gray-200 dark:!border-gray-700 !text-gray-700 dark:!text-gray-200 hover:!bg-gray-50 dark:hover:!bg-gray-800">
       <mat-icon>{{ (isExporting() || isExportingPdf()) ? 'hourglass_empty' : 'download' }}</mat-icon>
@@ -207,7 +209,7 @@
       icon="receipt_long"
       [title]="'No Transactions Matched' | t"
       [description]="'No financial ledger entries match your filter criteria. Try clearing search filters or record a new transaction.' | t"
-      [actionLabel]="'Record Income' | t"
+      [actionLabel]="('finance.create' | can) ? ('Record Income' | t) : undefined"
       (action)="openIncomeDialog()">
     </app-empty-state>
 

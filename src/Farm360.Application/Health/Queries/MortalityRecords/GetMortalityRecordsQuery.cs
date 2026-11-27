@@ -1,6 +1,7 @@
 using Farm360.Application.Common.Models;
 using Farm360.Application.Health.DTOs;
 using Farm360.Application.Health.Mappings;
+using Farm360.Application.Livestock.Queries;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using MediatR;
 
@@ -20,10 +21,12 @@ public sealed record GetMortalityRecordsQuery(
 internal sealed class GetMortalityRecordsQueryHandler : IRequestHandler<GetMortalityRecordsQuery, PagedResult<MortalityRecordDto>>
 {
     private readonly IMortalityRecordRepository _repository;
+    private readonly IAnimalTagNames? _tags;
 
-    public GetMortalityRecordsQueryHandler(IMortalityRecordRepository repository)
+    public GetMortalityRecordsQueryHandler(IMortalityRecordRepository repository, IAnimalTagNames? tags = null)
     {
         _repository = repository;
+        _tags = tags;
     }
 
     public async Task<PagedResult<MortalityRecordDto>> Handle(GetMortalityRecordsQuery request, CancellationToken cancellationToken)
@@ -42,7 +45,10 @@ internal sealed class GetMortalityRecordsQueryHandler : IRequestHandler<GetMorta
             request.SortDesc,
             cancellationToken);
 
-        var dtos = items.Select(m => m.ToDto()).ToList();
+        // Ear tags for the whole page in one lookup.
+        var tags = await _tags.TagsForAsync(items.Select(m => m.AnimalId), cancellationToken);
+
+        var dtos = items.Select(m => m.ToDto(tags.GetValueOrDefault(m.AnimalId))).ToList();
         return new PagedResult<MortalityRecordDto>(dtos, count, pageNumber, pageSize);
     }
 }

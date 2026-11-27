@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -32,7 +34,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-inventory-item-list',
   standalone: true,
-  imports: [InventorySubnavComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -51,7 +53,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
       [description]="'Feed, medicine and other items you keep in stock.' | t"
       [breadcrumbActiveNode]="'Stock Items' | t">
       <div actions>
-        <button (click)="openCreateItemDialog()"
+        <button *hasPermission="'inventory.create'" (click)="openCreateItemDialog()"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Stock Item' | t }}
         </button>
@@ -110,7 +112,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
         icon="inventory_2"
         [title]="'No inventory items found' | t"
         [description]="'Add your first stock item to start monitoring farm inventory.' | t"
-        [actionLabel]="'Add Stock Item' | t"
+        [actionLabel]="('inventory.create' | can) ? ('Add Stock Item' | t) : undefined"
         (action)="openCreateItemDialog()">
       </app-empty-state>
 
@@ -167,18 +169,18 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             </div>
 
             <!-- Footer Action -->
-            <div class="p-3 bg-gray-50/80 dark:bg-gray-900/40 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between gap-2">
-              <button (click)="openStockInDialog(item)" class="min-h-[36px] px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1">
+            <div *hasPermission="['inventory.create', 'inventory.edit', 'inventory.delete']" class="p-3 bg-gray-50/80 dark:bg-gray-900/40 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between gap-2">
+              <button *hasPermission="'inventory.create'" (click)="openStockInDialog(item)" class="min-h-[36px] px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1">
                 <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">add_business</mat-icon> {{ 'Stock In' | t }}
               </button>
               <div class="flex items-center gap-1">
-                <button (click)="openStockOutDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 transition-colors inline-flex items-center gap-1">
+                <button *hasPermission="'inventory.create'" (click)="openStockOutDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 transition-colors inline-flex items-center gap-1">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">remove</mat-icon> {{ 'Stock Out' | t }}
                 </button>
-                <button (click)="openEditDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors inline-flex items-center gap-1">
+                <button *hasPermission="'inventory.edit'" (click)="openEditDialog(item)" class="px-2.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors inline-flex items-center gap-1">
                   <mat-icon class="!text-[14px] !w-[14px] !h-[14px]">edit</mat-icon> {{ 'Edit' | t }}
                 </button>
-                <button [attr.aria-label]="'Delete' | t" (click)="onDelete(item, $event)" class="px-2 py-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg border border-transparent transition-colors">
+                <button *hasPermission="'inventory.delete'" [attr.aria-label]="'Delete' | t" (click)="onDelete(item, $event)" class="px-2 py-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg border border-transparent transition-colors">
                   <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">delete</mat-icon>
                 </button>
               </div>

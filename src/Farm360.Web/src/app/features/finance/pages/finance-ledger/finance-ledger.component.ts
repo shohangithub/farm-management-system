@@ -1,3 +1,4 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -46,7 +47,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-finance-ledger',
   standalone: true,
-  imports: [FinanceSubnavComponent, TranslatePipe, MoneyPipe, HasPermissionDirective, 
+  imports: [CanPipe, FinanceSubnavComponent, TranslatePipe, MoneyPipe, HasPermissionDirective, 
     CommonModule,
     FormsModule,
     RouterLink,

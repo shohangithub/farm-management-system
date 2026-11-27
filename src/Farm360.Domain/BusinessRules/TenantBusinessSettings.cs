@@ -23,14 +23,16 @@ public sealed record BusinessRulesOverrides(
     decimal? DefaultMeatPricePerKgBdt = null,
     decimal? DefaultLiveWeightPricePerKgBdt = null,
     ReportLanguagePreference? DefaultReportLanguage = null,
-    bool? BengaliNumeralsByDefault = null)
+    bool? BengaliNumeralsByDefault = null,
+    bool? CarryLivestockGrowingCosts = null)
 {
     /// <summary>True when no field is overridden.</summary>
     public bool IsEmpty =>
         FeedAllocation is null && MetabolicWeightExponent is null && GroupPlanQuantityBasis is null &&
         FallbackAnimalWeightKg is null && OverheadAllocation is null && OverheadCostPeriod is null &&
         Valuation is null && DefaultDressingPercentage is null && DefaultMeatPricePerKgBdt is null &&
-        DefaultLiveWeightPricePerKgBdt is null && DefaultReportLanguage is null && BengaliNumeralsByDefault is null;
+        DefaultLiveWeightPricePerKgBdt is null && DefaultReportLanguage is null && BengaliNumeralsByDefault is null &&
+        CarryLivestockGrowingCosts is null;
 }
 
 /// <summary>
@@ -64,6 +66,7 @@ public sealed class TenantBusinessSettings : AuditableEntity, IAggregateRoot
     public decimal? DefaultLiveWeightPricePerKgBdt { get; private set; }
     public ReportLanguagePreference? DefaultReportLanguage { get; private set; }
     public bool? BengaliNumeralsByDefault { get; private set; }
+    public bool? CarryLivestockGrowingCosts { get; private set; }
 
     private TenantBusinessSettings() { } // EF Core
 
@@ -105,13 +108,15 @@ public sealed class TenantBusinessSettings : AuditableEntity, IAggregateRoot
         DefaultLiveWeightPricePerKgBdt = values.DefaultLiveWeightPricePerKgBdt;
         DefaultReportLanguage = values.DefaultReportLanguage;
         BengaliNumeralsByDefault = values.BengaliNumeralsByDefault;
+        CarryLivestockGrowingCosts = values.CarryLivestockGrowingCosts;
     }
 
     /// <summary>The stored values, <c>null</c> where this row inherits.</summary>
     public BusinessRulesOverrides ToOverrides() => new(
         FeedAllocation, MetabolicWeightExponent, GroupPlanQuantityBasis, FallbackAnimalWeightKg,
         OverheadAllocation, OverheadCostPeriod, Valuation, DefaultDressingPercentage,
-        DefaultMeatPricePerKgBdt, DefaultLiveWeightPricePerKgBdt, DefaultReportLanguage, BengaliNumeralsByDefault);
+        DefaultMeatPricePerKgBdt, DefaultLiveWeightPricePerKgBdt, DefaultReportLanguage, BengaliNumeralsByDefault,
+        CarryLivestockGrowingCosts);
 
     private static void Guard(bool ok, string field)
     {
@@ -145,6 +150,7 @@ public static class FarmBusinessRulesResolution
         if (overrides.DefaultLiveWeightPricePerKgBdt is { } lp) r.DefaultLiveWeightPricePerKgBdt = lp;
         if (overrides.DefaultReportLanguage is { } lang) r.DefaultReportLanguage = lang;
         if (overrides.BengaliNumeralsByDefault is { } bn) r.BengaliNumeralsByDefault = bn;
+        if (overrides.CarryLivestockGrowingCosts is { } carry) r.CarryLivestockGrowingCosts = carry;
         return r;
     }
 }

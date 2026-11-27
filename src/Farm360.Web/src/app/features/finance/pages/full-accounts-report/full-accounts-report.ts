@@ -49,6 +49,8 @@ export class FullAccountsReportComponent {
 
   private readonly paper = viewChild<ElementRef<HTMLElement>>('paper');
 
+  readonly carriedCostNote = 'Feed, health, labour and overhead spent on animals still on the farm are part of their value until they are sold or die, when they become a cost of that sale or loss.';
+
   readonly presets = [
     ...RANGE_PRESETS,
     {

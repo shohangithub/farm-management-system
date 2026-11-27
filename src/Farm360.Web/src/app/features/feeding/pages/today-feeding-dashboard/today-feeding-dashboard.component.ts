@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { FeedingSubnavComponent } from '../../components/feeding-subnav/feeding-subnav.component';
 import { RouterLink } from '@angular/router';
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed, DestroyRef } from '@angular/core';
@@ -60,7 +62,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
 @Component({
   selector: 'app-today-feeding-dashboard',
   standalone: true,
-  imports: [RouterLink, ErrorStateComponent, MoneyPipe,
+  imports: [HasPermissionDirective, CanPipe, RouterLink, ErrorStateComponent, MoneyPipe,
     FeedingSubnavComponent,
     CommonModule,
     RouterModule,
@@ -80,14 +82,14 @@ type ViewMode = 'cows' | 'grouped' | 'list';
       [breadcrumbActiveNode]="'Confirm Planned Feed' | t">
       <div actions class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <!-- Generate Entries On-Demand -->
-        <button type="button" (click)="generateEntries()" [disabled]="isGenerating()"
+        <button type="button" *hasPermission="'feeding.edit'" (click)="generateEntries()" [disabled]="isGenerating()"
           class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0" [class.animate-spin]="isGenerating()">auto_awesome</mat-icon>
           <span>{{ (isGenerating() ? 'Generating...' : (isPast() ? 'Generate Missed Day' : 'Generate Entries')) | t }}</span>
         </button>
 
         <!-- Feed given outside the plan -->
-        <button type="button" (click)="openManualEntry()" [disabled]="!currentFarmId"
+        <button type="button" *hasPermission="'feeding.edit'" (click)="openManualEntry()" [disabled]="!currentFarmId"
           [matTooltip]="'Record feed actually given outside the plan — a missed or extra feed, or a cow with no ration' | t"
           class="min-h-11 sm:min-h-10 px-4 text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors inline-flex items-center justify-center gap-2 text-center leading-tight disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px] shrink-0">edit_note</mat-icon>
@@ -293,10 +295,12 @@ type ViewMode = 'cows' | 'grouped' | 'list';
         <app-empty-state
           icon="restaurant_menu"
           [title]="(allEntries().length === 0 ? 'No Feeding Entries for Selected Date' : 'No Matching Feeding Entries') | t"
-          [description]="allEntries().length === 0
+          [description]="allEntries().length === 0 && !('feeding.edit' | can)
+            ? ('No feeding entries were made for {date}.' | t: { date: (selectedDate() | date:'EEEE, d MMM y') })
+            : allEntries().length === 0
             ? ('Nothing to confirm for {date} yet. Tap “{action}” to build the feeding list from your active feeding plans.' | t: { date: (selectedDate() | date:'EEEE, d MMM y'), action: ((isPast() ? 'Generate Missed Day' : 'Generate Entries') | t) })
             : ('No entries match your search or status filter. Clear them to see every entry for this day.' | t)"
-          [actionLabel]="(allEntries().length === 0 ? 'Generate Entries Now' : 'Reset Filters') | t"
+          [actionLabel]="allEntries().length === 0 ? (('feeding.edit' | can) ? ('Generate Entries Now' | t) : undefined) : ('Reset Filters' | t)"
           (action)="allEntries().length === 0 ? generateEntries() : resetFilters()">
         </app-empty-state>
       }
@@ -351,12 +355,12 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                   </div>
 
                   <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button type="button" (click)="openManualEntry([cow.animalId])" [matTooltip]="'Record extra feed given to this cow' | t"
+                    <button type="button" *hasPermission="'feeding.edit'" (click)="openManualEntry([cow.animalId])" [matTooltip]="'Record extra feed given to this cow' | t"
                       class="h-11 sm:h-10 px-4 flex-1 sm:flex-none text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 rounded-xl inline-flex items-center justify-center gap-1 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
                       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Add Feed' | t }}
                     </button>
 
-                    @if (cow.hasPending) {
+                    @if (cow.hasPending && ('feeding.edit' | can)) {
                       <button type="button" (click)="confirmCow(cow)"
                         [matTooltip]="'Confirm all {n} pending rations for this cow' | t: { n: getPendingCountForCow(cow) }"
                         [attr.aria-label]="'Confirm ({n}) pending rations for {tag}' | t: { n: getPendingCountForCow(cow), tag: cow.animalTag }"
@@ -423,7 +427,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                         </span>
                       </div>
 
-                      @if (hasPending(pen)) {
+                      @if (hasPending(pen) && ('feeding.edit' | can)) {
                         <button type="button" (click)="confirmPen(pen)"
                           [attr.aria-label]="'Confirm All ({n}) pending entries in {pen}' | t: { n: getPendingPenCount(pen), pen: (pen.penName | t) }"
                           class="h-11 sm:h-10 px-4 w-full sm:w-auto text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800">
@@ -544,7 +548,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
                           <mat-icon class="!w-5 !h-5 !text-[20px]">payments</mat-icon>
                         </button>
 
-                        @if (entry.status === 'Pending') {
+                        @if (entry.status === 'Pending' && ('feeding.edit' | can)) {
                           <button type="button" (click)="confirmEntry(entry)" [matTooltip]="'Confirm Planned Amount' | t"
                             [attr.aria-label]="'Confirm planned amount for {tag}' | t: { tag: entry.animalTag }"
                             class="h-10 w-10 inline-flex items-center justify-center text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1">
@@ -667,7 +671,7 @@ type ViewMode = 'cows' | 'grouped' | 'list';
         }
 
         <!-- Actions for Pending: Confirm is the big primary; Adjust / Skip are secondary -->
-        @if (entry.status === 'Pending') {
+        @if (entry.status === 'Pending' && ('feeding.edit' | can)) {
           <div class="mt-auto pt-4 space-y-2">
             <button type="button" (click)="confirmEntry(entry)"
               [attr.aria-label]="'Confirm {kg} kg for {tag}' | t: { kg: (entry.expectedKg | number:'1.2-2'), tag: entry.animalTag }"

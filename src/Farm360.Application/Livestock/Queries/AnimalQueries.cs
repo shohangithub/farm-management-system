@@ -76,7 +76,11 @@ public interface IAnimalListQueries
     Task<(IReadOnlyList<Animal> Items, int TotalCount)> GetPagedAsync(GetAnimalListQuery filter, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 }
 
-public sealed class GetAnimalListQueryHandler(IAnimalRepository repository, IAnimalListQueries? listQueries = null, IBreedRepository? breeds = null)
+public sealed class GetAnimalListQueryHandler(
+    IAnimalRepository repository,
+    IAnimalListQueries? listQueries = null,
+    IBreedRepository? breeds = null,
+    IAnimalLocationNames? locations = null)
     : IRequestHandler<GetAnimalListQuery, PagedAnimalListDto>
 {
     public async Task<PagedAnimalListDto> Handle(GetAnimalListQuery request, CancellationToken cancellationToken)
@@ -107,8 +111,27 @@ public sealed class GetAnimalListQueryHandler(IAnimalRepository repository, IAni
             ? new Dictionary<Guid, string>()
             : (await breeds.GetAllAsync(cancellationToken)).GroupBy(b => b.Id).ToDictionary(g => g.Key, g => g.First().Name);
 
+        // Shed / pen labels: one set-based lookup per table for the whole page.
+        var rows = items.Select(a => a.ToListItemDto()).ToList();
+        IReadOnlyDictionary<Guid, string> shedNames = new Dictionary<Guid, string>();
+        IReadOnlyDictionary<Guid, string> penNames = new Dictionary<Guid, string>();
+        if (locations is not null && rows.Count != 0)
+        {
+            var shedIds = rows.Where(r => r.ShedId.HasValue).Select(r => r.ShedId!.Value).Distinct().ToList();
+            var penIds = rows.Where(r => r.PenId.HasValue).Select(r => r.PenId!.Value).Distinct().ToList();
+            if (shedIds.Count != 0)
+                shedNames = await locations.GetShedNamesAsync(shedIds, cancellationToken);
+            if (penIds.Count != 0)
+                penNames = await locations.GetPenNamesAsync(penIds, cancellationToken);
+        }
+
         return new PagedAnimalListDto(
-            items.Select(a => a.ToListItemDto() with { BreedName = breedNames.GetValueOrDefault(a.BreedId) }).ToList().AsReadOnly(),
+            rows.Select(r => r with
+            {
+                BreedName = breedNames.GetValueOrDefault(r.BreedId),
+                ShedName = r.ShedId is { } shedId ? shedNames.GetValueOrDefault(shedId) : null,
+                PenName = r.PenId is { } penId ? penNames.GetValueOrDefault(penId) : null,
+            }).ToList().AsReadOnly(),
             totalCount,
             pageNumber,
             pageSize);

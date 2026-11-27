@@ -62,6 +62,8 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
             "খাদ্য ও ওষুধ কেনার সময় নয়, ব্যবহারের সময় খরচ ধরা হয়; গুদামে থাকা মজুদ এখনও খরচ নয়।"),
         new("Buying animals is not an expense; their cost appears as 'Cost of animals sold' in the month they are sold, or 'Animals that died' if they die.",
             "পশু কেনা খরচ নয়; পশু বিক্রি হলে সেই মাসে তার খরচ 'বিক্রিত পশুর ক্রয়মূল্য' হিসেবে, আর মারা গেলে 'মৃত পশুর ক্ষতি' হিসেবে আসে।"),
+        new("Feed & care spent on animals still on the farm is part of their value (a minus expense here) until the animal is sold or dies, when it becomes a cost of that month.",
+            "খামারে থাকা পশুর খাদ্য ও যত্নের খরচ পশু বিক্রি বা মারা যাওয়া পর্যন্ত তার মূল্যের অংশ (এখানে ঋণাত্মক খরচ); তখন তা সেই মাসের খরচ হয়।"),
         new("Owner or investor money and loans are not income, and loan repayments are not expenses (only the interest is).",
             "মালিক বা বিনিয়োগকারীর টাকা ও ঋণ আয় নয়, এবং ঋণ পরিশোধ খরচ নয় (শুধু সুদ খরচ)।"),
     ];
@@ -209,6 +211,7 @@ public sealed class MonthlyPnlReportDefinition : ReportDefinition<MonthlyPnlRepo
             "InterestExpense" => ("Loan interest", "ঋণের সুদ"),
             "BadDebt" => ("Money owed that will not be paid", "অনাদায়ী পাওনা"),
             "AssetDisposal" => ("Loss / (gain) on selling equipment", "সরঞ্জাম বিক্রয়ে ক্ষতি / (লাভ)"),
+            "GrowingCostsCarried" => ("Feed & care of animals still on the farm (carried to next period)", "খামারে থাকা পশুর খাদ্য ও যত্নের খরচ (পরবর্তী সময়ে স্থানান্তরিত)"),
             "Depreciation" => ("Wear and tear of sheds & equipment (depreciation)", "শেড ও সরঞ্জামের অবচয়"),
             _ => null,
         };

@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -30,7 +32,7 @@ import { HealthFilterBarComponent } from '../../components/health-filter-bar/hea
 @Component({
   selector: 'app-vet-visit-list',
   standalone: true,
-  imports: [ErrorStateComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     MatButtonModule,

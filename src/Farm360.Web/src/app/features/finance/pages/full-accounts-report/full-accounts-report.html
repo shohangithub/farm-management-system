@@ -261,6 +261,16 @@
             </tbody>
             <tfoot><tr><td>{{ 'Closing herd value' | t }}</td><td class="num">{{ d.assets.livestockClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
           </table>
+          @if (d.assets.livestockCarriedOpeningBdt || d.assets.livestockCarriedClosingBdt) {
+            <table class="t">
+              <thead><tr><th>{{ 'Animals on the farm: feed & care to date' | t }}</th><th class="num" style="width: 130px;">{{ 'Amount (৳)' | t }}</th></tr></thead>
+              <tbody>
+                <tr class="opening"><td>{{ 'At the start' | t }}</td><td class="num">{{ (d.assets.livestockCarriedOpeningBdt ?? 0) | number: '1.2-2' }}</td></tr>
+              </tbody>
+              <tfoot><tr><td>{{ 'At the end' | t }}</td><td class="num">{{ (d.assets.livestockCarriedClosingBdt ?? 0) | number: '1.2-2' }}</td></tr></tfoot>
+            </table>
+            <p class="note">{{ carriedCostNote | t }}</p>
+          }
         </div>
       }
 

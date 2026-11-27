@@ -2,7 +2,7 @@
   [title]="'Vaccination Protocols' | t"
   [description]="'Ready-made vaccine schedules you can apply to many animals at once.' | t">
   <div actions class="flex flex-wrap items-center gap-2">
-    <button type="button" (click)="openCreateDialog()"
+    <button type="button" *hasPermission="'health.create'" (click)="openCreateDialog()"
       class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Create Protocol' | t }}
     </button>
@@ -20,7 +20,7 @@
       icon="library_books"
       [title]="'No vaccination protocols yet' | t"
       [description]="'Create one schedule, then apply it to a whole group of animals.' | t"
-      [actionLabel]="'Create Protocol' | t"
+      [actionLabel]="('health.create' | can) ? ('Create Protocol' | t) : undefined"
       (action)="openCreateDialog()">
     </app-empty-state>
   </div>
@@ -55,11 +55,11 @@
       </dl>
 
       <div class="mt-auto px-4 py-3 border-t border-gray-100 dark:border-gray-700/60 flex gap-2">
-        <button type="button" (click)="openAssignDialog(element)"
+        <button type="button" *hasPermission="'health.create'" (click)="openAssignDialog(element)"
           class="flex-1 inline-flex items-center justify-center gap-1 h-10 px-3 text-[13px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">group_add</mat-icon> {{ 'Apply to animals' | t }}
         </button>
-        <button type="button" (click)="openEditDialog(element)" [matTooltip]="'Edit Protocol' | t" [attr.aria-label]="'Edit Protocol' | t"
+        <button type="button" *hasPermission="'health.edit'" (click)="openEditDialog(element)" [matTooltip]="'Edit Protocol' | t" [attr.aria-label]="'Edit Protocol' | t"
           class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">edit</mat-icon>
         </button>

@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -23,13 +25,13 @@ import { HealthFilterBarComponent, HealthFilterOption } from '../../components/h
 @Component({
   selector: 'app-incident-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent, HealthFilterBarComponent],
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, CommonModule, RouterModule, MatIconModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent, HealthFilterBarComponent],
   template: `
 <app-page-header
   [title]="'Disease Incidents' | t"
   [description]="'Outbreaks on the farm and how far they have spread.' | t">
   <div actions class="flex flex-wrap items-center gap-2">
-    <button type="button" (click)="reportIncident()"
+    <button type="button" *hasPermission="'health.create'" (click)="reportIncident()"
       class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Report Incident' | t }}
     </button>
@@ -55,7 +57,7 @@ import { HealthFilterBarComponent, HealthFilterOption } from '../../components/h
       icon="health_and_safety"
       [title]="(!incidents().length ? 'No disease incidents' : (openFilter() === 'open' && !search() ? 'No active outbreaks' : 'Nothing matches this filter')) | t"
       [description]="(!incidents().length ? 'Report one when several animals fall sick with the same disease.' : (openFilter() === 'open' && !search() ? 'Every reported incident is resolved.' : 'Try another word or filter.')) | t"
-      [actionLabel]="incidents().length ? undefined : ('Report Incident' | t)"
+      [actionLabel]="incidents().length || !('health.create' | can) ? undefined : ('Report Incident' | t)"
       (action)="reportIncident()">
     </app-empty-state>
   </div>

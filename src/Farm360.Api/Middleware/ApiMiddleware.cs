@@ -191,7 +191,7 @@ public sealed partial class TenantResolutionMiddleware(RequestDelegate next, ILo
                 context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
                 await context.Response.WriteAsJsonAsync(new
                 {
-                    error = "Your subscription has been suspended. Please renew to continue.",
+                    error = Localization.ProblemDetailsLocalizer.Text(context, "Your subscription has been suspended. Please renew to continue."),
                     supportUrl = "/settings/billing",
                 });
                 return;
@@ -235,14 +235,16 @@ public sealed partial class TenantResolutionMiddleware
     private static async Task WriteProblemAsync(HttpContext context, int status, string title, string detail)
     {
         context.Response.StatusCode = status;
+        var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Type = "https://farm360.ai/errors/tenant",
+            Title = title,
+            Status = status,
+            Detail = detail,
+        };
+        Localization.ProblemDetailsLocalizer.Localize(problem, context);
         await context.Response.WriteAsJsonAsync(
-            new Microsoft.AspNetCore.Mvc.ProblemDetails
-            {
-                Type = "https://farm360.ai/errors/tenant",
-                Title = title,
-                Status = status,
-                Detail = detail,
-            },
+            problem,
             options: (System.Text.Json.JsonSerializerOptions?)null,
             contentType: "application/problem+json");
     }

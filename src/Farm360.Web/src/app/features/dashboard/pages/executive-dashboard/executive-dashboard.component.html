@@ -167,31 +167,31 @@
              [ngClass]="dashboard.actionableInsights.length > 0 ? '' : 'lg:col-span-2 lg:grid-cols-2'">
 
           <!-- Quick Actions -->
-          <section aria-labelledby="quick-ops-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
+          <section *hasPermission="['animals.create', 'health.create', 'feeding.edit', 'inventory.create']" aria-labelledby="quick-ops-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2">
               <mat-icon class="text-primary-600 dark:text-primary-400 text-[20px] w-[20px] h-[20px]" aria-hidden="true">bolt</mat-icon>
               <h2 id="quick-ops-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Quick actions' | t }}</h2>
             </div>
             <div class="p-4 grid grid-cols-2 gap-3">
-              <button type="button" routerLink="/livestock/register" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <button type="button" *hasPermission="'animals.create'" routerLink="/livestock/register" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">add_circle</mat-icon>
                 </span>
                 <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Add Animal' | t }}</span>
               </button>
-              <button type="button" routerLink="/health/treatments" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <button type="button" *hasPermission="'health.create'" routerLink="/health/treatments" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">healing</mat-icon>
                 </span>
                 <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Log Treatment' | t }}</span>
               </button>
-              <button type="button" routerLink="/feeding/sheet" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <button type="button" *hasPermission="'feeding.edit'" routerLink="/feeding/sheet" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">restaurant_menu</mat-icon>
                 </span>
                 <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'Log Feed' | t }}</span>
               </button>
-              <button type="button" routerLink="/inventory/dashboard" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <button type="button" *hasPermission="'inventory.create'" routerLink="/inventory/dashboard" class="group flex flex-col items-center justify-center gap-2 min-h-[88px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-primary-400 hover:bg-primary-50/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10 transition-colors cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <span class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 flex items-center justify-center" aria-hidden="true">
                   <mat-icon class="text-[20px] w-[20px] h-[20px]">inventory_2</mat-icon>
                 </span>
@@ -201,7 +201,7 @@
           </section>
 
           <!-- Recent Activity Feed -->
-          <section aria-labelledby="activity-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
+          <section [ngClass]="{ 'lg:col-span-2': dashboard.actionableInsights.length === 0 && !(['animals.create', 'health.create', 'feeding.edit', 'inventory.create'] | can) }" aria-labelledby="activity-heading" class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2">
               <mat-icon class="text-primary-600 dark:text-primary-400 text-[20px] w-[20px] h-[20px]" aria-hidden="true">history</mat-icon>
               <h2 id="activity-heading" class="text-base font-semibold text-gray-900 dark:text-white m-0">{{ 'Recent Activity' | t }}</h2>

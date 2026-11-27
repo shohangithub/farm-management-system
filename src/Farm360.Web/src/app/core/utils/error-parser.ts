@@ -1,4 +1,15 @@
-import { translate } from '../i18n/i18n.service';
+import { readStoredLanguage, translate } from '../i18n/i18n.service';
+
+/** Generic ProblemDetails titles (English and the server's Bangla) that say nothing on their own. */
+const GENERIC_TITLES = new Set(['Validation Failed', 'Bad Request', 'তথ্যে ভুল আছে', 'অনুরোধটি সঠিক নয়']);
+
+/**
+ * "Field: message" in English. In Bangla the server already names the field inside the message,
+ * and the dictionary key is an English property name, so only the message is shown.
+ */
+function fieldMessage(field: string, message: string): string {
+  return readStoredLanguage() === 'bn' ? message : `${field}: ${message}`;
+}
 
 /**
  * Utility to parse all types of API validation & exception responses from ASP.NET Core RFC 7807 ProblemDetails
@@ -15,7 +26,7 @@ export function parseApiError(err: any, fallbackMessage = 'An unexpected error o
       const parsed = JSON.parse(errorObj);
       if (parsed?.detail && typeof parsed.detail === 'string') return parsed.detail;
       if (parsed?.message && typeof parsed.message === 'string') return parsed.message;
-      if (parsed?.title && typeof parsed.title === 'string' && parsed.title !== 'Validation Failed' && parsed.title !== 'Bad Request') return parsed.title;
+      if (parsed?.title && typeof parsed.title === 'string' && !GENERIC_TITLES.has(parsed.title)) return parsed.title;
     } catch {
       // not valid JSON, proceed
     }
@@ -28,9 +39,9 @@ export function parseApiError(err: any, fallbackMessage = 'An unexpected error o
       const messages: string[] = [];
       for (const [field, msgs] of errorEntries) {
         if (Array.isArray(msgs)) {
-          msgs.forEach(m => messages.push(`${field}: ${m}`));
+          msgs.forEach(m => messages.push(fieldMessage(field, m)));
         } else if (typeof msgs === 'string') {
-          messages.push(`${field}: ${msgs}`);
+          messages.push(fieldMessage(field, msgs));
         }
       }
       if (messages.length > 0) {
@@ -45,7 +56,7 @@ export function parseApiError(err: any, fallbackMessage = 'An unexpected error o
   }
 
   // 3. Handle ProblemDetails title (if descriptive)
-  if (errorObj?.title && typeof errorObj.title === 'string' && errorObj.title !== 'Validation Failed' && errorObj.title !== 'Bad Request') {
+  if (errorObj?.title && typeof errorObj.title === 'string' && !GENERIC_TITLES.has(errorObj.title)) {
     return errorObj.title;
   }
 

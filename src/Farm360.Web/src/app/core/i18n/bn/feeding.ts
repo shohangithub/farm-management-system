@@ -165,6 +165,7 @@ export const BN_FEEDING: Record<string, string> = {
   'Nothing to confirm for {date} yet. Tap “{action}” to build the feeding list from your active feeding plans.': '{date}-এ এখনো নিশ্চিত করার কিছু নেই। সক্রিয় খাদ্য পরিকল্পনা থেকে খাওয়ানোর তালিকা বানাতে “{action}” চাপুন।',
   'No entries match your search or status filter. Clear them to see every entry for this day.': 'আপনার খোঁজা বা অবস্থা ফিল্টারের সাথে কোনো এন্ট্রি মেলেনি। এই দিনের সব এন্ট্রি দেখতে ফিল্টার মুছে দিন।',
   'Generate Entries Now': 'এখনই এন্ট্রি তৈরি করুন',
+  'No feeding entries were made for {date}.': '{date}-এ কোনো খাওয়ানোর এন্ট্রি তৈরি হয়নি।',
   'Reset Filters': 'ফিল্টার রিসেট করুন',
   '{n} ration': '{n}টি রেশন',
   '{n} rations': '{n}টি রেশন',

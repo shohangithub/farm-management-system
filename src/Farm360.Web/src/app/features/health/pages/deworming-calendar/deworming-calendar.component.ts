@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,7 +27,7 @@ import { HealthNavComponent } from '../../components/health-nav/health-nav.compo
 @Component({
   selector: 'app-deworming-calendar',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent],
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, CommonModule, MatIconModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent],
   template: `
 <app-page-header
   [title]="'Deworming Calendar' | t"
@@ -38,7 +40,7 @@ import { HealthNavComponent } from '../../components/health-nav/health-nav.compo
         {{ (isExporting() ? 'Preparing PDF...' : 'Download PDF') | t }}
       </button>
     }
-    <button type="button" (click)="openScheduleDialog()"
+    <button type="button" *hasPermission="'health.create'" (click)="openScheduleDialog()"
       class="inline-flex items-center gap-1.5 h-10 px-4 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">add</mat-icon> {{ 'Schedule Deworming' | t }}
     </button>
@@ -56,7 +58,7 @@ import { HealthNavComponent } from '../../components/health-nav/health-nav.compo
       icon="event_note"
       [title]="'No deworming planned' | t"
       [description]="'Create a deworming protocol, then apply it to your animals.' | t"
-      [actionLabel]="'Schedule Deworming' | t"
+      [actionLabel]="('health.create' | can) ? ('Schedule Deworming' | t) : undefined"
       (action)="openScheduleDialog()">
     </app-empty-state>
   </div>

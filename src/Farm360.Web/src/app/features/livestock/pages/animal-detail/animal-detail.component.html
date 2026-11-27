@@ -158,7 +158,7 @@
       </button>
     </mat-menu>
 
-    <button type="button" (click)="onEdit()"
+    <button type="button" *hasPermission="'animals.edit'" (click)="onEdit()"
       class="h-9 px-3 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 border border-gray-300 dark:border-gray-700 rounded-lg transition-colors shadow-sm inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-gray-500 dark:text-gray-400" aria-hidden="true">edit</mat-icon>
       {{ 'Edit' | t }}
@@ -173,6 +173,7 @@
       <mat-icon class="!hidden sm:!inline-block !text-[18px] !w-[18px] !h-[18px] text-gray-400 -mr-1" aria-hidden="true">arrow_drop_down</mat-icon>
     </button>
     <mat-menu #moreActionsMenu="matMenu" xPosition="before" class="!rounded-2xl !p-1.5">
+      <ng-container *hasPermission="'animals.sell'">
       <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onSell()" class="!rounded-xl">
         <mat-icon class="!text-gray-500">sell</mat-icon>
         <span class="text-sm">{{ 'Record Sale' | t }}</span>
@@ -184,11 +185,13 @@
           <span class="text-[11px]">{{ 'Release it from quarantine before selling' | t }}</span>
         </div>
       </button>
+      </ng-container>
       <!-- Sale planner: projects weight and profit for a future sale date -->
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onOpenIntelligence()" class="!rounded-xl">
         <mat-icon class="!text-gray-500">event_available</mat-icon>
         <span class="text-sm">{{ 'When to sell?' | t }}</span>
       </button>
+      <ng-container *hasPermission="'animals.edit'">
       <mat-divider class="!my-1"></mat-divider>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onTransfer()" class="!rounded-xl">
         <mat-icon class="!text-gray-500">place</mat-icon>
@@ -198,6 +201,8 @@
         <mat-icon class="!text-gray-500">group_work</mat-icon>
         <span class="text-sm">{{ 'Assign to Batch' | t }}</span>
       </button>
+      </ng-container>
+      <ng-container *hasPermission="'animals.quarantine'">
       <button mat-menu-item *ngIf="animal()!.status === AnimalStatus.Active" (click)="onQuarantine()" class="!rounded-xl">
         <mat-icon class="!text-amber-600">health_and_safety</mat-icon>
         <span class="text-sm">{{ 'Quarantine' | t }}</span>
@@ -206,15 +211,18 @@
         <mat-icon class="!text-emerald-600">lock_open</mat-icon>
         <span class="text-sm">{{ 'Release from Quarantine' | t }}</span>
       </button>
+      </ng-container>
+      <ng-container *hasPermission="'animals.edit'">
       <mat-divider class="!my-1"></mat-divider>
       <button mat-menu-item *ngIf="isOnFarm()" (click)="onRecordDeath()" class="!rounded-xl">
         <mat-icon class="!text-red-600">heart_broken</mat-icon>
         <span class="text-sm text-red-700 dark:text-red-300">{{ 'Record Death' | t }}</span>
       </button>
+      </ng-container>
     </mat-menu>
 
     <!-- Primary action: first on phones, last (right-most) on wider screens. -->
-    <button type="button" *ngIf="isOnFarm()" (click)="onRecordWeight()"
+    <button type="button" *ngIf="isOnFarm() && (['animals.edit', 'animals.create'] | can)" (click)="onRecordWeight()"
       class="order-first sm:order-none h-9 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm shadow-primary-600/20 transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">scale</mat-icon>
       {{ 'Record Weight' | t }}
@@ -486,7 +494,7 @@
               <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Weight Progression' | t }}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Every weighing, newest first.' | t }}</p>
             </div>
-            <button type="button" *ngIf="isOnFarm()" (click)="onRecordWeight()"
+            <button type="button" *ngIf="isOnFarm() && (['animals.edit', 'animals.create'] | can)" (click)="onRecordWeight()"
               class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm no-print focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> {{ 'Add Weight' | t }}
             </button>
@@ -537,7 +545,7 @@
               <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Body Condition Score' | t }}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Periodic body condition assessments (1–5 scale).' | t }}</p>
             </div>
-            <button type="button" *ngIf="isOnFarm()" (click)="onRecordBcs()"
+            <button type="button" *ngIf="isOnFarm() && (['animals.edit', 'animals.create'] | can)" (click)="onRecordBcs()"
               class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm no-print focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add</mat-icon> {{ 'Record BCS' | t }}
             </button>
@@ -732,7 +740,7 @@
               <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ 'Animal Photos' | t }}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ 'Visual record and identification.' | t }}</p>
             </div>
-            <button type="button" (click)="onUploadPhoto()"
+            <button type="button" *hasPermission="'animals.create'" (click)="onUploadPhoto()"
               class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
               <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add_a_photo</mat-icon> {{ 'Add Photo' | t }}
             </button>
@@ -779,14 +787,14 @@
             </div>
             <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ 'No breeding records' | t }}</h4>
             <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">{{ "Record a mating to start this animal's breeding history." | t }}</p>
-            <button type="button" *ngIf="isOnFarm()" (click)="onRecordMating()"
+            <button type="button" *ngIf="isOnFarm() && ('animals.edit' | can)" (click)="onRecordMating()"
               class="h-9 inline-flex items-center gap-1.5 px-4 text-xs font-semibold text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
               {{ 'Record Mating' | t }}
             </button>
           </div>
 
           <ng-container *ngIf="animal()!.breedingRecords.length > 0">
-            <div *ngIf="isOnFarm()" class="flex justify-end mb-4">
+            <div *ngIf="isOnFarm() && ('animals.edit' | can)" class="flex justify-end mb-4">
               <button type="button" (click)="onRecordMating()"
                 class="h-9 px-3 text-xs font-semibold text-pink-700 dark:text-pink-300 bg-pink-50 dark:bg-pink-900/20 hover:bg-pink-100 dark:hover:bg-pink-900/40 border border-pink-200 dark:border-pink-800/60 rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 {{ 'Record New Mating' | t }}
@@ -842,7 +850,7 @@
                           class="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
                           {{ 'Calved:' | t }} {{ br.actualCalvingDate | date:'mediumDate' }} ({{ (br.calvingOutcome || 'Live Birth') | t }})
                         </div>
-                        <button *ngIf="!br.actualCalvingDate && isOnFarm()" (click)="onRecordCalving(br.id)"
+                        <button *ngIf="!br.actualCalvingDate && isOnFarm() && ('animals.edit' | can)" (click)="onRecordCalving(br.id)"
                           class="mt-1 inline-flex items-center gap-1 w-max px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors">
                           <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">child_care</mat-icon>
                           {{ 'Record Calving' | t }}
@@ -852,7 +860,7 @@
                     <ng-template #notConfirmed>
                       <div class="flex flex-col gap-1">
                         <span class="text-amber-600 dark:text-amber-400 font-medium">{{ 'Pending Check' | t }}</span>
-                        <button *ngIf="isOnFarm()" (click)="onConfirmPregnancy(br.id)"
+                        <button *ngIf="isOnFarm() && ('animals.edit' | can)" (click)="onConfirmPregnancy(br.id)"
                           class="inline-flex items-center gap-1 w-max px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors">
                           <mat-icon class="!text-[12px] !w-[12px] !h-[12px]">done</mat-icon>
                           {{ 'Confirm' | t }}
@@ -1060,7 +1068,7 @@
             <!-- No ration yet -->
             <div *ngIf="!activeFeedingPlan() && isOnFarm()" class="rounded-xl p-4 border border-dashed border-rose-200 dark:border-rose-800/60 bg-rose-50/50 dark:bg-rose-950/20 flex flex-wrap items-center justify-between gap-3">
               <span class="text-sm text-rose-800 dark:text-rose-300 min-w-0 flex-1 basis-56">{{ 'This animal has no ration — the system is not feeding it or charging it feed cost.' | t }}</span>
-              <button type="button" *ngIf="isOnFarm()" (click)="openSetRation()" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+              <button type="button" *ngIf="isOnFarm() && ('feeding.create' | can)" (click)="openSetRation()" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">restaurant</mat-icon> {{ 'Set ration' | t }}
               </button>
             </div>
@@ -1094,11 +1102,11 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-2 md:justify-end md:self-center">
-                <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('extra')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shadow-sm">
+                <button type="button" *ngIf="isOnFarm() && ('feeding.create' | can)" (click)="openSetRation('extra')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shadow-sm">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">add_circle</mat-icon>
                   {{ 'Add extra' | t }}
                 </button>
-                <button type="button" *ngIf="isOnFarm()" (click)="openSetRation('switch')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors shadow-sm">
+                <button type="button" *ngIf="isOnFarm() && ('feeding.create' | can)" (click)="openSetRation('switch')" class="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors shadow-sm">
                   <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">swap_horiz</mat-icon>
                   {{ 'Change ration' | t }}
                 </button>

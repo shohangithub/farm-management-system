@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -40,7 +42,7 @@ interface GroupedPlanEntries {
 @Component({
   selector: 'app-daily-consumable-dashboard',
   standalone: true,
-  imports: [InventorySubnavComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, InventorySubnavComponent, MoneyPipe, 
     CommonModule,
     RouterModule,
     FormsModule,
@@ -77,12 +79,12 @@ interface GroupedPlanEntries {
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">calendar_today</mat-icon> {{ 'Today' | t }}
         </button>
 
-        <button (click)="generateEntries()" [disabled]="generating()"
+        <button *hasPermission="'inventory.create'" (click)="generateEntries()" [disabled]="generating()"
           class="px-3.5 py-2 text-xs font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl border border-teal-200 dark:border-teal-800 transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50">
           <mat-icon class="!text-[16px] !w-[16px] !h-[16px]">sync</mat-icon> {{ 'Generate Entries' | t }}
         </button>
 
-        <button (click)="bulkConfirmAll()" [disabled]="pendingCount() === 0 || bulkConfirming()"
+        <button *hasPermission="'inventory.edit'" (click)="bulkConfirmAll()" [disabled]="pendingCount() === 0 || bulkConfirming()"
           class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
           <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">done_all</mat-icon> {{ 'Confirm All ({n})' | t: { n: pendingCount() } }}
         </button>
@@ -186,7 +188,7 @@ interface GroupedPlanEntries {
             icon="cleaning_services"
             [title]="'No Consumable Entries For This Date' | t"
             [description]="emptyDescription | t"
-            [actionLabel]="'Generate Entries' | t"
+            [actionLabel]="('inventory.create' | can) ? ('Generate Entries' | t) : undefined"
             (action)="generateEntries()">
           </app-empty-state>
         } @else {
@@ -254,7 +256,7 @@ interface GroupedPlanEntries {
                       </div>
 
                       <!-- Actions -->
-                      <div class="flex items-center justify-end gap-1.5 pt-1">
+                      <div *hasPermission="'inventory.edit'" class="flex items-center justify-end gap-1.5 pt-1">
                         @if (entry.status === DailyConsumableEntryStatus.Pending) {
                           <button (click)="skipEntry(entry)"
                             class="px-2.5 py-1 text-[11px] font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">

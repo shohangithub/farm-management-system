@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -27,12 +29,11 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
 import { HealthFilterBarComponent } from '../../components/health-filter-bar/health-filter-bar.component';
-import { AnimalTagLookupService } from '../../services/animal-tag-lookup.service';
 
 @Component({
   selector: 'app-mortality-list',
   standalone: true,
-  imports: [ErrorStateComponent, MoneyPipe, 
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, MoneyPipe, 
     CommonModule, 
     RouterModule, 
     MatButtonModule, 
@@ -57,7 +58,6 @@ export class MortalityListComponent {
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
   private readonly i18n = inject(I18nService);
-  private readonly tagLookup = inject(AnimalTagLookupService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -107,14 +107,6 @@ export class MortalityListComponent {
 
   dataSource = computed(() => this.mortalitiesResult().items);
   totalItems = computed(() => this.mortalitiesResult().totalCount);
-
-  /** Ear tags for the animals on this page (the API row only carries the animal id). */
-  readonly tags = toSignal(
-    toObservable(this.dataSource).pipe(
-      switchMap(items => this.tagLookup.tagsFor(items.map((m: any) => m.animalId)))
-    ),
-    { initialValue: {} as Record<string, string> }
-  );
 
   setSearch(value: string): void {
     this.search.set(value);

@@ -2,10 +2,10 @@
   [title]="'Health' | t"
   [description]="'What needs your attention today.' | t"
   [breadcrumbActiveNode]="'Overview' | t"
-  [primaryActionLabel]="'Schedule Vaccine' | t"
+  [primaryActionLabel]="('health.create' | can) ? ('Schedule Vaccine' | t) : undefined"
   primaryActionIcon="vaccines"
   (primaryAction)="openScheduleVaccinationDialog()">
-  <div actions class="flex flex-wrap items-center gap-2">
+  <div actions *hasPermission="'health.create'" class="flex flex-wrap items-center gap-2">
     <button type="button" [attr.aria-label]="'Log Treatment' | t" [title]="'Log Treatment' | t" (click)="openLogTreatmentDialog()"
       class="inline-flex items-center justify-center gap-1.5 h-10 min-w-10 px-3 sm:px-3.5 text-sm font-semibold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <mat-icon class="!text-[18px] !w-[18px] !h-[18px] text-amber-600 dark:text-amber-400">medical_services</mat-icon><span class="hidden sm:inline">{{ 'Log Treatment' | t }}</span>
@@ -91,7 +91,7 @@
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-blue-600 dark:text-blue-400 shrink-0">vaccines</mat-icon>
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ v.vaccineName }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ tags()[v.animalId] || (v.animalId | slice:0:8) }} · {{ v.scheduledDate | date:'mediumDate' }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ v.animalTag || (v.animalId | slice:0:8) }} · {{ v.scheduledDate | date:'mediumDate' }}</p>
               </div>
               @if (isOverdue(v.scheduledDate)) {
                 <span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{{ 'Overdue' | t }}</span>
@@ -131,7 +131,7 @@
               <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-amber-600 dark:text-amber-400 shrink-0">medical_services</mat-icon>
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ t.diagnosis }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t.animalTagId || (t.animalId | slice:0:8) }} · {{ t.medicationName }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t.animalTag || (t.animalId | slice:0:8) }} · {{ t.medicationName }}</p>
               </div>
               <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{{ t.startDate | date:'MMM d' }}</span>
             </li>

@@ -153,6 +153,7 @@ interface Period { fromDate: string | null; toDate: string; comparative: boolean
             <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0">info</mat-icon>
             <span>
               {{ costOfSalesNote | t }}
+              {{ carriedCostNote | t }}
               {{ 'See the' | t }} <a routerLink="/finance/reports/balance-sheet" class="underline">{{ 'balance sheet' | t }}</a> {{ 'for the financial position.' | t }}
             </span>
           </div>
@@ -168,6 +169,7 @@ export class IncomeStatementComponent {
   private readonly reports = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = inject(I18nService);
+  readonly carriedCostNote = 'Feed, health, labour and overhead spent on animals still on the farm are part of their value until they are sold or die, when they become a cost of that sale or loss.';
   readonly costOfSalesNote = 'Cost of sales is the purchase cost of the animals sold or lost plus the feed, health, labour and consumables used. Stock and animal purchases are not costs until used or sold. A negative "Loss / (Gain) on disposal" is a gain.';
 
   readonly statement = signal<IncomeStatement | null>(null);

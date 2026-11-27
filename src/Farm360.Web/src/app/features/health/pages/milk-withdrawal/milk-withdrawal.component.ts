@@ -188,7 +188,7 @@ export class MilkWithdrawalComponent {
       .map(t => {
         const safe = new Date(t.startDate);
         safe.setDate(safe.getDate() + t.meatWithdrawalDays);
-        return { tag: t.animalTagId || t.animalId.slice(0, 8), medicine: t.medicationName, startDate: t.startDate, safeDate: safe };
+        return { tag: t.animalTag || t.animalId.slice(0, 8), medicine: t.medicationName, startDate: t.startDate, safeDate: safe };
       })
       .filter(r => r.safeDate >= today)
       .sort((a, b) => a.safeDate.getTime() - b.safeDate.getTime());

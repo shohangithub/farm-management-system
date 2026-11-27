@@ -38,7 +38,8 @@ public class GetTrialBalanceQueryHandler : IRequestHandler<GetTrialBalanceQuery,
         var asOf = request.AsOfDate ?? DateTime.UtcNow;
         var day = DateOnly.FromDateTime(asOf);
 
-        var ledger = await _engine.LoadAsync(request.FarmId, day, cancellationToken);
+        // Pure ledger: the statement-level carried feed & care of animals on the farm is left out.
+        var ledger = (await _engine.LoadAsync(request.FarmId, day, cancellationToken)).LedgerOnly();
         var balances = ledger.BalancesAt(day);
 
         var lines = new List<TrialBalanceLineDto>();

@@ -40,7 +40,7 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
       <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
         <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Deaths (12 months)' | t }}</p>
-        <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ dataValue?.totalDeathsLast12Months }}</p>
+        <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ totalDeaths() }}</p>
       </div>
       <div class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm p-4">
         <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ 'Vaccine coverage' | t }}</p>

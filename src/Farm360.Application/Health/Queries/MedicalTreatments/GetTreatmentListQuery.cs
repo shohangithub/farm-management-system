@@ -1,6 +1,7 @@
 using Farm360.Application.Common.Models;
 using Farm360.Application.Health.DTOs;
 using Farm360.Application.Health.Mappings;
+using Farm360.Application.Livestock.Queries;
 using Farm360.Domain.Health.Enums;
 using Farm360.Domain.Health.Interfaces.Repositories;
 using MediatR;
@@ -21,12 +22,12 @@ public sealed record GetTreatmentListQuery(
 internal sealed class GetTreatmentListQueryHandler : IRequestHandler<GetTreatmentListQuery, PagedResult<MedicalTreatmentDto>>
 {
     private readonly IMedicalTreatmentRepository _repository;
-    private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository _animalRepository;
+    private readonly IAnimalTagNames? _tags;
 
-    public GetTreatmentListQueryHandler(IMedicalTreatmentRepository repository, Farm360.Domain.Livestock.Repositories.IAnimalRepository animalRepository)
+    public GetTreatmentListQueryHandler(IMedicalTreatmentRepository repository, IAnimalTagNames? tags = null)
     {
         _repository = repository;
-        _animalRepository = animalRepository;
+        _tags = tags;
     }
 
     public async Task<PagedResult<MedicalTreatmentDto>> Handle(GetTreatmentListQuery request, CancellationToken cancellationToken)
@@ -45,11 +46,10 @@ internal sealed class GetTreatmentListQueryHandler : IRequestHandler<GetTreatmen
             request.SortDesc,
             cancellationToken);
 
-        var animalIds = items.Select(t => t.AnimalId).Distinct().ToList();
-        var animals = animalIds.Count != 0 ? await _animalRepository.GetByIdsAsync(animalIds, cancellationToken) : [];
-        var animalDict = animals.ToDictionary(a => a.Id, a => a.Tag.TagId);
+        // Ear tags for the whole page in one lookup.
+        var tags = await _tags.TagsForAsync(items.Select(t => t.AnimalId), cancellationToken);
 
-        var dtos = items.Select(t => t.ToDto(animalDict.GetValueOrDefault(t.AnimalId))).ToList();
+        var dtos = items.Select(t => t.ToDto(tags.GetValueOrDefault(t.AnimalId))).ToList();
         return new PagedResult<MedicalTreatmentDto>(dtos, count, pageNumber, pageSize);
     }
 }

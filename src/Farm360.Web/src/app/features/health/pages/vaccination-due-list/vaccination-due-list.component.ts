@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { Component, inject, ChangeDetectionStrategy, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -24,12 +26,11 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { HealthNavComponent } from '../../components/health-nav/health-nav.component';
 import { HealthFilterBarComponent, HealthFilterOption } from '../../components/health-filter-bar/health-filter-bar.component';
-import { AnimalTagLookupService } from '../../services/animal-tag-lookup.service';
 
 @Component({
   selector: 'app-vaccination-due-list',
   standalone: true,
-  imports: [ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, MatButtonModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent, HealthFilterBarComponent],
+  imports: [HasPermissionDirective, CanPipe, ErrorStateComponent, CommonModule, RouterModule, FormsModule, MatIconModule, MatButtonModule, MatDialogModule, PageHeaderComponent, EmptyStateComponent, LoadingComponent, TranslatePipe, HealthNavComponent, HealthFilterBarComponent],
   templateUrl: './vaccination-due-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -40,7 +41,6 @@ export class VaccinationDueListComponent {
   private pdfExportService = inject(PdfExportService);
   private dialog = inject(MatDialog);
   private readonly i18n = inject(I18nService);
-  private readonly tagLookup = inject(AnimalTagLookupService);
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;
   readonly isExporting = signal(false);
@@ -100,26 +100,17 @@ export class VaccinationDueListComponent {
     { value: 'week', label: 'Due this week' },
   ];
 
-  /** Ear tags for the animals in the list (the API row only carries the animal id). */
-  readonly tags = toSignal(
-    toObservable(this.upcomingVaccinations).pipe(
-      switchMap(items => this.tagLookup.tagsFor((items || []).map(v => v.animalId)))
-    ),
-    { initialValue: {} as Record<string, string> }
-  );
-
   /** The list after filters, overdue first. */
   readonly visible = computed(() => {
     const term = this.search().toLowerCase();
     const when = this.whenFilter();
-    const tags = this.tags();
     return [...(this.upcomingVaccinations() || [])]
       .filter(v => {
         const urgency = this.getUrgencyClass(v.scheduledDate);
         if (when === 'overdue' && urgency !== 'danger-row') return false;
         if (when === 'week' && urgency === '') return false;
         if (!term) return true;
-        return v.vaccineName.toLowerCase().includes(term) || (tags[v.animalId] || '').toLowerCase().includes(term);
+        return v.vaccineName.toLowerCase().includes(term) || (v.animalTag || '').toLowerCase().includes(term);
       })
       .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
   });

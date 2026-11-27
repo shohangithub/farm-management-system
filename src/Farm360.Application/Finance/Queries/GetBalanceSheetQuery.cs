@@ -181,9 +181,18 @@ public sealed class BalanceSheetPosition
             "Prepaid expenses, deposits and supplier advances"),
         new(AccountChart.InventoryAccount, "Inventory (Feed, Medicine & Supplies)", "মজুদ মালামাল", Current,
             "Stock bought or brought in, less stock used, returned or written off — at cost", AlwaysShow: true),
-        new(AccountChart.LivestockAccount, "Livestock (at cost)", "গবাদিপশু (ক্রয়মূল্যে)", Current,
+        new(AccountChart.LivestockAccount, "Animals on the farm: purchase cost", "খামারে থাকা পশু: ক্রয়মূল্য", Current,
             "Animals bought, less the cost of animals sold, slaughtered or dead", AlwaysShow: true),
+        new(AccountChart.LivestockCarriedCostAccount, "Animals on the farm: feed & care to date", "খামারে থাকা পশু: এ পর্যন্ত খাদ্য ও যত্নের খরচ", Current,
+            CarriedCostNote),
     ];
+
+    /// <summary>The one-sentence policy note for the carried feed &amp; care of animals on the farm.</summary>
+    public const string CarriedCostNote =
+        "Feed, health, labour and overhead spent on animals still on the farm are part of their value until they are sold or die, when they become a cost of that sale or loss.";
+
+    public const string CarriedCostNoteBn =
+        "খামারে থাকা পশুর খাদ্য, চিকিৎসা, শ্রম ও অন্যান্য খরচ পশুটি বিক্রি বা মারা যাওয়া পর্যন্ত তার মূল্যের অংশ হিসেবে ধরা হয়; তখন তা সেই বিক্রি বা ক্ষতির খরচ হয়।";
 
     public static readonly IReadOnlyList<LineSpec> LiabilityLayout =
     [
@@ -262,6 +271,7 @@ public sealed class BalanceSheetPosition
             [AccountChart.AdvancesDepositsAccount] = Bal(AccountChart.AdvancesDepositsAccount) + Math.Max(0m, -payable),
             [AccountChart.InventoryAccount] = Bal(AccountChart.InventoryAccount),
             [AccountChart.LivestockAccount] = Bal(AccountChart.LivestockAccount),
+            [AccountChart.LivestockCarriedCostAccount] = Bal(AccountChart.LivestockCarriedCostAccount),
 
             // Liabilities: credit balances.
             [AccountChart.PayableAccount] = Math.Max(0m, payable),

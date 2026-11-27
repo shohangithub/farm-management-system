@@ -72,7 +72,10 @@ public sealed record AnimalListItemDto(
     string? PrimaryPhotoUrl,
     DateTime CreatedAtUtc,
     // The breed's name, for lists and pickers ("B-04 · Sahiwal"); null if the breed is unknown.
-    string? BreedName = null);
+    string? BreedName = null,
+    // Display labels of the current shed / pen (shed name, pen number); null when not housed or unknown.
+    string? ShedName = null,
+    string? PenName = null);
 
 /// <summary>
 /// Weight record DTO.

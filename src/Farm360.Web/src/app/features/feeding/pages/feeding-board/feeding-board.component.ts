@@ -1,3 +1,5 @@
+import { CanPipe } from '../../../../shared/pipes/can.pipe';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,12 +31,12 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
 @Component({
   selector: 'app-feeding-board',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
+  imports: [HasPermissionDirective, CanPipe, TranslatePipe, MoneyPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FeedingSubnavComponent],
   template: `
     <app-page-header [title]="'Feeding Plans' | t" [description]="'Who eats what each day. Set, change, pause or stop plans here.' | t"
       [breadcrumbActiveNode]="'Feeding Plans' | t">
       <div actions>
-        <button mat-flat-button (click)="openSetRation()" class="!rounded-xl !bg-emerald-600 !text-white">
+        <button mat-flat-button *hasPermission="'feeding.create'" (click)="openSetRation()" class="!rounded-xl !bg-emerald-600 !text-white">
           <mat-icon>restaurant</mat-icon> {{ 'Set ration' | t }}{{ selected().length ? ' (' + selected().length + ')' : '' }}
         </button>
       </div>
@@ -52,7 +54,7 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
           <div class="flex-1 text-xs text-amber-900 dark:text-amber-100">
             <b>{{ '{n} old feeding schedule(s)' | t: { n: b.summary.activeLegacySchedules } }}</b> {{ 'are still switched on. Schedules only describe feeding — they never created daily feed, used stock or charged cost. Convert them to shed/batch rations so they do.' | t }}
           </div>
-          <button mat-flat-button (click)="convertSchedules()" [disabled]="busy()" class="!rounded-xl !bg-amber-600 !text-white !text-xs">{{ 'Convert now' | t }}</button>
+          <button mat-flat-button *hasPermission="'feeding.create'" (click)="convertSchedules()" [disabled]="busy()" class="!rounded-xl !bg-amber-600 !text-white !text-xs">{{ 'Convert now' | t }}</button>
         </div>
 
         <!-- Summary -->
@@ -126,7 +128,7 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
                     <span class="text-gray-500">{{ it.kgPerDay | number:'1.0-3' }} {{ (it.unit || 'kg') | t }}<span *ngIf="it.feedName && it.feedName !== it.name"> · {{ it.feedName }}</span></span>
                     <span *ngIf="it.fit === 'BelowRange' || it.fit === 'AboveRange'" class="text-amber-600" [title]="i18n.t(outsideRangeHint)">⚠ {{ (it.fit === 'BelowRange' ? 'below chart' : 'above chart') | t }}</span>
                     <span *ngIf="it.isPaused" class="text-sky-600">{{ it.pausedUntil ? ('paused until {date}' | t: { date: (it.pausedUntil | date:'d MMM') }) : ('paused' | t) }}</span>
-                    <span *ngIf="it.planId && it.kind !== 'Group'" class="ml-auto inline-flex gap-0.5">
+                    <span *ngIf="it.planId && it.kind !== 'Group' && ('feeding.edit' | can)" class="ml-auto inline-flex gap-0.5">
                       <button (click)="pause(a, it)" [title]="'Pause' | t" class="p-0.5 text-gray-400 hover:text-sky-600" [attr.aria-label]="'Pause' | t"><mat-icon class="!text-[16px] !w-4 !h-4">pause_circle</mat-icon></button>
                       <button (click)="stop(a, it)" [title]="'Stop' | t" class="p-0.5 text-gray-400 hover:text-rose-600" [attr.aria-label]="'Stop' | t"><mat-icon class="!text-[16px] !w-4 !h-4">stop_circle</mat-icon></button>
                     </span>
@@ -135,12 +137,14 @@ type Filter = 'all' | 'unfed' | 'extras' | 'paused';
                 <td class="px-3 py-2.5 text-right font-mono">{{ a.totalKgPerDay | number:'1.0-2' }}</td>
                 <td class="px-3 py-2.5 text-right font-mono">{{ a.totalCostPerDayBdt | number:'1.0-0' }}</td>
                 <td class="px-3 py-2.5 text-right whitespace-nowrap">
+                  <ng-container *hasPermission="'feeding.create'">
                   <button (click)="openSetRation([a.animalId], hasChart(a) ? 'switch' : undefined)" [title]="(hasChart(a) ? 'Change chart' : 'Set ration') | t" class="p-1 text-gray-400 hover:text-emerald-600" [attr.aria-label]="'Open set ration' | t">
                     <mat-icon class="!text-[18px]">{{ hasChart(a) ? 'swap_horiz' : 'restaurant' }}</mat-icon>
                   </button>
                   <button (click)="openSetRation([a.animalId], 'extra')" [title]="'Add extra' | t" class="p-1 text-gray-400 hover:text-amber-600" [attr.aria-label]="'Open set ration' | t">
                     <mat-icon class="!text-[18px]">add_circle</mat-icon>
                   </button>
+                  </ng-container>
                 </td>
               </tr>
             </tbody>

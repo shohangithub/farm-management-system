@@ -339,6 +339,10 @@ export const CATEGORY_LABELS: Readonly<Record<string, { en: string; bn: string; 
   InventoryWriteOff: { en: 'Stock Write-off', bn: 'মজুদ ক্ষতি / বাতিল' },
   CostOfAnimalsSold: { en: 'Cost of Animals Sold', bn: 'বিক্রিত পশুর ক্রয়মূল্য' },
   LivestockLoss: { en: 'Livestock Mortality Loss', bn: 'পশু মৃত্যুজনিত ক্ষতি' },
+  GrowingCostsCarried: {
+    en: 'Feed & care of animals still on the farm (carried to next period)',
+    bn: 'খামারে থাকা পশুর খাদ্য ও যত্নের খরচ (পরবর্তী সময়ে স্থানান্তরিত)',
+  },
   InterestExpense: { en: 'Loan Interest', bn: 'ঋণের সুদ' },
   BadDebt: { en: 'Bad Debts Written Off', bn: 'অনাদায়ী পাওনা' },
   SupplierPayment: { en: 'Supplier Payment (credit bill)', bn: 'সরবরাহকারীকে বকেয়া পরিশোধ' },
@@ -982,6 +986,9 @@ export interface AssetMovement {
   costOfAnimalsSoldBdt: number;
   mortalityLossBdt: number;
   livestockClosingBdt: number;
+  /** Feed & care carried in the animals on the farm (farm rule; 0 when off). */
+  livestockCarriedOpeningBdt?: number;
+  livestockCarriedClosingBdt?: number;
 }
 
 export interface InvestorAccount {

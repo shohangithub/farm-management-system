@@ -156,6 +156,19 @@ public sealed class FarmBusinessRules
     /// <summary>Fallback live-animal rate, used only by <see cref="AnimalValuationPolicy.LiveWeightMarket"/>.</summary>
     public decimal DefaultLiveWeightPricePerKgBdt { get; set; } = 400m;
 
+    // ── Accounts ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Carry the feed, health, labour and overhead costs of animals still on the farm as part of
+    /// their value (standard livestock-inventory accounting). On by default.
+    /// </summary>
+    /// <remarks>
+    /// The ledger books those costs as expenses when they happen; with this on, the statements move
+    /// the part that belongs to animals still on the farm into the livestock asset, so a fattening
+    /// month is not shown as a loss and the cost is matched with the sale. Off = ledger-only figures.
+    /// </remarks>
+    public bool CarryLivestockGrowingCosts { get; set; } = true;
+
     // ── Reporting presentation ──────────────────────────────────────────────
 
     public ReportLanguagePreference DefaultReportLanguage { get; set; } = ReportLanguagePreference.English;
