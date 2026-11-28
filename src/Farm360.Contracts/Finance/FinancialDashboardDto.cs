@@ -27,4 +27,7 @@ public record FinancialDashboardDto(
     public DateTime? FiscalYearStart { get; init; }
 
     public int FiscalYearStartMonth { get; init; }
+
+    /// <summary>Cash &amp; bank today, split by money account (cash in hand, bank, wallet).</summary>
+    public IReadOnlyList<MoneyAccountBreakdownDto>? MoneyAccounts { get; init; }
 }

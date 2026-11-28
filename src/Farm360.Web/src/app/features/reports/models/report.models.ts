@@ -12,7 +12,7 @@ export type ReportAlign = 'Left' | 'Center' | 'Right';
 export type ReportParameterType =
   | 'Text' | 'WholeNumber' | 'Number' | 'Boolean' | 'Date' | 'DateRange'
   | 'Select' | 'MultiSelect' | 'Animal' | 'Batch' | 'Farm' | 'Shed' | 'Breed'
-  | 'InventoryItem';
+  | 'InventoryItem' | 'MoneyAccount' | 'Partner';
 
 export type ReportCategory =
   | 'Livestock' | 'Feeding' | 'Health' | 'Finance' | 'Inventory' | 'Intelligence' | 'Operations';

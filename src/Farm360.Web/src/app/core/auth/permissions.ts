@@ -21,6 +21,8 @@ export const Permissions = {
     Edit: 'finance.edit',
     Delete: 'finance.delete',
     Admin: 'finance.admin',
+    /** Open, edit and close money accounts and move money between them. */
+    Accounts: 'finance.accounts',
   },
   Dashboard: { View: 'dashboard.view' },
   Analytics: { View: 'analytics.view' },

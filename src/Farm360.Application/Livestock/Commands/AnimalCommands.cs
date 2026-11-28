@@ -34,7 +34,12 @@ public sealed record RegisterAnimalCommand(
     Guid? ShedId,
     Guid? PenId,
     // Opt out of the health programmes that start automatically for purchased animals.
-    bool SkipHealthProgramme = false) : IRequest<AnimalDto>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
+    bool SkipHealthProgramme = false,
+    // Paid from (purchased animals): a money account (null = the farm's default), OR on credit
+    // (a supplier bill is raised at registration), OR directly by a partner (books their capital).
+    Guid? MoneyAccountId = null,
+    Guid? PaidByPartnerId = null,
+    Farm360.Contracts.Finance.CreditTermsRequest? Credit = null) : IRequest<AnimalDto>, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterAnimalCommand>
 {
@@ -73,6 +78,21 @@ public sealed class RegisterAnimalCommandValidator : AbstractValidator<RegisterA
         RuleFor(x => x.Notes)
             .MaximumLength(2000).WithMessage("Notes cannot exceed 2000 characters.")
             .When(x => x.Notes is not null);
+
+        RuleFor(x => x.PaidByPartnerId)
+            .Must(p => p is null)
+            .When(x => x.Credit is not null)
+            .WithMessage("Choose one: paid from an account, on credit, or paid directly by a partner.");
+
+        RuleFor(x => x.Credit!.PartyName)
+            .NotEmpty().WithMessage("Enter the seller's name for a purchase on credit.")
+            .When(x => x.Credit is not null);
+
+        RuleFor(x => x.Credit!.PaidNowBdt)
+            .GreaterThanOrEqualTo(0)
+            .LessThan(x => x.AcquisitionPriceBdt ?? 0m)
+            .When(x => x.Credit is not null)
+            .WithMessage("The amount paid now must be less than the purchase price (otherwise it is a cash purchase).");
     }
 }
 
@@ -83,7 +103,9 @@ public sealed class RegisterAnimalCommandHandler(
     ITenantService tenantService,
     ICurrentUserService currentUser,
     IPublisher publisher,
-    IFarmClock? clock = null) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
+    IFarmClock? clock = null,
+    Farm360.Application.Finance.Services.ITradeCreditService? credit = null,
+    Farm360.Application.Finance.Services.IMoneyAccountService? money = null) : IRequestHandler<RegisterAnimalCommand, AnimalDto>
 {
     private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
 
@@ -141,6 +163,27 @@ public sealed class RegisterAnimalCommandHandler(
         foreach (var domainEvent in domainEvents)
         {
             await publisher.Publish(domainEvent, cancellationToken);
+        }
+
+        // The purchase was booked by Finance (AnimalRegisteredEvent) as a cash purchase. Now say how
+        // it was paid: on credit (a supplier bill), directly by a partner, or from a chosen account.
+        if (request.AcquisitionType != AcquisitionType.BornOnFarm && (request.AcquisitionPriceBdt ?? 0m) > 0m)
+        {
+            const Farm360.Domain.Finance.Enums.TransactionCategory purchase = Farm360.Domain.Finance.Enums.TransactionCategory.AnimalPurchase;
+            if (request.Credit is { } terms && credit is not null)
+            {
+                await credit.OpenForSourceAsync(animal.FarmId, animal.Id, purchase,
+                    new Farm360.Application.Finance.Services.CreditTerms(terms.PartyName, terms.PartyPhone, terms.DueDate, terms.PaidNowBdt,
+                        terms.PaymentMethod, terms.Notes, MoneyAccountId: terms.MoneyAccountId ?? request.MoneyAccountId),
+                    cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+            else if (money is not null && (request.MoneyAccountId is not null || request.PaidByPartnerId is not null))
+            {
+                await money.ApplyToSourceAsync(animal.FarmId, animal.Id, purchase,
+                    new Farm360.Application.Finance.Services.PaymentSource(request.MoneyAccountId, request.PaidByPartnerId), cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+            }
         }
 
         // A purchased animal starts the farm's automatic health programmes (e.g. the 108-day market
@@ -391,7 +434,9 @@ public sealed record SellAnimalCommand(
     string? BuyerName,
     decimal? SaleWeightKg,
     Farm360.Contracts.Finance.CreditTermsRequest? Credit = null,
-    bool AllowDuringMeatWithdrawal = false) : IRequest, Farm360.Application.Common.Behaviors.ITransactionalCommand;
+    bool AllowDuringMeatWithdrawal = false,
+    // The account the sale money goes into (null = the farm's default).
+    Guid? MoneyAccountId = null) : IRequest, Farm360.Application.Common.Behaviors.ITransactionalCommand;
 
 public sealed class SellAnimalCommandValidator : AbstractValidator<SellAnimalCommand>
 {
@@ -435,7 +480,8 @@ public sealed class SellAnimalCommandHandler(
     MediatR.IPublisher publisher,
     Farm360.Application.Finance.Services.ITradeCreditService? credit = null,
     Farm360.Application.Feeding.Services.IAnimalExitService? exitService = null,
-    Farm360.Domain.Health.Interfaces.Repositories.IMedicalTreatmentRepository? treatments = null) : IRequestHandler<SellAnimalCommand>
+    Farm360.Domain.Health.Interfaces.Repositories.IMedicalTreatmentRepository? treatments = null,
+    Farm360.Application.Finance.Services.IMoneyAccountService? money = null) : IRequestHandler<SellAnimalCommand>
 {
     public async Task Handle(SellAnimalCommand request, CancellationToken cancellationToken)
     {
@@ -485,8 +531,16 @@ public sealed class SellAnimalCommandHandler(
         {
             var buyer = string.IsNullOrWhiteSpace(terms.PartyName) ? request.BuyerName! : terms.PartyName;
             await credit.OpenForSourceAsync(animal.FarmId, animal.Id, Farm360.Domain.Finance.Enums.TransactionCategory.AnimalSale,
-                new Farm360.Application.Finance.Services.CreditTerms(buyer, terms.PartyPhone, terms.DueDate, terms.PaidNowBdt, terms.PaymentMethod, terms.Notes),
+                new Farm360.Application.Finance.Services.CreditTerms(buyer, terms.PartyPhone, terms.DueDate, terms.PaidNowBdt, terms.PaymentMethod, terms.Notes,
+                    MoneyAccountId: terms.MoneyAccountId ?? request.MoneyAccountId),
                 cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        else if (money is not null && request.MoneyAccountId is not null)
+        {
+            // Paid in full on the day: the money goes into the chosen account.
+            await money.ApplyToSourceAsync(animal.FarmId, animal.Id, Farm360.Domain.Finance.Enums.TransactionCategory.AnimalSale,
+                new Farm360.Application.Finance.Services.PaymentSource(request.MoneyAccountId), cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 

@@ -10,6 +10,7 @@ import { parseApiError } from '../../../../core/utils/error-parser';
 import { FinancialTransaction, PAYMENT_METHODS, TradeBill, categoryLabel } from '../../models/finance.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../paid-from/paid-from.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export type TradeBillDialogMode = 'payment' | 'write-off' | 'terms' | 'open';
@@ -29,7 +30,7 @@ export interface TradeBillDialogData {
 @Component({
   selector: 'app-trade-bill-dialog',
   standalone: true,
-  imports: [TranslatePipe, MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [TranslatePipe, MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, PaidFromComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -115,6 +116,8 @@ export interface TradeBillDialogData {
                 <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Notes' | t }}</label>
                 <input type="text" formControlName="notes" [placeholder]="'Optional' | t" [class]="input">
               </div>
+              <app-paid-from [group]="paidFromGroup" [direction]="isPayable ? 'out' : 'in'" [allowCredit]="false"
+                [allowPartner]="isPayable" [amount]="form.value.amountBdt"></app-paid-from>
             }
             @case ('write-off') {
               <p class="text-xs text-gray-600 dark:text-gray-300 m-0">
@@ -168,6 +171,10 @@ export interface TradeBillDialogData {
                 <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500">{{ 'Notes' | t }}</label>
                 <input type="text" formControlName="notes" [class]="input">
               </div>
+              @if (data.mode === 'open' && (form.value.paidNowBdt || 0) > 0) {
+                <app-paid-from [group]="paidFromGroup" [direction]="isPayable ? 'out' : 'in'" [allowCredit]="false"
+                  [allowPartner]="false" [amount]="form.value.paidNowBdt"></app-paid-from>
+              }
             }
           }
         </div>
@@ -254,6 +261,7 @@ export class TradeBillDialogComponent implements OnInit {
           method: ['Cash'],
           reference: [''],
           notes: [''],
+          paidFrom: buildPaidFromGroup(this.fb),
         });
         break;
       case 'write-off':
@@ -271,8 +279,13 @@ export class TradeBillDialogComponent implements OnInit {
           paidNowBdt: [0, [Validators.min(0), Validators.max(this.data.transaction?.amountBdt ?? Number.MAX_SAFE_INTEGER)]],
           paymentMethod: ['Cash'],
           notes: [b?.notes ?? ''],
+          paidFrom: buildPaidFromGroup(this.fb),
         });
     }
+  }
+
+  get paidFromGroup(): FormGroup {
+    return this.form.get('paidFrom') as FormGroup;
   }
 
   payAll(): void {
@@ -288,7 +301,16 @@ export class TradeBillDialogComponent implements OnInit {
     let call: Observable<unknown>;
     switch (this.data.mode) {
       case 'payment':
-        call = this.finance.recordBillPayment(farmId, billId, v);
+      {
+        const { paidFrom, ...rest } = v;
+        const source = toPaidFrom(paidFrom);
+        // Payable: out of an account or paid by a partner. Receivable: into an account.
+        call = this.finance.recordBillPayment(farmId, billId, {
+          ...rest,
+          moneyAccountId: source.moneyAccountId,
+          paidByPartnerId: this.isPayable ? source.paidByPartnerId : null,
+        });
+      }
         break;
       case 'write-off':
         call = this.finance.writeOffTradeBill(farmId, billId, { date: v.date, reason: v.reason, amountBdt: v.amountBdt || null });
@@ -305,6 +327,7 @@ export class TradeBillDialogComponent implements OnInit {
           paidNowBdt: Number(v.paidNowBdt) || 0,
           paymentMethod: v.paymentMethod,
           notes: v.notes,
+          moneyAccountId: toPaidFrom(v.paidFrom).moneyAccountId,
         });
     }
 

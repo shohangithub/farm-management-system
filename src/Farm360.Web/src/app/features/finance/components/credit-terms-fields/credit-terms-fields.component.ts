@@ -43,6 +43,7 @@ export function toCreditTerms(value: Record<string, unknown> | null | undefined)
     paidNowBdt: Number(value['paidNowBdt']) || 0,
     paymentMethod: text('paymentMethod'),
     notes: text('notes'),
+    moneyAccountId: text('moneyAccountId'),
   };
 }
 
@@ -57,6 +58,7 @@ export function toCreditTerms(value: Record<string, unknown> | null | undefined)
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div [formGroup]="group" class="space-y-3">
+      @if (!fixed) {
       <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 text-xs font-bold">
         <button type="button" (click)="set(false)"
           class="py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
@@ -69,6 +71,7 @@ export function toCreditTerms(value: Record<string, unknown> | null | undefined)
           <mat-icon class="!w-4 !h-4 !text-[16px]">schedule</mat-icon> {{ 'On credit (বাকি)' | t }}
         </button>
       </div>
+      }
 
       @if (onCredit) {
         <div class="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 space-y-3">
@@ -130,6 +133,8 @@ export class CreditTermsFieldsComponent {
   @Input() total: number | null = null;
   @Input() requireParty = true;
   @Input() partyPlaceholder = 'Name';
+  /** Hide the "paid now / on credit" switch (the "Paid from" selector already chose credit). */
+  @Input() fixed = false;
 
   readonly methods = PAYMENT_METHODS;
 

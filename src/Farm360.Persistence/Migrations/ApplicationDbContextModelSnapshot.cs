@@ -1868,10 +1868,16 @@ namespace Farm360.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<Guid?>("LinkedTransactionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("MoneyAccountId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Notes")
@@ -1924,9 +1930,13 @@ namespace Farm360.Persistence.Migrations
 
                     b.HasIndex("FarmId");
 
+                    b.HasIndex("MoneyAccountId");
+
                     b.HasIndex("TenantId");
 
                     b.HasIndex("TransactionDate");
+
+                    b.HasIndex("FarmId", "MoneyAccountId");
 
                     b.HasIndex("FarmId", "SourceDocumentId", "Category");
 
@@ -2178,6 +2188,89 @@ namespace Farm360.Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("LoanRecords", "finance");
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Finance.MoneyAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccountNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Branch")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FarmId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ProviderName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FarmId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_MoneyAccounts_Farm_Default")
+                        .HasFilter("[IsDefault] = 1 AND [IsDeleted] = 0");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("MoneyAccounts", "finance");
                 });
 
             modelBuilder.Entity("Farm360.Domain.Finance.ShareHolding", b =>
@@ -6008,6 +6101,14 @@ namespace Farm360.Persistence.Migrations
 
                     b.Navigation("IngredientNutritionalProfile")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Farm360.Domain.Finance.FinancialTransaction", b =>
+                {
+                    b.HasOne("Farm360.Domain.Finance.MoneyAccount", null)
+                        .WithMany()
+                        .HasForeignKey("MoneyAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Farm360.Domain.Finance.InvestorTransaction", b =>

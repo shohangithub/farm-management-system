@@ -147,6 +147,7 @@ try
             policy.WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
+                .WithExposedHeaders(Farm360.Api.Middleware.OperationWarningsMiddleware.HeaderName)
                 .AllowCredentials(); // Required for SignalR + cookie auth
         });
     });
@@ -175,6 +176,9 @@ try
 
     // [2] Correlation ID — inject before any logging
     app.UseMiddleware<CorrelationIdMiddleware>();
+
+    // [2b] Non-blocking warnings ("Bank has ৳40,000; this spends ৳60,000") → X-Farm360-Warnings header.
+    app.UseMiddleware<Farm360.Api.Middleware.OperationWarningsMiddleware>();
 
     // [3] Request logging (Serilog) — after correlation ID is set
     app.UseSerilogRequestLogging(options =>

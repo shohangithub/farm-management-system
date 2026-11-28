@@ -19,7 +19,8 @@ public record CreateLoanRecordCommand(
     decimal InterestRatePercent,
     DateTime DisbursementDate,
     string Schedule,
-    string? Notes
+    string? Notes,
+    Guid? MoneyAccountId = null
 ) : IRequest<LoanRecordDto>;
 
 public class CreateLoanRecordCommandHandler : IRequestHandler<CreateLoanRecordCommand, LoanRecordDto>
@@ -64,7 +65,8 @@ public class CreateLoanRecordCommandHandler : IRequestHandler<CreateLoanRecordCo
             loan.Id,
             "Finance",
             $"Loan received from {loan.LenderName}",
-            Notes: $"{loan.InterestRatePercent:0.##}% flat, {loan.Schedule} repayment"), cancellationToken);
+            Notes: $"{loan.InterestRatePercent:0.##}% flat, {loan.Schedule} repayment",
+            MoneyAccountId: request.MoneyAccountId), cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

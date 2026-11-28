@@ -23,7 +23,8 @@ public record RecordIncomeCommand(
     Guid? AnimalId,
     Guid? BatchId,
     Guid? ShedId,
-    CreditTermsRequest? Credit = null
+    CreditTermsRequest? Credit = null,
+    Guid? MoneyAccountId = null
 ) : IRequest<FinancialTransactionDto>;
 
 public class RecordIncomeCommandHandler : IRequestHandler<RecordIncomeCommand, FinancialTransactionDto>
@@ -31,12 +32,15 @@ public class RecordIncomeCommandHandler : IRequestHandler<RecordIncomeCommand, F
     private readonly IFinancialTransactionRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITradeCreditService _credit;
+    private readonly IMoneyAccountService? _money;
 
-    public RecordIncomeCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork, ITradeCreditService credit)
+    public RecordIncomeCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork, ITradeCreditService credit,
+        IMoneyAccountService? money = null)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _credit = credit;
+        _money = money;
     }
 
     public async Task<FinancialTransactionDto> Handle(RecordIncomeCommand request, CancellationToken cancellationToken)
@@ -67,8 +71,14 @@ public class RecordIncomeCommandHandler : IRequestHandler<RecordIncomeCommand, F
         if (request.Credit is { } credit)
         {
             await _credit.OpenAsync(transaction, new CreditTerms(
-                credit.PartyName, credit.PartyPhone, credit.DueDate, credit.PaidNowBdt, credit.PaymentMethod, credit.Notes),
+                credit.PartyName, credit.PartyPhone, credit.DueDate, credit.PaidNowBdt, credit.PaymentMethod, credit.Notes,
+                MoneyAccountId: credit.MoneyAccountId ?? request.MoneyAccountId),
                 cancellationToken);
+        }
+        else if (_money is not null)
+        {
+            // Money received goes INTO the chosen account.
+            await _money.ApplyAsync(transaction, new PaymentSource(request.MoneyAccountId), cancellationToken);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -184,7 +184,7 @@ public sealed class HerdPerformanceReportDefinition : ReportDefinition<HerdPerfo
                 : null;
 
             rows.Add(new HerdPerformanceReportRow(
-                AnimalLabels.Tag(animal),
+                AnimalLabels.Tag(animal, context),
                 StatusLabel(animal.Status, context.Language == ReportLanguage.Bn),
                 weight,
                 animal.AdgKgPerDay,

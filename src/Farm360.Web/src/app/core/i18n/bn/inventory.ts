@@ -554,4 +554,8 @@ export const BN_INVENTORY: Record<string, string> = {
   "Received": "পাওয়া গেছে",
   "Used": "ব্যবহৃত",
   "Inventory": "মজুদ",
+  // ── Paid from (money accounts / partners) ──
+  "Choose the partner who paid.": "কোন অংশীদার টাকা দিয়েছেন তা বেছে নিন।",
+  "Return {ret}: {n} item(s) leave stock now; the supplier refunds {amount}.": "ফেরত {ret}: {n}টি পণ্য এখনই মজুদ থেকে বের হবে; সরবরাহকারী {amount} ফেরত দেবেন।",
+  "If the order is still unpaid on credit, the refund is taken off the supplier bill instead and no money moves.": "অর্ডারটি বাকিতে কেনা ও এখনও অপরিশোধিত হলে ফেরতের টাকা সরবরাহকারীর বিল থেকে কাটা যাবে, কোনো টাকা হাতবদল হবে না।",
 };

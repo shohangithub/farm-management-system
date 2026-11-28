@@ -136,10 +136,27 @@ public sealed class BatchPnlReportDefinition : ReportDefinition<BatchPnlReportRo
 
             new(estimated, T("Value of animals still on the farm", "খামারে থাকা পশুর আনুমানিক মূল্য"), data.UnrealisedValueBdt,
                 bn ? Whole(context, data.OnHandAnimals) + " টি" : Whole(context, data.OnHandAnimals) + " head",
-                T("Active and quarantined animals at the farm's valuation rate", "খামারের মূল্যায়ন দরে সক্রিয় ও পৃথক রাখা পশু")),
+                ValueNote(context, data)),
             new(estimated, T("Expected profit / (loss)", "প্রত্যাশিত লাভ / (ক্ষতি)"), data.EstimatedTotalProfitBdt, Roi(data.EstimatedRoiPercent),
                 T("Money earned + value on the farm − total cost", "আয় + খামারে থাকা পশুর মূল্য − মোট খরচ")),
         ];
+    }
+
+    /// <summary>How the on-farm value was reached, naming the animals valued at cost because they have no weight yet.</summary>
+    private static string ValueNote(ReportContext context, BatchPnLReportDto data)
+    {
+        var bn = context.Language == ReportLanguage.Bn;
+        var note = bn
+            ? "খামারের মূল্যায়ন দরে সক্রিয় ও পৃথক রাখা পশু"
+            : "Active and quarantined animals at the farm's valuation rate";
+        if (data.UnweighedAtCostAnimals <= 0)
+        {
+            return note;
+        }
+
+        return bn
+            ? $"{note}; {Whole(context, data.UnweighedAtCostAnimals)} টি ক্রয়মূল্যে ধরা (এখনো ওজন নেই): {Money(context, data.UnweighedAtCostValueBdt)} টাকা"
+            : $"{note}; {data.UnweighedAtCostAnimals} valued at cost (no weight yet): {Money(context, data.UnweighedAtCostValueBdt)} BDT";
     }
 
     private static Task<BatchPnLReportDto?> LoadAsync(ReportContext context, CancellationToken cancellationToken) =>

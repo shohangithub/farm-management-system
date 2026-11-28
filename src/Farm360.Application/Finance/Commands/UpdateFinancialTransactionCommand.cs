@@ -1,3 +1,4 @@
+using System.Linq;
 using Farm360.Application.Finance.EventHandlers.Internal;
 using System;
 using System.Threading;
@@ -55,8 +56,10 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
         IUnitOfWork unitOfWork,
         Farm360.Domain.Finance.Interfaces.ITradeBillRepository bills,
         Farm360.Domain.Finance.Interfaces.IAnimalCostLedgerRepository ledgers,
-        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null)
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null,
+        IMoneyAccountService? money = null)
     {
+        _money = money;
         _animals = animals;
         _ledgers = ledgers;
         _repository = repository;
@@ -65,13 +68,17 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
         _bills = bills;
     }
 
+    private readonly IMoneyAccountService? _money;
+
     public async Task<FinancialTransactionDto> Handle(UpdateFinancialTransactionCommand request, CancellationToken cancellationToken)
     {
         var transaction = await _repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(FinancialTransaction), request.Id);
 
         AccountChart.EnsureEditable(transaction);
-        AccountChart.EnsureManualAllowed(transaction.Type, request.Category);
+        // Old owner-capital / drawing rows stay editable as they are; new ones are booked under Partners.
+        if (!(request.Category == transaction.Category && AccountChart.LegacyManualCategories.Contains(request.Category)))
+            AccountChart.EnsureManualAllowed(transaction.Type, request.Category);
         if (transaction.Type == TransactionType.Expense)
             await AnimalExpenseGuard.EnsureAsync(_animals, request.AnimalId, transaction.FarmId, request.TransactionDate, cancellationToken);
 
@@ -102,6 +109,10 @@ public sealed class UpdateFinancialTransactionCommandHandler : IRequestHandler<U
         );
 
         await _repository.UpdateAsync(transaction, cancellationToken);
+
+        // Paid directly by a partner: their capital contribution follows the corrected amount and date.
+        if (_money is not null)
+            await _money.SyncLinkedAsync(transaction, cancellationToken);
         if (bill is not null)
         {
             bill.Revise(transaction.AmountBdt, DateOnly.FromDateTime(transaction.TransactionDate));

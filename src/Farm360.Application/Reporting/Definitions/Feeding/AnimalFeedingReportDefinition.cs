@@ -123,7 +123,7 @@ public sealed class AnimalFeedingReportDefinition : ReportDefinition<AnimalFeedi
         var language = context.Language;
         var parts = new List<string>
         {
-            new LocalizedText("Tag ", "ট্যাগ ").For(language) + FeedReportText.Tag(animal),
+            new LocalizedText("Tag ", "ট্যাগ ").For(language) + FeedReportText.Tag(animal, context),
             FeedReportText.Species(animal.Species).For(language),
         };
 
@@ -328,29 +328,13 @@ internal static class FeedReportText
         _ => NotRecorded,
     };
 
-    /// <summary>"B-04", or "B-04 (Sold 12-Nov-2026)" once the animal has left the farm.</summary>
-    public static string Tag(AnimalDto animal)
+    /// <summary>"B-04", or "B-04 (Sold 12-Nov-2026)" / "B-04 (বিক্রি ১২ নভেম্বর ২০২৬)" once the animal has left the farm.</summary>
+    public static string Tag(AnimalDto animal, ReportContext context)
     {
         ArgumentNullException.ThrowIfNull(animal);
-
-        var what = animal.Status switch
-        {
-            AnimalStatus.Sold => "Sold",
-            AnimalStatus.Dead => "Died",
-            AnimalStatus.Slaughtered => "Slaughtered",
-            AnimalStatus.Transferred => "Left",
-            _ => null,
-        };
-
-        if (what is null)
-        {
-            return animal.TagId;
-        }
-
-        var exit = animal.ExitDate ?? animal.SaleDate ?? animal.DeathDate;
-        return exit is { } d
-            ? $"{animal.TagId} ({what} {d.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture)})"
-            : $"{animal.TagId} ({what})";
+        ArgumentNullException.ThrowIfNull(context);
+        return AnimalLabels.Tag(animal.TagId, animal.Status, animal.ExitDate ?? animal.SaleDate ?? animal.DeathDate,
+            context.Language, context.BengaliNumerals);
     }
 
     /// <summary>"18 Nov 2026".</summary>

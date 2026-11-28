@@ -124,7 +124,7 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
 
         var bn = context.Language == ReportLanguage.Bn;
         var period = context.Range("period");
-        return $"{(bn ? "ট্যাগ" : "Tag")} {AnimalLabels.Tag(animal)} · {SpeciesLabel(animal.Species, bn)} · {SexLabel(animal.Sex, bn)} · {DescribePeriod(period)}";
+        return $"{(bn ? "ট্যাগ" : "Tag")} {AnimalLabels.Tag(animal, context)} · {SpeciesLabel(animal.Species, bn)} · {SexLabel(animal.Sex, bn)} · {DescribePeriod(period)}";
     }
 
     protected override async Task<IReadOnlyList<AnimalGrowthReportRow>> FetchAsync(

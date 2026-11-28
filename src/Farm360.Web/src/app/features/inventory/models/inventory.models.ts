@@ -234,6 +234,10 @@ export interface RecordStockInRequest {
   credit?: CreditTerms | null;
   /** Quantity and unit cost are in this unit (e.g. bags); the server converts to the base unit. */
   unitId?: string | null;
+  /** Paid from this money account (null = the farm's default). */
+  moneyAccountId?: string | null;
+  /** Paid directly by this partner (books their capital contribution). */
+  paidByPartnerId?: string | null;
 }
 
 export interface RecordStockOutRequest {

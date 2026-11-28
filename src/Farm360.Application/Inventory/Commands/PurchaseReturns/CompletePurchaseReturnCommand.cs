@@ -9,7 +9,8 @@ using MediatR;
 
 namespace Farm360.Application.Inventory.Commands.PurchaseReturns;
 
-public sealed record CompletePurchaseReturnCommand(Guid Id) : IRequest, ITransactionalCommand;
+/// <param name="MoneyAccountId">Account a cash refund from the supplier goes into; null = the farm's default.</param>
+public sealed record CompletePurchaseReturnCommand(Guid Id, Guid? MoneyAccountId = null) : IRequest, ITransactionalCommand;
 
 public sealed class CompletePurchaseReturnCommandHandler : IRequestHandler<CompletePurchaseReturnCommand>
 {
@@ -20,6 +21,7 @@ public sealed class CompletePurchaseReturnCommandHandler : IRequestHandler<Compl
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPublisher _publisher;
+    private readonly Farm360.Application.Finance.Services.IMoneyAccountService? _money;
 
     public CompletePurchaseReturnCommandHandler(
         IPurchaseReturnRepository returnRepository,
@@ -28,8 +30,10 @@ public sealed class CompletePurchaseReturnCommandHandler : IRequestHandler<Compl
         IStockTransactionRepository transactionRepository,
         ICurrentUserService currentUserService,
         IUnitOfWork unitOfWork,
-        IPublisher publisher)
+        IPublisher publisher,
+        Farm360.Application.Finance.Services.IMoneyAccountService? money = null)
     {
+        _money = money;
         _returnRepository = returnRepository;
         _poRepository = poRepository;
         _itemRepository = itemRepository;
@@ -104,6 +108,15 @@ public sealed class CompletePurchaseReturnCommandHandler : IRequestHandler<Compl
         foreach (var domainEvent in domainEvents)
         {
             await _publisher.Publish(new Farm360.Application.Inventory.EventHandlers.PurchaseReturnCompletedNotification(domainEvent), cancellationToken);
+        }
+
+        // A cash refund lands in the chosen account (a return credited to an unpaid bill moves no money).
+        if (_money is not null && request.MoneyAccountId is not null)
+        {
+            await _money.ApplyToSourceAsync(purchaseReturn.FarmId, purchaseReturn.Id,
+                Farm360.Domain.Finance.Enums.TransactionCategory.InventoryPurchaseReturn,
+                new Farm360.Application.Finance.Services.PaymentSource(request.MoneyAccountId), cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }

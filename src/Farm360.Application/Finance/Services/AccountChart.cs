@@ -50,6 +50,7 @@ public static class AccountChart
     public const string Capital = "Capital";
     public const string Financing = "Financing";
     public const string Trade = "Trade";
+    public const string Transfer = "Transfer";
 
     // Cost-analysis buckets for the full accounts report.
     public const string CostLivestock = "livestock";
@@ -163,6 +164,10 @@ public static class AccountChart
         [TransactionCategory.ProfitDistribution] = new(ProfitDistributionAccount, "Profit Distribution", "লভ্যাংশ বণ্টন", AccountClass.Equity, Capital, TransactionType.Expense),
         [TransactionCategory.OwnerCapital] = new(OwnerCapitalAccount, "Owner's Capital", "মালিকের মূলধন", AccountClass.Equity, Capital, TransactionType.Income),
         [TransactionCategory.OwnerDrawing] = new(OwnerDrawingAccount, "Owner's Drawings", "মালিকের উত্তোলন", AccountClass.Equity, Capital, TransactionType.Expense),
+
+        // ── Money accounts ──
+        // Both legs post to Cash & Bank on both sides, so the ledger and total cash never move.
+        [TransactionCategory.AccountTransfer] = new(CashAccount, "Transfer between money accounts", "টাকার খাতার মধ্যে স্থানান্তর", AccountClass.Asset, Transfer, TransactionType.Expense),
     };
 
     private static readonly Dictionary<string, LedgerAccount> LedgerAccounts = new()
@@ -233,7 +238,17 @@ public static class AccountChart
         TransactionCategory.MilkSale,
         TransactionCategory.ByproductSale,
         TransactionCategory.OtherIncome,
+    ];
+
+    /// <summary>
+    /// Old capital heads still accepted when an existing hand-entered row is edited, but no longer
+    /// offered for new entries: partner money is booked from Finance &gt; Partners so each partner's
+    /// capital and share stay right.
+    /// </summary>
+    public static readonly TransactionCategory[] LegacyManualCategories =
+    [
         TransactionCategory.OwnerCapital,
+        TransactionCategory.OwnerDrawing,
     ];
 
     /// <summary>
@@ -251,7 +266,6 @@ public static class AccountChart
         TransactionCategory.Transport,
         TransactionCategory.MiscellaneousExpense,
         TransactionCategory.InterestExpense,
-        TransactionCategory.OwnerDrawing,
     ];
 
     /// <summary>Purchases that may be made on credit (raise a supplier bill).</summary>
@@ -358,8 +372,11 @@ public static class AccountChart
                 "Animal purchases, sales and deaths are booked from Livestock (register, sell or record death of the animal).",
             TransactionCategory.LoanDisbursement or TransactionCategory.LoanRepayment =>
                 "Loans and repayments are booked from Finance > Loans so principal and interest stay correct.",
-            TransactionCategory.InvestorCapital or TransactionCategory.InvestorWithdrawal or TransactionCategory.ProfitDistribution =>
-                "Investor money is booked from Finance > Investors / Share Market.",
+            TransactionCategory.InvestorCapital or TransactionCategory.InvestorWithdrawal or TransactionCategory.ProfitDistribution
+                or TransactionCategory.OwnerCapital or TransactionCategory.OwnerDrawing =>
+                "Partner and owner money is booked from Finance > Partners, so each partner's capital and share stay right.",
+            TransactionCategory.AccountTransfer =>
+                "Move money between accounts from Finance > Money accounts (Transfer).",
             TransactionCategory.SupplierPayment or TransactionCategory.CustomerReceipt or TransactionCategory.BadDebt =>
                 "Payments against credit bills are recorded in Finance > Payables & Receivables, so the bill and the ledger stay in step.",
             TransactionCategory.FixedAssetPurchase or TransactionCategory.AssetDisposal =>
@@ -410,9 +427,17 @@ public static class AccountChart
         return t.Type == TransactionType.Income ? t.AmountBdt : -t.AmountBdt;
     }
 
-    /// <summary>Signed cash effect: zero for non-cash postings (stock consumed, animal sold at cost…).</summary>
+    /// <summary>
+    /// Signed cash effect on the farm as a whole: zero for non-cash postings (stock consumed, animal
+    /// sold at cost…) and for transfers between the farm's own accounts.
+    /// </summary>
     public static decimal CashEffect(FinancialTransaction t) =>
-        t.Settlement != SettlementAccount.Cash ? 0m
+        !t.AffectsCash ? 0m
+        : t.Type == TransactionType.Income ? t.AmountBdt : -t.AmountBdt;
+
+    /// <summary>Signed effect on the posting's own money account (transfers included).</summary>
+    public static decimal AccountCashEffect(FinancialTransaction t) =>
+        !t.MovesMoneyAccount ? 0m
         : t.Type == TransactionType.Income ? t.AmountBdt : -t.AmountBdt;
 
     /// <summary>Total P&amp;L revenue of a set of postings.</summary>
@@ -429,11 +454,11 @@ public static class AccountChart
 
     /// <summary>Cash received (all cash-settled income-type postings).</summary>
     public static decimal CashIn(IEnumerable<FinancialTransaction> postings) =>
-        postings.Where(t => t.Settlement == SettlementAccount.Cash && t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
+        postings.Where(t => t.AffectsCash && t.Type == TransactionType.Income).Sum(t => t.AmountBdt);
 
     /// <summary>Cash paid out (all cash-settled expense-type postings).</summary>
     public static decimal CashOut(IEnumerable<FinancialTransaction> postings) =>
-        postings.Where(t => t.Settlement == SettlementAccount.Cash && t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
+        postings.Where(t => t.AffectsCash && t.Type == TransactionType.Expense).Sum(t => t.AmountBdt);
 
     /// <summary>The double entry a posting represents.</summary>
     public static (string Debit, string Credit, decimal Amount) Journal(FinancialTransaction t)

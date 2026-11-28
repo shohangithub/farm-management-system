@@ -12,5 +12,7 @@ public record RecordIncomeRequest(
     Guid? AnimalId = null,
     Guid? BatchId = null,
     Guid? ShedId = null,
-    CreditTermsRequest? Credit = null
+    CreditTermsRequest? Credit = null,
+    /// <summary>Account the money went into; null = the farm's default account.</summary>
+    Guid? MoneyAccountId = null
 );

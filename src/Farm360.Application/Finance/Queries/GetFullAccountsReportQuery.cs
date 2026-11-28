@@ -49,14 +49,17 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
     private readonly IFarmShareRepository _shareRepository;
     private readonly ILoanRecordRepository _loanRepository;
     private readonly ISender _sender;
+    private readonly IMoneyAccountRepository? _moneyAccounts;
 
     public GetFullAccountsReportQueryHandler(
         IFinancialStatementEngine engine,
         IInvestorRepository investorRepository,
         IFarmShareRepository shareRepository,
         ILoanRecordRepository loanRepository,
-        ISender sender)
+        ISender sender,
+        IMoneyAccountRepository? moneyAccounts = null)
     {
+        _moneyAccounts = moneyAccounts;
         _engine = engine;
         _investorRepository = investorRepository;
         _shareRepository = shareRepository;
@@ -92,7 +95,10 @@ public class GetFullAccountsReportQueryHandler : IRequestHandler<GetFullAccounts
             R(totalOutflow),
             R(totalInflow - totalOutflow),
             R(openingBalance + totalInflow - totalOutflow),
-            cashRows.Count);
+            cashRows.Count)
+        {
+            Accounts = await MoneyAccountBreakdown.ForAsync(_moneyAccounts, books, toDay, cancellationToken),
+        };
 
         // ── Profit & loss (revenue and expense accounts, cash or not) ────────
         // Heads are the ledger movement of each account — net of refunds and disposal proceeds,

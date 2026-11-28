@@ -222,8 +222,8 @@ public sealed class PurchaseRegisterReportDefinition : ReportDefinition<Purchase
                         var animalId = t.AnimalId ?? source;
                         var item = animals.TryGetValue(animalId, out var animal)
                             ? (breeds.TryGetValue(animal.BreedId, out var b)
-                                ? $"{T("Tag", "ট্যাগ")} {AnimalLabels.Tag(animal)} · {b}"
-                                : $"{T("Tag", "ট্যাগ")} {AnimalLabels.Tag(animal)}")
+                                ? $"{T("Tag", "ট্যাগ")} {AnimalLabels.Tag(animal, context)} · {b}"
+                                : $"{T("Tag", "ট্যাগ")} {AnimalLabels.Tag(animal, context)}")
                             : AccountChart.Describe(t);
                         rows.Add(new(livestock, date, reference, bill?.PartyName ?? "—", item,
                             1m, head, amount, amount, paid, owed));

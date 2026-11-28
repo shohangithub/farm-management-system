@@ -34,4 +34,10 @@ public record FinancialTransactionDto(
 
     /// <summary>Asset, Liability, Equity, Revenue or Expense.</summary>
     public string AccountClass { get; init; } = string.Empty;
+
+    /// <summary>The money account a cash posting went through (null on non-cash rows; resolved to the default when blank).</summary>
+    public Guid? MoneyAccountId { get; init; }
+
+    /// <summary>The other half of a pair: a transfer's opposite leg, or a partner-paid spend's contribution.</summary>
+    public Guid? LinkedTransactionId { get; init; }
 }

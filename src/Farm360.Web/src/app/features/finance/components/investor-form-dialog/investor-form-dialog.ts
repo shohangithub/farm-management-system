@@ -8,6 +8,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { Investor, CreateInvestorRequest, UpdateInvestorRequest } from '../../models/finance.model';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../paid-from/paid-from.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
@@ -18,7 +19,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     TranslatePipe, CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    PaidFromComponent
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -29,10 +31,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             <mat-icon class="!text-[20px] !w-[20px] !h-[20px] text-teal-600 dark:text-teal-400">
               {{ isEditMode ? 'edit' : 'person_add' }}
             </mat-icon>
-            {{ (isEditMode ? 'Edit Investor' : 'Register New Investor') | t }}
+            {{ (isEditMode ? 'Edit Partner' : 'Add Partner') | t }}
           </h2>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-0">
-            {{ (isEditMode ? 'Update investor details and agreed profit share' : 'Add an equity investor and record their starting capital') | t }}
+            {{ (isEditMode ? 'Update partner details' : 'Add a partner (the owner too) and the capital they put in. Profit is shared by capital.') | t }}
           </p>
         </div>
         <button mat-dialog-close type="button" [attr.aria-label]="'Close' | t" class="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -55,7 +57,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <!-- Investor Name -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-              {{ 'Investor Full Name' | t }} <span class="text-red-500">*</span>
+              {{ 'Partner Full Name' | t }} <span class="text-red-500">*</span>
             </label>
             <input type="text" formControlName="name" [placeholder]="'e.g. Tariq Ahmed' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
@@ -80,6 +82,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             </div>
           </div>
 
+          <!-- Money account the first capital goes into -->
+          <div *ngIf="!isEditMode && (form.value.initialInvestmentBdt || 0) > 0">
+            <app-paid-from [group]="paidFromGroup" direction="in" [allowPartner]="false"
+              [amount]="form.value.initialInvestmentBdt"></app-paid-from>
+          </div>
+
           <!-- Reference ID (For Initial Investment) -->
           <div *ngIf="!isEditMode" class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -89,18 +97,18 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
           </div>
 
-          <!-- Profit Share Ratio -->
-          <div class="space-y-1.5">
+          <!-- Old agreed profit share: kept on record, not used (profit is split by capital) -->
+          <div *ngIf="isEditMode && data?.agreedProfitSharePercentage != null" class="space-y-1.5">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
-                {{ 'Agreed Profit Share % (Optional)' | t }}
+                {{ 'Old agreed share % (not used)' | t }}
               </label>
-              <span class="text-[11px] text-teal-600 dark:text-teal-400 font-medium">{{ 'Leave blank for dynamic capital share' | t }}</span>
+              <span class="text-[11px] text-teal-600 dark:text-teal-400 font-medium">{{ 'Clear it to remove' | t }}</span>
             </div>
             <input type="number" formControlName="agreedProfitSharePercentage" step="0.1" min="0" max="100" [placeholder]="'e.g. 25.0 (Optional)' | t"
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-shadow">
             <p class="text-[11px] text-gray-400 dark:text-gray-500 m-0">
-              {{ "If left blank, profit/loss will be allocated automatically based on this investor's share of total farm capital pool." | t }}
+              {{ 'Profit is split by capital (each partner's capital × days in the farm). This old percentage is kept on record only.' | t }}
             </p>
           </div>
 
@@ -153,7 +161,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
           <button type="submit" [disabled]="form.invalid || isLoading()"
                   class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shadow-teal-500/20 flex items-center gap-2">
             <mat-icon *ngIf="isLoading()" class="!text-[18px] !w-[18px] !h-[18px] animate-spin">sync</mat-icon>
-            <span>{{ (isEditMode ? 'Save Changes' : 'Register Investor') | t }}</span>
+            <span>{{ (isEditMode ? 'Save Changes' : 'Add Partner') | t }}</span>
           </button>
         </div>
 
@@ -188,8 +196,13 @@ export class InvestorFormDialogComponent implements OnInit {
       phone: [this.data?.phone || '', [Validators.maxLength(50)]],
       email: [this.data?.email || '', [Validators.email, Validators.maxLength(150)]],
       nationalId: [this.data?.nationalId || '', [Validators.maxLength(50)]],
-      notes: [this.data?.notes || '', [Validators.maxLength(1000)]]
+      notes: [this.data?.notes || '', [Validators.maxLength(1000)]],
+      paidFrom: buildPaidFromGroup(this.fb)
     });
+  }
+
+  get paidFromGroup(): FormGroup {
+    return this.form.get('paidFrom') as FormGroup;
   }
 
   onSubmit(): void {
@@ -236,7 +249,8 @@ export class InvestorFormDialogComponent implements OnInit {
         phone: raw.phone || null,
         nationalId: raw.nationalId || null,
         notes: raw.notes || null,
-        referenceId: raw.referenceId || null
+        referenceId: raw.referenceId || null,
+        moneyAccountId: toPaidFrom(raw.paidFrom).moneyAccountId
       };
 
       this.financeService.createInvestor(farmId, createReq).subscribe({

@@ -103,6 +103,10 @@ public class AccountingRulesTests
     [InlineData(TransactionType.Income, TransactionCategory.LoanDisbursement)]
     [InlineData(TransactionType.Income, TransactionCategory.InvestorCapital)]
     [InlineData(TransactionType.Income, TransactionCategory.FeedCost)]
+    // Partner / owner money is booked under Partners so each partner's capital stays right.
+    [InlineData(TransactionType.Income, TransactionCategory.OwnerCapital)]
+    [InlineData(TransactionType.Expense, TransactionCategory.OwnerDrawing)]
+    [InlineData(TransactionType.Expense, TransactionCategory.AccountTransfer)]
     public void ManualEntry_OfModuleOwnedOrWrongDirectionHeads_IsRejected(TransactionType type, TransactionCategory category)
     {
         var act = () => AccountChart.EnsureManualAllowed(type, category);
@@ -113,7 +117,6 @@ public class AccountingRulesTests
     [InlineData(TransactionType.Expense, TransactionCategory.LaborCost)]
     [InlineData(TransactionType.Expense, TransactionCategory.Utilities)]
     [InlineData(TransactionType.Income, TransactionCategory.MilkSale)]
-    [InlineData(TransactionType.Income, TransactionCategory.OwnerCapital)]
     public void ManualEntry_OfOrdinaryHeads_IsAllowed(TransactionType type, TransactionCategory category)
     {
         var act = () => AccountChart.EnsureManualAllowed(type, category);

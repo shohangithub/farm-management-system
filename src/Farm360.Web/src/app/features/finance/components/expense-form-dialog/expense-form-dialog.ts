@@ -7,7 +7,7 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { AnimalPickerComponent } from '../../../../shared/components/animal-picker/animal-picker.component';
-import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../credit-terms-fields/credit-terms-fields.component';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../paid-from/paid-from.component';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -21,7 +21,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     MatDialogModule,
     MatIconModule,
     AnimalPickerComponent,
-    CreditTermsFieldsComponent,
+    PaidFromComponent,
     TranslatePipe
   ],
   template: `
@@ -65,8 +65,10 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               <option value="Transport">{{ 'Transport (পরিবহন)' | t }}</option>
               <option value="MiscellaneousExpense">{{ 'Miscellaneous (বিবিধ)' | t }}</option>
               <option value="InterestExpense">{{ 'Bank Charges & Other Interest (সুদ)' | t }}</option>
-              <option value="OwnerDrawing">{{ "Owner's Drawings - personal use (মালিকের উত্তোলন)" | t }}</option>
             </select>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug pt-1 m-0">
+              {{ 'Money a partner or the owner takes out is recorded under Finance → Partners, not as an expense.' | t }}
+            </p>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug pt-1">
               {{ 'Buying stock (feed, medicine, supplies) goes through Inventory → Stock In; buying or selling animals through Livestock; loans and investors through their own pages. That keeps stock, the herd and the books in agreement.' | t }}
             </p>
@@ -88,10 +90,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
           </div>
 
-          @if (creditAllowed()) {
-            <app-credit-terms-fields [group]="creditGroup" kind="Payable" [total]="form.value.amountBdt"
-              [partyPlaceholder]="'Supplier / worker / shop'"></app-credit-terms-fields>
-          }
+          <app-paid-from [group]="paidFromGroup" direction="out" [allowCredit]="creditAllowed()" creditKind="Payable"
+            [amount]="form.value.amountBdt" [partyPlaceholder]="'Supplier / worker / shop'"></app-paid-from>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -163,19 +163,15 @@ export class ExpenseFormDialogComponent implements OnInit {
       description: ['', Validators.required],
       animalId: [null],
       notes: [''],
-      credit: buildCreditTermsGroup(this.fb)
-    });
-
-    this.form.get('category')!.valueChanges.subscribe(category => {
-      if (ExpenseFormDialogComponent.CASH_ONLY.includes(category)) this.creditGroup.patchValue({ onCredit: false });
+      paidFrom: buildPaidFromGroup(this.fb)
     });
   }
 
-  /** Cash-only heads (owner money, interest) can never be on credit. */
+  /** Cash-only heads (interest) can never be on credit. */
   private static readonly CASH_ONLY = ['InterestExpense', 'OwnerDrawing'];
 
-  get creditGroup(): FormGroup {
-    return this.form.get('credit') as FormGroup;
+  get paidFromGroup(): FormGroup {
+    return this.form.get('paidFrom') as FormGroup;
   }
 
   creditAllowed(): boolean {
@@ -194,8 +190,9 @@ export class ExpenseFormDialogComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
 
-    const { credit, ...rest } = this.form.value;
-    const payload = { ...rest, credit: this.creditAllowed() ? toCreditTerms(credit) : null };
+    const { paidFrom, ...rest } = this.form.value;
+    const source = toPaidFrom(paidFrom);
+    const payload = { ...rest, ...source, credit: this.creditAllowed() ? source.credit : null };
 
     this.financeService.recordExpense(farmId, payload).subscribe({
       next: (result) => {

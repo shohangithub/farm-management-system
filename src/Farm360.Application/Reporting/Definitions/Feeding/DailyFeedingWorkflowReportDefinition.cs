@@ -233,7 +233,7 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
             var animal = await _animals.GetByIdAsync(animalId.Value, cancellationToken).ConfigureAwait(false);
             if (animal is not null)
             {
-                parts.Add(new LocalizedText("Tag ", "ট্যাগ ").For(language) + AnimalLabels.Tag(animal));
+                parts.Add(new LocalizedText("Tag ", "ট্যাগ ").For(language) + AnimalLabels.Tag(animal, context));
             }
         }
 
@@ -344,7 +344,7 @@ public sealed class DailyFeedingWorkflowReportDefinition : ReportDefinition<Dail
                 ruleSetsMap.TryGetValue(plan.FeedingRuleSetId, out ruleSet);
             }
 
-            string tag = animal is null ? unknownAnimal : AnimalLabels.Tag(animal);
+            string tag = animal is null ? unknownAnimal : AnimalLabels.Tag(animal, context);
             string species = animal is null ? notRecorded : FeedReportText.Species(animal.Species).For(language);
 
             string location = noShed;

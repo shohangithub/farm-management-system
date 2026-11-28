@@ -108,7 +108,7 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
         var bn = context.Language == ReportLanguage.Bn;
         var period = context.Range("period");
         var age = AnimalAge.Format(animal.DateOfBirth, animal.ExitDate ?? context.Today);
-        return $"{(bn ? "ট্যাগ" : "Tag")} {TagLabel(animal.TagId, animal.Status, animal.ExitDate)} · {SpeciesLabel(animal.Species, bn)} · {SexLabel(animal.Sex, bn)} · {(bn ? "বয়স" : "age")} {age} · "
+        return $"{(bn ? "ট্যাগ" : "Tag")} {AnimalLabels.Tag(animal.TagId, animal.Status, animal.ExitDate, context.Language, context.BengaliNumerals)} · {SpeciesLabel(animal.Species, bn)} · {SexLabel(animal.Sex, bn)} · {(bn ? "বয়স" : "age")} {age} · "
             + $"{period.From.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} – {period.To.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
     }
 
@@ -213,28 +213,6 @@ public sealed class AnimalHealthReportDefinition : ReportDefinition<AnimalHealth
         "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
         "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর",
     ];
-
-    /// <summary>"B-04", or "B-04 (Sold 12-Nov-2026)" once the animal has left the farm.</summary>
-    private static string TagLabel(string tagId, AnimalStatus status, DateOnly? exitDate)
-    {
-        var what = status switch
-        {
-            AnimalStatus.Sold => "Sold",
-            AnimalStatus.Dead => "Died",
-            AnimalStatus.Slaughtered => "Slaughtered",
-            AnimalStatus.Transferred => "Left",
-            _ => null,
-        };
-
-        if (what is null)
-        {
-            return tagId;
-        }
-
-        return exitDate is { } d
-            ? $"{tagId} ({what} {d.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture)})"
-            : $"{tagId} ({what})";
-    }
 
     private static string SpeciesLabel(AnimalSpecies species, bool bn) => species switch
     {

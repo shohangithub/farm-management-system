@@ -24,7 +24,9 @@ public record RecordExpenseCommand(
     Guid? AnimalId,
     Guid? BatchId,
     Guid? ShedId,
-    CreditTermsRequest? Credit = null
+    CreditTermsRequest? Credit = null,
+    Guid? MoneyAccountId = null,
+    Guid? PaidByPartnerId = null
 ) : IRequest<FinancialTransactionDto>;
 
 public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand, FinancialTransactionDto>
@@ -34,10 +36,12 @@ public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand,
     private readonly ITradeCreditService _credit;
     private readonly IPublisher _publisher;
     private readonly Farm360.Domain.Livestock.Repositories.IAnimalRepository? _animals;
+    private readonly IMoneyAccountService? _money;
 
     public RecordExpenseCommandHandler(IFinancialTransactionRepository repository, IUnitOfWork unitOfWork, ITradeCreditService credit, IPublisher publisher,
-        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null)
+        Farm360.Domain.Livestock.Repositories.IAnimalRepository? animals = null, IMoneyAccountService? money = null)
     {
+        _money = money;
         _animals = animals;
         _repository = repository;
         _unitOfWork = unitOfWork;
@@ -74,8 +78,14 @@ public class RecordExpenseCommandHandler : IRequestHandler<RecordExpenseCommand,
         if (request.Credit is { } credit)
         {
             await _credit.OpenAsync(transaction, new CreditTerms(
-                credit.PartyName, credit.PartyPhone, credit.DueDate, credit.PaidNowBdt, credit.PaymentMethod, credit.Notes),
+                credit.PartyName, credit.PartyPhone, credit.DueDate, credit.PaidNowBdt, credit.PaymentMethod, credit.Notes,
+                MoneyAccountId: credit.MoneyAccountId ?? request.MoneyAccountId),
                 cancellationToken);
+        }
+        else if (_money is not null)
+        {
+            // Paid from the chosen account, or directly by a partner (books their capital too).
+            await _money.ApplyAsync(transaction, new PaymentSource(request.MoneyAccountId, request.PaidByPartnerId), cancellationToken);
         }
 
         var domainEvents = transaction.DomainEvents.ToList();

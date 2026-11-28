@@ -910,4 +910,7 @@ export const BN_LIVESTOCK: Record<string, string> = {
   'Heart girth for {tag}': '{tag}-এর বেড়',
   'Tape': 'ফিতা',
   'Tape measure: length {l} in, heart girth {g} in': 'ফিতার মাপ: দৈর্ঘ্য {l} ইঞ্চি, বেড় {g} ইঞ্চি',
+  // ── Paid from (money accounts / partners) ──
+  'Say how the animal was paid for: choose the partner or enter the seller for a purchase on credit.': 'পশুটির দাম কীভাবে দেওয়া হয়েছে তা জানান: অংশীদার বেছে নিন, অথবা বাকিতে কেনা হলে বিক্রেতার নাম লিখুন।',
+  'Seller / haat / trader': 'বিক্রেতা / হাট / ব্যাপারী',
 };

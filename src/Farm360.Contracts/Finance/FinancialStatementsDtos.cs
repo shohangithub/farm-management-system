@@ -147,8 +147,11 @@ public record SaveFixedAssetRequest(
     decimal ResidualValueBdt,
     string? Location = null,
     string? Notes = null,
-    CreditTermsRequest? Credit = null);
+    CreditTermsRequest? Credit = null,
+    Guid? MoneyAccountId = null,
+    Guid? PaidByPartnerId = null);
 
-public record DisposeFixedAssetRequest(DateTime DisposalDate, decimal ProceedsBdt);
+/// <param name="MoneyAccountId">Account the sale proceeds went into; null = the farm's default account.</param>
+public record DisposeFixedAssetRequest(DateTime DisposalDate, decimal ProceedsBdt, Guid? MoneyAccountId = null);
 
 public record SaveAccountingSettingsRequest(int FiscalYearStartMonth, DateTime? BooksStartDate);

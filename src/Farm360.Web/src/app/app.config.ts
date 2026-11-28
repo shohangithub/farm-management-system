@@ -10,6 +10,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { languageInterceptor } from './core/interceptors/language.interceptor';
+import { warningsInterceptor } from './core/interceptors/warnings.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { provideEchartsCore } from 'ngx-echarts';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
@@ -25,7 +26,7 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useFactory: () => (readStoredLanguage() === 'bn' ? 'bn' : 'en-US') },
     { provide: MatPaginatorIntl, useClass: TranslatedPaginatorIntl },
     provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
-    provideHttpClient(withInterceptors([languageInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([languageInterceptor, authInterceptor, warningsInterceptor])),
     provideAnimations(),
     provideEchartsCore({ echarts: () => import('echarts') }),
     provideCharts(withDefaultRegisterables())

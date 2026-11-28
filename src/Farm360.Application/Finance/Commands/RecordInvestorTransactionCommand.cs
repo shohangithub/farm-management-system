@@ -20,7 +20,8 @@ public record RecordInvestorTransactionCommand(
     decimal AmountBdt,
     DateTime TransactionDate,
     string? ReferenceId = null,
-    string? Notes = null
+    string? Notes = null,
+    Guid? MoneyAccountId = null
 ) : IRequest<InvestorTransactionDto>;
 
 public class RecordInvestorTransactionCommandHandler : IRequestHandler<RecordInvestorTransactionCommand, InvestorTransactionDto>
@@ -28,15 +29,18 @@ public class RecordInvestorTransactionCommandHandler : IRequestHandler<RecordInv
     private readonly IInvestorRepository _investorRepository;
     private readonly IFinancialTransactionRepository _transactionRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Application.Finance.Services.IMoneyAccountService? _money;
 
     public RecordInvestorTransactionCommandHandler(
         IInvestorRepository investorRepository,
         IFinancialTransactionRepository transactionRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Application.Finance.Services.IMoneyAccountService? money = null)
     {
         _investorRepository = investorRepository;
         _transactionRepository = transactionRepository;
         _unitOfWork = unitOfWork;
+        _money = money;
     }
 
     public async Task<InvestorTransactionDto> Handle(RecordInvestorTransactionCommand request, CancellationToken cancellationToken)
@@ -63,24 +67,31 @@ public class RecordInvestorTransactionCommandHandler : IRequestHandler<RecordInv
             case InvestorTransactionType.CapitalContribution:
                 glType = TransactionType.Income;
                 glCategory = TransactionCategory.InvestorCapital;
-                glDescription = $"Capital contribution from investor {investor.Name}";
+                glDescription = $"Capital contribution from partner {investor.Name}";
                 break;
 
             case InvestorTransactionType.CapitalWithdrawal:
                 glType = TransactionType.Expense;
                 glCategory = TransactionCategory.InvestorWithdrawal;
-                glDescription = $"Capital withdrawal by investor {investor.Name}";
+                glDescription = $"Capital withdrawal by partner {investor.Name}";
                 break;
 
             case InvestorTransactionType.ProfitDistribution:
                 glType = TransactionType.Expense;
                 glCategory = TransactionCategory.ProfitDistribution;
-                glDescription = $"Profit distribution to investor {investor.Name}";
+                glDescription = $"Profit paid to partner {investor.Name}";
                 break;
 
             default:
                 throw new InvalidOperationException($"Unsupported transaction type: {txType}");
         }
+
+        // Money in goes INTO the chosen account; a withdrawal or payout comes OUT of it.
+        var account = _money is null
+            ? null
+            : await _money.ResolveAsync(request.TenantId, request.FarmId, request.MoneyAccountId, cancellationToken);
+        if (account is not null && glType == TransactionType.Expense)
+            await _money!.WarnIfShortAsync(account, request.AmountBdt, cancellationToken: cancellationToken);
 
         var glTx = FinancialTransaction.Create(
             request.TenantId,
@@ -93,7 +104,8 @@ public class RecordInvestorTransactionCommandHandler : IRequestHandler<RecordInv
             request.Notes ?? string.Empty,
             glDescription,
             isAutomated: true,
-            sourceModule: "Investors"
+            sourceModule: "Investors",
+            moneyAccountId: account?.Id
         );
 
         await _transactionRepository.AddAsync(glTx, cancellationToken);

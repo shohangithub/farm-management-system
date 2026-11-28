@@ -29,6 +29,9 @@ import { FarmService } from '../../../farms/services/farm.service';
 import { ShedService } from '../../../farms/services/shed.service';
 import { ShedList } from '../../../farms/models/shed.model';
 import { InventoryService } from '../../../inventory/services/inventory.service';
+import { FinanceService } from '../../../finance/services/finance.service';
+import { formatMoney } from '../../../../shared/pipes/money.pipe';
+import { APP_NUMBER_LOCALE } from '../../../../shared/utils/locale';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { ReportParameterType } from '../../models/report.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -108,12 +111,18 @@ interface PickerOption {
         <mat-label>{{ label() }}{{ required() ? ' *' : '' }}</mat-label>
         <mat-select [value]="value()" [disabled]="!scoped() && needsFarmScope()"
                     (selectionChange)="valueChange.emit($event.value)">
+          <mat-select-trigger>{{ selected()?.label }}</mat-select-trigger>
           @if (!required()) {
-            <mat-option [value]="null">{{ '-- None --' | t }}</mat-option>
+            <mat-option [value]="null">{{ (entityType() === 'MoneyAccount' ? 'Default account' : '-- None --') | t }}</mat-option>
           }
           @for (option of listOptions(); track option.id) {
             <mat-option [value]="option.id">
-              {{ option.label }}{{ option.sublabel ? ' -- ' + option.sublabel : '' }}
+              <span class="opt-row">
+                <span class="opt-label">{{ option.label }}</span>
+                @if (option.sublabel) {
+                  <span class="opt-meta">{{ option.sublabel }}</span>
+                }
+              </span>
             </mat-option>
           }
         </mat-select>
@@ -129,6 +138,9 @@ interface PickerOption {
   `,
   styles: [`
     .full-width { width: 100%; }
+    .opt-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%; }
+    .opt-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .opt-meta { flex: none; font-size: 12px; opacity: .7; font-variant-numeric: tabular-nums; }
     .opt-main { font-weight: 500; }
     .opt-sub { margin-left: 6px; font-size: 12px; }
     .clear-btn {
@@ -157,6 +169,7 @@ export class ReportEntityPickerComponent {
   private readonly farms = inject(FarmService);
   private readonly sheds = inject(ShedService);
   private readonly inventoryService = inject(InventoryService);
+  private readonly finance = inject(FinanceService);
   private readonly workingContext = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly i18n = inject(I18nService);
@@ -202,7 +215,8 @@ export class ReportEntityPickerComponent {
 
   protected readonly isSearchable = computed(() => this.entityType() === 'Animal');
   protected readonly needsFarmScope = computed(() =>
-    this.entityType() === 'Animal' || this.entityType() === 'Batch' || this.entityType() === 'Shed' || this.entityType() === 'InventoryItem');
+    this.entityType() === 'Animal' || this.entityType() === 'Batch' || this.entityType() === 'Shed' || this.entityType() === 'InventoryItem'
+    || this.entityType() === 'MoneyAccount' || this.entityType() === 'Partner');
   protected readonly scoped = computed(() => !this.needsFarmScope() || !!this.effectiveFarmId());
 
   constructor() {
@@ -445,8 +459,45 @@ export class ReportEntityPickerComponent {
           catchError(() => of<PickerOption[]>([])),
         );
 
+      case 'MoneyAccount':
+        if (!farmId) {
+          return of<PickerOption[]>([]);
+        }
+        // Name + current balance; closed accounts stay pickable (old cash books) but are marked.
+        return this.finance.getMoneyAccounts(farmId, true).pipe(
+          map(list => [...list]
+            .sort((a, b) => Number(b.isActive) - Number(a.isActive) || Number(b.isDefault) - Number(a.isDefault))
+            .map(a => ({
+              id: a.id,
+              label: a.isDefault ? `${a.name} (${this.i18n.t('Default')})` : a.name,
+              sublabel: [formatMoney(a.balanceBdt), a.isActive ? '' : this.i18n.t('Inactive')].filter(Boolean).join(' · '),
+            }))),
+        );
+
+      case 'Partner':
+        if (!farmId) {
+          return of<PickerOption[]>([]);
+        }
+        // Name + share of capital and the capital itself.
+        return this.finance.getPartnersOverview(farmId, true).pipe(
+          map(o => o.partners.map(p => ({
+            id: p.id,
+            label: p.name,
+            sublabel: [
+              `${this.i18n.t('Share')} ${this.formatPercent(p.sharePercent)}`,
+              formatMoney(p.capitalBdt),
+              p.isActive ? '' : this.i18n.t('Inactive'),
+            ].filter(Boolean).join(' · '),
+          }))),
+        );
+
       default:
         return of<PickerOption[]>([]);
     }
+  }
+
+  private formatPercent(value: number | null | undefined): string {
+    const n = Number(value ?? 0);
+    return `${(Number.isFinite(n) ? Math.round(n * 10) / 10 : 0).toLocaleString(APP_NUMBER_LOCALE)}%`;
   }
 }

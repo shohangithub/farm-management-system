@@ -199,8 +199,9 @@ namespace Farm360.Application.Finance.Commands
         private async Task<decimal> AdjustInventoryAsync(
             RepairLedgerCommand request, List<string> messages, CancellationToken cancellationToken)
         {
-            var postings = await _transactions.GetAllByFarmIdAsync(request.FarmId, cancellationToken);
-            var lines = await _reconciliation.ReconcileAsync(request.FarmId, postings, cancellationToken);
+            // Compared on the balance-sheet basis, so opening stock entered as an opening balance is
+            // not booked a second time as "unrecorded stock".
+            var lines = await _reconciliation.ReconcileBooksAsync(request.FarmId, cancellationToken);
             var inventory = lines.First(l => l.Key == "inventory");
 
             // Books above the count: stock was used or lost without being recorded.

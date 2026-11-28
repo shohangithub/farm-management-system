@@ -10,7 +10,11 @@ public record CashPositionDto(
     decimal NetCashFlowBdt,
     decimal ClosingBalanceBdt,
     int TransactionCount
-);
+)
+{
+    /// <summary>The closing cash &amp; bank balance split by money account.</summary>
+    public IReadOnlyList<MoneyAccountBreakdownDto>? Accounts { get; init; }
+}
 
 public record OperatingStatementDto(
     IReadOnlyList<AccountHeadSummaryDto> RevenueLines,

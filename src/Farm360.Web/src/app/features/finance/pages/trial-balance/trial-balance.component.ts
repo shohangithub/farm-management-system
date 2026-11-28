@@ -240,7 +240,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                     {{ line.accountCode }}
                   </td>
                   <td class="py-3.5 px-5 font-semibold text-gray-900 dark:text-white">
-                    {{ line.accountName }}
+                    {{ line.accountName | t }}
                   </td>
                   <td class="py-3.5 px-5">
                     <span [ngClass]="getBadgeClass(line.categoryGroup)"

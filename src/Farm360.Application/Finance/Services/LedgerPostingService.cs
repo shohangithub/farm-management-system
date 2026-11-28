@@ -25,8 +25,13 @@ public sealed record LedgerPosting(
     Guid? AnimalId = null,
     Guid? BatchId = null,
     Guid? ShedId = null,
-    TransactionType? Type = null)
+    TransactionType? Type = null,
+    Guid? MoneyAccountId = null,
+    Guid? PaidByPartnerId = null)
 {
+    /// <summary>Where the money came from / went to, when the caller chose one.</summary>
+    public PaymentSource Source => new(MoneyAccountId, PaidByPartnerId);
+
     /// <summary>
     /// A stable id for a second posting of the same category from one document (e.g. the stock and
     /// the direct-cash part of one feeding entry). Same inputs always give the same id.
@@ -63,11 +68,13 @@ public sealed class LedgerPostingService : ILedgerPostingService
 {
     private readonly IFinancialTransactionRepository _repository;
     private readonly ITradeBillRepository? _bills;
+    private readonly IMoneyAccountService? _money;
 
-    public LedgerPostingService(IFinancialTransactionRepository repository, ITradeBillRepository? bills = null)
+    public LedgerPostingService(IFinancialTransactionRepository repository, ITradeBillRepository? bills = null, IMoneyAccountService? money = null)
     {
         _repository = repository;
         _bills = bills;
+        _money = money;
     }
 
     public async Task<FinancialTransaction?> PostAsync(LedgerPosting posting, CancellationToken cancellationToken = default)
@@ -84,7 +91,11 @@ public sealed class LedgerPostingService : ILedgerPostingService
         if (amount <= 0)
         {
             if (existing is not null)
+            {
+                if (_money is not null)
+                    await _money.RemoveLinkedAsync(existing, cancellationToken);
                 await _repository.DeleteAsync(existing, cancellationToken);
+            }
             SourceRemoved(bill);
             return null;
         }
@@ -101,6 +112,14 @@ public sealed class LedgerPostingService : ILedgerPostingService
         if (existing is not null)
         {
             existing.Revise(amount, posting.TransactionDate, posting.Description, posting.Notes, settlement);
+            if (_money is not null)
+            {
+                if (posting.Source.IsSpecified)
+                    await _money.ApplyAsync(existing, posting.Source, warn: false, cancellationToken);
+                else
+                    await _money.SyncLinkedAsync(existing, cancellationToken);
+            }
+
             await _repository.UpdateAsync(existing, cancellationToken);
             return existing;
         }
@@ -121,9 +140,12 @@ public sealed class LedgerPostingService : ILedgerPostingService
             isAutomated: true,
             sourceModule: posting.SourceModule,
             settlement: settlement,
-            sourceDocumentId: posting.SourceDocumentId);
+            sourceDocumentId: posting.SourceDocumentId,
+            moneyAccountId: posting.MoneyAccountId);
 
         await _repository.AddAsync(transaction, cancellationToken);
+        if (_money is not null && posting.Source.IsSpecified)
+            await _money.ApplyAsync(transaction, posting.Source, warn: false, cancellationToken);
         return transaction;
     }
 
@@ -131,7 +153,11 @@ public sealed class LedgerPostingService : ILedgerPostingService
     {
         var existing = await _repository.FindBySourceAsync(farmId, sourceDocumentId, category, cancellationToken);
         if (existing is not null)
+        {
+            if (_money is not null)
+                await _money.RemoveLinkedAsync(existing, cancellationToken);
             await _repository.DeleteAsync(existing, cancellationToken);
+        }
 
         if (_bills is not null)
         {

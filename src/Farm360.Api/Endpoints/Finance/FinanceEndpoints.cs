@@ -38,6 +38,9 @@ public static class FinanceEndpoints
         "POST investors/{id:guid}/transactions",
     ];
 
+    // Money-account management (open/edit/close accounts, transfers) carries its own permission,
+    // finance.accounts, declared on each of those endpoints; viewing balances needs finance.view.
+
     public static IEndpointRouteBuilder MapFinanceEndpoints(this IEndpointRouteBuilder builder)
     {
         MapFinanceRoutes(builder, "/api/farms/{farmId:guid}/finance", "/api/finance");
@@ -222,7 +225,7 @@ public static class FinanceEndpoints
             IMediator mediator) =>
         {
             var tenantId = tenantService.TenantId;
-            var command = new RecordIncomeCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId, request.Credit);
+            var command = new RecordIncomeCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId, request.Credit, request.MoneyAccountId);
             var result = await mediator.Send(command);
             return Results.Created($"/api/farms/{farmId}/finance/transactions/{result.Id}", result);
         }).Produces<FinancialTransactionDto>(StatusCodes.Status201Created);
@@ -234,7 +237,7 @@ public static class FinanceEndpoints
             IMediator mediator) =>
         {
             var tenantId = tenantService.TenantId;
-            var command = new RecordExpenseCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId, request.Credit);
+            var command = new RecordExpenseCommand(tenantId, farmId, request.Category, request.AmountBdt, request.TransactionDate, request.Description, request.ReferenceId, request.Notes, request.AnimalId, request.BatchId, request.ShedId, request.Credit, request.MoneyAccountId, request.PaidByPartnerId);
             var result = await mediator.Send(command);
             return Results.Created($"/api/farms/{farmId}/finance/transactions/{result.Id}", result);
         }).Produces<FinancialTransactionDto>(StatusCodes.Status201Created);
@@ -253,7 +256,7 @@ public static class FinanceEndpoints
             IMediator mediator) =>
         {
             var tenantId = tenantService.TenantId;
-            var command = new CreateLoanRecordCommand(tenantId, farmId, request.LenderName, request.PrincipalAmountBdt, request.InterestRatePercent, request.DisbursementDate, request.Schedule, request.Notes);
+            var command = new CreateLoanRecordCommand(tenantId, farmId, request.LenderName, request.PrincipalAmountBdt, request.InterestRatePercent, request.DisbursementDate, request.Schedule, request.Notes, request.MoneyAccountId);
             var result = await mediator.Send(command);
             return Results.Created($"/api/farms/{farmId}/finance/loans/{result.Id}", result);
         }).Produces<LoanRecordDto>(StatusCodes.Status201Created);
@@ -266,7 +269,7 @@ public static class FinanceEndpoints
             IMediator mediator) =>
         {
             var tenantId = tenantService.TenantId;
-            var command = new RecordLoanRepaymentCommand(tenantId, farmId, loanId, request.AmountBdt, request.RepaymentDate, request.ReferenceId, request.Notes);
+            var command = new RecordLoanRepaymentCommand(tenantId, farmId, loanId, request.AmountBdt, request.RepaymentDate, request.ReferenceId, request.Notes, request.MoneyAccountId, request.PaidByPartnerId);
             var result = await mediator.Send(command);
             return Results.Ok(result);
         }).Produces<LoanRecordDto>();
@@ -307,7 +310,8 @@ public static class FinanceEndpoints
                 request.Phone,
                 request.NationalId,
                 request.Notes,
-                request.ReferenceId
+                request.ReferenceId,
+                request.MoneyAccountId
             );
             var result = await mediator.Send(command);
             return Results.Created($"/api/farms/{farmId}/finance/investors/{result.Id}", result);
@@ -361,11 +365,85 @@ public static class FinanceEndpoints
                 request.AmountBdt,
                 request.TransactionDate,
                 request.ReferenceId,
-                request.Notes
+                request.Notes,
+                request.MoneyAccountId
             );
             var result = await mediator.Send(command);
             return Results.Ok(result);
         }).Produces<InvestorTransactionDto>();
+
+        // ── Partners (investors presented as partners; profit split by capital) ──
+        group.MapGet("partners/overview", async (Guid farmId, [FromQuery] bool includeInactive, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetPartnersOverviewQuery(farmId, includeInactive))))
+            .Produces<PartnersOverviewDto>();
+
+        group.MapGet("partners/allocation", async (Guid farmId, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetPartnerProfitAllocationQuery(farmId, fromDate, toDate))))
+            .Produces<PartnerProfitAllocationDto>();
+
+        group.MapGet("partners/{id:guid}/statement", async (Guid farmId, Guid id, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetPartnerStatementQuery(farmId, id, fromDate, toDate))))
+            .Produces<PartnerStatementDto>();
+
+        group.MapGet("partners/whose-money", async (
+            Guid farmId,
+            [FromQuery] DateOnly? fromDate,
+            [FromQuery] DateOnly? toDate,
+            [FromQuery] Guid? animalId,
+            [FromQuery] Guid? transactionId,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetWhoseMoneyQuery(farmId, fromDate, toDate, animalId, transactionId))))
+            .Produces<WhoseMoneyDto>();
+
+        // ── Money accounts (cash in hand, bank, mobile wallet) ──────────────
+        // Viewing needs finance.view; opening, editing and transferring need finance.accounts.
+        group.MapGet("money-accounts", async (
+            Guid farmId,
+            [FromQuery] bool? includeInactive,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetMoneyAccountsQuery(tenantService.TenantId, farmId, includeInactive ?? true))))
+            .Produces<IReadOnlyList<MoneyAccountDto>>();
+
+        group.MapGet("money-accounts/{id:guid}/statement", async (Guid farmId, Guid id, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetMoneyAccountStatementQuery(farmId, id, fromDate, toDate))))
+            .Produces<MoneyAccountStatementDto>();
+
+        group.MapPost("money-accounts", async (
+            Guid farmId,
+            [FromBody] SaveMoneyAccountRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new CreateMoneyAccountCommand(tenantService.TenantId, farmId, request));
+            return Results.Created($"/api/farms/{farmId}/finance/money-accounts/{result.Id}", result);
+        }).RequirePermission(PermissionConstants.FinanceModule.Accounts).Produces<MoneyAccountDto>(StatusCodes.Status201Created);
+
+        group.MapPut("money-accounts/{id:guid}", async (Guid farmId, Guid id, [FromBody] SaveMoneyAccountRequest request, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new UpdateMoneyAccountCommand(farmId, id, request))))
+            .RequirePermission(PermissionConstants.FinanceModule.Accounts).Produces<MoneyAccountDto>();
+
+        group.MapPatch("money-accounts/{id:guid}/status", async (Guid farmId, Guid id, [FromQuery] bool isActive, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new SetMoneyAccountActiveCommand(farmId, id, isActive))))
+            .RequirePermission(PermissionConstants.FinanceModule.Accounts).Produces<MoneyAccountDto>();
+
+        group.MapPost("money-accounts/{id:guid}/default", async (Guid farmId, Guid id, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new SetDefaultMoneyAccountCommand(farmId, id))))
+            .RequirePermission(PermissionConstants.FinanceModule.Accounts).Produces<MoneyAccountDto>();
+
+        group.MapPost("money-accounts/transfers", async (
+            Guid farmId,
+            [FromBody] TransferBetweenAccountsRequest request,
+            Farm360.Application.Common.Interfaces.ITenantService tenantService,
+            IMediator mediator) =>
+            Results.Ok(await mediator.Send(new TransferBetweenAccountsCommand(tenantService.TenantId, farmId, request))))
+            .RequirePermission(PermissionConstants.FinanceModule.Accounts).Produces<MoneyTransferDto>();
+
+        group.MapDelete("money-accounts/transfers/{transactionId:guid}", async (Guid farmId, Guid transactionId, IMediator mediator) =>
+        {
+            await mediator.Send(new DeleteMoneyTransferCommand(farmId, transactionId));
+            return Results.NoContent();
+        }).RequirePermission(PermissionConstants.FinanceModule.Accounts).Produces(StatusCodes.Status204NoContent);
 
         group.MapGet("investors/pnl", async (
             Guid farmId,

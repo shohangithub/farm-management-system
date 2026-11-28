@@ -16,7 +16,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { IncomeFormDialogComponent } from '../../components/income-form-dialog/income-form-dialog';
 import { ExpenseFormDialogComponent } from '../../components/expense-form-dialog/expense-form-dialog';
 import { AllocateOverheadDialogComponent } from '../../components/allocate-overhead-dialog/allocate-overhead-dialog';
-import { MonthlyCashFlowPoint, categoryLabel } from '../../models/finance.model';
+import { MonthlyCashFlowPoint, categoryLabel, formatMonthLabel, moneyAccountIcon, moneyAccountName } from '../../models/finance.model';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -43,6 +43,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FinanceDashboardComponent implements OnInit {
+  readonly accountName = moneyAccountName;
+  readonly accountIcon = moneyAccountIcon;
+
   private readonly financeService = inject(FinanceService);
   private readonly workingContextService = inject(WorkingContextService);
   private readonly dialog = inject(MatDialog);
@@ -85,6 +88,11 @@ export class FinanceDashboardComponent implements OnInit {
 
   refresh(): void {
     this.refreshTrigger$.next();
+  }
+
+  /** "Aug 2026" from the API, shown as "আগস্ট ২০২৬" in Bangla. */
+  monthText(label: string): string {
+    return formatMonthLabel(label, this.i18n.isBangla, text => this.i18n.t(text));
   }
 
   getBarHeight(value: number, trendList: MonthlyCashFlowPoint[]): number {

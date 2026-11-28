@@ -32,6 +32,12 @@ public interface IAccountingReconciliationService
     Task<IReadOnlyList<ReconciliationLineDto>> ReconcileAsync(Guid farmId, IReadOnlyCollection<FinancialTransaction> postings, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Reconciles the books as they stand today on the balance-sheet basis (opening entries plus
+    /// postings after the books start) — the figures the balance sheet shows.
+    /// </summary>
+    Task<IReadOnlyList<ReconciliationLineDto>> ReconcileBooksAsync(Guid farmId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Reconciles account balances already computed on the balance-sheet basis (opening entries
     /// plus postings after the books start — <see cref="FarmLedger.BalancesAt"/>) against the registers.
     /// </summary>
@@ -51,6 +57,8 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
     private readonly ILoanRecordRepository _loans;
     private readonly IInvestorRepository _investors;
     private readonly ITradeBillRepository _bills;
+    private readonly IMoneyAccountRepository? _moneyAccounts;
+    private readonly IFinancialStatementEngine? _engine;
 
     public AccountingReconciliationService(
         IFinancialTransactionRepository transactions,
@@ -59,8 +67,12 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
         ILoanRecordRepository loans,
         IInvestorRepository investors,
         ITradeBillRepository bills,
-        IFarmClock? clock = null)
+        IFarmClock? clock = null,
+        IMoneyAccountRepository? moneyAccounts = null,
+        IFinancialStatementEngine? engine = null)
     {
+        _moneyAccounts = moneyAccounts;
+        _engine = engine;
         _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _transactions = transactions;
         _inventory = inventory;
@@ -73,10 +85,20 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
     public async Task<AccountingHealthDto> CheckAsync(Guid farmId, CancellationToken cancellationToken = default)
     {
         var postings = await _transactions.GetAllByFarmIdAsync(farmId, cancellationToken);
-        var reconciliations = await ReconcileAsync(farmId, postings, cancellationToken);
-        var issues = await FindIssuesAsync(farmId, postings, reconciliations, cancellationToken);
 
-        var cash = postings.Sum(AccountChart.CashEffect);
+        // The balance-sheet basis: opening entries count and postings on or before the books start
+        // do not. Raw postings left the opening cash out of the cash figure, and every opening stock,
+        // herd or loan entry showed as a register difference (which the stock-count repair then
+        // "fixed" by booking the opening stock a second time).
+        var ledger = await LoadTodayAsync(farmId, cancellationToken);
+        var reconciliations = ledger is null
+            ? await ReconcileAsync(farmId, postings, cancellationToken)
+            : await ReconcileBalancesAsync(farmId, ledger.LedgerOnly().BalancesAt(_clock.Today), cancellationToken);
+        var issues = await FindIssuesAsync(farmId, postings, reconciliations, ledger, cancellationToken);
+
+        var cash = ledger is null
+            ? postings.Sum(AccountChart.CashEffect)
+            : ledger.BalancesAt(_clock.Today).GetValueOrDefault(AccountChart.CashAccount);
         return new AccountingHealthDto(
             farmId,
             DateTime.UtcNow,
@@ -94,6 +116,17 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
         ArgumentNullException.ThrowIfNull(postings);
         return await ReconcileBalancesAsync(farmId, AccountChart.Balances(postings), cancellationToken);
     }
+
+    public async Task<IReadOnlyList<ReconciliationLineDto>> ReconcileBooksAsync(Guid farmId, CancellationToken cancellationToken = default)
+    {
+        var ledger = await LoadTodayAsync(farmId, cancellationToken);
+        return ledger is null
+            ? await ReconcileAsync(farmId, await _transactions.GetAllByFarmIdAsync(farmId, cancellationToken), cancellationToken)
+            : await ReconcileBalancesAsync(farmId, ledger.LedgerOnly().BalancesAt(_clock.Today), cancellationToken);
+    }
+
+    private async Task<FarmLedger?> LoadTodayAsync(Guid farmId, CancellationToken cancellationToken) =>
+        _engine is null ? null : await _engine.LoadAsync(farmId, _clock.Today, cancellationToken);
 
     public async Task<IReadOnlyList<ReconciliationLineDto>> ReconcileBalancesAsync(
         Guid farmId,
@@ -151,6 +184,7 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
         Guid farmId,
         IReadOnlyCollection<FinancialTransaction> postings,
         IReadOnlyList<ReconciliationLineDto> reconciliations,
+        FarmLedger? ledger,
         CancellationToken cancellationToken)
     {
         var issues = new List<AccountingIssueDto>();
@@ -254,13 +288,35 @@ public sealed class AccountingReconciliationService : IAccountingReconciliationS
                 stale.Count, stale.Sum(b => b.OutstandingBdt), false));
         }
 
-        var cash = postings.Sum(AccountChart.CashEffect);
-        if (cash < 0)
+        // Checked per money account: a bank account below zero is a problem even when cash in hand
+        // covers it on paper (the money is in the wrong place).
+        IReadOnlyList<MoneyAccount> accounts = _moneyAccounts is null
+            ? []
+            : await _moneyAccounts.GetByFarmIdAsync(farmId, includeInactive: true, cancellationToken);
+        var defaultId = accounts.FirstOrDefault(a => a.IsDefault)?.Id ?? Guid.Empty;
+        // Same balances as the money-account pages (opening cash in the default account, nothing
+        // from before the books start), so an opening balance never reads as an overdraft.
+        var negative = (ledger is not null && accounts.Count > 0
+                ? MoneyAccountBalances.Compute(ledger, accounts, _clock.Today).Select(b => (Id: b.Key, Balance: b.Value))
+                : postings
+                    .Where(t => t.MovesMoneyAccount)
+                    .GroupBy(t => t.MoneyAccountId ?? defaultId)
+                    .Select(g => (Id: g.Key, Balance: g.Sum(AccountChart.AccountCashEffect))))
+            .Where(b => b.Balance < -0.005m)
+            .ToList();
+        if (negative.Count > 0)
         {
+            var names = accounts.ToDictionary(a => a.Id, a => a.Name);
             issues.Add(new AccountingIssueDto("negative-cash", "Warning",
-                "Cash balance is negative",
-                "More money has been recorded as paid out than received. Usually an opening cash balance, owner capital or loan receipt is missing.",
-                1, Math.Round(-cash, 2), false));
+                negative.Count == 1 && accounts.Count <= 1 ? "Cash balance is negative" : "Money account balance is negative",
+                "More money has been recorded as paid out of these accounts than came in. Add partner money, transfer between accounts, or enter the missing opening balance or loan receipt.",
+                negative.Count, Math.Round(-negative.Sum(b => b.Balance), 2), false)
+            {
+                Items = negative
+                    .Select(b => new AccountingIssueItemDto(b.Id == Guid.Empty ? null : b.Id,
+                        names.GetValueOrDefault(b.Id) ?? MoneyAccount.DefaultName, Math.Round(b.Balance, 2)))
+                    .ToList(),
+            });
         }
 
         foreach (var line in reconciliations.Where(r => !r.IsReconciled))

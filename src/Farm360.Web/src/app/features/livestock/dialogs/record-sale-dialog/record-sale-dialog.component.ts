@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 import { AnimalService } from '../../services/animal.service';
 import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../../../finance/components/credit-terms-fields/credit-terms-fields.component';
+import { PaidFromComponent, buildPaidFromGroup } from '../../../finance/components/paid-from/paid-from.component';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -21,7 +22,7 @@ export interface RecordSaleDialogData {
   selector: 'app-record-sale-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, CreditTermsFieldsComponent, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, CreditTermsFieldsComponent, PaidFromComponent, TranslatePipe],
   templateUrl: './record-sale-dialog.component.html'
 })
 export class RecordSaleDialogComponent {
@@ -41,6 +42,8 @@ export class RecordSaleDialogComponent {
 
   /** Paid in full now, or on credit (the buyer pays later). The buyer name is used if no customer is given. */
   readonly credit = buildCreditTermsGroup(this.fb, false);
+  /** The money account the sale money (or the part received now) goes into. */
+  readonly moneyTo = buildPaidFromGroup(this.fb);
 
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
@@ -63,7 +66,9 @@ export class RecordSaleDialogComponent {
     this.withdrawalWarning.set(false);
 
     const v = this.form.getRawValue();
-    const credit = toCreditTerms(this.credit.getRawValue());
+    const moneyAccountId: string | null = this.moneyTo.value.moneyAccountId ?? null;
+    const terms = toCreditTerms(this.credit.getRawValue());
+    const credit = terms ? { ...terms, moneyAccountId } : null;
     if (credit && !credit.partyName && !v.buyer) {
       this.submitting.set(false);
       this.error.set(this.i18n.t('Enter the buyer name for a sale on credit.'));
@@ -76,7 +81,8 @@ export class RecordSaleDialogComponent {
       buyerName: v.buyer || undefined,
       saleWeightKg: v.weight || undefined,
       credit,
-      allowDuringMeatWithdrawal
+      allowDuringMeatWithdrawal,
+      moneyAccountId
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => this.dialogRef.close(true),
       error: (err) => {

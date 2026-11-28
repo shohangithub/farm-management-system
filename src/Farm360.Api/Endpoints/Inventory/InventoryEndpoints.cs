@@ -377,7 +377,7 @@ public static class InventoryEndpoints
             CancellationToken ct) =>
         {
             // No credit terms = paid in cash on receipt; with terms = received on credit.
-            var command = new FulfillPurchaseOrderCommand(id, request?.Credit);
+            var command = new FulfillPurchaseOrderCommand(id, request?.Credit, request?.MoneyAccountId, request?.PaidByPartnerId);
             await sender.Send(command, ct);
             return Results.NoContent();
         })
@@ -442,10 +442,12 @@ public static class InventoryEndpoints
 
         group.MapPost("/purchase-returns/{id:guid}/complete", async (
             Guid id,
+            [FromQuery] Guid? moneyAccountId,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new CompletePurchaseReturnCommand(id);
+            // moneyAccountId: where a cash refund from the supplier goes (blank = the farm's default account).
+            var command = new CompletePurchaseReturnCommand(id, moneyAccountId);
             await sender.Send(command, ct);
             return Results.NoContent();
         })
@@ -632,6 +634,6 @@ public static class InventoryEndpoints
 public sealed record CancelPurchaseReturnRequest(string Reason);
 
 /// <summary>Receipt of a purchase order. Leave <paramref name="Credit"/> out when paid in cash.</summary>
-public sealed record FulfillPurchaseOrderRequest(Farm360.Contracts.Finance.CreditTermsRequest? Credit = null);
+public sealed record FulfillPurchaseOrderRequest(Farm360.Contracts.Finance.CreditTermsRequest? Credit = null, Guid? MoneyAccountId = null, Guid? PaidByPartnerId = null);
 
 public sealed record CancelPurchaseOrderRequest(string? Reason = null);

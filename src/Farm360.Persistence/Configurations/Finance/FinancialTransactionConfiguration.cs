@@ -67,6 +67,18 @@ public class FinancialTransactionConfiguration : IEntityTypeConfiguration<Financ
         builder.Property(t => t.SourceDocumentId);
 
         builder.Ignore(t => t.AffectsCash);
+        builder.Ignore(t => t.MovesMoneyAccount);
+        builder.Ignore(t => t.IsAccountTransfer);
+
+        // The money account a cash posting went through (default account when not chosen) and the
+        // other half of a pair (transfer legs; a partner-paid spend and its capital contribution).
+        builder.Property(t => t.MoneyAccountId);
+        builder.Property(t => t.LinkedTransactionId);
+        builder.HasOne<MoneyAccount>()
+            .WithMany()
+            .HasForeignKey(t => t.MoneyAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(t => new { t.FarmId, t.MoneyAccountId });
 
         builder.HasIndex(t => t.FarmId);
         builder.HasIndex(t => t.TenantId);

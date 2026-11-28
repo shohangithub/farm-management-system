@@ -10,6 +10,7 @@ import { LoanRecord } from '../../models/finance.model';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../paid-from/paid-from.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
@@ -19,7 +20,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    PaidFromComponent
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -116,6 +118,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                    class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow">
           </div>
 
+          <app-paid-from [group]="paidFromGroup" direction="out" [allowCredit]="false" [allowPartner]="true"
+            [amount]="form.value.amountBdt"></app-paid-from>
+
           <!-- Notes -->
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -169,8 +174,13 @@ export class LoanRepaymentDialogComponent implements OnInit {
       amountBdt: [null, [Validators.required, Validators.min(1), Validators.max(Math.ceil(this.data.outstandingBalanceBdt))]],
       repaymentDate: [today, Validators.required],
       referenceId: [''],
-      notes: ['']
+      notes: [''],
+      paidFrom: buildPaidFromGroup(this.fb)
     });
+  }
+
+  get paidFromGroup(): FormGroup {
+    return this.form.get('paidFrom') as FormGroup;
   }
 
   /**
@@ -203,7 +213,9 @@ export class LoanRepaymentDialogComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
 
-    const payload = this.form.value;
+    const { paidFrom, ...rest } = this.form.value;
+    const source = toPaidFrom(paidFrom);
+    const payload = { ...rest, moneyAccountId: source.moneyAccountId, paidByPartnerId: source.paidByPartnerId };
 
     this.financeService.recordLoanRepayment(farmId, this.data.id, payload).subscribe({
       next: (result) => {

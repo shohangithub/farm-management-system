@@ -15,7 +15,9 @@ public record CreditTermsRequest(
     DateOnly? DueDate = null,
     decimal PaidNowBdt = 0m,
     string? PaymentMethod = null,
-    string? Notes = null
+    string? Notes = null,
+    /// <summary>The money account the part paid (or received) now goes through; null = the farm's default.</summary>
+    Guid? MoneyAccountId = null
 );
 
 /// <summary>Puts an existing cash-booked purchase or sale on credit.</summary>
@@ -26,15 +28,20 @@ public record OpenTradeBillRequest(
     DateOnly? DueDate = null,
     decimal PaidNowBdt = 0m,
     string? PaymentMethod = null,
-    string? Notes = null
+    string? Notes = null,
+    Guid? MoneyAccountId = null
 );
 
+/// <param name="MoneyAccountId">Account the money goes out of (supplier) or into (customer); null = default.</param>
+/// <param name="PaidByPartnerId">A partner paid the supplier out of their own pocket (books their capital).</param>
 public record RecordBillPaymentRequest(
     decimal AmountBdt,
     DateOnly PaymentDate,
     string? Method = null,
     string? Reference = null,
-    string? Notes = null
+    string? Notes = null,
+    Guid? MoneyAccountId = null,
+    Guid? PaidByPartnerId = null
 );
 
 /// <summary>

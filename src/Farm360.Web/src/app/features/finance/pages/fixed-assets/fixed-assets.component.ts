@@ -1,7 +1,7 @@
 import { CanPipe } from '../../../../shared/pipes/can.pipe';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,14 +16,17 @@ import { AccountingSettings, FixedAsset, FixedAssetSchedule, SaveFixedAssetReque
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../../components/paid-from/paid-from.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
-interface AssetForm extends SaveFixedAssetRequest {
-  supplierName: string;
-  supplierPhone: string;
-  dueDate: string;
-  paidNowBdt: number;
+type AssetForm = SaveFixedAssetRequest;
+
+/** Disposal body; the account the sale money goes into (null = the farm's default). */
+interface DisposeBody {
+  disposalDate: string;
+  proceedsBdt: number;
+  moneyAccountId: string | null;
 }
 
 /**
@@ -34,7 +37,7 @@ interface AssetForm extends SaveFixedAssetRequest {
 @Component({
   selector: 'app-fixed-assets',
   standalone: true,
-  imports: [MoneyPipe, CanPipe, CommonModule, FormsModule, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
+  imports: [MoneyPipe, CanPipe, CommonModule, FormsModule, ReactiveFormsModule, PaidFromComponent, RouterLink, MatIconModule, MatButtonModule, PageHeaderComponent, FinanceSubnavComponent, DatePipe, TranslatePipe],
   template: `
     <app-page-header
       [title]="'Fixed Assets' | t"
@@ -93,8 +96,10 @@ interface AssetForm extends SaveFixedAssetRequest {
           </label>
           <label class="flex flex-col gap-1">{{ 'How acquired' | t }}
             <select [(ngModel)]="f.acquisition" class="field" [disabled]="!!editingId()">
-              <option value="Cash">{{ 'Bought — paid in cash' | t }}</option>
-              <option value="Credit">{{ 'Bought on credit (supplier bill)' | t }}</option>
+              <option value="Cash">{{ 'Bought (paid now, on credit or by a partner)' | t }}</option>
+              @if (editingId()) {
+                <option value="Credit">{{ 'Bought on credit (supplier bill)' | t }}</option>
+              }
               <option value="OwnerContributed">{{ 'Brought in by the owner' | t }}</option>
               <option value="Opening">{{ 'Owned before the books start (opening)' | t }}</option>
             </select>
@@ -132,20 +137,10 @@ interface AssetForm extends SaveFixedAssetRequest {
             </ng-container>
           </ng-container>
           <div *ngIf="f.category === 'Land'" class="flex items-end text-gray-500">{{ 'Land is not depreciated.' | t }}</div>
-          <ng-container *ngIf="f.acquisition === 'Credit' && !editingId()">
-            <label class="flex flex-col gap-1">{{ 'Supplier' | t }}
-              <input [(ngModel)]="f.supplierName" class="field" />
-            </label>
-            <label class="flex flex-col gap-1">{{ 'Supplier phone' | t }}
-              <input [(ngModel)]="f.supplierPhone" class="field" />
-            </label>
-            <label class="flex flex-col gap-1">{{ 'Due date' | t }}
-              <input type="date" [(ngModel)]="f.dueDate" class="field" />
-            </label>
-            <label class="flex flex-col gap-1">{{ 'Paid now (BDT)' | t }}
-              <input type="number" min="0" [(ngModel)]="f.paidNowBdt" class="field" />
-            </label>
-          </ng-container>
+<div *ngIf="f.acquisition === 'Cash' && !editingId()" class="md:col-span-3">
+            <app-paid-from [group]="paidFrom" direction="out" [allowCredit]="true" [allowPartner]="true" creditKind="Payable"
+              [amount]="f.costBdt" [partyPlaceholder]="'Supplier'"></app-paid-from>
+          </div>
           <label class="flex flex-col gap-1 md:col-span-3">{{ 'Notes' | t }}
             <input [(ngModel)]="f.notes" class="field" />
           </label>
@@ -163,6 +158,9 @@ interface AssetForm extends SaveFixedAssetRequest {
         <div class="flex gap-3 flex-wrap">
           <label class="flex flex-col gap-1">{{ 'Date' | t }} <input type="date" [(ngModel)]="d.date" class="field" /></label>
           <label class="flex flex-col gap-1">{{ 'Sale proceeds (BDT)' | t }} <input type="number" min="0" [(ngModel)]="d.proceeds" class="field" /></label>
+        </div>
+        <div *ngIf="(+d.proceeds || 0) > 0" class="max-w-md">
+          <app-paid-from [group]="disposeFrom" direction="in" [allowPartner]="false" [amount]="d.proceeds"></app-paid-from>
         </div>
         <div class="flex gap-2 justify-end">
           <button mat-stroked-button (click)="disposing.set(null)" class="!rounded-xl">{{ 'Cancel' | t }}</button>
@@ -241,27 +239,27 @@ interface AssetForm extends SaveFixedAssetRequest {
             <tbody>
               <tr *ngFor="let l of sc.lines" class="border-t border-gray-100 dark:border-gray-700/60">
                 <td class="px-3 py-1.5"><span class="font-mono text-gray-400">{{ l.code }}</span> {{ l.name }}</td>
-                <td class="px-2 py-1.5 text-right font-mono">{{ l.costOpeningBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-1.5 text-right font-mono">{{ l.additionsBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-1.5 text-right font-mono">{{ l.disposalsBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-1.5 text-right font-mono font-semibold">{{ l.costClosingBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-1.5 text-right font-mono">{{ l.depreciationOpeningBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-1.5 text-right font-mono">{{ l.depreciationChargeBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-1.5 text-right font-mono">{{ l.depreciationOnDisposalBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-1.5 text-right font-mono font-semibold">{{ l.depreciationClosingBdt | number:'1.0-0' }}</td>
-                <td class="px-3 py-1.5 text-right font-mono font-bold">{{ l.writtenDownValueBdt | number:'1.0-0' }}</td>
+                <td class="px-2 py-1.5 text-right font-mono">{{ l.costOpeningBdt | money:0:false }}</td>
+                <td class="px-2 py-1.5 text-right font-mono">{{ l.additionsBdt | money:0:false }}</td>
+                <td class="px-2 py-1.5 text-right font-mono">{{ l.disposalsBdt | money:0:false }}</td>
+                <td class="px-2 py-1.5 text-right font-mono font-semibold">{{ l.costClosingBdt | money:0:false }}</td>
+                <td class="px-2 py-1.5 text-right font-mono">{{ l.depreciationOpeningBdt | money:0:false }}</td>
+                <td class="px-2 py-1.5 text-right font-mono">{{ l.depreciationChargeBdt | money:0:false }}</td>
+                <td class="px-2 py-1.5 text-right font-mono">{{ l.depreciationOnDisposalBdt | money:0:false }}</td>
+                <td class="px-2 py-1.5 text-right font-mono font-semibold">{{ l.depreciationClosingBdt | money:0:false }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-bold">{{ l.writtenDownValueBdt | money:0:false }}</td>
               </tr>
               <tr class="border-t-2 border-gray-800 dark:border-gray-200 font-black">
                 <td class="px-3 py-2">{{ 'Total ({from} – {to})' | t: { from: (sc.fromDate | date:'d MMM yy'), to: (sc.toDate | date:'d MMM yy') } }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.costOpeningBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.additionsBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.disposalsBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.costClosingBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationOpeningBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationChargeBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationOnDisposalBdt | number:'1.0-0' }}</td>
-                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationClosingBdt | number:'1.0-0' }}</td>
-                <td class="px-3 py-2 text-right font-mono">{{ sc.totals.writtenDownValueBdt | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.costOpeningBdt | money:0:false }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.additionsBdt | money:0:false }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.disposalsBdt | money:0:false }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.costClosingBdt | money:0:false }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationOpeningBdt | money:0:false }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationChargeBdt | money:0:false }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationOnDisposalBdt | money:0:false }}</td>
+                <td class="px-2 py-2 text-right font-mono">{{ sc.totals.depreciationClosingBdt | money:0:false }}</td>
+                <td class="px-3 py-2 text-right font-mono">{{ sc.totals.writtenDownValueBdt | money:0:false }}</td>
               </tr>
             </tbody>
           </table>
@@ -285,6 +283,11 @@ export class FixedAssetsComponent {
   private readonly context = inject(WorkingContextService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly i18n = inject(I18nService);
+  private readonly fb = inject(FormBuilder);
+  /** Where the money for a purchase came from (account, credit or a partner). */
+  paidFrom: FormGroup = buildPaidFromGroup(this.fb);
+  /** Which account the sale money goes into. */
+  disposeFrom: FormGroup = buildPaidFromGroup(this.fb);
   readonly pageDescription = this.i18n.t('Sheds, machinery, vehicles and land, at cost less wear and tear.');
 
   readonly categories = [
@@ -358,8 +361,8 @@ export class FixedAssetsComponent {
     this.form.set({
       name: '', category: 'BuildingAndShed', acquisition: 'Cash', acquisitionDate: this.today(), costBdt: 0,
       method: 'ReducingBalance', ratePercent: 10, usefulLifeYears: 0, residualValueBdt: 0, location: '', notes: '',
-      supplierName: '', supplierPhone: '', dueDate: '', paidNowBdt: 0,
     });
+    this.paidFrom = buildPaidFromGroup(this.fb);
   }
 
   edit(a: FixedAsset): void {
@@ -368,21 +371,22 @@ export class FixedAssetsComponent {
       name: a.name, category: a.category, acquisition: a.acquisition, acquisitionDate: a.acquisitionDate.substring(0, 10),
       costBdt: a.costBdt, method: a.method, ratePercent: a.ratePercent, usefulLifeYears: a.usefulLifeYears,
       residualValueBdt: a.residualValueBdt, location: a.location ?? '', notes: a.notes ?? '',
-      supplierName: '', supplierPhone: '', dueDate: '', paidNowBdt: 0,
     });
   }
 
   save(f: AssetForm): void {
     const farmId = this.farmId;
     if (!farmId) return;
+    // A new purchase: paid from an account, on credit (supplier bill) or directly by a partner.
+    const source = f.acquisition === 'Cash' && !this.editingId() ? toPaidFrom(this.paidFrom.value) : null;
     const body: SaveFixedAssetRequest = {
-      name: f.name, category: f.category, acquisition: f.acquisition,
+      name: f.name, category: f.category, acquisition: source?.credit ? 'Credit' : f.acquisition,
       acquisitionDate: f.acquisition === 'Opening' ? (this.settings()?.booksStartDate ?? this.today()) : f.acquisitionDate,
       costBdt: +f.costBdt, method: f.method, ratePercent: +f.ratePercent, usefulLifeYears: +f.usefulLifeYears,
       residualValueBdt: +f.residualValueBdt, location: f.location || null, notes: f.notes || null,
-      credit: f.acquisition === 'Credit' && !this.editingId()
-        ? { partyName: f.supplierName, partyPhone: f.supplierPhone || null, dueDate: f.dueDate || null, paidNowBdt: +f.paidNowBdt || 0 }
-        : null,
+      credit: source?.credit ?? null,
+      moneyAccountId: source?.moneyAccountId ?? null,
+      paidByPartnerId: source?.paidByPartnerId ?? null,
     };
     const id = this.editingId();
     this.busy.set(true);
@@ -394,6 +398,7 @@ export class FixedAssetsComponent {
 
   startDispose(a: FixedAsset): void {
     this.disposing.set({ asset: a, date: this.today(), proceeds: 0 });
+    this.disposeFrom = buildPaidFromGroup(this.fb);
   }
 
   dispose(): void {
@@ -401,7 +406,12 @@ export class FixedAssetsComponent {
     const farmId = this.farmId;
     if (!d || !farmId) return;
     this.busy.set(true);
-    this.finance.disposeFixedAsset(farmId, d.asset.id, { disposalDate: d.date, proceedsBdt: +d.proceeds || 0 }).subscribe({
+    const body: DisposeBody = {
+      disposalDate: d.date,
+      proceedsBdt: +d.proceeds || 0,
+      moneyAccountId: toPaidFrom(this.disposeFrom.value).moneyAccountId,
+    };
+    this.finance.disposeFixedAsset(farmId, d.asset.id, body).subscribe({
       next: () => this.done(this.i18n.t('{name} disposed.', { name: d.asset.name }), () => this.disposing.set(null)),
       error: err => this.fail(err, this.i18n.t('Could not record the disposal.')),
     });

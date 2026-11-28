@@ -11,5 +11,7 @@ public record CreateInvestorRequest(
     string? Phone = null,
     string? NationalId = null,
     string? Notes = null,
-    string? ReferenceId = null
+    string? ReferenceId = null,
+    /// <summary>The money account the first contribution goes into; null = the farm's default account.</summary>
+    Guid? MoneyAccountId = null
 );

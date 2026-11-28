@@ -115,9 +115,10 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         }
 
         var bn = context.Language == ReportLanguage.Bn;
-        var age = AnimalAge.Format(animal.DateOfBirth, animal.ExitDate ?? context.Today);
-        return $"{(bn ? "ট্যাগ" : "Tag")} {AnimalLabels.Tag(animal)} · {SpeciesLabel(animal.Species)} · {animal.Sex} · {(bn ? "বয়স" : "age")} {age} · "
-            + $"{(bn ? "খামারে আছে" : "on farm since")} {animal.AcquisitionDate.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}";
+        var age = Age(animal.DateOfBirth, animal.ExitDate ?? context.Today, bn,
+            s => context.BengaliNumerals ? ReportValueFormatter.ToBengaliNumerals(s) : s);
+        return $"{(bn ? "ট্যাগ" : "Tag")} {AnimalLabels.Tag(animal, context)} · {Farm360.Application.Reporting.Definitions.Feeding.FeedReportText.Species(animal.Species).For(context.Language)} · {Farm360.Application.Reporting.Definitions.Feeding.FeedReportText.Sex(animal.Sex).For(context.Language)} · {(bn ? "বয়স" : "age")} {age} · "
+            + $"{(bn ? "খামারে আছে" : "on farm since")} {AnimalLabels.Day(animal.AcquisitionDate, context.Language, context.BengaliNumerals)}";
     }
 
     protected override async Task<IReadOnlyList<AnimalSummaryReportRow>> FetchAsync(
@@ -164,14 +165,24 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
             ? await _batches.GetByIdAsync(batchId, cancellationToken).ConfigureAwait(false)
             : null;
 
-        var breedName = breed?.Name ?? "Native / Cross";
-        var shedName = shed?.ShedNumber ?? (shedId.HasValue ? "Assigned" : "Unassigned");
-        var penName = pen?.PenNumber ?? (penId.HasValue ? "Assigned" : "Unassigned");
+        var bn = context.Language == ReportLanguage.Bn;
+        string T(string en, string bnText) => bn ? bnText : en;
+        string Day(DateOnly d) => AnimalLabels.Day(d, context.Language, context.BengaliNumerals);
+        string Num(string formatted) => context.BengaliNumerals ? ReportValueFormatter.ToBengaliNumerals(formatted) : formatted;
+        string Tk(decimal v, string format) => "৳ " + Num(v.ToString(format, CultureInfo.InvariantCulture));
+        string Kg(decimal v) => Num(v.ToString("N1", CultureInfo.InvariantCulture)) + T(" kg", " কেজি");
+        string Whole(int v) => Num(v.ToString(CultureInfo.InvariantCulture));
+        var assigned = T("Assigned", "নির্ধারিত");
+        var unassigned = T("Unassigned", "নির্ধারিত নয়");
+
+        var breedName = breed?.Name ?? T("Native / Cross", "দেশি / সংকর");
+        var shedName = shed?.ShedNumber ?? (shedId.HasValue ? assigned : unassigned);
+        var penName = pen?.PenNumber ?? (penId.HasValue ? assigned : unassigned);
 
         // Computations
         var today = animal.ExitDate ?? context.Today; // age stops at sale/death
         var ageDays = AnimalAge.Days(animal.DateOfBirth, today);
-        var ageFormatted = $"{AnimalAge.Format(animal.DateOfBirth, today)} ({ageDays} days)";
+        var ageFormatted = $"{Age(animal.DateOfBirth, today, bn, Num)} ({Whole(ageDays)}{T(" days", " দিন")})";
 
         var latestWeight = animal.LatestWeightKg ?? 0m;
         var adg = animal.AdgKgPerDay ?? 0m;
@@ -196,58 +207,121 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         var projectedValue = _valuation.CurrentValue(animal, ledger, totalInvestment, price, rateOverride);
         var projectedProfit = projectedValue - totalInvestment;
         var marginPct = totalInvestment > 0 ? decimal.Round((projectedProfit / totalInvestment) * 100m, 1) : 0m;
+        var weightTimesRate = T($"Latest weight {Kg(latestWeight)} × {Tk(marketPricePerKg, "N2")}/kg",
+            $"সর্বশেষ ওজন {Kg(latestWeight)} × {Tk(marketPricePerKg, "N2")}/কেজি");
         var valueBasis = onHand
             ? (rateOverride is null && price.ValuedAtCost
-                ? "Valued at cost (farm setting): value = cost so far"
+                ? T("Valued at cost (farm setting): value = cost so far", "ক্রয়মূল্যে ধরা (খামারের নিয়ম): মূল্য = এ পর্যন্ত খরচ")
                 : rateOverride is null && price.PerHeadBdt > 0m
-                    ? $"Latest weight {latestWeight:N1} kg × ৳ {marketPricePerKg:N2}/kg + ৳ {price.PerHeadBdt:N0} by-products per head"
-                    : $"Latest weight {latestWeight:N1} kg × ৳ {marketPricePerKg:N2}/kg")
-            : animal.Status is Farm360.Domain.Livestock.Enums.AnimalStatus.Sold or Farm360.Domain.Livestock.Enums.AnimalStatus.Slaughtered
-                ? "Sale price received"
-                : animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Dead
-                    ? "Animal died — no realisable value"
-                    : "Left the farm — no realisable value";
+                    ? weightTimesRate + T($" + {Tk(price.PerHeadBdt, "N0")} by-products per head", $" + প্রতি পশুতে উপজাত {Tk(price.PerHeadBdt, "N0")}")
+                    : weightTimesRate)
+            : animal.Status is AnimalStatus.Sold or AnimalStatus.Slaughtered
+                ? T("Sale price received", "পাওয়া বিক্রয়মূল্য")
+                : animal.Status == AnimalStatus.Dead
+                    ? T("Animal died — no realisable value", "পশুটি মারা গেছে — কোনো মূল্য পাওয়া যাবে না")
+                    : T("Left the farm — no realisable value", "খামার ছেড়ে গেছে — কোনো মূল্য পাওয়া যাবে না");
+
+        var notRecorded = T("Not recorded", "লেখা হয়নি");
+        var noWeighing = T("No weighing record", "ওজনের কোনো রেকর্ড নেই");
+        string WeighedOn(DateOnly d) => T("Weighed on ", "ওজন নেওয়া হয়েছে ") + Day(d);
+
+        var statusContext = animal.Status switch
+        {
+            AnimalStatus.Sold => T("Sold on ", "বিক্রি ") + (animal.SaleDate is { } sd ? Day(sd) : string.Empty)
+                + (animal.BuyerName is { Length: > 0 } b ? T($" to {b}", $" — ক্রেতা {b}") : string.Empty)
+                + T(" for ", "; দাম ") + Tk(animal.SalePriceBdt ?? 0m, "N0"),
+            AnimalStatus.Dead => T("Died on ", "মৃত্যু ") + (animal.DeathDate is { } dd ? Day(dd) : string.Empty)
+                + (animal.DisposalReason is { } reason ? $" ({DisposalLabel(reason).For(context.Language)})" : string.Empty),
+            _ => string.IsNullOrWhiteSpace(animal.QuarantineReason)
+                ? T("Normal herd condition", "পালের স্বাভাবিক অবস্থা")
+                : T("Quarantine: ", "পৃথক রাখা: ") + animal.QuarantineReason,
+        };
 
         var rows = new List<AnimalSummaryReportRow>
         {
             // ── Section 1: Demographics ───────────────────────────────────────
-            new("1. Identification & Demographics", "Tag", AnimalLabels.Tag(animal), animal.Tag.TagType switch { TagType.EarTag => "Ear tag", TagType.Rfid => "RFID tag", _ => "Manual tag number" }),
-            new("1. Identification & Demographics", "Species & breed", $"{SpeciesLabel(animal.Species)} · {breedName}", breed is null ? "Breed not recorded" : "Registered breed"),
-            new("1. Identification & Demographics", "Sex", animal.Sex.ToString(), "—"),
-            new("1. Identification & Demographics", "Date of birth & age", $"{animal.DateOfBirth:dd-MMM-yyyy} ({ageFormatted})", animal.ExitDate is { } exit ? $"Age counted up to {exit:dd-MMM-yyyy}, when it left the farm" : "Age as of today"),
-            new("1. Identification & Demographics", "How it came to the farm", $"{AcquisitionLabel(animal.AcquisitionType)} on {animal.AcquisitionDate:dd-MMM-yyyy}", $"Purchase cost: ৳ {purchaseCost:N0}"),
-            new("1. Identification & Demographics", "Current status", StatusLabel(animal.Status),
-                animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Sold
-                    ? $"Sold on {animal.SaleDate:dd-MMM-yyyy}{(animal.BuyerName is { Length: > 0 } b ? $" to {b}" : "")} for ৳ {animal.SalePriceBdt:N0}"
-                    : animal.Status == Farm360.Domain.Livestock.Enums.AnimalStatus.Dead
-                        ? $"Died on {animal.DeathDate:dd-MMM-yyyy}{(animal.DisposalReason is { } reason ? $" ({DisposalLabel(reason)})" : "")}"
-                        : string.IsNullOrWhiteSpace(animal.QuarantineReason) ? "Normal herd condition" : $"Quarantine: {animal.QuarantineReason}"),
+            new("1. Identification & Demographics", T("Tag", "ট্যাগ"), AnimalLabels.Tag(animal, context), animal.Tag.TagType switch
+            {
+                TagType.EarTag => T("Ear tag", "কানের ট্যাগ"),
+                TagType.Rfid => T("RFID tag", "RFID ট্যাগ"),
+                _ => T("Manual tag number", "হাতে লেখা ট্যাগ নম্বর"),
+            }),
+            new("1. Identification & Demographics", T("Species & breed", "প্রজাতি ও জাত"),
+                $"{Farm360.Application.Reporting.Definitions.Feeding.FeedReportText.Species(animal.Species).For(context.Language)} · {breedName}",
+                breed is null ? T("Breed not recorded", "জাত লেখা হয়নি") : T("Registered breed", "নিবন্ধিত জাত")),
+            new("1. Identification & Demographics", T("Sex", "লিঙ্গ"),
+                Farm360.Application.Reporting.Definitions.Feeding.FeedReportText.Sex(animal.Sex).For(context.Language), "—"),
+            new("1. Identification & Demographics", T("Date of birth & age", "জন্মতারিখ ও বয়স"), $"{Day(animal.DateOfBirth)} ({ageFormatted})",
+                animal.ExitDate is { } exit
+                    ? T($"Age counted up to {Day(exit)}, when it left the farm", $"বয়স গোনা হয়েছে {Day(exit)} পর্যন্ত, যেদিন খামার ছেড়েছে")
+                    : T("Age as of today", "আজ পর্যন্ত বয়স")),
+            new("1. Identification & Demographics", T("How it came to the farm", "কীভাবে খামারে এসেছে"),
+                T($"{AcquisitionLabel(animal.AcquisitionType).En} on {Day(animal.AcquisitionDate)}",
+                  $"{AcquisitionLabel(animal.AcquisitionType).Bn} {Day(animal.AcquisitionDate)}"),
+                T("Purchase cost: ", "ক্রয়মূল্য: ") + Tk(purchaseCost, "N0")),
+            new("1. Identification & Demographics", T("Current status", "বর্তমান অবস্থা"),
+                Farm360.Application.Reporting.Definitions.Feeding.FeedReportText.Status(animal.Status).For(context.Language),
+                statusContext),
 
             // ── Section 2: Housing & Location ─────────────────────────────────
-            new("2. Housing & Location", "Shed", shedName, shedId.HasValue ? "Current housing" : "No shed assigned"),
-            new("2. Housing & Location", "Pen / stall", penName, penId.HasValue ? $"In shed {shedName}" : "No pen assigned"),
-            new("2. Housing & Location", "Batch", batch?.Name ?? (animal.BatchId.HasValue ? "Batch not found" : "Not in a batch"), "Group the animal is managed with"),
+            new("2. Housing & Location", T("Shed", "শেড"), shedName,
+                shedId.HasValue ? T("Current housing", "বর্তমান থাকার জায়গা") : T("No shed assigned", "কোনো শেড দেওয়া হয়নি")),
+            new("2. Housing & Location", T("Pen / stall", "খোপ / স্টল"), penName,
+                penId.HasValue ? T($"In shed {shedName}", $"শেড {shedName}-এ") : T("No pen assigned", "কোনো খোপ দেওয়া হয়নি")),
+            new("2. Housing & Location", T("Batch", "ব্যাচ"),
+                batch?.Name ?? (animal.BatchId.HasValue ? T("Batch not found", "ব্যাচ পাওয়া যায়নি") : T("Not in a batch", "কোনো ব্যাচে নেই")),
+                T("Group the animal is managed with", "যে দলের সাথে পশুটি পালন করা হয়")),
 
             // ── Section 3: Growth & Performance ───────────────────────────────
-            new("3. Growth & Weight KPIs", "Latest weight", animal.LatestWeightKg.HasValue ? $"{latestWeight:N1} kg" : "Not recorded", animal.LatestWeightDate.HasValue ? $"Weighed on {animal.LatestWeightDate.Value:dd-MMM-yyyy}" : "No weighing record"),
-            new("3. Growth & Weight KPIs", "First recorded weight", weightRecords.Count > 0 ? $"{initialWeight:N1} kg" : "Not recorded", weightRecords.Count > 0 ? $"Weighed on {weightRecords[0].RecordedDate:dd-MMM-yyyy}" : "No weighing record"),
-            new("3. Growth & Weight KPIs", "Weight gained since first weigh-in", $"{totalGainKg:N1} kg", $"Latest weight − first weight, over {weightRecords.Count} weigh-ins"),
-            new("3. Growth & Weight KPIs", "Average daily gain (kg/day)", animal.AdgKgPerDay.HasValue ? $"{adg:N3} kg/day" : "Not enough weigh-ins", "First to latest weigh-in; see the Animal Weight & Growth report for gain in a chosen period"),
-            new("3. Growth & Weight KPIs", "Body condition (1–5)", animal.LatestBcs.HasValue ? $"{animal.LatestBcs.Value:N1} / 5" : "Not recorded", "Visual score of muscle and fat cover: 1 = very thin, 5 = very fat"),
+            new("3. Growth & Weight KPIs", T("Latest weight", "সর্বশেষ ওজন"), animal.LatestWeightKg.HasValue ? Kg(latestWeight) : notRecorded,
+                animal.LatestWeightDate.HasValue ? WeighedOn(animal.LatestWeightDate.Value) : noWeighing),
+            new("3. Growth & Weight KPIs", T("First recorded weight", "প্রথম লেখা ওজন"), weightRecords.Count > 0 ? Kg(initialWeight) : notRecorded,
+                weightRecords.Count > 0 ? WeighedOn(weightRecords[0].RecordedDate) : noWeighing),
+            new("3. Growth & Weight KPIs", T("Weight gained since first weigh-in", "প্রথম ওজনের পর থেকে বেড়েছে"), Kg(totalGainKg),
+                T($"Latest weight − first weight, over {weightRecords.Count} weigh-ins",
+                  $"সর্বশেষ ওজন − প্রথম ওজন, {Whole(weightRecords.Count)} বার ওজন নেওয়া")),
+            new("3. Growth & Weight KPIs", T("Average daily gain (kg/day)", "গড় দৈনিক বৃদ্ধি (কেজি/দিন)"),
+                animal.AdgKgPerDay.HasValue
+                    ? Num(adg.ToString("N3", CultureInfo.InvariantCulture)) + T(" kg/day", " কেজি/দিন")
+                    : T("Not enough weigh-ins", "যথেষ্ট ওজন নেওয়া হয়নি"),
+                T("First to latest weigh-in; see the Animal Weight & Growth report for gain in a chosen period",
+                  "প্রথম থেকে সর্বশেষ ওজন পর্যন্ত; নির্দিষ্ট সময়ের বৃদ্ধির জন্য পশুর ওজন ও বৃদ্ধি রিপোর্ট দেখুন")),
+            new("3. Growth & Weight KPIs", T("Body condition (1–5)", "শারীরিক অবস্থা (১–৫)"),
+                animal.LatestBcs.HasValue ? Num(animal.LatestBcs.Value.ToString("N1", CultureInfo.InvariantCulture)) + " / " + Num("5") : notRecorded,
+                T("Visual score of muscle and fat cover: 1 = very thin, 5 = very fat",
+                  "মাংস ও চর্বির চোখে দেখা নম্বর: ১ = খুব রোগা, ৫ = খুব মোটা")),
 
             // ── Section 4: Cost & Financial Ledger ────────────────────────────
-            new("4. Financial Investment Breakdown", "Purchase cost", $"৳ {purchaseCost:N2}", "Price paid, or opening value if born on the farm"),
-            new("4. Financial Investment Breakdown", "Feed cost", $"৳ {feedCost:N2}", $"{feedTotals.TotalKg:N1} kg confirmed feed over {feedTotals.Days} days"),
-            new("4. Financial Investment Breakdown", "Vet & medicine cost", $"৳ {vetCost:N2}", "Vaccines, medicines and treatments"),
-            new("4. Financial Investment Breakdown", "Labour cost (share)", $"৳ {laborCost:N2}", "This animal's share of farm labour"),
-            new("4. Financial Investment Breakdown", "Overhead cost (share)", $"৳ {overheadCost:N2}", "This animal's share of utilities, shed upkeep and running costs"),
-            new("4. Financial Investment Breakdown", "Total cost so far", $"৳ {totalInvestment:N2}", "Sum of the five costs above"),
+            new("4. Financial Investment Breakdown", T("Purchase cost", "ক্রয়মূল্য"), Tk(purchaseCost, "N2"),
+                T("Price paid, or opening value if born on the farm", "দেওয়া দাম, খামারে জন্ম হলে শুরুর মূল্য")),
+            new("4. Financial Investment Breakdown", T("Feed cost", "খাদ্য খরচ"), Tk(feedCost, "N2"),
+                T($"{Kg(feedTotals.TotalKg)} confirmed feed over {Whole(feedTotals.Days)} days",
+                  $"{Whole(feedTotals.Days)} দিনে নিশ্চিত খাদ্য {Kg(feedTotals.TotalKg)}")),
+            new("4. Financial Investment Breakdown", T("Vet & medicine cost", "চিকিৎসা ও ওষুধ খরচ"), Tk(vetCost, "N2"),
+                T("Vaccines, medicines and treatments", "টিকা, ওষুধ ও চিকিৎসা")),
+            new("4. Financial Investment Breakdown", T("Labour cost (share)", "শ্রম খরচ (ভাগ)"), Tk(laborCost, "N2"),
+                T("This animal's share of farm labour", "খামারের শ্রম খরচে এই পশুর ভাগ")),
+            new("4. Financial Investment Breakdown", T("Overhead cost (share)", "পরোক্ষ খরচ (ভাগ)"), Tk(overheadCost, "N2"),
+                T("This animal's share of utilities, shed upkeep and running costs", "বিদ্যুৎ-পানি, শেড রক্ষণাবেক্ষণ ও চলতি খরচে এই পশুর ভাগ")),
+            new("4. Financial Investment Breakdown", T("Total cost so far", "এ পর্যন্ত মোট খরচ"), Tk(totalInvestment, "N2"),
+                T("Sum of the five costs above", "ওপরের পাঁচটি খরচের যোগফল")),
 
             // ── Section 5: Valuation & Profit Projections ─────────────────────
-            new("5. Valuation & Profit Projections", "Live-weight rate (BDT/kg)", $"৳ {marketPricePerKg:N2} / kg", rateOverride is null ? Capitalise(price.ExplanationEn) : "Rate entered for this report"),
-            new("5. Valuation & Profit Projections", onHand ? "Estimated value today" : "Value realised", $"৳ {projectedValue:N2}", valueBasis),
-            new("5. Valuation & Profit Projections", onHand ? "Expected profit / loss" : "Actual profit / loss", $"৳ {projectedProfit:N2}", projectedProfit >= 0 ? "Profit: value is above total cost" : "Loss: value is below total cost"),
-            new("5. Valuation & Profit Projections", "Return on cost (%)", $"{marginPct:+0.0;-0.0;0.0}%", $"Profit ÷ total cost (৳ {totalInvestment:N0})")
+            new("5. Valuation & Profit Projections", T("Live-weight rate (BDT/kg)", "জীবন্ত ওজনের দর (টাকা/কেজি)"),
+                Tk(marketPricePerKg, "N2") + T(" / kg", " / কেজি"),
+                rateOverride is null
+                    ? (bn && !string.IsNullOrWhiteSpace(price.ExplanationBn) ? price.ExplanationBn : Capitalise(price.ExplanationEn))
+                    : T("Rate entered for this report", "এই রিপোর্টের জন্য দেওয়া দর")),
+            new("5. Valuation & Profit Projections", onHand ? T("Estimated value today", "আজকের আনুমানিক মূল্য") : T("Value realised", "পাওয়া মূল্য"),
+                Tk(projectedValue, "N2"), valueBasis),
+            new("5. Valuation & Profit Projections", onHand ? T("Expected profit / loss", "প্রত্যাশিত লাভ / ক্ষতি") : T("Actual profit / loss", "প্রকৃত লাভ / ক্ষতি"),
+                Tk(projectedProfit, "N2"),
+                projectedProfit >= 0
+                    ? T("Profit: value is above total cost", "লাভ: মূল্য মোট খরচের চেয়ে বেশি")
+                    : T("Loss: value is below total cost", "ক্ষতি: মূল্য মোট খরচের চেয়ে কম")),
+            new("5. Valuation & Profit Projections", T("Return on cost (%)", "খরচের ওপর লাভ (%)"),
+                Num(marginPct.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture)) + "%",
+                T("Profit ÷ total cost (", "লাভ ÷ মোট খরচ (") + Tk(totalInvestment, "N0") + ")"),
         };
 
         return rows;
@@ -266,38 +340,44 @@ public sealed class AnimalSummaryReportDefinition : ReportDefinition<AnimalSumma
         _ => new(section, section),
     };
 
-    private static string SpeciesLabel(AnimalSpecies species) => species switch
+    /// <summary>"2y 3m" in English; "২ বছর ৩ মাস" in Bangla.</summary>
+    private static string Age(DateOnly dateOfBirth, DateOnly asOf, bool bn, Func<string, string> num)
     {
-        AnimalSpecies.CattleBeef => "Beef cattle",
-        AnimalSpecies.CattleDairy => "Dairy cattle",
-        _ => species.ToString(),
+        if (!bn)
+        {
+            return AnimalAge.Format(dateOfBirth, asOf);
+        }
+
+        string N(int v) => num(v.ToString(CultureInfo.InvariantCulture));
+        var months = AnimalAge.CompletedMonths(dateOfBirth, asOf);
+        if (months == 0)
+        {
+            return $"{N(AnimalAge.Days(dateOfBirth, asOf))} দিন";
+        }
+
+        if (months < 12)
+        {
+            return $"{N(months)} মাস";
+        }
+
+        var remainder = months % 12;
+        return remainder > 0 ? $"{N(months / 12)} বছর {N(remainder)} মাস" : $"{N(months / 12)} বছর";
+    }
+
+    private static LocalizedText AcquisitionLabel(AcquisitionType type) => type switch
+    {
+        AcquisitionType.Purchased => new("Bought", "কেনা হয়েছে"),
+        AcquisitionType.BornOnFarm => new("Born on farm", "খামারে জন্ম"),
+        _ => new(type.ToString(), type.ToString()),
     };
 
-    private static string AcquisitionLabel(AcquisitionType type) => type switch
+    private static LocalizedText DisposalLabel(DisposalReason reason) => reason switch
     {
-        AcquisitionType.Purchased => "Bought",
-        AcquisitionType.BornOnFarm => "Born on farm",
-        _ => type.ToString(),
-    };
-
-    private static string StatusLabel(AnimalStatus status) => status switch
-    {
-        AnimalStatus.Active => "On farm",
-        AnimalStatus.Quarantined => "In quarantine",
-        AnimalStatus.Sold => "Sold",
-        AnimalStatus.Slaughtered => "Slaughtered",
-        AnimalStatus.Dead => "Died",
-        AnimalStatus.Transferred => "Transferred out",
-        _ => status.ToString(),
-    };
-
-    private static string DisposalLabel(DisposalReason reason) => reason switch
-    {
-        DisposalReason.NaturalDeath => "natural death",
-        DisposalReason.Disease => "disease",
-        DisposalReason.Accident => "accident",
-        DisposalReason.Slaughter => "slaughter",
-        DisposalReason.Sale => "sale",
-        _ => "cause not recorded",
+        DisposalReason.NaturalDeath => new("natural death", "স্বাভাবিক মৃত্যু"),
+        DisposalReason.Disease => new("disease", "রোগ"),
+        DisposalReason.Accident => new("accident", "দুর্ঘটনা"),
+        DisposalReason.Slaughter => new("slaughter", "জবাই"),
+        DisposalReason.Sale => new("sale", "বিক্রি"),
+        _ => new("cause not recorded", "কারণ লেখা হয়নি"),
     };
 }

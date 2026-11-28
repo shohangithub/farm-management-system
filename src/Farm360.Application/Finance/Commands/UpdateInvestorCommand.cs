@@ -72,8 +72,8 @@ public class UpdateInvestorCommandHandler : IRequestHandler<UpdateInvestorComman
         var allInvestors = await _repository.GetByFarmIdAsync(investor.FarmId, cancellationToken: cancellationToken);
         var totalActiveCapital = allInvestors.Where(i => i.IsActive).Sum(i => i.CurrentCapitalBdt);
         
-        decimal effectiveShare = investor.AgreedProfitSharePercentage
-            ?? (totalActiveCapital > 0 ? Math.Round((investor.CurrentCapitalBdt / totalActiveCapital) * 100m, 2) : 0m);
+        // Profit is split by capital (partnership rule); an old agreed percentage is kept but not used.
+            decimal effectiveShare = totalActiveCapital > 0 ? Math.Round((investor.CurrentCapitalBdt / totalActiveCapital) * 100m, 2) : 0m;
 
         return new InvestorDto(
             investor.Id,

@@ -7,6 +7,7 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../paid-from/paid-from.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
@@ -17,7 +18,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     TranslatePipe, CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    PaidFromComponent
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -95,6 +97,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             </div>
           </div>
 
+          <app-paid-from [group]="paidFromGroup" direction="in" [allowPartner]="false"
+            [amount]="form.value.principalAmountBdt"></app-paid-from>
+
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
               {{ 'Notes / Remarks (Optional)' | t }}
@@ -148,8 +153,13 @@ export class LoanFormDialogComponent implements OnInit {
       interestRatePercent: [0, [Validators.required, Validators.min(0)]],
       disbursementDate: [today, Validators.required],
       schedule: ['Monthly', Validators.required],
-      notes: ['']
+      notes: [''],
+      paidFrom: buildPaidFromGroup(this.fb)
     });
+  }
+
+  get paidFromGroup(): FormGroup {
+    return this.form.get('paidFrom') as FormGroup;
   }
 
   onSubmit(): void {
@@ -164,7 +174,9 @@ export class LoanFormDialogComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
 
-    const payload = this.form.value;
+    const { paidFrom, ...rest } = this.form.value;
+    // The loan money is received INTO the chosen account.
+    const payload = { ...rest, moneyAccountId: toPaidFrom(paidFrom).moneyAccountId };
     
     this.financeService.createLoan(farmId, payload).subscribe({
       next: (result) => {

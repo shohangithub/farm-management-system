@@ -33,8 +33,8 @@ public class GetInvestorsQueryHandler : IRequestHandler<GetInvestorsQuery, IRead
 
         return investors.Select(i =>
         {
-            decimal effectiveShare = i.AgreedProfitSharePercentage
-                ?? (totalActiveCapital > 0 ? Math.Round((i.CurrentCapitalBdt / totalActiveCapital) * 100m, 2) : 0m);
+            // Profit is split by capital (partnership rule); an old agreed percentage is kept but not used.
+            decimal effectiveShare = totalActiveCapital > 0 ? Math.Round((i.CurrentCapitalBdt / totalActiveCapital) * 100m, 2) : 0m;
 
             return new InvestorDto(
                 i.Id,

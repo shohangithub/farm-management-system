@@ -50,7 +50,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
                   </mat-select>
                 </mat-form-field>
 
-                <div class="grid grid-cols-2 gap-2" *ngIf="isCustomDateRange(p.name)">
+                <!-- Stacked: the panel is too narrow for two full dates side by side ("11/28/202"). -->
+                <div class="grid grid-cols-1 gap-2" *ngIf="isCustomDateRange(p.name)">
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>{{ t('From', 'শুরু') }}</mat-label>
                     <input matInput [matDatepicker]="fromPicker" [ngModel]="getFromDateObj(p.name)"
@@ -427,7 +428,9 @@ export class ReportParameterPanelComponent {
       case 'Farm':
       case 'Shed':
       case 'Breed':
-      case 'InventoryItem': return 'entity';
+      case 'InventoryItem':
+      case 'MoneyAccount':
+      case 'Partner': return 'entity';
       default: return 'text';
     }
   }

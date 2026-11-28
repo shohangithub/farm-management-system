@@ -149,7 +149,7 @@ public sealed class AnimalDailyCostByAnimalReportDefinition : ReportDefinition<A
         var bn = context.Language == ReportLanguage.Bn;
         var unknown = bn ? "রেকর্ডে নেই এমন পশু" : "Animal no longer on record";
 
-        string TagOf(Guid id) => animalsById.TryGetValue(id, out var a) ? AnimalLabels.Tag(a) : "~";
+        string TagOf(Guid id) => animalsById.TryGetValue(id, out var a) ? AnimalLabels.Tag(a, context) : "~";
         string LabelOf(Guid id)
         {
             if (!animalsById.TryGetValue(id, out var a))
@@ -159,7 +159,7 @@ public sealed class AnimalDailyCostByAnimalReportDefinition : ReportDefinition<A
 
             var parts = new List<string>
             {
-                (bn ? "পশু: " : "Animal: ") + AnimalLabels.Tag(a),
+                (bn ? "পশু: " : "Animal: ") + AnimalLabels.Tag(a, context),
                 breeds.GetValueOrDefault(a.BreedId) ?? AnimalCostReportText.Species(a.Species, context.Language),
                 AnimalCostReportText.Sex(a.Sex, context.Language),
             };

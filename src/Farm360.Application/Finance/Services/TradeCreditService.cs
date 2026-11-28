@@ -16,7 +16,9 @@ public sealed record CreditTerms(
     decimal PaidNowBdt = 0m,
     string? PaymentMethod = null,
     string? Notes = null,
-    Guid? SupplierId = null);
+    Guid? SupplierId = null,
+    Guid? MoneyAccountId = null,
+    Guid? PaidByPartnerId = null);
 
 /// <summary>
 /// Payables and receivables. A purchase or sale is booked by its own module as usual; putting it on
@@ -36,6 +38,9 @@ public interface ITradeCreditService
     Task<TradeBill> OpenForSourceAsync(Guid farmId, Guid sourceDocumentId, TransactionCategory category, CreditTerms terms, CancellationToken cancellationToken = default);
 
     Task<TradeBillPayment> RecordPaymentAsync(TradeBill bill, decimal amountBdt, DateOnly date, string? method, string? reference, string? notes, CancellationToken cancellationToken = default);
+
+    /// <param name="source">The account the money went out of (payable) or into (receivable), or the partner who paid a supplier directly.</param>
+    Task<TradeBillPayment> RecordPaymentAsync(TradeBill bill, decimal amountBdt, DateOnly date, string? method, string? reference, string? notes, PaymentSource source, CancellationToken cancellationToken = default);
 
     Task VoidPaymentAsync(TradeBill bill, TradeBillPayment payment, CancellationToken cancellationToken = default);
 
@@ -119,7 +124,8 @@ public sealed class TradeCreditService : ITradeCreditService
         if (terms.PaidNowBdt > 0)
         {
             await RecordPaymentAsync(bill, terms.PaidNowBdt, billDate, terms.PaymentMethod,
-                bill.ReferenceNo, "Paid on the day of the deal", cancellationToken);
+                bill.ReferenceNo, "Paid on the day of the deal",
+                new PaymentSource(terms.MoneyAccountId, terms.PaidByPartnerId), cancellationToken);
         }
 
         return bill;
@@ -132,9 +138,14 @@ public sealed class TradeCreditService : ITradeCreditService
         return await OpenAsync(posting, terms, cancellationToken);
     }
 
+    public Task<TradeBillPayment> RecordPaymentAsync(
+        TradeBill bill, decimal amountBdt, DateOnly date, string? method, string? reference, string? notes,
+        CancellationToken cancellationToken = default) =>
+        RecordPaymentAsync(bill, amountBdt, date, method, reference, notes, PaymentSource.Default, cancellationToken);
+
     public async Task<TradeBillPayment> RecordPaymentAsync(
         TradeBill bill, decimal amountBdt, DateOnly date, string? method, string? reference, string? notes,
-        CancellationToken cancellationToken = default)
+        PaymentSource source, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(bill);
         if (date < bill.BillDate)
@@ -158,7 +169,9 @@ public sealed class TradeCreditService : ITradeCreditService
                 ? $"Paid to {bill.PartyName} - {bill.ReferenceNo}"
                 : $"Received from {bill.PartyName} - {bill.ReferenceNo}",
             Notes: $"{payment.Method}{(string.IsNullOrWhiteSpace(reference) ? string.Empty : $" ({reference})")} against: {bill.Description}",
-            ReferenceId: string.IsNullOrWhiteSpace(reference) ? bill.ReferenceNo : reference), cancellationToken);
+            ReferenceId: string.IsNullOrWhiteSpace(reference) ? bill.ReferenceNo : reference,
+            MoneyAccountId: source?.MoneyAccountId,
+            PaidByPartnerId: payable ? source?.PartnerId : null), cancellationToken);
 
         return payment;
     }

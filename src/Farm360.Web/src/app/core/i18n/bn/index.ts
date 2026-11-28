@@ -14,6 +14,7 @@ import { BN_REPORTS } from './reports';
 import { BN_SETTINGS } from './settings';
 import { BN_INTELLIGENCE } from './intelligence';
 import { BN_WEATHER } from './weather';
+import { BN_MONEY } from './money';
 
 /**
  * The whole Bangla dictionary, loaded only when the interface is in Bangla.
@@ -36,4 +37,6 @@ export const BN: Record<string, string> = {
   ...BN_SETTINGS,
   ...BN_INTELLIGENCE,
   ...BN_WEATHER,
+  // Last: money accounts and partners (also renames "Investors" to অংশীদার).
+  ...BN_MONEY,
 };

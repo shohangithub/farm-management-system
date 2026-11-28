@@ -146,11 +146,14 @@
         <div class="sec brand">{{ '১. নগদ অবস্থান / Cash Position' | t }}</div>
         <table class="t">
           <tbody>
-            <tr><td>{{ 'ওপেনিং ব্যালেন্স / Opening cash balance' | t }} <span class="note">{{ 'as of {date}' | t: { date: (d.fromDate | date: 'dd MMM yyyy') } }}</span></td><td class="num bold" style="width: 160px;">{{ d.cash.openingBalanceBdt | number: '1.2-2' }}</td></tr>
-            <tr><td>{{ '(+) মোট প্রাপ্তি / Total receipts (operating + capital + loans)' | t }}</td><td class="num inc">{{ d.cash.totalInflowBdt | number: '1.2-2' }}</td></tr>
-            <tr><td>{{ '(−) মোট প্রদান / Total payments (operating + withdrawals + repayments)' | t }}</td><td class="num exp">{{ d.cash.totalOutflowBdt | number: '1.2-2' }}</td></tr>
-            <tr class="sub"><td>{{ 'নিট নগদ প্রবাহ / Net cash flow' | t }}</td><td class="num" [class.inc]="d.cash.netCashFlowBdt >= 0" [class.exp]="d.cash.netCashFlowBdt < 0">{{ d.cash.netCashFlowBdt | number: '1.2-2' }}</td></tr>
+            <tr><td>{{ 'ওপেনিং ব্যালেন্স / Opening cash balance' | t }} <span class="note">{{ 'as of {date}' | t: { date: (d.fromDate | date: 'dd MMM yyyy') } }}</span></td><td class="num bold" style="width: 160px;">{{ d.cash.openingBalanceBdt | money:2:false }}</td></tr>
+            <tr><td>{{ '(+) মোট প্রাপ্তি / Total receipts (operating + capital + loans)' | t }}</td><td class="num inc">{{ d.cash.totalInflowBdt | money:2:false }}</td></tr>
+            <tr><td>{{ '(−) মোট প্রদান / Total payments (operating + withdrawals + repayments)' | t }}</td><td class="num exp">{{ d.cash.totalOutflowBdt | money:2:false }}</td></tr>
+            <tr class="sub"><td>{{ 'নিট নগদ প্রবাহ / Net cash flow' | t }}</td><td class="num" [class.inc]="d.cash.netCashFlowBdt >= 0" [class.exp]="d.cash.netCashFlowBdt < 0">{{ d.cash.netCashFlowBdt | money:2:false }}</td></tr>
             <tr class="grand"><td>{{ 'ক্লোজিং ব্যালেন্স / Closing cash balance' | t }} <span class="note">{{ 'as of {date}' | t: { date: (d.toDate | date: 'dd MMM yyyy') } }}</span></td><td class="num">{{ d.cash.closingBalanceBdt | money:2 }}</td></tr>
+            @for (a of d.cash.accounts ?? []; track a.id) {
+              <tr><td class="note">&nbsp;&nbsp;{{ 'of which in {account}' | t: { account: accountName(a.name) } }}</td><td class="num">{{ a.balanceBdt | money:2:false }}</td></tr>
+            }
           </tbody>
         </table>
       }
@@ -167,13 +170,13 @@
                   <td class="muted">{{ l.code }}</td>
                   <td>{{ l.nameBn }} @if (!i18n.isBangla) { <span class="note" style="display: inline;">/ {{ l.name }}</span> }<span class="cnt">({{ l.count }})</span></td>
                   <td class="num muted">{{ l.percentOfTotal | number: '1.0-1' }}</td>
-                  <td class="num inc">{{ l.totalBdt | number: '1.2-2' }}</td>
+                  <td class="num inc">{{ l.totalBdt | money:2:false }}</td>
                 </tr>
               } @empty {
                 <tr><td colspan="4" class="center muted">{{ 'No operating revenue.' | t }}</td></tr>
               }
             </tbody>
-            <tfoot><tr><td colspan="3">{{ 'মোট আয় / Total Revenue' | t }}</td><td class="num inc">{{ d.operating.totalRevenueBdt | number: '1.2-2' }}</td></tr></tfoot>
+            <tfoot><tr><td colspan="3">{{ 'মোট আয় / Total Revenue' | t }}</td><td class="num inc">{{ d.operating.totalRevenueBdt | money:2:false }}</td></tr></tfoot>
           </table>
           <table class="t">
             <thead><tr><th style="width: 46px;">{{ 'Code' | t }}</th><th>{{ 'ব্যয় / Expense' | t }}</th><th class="num">%</th><th class="num">{{ 'Amount (৳)' | t }}</th></tr></thead>
@@ -183,13 +186,13 @@
                   <td class="muted">{{ l.code }}</td>
                   <td>{{ l.nameBn }} @if (!i18n.isBangla) { <span class="note" style="display: inline;">/ {{ l.name }}</span> }<span class="cnt">({{ l.count }})</span></td>
                   <td class="num muted">{{ l.percentOfTotal | number: '1.0-1' }}</td>
-                  <td class="num exp">{{ l.totalBdt | number: '1.2-2' }}</td>
+                  <td class="num exp">{{ l.totalBdt | money:2:false }}</td>
                 </tr>
               } @empty {
                 <tr><td colspan="4" class="center muted">{{ 'No operating expenses.' | t }}</td></tr>
               }
             </tbody>
-            <tfoot><tr><td colspan="3">{{ 'মোট ব্যয় / Total Expense' | t }}</td><td class="num exp">{{ d.operating.totalExpenseBdt | number: '1.2-2' }}</td></tr></tfoot>
+            <tfoot><tr><td colspan="3">{{ 'মোট ব্যয় / Total Expense' | t }}</td><td class="num exp">{{ d.operating.totalExpenseBdt | money:2:false }}</td></tr></tfoot>
           </table>
         </div>
         <div class="result" [ngClass]="d.operating.netOperatingProfitBdt >= 0 ? 'profit' : 'loss'">
@@ -215,11 +218,11 @@
                     <span class="muted" style="width: 42px; text-align: right;">{{ g.percentOfTotal | number: '1.0-1' }}%</span>
                   </div>
                 </td>
-                <td class="num exp" [class.bold]="g.key === 'labour'">{{ g.amountBdt | number: '1.2-2' }}</td>
+                <td class="num exp" [class.bold]="g.key === 'labour'">{{ g.amountBdt | money:2:false }}</td>
               </tr>
             }
           </tbody>
-          <tfoot><tr><td colspan="3">{{ 'মোট পরিচালন খরচ / Total operating cost' | t }}</td><td class="num exp">{{ d.costs.totalOperatingCostBdt | number: '1.2-2' }}</td></tr></tfoot>
+          <tfoot><tr><td colspan="3">{{ 'মোট পরিচালন খরচ / Total operating cost' | t }}</td><td class="num exp">{{ d.costs.totalOperatingCostBdt | money:2:false }}</td></tr></tfoot>
         </table>
         <table class="info" style="margin-top: 8px;">
           <tr>
@@ -241,33 +244,33 @@
           <table class="t">
             <thead><tr><th>{{ 'মজুদ মালামাল / Inventory' | t }}</th><th class="num" style="width: 130px;">{{ 'Amount (৳)' | t }}</th></tr></thead>
             <tbody>
-              <tr class="opening"><td>{{ 'Opening stock value' | t }}</td><td class="num">{{ d.assets.inventoryOpeningBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(+) Bought (cash or credit)' | t }}</td><td class="num inc">{{ d.assets.stockPurchasedBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(+) Opening / owner-supplied stock' | t }}</td><td class="num inc">{{ d.assets.stockBroughtInBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Returned to suppliers' | t }}</td><td class="num exp">{{ d.assets.stockReturnedBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Used: feed, medicine, consumables' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.stockConsumedBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Written off' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.stockWrittenOffBdt | number: '1.2-2' }}</td></tr>
+              <tr class="opening"><td>{{ 'Opening stock value' | t }}</td><td class="num">{{ d.assets.inventoryOpeningBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(+) Bought (cash or credit)' | t }}</td><td class="num inc">{{ d.assets.stockPurchasedBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(+) Opening / owner-supplied stock' | t }}</td><td class="num inc">{{ d.assets.stockBroughtInBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Returned to suppliers' | t }}</td><td class="num exp">{{ d.assets.stockReturnedBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Used: feed, medicine, consumables' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.stockConsumedBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Written off' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.stockWrittenOffBdt | money:2:false }}</td></tr>
             </tbody>
-            <tfoot><tr><td>{{ 'Closing stock value' | t }}</td><td class="num">{{ d.assets.inventoryClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+            <tfoot><tr><td>{{ 'Closing stock value' | t }}</td><td class="num">{{ d.assets.inventoryClosingBdt | money:2:false }}</td></tr></tfoot>
           </table>
           <table class="t">
             <thead><tr><th>{{ 'গবাদিপশু / Livestock (at cost)' | t }}</th><th class="num" style="width: 130px;">{{ 'Amount (৳)' | t }}</th></tr></thead>
             <tbody>
-              <tr class="opening"><td>{{ 'Opening herd value' | t }}</td><td class="num">{{ d.assets.livestockOpeningBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(+) Animals bought' | t }}</td><td class="num inc">{{ d.assets.animalsPurchasedBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(+) Animals brought in by owner' | t }}</td><td class="num inc">{{ d.assets.animalsBroughtInBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Cost of animals sold / slaughtered' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.costOfAnimalsSoldBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Mortality loss' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.mortalityLossBdt | number: '1.2-2' }}</td></tr>
+              <tr class="opening"><td>{{ 'Opening herd value' | t }}</td><td class="num">{{ d.assets.livestockOpeningBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(+) Animals bought' | t }}</td><td class="num inc">{{ d.assets.animalsPurchasedBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(+) Animals brought in by owner' | t }}</td><td class="num inc">{{ d.assets.animalsBroughtInBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Cost of animals sold / slaughtered' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.costOfAnimalsSoldBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Mortality loss' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ d.assets.mortalityLossBdt | money:2:false }}</td></tr>
             </tbody>
-            <tfoot><tr><td>{{ 'Closing herd value' | t }}</td><td class="num">{{ d.assets.livestockClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+            <tfoot><tr><td>{{ 'Closing herd value' | t }}</td><td class="num">{{ d.assets.livestockClosingBdt | money:2:false }}</td></tr></tfoot>
           </table>
           @if (d.assets.livestockCarriedOpeningBdt || d.assets.livestockCarriedClosingBdt) {
             <table class="t">
               <thead><tr><th>{{ 'Animals on the farm: feed & care to date' | t }}</th><th class="num" style="width: 130px;">{{ 'Amount (৳)' | t }}</th></tr></thead>
               <tbody>
-                <tr class="opening"><td>{{ 'At the start' | t }}</td><td class="num">{{ (d.assets.livestockCarriedOpeningBdt ?? 0) | number: '1.2-2' }}</td></tr>
+                <tr class="opening"><td>{{ 'At the start' | t }}</td><td class="num">{{ (d.assets.livestockCarriedOpeningBdt ?? 0) | money:2:false }}</td></tr>
               </tbody>
-              <tfoot><tr><td>{{ 'At the end' | t }}</td><td class="num">{{ (d.assets.livestockCarriedClosingBdt ?? 0) | number: '1.2-2' }}</td></tr></tfoot>
+              <tfoot><tr><td>{{ 'At the end' | t }}</td><td class="num">{{ (d.assets.livestockCarriedClosingBdt ?? 0) | money:2:false }}</td></tr></tfoot>
             </table>
             <p class="note">{{ carriedCostNote | t }}</p>
           }
@@ -281,22 +284,22 @@
           <table class="t">
             <thead><tr><th>{{ 'পাওনা / Owed by customers (1100)' | t }}</th><th class="num" style="width: 130px;">{{ 'Amount (৳)' | t }}</th></tr></thead>
             <tbody>
-              <tr class="opening"><td>{{ 'Opening receivables' | t }}</td><td class="num">{{ c.receivablesOpeningBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(+) Sold on credit' | t }}</td><td class="num inc">{{ c.creditSalesBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Collected' | t }} <span class="note" style="display: inline;">{{ '→ cash in' | t }}</span></td><td class="num exp">{{ c.collectedBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Bad debts written off' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ c.badDebtsBdt | number: '1.2-2' }}</td></tr>
+              <tr class="opening"><td>{{ 'Opening receivables' | t }}</td><td class="num">{{ c.receivablesOpeningBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(+) Sold on credit' | t }}</td><td class="num inc">{{ c.creditSalesBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Collected' | t }} <span class="note" style="display: inline;">{{ '→ cash in' | t }}</span></td><td class="num exp">{{ c.collectedBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Bad debts written off' | t }} <span class="note" style="display: inline;">{{ '→ expenses' | t }}</span></td><td class="num exp">{{ c.badDebtsBdt | money:2:false }}</td></tr>
             </tbody>
-            <tfoot><tr><td>{{ 'Closing receivables' | t }}</td><td class="num">{{ c.receivablesClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+            <tfoot><tr><td>{{ 'Closing receivables' | t }}</td><td class="num">{{ c.receivablesClosingBdt | money:2:false }}</td></tr></tfoot>
           </table>
           <table class="t">
             <thead><tr><th>{{ 'দেনা / Owed to suppliers (2100)' | t }}</th><th class="num" style="width: 130px;">{{ 'Amount (৳)' | t }}</th></tr></thead>
             <tbody>
-              <tr class="opening"><td>{{ 'Opening payables' | t }}</td><td class="num">{{ c.payablesOpeningBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(+) Bought on credit' | t }}</td><td class="num inc">{{ c.creditPurchasesBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Paid to suppliers' | t }} <span class="note" style="display: inline;">{{ '→ cash out' | t }}</span></td><td class="num exp">{{ c.paidToSuppliersBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) Returns & waivers' | t }}</td><td class="num exp">{{ c.returnsAndWaiversBdt | number: '1.2-2' }}</td></tr>
+              <tr class="opening"><td>{{ 'Opening payables' | t }}</td><td class="num">{{ c.payablesOpeningBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(+) Bought on credit' | t }}</td><td class="num inc">{{ c.creditPurchasesBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Paid to suppliers' | t }} <span class="note" style="display: inline;">{{ '→ cash out' | t }}</span></td><td class="num exp">{{ c.paidToSuppliersBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) Returns & waivers' | t }}</td><td class="num exp">{{ c.returnsAndWaiversBdt | money:2:false }}</td></tr>
             </tbody>
-            <tfoot><tr><td>{{ 'Closing payables' | t }}</td><td class="num">{{ c.payablesClosingBdt | number: '1.2-2' }}</td></tr></tfoot>
+            <tfoot><tr><td>{{ 'Closing payables' | t }}</td><td class="num">{{ c.payablesClosingBdt | money:2:false }}</td></tr></tfoot>
           </table>
         </div>
       }
@@ -307,20 +310,20 @@
         <table class="t">
           <thead><tr><th style="width: 52px;">{{ 'Code' | t }}</th><th>{{ 'খাত / Item' | t }}</th><th class="num" style="width: 140px;">{{ 'In (৳)' | t }}</th><th class="num" style="width: 140px;">{{ 'Out (৳)' | t }}</th></tr></thead>
           <tbody>
-            <tr><td class="muted">3010</td><td>{{ 'বিনিয়োগ মূলধন গ্রহণ / Investor capital received' | t }}</td><td class="num inc">{{ d.capital.investorCapitalInBdt | number: '1.2-2' }}</td><td></td></tr>
-            <tr><td class="muted">3010</td><td>{{ 'মূলধন উত্তোলন / Capital withdrawn by investors' | t }}</td><td></td><td class="num exp">{{ d.capital.investorWithdrawalBdt | number: '1.2-2' }}</td></tr>
-            <tr><td class="muted">3110</td><td>{{ 'লভ্যাংশ বণ্টন / Profit distributed to investors' | t }}</td><td></td><td class="num exp">{{ d.capital.profitDistributedBdt | number: '1.2-2' }}</td></tr>
-            <tr><td class="muted">3200</td><td>{{ "মালিকের মূলধন / Owner's capital introduced" | t }}</td><td class="num inc">{{ d.capital.ownerCapitalInBdt | number: '1.2-2' }}</td><td></td></tr>
-            <tr><td class="muted">3210</td><td>{{ "মালিকের উত্তোলন / Owner's drawings" | t }}</td><td></td><td class="num exp">{{ d.capital.ownerDrawingBdt | number: '1.2-2' }}</td></tr>
-            <tr><td class="muted">2010</td><td>{{ 'ঋণ গ্রহণ / Loan received' | t }}</td><td class="num inc">{{ d.capital.loanReceivedBdt | number: '1.2-2' }}</td><td></td></tr>
-            <tr><td class="muted">2010</td><td>{{ 'ঋণের আসল পরিশোধ / Loan principal repaid' | t }}</td><td></td><td class="num exp">{{ d.capital.loanRepaidBdt | number: '1.2-2' }}</td></tr>
-            <tr><td class="muted">5300</td><td>{{ 'ঋণের সুদ / Loan interest paid' | t }} <span class="note" style="display: inline;">{{ '(expense — in P&L, shown for reference)' | t }}</span></td><td></td><td class="num muted">{{ d.capital.loanInterestPaidBdt | number: '1.2-2' }}</td></tr>
+            <tr><td class="muted">3010</td><td>{{ 'বিনিয়োগ মূলধন গ্রহণ / Investor capital received' | t }}</td><td class="num inc">{{ d.capital.investorCapitalInBdt | money:2:false }}</td><td></td></tr>
+            <tr><td class="muted">3010</td><td>{{ 'মূলধন উত্তোলন / Capital withdrawn by investors' | t }}</td><td></td><td class="num exp">{{ d.capital.investorWithdrawalBdt | money:2:false }}</td></tr>
+            <tr><td class="muted">3110</td><td>{{ 'লভ্যাংশ বণ্টন / Profit distributed to investors' | t }}</td><td></td><td class="num exp">{{ d.capital.profitDistributedBdt | money:2:false }}</td></tr>
+            <tr><td class="muted">3200</td><td>{{ "মালিকের মূলধন / Owner's capital introduced" | t }}</td><td class="num inc">{{ d.capital.ownerCapitalInBdt | money:2:false }}</td><td></td></tr>
+            <tr><td class="muted">3210</td><td>{{ "মালিকের উত্তোলন / Owner's drawings" | t }}</td><td></td><td class="num exp">{{ d.capital.ownerDrawingBdt | money:2:false }}</td></tr>
+            <tr><td class="muted">2010</td><td>{{ 'ঋণ গ্রহণ / Loan received' | t }}</td><td class="num inc">{{ d.capital.loanReceivedBdt | money:2:false }}</td><td></td></tr>
+            <tr><td class="muted">2010</td><td>{{ 'ঋণের আসল পরিশোধ / Loan principal repaid' | t }}</td><td></td><td class="num exp">{{ d.capital.loanRepaidBdt | money:2:false }}</td></tr>
+            <tr><td class="muted">5300</td><td>{{ 'ঋণের সুদ / Loan interest paid' | t }} <span class="note" style="display: inline;">{{ '(expense — in P&L, shown for reference)' | t }}</span></td><td></td><td class="num muted">{{ d.capital.loanInterestPaidBdt | money:2:false }}</td></tr>
           </tbody>
           <tfoot>
             <tr>
               <td colspan="2">{{ 'নিট মূলধন প্রবাহ / Net capital flow' | t }}</td>
               <td colspan="2" class="num" [class.inc]="d.capital.netCapitalFlowBdt >= 0" [class.exp]="d.capital.netCapitalFlowBdt < 0">
-                {{ d.capital.netCapitalFlowBdt | number: '1.2-2' }}
+                {{ d.capital.netCapitalFlowBdt | money:2:false }}
               </td>
             </tr>
           </tfoot>
@@ -351,26 +354,26 @@
                     <td class="sl">{{ n + 1 }}</td>
                     <td class="bold">{{ i.name }} @if (!i.isActive) { <span class="badge" style="color: #6b7280;">{{ 'Inactive' | t }}</span> }
                       @if (i.phone) { <div class="note">{{ i.phone }}</div> }</td>
-                    <td class="num">{{ i.openingCapitalBdt | number: '1.2-2' }}</td>
-                    <td class="num inc">{{ i.contributedInPeriodBdt | number: '1.2-2' }}</td>
-                    <td class="num exp">{{ i.withdrawnInPeriodBdt | number: '1.2-2' }}</td>
-                    <td class="num bold">{{ i.closingCapitalBdt | number: '1.2-2' }}</td>
+                    <td class="num">{{ i.openingCapitalBdt | money:2:false }}</td>
+                    <td class="num inc">{{ i.contributedInPeriodBdt | money:2:false }}</td>
+                    <td class="num exp">{{ i.withdrawnInPeriodBdt | money:2:false }}</td>
+                    <td class="num bold">{{ i.closingCapitalBdt | money:2:false }}</td>
                     <td class="num">{{ i.shareCount | number }}</td>
                     <td class="num">{{ i.ownershipPercentage | number: '1.0-2' }}%</td>
-                    <td class="num">{{ i.shareMarketValueBdt | number: '1.2-2' }}</td>
+                    <td class="num">{{ i.shareMarketValueBdt | money:2:false }}</td>
                   </tr>
                 }
               </tbody>
               <tfoot>
                 <tr>
                   <td colspan="2">{{ 'মোট / Total' | t }}</td>
-                  <td class="num">{{ investorTotals().opening | number: '1.2-2' }}</td>
-                  <td class="num inc">{{ investorTotals().contributed | number: '1.2-2' }}</td>
-                  <td class="num exp">{{ investorTotals().withdrawn | number: '1.2-2' }}</td>
-                  <td class="num">{{ investorTotals().closing | number: '1.2-2' }}</td>
+                  <td class="num">{{ investorTotals().opening | money:2:false }}</td>
+                  <td class="num inc">{{ investorTotals().contributed | money:2:false }}</td>
+                  <td class="num exp">{{ investorTotals().withdrawn | money:2:false }}</td>
+                  <td class="num">{{ investorTotals().closing | money:2:false }}</td>
                   <td class="num">{{ investorTotals().shares | number }}</td>
                   <td></td>
-                  <td class="num">{{ investorTotals().shareValue | number: '1.2-2' }}</td>
+                  <td class="num">{{ investorTotals().shareValue | money:2:false }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -386,12 +389,12 @@
         <div class="two">
           <table class="t">
             <tbody>
-              <tr><td>{{ 'নিট পরিচালন মুনাফা / Net operating profit' | t }}</td><td class="num bold">{{ d.profitShare.netOperatingProfitBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ '(−) দাতব্য সংরক্ষণ / Charity reserve ({value}%)' | t: { value: (d.profitShare.charityPercentage | number: '1.0-2') } }}</td><td class="num exp">{{ d.profitShare.charityAmountBdt | number: '1.2-2' }}</td></tr>
-              <tr class="sub"><td>{{ 'বণ্টনযোগ্য মুনাফা / Distributable profit' | t }}</td><td class="num">{{ d.profitShare.distributableProfitBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ "বিনিয়োগকারীদের প্রাপ্য / Investors' entitlement" | t }}</td><td class="num cap">{{ d.profitShare.totalEntitledBdt | number: '1.2-2' }}</td></tr>
-              <tr><td>{{ 'এই সময়ে প্রদত্ত / Paid out in period' | t }}</td><td class="num exp">{{ d.profitShare.distributedInPeriodBdt | number: '1.2-2' }}</td></tr>
-              <tr class="grand"><td>{{ 'খামারে সংরক্ষিত / Retained by farm' | t }}</td><td class="num">{{ d.profitShare.retainedProfitBdt | number: '1.2-2' }}</td></tr>
+              <tr><td>{{ 'নিট পরিচালন মুনাফা / Net operating profit' | t }}</td><td class="num bold">{{ d.profitShare.netOperatingProfitBdt | money:2:false }}</td></tr>
+              <tr><td>{{ '(−) দাতব্য সংরক্ষণ / Charity reserve ({value}%)' | t: { value: (d.profitShare.charityPercentage | number: '1.0-2') } }}</td><td class="num exp">{{ d.profitShare.charityAmountBdt | money:2:false }}</td></tr>
+              <tr class="sub"><td>{{ 'বণ্টনযোগ্য মুনাফা / Distributable profit' | t }}</td><td class="num">{{ d.profitShare.distributableProfitBdt | money:2:false }}</td></tr>
+              <tr><td>{{ "বিনিয়োগকারীদের প্রাপ্য / Investors' entitlement" | t }}</td><td class="num cap">{{ d.profitShare.totalEntitledBdt | money:2:false }}</td></tr>
+              <tr><td>{{ 'এই সময়ে প্রদত্ত / Paid out in period' | t }}</td><td class="num exp">{{ d.profitShare.distributedInPeriodBdt | money:2:false }}</td></tr>
+              <tr class="grand"><td>{{ 'খামারে সংরক্ষিত / Retained by farm' | t }}</td><td class="num">{{ d.profitShare.retainedProfitBdt | money:2:false }}</td></tr>
             </tbody>
           </table>
           <div class="tw">
@@ -402,9 +405,9 @@
                   <tr>
                     <td>{{ i.name }} @if (i.agreedProfitSharePercentage != null) { <span class="badge Capital">{{ 'Agreed' | t }}</span> }</td>
                     <td class="num">{{ i.profitSharePercentage | number: '1.0-2' }}%</td>
-                    <td class="num cap">{{ i.profitEntitledInPeriodBdt | number: '1.2-2' }}</td>
-                    <td class="num exp">{{ i.profitPaidInPeriodBdt | number: '1.2-2' }}</td>
-                    <td class="num bold" [class.exp]="i.profitPayableBdt < 0">{{ i.profitPayableBdt | number: '1.2-2' }}</td>
+                    <td class="num cap">{{ i.profitEntitledInPeriodBdt | money:2:false }}</td>
+                    <td class="num exp">{{ i.profitPaidInPeriodBdt | money:2:false }}</td>
+                    <td class="num bold" [class.exp]="i.profitPayableBdt < 0">{{ i.profitPayableBdt | money:2:false }}</td>
                   </tr>
                 } @empty {
                   <tr><td colspan="5" class="center muted">{{ 'No investors to share profit with.' | t }}</td></tr>
@@ -414,9 +417,9 @@
                 <tfoot>
                   <tr>
                     <td colspan="2">{{ 'মোট / Total' | t }}</td>
-                    <td class="num">{{ investorTotals().entitled | number: '1.2-2' }}</td>
-                    <td class="num">{{ investorTotals().paid | number: '1.2-2' }}</td>
-                    <td class="num">{{ investorTotals().payable | number: '1.2-2' }}</td>
+                    <td class="num">{{ investorTotals().entitled | money:2:false }}</td>
+                    <td class="num">{{ investorTotals().paid | money:2:false }}</td>
+                    <td class="num">{{ investorTotals().payable | money:2:false }}</td>
                   </tr>
                 </tfoot>
               }
@@ -463,8 +466,8 @@
                       <td>{{ s.investorName }} @if (s.counterpartyInvestorName) { <span class="note" style="display: inline;">↔ {{ s.counterpartyInvestorName }}</span> }</td>
                       <td>{{ s.type | t }}</td>
                       <td class="num">{{ s.shareCount | number }}</td>
-                      <td class="num">{{ s.pricePerShareBdt | number: '1.2-2' }}</td>
-                      <td class="num">{{ s.totalAmountBdt | number: '1.2-2' }}</td>
+                      <td class="num">{{ s.pricePerShareBdt | money:2:false }}</td>
+                      <td class="num">{{ s.totalAmountBdt | money:2:false }}</td>
                     </tr>
                   }
                 </tbody>
@@ -495,24 +498,24 @@
                       @if (l.disbursedInPeriod) { <span class="badge Financing">{{ 'New' | t }}</span> }
                       @if (!l.isActive) { <span class="badge" style="color: #6d28d9;">{{ 'Closed' | t }}</span> }</td>
                     <td>{{ l.disbursementDate | date: 'dd-MM-yy' }}</td>
-                    <td class="num">{{ l.principalAmountBdt | number: '1.2-2' }}</td>
+                    <td class="num">{{ l.principalAmountBdt | money:2:false }}</td>
                     <td class="num">{{ l.interestRatePercent | number: '1.0-2' }}%</td>
-                    <td class="num">{{ l.totalPayableBdt | number: '1.2-2' }}</td>
-                    <td class="num exp">{{ l.repaidInPeriodBdt | number: '1.2-2' }}</td>
-                    <td class="num">{{ l.principalRepaidBdt | number: '1.2-2' }}</td>
-                    <td class="num exp">{{ l.interestPaidBdt | number: '1.2-2' }}</td>
-                    <td class="num bold">{{ l.outstandingPrincipalBdt | number: '1.2-2' }}</td>
+                    <td class="num">{{ l.totalPayableBdt | money:2:false }}</td>
+                    <td class="num exp">{{ l.repaidInPeriodBdt | money:2:false }}</td>
+                    <td class="num">{{ l.principalRepaidBdt | money:2:false }}</td>
+                    <td class="num exp">{{ l.interestPaidBdt | money:2:false }}</td>
+                    <td class="num bold">{{ l.outstandingPrincipalBdt | money:2:false }}</td>
                   </tr>
                 }
               </tbody>
               <tfoot>
                 <tr>
                   <td colspan="2">{{ 'মোট / Total' | t }}</td>
-                  <td class="num">{{ d.loans.totalPrincipalBdt | number: '1.2-2' }}</td>
+                  <td class="num">{{ d.loans.totalPrincipalBdt | money:2:false }}</td>
                   <td colspan="2"></td>
-                  <td class="num">{{ (d.loans.repaidInPeriodBdt + d.loans.interestPaidInPeriodBdt) | number: '1.2-2' }}</td>
-                  <td colspan="2" class="num muted">{{ 'incl. interest still payable: {amount}' | t: { amount: (d.loans.totalOutstandingBdt | number: '1.2-2') } }}</td>
-                  <td class="num">{{ principalDue() | number: '1.2-2' }}</td>
+                  <td class="num">{{ (d.loans.repaidInPeriodBdt + d.loans.interestPaidInPeriodBdt) | money:2:false }}</td>
+                  <td colspan="2" class="num muted">{{ 'incl. interest still payable: {amount}' | t: { amount: (d.loans.totalOutstandingBdt | money:2:false) } }}</td>
+                  <td class="num">{{ principalDue() | money:2:false }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -535,24 +538,24 @@
               @for (t of d.trend; track t.startDate) {
                 <tr>
                   <td>{{ t.label }}</td>
-                  <td class="num inc">{{ t.operatingIncomeBdt | number: '1.2-2' }}</td>
-                  <td class="num exp">{{ t.operatingExpenseBdt | number: '1.2-2' }}</td>
-                  <td class="num bold" [class.inc]="t.netOperatingBdt > 0" [class.exp]="t.netOperatingBdt < 0">{{ t.netOperatingBdt | number: '1.2-2' }}</td>
-                  <td class="num cap">{{ t.capitalInBdt | number: '1.2-2' }}</td>
-                  <td class="num cap">{{ t.capitalOutBdt | number: '1.2-2' }}</td>
-                  <td class="num bold">{{ t.closingBalanceBdt | number: '1.2-2' }}</td>
+                  <td class="num inc">{{ t.operatingIncomeBdt | money:2:false }}</td>
+                  <td class="num exp">{{ t.operatingExpenseBdt | money:2:false }}</td>
+                  <td class="num bold" [class.inc]="t.netOperatingBdt > 0" [class.exp]="t.netOperatingBdt < 0">{{ t.netOperatingBdt | money:2:false }}</td>
+                  <td class="num cap">{{ t.capitalInBdt | money:2:false }}</td>
+                  <td class="num cap">{{ t.capitalOutBdt | money:2:false }}</td>
+                  <td class="num bold">{{ t.closingBalanceBdt | money:2:false }}</td>
                 </tr>
               }
             </tbody>
             <tfoot>
               <tr>
                 <td>{{ 'মোট / Total' | t }}</td>
-                <td class="num inc">{{ trendTotals().income | number: '1.2-2' }}</td>
-                <td class="num exp">{{ trendTotals().expense | number: '1.2-2' }}</td>
-                <td class="num">{{ trendTotals().net | number: '1.2-2' }}</td>
-                <td class="num">{{ trendTotals().capIn | number: '1.2-2' }}</td>
-                <td class="num">{{ trendTotals().capOut | number: '1.2-2' }}</td>
-                <td class="num">{{ d.cash.closingBalanceBdt | number: '1.2-2' }}</td>
+                <td class="num inc">{{ trendTotals().income | money:2:false }}</td>
+                <td class="num exp">{{ trendTotals().expense | money:2:false }}</td>
+                <td class="num">{{ trendTotals().net | money:2:false }}</td>
+                <td class="num">{{ trendTotals().capIn | money:2:false }}</td>
+                <td class="num">{{ trendTotals().capOut | money:2:false }}</td>
+                <td class="num">{{ d.cash.closingBalanceBdt | money:2:false }}</td>
               </tr>
             </tfoot>
           </table>
@@ -571,18 +574,18 @@
             <tbody>
               <tr class="opening">
                 <td class="sl">–</td><td>{{ d.fromDate | date: 'dd-MM-yy' }}</td><td>{{ 'OPENING' | t }}</td><td colspan="2">{{ 'ওপেনিং ব্যালেন্স / Balance brought forward' | t }}</td>
-                <td></td><td></td><td class="num">{{ d.cash.openingBalanceBdt | number: '1.2-2' }}</td>
+                <td></td><td></td><td class="num">{{ d.cash.openingBalanceBdt | money:2:false }}</td>
               </tr>
               @for (e of d.ledger; track e.id; let n = $index) {
                 <tr>
                   <td class="sl">{{ n + 1 }}</td>
                   <td>{{ e.transactionDate | date: 'dd-MM-yy' }}</td>
                   <td class="bold">{{ e.voucherNo }}</td>
-                  <td>{{ e.headName }} <div class="note">{{ e.code }}@if (e.group !== 'Operating') { · {{ e.group | t }} }</div></td>
+                  <td>{{ e.headName | t }} <div class="note">{{ e.code }}@if (e.group !== 'Operating') { · {{ e.group | t }} }</div></td>
                   <td>{{ e.description }} @if (e.isAutomated) { <span class="badge auto">{{ 'Auto' | t }}</span> }</td>
-                  <td class="num inc">{{ e.inflowBdt ? (e.inflowBdt | number: '1.2-2') : '' }}</td>
-                  <td class="num exp">{{ e.outflowBdt ? (e.outflowBdt | number: '1.2-2') : '' }}</td>
-                  <td class="num" [class.exp]="e.runningBalanceBdt < 0">{{ e.runningBalanceBdt | number: '1.2-2' }}</td>
+                  <td class="num inc">{{ e.inflowBdt ? (e.inflowBdt | money:2:false) : '' }}</td>
+                  <td class="num exp">{{ e.outflowBdt ? (e.outflowBdt | money:2:false) : '' }}</td>
+                  <td class="num" [class.exp]="e.runningBalanceBdt < 0">{{ e.runningBalanceBdt | money:2:false }}</td>
                 </tr>
               } @empty {
                 <tr><td colspan="8" class="center muted">{{ 'No transactions in this period.' | t }}</td></tr>
@@ -591,9 +594,9 @@
             <tfoot>
               <tr class="grand">
                 <td colspan="5">{{ 'ক্লোজিং ব্যালেন্স / Closing balance' | t }}</td>
-                <td class="num inc">{{ d.cash.totalInflowBdt | number: '1.2-2' }}</td>
-                <td class="num exp">{{ d.cash.totalOutflowBdt | number: '1.2-2' }}</td>
-                <td class="num">{{ d.cash.closingBalanceBdt | number: '1.2-2' }}</td>
+                <td class="num inc">{{ d.cash.totalInflowBdt | money:2:false }}</td>
+                <td class="num exp">{{ d.cash.totalOutflowBdt | money:2:false }}</td>
+                <td class="num">{{ d.cash.closingBalanceBdt | money:2:false }}</td>
               </tr>
             </tfoot>
           </table>

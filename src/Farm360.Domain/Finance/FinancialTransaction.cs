@@ -53,8 +53,30 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
     /// <inheritdoc cref="LedgerVetPostedAnimalId"/>
     public decimal? LedgerVetPostedBdt { get; private set; }
 
-    /// <summary>True when the posting moves money in or out of the cash book.</summary>
-    public bool AffectsCash => Settlement == SettlementAccount.Cash;
+    /// <summary>
+    /// The money account (cash in hand, bank, mobile wallet) a cash posting moved money in or out of.
+    /// Null only on non-cash postings, or on a cash posting not yet saved: the farm's default account
+    /// is filled in on save, so null on a cash row always means "the default account".
+    /// </summary>
+    public Guid? MoneyAccountId { get; private set; }
+
+    /// <summary>
+    /// The other half of a paired posting: the opposite leg of a transfer between money accounts, or
+    /// the partner capital contribution booked for a spend the partner paid directly (and back).
+    /// </summary>
+    public Guid? LinkedTransactionId { get; private set; }
+
+    /// <summary>One leg of a transfer between the farm's own money accounts (no farm-level cash moves).</summary>
+    public bool IsAccountTransfer => Category == TransactionCategory.AccountTransfer;
+
+    /// <summary>
+    /// True when the posting moves money in or out of the farm's cash book. A transfer between two
+    /// of the farm's own accounts moves money between accounts but not in or out of the farm.
+    /// </summary>
+    public bool AffectsCash => Settlement == SettlementAccount.Cash && !IsAccountTransfer;
+
+    /// <summary>True when the posting changes the balance of a money account (transfers included).</summary>
+    public bool MovesMoneyAccount => Settlement == SettlementAccount.Cash;
 
     private FinancialTransaction() { } // For EF Core
 
@@ -74,7 +96,8 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
         bool isAutomated = false,
         string? sourceModule = null,
         SettlementAccount settlement = SettlementAccount.Cash,
-        Guid? sourceDocumentId = null)
+        Guid? sourceDocumentId = null,
+        Guid? moneyAccountId = null)
     {
         if (amountBdt < 0)
             throw new ArgumentException("Transaction amount cannot be negative.", nameof(amountBdt));
@@ -96,7 +119,8 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
             IsAutomated = isAutomated,
             SourceModule = sourceModule,
             Settlement = settlement,
-            SourceDocumentId = sourceDocumentId
+            SourceDocumentId = sourceDocumentId,
+            MoneyAccountId = settlement == SettlementAccount.Cash ? moneyAccountId : null
         };
         
         // Use the protected SetTenantId pattern from AuditableEntity
@@ -158,6 +182,23 @@ public sealed class FinancialTransaction : AuditableEntity, IAggregateRoot
         Description = description?.Trim() ?? string.Empty;
         Notes = notes?.Trim() ?? string.Empty;
         Settlement = settlement;
+        if (settlement != SettlementAccount.Cash)
+            MoneyAccountId = null;
+    }
+
+    /// <summary>
+    /// Puts a cash posting in a money account. Ignored for non-cash postings (stock consumed, credit
+    /// deals): they move no money until paid, and the payment is its own posting.
+    /// </summary>
+    public void AssignMoneyAccount(Guid? moneyAccountId)
+    {
+        MoneyAccountId = Settlement == SettlementAccount.Cash ? moneyAccountId : null;
+    }
+
+    /// <summary>Pairs this posting with its other half (see <see cref="LinkedTransactionId"/>); null unpairs it.</summary>
+    public void LinkTo(Guid? transactionId)
+    {
+        LinkedTransactionId = transactionId;
     }
 
     /// <summary>Links a legacy posting to its source document (used by the ledger repair tool).</summary>

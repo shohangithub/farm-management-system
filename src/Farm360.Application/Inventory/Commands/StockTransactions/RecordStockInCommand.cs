@@ -23,7 +23,12 @@ public sealed record RecordStockInCommand(
     string? Notes = null,
     StockFundingSource FundingSource = StockFundingSource.CashPurchase,
     CreditTermsRequest? Credit = null,
-    Guid? UnitId = null) : IRequest<Guid>;
+    Guid? UnitId = null,
+    Guid? MoneyAccountId = null,
+    Guid? PaidByPartnerId = null) : IRequest<Guid>;
+// Paid from: MoneyAccountId (null = the farm's default account), OR Credit (owed to the supplier),
+// OR PaidByPartnerId (a partner paid the supplier directly: a cash purchase plus that partner's
+// capital contribution). FundingSource OwnerContribution is kept for older clients.
 // Quantity and UnitCostBdt are in UnitId (e.g. 4 "Bag (50 kg)" at ৳2,900 a bag); stock is kept in the item's base unit.
 
 public sealed class RecordStockInCommandValidator : AbstractValidator<RecordStockInCommand>
@@ -40,6 +45,10 @@ public sealed class RecordStockInCommandValidator : AbstractValidator<RecordStoc
             .Must(c => c is null)
             .When(x => x.FundingSource == StockFundingSource.OwnerContribution)
             .WithMessage("Owner-supplied stock is not bought, so it cannot be on credit.");
+        RuleFor(x => x.PaidByPartnerId)
+            .Must(p => p is null)
+            .When(x => x.Credit is not null || x.FundingSource == StockFundingSource.OwnerContribution)
+            .WithMessage("Choose one: paid from an account, on credit, or paid directly by a partner.");
         RuleFor(x => x.Credit!.PaidNowBdt)
             .GreaterThanOrEqualTo(0)
             .LessThan(x => x.Quantity * x.UnitCostBdt)
@@ -59,6 +68,7 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
     private readonly ITradeCreditService _credit;
     private readonly ISupplierRepository _suppliers;
     private readonly Farm360.Application.Inventory.Units.IUnitService _units;
+    private readonly IMoneyAccountService? _money;
 
     public RecordStockInCommandHandler(
         IInventoryItemRepository itemRepository,
@@ -69,8 +79,10 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
         ILedgerPostingService ledgerPosting,
         ITradeCreditService credit,
         ISupplierRepository suppliers,
-        Farm360.Application.Inventory.Units.IUnitService units)
+        Farm360.Application.Inventory.Units.IUnitService units,
+        IMoneyAccountService? money = null)
     {
+        _money = money;
         _units = units;
         _ledgerPosting = ledgerPosting;
         _credit = credit;
@@ -145,7 +157,12 @@ public sealed class RecordStockInCommandHandler : IRequestHandler<RecordStockInC
 
             await _credit.OpenAsync(posting, new CreditTerms(
                 party, credit.PartyPhone ?? supplier?.Phone, credit.DueDate, credit.PaidNowBdt,
-                credit.PaymentMethod, credit.Notes, supplier?.Id), cancellationToken);
+                credit.PaymentMethod, credit.Notes, supplier?.Id, credit.MoneyAccountId ?? request.MoneyAccountId), cancellationToken);
+        }
+        else if (posting is not null && _money is not null && request.FundingSource != StockFundingSource.OwnerContribution)
+        {
+            // Paid from the chosen account, or directly by a partner (books their capital too).
+            await _money.ApplyAsync(posting, new PaymentSource(request.MoneyAccountId, request.PaidByPartnerId), cancellationToken);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

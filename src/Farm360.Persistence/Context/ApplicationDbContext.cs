@@ -174,6 +174,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<Farm360.Domain.Finance.Accounting.BalanceSheetEntry> BalanceSheetEntries => Set<Farm360.Domain.Finance.Accounting.BalanceSheetEntry>();
     public DbSet<Farm360.Domain.Finance.Accounting.FixedAsset> FixedAssets => Set<Farm360.Domain.Finance.Accounting.FixedAsset>();
     public DbSet<Investor> Investors => Set<Investor>();
+    public DbSet<MoneyAccount> MoneyAccounts => Set<MoneyAccount>();
     public DbSet<InvestorTransaction> InvestorTransactions => Set<InvestorTransaction>();
     public DbSet<FarmShareConfig> FarmShareConfigs => Set<FarmShareConfig>();
     public DbSet<ShareHolding> ShareHoldings => Set<ShareHolding>();
@@ -278,6 +279,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         FixupNewChildEntityStates();
+        await AssignDefaultMoneyAccountsAsync(cancellationToken);
 
         var newlyAddedEntities = ChangeTracker.Entries()
             .Where(e => e.State == EntityState.Added)
@@ -300,6 +302,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public override int SaveChanges()
     {
         FixupNewChildEntityStates();
+        AssignDefaultMoneyAccountsAsync(CancellationToken.None).GetAwaiter().GetResult();
 
         var newlyAddedEntities = ChangeTracker.Entries()
             .Where(e => e.State == EntityState.Added)
@@ -314,6 +317,42 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Every cash posting belongs to a money account. A posting saved without one (every caller that
+    /// predates money accounts, and any that does not let the user choose) goes to its farm's default
+    /// account — created here, the first time, for a farm that has none yet.
+    /// </summary>
+    private async Task AssignDefaultMoneyAccountsAsync(CancellationToken cancellationToken)
+    {
+        var unassigned = ChangeTracker.Entries<FinancialTransaction>()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified
+                        && e.Entity.MoneyAccountId == null
+                        && e.Entity.MovesMoneyAccount)
+            .Select(e => e.Entity)
+            .ToList();
+        if (unassigned.Count == 0)
+            return;
+
+        foreach (var farm in unassigned.GroupBy(t => t.FarmId))
+        {
+            var farmId = farm.Key;
+            var account = ChangeTracker.Entries<MoneyAccount>()
+                              .Where(e => e.State != EntityState.Deleted && e.Entity.FarmId == farmId && e.Entity.IsDefault && !e.Entity.IsDeleted)
+                              .Select(e => e.Entity)
+                              .FirstOrDefault()
+                          ?? await MoneyAccounts.IgnoreQueryFilters()
+                              .FirstOrDefaultAsync(a => a.FarmId == farmId && a.IsDefault && !a.IsDeleted, cancellationToken);
+            if (account is null)
+            {
+                account = MoneyAccount.CreateDefault(farm.First().TenantId, farmId);
+                MoneyAccounts.Add(account);
+            }
+
+            foreach (var posting in farm)
+                posting.AssignMoneyAccount(account.Id);
+        }
     }
 
     /// <summary>

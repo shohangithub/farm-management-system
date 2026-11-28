@@ -76,6 +76,7 @@ export const BN_REPORTS: Record<string, string> = {
   'Could not load animals -- try again': 'পশুর তালিকা লোড করা যায়নি — আবার চেষ্টা করুন',
   'Choose a farm above, or in the top bar, to search its animals.': 'পশু খুঁজতে উপরে বা উপরের বারে একটি খামার বেছে নিন।',
   '-- None --': '-- কিছু নয় --',
+  'Default account': 'মূল খাতা',
   'Choose a farm above, or in the top bar, first.': 'আগে উপরে বা উপরের বারে একটি খামার বেছে নিন।',
   'Could not load the list -- try again.': 'তালিকা লোড করা যায়নি — আবার চেষ্টা করুন।',
   'Nothing found for this farm.': 'এই খামারে কিছু পাওয়া যায়নি।',

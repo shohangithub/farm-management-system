@@ -27,6 +27,8 @@ interface BatchPnLReportView extends BatchPnLReport {
   unrealisedValueBdt?: number;
   estimatedTotalProfitBdt?: number;
   estimatedRoiPercent?: number;
+  unweighedAtCostAnimals?: number;
+  unweighedAtCostValueBdt?: number;
 }
 
 @Component({
@@ -138,6 +140,9 @@ interface BatchPnLReportView extends BatchPnLReport {
             <h3 class="text-2xl font-bold text-amber-900 dark:text-amber-100">
               {{ (report.unrealisedValueBdt ?? 0) | money }}
             </h3>
+            <p *ngIf="(report.unweighedAtCostAnimals ?? 0) > 0" class="text-xs text-amber-700/80 dark:text-amber-300 mt-1">
+              {{ '{n} valued at cost (no weight yet): {amount}' | t: { n: report.unweighedAtCostAnimals, amount: ((report.unweighedAtCostValueBdt ?? 0) | money) } }}
+            </p>
           </div>
           <div class="bg-gray-50/50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
             <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">{{ 'Estimated Total P&L' | t }}</p>

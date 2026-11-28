@@ -14,10 +14,10 @@ import { InventoryItem, Supplier } from '../../../models/inventory.models';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import { UnitPickerComponent, UnitSelection } from '../../unit-picker/unit-picker.component';
 import {
-  CreditTermsFieldsComponent,
-  buildCreditTermsGroup,
-  toCreditTerms,
-} from '../../../../finance/components/credit-terms-fields/credit-terms-fields.component';
+  PaidFromComponent,
+  buildPaidFromGroup,
+  toPaidFrom,
+} from '../../../../finance/components/paid-from/paid-from.component';
 
 import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { NotificationService } from '../../../../../shared/services/notification.service';
@@ -37,7 +37,7 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
     MatSelectModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    CreditTermsFieldsComponent,
+    PaidFromComponent,
     UnitPickerComponent,
     TranslatePipe
   ],
@@ -128,21 +128,11 @@ import { I18nService } from '../../../../../core/i18n/i18n.service';
             </mat-form-field>
           </div>
 
-          <!-- Decides the accounting entry: a paid purchase moves cash into stock; opening or
-               owner-supplied stock is the owner's capital. Neither is an expense until used. -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>{{ 'How was this stock paid for?' | t }}</mat-label>
-            <mat-select formControlName="fundingSource">
-              <mat-option value="CashPurchase">{{ 'Bought by the farm (paid now or on credit)' | t }}</mat-option>
-              <mat-option value="OwnerContribution">{{ 'Opening stock / brought in by owner (no farm payment)' | t }}</mat-option>
-            </mat-select>
-            <mat-hint>{{ 'Stock is an asset in the books; it becomes a cost when it is fed, used or written off.' | t }}</mat-hint>
-          </mat-form-field>
-
-          @if (form.value.fundingSource === 'CashPurchase') {
-            <app-credit-terms-fields [group]="credit" kind="Payable" [total]="purchaseTotal()"
-              [requireParty]="false" [partyPlaceholder]="'Selected supplier' | t"></app-credit-terms-fields>
-          }
+          <!-- Paid from a money account, on credit to the supplier, or directly by a partner
+               (booked as that partner's capital). Stock is an asset until it is used. -->
+          <app-paid-from [group]="paidFrom" direction="out" [allowCredit]="true" creditKind="Payable"
+            [amount]="purchaseTotal()" [requireParty]="false" [partyPlaceholder]="'Selected supplier' | t"></app-paid-from>
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 m-0 -mt-2">{{ 'Stock is an asset in the books; it becomes a cost when it is fed, used or written off.' | t }}</p>
 
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>{{ 'Notes / Comments' | t }}</mat-label>
@@ -194,8 +184,8 @@ export class StockInDialogComponent implements OnInit {
     fundingSource: ['CashPurchase']
   });
 
-  /** Paid in full now, or on credit to the supplier (Accounts Payable). */
-  readonly credit = buildCreditTermsGroup(this.fb, false);
+  /** Paid from an account, on credit to the supplier (Accounts Payable), or by a partner. */
+  readonly paidFrom = buildPaidFromGroup(this.fb, false);
 
   purchaseTotal(): number | null {
     const v = this.form.value;
@@ -250,7 +240,13 @@ export class StockInDialogComponent implements OnInit {
     this.error.set('');
 
     const formVal = this.form.getRawValue();
-    const credit = formVal.fundingSource === 'CashPurchase' ? toCreditTerms(this.credit.getRawValue()) : null;
+    const source = toPaidFrom(this.paidFrom.getRawValue());
+    const credit = source.credit;
+    if (this.paidFrom.value.mode === 'partner' && !source.paidByPartnerId) {
+      this.isSubmitting.set(false);
+      this.error.set(this.i18n.t('Choose the partner who paid.'));
+      return;
+    }
     if (credit && !credit.partyName && !formVal.supplierId) {
       this.isSubmitting.set(false);
       this.error.set(this.i18n.t('Choose the supplier (or enter their name) for a purchase on credit.'));
@@ -263,8 +259,12 @@ export class StockInDialogComponent implements OnInit {
     }
 
     const request = {
-      credit,
       ...formVal,
+      credit,
+      moneyAccountId: source.moneyAccountId,
+      paidByPartnerId: source.paidByPartnerId,
+      // Partner-paid stock is a farm purchase plus that partner's capital, never "owner contribution".
+      fundingSource: 'CashPurchase',
       farmId: this.data.farmId,
       supplierId: formVal.supplierId ? formVal.supplierId : null,
       invoiceNumber: formVal.invoiceNumber ? formVal.invoiceNumber : null,

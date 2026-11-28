@@ -75,6 +75,8 @@ export class FinanceSubnavComponent {
   readonly everyday: FinanceNavLink[] = [
     { path: '/finance', icon: 'dashboard', label: 'Overview', exact: true },
     { path: '/finance/transactions', icon: 'receipt_long', label: 'Ledger' },
+    { path: '/finance/money-accounts', icon: 'account_balance_wallet', label: 'Money accounts' },
+    { path: '/finance/partners', icon: 'handshake', label: 'Partners' },
     { path: '/finance/credit', icon: 'request_quote', label: 'Payables & Receivables' },
   ];
 
@@ -94,7 +96,6 @@ export class FinanceSubnavComponent {
         { path: '/finance/accounts-setup', icon: 'tune', label: 'Accounts Setup' },
         { path: '/finance/fixed-assets', icon: 'agriculture', label: 'Fixed Assets' },
         { path: '/finance/loans', icon: 'account_balance', label: 'Loans & Liabilities' },
-        { path: '/finance/investors', icon: 'groups', label: 'Investors' },
         { path: '/finance/accounting-health', icon: 'fact_check', label: 'Accounting Health' },
       ]
     },
@@ -102,8 +103,8 @@ export class FinanceSubnavComponent {
 
   isActive(link: FinanceNavLink): boolean {
     const path = (this.url() || '').split(/[?#]/)[0];
-    // Farm Shares is reached from the Investors page, so it highlights Investors.
-    if (link.path === '/finance/investors' && path.startsWith('/finance/shares')) return true;
+    // Farm Shares and the old investor screens are reached from Partners, so they highlight Partners.
+    if (link.path === '/finance/partners' && (path.startsWith('/finance/shares') || path.startsWith('/finance/investors'))) return true;
     return path === link.path || path.startsWith(link.path + '/');
   }
 

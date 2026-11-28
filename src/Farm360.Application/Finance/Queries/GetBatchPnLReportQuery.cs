@@ -63,6 +63,8 @@ public class GetBatchPnLReportQueryHandler : IRequestHandler<GetBatchPnLReportQu
         decimal totalCost = 0m;
         decimal unrealisedValue = 0m;
         var onHand = 0;
+        var unweighed = 0;
+        decimal unweighedValue = 0m;
         foreach (var animal in animals)
         {
             ledgers.TryGetValue(animal.Id, out var ledger);
@@ -72,9 +74,23 @@ public class GetBatchPnLReportQueryHandler : IRequestHandler<GetBatchPnLReportQu
             if (_valuation.IsOnHand(animal))
             {
                 onHand++;
-                unrealisedValue += prices is null
+                var price = prices?.For(animal);
+                var valuedAtCost = price?.ValuedAtCost ?? _valuation.Policy == Farm360.Domain.BusinessRules.AnimalValuationPolicy.CostBasis;
+                if (!valuedAtCost && animal.LatestWeightKg is not > 0m)
+                {
+                    // Not weighed yet: a weight-based value would be 0, so carry the animal at what
+                    // it was bought for. Weighed animals are valued at market by weight, which never
+                    // adds the feed and care spent, so neither does this.
+                    var atCost = _valuation.PurchaseCostBdt(animal, ledger);
+                    unweighed++;
+                    unweighedValue += atCost;
+                    unrealisedValue += atCost;
+                    continue;
+                }
+
+                unrealisedValue += price is null
                     ? _valuation.CurrentValue(animal, ledger, cost)
-                    : _valuation.CurrentValue(animal, ledger, cost, prices.For(animal));
+                    : _valuation.CurrentValue(animal, ledger, cost, price);
             }
         }
 
@@ -101,7 +117,9 @@ public class GetBatchPnLReportQueryHandler : IRequestHandler<GetBatchPnLReportQu
             onHand,
             Math.Round(unrealisedValue, 2),
             Math.Round(estimatedProfit, 2),
-            Math.Round(estimatedRoi, 4));
+            Math.Round(estimatedRoi, 4),
+            unweighed,
+            Math.Round(unweighedValue, 2));
     }
 
     private async Task<List<Animal>> LoadBatchAnimalsAsync(Guid farmId, Guid batchId, CancellationToken cancellationToken)

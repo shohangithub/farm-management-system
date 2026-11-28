@@ -64,5 +64,13 @@ public enum TransactionCategory
     /// <summary>Owner's own capital brought in — cash, opening stock or animals.</summary>
     OwnerCapital = 93,
     /// <summary>Cash taken out by the owner for personal use.</summary>
-    OwnerDrawing = 94
+    OwnerDrawing = 94,
+
+    // ── Money accounts ──────────────────────────────────────────────────────
+    /// <summary>
+    /// One leg of a transfer between two of the farm's money accounts (e.g. bank → cash in hand).
+    /// The out-leg is Expense-type, the in-leg Income-type, both settled through Cash: each account's
+    /// balance moves, total cash does not, and nothing reaches profit &amp; loss.
+    /// </summary>
+    AccountTransfer = 95
 }

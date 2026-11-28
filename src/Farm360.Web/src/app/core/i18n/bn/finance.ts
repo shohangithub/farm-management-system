@@ -809,4 +809,18 @@ export const BN_FINANCE: Record<string, string> = {
   // UI audit: plain wording
   'Sell shares': 'শেয়ার বিক্রি করুন',
   'Share settings': 'শেয়ারের সেটিং',
+  // ── Paid from (finance forms) ──
+  'Money a partner or the owner puts in is recorded under Finance → Partners, not as income.':
+    'অংশীদার বা মালিকের দেওয়া টাকা আয় নয় — তা হিসাব-নিকাশ → অংশীদার থেকে লিখুন।',
+  'Bought (paid now, on credit or by a partner)': 'কেনা (এখন পরিশোধ, বাকিতে বা অংশীদার দিয়েছেন)',
+  'Edit Partner': 'অংশীদারের তথ্য সম্পাদনা',
+  'Add Partner': 'অংশীদার যোগ করুন',
+  'Update partner details': 'অংশীদারের তথ্য হালনাগাদ করুন',
+  'Add a partner (the owner too) and the capital they put in. Profit is shared by capital.':
+    'একজন অংশীদার (মালিকও) এবং তাঁর দেওয়া মূলধন যোগ করুন। লাভ ভাগ হয় মূলধন অনুযায়ী।',
+  'Partner Full Name': 'অংশীদারের পূর্ণ নাম',
+  'Old agreed share % (not used)': 'পুরোনো চুক্তির অংশ % (ব্যবহার হয় না)',
+  'Clear it to remove': 'মুছে দিলে বাদ যাবে',
+  "Profit is split by capital (each partner's capital × days in the farm). This old percentage is kept on record only.":
+    'লাভ ভাগ হয় মূলধন অনুযায়ী (প্রত্যেক অংশীদারের মূলধন × খামারে থাকা দিন)। এই পুরোনো শতাংশ শুধু রেকর্ডে রাখা আছে।',
 };

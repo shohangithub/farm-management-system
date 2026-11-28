@@ -58,6 +58,9 @@ public static class ApplicationServiceExtensions
         services.AddScoped<Farm360.Application.Finance.Services.ITradeCreditService, Farm360.Application.Finance.Services.TradeCreditService>();
         services.AddScoped<Farm360.Application.Finance.Services.ILivestockCarriedCostService, Farm360.Application.Finance.Services.LivestockCarriedCostService>();
         services.AddScoped<Farm360.Application.Finance.Services.IFinancialStatementEngine, Farm360.Application.Finance.Services.FinancialStatementEngine>();
+        // Money accounts (cash / bank / wallet), partner-paid spends and "not enough money" warnings.
+        services.AddScoped<Farm360.Application.Finance.Services.IMoneyAccountService, Farm360.Application.Finance.Services.MoneyAccountService>();
+        services.AddScoped<Farm360.Application.Common.Interfaces.IOperationWarnings, Farm360.Application.Common.Interfaces.OperationWarnings>();
 
         // ── Feeding: per-animal feed allocation (docs/32 GAP-1) ──────────────
         services.AddScoped<Farm360.Application.Feeding.Services.IFeedAllocationService, Farm360.Application.Feeding.Services.FeedAllocationService>();

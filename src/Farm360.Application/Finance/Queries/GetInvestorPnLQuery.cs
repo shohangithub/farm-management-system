@@ -50,30 +50,21 @@ public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, I
 
         var netFarmProfit = operatingRevenue - operatingExpenses;
 
-        // 5% goes to charity if net profit is positive; rest is distributable to investors
-        const decimal charityPercentage = 5.0m;
-        decimal charityAmount = netFarmProfit > 0 ? Math.Round(netFarmProfit * (charityPercentage / 100m), 2) : 0m;
-        decimal distributableProfit = netFarmProfit - charityAmount;
+        // 5% goes to charity if net profit is positive; the rest is shared by the partners.
+        var (charityAmount, distributableProfit) = PartnerCapital.Distributable(netFarmProfit);
+        const decimal charityPercentage = PartnerCapital.CharityPercentage;
 
         var investors = await _investorRepository.GetByFarmIdAsync(request.FarmId, includeTransactions: true, cancellationToken: cancellationToken);
         var activeInvestors = investors.Where(i => i.IsActive).ToList();
 
         var totalActiveCapital = activeInvestors.Sum(i => i.CurrentCapitalBdt);
 
-        // Agreed percentages and capital-based shares must never co-exist on the SAME 100% pool --
-        // an investor with no explicit agreement should only draw from whatever percentage the
-        // agreed investors haven't already claimed, split by capital among the other non-agreed
-        // investors. Previously every non-agreed investor's share was computed against TOTAL
-        // active capital regardless of what agreed investors already took, so e.g. one investor
-        // agreed at 80% plus another defaulting to 50% of total capital allocated 130% of the
-        // farm's distributable profit -- more than existed.
-        decimal totalAgreedPct = activeInvestors
-            .Where(i => i.AgreedProfitSharePercentage.HasValue)
-            .Sum(i => i.AgreedProfitSharePercentage!.Value);
-        decimal remainingPctForNonAgreed = Math.Max(0m, 100m - totalAgreedPct);
-        decimal totalNonAgreedCapital = activeInvestors
-            .Where(i => !i.AgreedProfitSharePercentage.HasValue)
-            .Sum(i => i.CurrentCapitalBdt);
+        // Partnership rule: profit is split by capital, time-weighted — each partner's capital times
+        // the days it was in the farm during the period (capital-days). A partner who joined half-way
+        // through gets half the weight of the same money held all period. Agreed percentages from
+        // the older investor screen are kept on record but no longer used to split profit.
+        var shares = PartnerCapital.TimeWeightedShares(investors, fromDay, toDay);
+        var allocations = PartnerCapital.Split(Math.Round(distributableProfit, 2), shares);
 
         var investorShares = new List<InvestorShareDto>();
         decimal totalDistributedProfit = 0m;
@@ -85,22 +76,9 @@ public class GetInvestorPnLQueryHandler : IRequestHandler<GetInvestorPnLQuery, I
                 ? Math.Round((inv.CurrentCapitalBdt / totalActiveCapital) * 100m, 2)
                 : 0m;
 
-            decimal effectiveSharePct;
-            if (inv.AgreedProfitSharePercentage.HasValue)
-            {
-                effectiveSharePct = inv.AgreedProfitSharePercentage.Value;
-            }
-            else if (inv.IsActive && totalNonAgreedCapital > 0)
-            {
-                effectiveSharePct = Math.Round((inv.CurrentCapitalBdt / totalNonAgreedCapital) * remainingPctForNonAgreed, 2);
-            }
-            else
-            {
-                effectiveSharePct = 0m;
-            }
+            decimal effectiveSharePct = Math.Round(shares.GetValueOrDefault(inv.Id) * 100m, 2);
 
-            // Profit sharing is based on distributable profit (after charity deduction)
-            decimal allocatedProfit = Math.Round(distributableProfit * (effectiveSharePct / 100m), 2);
+            decimal allocatedProfit = allocations.GetValueOrDefault(inv.Id);
             // Paid against THIS period's profit: distributions dated inside the period (all-time when
             // no period is given). Using the lifetime total made every period look over-distributed.
             decimal distributedProfit = inv.Transactions

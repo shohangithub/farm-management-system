@@ -35,7 +35,7 @@ public sealed class OpenTradeBillCommandHandler(
             throw new NotFoundException(nameof(FinancialTransaction), r.TransactionId);
 
         var bill = await credit.OpenAsync(posting,
-            new CreditTerms(r.PartyName, r.PartyPhone, r.DueDate, r.PaidNowBdt, r.PaymentMethod, r.Notes),
+            new CreditTerms(r.PartyName, r.PartyPhone, r.DueDate, r.PaidNowBdt, r.PaymentMethod, r.Notes, MoneyAccountId: r.MoneyAccountId),
             cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -55,7 +55,8 @@ public sealed class RecordBillPaymentCommandHandler(
     ITradeBillRepository bills,
     ITradeCreditService credit,
     IUnitOfWork unitOfWork,
-    IFarmClock? clock = null) : IRequestHandler<RecordBillPaymentCommand, TradeBillDto>
+    IFarmClock? clock = null,
+    IMoneyAccountService? money = null) : IRequestHandler<RecordBillPaymentCommand, TradeBillDto>
 {
     private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
 
@@ -66,7 +67,14 @@ public sealed class RecordBillPaymentCommandHandler(
         if (r.PaymentDate > _clock.Today)
             throw new InvalidOperationException("A payment cannot be dated in the future.");
 
-        await credit.RecordPaymentAsync(bill, r.AmountBdt, r.PaymentDate, r.Method, r.Reference, r.Notes, cancellationToken);
+        if (money is not null && bill.Kind == Farm360.Domain.Finance.Enums.TradeBillKind.Payable && r.PaidByPartnerId is null)
+        {
+            var account = await money.ResolveAsync(bill.TenantId, bill.FarmId, r.MoneyAccountId, cancellationToken);
+            await money.WarnIfShortAsync(account, r.AmountBdt, cancellationToken: cancellationToken);
+        }
+
+        await credit.RecordPaymentAsync(bill, r.AmountBdt, r.PaymentDate, r.Method, r.Reference, r.Notes,
+            new PaymentSource(r.MoneyAccountId, r.PaidByPartnerId), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return bill.ToDto(await bills.GetPaymentsAsync(bill.Id, cancellationToken), _clock.Today);

@@ -31,6 +31,8 @@ internal static class StatementWording
 
     public static string Day(ReportContext context, DateOnly day)
     {
+        if (context.Language == ReportLanguage.Bn)
+            return AnimalLabels.Day(day, ReportLanguage.Bn, context.BengaliNumerals);
         var text = day.ToString("d MMM yyyy", CultureInfo.InvariantCulture);
         return context.BengaliNumerals ? ReportValueFormatter.ToBengaliNumerals(text) : text;
     }

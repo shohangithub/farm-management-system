@@ -227,7 +227,7 @@ public sealed class TreatmentWithdrawalReportDefinition : ReportDefinition<Treat
 
                 rows.Add(new TreatmentWithdrawalReportRow(
                     withheld ? withheldSection : periodSection,
-                    animal is null ? "—" : AnimalLabels.Tag(animal),
+                    animal is null ? "—" : AnimalLabels.Tag(animal, context),
                     t.StartDate,
                     string.IsNullOrWhiteSpace(t.Diagnosis) ? "—" : t.Diagnosis,
                     t.MedicationName,

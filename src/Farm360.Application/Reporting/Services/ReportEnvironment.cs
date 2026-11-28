@@ -84,6 +84,8 @@ internal sealed class ReportEnvironment : IReportEnvironment
     private readonly IBreedRepository _breeds;
     private readonly IInventoryItemRepository _items;
     private readonly IFileStorageService? _files;
+    private readonly IMoneyAccountRepository? _moneyAccounts;
+    private readonly IInvestorRepository? _investors;
 
     private IReadOnlyList<ReportFarmOption>? _farmCache;
     private readonly Dictionary<Guid, ReportLetterhead> _letterheadCache = [];
@@ -103,7 +105,9 @@ internal sealed class ReportEnvironment : IReportEnvironment
         IShedRepository sheds,
         IBreedRepository breeds,
         IInventoryItemRepository items,
-        IFileStorageService? files = null)
+        IFileStorageService? files = null,
+        IMoneyAccountRepository? moneyAccounts = null,
+        IInvestorRepository? investors = null)
     {
         _tenant = tenant;
         _currentUser = currentUser;
@@ -119,6 +123,8 @@ internal sealed class ReportEnvironment : IReportEnvironment
         _breeds = breeds;
         _items = items;
         _files = files;
+        _moneyAccounts = moneyAccounts;
+        _investors = investors;
     }
 
     public async Task<IReadOnlyList<ReportFarmOption>> GetAccessibleFarmsAsync(CancellationToken cancellationToken)
@@ -236,6 +242,12 @@ internal sealed class ReportEnvironment : IReportEnvironment
 
             case ReportParameterType.InventoryItem:
                 return (await _items.GetByIdAsync(id, cancellationToken).ConfigureAwait(false))?.Name;
+
+            case ReportParameterType.MoneyAccount:
+                return _moneyAccounts is null ? null : (await _moneyAccounts.GetByIdAsync(id, cancellationToken).ConfigureAwait(false))?.Name;
+
+            case ReportParameterType.Partner:
+                return _investors is null ? null : (await _investors.GetByIdAsync(id, cancellationToken).ConfigureAwait(false))?.Name;
 
             default:
                 return null;

@@ -345,7 +345,7 @@ internal static class FixedAssetPostings
             ReferenceId: asset.Code), ct);
     }
 
-    public static Task PostDisposalAsync(ILedgerPostingService ledger, FixedAsset asset, CancellationToken ct) =>
+    public static Task PostDisposalAsync(ILedgerPostingService ledger, FixedAsset asset, CancellationToken ct, Guid? moneyAccountId = null) =>
         // Zero proceeds (scrapped, or disposal cancelled) removes the posting.
         ledger.PostAsync(new LedgerPosting(
             asset.TenantId,
@@ -356,7 +356,8 @@ internal static class FixedAssetPostings
             asset.Id,
             Module,
             $"Sale of fixed asset — {asset.Name}",
-            ReferenceId: asset.Code), ct);
+            ReferenceId: asset.Code,
+            MoneyAccountId: moneyAccountId), ct);
 }
 
 public class CreateFixedAssetCommandHandler(
@@ -365,7 +366,8 @@ public class CreateFixedAssetCommandHandler(
     ILedgerPostingService ledger,
     ITradeCreditService credit,
     IUnitOfWork unitOfWork,
-    IFarmClock? clock = null) : IRequestHandler<CreateFixedAssetCommand, FixedAssetDto>
+    IFarmClock? clock = null,
+    IMoneyAccountService? money = null) : IRequestHandler<CreateFixedAssetCommand, FixedAssetDto>
 {
     private readonly IFarmClock _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
 
@@ -389,7 +391,12 @@ public class CreateFixedAssetCommandHandler(
         {
             var c = r.Credit!;
             await credit.OpenAsync(posting,
-                new CreditTerms(c.PartyName, c.PartyPhone, c.DueDate, c.PaidNowBdt, c.PaymentMethod, c.Notes), cancellationToken);
+                new CreditTerms(c.PartyName, c.PartyPhone, c.DueDate, c.PaidNowBdt, c.PaymentMethod, c.Notes,
+                    MoneyAccountId: c.MoneyAccountId ?? r.MoneyAccountId), cancellationToken);
+        }
+        else if (posting is not null && money is not null)
+        {
+            await money.ApplyAsync(posting, new PaymentSource(r.MoneyAccountId, r.PaidByPartnerId), cancellationToken);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -460,7 +467,7 @@ public class DisposeFixedAssetCommandHandler(
 
         asset.RecordDisposal(DateOnly.FromDateTime(command.Request.DisposalDate), command.Request.ProceedsBdt);
         assets.Update(asset);
-        await FixedAssetPostings.PostDisposalAsync(ledger, asset, cancellationToken);
+        await FixedAssetPostings.PostDisposalAsync(ledger, asset, cancellationToken, command.Request.MoneyAccountId);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return asset.ToDto(_clock.Today, await FixedAssetPostings.FiscalMonthAsync(settings, command.FarmId, cancellationToken));

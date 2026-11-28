@@ -8,6 +8,7 @@ import { WorkingContextService } from '../../../../core/services/working-context
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { AnimalPickerComponent } from '../../../../shared/components/animal-picker/animal-picker.component';
 import { CreditTermsFieldsComponent, buildCreditTermsGroup, toCreditTerms } from '../credit-terms-fields/credit-terms-fields.component';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../paid-from/paid-from.component';
 
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -21,7 +22,8 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
     MatDialogModule,
     MatIconModule,
     AnimalPickerComponent,
-    CreditTermsFieldsComponent
+    CreditTermsFieldsComponent,
+    PaidFromComponent
   ],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -59,10 +61,12 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
               <option value="MilkSale">{{ 'Milk & Dairy Sale (দুধ বিক্রয়)' | t }}</option>
               <option value="ByproductSale">{{ 'By-product / Manure Sale (উপজাত বিক্রয়)' | t }}</option>
               <option value="OtherIncome">{{ 'Other Farm Income (অন্যান্য আয়)' | t }}</option>
-              <option value="OwnerCapital">{{ "Owner's Capital - money put in (মালিকের মূলধন)" | t }}</option>
             </select>
             <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug pt-1">
               {{ 'Animal sales are recorded by selling the animal in Livestock (that also books its cost). Loans and investor money are recorded on the Loans and Investors pages.' | t }}
+            </p>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug m-0">
+              {{ 'Money a partner or the owner puts in is recorded under Finance → Partners, not as income.' | t }}
             </p>
           </div>
 
@@ -86,6 +90,9 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
             <app-credit-terms-fields [group]="creditGroup" kind="Receivable" [total]="form.value.amountBdt"
               [partyPlaceholder]="'Customer / dairy / buyer'"></app-credit-terms-fields>
           }
+
+          <app-paid-from [group]="paidFromGroup" direction="in" [allowPartner]="false"
+            [amount]="form.value.amountBdt"></app-paid-from>
 
           <div class="space-y-1.5">
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -157,7 +164,8 @@ export class IncomeFormDialogComponent implements OnInit {
       description: ['', Validators.required],
       animalId: [null],
       notes: [''],
-      credit: buildCreditTermsGroup(this.fb)
+      credit: buildCreditTermsGroup(this.fb),
+      paidFrom: buildPaidFromGroup(this.fb)
     });
 
     this.form.get('category')!.valueChanges.subscribe(category => {
@@ -167,6 +175,10 @@ export class IncomeFormDialogComponent implements OnInit {
 
   /** Cash-only heads (owner money, interest) can never be on credit. */
   private static readonly CASH_ONLY = ['OwnerCapital'];
+
+  get paidFromGroup(): FormGroup {
+    return this.form.get('paidFrom') as FormGroup;
+  }
 
   get creditGroup(): FormGroup {
     return this.form.get('credit') as FormGroup;
@@ -188,8 +200,11 @@ export class IncomeFormDialogComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
 
-    const { credit, ...rest } = this.form.value;
-    const payload = { ...rest, credit: this.creditAllowed() ? toCreditTerms(credit) : null };
+    const { credit, paidFrom, ...rest } = this.form.value;
+    const moneyAccountId = toPaidFrom(paidFrom).moneyAccountId;
+    const terms = this.creditAllowed() ? toCreditTerms(credit) : null;
+    // The part received now (credit) or the whole amount goes into the chosen account.
+    const payload = { ...rest, moneyAccountId, credit: terms ? { ...terms, moneyAccountId } : null };
 
     this.financeService.recordIncome(farmId, payload).subscribe({
       next: (result) => {

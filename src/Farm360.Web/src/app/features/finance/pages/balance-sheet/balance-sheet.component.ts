@@ -14,7 +14,7 @@ import { FinanceService } from '../../services/finance.service';
 import { WorkingContextService } from '../../../../core/services/working-context.service';
 import { PdfExportService } from '../../../../shared/services/pdf-export.service';
 import { ReportService } from '../../../reports/services/report.service';
-import { BalanceSheet, BalanceSheetLine } from '../../models/finance.model';
+import { BalanceSheet, BalanceSheetLine, registerSourceText } from '../../models/finance.model';
 import { FinanceSubnavComponent } from '../../components/finance-subnav/finance-subnav.component';
 import { toLocalIsoDate } from '../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
@@ -236,8 +236,8 @@ interface StatementBlock { title: string; totalLabel: string; total: number; pri
             <tbody>
               <tr *ngFor="let r of sheet.reconciliations" class="border-t border-gray-100 dark:border-gray-700/60">
                 <td class="px-4 py-2">
-                  <span class="font-semibold text-gray-800 dark:text-gray-200">{{ r.account }}</span>
-                  <span class="block text-[11px] text-gray-500">{{ r.registerSource }}</span>
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">{{ (i18n.isBangla && r.accountBn) ? r.accountBn : r.account }}</span>
+                  <span class="block text-[11px] text-gray-500">{{ registerSource(r.registerSource) }}</span>
                 </td>
                 <td class="px-4 py-2 text-right font-mono">{{ r.booksBdt | money:2 }}</td>
                 <td class="px-4 py-2 text-right font-mono">{{ r.registerBdt | money:2 }}</td>
@@ -263,6 +263,7 @@ export class BalanceSheetComponent {
   private readonly reportService = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = inject(I18nService);
+  protected readonly registerSource = registerSourceText;
   readonly loadErrorTitle = this.i18n.t("Couldn't load the balance sheet");
 
   @ViewChild('reportSheet') reportSheet?: ElementRef<HTMLElement>;

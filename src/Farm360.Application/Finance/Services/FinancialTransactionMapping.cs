@@ -31,6 +31,8 @@ public static class FinancialTransactionMapping
             AccountCode = head.Code,
             AccountGroup = head.Group,
             AccountClass = head.Class.ToString(),
+            MoneyAccountId = t.MoneyAccountId,
+            LinkedTransactionId = t.LinkedTransactionId,
         };
     }
 }

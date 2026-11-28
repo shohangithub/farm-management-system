@@ -51,4 +51,15 @@ public sealed class InvestorTransaction : AuditableEntity
         tx.SetTenantId(tenantId);
         return tx;
     }
+
+    /// <summary>Restates the amount and date (a spend paid directly by the partner was corrected).</summary>
+    internal void Revise(decimal amountBdt, DateTime transactionDate)
+    {
+        if (amountBdt <= 0)
+            throw new ArgumentException("Transaction amount must be greater than zero.", nameof(amountBdt));
+        AmountBdt = amountBdt;
+        TransactionDate = transactionDate;
+    }
+
+    internal void LinkFinancialTransaction(Guid? financialTransactionId) => FinancialTransactionId = financialTransactionId;
 }

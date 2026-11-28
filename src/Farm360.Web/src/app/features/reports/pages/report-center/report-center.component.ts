@@ -8,7 +8,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ReportService } from '../../services/report.service';
-import { CATEGORY_ICONS, ReportCatalogItem, ReportCategory, ReportLanguage, ReportRunHistoryItem } from '../../models/report.models';
+import { CATEGORY_ICONS, DATE_RANGE_PRESETS, ReportCatalogItem, ReportCategory, ReportLanguage, ReportRunHistoryItem } from '../../models/report.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
@@ -391,8 +391,13 @@ export class ReportCenterComponent implements OnInit {
         const p = report?.parameters.find(x => x.name.toLowerCase() === name.toLowerCase());
         const bn = this.i18n.isBangla;
         const label = (bn ? p?.label.bn || p?.label.en : p?.label.en) ?? name;
-        const isEntity = p && ['Animal', 'Batch', 'Farm', 'Shed', 'Breed', 'InventoryItem'].includes(p.type);
-        const optionLabel = p?.options?.find(o => o.value === value)?.label;
+        const isEntity = p && ['Animal', 'Batch', 'Farm', 'Shed', 'Breed', 'InventoryItem', 'MoneyAccount', 'Partner'].includes(p.type);
+        // Date keywords ("today", "current-month") and ranges ("2026-11-01..2026-11-30") read as words.
+        const optionLabel = p?.options?.find(o => o.value === value)?.label
+          ?? DATE_RANGE_PRESETS.find(o => o.value === value)?.label;
+        if (!optionLabel && typeof value === 'string' && value.includes('..')) {
+          value = value.replace('..', ' – ');
+        }
         const option = optionLabel ? (bn ? optionLabel.bn || optionLabel.en : optionLabel.en) : undefined;
         return `${label}: ${isEntity ? this.i18n.t('selected') : option ?? value}`;
       })

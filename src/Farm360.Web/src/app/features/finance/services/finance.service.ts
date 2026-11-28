@@ -54,7 +54,16 @@ import {
   OpenTradeBillRequest,
   UpdateBillTermsRequest,
   RecordBillPaymentRequest,
-  WriteOffBillRequest
+  WriteOffBillRequest,
+  MoneyAccount,
+  MoneyAccountStatement,
+  MoneyTransfer,
+  SaveMoneyAccountRequest,
+  TransferBetweenAccountsRequest,
+  PartnersOverview,
+  PartnerProfitAllocation,
+  PartnerStatement,
+  WhoseMoney
 } from '../models/finance.model';
 
 @Injectable({
@@ -293,7 +302,7 @@ export class FinanceService {
     return this.http.delete<void>(`${this.getBaseUrl(farmId)}/fixed-assets/${id}`);
   }
 
-  disposeFixedAsset(farmId: string, id: string, body: { disposalDate: string; proceedsBdt: number }): Observable<FixedAsset> {
+  disposeFixedAsset(farmId: string, id: string, body: { disposalDate: string; proceedsBdt: number; moneyAccountId?: string | null }): Observable<FixedAsset> {
     return this.http.post<FixedAsset>(`${this.getBaseUrl(farmId)}/fixed-assets/${id}/dispose`, body);
   }
 
@@ -405,6 +414,71 @@ export class FinanceService {
     let params = new HttpParams();
     if (investorId) params = params.set('investorId', investorId);
     return this.http.get<ShareTransaction[]>(`${this.getBaseUrl(farmId)}/shares/transactions`, { params });
+  }
+
+  // --- Money accounts (cash in hand, bank, mobile wallet) ---
+
+  getMoneyAccounts(farmId: string, includeInactive = true): Observable<MoneyAccount[]> {
+    const params = new HttpParams().set('includeInactive', String(includeInactive));
+    return this.http.get<MoneyAccount[]>(`${this.getBaseUrl(farmId)}/money-accounts`, { params });
+  }
+
+  createMoneyAccount(farmId: string, request: SaveMoneyAccountRequest): Observable<MoneyAccount> {
+    return this.http.post<MoneyAccount>(`${this.getBaseUrl(farmId)}/money-accounts`, this.sanitizePayload(request));
+  }
+
+  updateMoneyAccount(farmId: string, id: string, request: SaveMoneyAccountRequest): Observable<MoneyAccount> {
+    return this.http.put<MoneyAccount>(`${this.getBaseUrl(farmId)}/money-accounts/${id}`, this.sanitizePayload(request));
+  }
+
+  setMoneyAccountActive(farmId: string, id: string, isActive: boolean): Observable<MoneyAccount> {
+    return this.http.patch<MoneyAccount>(`${this.getBaseUrl(farmId)}/money-accounts/${id}/status?isActive=${isActive}`, {});
+  }
+
+  setDefaultMoneyAccount(farmId: string, id: string): Observable<MoneyAccount> {
+    return this.http.post<MoneyAccount>(`${this.getBaseUrl(farmId)}/money-accounts/${id}/default`, {});
+  }
+
+  getMoneyAccountStatement(farmId: string, id: string, fromDate?: string, toDate?: string): Observable<MoneyAccountStatement> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    return this.http.get<MoneyAccountStatement>(`${this.getBaseUrl(farmId)}/money-accounts/${id}/statement`, { params });
+  }
+
+  transferBetweenAccounts(farmId: string, request: TransferBetweenAccountsRequest): Observable<MoneyTransfer> {
+    return this.http.post<MoneyTransfer>(`${this.getBaseUrl(farmId)}/money-accounts/transfers`, this.sanitizePayload(request));
+  }
+
+  deleteMoneyTransfer(farmId: string, transactionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.getBaseUrl(farmId)}/money-accounts/transfers/${transactionId}`);
+  }
+
+  // --- Partners (capital, share, profit allocation) ---
+
+  getPartnersOverview(farmId: string, includeInactive = true): Observable<PartnersOverview> {
+    const params = new HttpParams().set('includeInactive', String(includeInactive));
+    return this.http.get<PartnersOverview>(`${this.getBaseUrl(farmId)}/partners/overview`, { params });
+  }
+
+  getPartnerAllocation(farmId: string, fromDate?: string, toDate?: string): Observable<PartnerProfitAllocation> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    return this.http.get<PartnerProfitAllocation>(`${this.getBaseUrl(farmId)}/partners/allocation`, { params });
+  }
+
+  getPartnerStatement(farmId: string, partnerId: string, fromDate?: string, toDate?: string): Observable<PartnerStatement> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    return this.http.get<PartnerStatement>(`${this.getBaseUrl(farmId)}/partners/${partnerId}/statement`, { params });
+  }
+
+  getWhoseMoney(farmId: string, opts: { fromDate?: string; toDate?: string; animalId?: string; transactionId?: string } = {}): Observable<WhoseMoney> {
+    let params = new HttpParams();
+    for (const [k, v] of Object.entries(opts)) if (v) params = params.set(k, v);
+    return this.http.get<WhoseMoney>(`${this.getBaseUrl(farmId)}/partners/whose-money`, { params });
   }
 
   // --- Helpers ---

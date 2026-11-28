@@ -226,7 +226,7 @@ public sealed class HerdSummaryReportDefinition : ReportDefinition<HerdSummaryRe
             var projectedProfit = projectedValue - totalCost;
 
             rows.Add(((int)a.Status, new HerdSummaryReportRow(
-                TagId: AnimalLabels.Tag(a),
+                TagId: AnimalLabels.Tag(a, context),
                 Breed: breed?.Name ?? SpeciesLabel(a.Species, bn),
                 Sex: SexLabel(a.Sex, bn),
                 Age: ageLabel,

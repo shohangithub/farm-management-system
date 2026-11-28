@@ -139,6 +139,52 @@ public sealed class Investor : AuditableEntity, IAggregateRoot
         return tx;
     }
 
+    /// <summary>
+    /// Restates a capital contribution that mirrors a ledger posting (a spend the partner paid
+    /// directly whose amount or date was corrected). Totals follow.
+    /// </summary>
+    public void ReviseContribution(Guid transactionId, decimal amountBdt, DateTime transactionDate)
+    {
+        var tx = FindTransaction(transactionId);
+        if (tx.Type != InvestorTransactionType.CapitalContribution)
+            throw new InvalidOperationException("Only a capital contribution can be restated this way.");
+        if (amountBdt < tx.AmountBdt && TotalInvestedBdt - (tx.AmountBdt - amountBdt) < TotalWithdrawnBdt)
+            throw new InvalidOperationException("This partner has already withdrawn more than the reduced contribution leaves.");
+
+        TotalInvestedBdt += amountBdt - tx.AmountBdt;
+        tx.Revise(amountBdt, transactionDate);
+    }
+
+    /// <summary>Removes a transaction (its ledger posting is gone) and takes it out of the totals.</summary>
+    public void RemoveTransaction(Guid transactionId)
+    {
+        var tx = FindTransaction(transactionId);
+        switch (tx.Type)
+        {
+            case InvestorTransactionType.CapitalContribution:
+                if (TotalInvestedBdt - tx.AmountBdt < TotalWithdrawnBdt)
+                    throw new InvalidOperationException("This partner has already withdrawn more than the capital left without this contribution.");
+                TotalInvestedBdt -= tx.AmountBdt;
+                break;
+            case InvestorTransactionType.CapitalWithdrawal:
+                TotalWithdrawnBdt -= tx.AmountBdt;
+                break;
+            case InvestorTransactionType.ProfitDistribution:
+                TotalProfitPaidBdt -= tx.AmountBdt;
+                break;
+        }
+
+        _transactions.Remove(tx);
+    }
+
+    /// <summary>Points a transaction at the ledger posting that moved its money.</summary>
+    public void LinkTransaction(Guid transactionId, Guid? financialTransactionId) =>
+        FindTransaction(transactionId).LinkFinancialTransaction(financialTransactionId);
+
+    private InvestorTransaction FindTransaction(Guid transactionId) =>
+        _transactions.Find(t => t.Id == transactionId)
+        ?? throw new InvalidOperationException("That partner transaction was not found.");
+
     public void UpdateDetails(
         string name,
         decimal? agreedProfitSharePercentage,

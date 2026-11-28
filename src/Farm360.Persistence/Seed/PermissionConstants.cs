@@ -150,6 +150,8 @@ public static class PermissionConstants
         /// <summary>Administrative finance operations: accounting repair, overhead allocation,
         /// ledger backfill, share-market and investor capital operations.</summary>
         public const string Admin  = "finance.admin";
+        /// <summary>Open, edit and close money accounts (cash, bank, mobile wallet) and move money between them.</summary>
+        public const string Accounts = "finance.accounts";
     }
 
     // ── Intelligence (simulations, projections, insights) ───────────────────
@@ -251,6 +253,7 @@ public static class PermissionConstants
         (FinanceModule.Edit,   "Finance", "Edit finance records and accounting settings"),
         (FinanceModule.Delete, "Finance", "Delete finance records"),
         (FinanceModule.Admin,  "Finance", "Run finance admin operations (repair, allocation, backfill, share market, investors)"),
+        (FinanceModule.Accounts, "Finance", "Manage money accounts (cash, bank, mobile wallet) and transfers between them"),
 
         (IntelligenceModule.View, "Intelligence", "View insights, projections and simulations"),
         (DashboardModule.View,    "Dashboard",    "View dashboards"),

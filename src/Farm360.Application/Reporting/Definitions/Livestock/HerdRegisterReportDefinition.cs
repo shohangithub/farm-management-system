@@ -160,7 +160,7 @@ public sealed class HerdRegisterReportDefinition : ReportDefinition<HerdRegister
             {
                 var ageMonths = AnimalAge.CompletedMonths(a.DateOfBirth, a.ExitDate ?? today);
                 return new HerdRegisterReportRow(
-                    TagId: AnimalLabels.Tag(a),
+                    TagId: AnimalLabels.Tag(a, context),
                     Batch: a.BatchId is { } b && batches.TryGetValue(b, out var batchName) ? batchName : (bn ? "ব্যাচ নেই" : "Not in a batch"),
                     Species: SpeciesLabel(a.Species, bn),
                     Breed: breeds.TryGetValue(a.BreedId, out var breedName) ? breedName : (bn ? "দেশি / উল্লেখ নেই" : "Native / not recorded"),

@@ -225,9 +225,13 @@ export class InventoryService {
     return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/cancel`, { reason });
   }
 
-  /** Receives the order into stock. Pass credit terms when the supplier is paid later. */
-  fulfillPurchaseOrder(id: string, credit: CreditTerms | null = null): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, { credit });
+  /**
+   * Receives the order into stock. Pass credit terms when the supplier is paid later; otherwise the
+   * money account it was paid from, or the partner who paid the supplier directly.
+   */
+  fulfillPurchaseOrder(id: string, credit: CreditTerms | null = null,
+    moneyAccountId: string | null = null, paidByPartnerId: string | null = null): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/purchase-orders/${id}/fulfill`, { credit, moneyAccountId, paidByPartnerId });
   }
 
   // ── Purchase Returns ────────────────────────────────────────────────────────
@@ -258,8 +262,11 @@ export class InventoryService {
     return this.http.post<{ id: string }>(`${this.baseUrl}/purchase-returns`, request);
   }
 
-  completePurchaseReturn(id: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/purchase-returns/${id}/complete`, {});
+  /** Completes a return; a cash refund from the supplier goes into `moneyAccountId` (null = default account). */
+  completePurchaseReturn(id: string, moneyAccountId: string | null = null): Observable<void> {
+    let params = new HttpParams();
+    if (moneyAccountId) params = params.set('moneyAccountId', moneyAccountId);
+    return this.http.post<void>(`${this.baseUrl}/purchase-returns/${id}/complete`, {}, { params });
   }
 
   cancelPurchaseReturn(id: string, reason: string): Observable<void> {

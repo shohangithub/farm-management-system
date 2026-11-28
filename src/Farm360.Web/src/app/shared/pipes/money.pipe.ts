@@ -20,8 +20,11 @@ export function formatMoney(value: number | string | null | undefined, decimals 
   if (!Number.isFinite(n)) return '—';
   const d = Math.max(0, Math.min(4, decimals));
   const body = formatter(d, d).format(Math.abs(n));
-  const sym = symbol === false ? '' : (symbol === true ? CURRENCY_SYMBOL : symbol) + ' ';
-  return `${n < 0 ? '-' : ''}${sym}${body}`;
+  // Non-breaking space: "৳" never wraps away from its amount in narrow table cells.
+  const sym = symbol === false ? '' : (symbol === true ? CURRENCY_SYMBOL : symbol) + ' ';
+  // No sign for an amount that rounds to zero ("-৳ 0" reads as a debt that isn't there).
+  const negative = n < 0 && Number(Math.abs(n).toFixed(d)) !== 0;
+  return `${negative ? '-' : ''}${sym}${body}`;
 }
 
 /**

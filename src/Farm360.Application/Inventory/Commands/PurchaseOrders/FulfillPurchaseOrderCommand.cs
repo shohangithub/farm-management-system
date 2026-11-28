@@ -11,7 +11,10 @@ using MediatR;
 namespace Farm360.Application.Inventory.Commands.PurchaseOrders;
 
 /// <param name="Credit">Set when the goods were received on credit — the supplier is owed until paid.</param>
-public record FulfillPurchaseOrderCommand(Guid Id, CreditTermsRequest? Credit = null) : IRequest<Unit>, ITransactionalCommand;
+/// <param name="MoneyAccountId">Paid in cash: the account it was paid from (null = the farm's default).</param>
+/// <param name="PaidByPartnerId">Paid directly by a partner out of their own pocket (books their capital).</param>
+public record FulfillPurchaseOrderCommand(Guid Id, CreditTermsRequest? Credit = null, Guid? MoneyAccountId = null, Guid? PaidByPartnerId = null)
+    : IRequest<Unit>, ITransactionalCommand;
 
 public class FulfillPurchaseOrderCommandHandler : IRequestHandler<FulfillPurchaseOrderCommand, Unit>
 {
@@ -20,14 +23,17 @@ public class FulfillPurchaseOrderCommandHandler : IRequestHandler<FulfillPurchas
     private readonly IPublisher _publisher;
     private readonly ITradeCreditService _credit;
     private readonly ISupplierRepository _suppliers;
+    private readonly IMoneyAccountService? _money;
 
     public FulfillPurchaseOrderCommandHandler(
         IPurchaseOrderRepository repository,
         IUnitOfWork unitOfWork,
         IPublisher publisher,
         ITradeCreditService credit,
-        ISupplierRepository suppliers)
+        ISupplierRepository suppliers,
+        IMoneyAccountService? money = null)
     {
+        _money = money;
         _repository = repository;
         _unitOfWork = unitOfWork;
         _publisher = publisher;
@@ -55,14 +61,24 @@ public class FulfillPurchaseOrderCommandHandler : IRequestHandler<FulfillPurchas
         }
 
         // Received on credit: the stock purchase just posted is owed to the supplier, not paid.
+        if (request.Credit is not null && request.PaidByPartnerId is not null)
+            throw new InvalidOperationException("Choose one: on credit, or paid directly by a partner.");
+
         if (request.Credit is { } terms)
         {
             var supplier = await _suppliers.GetByIdAsync(purchaseOrder.SupplierId, cancellationToken);
             var party = string.IsNullOrWhiteSpace(terms.PartyName) ? supplier?.Name ?? "Supplier" : terms.PartyName;
             await _credit.OpenForSourceAsync(purchaseOrder.FarmId, purchaseOrder.Id, TransactionCategory.InventoryPurchase,
                 new CreditTerms(party, terms.PartyPhone ?? supplier?.Phone, terms.DueDate, terms.PaidNowBdt, terms.PaymentMethod,
-                    terms.Notes, purchaseOrder.SupplierId),
+                    terms.Notes, purchaseOrder.SupplierId, terms.MoneyAccountId ?? request.MoneyAccountId),
                 cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        else if (_money is not null)
+        {
+            // Paid on receipt: from the chosen account, or directly by a partner.
+            await _money.ApplyToSourceAsync(purchaseOrder.FarmId, purchaseOrder.Id, TransactionCategory.InventoryPurchase,
+                new PaymentSource(request.MoneyAccountId, request.PaidByPartnerId), cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
         

@@ -24,6 +24,10 @@ export interface FinancialTransaction {
   accountGroup?: string;
   /** Asset, Liability, Equity, Revenue or Expense. */
   accountClass?: string;
+  /** The money account a cash posting went through. */
+  moneyAccountId?: string | null;
+  /** A transfer's other leg, or a partner-paid spend's capital contribution. */
+  linkedTransactionId?: string | null;
 }
 
 export interface PagedFinancialTransactionsResult {
@@ -72,6 +76,8 @@ export interface RecordIncomeRequest {
   shedId?: string;
   /** Set when not paid on the day — raises a customer invoice. */
   credit?: CreditTerms | null;
+  /** The money account the money went into (null = the farm's default). */
+  moneyAccountId?: string | null;
 }
 
 export interface RecordExpenseRequest {
@@ -86,6 +92,10 @@ export interface RecordExpenseRequest {
   shedId?: string;
   /** Set when not paid on the day — raises a supplier bill. */
   credit?: CreditTerms | null;
+  /** The money account it was paid from (null = the farm's default). */
+  moneyAccountId?: string | null;
+  /** Paid directly by this partner: books their capital contribution of the same amount. */
+  paidByPartnerId?: string | null;
 }
 
 export interface UpdateFinancialTransactionRequest {
@@ -129,6 +139,8 @@ export interface CreateLoanRecordRequest {
   disbursementDate: string;
   schedule: string;
   notes?: string;
+  /** The account the loan money was received into. */
+  moneyAccountId?: string | null;
 }
 
 export interface RecordLoanRepaymentRequest {
@@ -136,6 +148,8 @@ export interface RecordLoanRepaymentRequest {
   repaymentDate: string;
   referenceId?: string;
   notes?: string;
+  moneyAccountId?: string | null;
+  paidByPartnerId?: string | null;
 }
 
 export interface AnimalCostLedger {
@@ -216,6 +230,25 @@ export interface ConsolidatedPnLReport {
   farmBreakdown: { [key: string]: FarmPnLSnapshot };
 }
 
+const MONTH_NAMES: Record<string, string> = {
+  Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June',
+  Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December',
+};
+const BENGALI_DIGITS = '০১২৩৪৫৬৭৮৯';
+
+/**
+ * A month label from the API ("Aug 2026") in the interface language: unchanged in English,
+ * "আগস্ট ২০২৬" in Bangla (month name from the dictionary, Bengali digits for the year).
+ */
+export function formatMonthLabel(label: string, bangla: boolean, translate: (text: string) => string): string {
+  if (!bangla || !label) return label;
+  const match = /^([A-Za-z]{3})[a-z]*\s+(\d{4})$/.exec(label.trim());
+  if (!match) return translate(label);
+  const month = MONTH_NAMES[match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()];
+  const year = match[2].replace(/\d/g, d => BENGALI_DIGITS[Number(d)]);
+  return month ? `${translate(month)} ${year}` : label;
+}
+
 export interface MonthlyCashFlowPoint {
   monthLabel: string;
   incomeBdt: number;
@@ -247,6 +280,8 @@ export interface FinancialDashboard {
   /** First day of the fiscal-year-to-date window the YTD figures cover. */
   fiscalYearStart?: string | null;
   fiscalYearStartMonth?: number;
+  /** Cash & bank today, split by money account. */
+  moneyAccounts?: MoneyAccountBreakdown[] | null;
 }
 
 /**
@@ -263,14 +298,14 @@ export const MANUAL_TRANSACTION_CATEGORIES = {
     'Utilities',
     'Transport',
     'MiscellaneousExpense',
-    'InterestExpense',
-    'OwnerDrawing'
+    'InterestExpense'
   ],
+  // Owner / partner money is no longer entered here: it is booked under Finance → Partners so each
+  // partner's capital and share stay right. Old OwnerCapital / OwnerDrawing rows still display.
   Income: [
     'MilkSale',
     'ByproductSale',
-    'OtherIncome',
-    'OwnerCapital'
+    'OtherIncome'
   ]
 };
 
@@ -413,6 +448,8 @@ export interface CreateInvestorRequest {
   nationalId?: string | null;
   notes?: string | null;
   referenceId?: string | null;
+  /** The money account the first contribution goes into (null = the farm's default). */
+  moneyAccountId?: string | null;
 }
 
 export interface UpdateInvestorRequest {
@@ -430,6 +467,8 @@ export interface RecordInvestorTransactionRequest {
   transactionDate: string;
   referenceId?: string | null;
   notes?: string | null;
+  /** The account a contribution goes INTO, or a withdrawal / profit payout comes OUT of. */
+  moneyAccountId?: string | null;
 }
 
 export interface InvestorShare {
@@ -656,7 +695,11 @@ export interface SaveFixedAssetRequest {
   residualValueBdt: number;
   location?: string | null;
   notes?: string | null;
-  credit?: { partyName: string; partyPhone?: string | null; dueDate?: string | null; paidNowBdt?: number } | null;
+  credit?: CreditTerms | null;
+  /** Paid in cash: the account it was paid from (null = the farm's default). */
+  moneyAccountId?: string | null;
+  /** Paid directly by a partner (books their capital contribution). */
+  paidByPartnerId?: string | null;
 }
 
 export interface FixedAssetScheduleLine {
@@ -710,6 +753,8 @@ export interface AccountingIssue {
   count: number;
   amountBdt: number;
   canAutoFix: boolean;
+  /** The records the issue names (e.g. each money account below zero). */
+  items?: { id?: string | null; name: string; amountBdt: number }[] | null;
 }
 
 export interface AccountingHealth {
@@ -927,6 +972,8 @@ export interface CashPosition {
   netCashFlowBdt: number;
   closingBalanceBdt: number;
   transactionCount: number;
+  /** The closing balance split by money account. */
+  accounts?: MoneyAccountBreakdown[] | null;
 }
 
 export interface OperatingStatement {
@@ -1126,6 +1173,8 @@ export interface CreditTerms {
   paidNowBdt?: number;
   paymentMethod?: string | null;
   notes?: string | null;
+  /** The money account the part paid / received now goes through. */
+  moneyAccountId?: string | null;
 }
 
 export interface OpenTradeBillRequest extends CreditTerms {
@@ -1138,6 +1187,10 @@ export interface RecordBillPaymentRequest {
   method?: string | null;
   reference?: string | null;
   notes?: string | null;
+  /** Account the money goes out of (supplier) or into (customer). */
+  moneyAccountId?: string | null;
+  /** A partner paid the supplier directly. */
+  paidByPartnerId?: string | null;
 }
 
 export interface WriteOffBillRequest {
@@ -1245,3 +1298,235 @@ export interface TradeCreditMovement {
 
 /** How a payment was made — all are Cash & Bank in the books; kept for the receipt trail. */
 export const PAYMENT_METHODS = ['Cash', 'Bank', 'bKash', 'Nagad', 'Rocket', 'Cheque'];
+
+
+// ── Money accounts (cash in hand, bank, mobile wallet) ──────────────────────
+
+export type MoneyAccountKind = 'Cash' | 'Bank' | 'MobileWallet';
+
+export const MONEY_ACCOUNT_KINDS: { value: MoneyAccountKind; label: string; icon: string }[] = [
+  { value: 'Cash', label: 'Cash', icon: 'payments' },
+  { value: 'Bank', label: 'Bank account', icon: 'account_balance' },
+  { value: 'MobileWallet', label: 'Mobile wallet (bKash, Nagad…)', icon: 'smartphone' },
+];
+
+export interface MoneyAccount {
+  id: string;
+  farmId: string;
+  name: string;
+  kind: MoneyAccountKind | string;
+  providerName?: string | null;
+  accountNumber?: string | null;
+  branch?: string | null;
+  notes?: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  balanceBdt: number;
+}
+
+export interface SaveMoneyAccountRequest {
+  name: string;
+  kind: MoneyAccountKind | string;
+  providerName?: string | null;
+  accountNumber?: string | null;
+  branch?: string | null;
+  notes?: string | null;
+}
+
+export interface TransferBetweenAccountsRequest {
+  fromAccountId: string;
+  toAccountId: string;
+  amountBdt: number;
+  transferDate: string;
+  referenceId?: string | null;
+  notes?: string | null;
+}
+
+export interface MoneyTransfer {
+  outTransactionId: string;
+  inTransactionId: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amountBdt: number;
+  transferDate: string;
+  referenceId: string;
+}
+
+export interface MoneyAccountLine {
+  transactionId: string;
+  date: string;
+  voucherNo: string;
+  description: string;
+  category: string;
+  categoryName: string;
+  categoryNameBn: string;
+  inBdt: number;
+  outBdt: number;
+  balanceBdt: number;
+  isTransfer: boolean;
+  counterAccountName?: string | null;
+  linkedTransactionId?: string | null;
+  sourceModule?: string | null;
+}
+
+export interface MoneyAccountStatement {
+  account: MoneyAccount;
+  fromDate: string;
+  toDate: string;
+  openingBdt: number;
+  totalInBdt: number;
+  totalOutBdt: number;
+  closingBdt: number;
+  lines: MoneyAccountLine[];
+}
+
+export interface MoneyAccountBreakdown {
+  id: string;
+  name: string;
+  kind: MoneyAccountKind | string;
+  isDefault: boolean;
+  balanceBdt: number;
+}
+
+/** The default account's stored name; shown translated ("হাতে নগদ"). */
+export const DEFAULT_MONEY_ACCOUNT_NAME = 'Cash in hand';
+
+/** An account's display name: the default account's English name goes through the dictionary. */
+export function moneyAccountName(name: string | null | undefined): string {
+  if (!name) return '';
+  return name === DEFAULT_MONEY_ACCOUNT_NAME ? translate(name) : name;
+}
+
+/**
+ * The server describes each register with a count baked in ("Herd: 23 animal(s) on farm at
+ * purchase cost"), so a plain dictionary lookup can't match it. Pull the number out, translate the
+ * pattern, put the number back.
+ */
+export function registerSourceText(text: string | null | undefined): string {
+  if (!text) return '';
+  const m = /\d+/.exec(text);
+  if (!m) return translate(text);
+  const pattern = text.slice(0, m.index) + '{n}' + text.slice(m.index + m[0].length);
+  const translated = translate(pattern, { n: m[0] });
+  return translated === pattern.replace('{n}', m[0]) ? text : translated;
+}
+
+export function moneyAccountIcon(kind: string | null | undefined): string {
+  return kind === 'Bank' ? 'account_balance' : kind === 'MobileWallet' ? 'smartphone' : 'payments';
+}
+
+/**
+ * Where the money for a form came from (or went to). One of: a money account, on credit (বাকি),
+ * or paid directly by a partner (books that partner's capital contribution as well).
+ */
+export type PaidFromMode = 'account' | 'credit' | 'partner';
+
+export interface PaidFromPayload {
+  moneyAccountId: string | null;
+  paidByPartnerId: string | null;
+  credit: CreditTerms | null;
+}
+
+// ── Partners (investors presented as partners; profit split by capital) ─────
+
+export interface PartnerSummary {
+  id: string;
+  name: string;
+  phone?: string | null;
+  isActive: boolean;
+  joinedOn: string;
+  depositedBdt: number;
+  withdrawnBdt: number;
+  capitalBdt: number;
+  sharePercent: number;
+  profitAllocatedBdt: number;
+  profitPaidBdt: number;
+  profitDueBdt: number;
+  equityBdt: number;
+}
+
+export interface PartnersOverview {
+  totalCapitalBdt: number;
+  netAssetsBdt: number;
+  profitAllocatedBdt: number;
+  profitPaidBdt: number;
+  partners: PartnerSummary[];
+}
+
+export interface PartnerAllocationLine {
+  partnerId: string;
+  name: string;
+  capitalDays: number;
+  averageCapitalBdt: number;
+  sharePercent: number;
+  allocatedBdt: number;
+}
+
+export interface PartnerProfitAllocation {
+  fromDate: string;
+  toDate: string;
+  days: number;
+  netProfitBdt: number;
+  charityPercent: number;
+  charityBdt: number;
+  distributableProfitBdt: number;
+  lines: PartnerAllocationLine[];
+}
+
+export interface PartnerLedgerLine {
+  id?: string | null;
+  date: string;
+  type: 'CapitalContribution' | 'CapitalWithdrawal' | 'ProfitDistribution' | 'ProfitAllocation' | string;
+  amountBdt: number;
+  capitalAfterBdt: number;
+  moneyAccountName?: string | null;
+  referenceId?: string | null;
+  notes?: string | null;
+}
+
+export interface NetAssetLine {
+  key: string;
+  name: string;
+  nameBn: string;
+  farmBdt: number;
+  partnerBdt: number;
+}
+
+export interface PartnerStatement {
+  partner: PartnerSummary;
+  fromDate: string;
+  toDate: string;
+  openingCapitalBdt: number;
+  closingCapitalBdt: number;
+  lines: PartnerLedgerLine[];
+  allocation: PartnerProfitAllocation;
+  netAssets: NetAssetLine[];
+  netAssetsBdt: number;
+  partnerNetAssetsBdt: number;
+}
+
+export interface PartnerPart {
+  partnerId: string;
+  name: string;
+  sharePercent: number;
+  amountBdt: number;
+}
+
+export interface WhoseMoneyRow {
+  transactionId: string;
+  date: string;
+  description: string;
+  category: string;
+  categoryName: string;
+  categoryNameBn: string;
+  amountBdt: number;
+  animalId?: string | null;
+  parts: PartnerPart[];
+}
+
+export interface WhoseMoney {
+  partners: { id: string; name: string }[];
+  rows: WhoseMoneyRow[];
+  totalBdt: number;
+  totals: PartnerPart[];
+}

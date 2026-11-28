@@ -19,7 +19,28 @@ export const FINANCE_ROUTES: Routes = [
     title: 'Loans - Farm360 AI'
   },
   {
+    path: 'money-accounts',
+    loadComponent: () => import('./pages/money-accounts/money-accounts.component').then(m => m.MoneyAccountsComponent),
+    title: 'Money Accounts - Farm360 AI'
+  },
+  {
+    path: 'partners',
+    loadComponent: () => import('./pages/partners/partners.component').then(m => m.PartnersComponent),
+    title: 'Partners - Farm360 AI'
+  },
+  {
+    path: 'partners/:id',
+    loadComponent: () => import('./pages/partners/partner-statement.component').then(m => m.PartnerStatementComponent),
+    title: 'Partner Statement - Farm360 AI'
+  },
+  // Investors are presented as Partners; the old list stays reachable for the share-market module.
+  {
     path: 'investors',
+    pathMatch: 'full',
+    redirectTo: 'partners'
+  },
+  {
+    path: 'investors/list',
     loadComponent: () => import('./pages/investor-list/investor-list').then(m => m.InvestorListComponent),
     title: 'Investors & Equity - Farm360 AI'
   },

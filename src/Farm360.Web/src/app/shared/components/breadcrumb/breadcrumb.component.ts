@@ -71,7 +71,13 @@ export class BreadcrumbComponent implements OnChanges {
 
     // Override the very last node if customLastNode is provided by the page
     // (e.g. the animal Tag ID, incident title, protocol name, etc.)
-    if (this.customLastNode && breadcrumbs.length > 0) {
+    // A leaf like `partners/:id` adds no crumb of its own, so the page's name is appended after
+    // its parent ("Finance > Md. Karim") instead of overwriting the parent's crumb.
+    const leafPath = route.routeConfig?.path ?? '';
+    const leafIsParam = leafPath.split('/').pop()?.startsWith(':') ?? false;
+    if (this.customLastNode && leafIsParam) {
+      breadcrumbs.push({ label: this.customLastNode, url: nextUrl });
+    } else if (this.customLastNode && breadcrumbs.length > 0) {
       breadcrumbs[breadcrumbs.length - 1].label = this.customLastNode;
     }
 

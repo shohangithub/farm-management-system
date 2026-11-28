@@ -1,3 +1,4 @@
+import { moneyAccountName } from '../../models/finance.model';
 import {
   ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewEncapsulation, computed, inject, signal, viewChild,
 } from '@angular/core';
@@ -41,6 +42,8 @@ type SectionKey =
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FullAccountsReportComponent {
+  readonly accountName = moneyAccountName;
+
   private readonly finance = inject(FinanceService);
   private readonly context = inject(WorkingContextService);
   private readonly reports = inject(ReportService);

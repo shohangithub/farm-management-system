@@ -201,6 +201,12 @@ export interface RegisterAnimalRequest {
   skipHealthProgramme?: boolean;
   shedId?: string;
   penId?: string;
+  /** Purchase paid from this money account (null = the farm's default). */
+  moneyAccountId?: string | null;
+  /** Purchase paid directly by this partner (books their capital contribution). */
+  paidByPartnerId?: string | null;
+  /** Bought on credit: a supplier bill is raised at registration. */
+  credit?: CreditTerms | null;
 }
 
 export interface UpdateAnimalRequest {
@@ -244,6 +250,8 @@ export interface SellAnimalRequest {
   credit?: CreditTerms | null;
   /** Sell even though a medicine's meat withdrawal period is still running (e.g. sold live). */
   allowDuringMeatWithdrawal?: boolean;
+  /** The money account the sale money goes into (null = the farm's default). */
+  moneyAccountId?: string | null;
 }
 
 export interface QuarantineAnimalRequest {

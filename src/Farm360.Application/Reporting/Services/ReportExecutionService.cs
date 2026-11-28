@@ -421,7 +421,8 @@ public sealed class ReportExecutionService : IReportExecutionService
             switch (parameter.Type)
             {
                 case ReportParameterType.Animal or ReportParameterType.Batch or ReportParameterType.Farm
-                    or ReportParameterType.Shed or ReportParameterType.Breed or ReportParameterType.InventoryItem:
+                    or ReportParameterType.Shed or ReportParameterType.Breed or ReportParameterType.InventoryItem
+                    or ReportParameterType.MoneyAccount or ReportParameterType.Partner:
                     display = Guid.TryParse(raw, out var id) && id != Guid.Empty
                         ? await _environment.DescribeAsync(parameter.Type, id, cancellationToken).ConfigureAwait(false) ?? raw
                         : null;

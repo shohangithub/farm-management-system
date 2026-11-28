@@ -49,14 +49,17 @@ public sealed class CreateFarmCommandHandler : IRequestHandler<CreateFarmCommand
     private readonly ITenantRepository _tenantRepository;
     private readonly ITenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Domain.Finance.Interfaces.IMoneyAccountRepository? _moneyAccounts;
 
     public CreateFarmCommandHandler(
         IFarmRepository repository,
         IBranchRepository branchRepository,
         ITenantRepository tenantRepository,
         ITenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Domain.Finance.Interfaces.IMoneyAccountRepository? moneyAccounts = null)
     {
+        _moneyAccounts = moneyAccounts;
         _repository = repository;
         _branchRepository = branchRepository;
         _tenantRepository = tenantRepository;
@@ -108,6 +111,10 @@ public sealed class CreateFarmCommandHandler : IRequestHandler<CreateFarmCommand
             request.Description);
 
         _repository.Add(farm);
+
+        // Every farm starts with one money account, "Cash in hand", where money lands by default.
+        _moneyAccounts?.Add(Farm360.Domain.Finance.MoneyAccount.CreateDefault(tenantId, farm.Id));
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return farm.Id;
     }

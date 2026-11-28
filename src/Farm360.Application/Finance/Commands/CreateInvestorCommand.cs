@@ -25,7 +25,8 @@ public record CreateInvestorCommand(
     string? Phone = null,
     string? NationalId = null,
     string? Notes = null,
-    string? ReferenceId = null
+    string? ReferenceId = null,
+    Guid? MoneyAccountId = null
 ) : IRequest<InvestorDto>;
 
 public class CreateInvestorCommandHandler : IRequestHandler<CreateInvestorCommand, InvestorDto>
@@ -33,15 +34,18 @@ public class CreateInvestorCommandHandler : IRequestHandler<CreateInvestorComman
     private readonly IInvestorRepository _investorRepository;
     private readonly IFinancialTransactionRepository _transactionRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Farm360.Application.Finance.Services.IMoneyAccountService? _money;
 
     public CreateInvestorCommandHandler(
         IInvestorRepository investorRepository,
         IFinancialTransactionRepository transactionRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Farm360.Application.Finance.Services.IMoneyAccountService? money = null)
     {
         _investorRepository = investorRepository;
         _transactionRepository = transactionRepository;
         _unitOfWork = unitOfWork;
+        _money = money;
     }
 
     public async Task<InvestorDto> Handle(CreateInvestorCommand request, CancellationToken cancellationToken)
@@ -80,6 +84,10 @@ public class CreateInvestorCommandHandler : IRequestHandler<CreateInvestorComman
         // If initial capital was invested, also post an entry to the General Ledger
         if (request.InitialInvestmentBdt > 0)
         {
+            // The money comes INTO a chosen account (default: cash in hand).
+            var account = _money is null
+                ? null
+                : await _money.ResolveAsync(request.TenantId, request.FarmId, request.MoneyAccountId, cancellationToken);
             var glTx = FinancialTransaction.Create(
                 request.TenantId,
                 request.FarmId,
@@ -89,12 +97,15 @@ public class CreateInvestorCommandHandler : IRequestHandler<CreateInvestorComman
                 request.InvestmentDate,
                 request.ReferenceId ?? string.Empty,
                 request.Notes ?? string.Empty,
-                $"Initial capital contribution from investor {investor.Name}",
+                $"Initial capital contribution from partner {investor.Name}",
                 isAutomated: true,
-                sourceModule: "Investors"
+                sourceModule: "Investors",
+                moneyAccountId: account?.Id
             );
 
             await _transactionRepository.AddAsync(glTx, cancellationToken);
+            if (investor.Transactions.FirstOrDefault() is { } first)
+                investor.LinkTransaction(first.Id, glTx.Id);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -103,8 +114,8 @@ public class CreateInvestorCommandHandler : IRequestHandler<CreateInvestorComman
         var allInvestors = await _investorRepository.GetByFarmIdAsync(request.FarmId, cancellationToken: cancellationToken);
         var totalActiveCapital = allInvestors.Where(i => i.IsActive).Sum(i => i.CurrentCapitalBdt);
         
-        decimal effectiveShare = investor.AgreedProfitSharePercentage
-            ?? (totalActiveCapital > 0 ? Math.Round((investor.CurrentCapitalBdt / totalActiveCapital) * 100m, 2) : 0m);
+        // Profit is split by capital (partnership rule); an old agreed percentage is kept but not used.
+            decimal effectiveShare = totalActiveCapital > 0 ? Math.Round((investor.CurrentCapitalBdt / totalActiveCapital) * 100m, 2) : 0m;
 
         return new InvestorDto(
             investor.Id,

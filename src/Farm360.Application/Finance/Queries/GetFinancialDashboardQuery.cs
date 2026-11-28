@@ -25,10 +25,13 @@ public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDas
     private readonly IFarmClock _clock;
 
     private readonly IFinancialStatementEngine _engine;
+    private readonly Farm360.Domain.Finance.Interfaces.IMoneyAccountRepository? _moneyAccounts;
 
     public GetFinancialDashboardQueryHandler(IFinancialStatementEngine engine,
-        IFarmClock? clock = null)
+        IFarmClock? clock = null,
+        Farm360.Domain.Finance.Interfaces.IMoneyAccountRepository? moneyAccounts = null)
     {
+        _moneyAccounts = moneyAccounts;
         _clock = clock ?? Farm360.Application.Common.Time.FarmClock.System;
         _engine = engine;
     }
@@ -130,6 +133,7 @@ public class GetFinancialDashboardQueryHandler : IRequestHandler<GetFinancialDas
         {
             FiscalYearStart = fiscalYearStart.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
             FiscalYearStartMonth = ledger.FiscalYearStartMonth,
+            MoneyAccounts = await MoneyAccountBreakdown.ForAsync(_moneyAccounts, ledger, today, cancellationToken),
         };
     }
 

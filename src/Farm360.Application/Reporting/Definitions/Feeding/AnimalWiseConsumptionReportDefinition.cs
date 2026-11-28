@@ -125,7 +125,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             var animal = await _animals.GetByIdAsync(animalId.Value, cancellationToken).ConfigureAwait(false);
             if (animal is not null)
             {
-                parts.Add(new LocalizedText("Tag ", "ট্যাগ ").For(language) + AnimalLabels.Tag(animal));
+                parts.Add(new LocalizedText("Tag ", "ট্যাগ ").For(language) + AnimalLabels.Tag(animal, context));
                 parts.Add(FeedReportText.Species(animal.Species).For(language));
             }
         }
@@ -217,7 +217,7 @@ public sealed class AnimalWiseConsumptionReportDefinition : ReportDefinition<Ani
             }
             else
             {
-                tagId = AnimalLabels.Tag(animal);
+                tagId = AnimalLabels.Tag(animal, context);
                 var breed = breedsById.TryGetValue(animal.BreedId, out var bName) && !string.IsNullOrWhiteSpace(bName)
                     ? bName
                     : new LocalizedText("Breed not recorded", "জাত রেকর্ড নেই").For(language);

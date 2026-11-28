@@ -1,3 +1,4 @@
+import { CompleteReturnDialogComponent, CompleteReturnDialogResult } from '../../components/dialogs/complete-return-dialog/complete-return-dialog.component';
 import { InventorySubnavComponent } from '../../components/inventory-subnav/inventory-subnav.component';
 import { Component, ChangeDetectionStrategy, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -25,7 +26,6 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { parseApiError } from '../../../../core/utils/error-parser';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
-import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -283,22 +283,18 @@ export class PurchaseReturnListComponent {
   }
 
   onCompleteReturn(ret: PurchaseReturn): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      data: {
-        title: this.i18n.t('Complete Purchase Return'),
-        message: this.i18n.t('Are you sure you want to complete return {ret}? This will immediately deduct {n} item(s) from inventory stock and post a financial reversal of ৳ {amount}.', { ret: ret.returnNumber, n: ret.items.length, amount: ret.totalAmountBdt.toFixed(2) }),
-        confirmText: this.i18n.t('Complete Return'),
-        cancelText: this.i18n.t('Cancel'),
-        isDanger: false
-      }
+    // Confirms, and asks which money account the supplier's cash refund goes into.
+    const dialogRef = this.dialog.open(CompleteReturnDialogComponent, {
+      width: '520px', maxWidth: '95vw',
+      data: { returnNumber: ret.returnNumber, itemCount: ret.items.length, totalAmountBdt: ret.totalAmountBdt },
     });
 
     dialogRef.afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(confirmed => {
-        if (!confirmed) return;
+      .subscribe((result?: CompleteReturnDialogResult) => {
+        if (!result) return;
         this.loading.set(true);
-        this.inventoryService.completePurchaseReturn(ret.id)
+        this.inventoryService.completePurchaseReturn(ret.id, result.moneyAccountId)
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: () => this.refresh(),

@@ -30,7 +30,14 @@ public record AccountingIssueDto(
     int Count,
     decimal AmountBdt,
     bool CanAutoFix
-);
+)
+{
+    /// <summary>The records the issue is about, when it names them (e.g. each money account below zero).</summary>
+    public IReadOnlyList<AccountingIssueItemDto>? Items { get; init; }
+}
+
+/// <summary>One named record of an issue and its amount.</summary>
+public record AccountingIssueItemDto(Guid? Id, string Name, decimal AmountBdt);
 
 public record AccountingHealthDto(
     Guid FarmId,

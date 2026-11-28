@@ -70,16 +70,16 @@
               <tr class="border-t border-gray-100 dark:border-gray-700/60 align-top">
                 <td class="px-5 py-3">
                   <div class="font-bold text-gray-900 dark:text-white">@if (isBangla) { {{ r.accountBn || r.account }} } @else { {{ r.account }} <span class="text-gray-400 font-normal">· {{ r.accountBn }}</span> }</div>
-                  <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ r.registerSource }}</div>
+                  <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ registerSource(r.registerSource) }}</div>
                   @if (!r.isReconciled) {
-                    <div class="text-[11px] text-amber-700 dark:text-amber-300 mt-1 max-w-xl">{{ r.explanation }}</div>
+                    <div class="text-[11px] text-amber-700 dark:text-amber-300 mt-1 max-w-xl">{{ r.explanation | t }}</div>
                   }
                 </td>
-                <td class="px-4 py-3 text-right font-mono">{{ r.booksBdt | number: '1.2-2' }}</td>
-                <td class="px-4 py-3 text-right font-mono">{{ r.registerBdt | number: '1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-mono">{{ r.booksBdt | money:2:false }}</td>
+                <td class="px-4 py-3 text-right font-mono">{{ r.registerBdt | money:2:false }}</td>
                 <td class="px-4 py-3 text-right font-mono font-bold"
                   [ngClass]="r.isReconciled ? 'text-gray-400' : 'text-amber-600 dark:text-amber-400'">
-                  {{ r.differenceBdt | number: '1.2-2' }}
+                  {{ r.differenceBdt | money:2:false }}
                 </td>
                 <td class="px-4 py-3 text-center">
                   @if (r.isReconciled) {
@@ -111,12 +111,20 @@
               {{ i.severity === 'Error' ? 'error' : 'warning' }}
             </mat-icon>
             <div class="flex-1">
-              <div class="text-sm font-bold text-gray-900 dark:text-white">{{ i.title }}
+              <div class="text-sm font-bold text-gray-900 dark:text-white">{{ i.title | t }}
                 @if (i.canAutoFix) {
                   <span class="ml-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">{{ 'Auto-fixable' | t }}</span>
                 }
               </div>
-              <div class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{{ i.detail }}</div>
+              <div class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{{ i.detail | t }}</div>
+              @if (i.items?.length) {
+                <ul class="mt-1 mb-0 pl-4 text-xs text-gray-700 dark:text-gray-200 list-disc">
+                  @for (it of i.items; track it.name) {
+                    <li>{{ accountName(it.name) }}: <span class="font-mono text-rose-600 dark:text-rose-400">{{ it.amountBdt | money }}</span></li>
+                  }
+                </ul>
+                <a routerLink="/finance/money-accounts" class="text-xs font-semibold text-primary-700 dark:text-primary-300 hover:underline">{{ 'Open money accounts' | t }} →</a>
+              }
             </div>
             <div class="text-right text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
               <div>{{ '{count} item(s)' | t: { count: i.count } }}</div>

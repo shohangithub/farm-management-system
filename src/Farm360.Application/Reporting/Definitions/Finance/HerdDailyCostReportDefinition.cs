@@ -270,7 +270,7 @@ internal static class AnimalCostReportText
         var bn = language == ReportLanguage.Bn;
         var parts = new List<string>
         {
-            (bn ? "ট্যাগ " : "Tag ") + AnimalLabels.Tag(animal),
+            (bn ? "ট্যাগ " : "Tag ") + AnimalLabels.Tag(animal, language, bengaliNumerals: false),
             string.IsNullOrWhiteSpace(breed) ? Species(animal.Species, language) : breed!,
             Sex(animal.Sex, language),
         };

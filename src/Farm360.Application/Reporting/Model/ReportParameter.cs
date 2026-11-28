@@ -19,6 +19,10 @@ public enum ReportParameterType
     Shed = 11,
     Breed = 12,
     InventoryItem = 13,
+    /// <summary>One of the farm's money accounts (cash box, bank, mobile wallet). Blank usually means cash in hand.</summary>
+    MoneyAccount = 14,
+    /// <summary>A partner (investor) of the farm.</summary>
+    Partner = 15,
 }
 
 public sealed record ReportSelectOption(string Value, LocalizedText Label);
@@ -50,6 +54,12 @@ public sealed record ReportParameter(
 
     public static ReportParameter InventoryItem(string name = "inventoryItemId", bool required = false) =>
         new(name, new LocalizedText("Inventory Item", "মজুদ উপাদান"), ReportParameterType.InventoryItem, required);
+
+    public static ReportParameter MoneyAccount(string name, LocalizedText label, bool required = false) =>
+        new(name, label, ReportParameterType.MoneyAccount, required);
+
+    public static ReportParameter Partner(string name = "partnerId", bool required = true) =>
+        new(name, new LocalizedText("Partner", "অংশীদার"), ReportParameterType.Partner, required);
 
     /// <summary>
     /// A from/to pair. The client sends "yyyy-MM-dd..yyyy-MM-dd"; <see cref="ReportContext.Range"/>

@@ -53,7 +53,8 @@ public sealed class LivestockCarriedCostSource : ILivestockCarriedCostSource
         costs.AddRange(feed.Select(f => new AnimalGrowingCost(f.AnimalId, f.EntryDate, f.Cost)));
 
         // ── Labour and overhead allocations, dated by the expense they came from ──
-        var upToExclusive = upTo.AddDays(1).ToDateTime(TimeOnly.MinValue);
+        // "Everything so far" (DateOnly.MaxValue, e.g. money-account balances) has no next day.
+        var upToExclusive = upTo < DateOnly.MaxValue ? upTo.AddDays(1).ToDateTime(TimeOnly.MinValue) : DateTime.MaxValue;
         var overhead = await (
                 from o in _context.AnimalOverheadAllocations.AsNoTracking()
                 join t in _context.FinancialTransactions.AsNoTracking() on o.SourceTransactionId equals t.Id

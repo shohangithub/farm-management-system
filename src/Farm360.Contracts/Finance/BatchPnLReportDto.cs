@@ -11,6 +11,8 @@ namespace Farm360.Contracts.Finance;
 /// <param name="UnrealisedValueBdt">Value of the on-hand animals under the farm's valuation policy.</param>
 /// <param name="EstimatedTotalProfitBdt">Realised revenue + unrealised value − full cost.</param>
 /// <param name="EstimatedRoiPercent">Estimated ROI as a 0–1 fraction (EstimatedTotalProfit / TotalCost).</param>
+/// <param name="UnweighedAtCostAnimals">On-hand animals with no weight record yet, valued at their purchase cost instead of by weight.</param>
+/// <param name="UnweighedAtCostValueBdt">The part of <paramref name="UnrealisedValueBdt"/> that is those animals' purchase cost.</param>
 public record BatchPnLReportDto(
     Guid BatchId,
     Guid FarmId,
@@ -22,5 +24,7 @@ public record BatchPnLReportDto(
     int OnHandAnimals = 0,
     decimal UnrealisedValueBdt = 0m,
     decimal EstimatedTotalProfitBdt = 0m,
-    decimal EstimatedRoiPercent = 0m
+    decimal EstimatedRoiPercent = 0m,
+    int UnweighedAtCostAnimals = 0,
+    decimal UnweighedAtCostValueBdt = 0m
 );

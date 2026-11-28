@@ -6,10 +6,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { InventoryService } from '../../../services/inventory.service';
 import { parseApiError } from '../../../../../core/utils/error-parser';
 import {
-  CreditTermsFieldsComponent,
-  buildCreditTermsGroup,
-  toCreditTerms,
-} from '../../../../finance/components/credit-terms-fields/credit-terms-fields.component';
+  PaidFromComponent,
+  buildPaidFromGroup,
+  toPaidFrom,
+} from '../../../../finance/components/paid-from/paid-from.component';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../../core/i18n/i18n.service';
@@ -28,7 +28,7 @@ export interface FulfillPoDialogData {
 @Component({
   selector: 'app-fulfill-po-dialog',
   standalone: true,
-  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, CreditTermsFieldsComponent, TranslatePipe],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, PaidFromComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -60,8 +60,8 @@ export interface FulfillPoDialogData {
           </div>
         </div>
 
-        <app-credit-terms-fields [group]="credit" kind="Payable" [total]="data.totalAmountBdt"
-          [requireParty]="false" [partyPlaceholder]="supplierName() || ('Supplier' | t)"></app-credit-terms-fields>
+        <app-paid-from [group]="paidFrom" direction="out" [allowCredit]="true" creditKind="Payable" [amount]="data.totalAmountBdt"
+          [requireParty]="false" [partyPlaceholder]="supplierName() || ('Supplier' | t)"></app-paid-from>
       </div>
 
       <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
@@ -69,7 +69,7 @@ export interface FulfillPoDialogData {
           class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50">
           {{ 'Cancel' | t }}
         </button>
-        <button type="button" (click)="fulfill()" [disabled]="busy() || credit.invalid"
+        <button type="button" (click)="fulfill()" [disabled]="busy() || paidFrom.invalid"
           class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2">
           @if (busy()) { <mat-icon class="animate-spin !w-[18px] !h-[18px] !text-[18px]">autorenew</mat-icon> }
           {{ (busy() ? 'Receiving…' : 'Fulfill & Receive Stock') | t }}
@@ -84,7 +84,7 @@ export class FulfillPoDialogComponent {
   private readonly inventory = inject(InventoryService);
   private readonly i18n = inject(I18nService);
 
-  readonly credit = buildCreditTermsGroup(inject(FormBuilder), false);
+  readonly paidFrom = buildPaidFromGroup(inject(FormBuilder), false);
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly supplierName = signal<string | null>(null);
@@ -99,7 +99,8 @@ export class FulfillPoDialogComponent {
   }
 
   fulfill(): void {
-    const credit = toCreditTerms(this.credit.getRawValue());
+    const source = toPaidFrom(this.paidFrom.getRawValue());
+    const credit = source.credit;
     if (credit && (credit.paidNowBdt ?? 0) >= this.data.totalAmountBdt) {
       this.error.set(this.i18n.t('The amount paid now covers the whole order — choose “Paid in full now” instead.'));
       return;
@@ -107,7 +108,7 @@ export class FulfillPoDialogComponent {
 
     this.busy.set(true);
     this.error.set(null);
-    this.inventory.fulfillPurchaseOrder(this.data.id, credit).subscribe({
+    this.inventory.fulfillPurchaseOrder(this.data.id, credit, source.moneyAccountId, source.paidByPartnerId).subscribe({
       next: () => this.dialogRef.close(true),
       error: err => {
         this.busy.set(false);

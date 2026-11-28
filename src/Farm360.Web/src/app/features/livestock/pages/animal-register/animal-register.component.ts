@@ -30,6 +30,7 @@ import { HealthService } from '../../../health/services/health.service';
 import { AutoStartProgrammeDto } from '../../../health/models/health.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { combineLatest, startWith, switchMap, of, catchError } from 'rxjs';
+import { PaidFromComponent, buildPaidFromGroup, toPaidFrom } from '../../../finance/components/paid-from/paid-from.component';
 
 @Component({
   selector: 'app-animal-register',
@@ -37,7 +38,7 @@ import { combineLatest, startWith, switchMap, of, catchError } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, RouterModule, ReactiveFormsModule,
-    PageHeaderComponent, MatSnackBarModule, MatStepperModule, MatButtonModule, MatIconModule, TranslatePipe
+    PageHeaderComponent, MatSnackBarModule, MatStepperModule, MatButtonModule, MatIconModule, TranslatePipe, PaidFromComponent
   ],
   templateUrl: './animal-register.component.html'
 })
@@ -79,6 +80,8 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
   acquisitionForm!: FormGroup;
   notesForm!: FormGroup;
   placementForm!: FormGroup;
+  /** How a purchased animal was paid: a money account, on credit to the seller, or by a partner. */
+  paidFromForm!: FormGroup;
 
   // Expose enums to template
   readonly TagType         = TagType;
@@ -104,6 +107,8 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
       acquisitionDate:    ['', Validators.required],
       acquisitionPriceBdt:[null as number | null, Validators.min(0)],
     });
+
+    this.paidFromForm = buildPaidFromGroup(this.fb);
 
     this.notesForm = this.fb.group({
       notes:              [null as string | null, Validators.maxLength(1000)],
@@ -179,7 +184,18 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
     return this.i18n.t('Invalid value.');
   }
 
+ /** Paid-from applies only to a purchased animal with a price. */
+  isPaidPurchase(): boolean {
+    const v = this.acquisitionForm?.value;
+    return v?.acquisitionType === AcquisitionType.Purchased && Number(v?.acquisitionPriceBdt) > 0;
+  }
+
   onSubmit(): void {
+    if (this.isPaidPurchase() && this.paidFromForm.invalid) {
+      this.paidFromForm.markAllAsTouched();
+      this.notify.error(this.i18n.t('Say how the animal was paid for: choose the partner or enter the seller for a purchase on credit.'));
+      return;
+    }
     if (this.idForm.invalid || this.acquisitionForm.invalid || this.notesForm.invalid) { 
       this.idForm.markAllAsTouched(); 
       this.acquisitionForm.markAllAsTouched();
@@ -202,6 +218,10 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
       return;
     }
 
+    const paid = this.isPaidPurchase()
+      ? toPaidFrom(this.paidFromForm.getRawValue())
+      : { moneyAccountId: null, paidByPartnerId: null, credit: null };
+
     this.svc.register({
       farmId:              farmId,
       tagId:               idVals.tagId!,
@@ -217,6 +237,9 @@ export class AnimalRegisterComponent implements OnInit, HasUnsavedChanges {
       skipHealthProgramme: this.autoProgrammes().length > 0 && this.skipHealthProgramme(),
       shedId:              placementVals.shedId ?? undefined,
       penId:               placementVals.penId ?? undefined,
+      moneyAccountId:      paid.moneyAccountId,
+      paidByPartnerId:     paid.paidByPartnerId,
+      credit:              paid.credit,
     }).subscribe({
       next:  a => {
         this.saved = true;

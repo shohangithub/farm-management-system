@@ -18,6 +18,7 @@ import { toLocalIsoDate } from '../../../../../shared/utils/local-date';
 import { MoneyPipe } from '../../../../../shared/pipes/money.pipe';
 import { TranslatePipe } from '../../../../../core/i18n/translate.pipe';
 import { I18nService } from '../../../../../core/i18n/i18n.service';
+import { PaidFromComponent, buildPaidFromGroup } from '../../../../finance/components/paid-from/paid-from.component';
 
 export interface CreatePurchaseReturnDialogData {
   purchaseOrderId: string;
@@ -34,6 +35,7 @@ export interface CreatePurchaseReturnDialogData {
     MatDialogModule,
     MatIconModule,
     MatButtonModule,
+    PaidFromComponent,
     TranslatePipe
   ],
   template: `
@@ -100,6 +102,10 @@ export interface CreatePurchaseReturnDialogData {
             <textarea formControlName="notes" rows="2" [placeholder]="'Describe the reason for returning goods...' | t"
               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></textarea>
           </div>
+
+          <!-- A cash refund (when the order was not bought on credit) lands in this account
+               when the return is completed. -->
+          <app-paid-from [group]="refundTo" direction="in"></app-paid-from>
 
           <!-- Items Table -->
           <div class="space-y-2">
@@ -247,6 +253,9 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
     items: this.fb.array([])
   });
 
+  /** Account a supplier's cash refund goes into (used when completing immediately). */
+  readonly refundTo: FormGroup = buildPaidFromGroup(this.fb);
+
   get itemsFormArray(): FormArray {
     return this.form.get('items') as FormArray;
   }
@@ -362,7 +371,7 @@ export class CreatePurchaseReturnDialogComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (completeImmediately) {
-            this.inventoryService.completePurchaseReturn(res.id)
+            this.inventoryService.completePurchaseReturn(res.id, this.refundTo.value.moneyAccountId ?? null)
               .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe({
                 next: () => {

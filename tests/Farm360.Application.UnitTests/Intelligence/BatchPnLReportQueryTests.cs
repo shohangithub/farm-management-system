@@ -69,5 +69,41 @@ public class BatchPnLReportQueryTests
         r.UnrealisedValueBdt.Should().Be(unrealised);
         r.EstimatedTotalProfitBdt.Should().Be(90_000m + unrealised - totalCost);
         r.EstimatedRoiPercent.Should().Be(Math.Round((90_000m + unrealised - totalCost) / totalCost, 4));
+        r.UnweighedAtCostAnimals.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task An_animal_on_the_farm_with_no_weight_yet_is_valued_at_its_purchase_cost()
+    {
+        var batchId = Guid.NewGuid();
+        var valuation = new AnimalValuationService(new TestRulesProvider());
+        var rate = valuation.LiveWeightRatePerKgBdt;
+
+        var weighed = TestAnimals.Create(50_000m, 200m, "A");
+        var unweighed = TestAnimals.Create(40_000m, null, "B");
+        var unweighedLedger = AnimalCostLedger.Create(TestAnimals.TenantId, unweighed.Id, TestAnimals.FarmId, 40_000m);
+        unweighedLedger.UpdateFeedCost(300m);
+
+        var animals = Substitute.For<IAnimalRepository>();
+        animals.GetPagedAsync(1, Arg.Any<int>(), TestAnimals.FarmId, batchId,
+                Arg.Any<Guid?>(), Arg.Any<Guid?>(), Arg.Any<AnimalSpecies?>(), Arg.Any<AnimalSex?>(), Arg.Any<AnimalStatus?>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(((IReadOnlyList<Animal>)new List<Animal> { weighed, unweighed }, 2));
+        var ledgers = Substitute.For<IAnimalCostLedgerRepository>();
+        ledgers.GetByBatchIdAsync(TestAnimals.FarmId, batchId, Arg.Any<CancellationToken>())
+            .Returns(new List<AnimalCostLedger> { unweighedLedger });
+        var transactions = Substitute.For<IFinancialTransactionRepository>();
+        transactions.GetAllByFarmIdAsync(TestAnimals.FarmId, Arg.Any<CancellationToken>())
+            .Returns(new List<FinancialTransaction>());
+
+        var sut = new GetBatchPnLReportQueryHandler(transactions, ledgers, animals, valuation, TestPrices.Resolver(new TestRulesProvider()));
+        var r = await sut.Handle(new GetBatchPnLReportQuery(TestAnimals.FarmId, batchId), CancellationToken.None);
+
+        // Weighed: market value by weight (no feed added) · unweighed: purchase price, likewise without its 300 feed.
+        r.OnHandAnimals.Should().Be(2);
+        r.UnweighedAtCostAnimals.Should().Be(1);
+        r.UnweighedAtCostValueBdt.Should().Be(40_000m);
+        r.UnrealisedValueBdt.Should().Be(Math.Round(200m * rate, 2) + 40_000m, "an animal not yet weighed is no longer worth 0");
+        r.TotalCostBdt.Should().Be(50_000m + 40_300m);
     }
 }

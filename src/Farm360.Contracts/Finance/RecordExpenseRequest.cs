@@ -12,5 +12,9 @@ public record RecordExpenseRequest(
     Guid? AnimalId = null,
     Guid? BatchId = null,
     Guid? ShedId = null,
-    CreditTermsRequest? Credit = null
+    CreditTermsRequest? Credit = null,
+    /// <summary>Account the money was paid from; null = the farm's default account.</summary>
+    Guid? MoneyAccountId = null,
+    /// <summary>A partner paid this directly; books their capital contribution of the same amount.</summary>
+    Guid? PaidByPartnerId = null
 );
