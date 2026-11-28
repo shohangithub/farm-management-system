@@ -3010,8 +3010,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/services/intelligence-signalr.service.ts": {
-    "mtime": 1795772044.2073796,
-    "ast_hash": "af49c80ee988f6086779fb259bf61725",
+    "mtime": 1795795615.2901587,
+    "ast_hash": "54c15a269bf8e416921c1fcb9120feb5",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/services/lookup.service.ts": {
@@ -3647,16 +3647,6 @@
   "src/Farm360.Web/src/app/features/livestock/components/dialogs/breed-setup-dialog/breed-setup-dialog.component.ts": {
     "mtime": 1795763851.931864,
     "ast_hash": "7a03b5c82053a3671fb9a3daf34709ab",
-    "semantic_hash": ""
-  },
-  "src/Farm360.Web/src/app/features/livestock/components/intelligence-panel/intelligence-panel.component.ts": {
-    "mtime": 1795755974.992511,
-    "ast_hash": "3346f50cee3e14bbb1b1d610b3ad90ca",
-    "semantic_hash": ""
-  },
-  "src/Farm360.Web/src/app/features/livestock/components/what-if-simulator/what-if-simulator.component.ts": {
-    "mtime": 1795790559.6152256,
-    "ast_hash": "407e015334bff49dd6d85e0250513443",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/dialogs/assign-batch-dialog/assign-batch-dialog.component.ts": {
@@ -8262,6 +8252,11 @@
   "tests/Farm360.Application.UnitTests/Farms/Commands/SetFarmLocationCommandTests.cs": {
     "mtime": 1795794799.388814,
     "ast_hash": "21391acb43f362574608ed47a0fc44ed",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/core/models/actionable-insight.model.ts": {
+    "mtime": 1795795615.254072,
+    "ast_hash": "fd380591ec575c5bb3c52ededfcb0d81",
     "semantic_hash": ""
   }
 }

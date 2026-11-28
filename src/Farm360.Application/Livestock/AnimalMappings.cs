@@ -80,7 +80,10 @@ public static class AnimalMappings
             WeightKg: record.Weight.WeightKg,
             RecordedDate: record.RecordedDate,
             Notes: record.Notes,
-            RecordedAtUtc: record.RecordedAtUtc);
+            RecordedAtUtc: record.RecordedAtUtc,
+            Method: record.Method,
+            LengthInch: record.LengthInch,
+            GirthInch: record.GirthInch);
 
     public static BcsRecordDto ToDto(this BodyConditionScore record) =>
         new(

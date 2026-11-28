@@ -19,11 +19,29 @@
     </div>
 
     <div class="p-6 space-y-4 overflow-y-auto">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Scale / Tape switch -->
+      <div role="radiogroup" [attr.aria-label]="'How was it weighed?' | t"
+        class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800">
+        <button type="button" role="radio" [attr.aria-checked]="mode() === 'Scale'" (click)="setMode('Scale')"
+          class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          [ngClass]="mode() === 'Scale' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">scale</mat-icon>
+          {{ 'Scale (kg)' | t }}
+        </button>
+        <button type="button" role="radio" [attr.aria-checked]="mode() === 'Tape'" (click)="setMode('Tape')"
+          class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          [ngClass]="mode() === 'Tape' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]" aria-hidden="true">straighten</mat-icon>
+          {{ 'Tape measure' | t }}
+        </button>
+      </div>
+
+      <!-- Scale -->
+      <div *ngIf="mode() === 'Scale'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Weight (kg)' | t }} <span class="text-red-500">*</span></label>
+          <label for="rw-kg" class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Weight (kg)' | t }} <span class="text-red-500">*</span></label>
           <div class="relative">
-            <input type="number" formControlName="weightKg" min="1" step="0.1"
+            <input id="rw-kg" type="number" formControlName="weightKg" min="1" step="0.1"
               class="block w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
             <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 font-medium text-sm">{{ 'kg' | t }}</span>
           </div>
@@ -32,22 +50,90 @@
           </p>
         </div>
 
-        <div class="space-y-1.5">
-          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Recorded Date' | t }} <span class="text-red-500">*</span></label>
-          <input type="date" formControlName="recordedDate"
-            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
-          <p class="text-xs text-red-500 mt-1" *ngIf="form.get('recordedDate')?.touched && form.get('recordedDate')?.invalid">
-            {{ 'Date is required.' | t }}
-          </p>
+        <ng-container *ngTemplateOutlet="dateField"></ng-container>
+      </div>
+
+      <!-- Tape measure -->
+      <div *ngIf="mode() === 'Tape'" class="space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Unit' | t }}</span>
+          <div role="radiogroup" [attr.aria-label]="'Unit' | t" class="inline-flex p-0.5 rounded-lg bg-gray-100 dark:bg-gray-800">
+            <button type="button" role="radio" [attr.aria-checked]="unit() === 'in'" (click)="setUnit('in')"
+              class="px-3 py-1 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              [ngClass]="unit() === 'in' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-300 shadow-sm' : 'text-gray-600 dark:text-gray-400'">
+              {{ 'inches' | t }}
+            </button>
+            <button type="button" role="radio" [attr.aria-checked]="unit() === 'cm'" (click)="setUnit('cm')"
+              class="px-3 py-1 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              [ngClass]="unit() === 'cm' ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-300 shadow-sm' : 'text-gray-600 dark:text-gray-400'">
+              {{ 'cm' | t }}
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="rw-length" class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Length' | t }} <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <input id="rw-length" type="number" formControlName="length" min="0" step="0.1" aria-describedby="rw-length-hint"
+                class="block w-full pr-12 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 font-medium text-sm">{{ (unit() === 'cm' ? 'cm' : 'in') | t }}</span>
+            </div>
+            <p id="rw-length-hint" class="text-xs text-gray-500 dark:text-gray-400">{{ 'From the point of the shoulder to the pin bone.' | t }}</p>
+            <p class="text-xs text-red-500" *ngIf="lengthOutOfRange()">{{ 'Length must be between 20 and 120 inches (51–305 cm).' | t }}</p>
+            <p class="text-xs text-red-500" *ngIf="!lengthOutOfRange() && form.get('length')?.touched && form.get('length')?.invalid">{{ 'Enter the length.' | t }}</p>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="rw-girth" class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Heart girth' | t }} <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <input id="rw-girth" type="number" formControlName="girth" min="0" step="0.1" aria-describedby="rw-girth-hint"
+                class="block w-full pr-12 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500 font-medium text-sm">{{ (unit() === 'cm' ? 'cm' : 'in') | t }}</span>
+            </div>
+            <p id="rw-girth-hint" class="text-xs text-gray-500 dark:text-gray-400">{{ 'Around the chest, just behind the front legs.' | t }}</p>
+            <p class="text-xs text-red-500" *ngIf="girthOutOfRange()">{{ 'Heart girth must be between 20 and 120 inches (51–305 cm).' | t }}</p>
+            <p class="text-xs text-red-500" *ngIf="!girthOutOfRange() && form.get('girth')?.touched && form.get('girth')?.invalid">{{ 'Enter the heart girth.' | t }}</p>
+          </div>
+        </div>
+
+        <!-- Live preview -->
+        <div class="p-3 rounded-xl border border-primary-100 dark:border-primary-900/50 bg-primary-50/60 dark:bg-primary-900/10" aria-live="polite">
+          <ng-container *ngIf="preview() as p; else noPreview">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
+              {{ 'Estimated weight: {kg} kg' | t: { kg: (p.kg | number:'1.1-1') } }}
+              <span class="font-normal text-gray-600 dark:text-gray-300">= ({{ p.lengthInch | number:'1.0-2' }} × {{ p.girthInch | number:'1.0-2' }} × {{ p.girthInch | number:'1.0-2' }}) / {{ divisor }}</span>
+            </p>
+            <p *ngIf="unit() === 'cm'" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'cm are converted to inches (÷ 2.54) before the formula.' | t }}</p>
+          </ng-container>
+          <ng-template #noPreview>
+            <p class="text-sm text-gray-600 dark:text-gray-300">{{ 'Weight = (length × girth × girth) / 660, in inches.' | t }}</p>
+          </ng-template>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'A tape estimate is usually within about ±5–10% of a scale weight.' | t }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <ng-container *ngTemplateOutlet="dateField"></ng-container>
         </div>
       </div>
 
       <div class="space-y-1.5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Notes (Optional)' | t }}</label>
-        <textarea formControlName="notes" rows="2"
+        <label for="rw-notes" class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Notes (Optional)' | t }}</label>
+        <textarea id="rw-notes" formControlName="notes" rows="2"
           class="block w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow resize-none"></textarea>
       </div>
     </div>
+
+    <ng-template #dateField>
+      <div class="space-y-1.5">
+        <label for="rw-date" class="block text-xs font-bold uppercase tracking-wider text-gray-500">{{ 'Recorded Date' | t }} <span class="text-red-500">*</span></label>
+        <input id="rw-date" type="date" formControlName="recordedDate"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow">
+        <p class="text-xs text-red-500 mt-1" *ngIf="form.get('recordedDate')?.touched && form.get('recordedDate')?.invalid">
+          {{ 'Date is required.' | t }}
+        </p>
+      </div>
+    </ng-template>
 
     <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
       <button type="button" mat-dialog-close [disabled]="submitting()"

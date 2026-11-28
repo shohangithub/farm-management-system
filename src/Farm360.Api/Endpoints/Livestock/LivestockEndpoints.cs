@@ -348,7 +348,7 @@ public static class LivestockEndpoints
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new RecordWeightCommand(id, request.WeightKg, request.RecordedDate, request.Notes),
+            new RecordWeightCommand(id, request.WeightKg, request.RecordedDate, request.Notes, request.Method, request.LengthInch, request.GirthInch),
             cancellationToken);
         return Results.Created($"/api/v1/livestock/animals/{id}/weights/{result.Id}", result);
     }
@@ -505,8 +505,17 @@ public static class LivestockEndpoints
 
 // ── Request bodies (simple records — not commands, to decouple route param binding) ──
 
-/// <summary>Weight recording request body.</summary>
-public sealed record RecordWeightRequest(decimal WeightKg, DateOnly RecordedDate, string? Notes);
+/// <summary>
+/// Weight recording request body: a scale kg, or a tape measure (Method = Tape, LengthInch + GirthInch,
+/// inches) whose kg the server computes. A kg sent with Tape is ignored.
+/// </summary>
+public sealed record RecordWeightRequest(
+    decimal? WeightKg,
+    DateOnly RecordedDate,
+    string? Notes,
+    WeightMethod? Method = null,
+    decimal? LengthInch = null,
+    decimal? GirthInch = null);
 
 /// <summary>Sale request body.</summary>
 public sealed record SellAnimalRequest(decimal SalePriceBdt, DateOnly SaleDate, string? BuyerName, decimal? SaleWeightKg, Farm360.Contracts.Finance.CreditTermsRequest? Credit = null, bool AllowDuringMeatWithdrawal = false);

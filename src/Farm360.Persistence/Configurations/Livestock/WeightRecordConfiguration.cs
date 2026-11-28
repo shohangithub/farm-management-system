@@ -36,6 +36,20 @@ public sealed class WeightRecordConfiguration : IEntityTypeConfiguration<WeightR
 
         builder.Property(w => w.RecordedAtUtc).IsRequired();
 
+        // Scale | Tape. Existing rows (all weighed before tape support) are Scale = 0.
+        builder.Property(w => w.Method)
+            .HasConversion<int>()
+            .IsRequired();
+
+        // Tape measurements in inches; null for a scale weight.
+        builder.Property(w => w.LengthInch)
+            .HasPrecision(6, 2)
+            .IsRequired(false);
+
+        builder.Property(w => w.GirthInch)
+            .HasPrecision(6, 2)
+            .IsRequired(false);
+
         // FK to Animal is defined in AnimalConfiguration via HasMany/WithOne
         builder.HasIndex(w => w.AnimalId)
             .HasDatabaseName("IX_WeightRecords_AnimalId");

@@ -4792,6 +4792,17 @@ namespace Farm360.Persistence.Migrations
                     b.Property<Guid>("AnimalId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("GirthInch")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)");
+
+                    b.Property<decimal?>("LengthInch")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");

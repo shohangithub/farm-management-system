@@ -537,7 +537,13 @@
                 <tr *ngFor="let w of sortedWeightsDesc()"
                   class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                   <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-white">{{ w.recordedDate | date:'mediumDate' }}</td>
-                  <td class="px-4 py-3 whitespace-nowrap text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{{ w.weightKg | number:'1.1-2' }} {{ 'kg' | t }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">
+                    <span *ngIf="w.method === 'Tape'" tabindex="0"
+                      [matTooltip]="'Tape measure: length {l} in, heart girth {g} in' | t: { l: (w.lengthInch | number:'1.0-2'), g: (w.girthInch | number:'1.0-2') }"
+                      class="inline-flex items-center gap-0.5 mr-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide align-middle bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800 cursor-help">
+                      <mat-icon class="!text-[12px] !w-[12px] !h-[12px]" aria-hidden="true">straighten</mat-icon>{{ 'Tape' | t }}
+                    </span>{{ w.weightKg | number:'1.1-2' }} {{ 'kg' | t }}
+                  </td>
                   <td class="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-[10rem]">{{ w.notes || '-' }}</td>
                 </tr>
               </tbody>

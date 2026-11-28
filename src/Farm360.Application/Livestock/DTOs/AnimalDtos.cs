@@ -86,7 +86,11 @@ public sealed record WeightRecordDto(
     decimal WeightKg,
     DateOnly RecordedDate,
     string? Notes,
-    DateTime RecordedAtUtc);
+    DateTime RecordedAtUtc,
+    // How the weight was taken: "Scale" or "Tape". For Tape, the length and girth (inches) it was estimated from.
+    WeightMethod Method = WeightMethod.Scale,
+    decimal? LengthInch = null,
+    decimal? GirthInch = null);
 
 /// <summary>
 /// Body condition score DTO.

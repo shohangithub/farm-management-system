@@ -27,7 +27,8 @@ public sealed record AnimalGrowthReportRow(
     decimal FeedKg,
     decimal FeedCostBdt,
     decimal? Fcr,
-    decimal? CostPerKgGainBdt);
+    decimal? CostPerKgGainBdt,
+    string? WeighedBy = null);
 
 /// <summary>
 /// Report A3 — every weigh-in for one animal, with the feed and cost of each interval between
@@ -81,6 +82,8 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
     [
         ReportColumn<AnimalGrowthReportRow>.Date("date", new LocalizedText("Weigh-in date", "ওজনের তারিখ"), r => r.Date, 24f),
         ReportColumn<AnimalGrowthReportRow>.Number("weight", new LocalizedText("Weight (kg)", "ওজন (কেজি)"), r => r.WeightKg, 1, 22f),
+        // "(tape)" when the weight was estimated from a tape measure; blank for a scale weight.
+        ReportColumn<AnimalGrowthReportRow>.Text("weighedBy", new LocalizedText("Measured by", "মাপার ধরন"), r => r.WeighedBy, 16f, relative: false),
         ReportColumn<AnimalGrowthReportRow>.WholeNumber("days", new LocalizedText("Days since last weigh-in", "আগের ওজনের পর (দিন)"), r => r.IntervalDays, 24f, ReportAggregate.Sum),
         ReportColumn<AnimalGrowthReportRow>.Number("gain", new LocalizedText("Weight gained (kg)", "ওজন বৃদ্ধি (কেজি)"), r => r.GainKg, 1, 24f, ReportAggregate.Sum),
         // Period daily gain (between consecutive weigh-ins inside the selected date range) --
@@ -103,6 +106,8 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
             "সময়কালের প্রথম ওজনের আগে তুলনা করার মতো ওজন নেই, তাই তার বৃদ্ধি ও দক্ষতার ঘর ফাঁকা থাকে।"),
         new("Daily gain = weight gained ÷ days. Feed per kg gain = feed eaten ÷ weight gained — lower is better.",
             "দৈনিক বৃদ্ধি = ওজন বৃদ্ধি ÷ দিন। প্রতি কেজি বৃদ্ধিতে খাদ্য = খাওয়া খাদ্য ÷ ওজন বৃদ্ধি — যত কম তত ভালো।"),
+        new("(tape) = the weight was estimated from a tape measure (length × girth² ÷ 660, in inches), usually within about ±5–10% of a scale.",
+            "(ফিতা) = ওজনটি ফিতা দিয়ে মেপে হিসাব করা (দৈর্ঘ্য × বেড়² ÷ 660, ইঞ্চিতে), সাধারণত ওজন মেশিনের চেয়ে ±5–10% কম-বেশি হতে পারে।"),
         new("Only confirmed feed is counted, not planned rations. If the animal lost weight or no feed was confirmed, the efficiency cells are blank.",
             "শুধু নিশ্চিত করা খাদ্য গণনা হয়েছে, পরিকল্পিত রেশন নয়। ওজন কমলে বা খাদ্য নিশ্চিত না হলে দক্ষতার ঘর ফাঁকা থাকে।"),
     ];
@@ -159,6 +164,7 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
             .Select(a => (a.EntryDate, a.AllocatedKg, a.AllocatedCostBdt))
             .ToList();
 
+        var tapeLabel = context.Language == ReportLanguage.Bn ? "(ফিতা)" : "(tape)";
         var rows = new List<AnimalGrowthReportRow>(weighings.Count);
         DateOnly? previousDate = null;
         decimal? previousWeight = null;
@@ -193,7 +199,8 @@ public sealed class AnimalGrowthReportDefinition : ReportDefinition<AnimalGrowth
                 // Guard the divisions: an animal that lost or held weight, or an interval with no
                 // confirmed feed, has no meaningful efficiency: a blank cell, not a vast number or 0.
                 gain is { } g1 && g1 > 0 && feedKg > 0 ? decimal.Round(feedKg / g1, 2, MidpointRounding.AwayFromZero) : null,
-                gain is { } g2 && g2 > 0 && feedCost > 0 ? decimal.Round(feedCost / g2, 2, MidpointRounding.AwayFromZero) : null));
+                gain is { } g2 && g2 > 0 && feedCost > 0 ? decimal.Round(feedCost / g2, 2, MidpointRounding.AwayFromZero) : null,
+                weighing.Method == WeightMethod.Tape ? tapeLabel : null));
 
             previousDate = weighing.RecordedDate;
             previousWeight = weight;

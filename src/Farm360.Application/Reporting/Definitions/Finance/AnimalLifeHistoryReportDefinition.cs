@@ -265,6 +265,10 @@ public sealed class AnimalLifeHistoryReportDefinition : ReportDefinition<AnimalL
             {
                 var w = weighings[i];
                 var details = Kg(w.Weight.WeightKg);
+                if (w.Method == WeightMethod.Tape)
+                {
+                    details += " " + T("(tape)", "(ফিতা)");
+                }
                 if (i > 0)
                 {
                     var prev = weighings[i - 1];

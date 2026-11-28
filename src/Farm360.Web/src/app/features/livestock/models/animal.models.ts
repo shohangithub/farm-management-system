@@ -51,6 +51,10 @@ export interface WeightRecordDto {
   recordedDate: string;
   notes?: string;
   recordedAtUtc: string;
+  /** 'Scale' (kg entered) or 'Tape' (kg estimated from length and girth). */
+  method?: 'Scale' | 'Tape';
+  lengthInch?: number | null;
+  girthInch?: number | null;
 }
 
 export interface BreedingRecordDto {
@@ -213,10 +217,14 @@ export interface UpdateAnimalRequest {
   notes?: string;
 }
 
+/** A scale weight (weightKg), or a tape measure (method 'Tape' + lengthInch + girthInch; the server computes the kg). */
 export interface RecordWeightRequest {
-  weightKg: number;
+  weightKg?: number | null;
   recordedDate: string;
   notes?: string;
+  method?: 'Scale' | 'Tape';
+  lengthInch?: number | null;
+  girthInch?: number | null;
 }
 
 /** What undoing a sale or death changed. */

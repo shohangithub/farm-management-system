@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Api/Endpoints/Livestock/LivestockEndpoints.cs": {
-    "mtime": 1795789929.4956117,
-    "ast_hash": "bc3cb05428e86bc08ba07aa4e261efd6",
+    "mtime": 1795797115.3173757,
+    "ast_hash": "b5d47c8f534ba3e365d36c54dd6e1f79",
     "semantic_hash": ""
   },
   "src/Farm360.Api/Endpoints/MasterData/LocationEndpoints.cs": {
@@ -1070,8 +1070,8 @@
     "semantic_hash": "e8f75844108ad67040d99e3f7b5de58a"
   },
   "src/Farm360.Application/Livestock/AnimalMappings.cs": {
-    "mtime": 1794727804.0868762,
-    "ast_hash": "8cc6f5c3a1dd56b8a5f7fd4d907ba580",
+    "mtime": 1795797083.491855,
+    "ast_hash": "31fc730914c0adb6a051d74d0092a779",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/BreedMappings.cs": {
@@ -1080,8 +1080,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/Commands/AnimalCommands.cs": {
-    "mtime": 1795771092.076303,
-    "ast_hash": "9d71408cded1326626fd885fe766c6f0",
+    "mtime": 1795797106.0198488,
+    "ast_hash": "5646955775febd426d9c97aeb9aca55e",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/Commands/AssignAnimalsToBatchCommand.cs": {
@@ -1125,8 +1125,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/DTOs/AnimalDtos.cs": {
-    "mtime": 1795710110.3636036,
-    "ast_hash": "edde1a0be6a230e4b557cb44f52c8a79",
+    "mtime": 1795797083.491855,
+    "ast_hash": "b22c3fbedfe3029b34ca0cf79aca4839",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Livestock/DTOs/BatchDtos.cs": {
@@ -1840,8 +1840,8 @@
     "semantic_hash": "93bac0e9566d2fa0072ab3baf62cedf1"
   },
   "src/Farm360.Domain/Livestock/Animal.cs": {
-    "mtime": 1795083583.777678,
-    "ast_hash": "ae3429ac383ab3f8a4480004fb4193d1",
+    "mtime": 1795797063.76275,
+    "ast_hash": "082c3ee22955af0f92f9d74a24999ffe",
     "semantic_hash": ""
   },
   "src/Farm360.Domain/Livestock/AnimalBatch.cs": {
@@ -1915,8 +1915,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Domain/Livestock/Exceptions/LivestockExceptions.cs": {
-    "mtime": 1794727745.9743626,
-    "ast_hash": "680a001413c4e8f161d879978cad3083",
+    "mtime": 1795797051.4495418,
+    "ast_hash": "1a36983adce6ce0030daa9366a6faaab",
     "semantic_hash": ""
   },
   "src/Farm360.Domain/Livestock/Repositories/IAnimalBatchRepository.cs": {
@@ -1945,9 +1945,9 @@
     "semantic_hash": "321d4b91e2b5cf86bd1cbb7af2e84f61"
   },
   "src/Farm360.Domain/Livestock/WeightRecord.cs": {
-    "mtime": 1784124529.412177,
-    "ast_hash": "8dfdcd5d4622a90d255434f7539fb79e",
-    "semantic_hash": "8dfdcd5d4622a90d255434f7539fb79e"
+    "mtime": 1795797063.7552426,
+    "ast_hash": "b4b082336969e46e4d40ed2ecfefa136",
+    "semantic_hash": ""
   },
   "src/Farm360.Domain/MasterData/Enums/MasterDataType.cs": {
     "mtime": 1784179969.4731958,
@@ -2385,9 +2385,9 @@
     "semantic_hash": "b04f0926aa0cac14d47fd5e97903fdc2"
   },
   "src/Farm360.Persistence/Configurations/Livestock/WeightRecordConfiguration.cs": {
-    "mtime": 1784125321.862956,
-    "ast_hash": "dd5118c4dc2eff2618b39ea67073cd8a",
-    "semantic_hash": "dd5118c4dc2eff2618b39ea67073cd8a"
+    "mtime": 1795797083.491855,
+    "ast_hash": "19b3ad3cfb693b8dfb75eedb9527651a",
+    "semantic_hash": ""
   },
   "src/Farm360.Persistence/Configurations/MasterData/LocationConfigurations.cs": {
     "mtime": 1784180081.190721,
@@ -2565,8 +2565,8 @@
     "semantic_hash": "c498405e853c06a050269123669aa152"
   },
   "src/Farm360.Persistence/Migrations/ApplicationDbContextModelSnapshot.cs": {
-    "mtime": 1795787042.245267,
-    "ast_hash": "4e58ac73e86b1be9081a625ef131d167",
+    "mtime": 1795797222.6165695,
+    "ast_hash": "3c17497a49f5c078c210b5e0ecc50054",
     "semantic_hash": ""
   },
   "src/Farm360.Persistence/Migrations/ApplicationDb/20260715203750_AddHealthModule.Designer.cs": {
@@ -3630,8 +3630,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/components/dialogs/batch-weight-dialog.component.ts": {
-    "mtime": 1795530899.5804482,
-    "ast_hash": "16a8bc4d9c8b8e8071d500f5c8fc98c7",
+    "mtime": 1795797386.3697085,
+    "ast_hash": "c0a76d46fc6c0a4ac16bc256ee26d23a",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/components/dialogs/breed-detail-dialog/breed-detail-dialog.component.ts": {
@@ -3685,8 +3685,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/dialogs/record-weight-dialog/record-weight-dialog.component.ts": {
-    "mtime": 1795531102.0194435,
-    "ast_hash": "dad29d493ca5b853baecba2c83d0e92c",
+    "mtime": 1795797277.346429,
+    "ast_hash": "af7cc40d1c3f3cc8d8ba7e0acab40da3",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/dialogs/transfer-animal-dialog/transfer-animal-dialog.component.ts": {
@@ -3705,8 +3705,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/models/animal.models.ts": {
-    "mtime": 1795772125.7779539,
-    "ast_hash": "274778a0668b866e82655c066f063c7f",
+    "mtime": 1795797259.1626594,
+    "ast_hash": "9b77de1bffead01ba08644b3790bfcc5",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/models/batch.models.ts": {
@@ -5305,8 +5305,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/dialogs/record-weight-dialog/record-weight-dialog.component.html": {
-    "mtime": 1795531101.4502993,
-    "ast_hash": "8c2a017ade3c94450bb3450f7608e591",
+    "mtime": 1795797322.1155887,
+    "ast_hash": "46a4fc3a0d067af32d9f68afb34f8f3b",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/dialogs/transfer-animal-dialog/transfer-animal-dialog.component.html": {
@@ -5320,8 +5320,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-detail/animal-detail.component.html": {
-    "mtime": 1795794434.3411474,
-    "ast_hash": "07b95d0f78a4243569c3b484a0278585",
+    "mtime": 1795797394.533853,
+    "ast_hash": "ea62c72f8e58aefedf96875da1c9fd49",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/features/livestock/pages/animal-list/animal-list.component.html": {
@@ -5545,8 +5545,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Reporting/Definitions/Livestock/AnimalGrowthReportDefinition.cs": {
-    "mtime": 1795085491.160114,
-    "ast_hash": "ddce02da3cb15d03541d00dea86c2013",
+    "mtime": 1795797142.8831265,
+    "ast_hash": "757b51aec4b04fa66a7d5df2d7841a7b",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Reporting/Definitions/Livestock/HerdPerformanceReportDefinition.cs": {
@@ -7370,8 +7370,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Reporting/Definitions/Finance/AnimalLifeHistoryReportDefinition.cs": {
-    "mtime": 1795786959.6915877,
-    "ast_hash": "38455e294c7f1cd9bbd226ff448c3658",
+    "mtime": 1795797142.8858821,
+    "ast_hash": "323781492637400f340c00f2b5124389",
     "semantic_hash": ""
   },
   "tests/Farm360.Application.UnitTests/Reporting/AnimalLifeHistoryReportTests.cs": {
@@ -7600,8 +7600,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/i18n/bn/livestock.ts": {
-    "mtime": 1795790680.5290482,
-    "ast_hash": "5b4e2552e9a5b11980ebdbb18401ad6b",
+    "mtime": 1795797421.6955032,
+    "ast_hash": "b105af4077941d2645fc52100486f126",
     "semantic_hash": ""
   },
   "src/Farm360.Web/src/app/core/i18n/bn/organizations.ts": {
@@ -7795,8 +7795,8 @@
     "semantic_hash": ""
   },
   "src/Farm360.Application/Common/Localization/BanglaMessageCatalogue.cs": {
-    "mtime": 1795786537.7186286,
-    "ast_hash": "e53b2190b59bfd54cbf097d4c164c923",
+    "mtime": 1795797129.1351626,
+    "ast_hash": "0e35fae6ef1c73538ecde3921aaadf89",
     "semantic_hash": ""
   },
   "src/Farm360.Application/Common/Localization/IMessageTranslator.cs": {
@@ -8257,6 +8257,51 @@
   "src/Farm360.Web/src/app/core/models/actionable-insight.model.ts": {
     "mtime": 1795795615.254072,
     "ast_hash": "fd380591ec575c5bb3c52ededfcb0d81",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Livestock/Enums/WeightMethod.cs": {
+    "mtime": 1795797051.3644462,
+    "ast_hash": "c2f1d9dc39f3127e546b700e57376fda",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Domain/Livestock/TapeWeight.cs": {
+    "mtime": 1795797075.0547738,
+    "ast_hash": "42f1712452cf51ac490cf15e671824a4",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261127163342_AddTapeMeasureWeight.Designer.cs": {
+    "mtime": 1795797222.6165695,
+    "ast_hash": "086df2b4906d0fe66201c270a6f8c5f8",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Persistence/Migrations/20261127163342_AddTapeMeasureWeight.cs": {
+    "mtime": 1795797230.1412997,
+    "ast_hash": "38c649a9c7102efa9dea80546c0b48a8",
+    "semantic_hash": ""
+  },
+  "src/Farm360.Web/src/app/features/livestock/utils/tape-weight.ts": {
+    "mtime": 1795797259.0713153,
+    "ast_hash": "2db480a681f20b6917dc9eea15e129ac",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Api.FunctionalTests/RecordWeightEndpointTests.cs": {
+    "mtime": 1795797658.5372574,
+    "ast_hash": "c9ff55ce494a0c3fd223b140a441d5ee",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.IntegrationTests/Persistence/TapeWeightPersistenceTests.cs": {
+    "mtime": 1795797590.3644855,
+    "ast_hash": "0961d3963ff3c5c8485e36a0109f29c9",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Application.UnitTests/Livestock/TapeWeightCommandTests.cs": {
+    "mtime": 1795797545.0893815,
+    "ast_hash": "17cce5de0ab44de8cc040845dc7e71ac",
+    "semantic_hash": ""
+  },
+  "tests/Farm360.Domain.UnitTests/Livestock/TapeWeightTests.cs": {
+    "mtime": 1795797517.227551,
+    "ast_hash": "5203eeef9c9a0e51f1a6708ae207178a",
     "semantic_hash": ""
   }
 }

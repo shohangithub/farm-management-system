@@ -284,7 +284,33 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
         Weight weight,
         DateOnly recordedDate,
         Guid recordedBy,
+        string? notes) =>
+        AddWeight(weight, recordedDate, recordedBy, notes, WeightMethod.Scale, null, null);
+
+    /// <summary>
+    /// Records a weight estimated from a tape measure. The kg is computed here by
+    /// <see cref="TapeWeight.EstimateKg"/> — never taken from the caller — and the length and girth
+    /// are stored with the record. Same date rules as <see cref="RecordWeight"/>.
+    /// </summary>
+    public WeightRecord RecordTapeWeight(
+        decimal lengthInch,
+        decimal girthInch,
+        DateOnly recordedDate,
+        Guid recordedBy,
         string? notes)
+    {
+        var weight = Weight.Create(TapeWeight.EstimateKg(lengthInch, girthInch));
+        return AddWeight(weight, recordedDate, recordedBy, notes, WeightMethod.Tape, lengthInch, girthInch);
+    }
+
+    private WeightRecord AddWeight(
+        Weight weight,
+        DateOnly recordedDate,
+        Guid recordedBy,
+        string? notes,
+        WeightMethod method,
+        decimal? lengthInch,
+        decimal? girthInch)
     {
         if (recordedDate < DateOfBirth)
             throw new InvalidWeightDateException(Tag.TagId, recordedDate, DateOfBirth);
@@ -297,7 +323,10 @@ public sealed class Animal : AuditableEntity, IAggregateRoot
             weight,
             recordedDate,
             recordedBy,
-            notes);
+            notes,
+            method,
+            lengthInch,
+            girthInch);
 
         _weightRecords.Add(record);
 

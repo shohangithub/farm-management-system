@@ -260,13 +260,29 @@ public sealed class UpdateAnimalCommandHandler(
 
 /// <summary>
 /// Records a new weight measurement for an animal.
+/// <para>
+/// Either a scale weight (<see cref="WeightKg"/>), or a tape measure (<see cref="LengthInch"/> +
+/// <see cref="GirthInch"/>, <see cref="Method"/> = Tape). With Tape the server computes the kg
+/// itself via <see cref="TapeWeight"/>; any kg the client sends is ignored. When
+/// <see cref="Method"/> is omitted it is Tape if a length or girth is given and no kg, else Scale.
+/// </para>
 /// Permission: animals:write
 /// </summary>
 public sealed record RecordWeightCommand(
     Guid AnimalId,
-    decimal WeightKg,
+    decimal? WeightKg,
     DateOnly RecordedDate,
-    string? Notes) : IRequest<WeightRecordDto>;
+    string? Notes,
+    WeightMethod? Method = null,
+    decimal? LengthInch = null,
+    decimal? GirthInch = null) : IRequest<WeightRecordDto>
+{
+    /// <summary>The method actually used: as given, else inferred from which inputs were sent.</summary>
+    public WeightMethod EffectiveMethod =>
+        Method ?? (WeightKg is null && (LengthInch is not null || GirthInch is not null)
+            ? WeightMethod.Tape
+            : WeightMethod.Scale);
+}
 
 public sealed class RecordWeightCommandValidator : AbstractValidator<RecordWeightCommand>
 {
@@ -275,9 +291,32 @@ public sealed class RecordWeightCommandValidator : AbstractValidator<RecordWeigh
         clock ??= Farm360.Application.Common.Time.FarmClock.System;
         RuleFor(x => x.AnimalId).NotEmpty();
 
-        RuleFor(x => x.WeightKg)
-            .GreaterThan(0).WithMessage("Weight must be greater than zero.")
-            .LessThanOrEqualTo(2000).WithMessage("Weight cannot exceed 2000 kg.");
+        RuleFor(x => x.Method).IsInEnum().When(x => x.Method is not null);
+
+        When(x => x.EffectiveMethod == WeightMethod.Scale, () =>
+        {
+            RuleFor(x => x.WeightKg)
+                .NotNull().WithMessage("Enter the weight in kg.")
+                .GreaterThan(0).WithMessage("Weight must be greater than zero.")
+                .LessThanOrEqualTo(2000).WithMessage("Weight cannot exceed 2000 kg.");
+        });
+
+        When(x => x.EffectiveMethod == WeightMethod.Tape, () =>
+        {
+            RuleFor(x => x.LengthInch)
+                .NotNull().WithMessage("Enter the body length for a tape-measure weight.")
+                .Must(v => v is null || TapeWeight.IsPlausible(v.Value)).WithMessage(TapeWeight.LengthOutOfRangeMessage);
+
+            RuleFor(x => x.GirthInch)
+                .NotNull().WithMessage("Enter the heart girth for a tape-measure weight.")
+                .Must(v => v is null || TapeWeight.IsPlausible(v.Value)).WithMessage(TapeWeight.GirthOutOfRangeMessage);
+
+            RuleFor(x => x)
+                .Must(x => TapeWeight.Compute(x.LengthInch!.Value, x.GirthInch!.Value) <= TapeWeight.MaxKg)
+                .When(x => x.LengthInch is { } l && x.GirthInch is { } g && TapeWeight.IsPlausible(l) && TapeWeight.IsPlausible(g))
+                .WithName("Weight")
+                .WithMessage(TapeWeight.EstimateTooHighMessage);
+        });
 
         RuleFor(x => x.RecordedDate)
             .LessThanOrEqualTo(_ => clock.Today)
@@ -300,8 +339,29 @@ public sealed class RecordWeightCommandHandler(
         var animal = await repository.GetByIdWithWeightsAsync(request.AnimalId, cancellationToken)
             ?? throw new NotFoundException(nameof(Animal), request.AnimalId);
 
-        var weight = Weight.Create(request.WeightKg);
-        var record = animal.RecordWeight(weight, request.RecordedDate, currentUser.UserId ?? Guid.Empty, request.Notes);
+        var recordedBy = currentUser.UserId ?? Guid.Empty;
+        WeightRecord record;
+        if (request.EffectiveMethod == WeightMethod.Tape)
+        {
+            // The kg comes from the formula, never from the client.
+            if (request.LengthInch is not { } length || request.GirthInch is not { } girth)
+            {
+                throw new Farm360.Application.Common.Exceptions.ValidationException(
+                    [new FluentValidation.Results.ValidationFailure(nameof(request.LengthInch), "Enter the body length and heart girth for a tape-measure weight.")]);
+            }
+
+            record = animal.RecordTapeWeight(length, girth, request.RecordedDate, recordedBy, request.Notes);
+        }
+        else
+        {
+            if (request.WeightKg is not { } kg)
+            {
+                throw new Farm360.Application.Common.Exceptions.ValidationException(
+                    [new FluentValidation.Results.ValidationFailure(nameof(request.WeightKg), "Enter the weight in kg.")]);
+            }
+
+            record = animal.RecordWeight(Weight.Create(kg), request.RecordedDate, recordedBy, request.Notes);
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

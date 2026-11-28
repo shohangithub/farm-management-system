@@ -93,3 +93,10 @@ public sealed class InvalidExitDateException(string tagId, string reason)
 /// </summary>
 public sealed class PenFullException(string penName, int capacity)
     : LivestockDomainException($"Pen '{penName}' is full ({capacity} animals on farm). Move an animal out or raise the pen capacity first.");
+
+/// <summary>
+/// Thrown when a tape-measure length or heart girth is outside the plausible 20–120 inch range.
+/// HTTP 422.
+/// </summary>
+public sealed class InvalidTapeMeasurementException(string message)
+    : LivestockDomainException(message);
